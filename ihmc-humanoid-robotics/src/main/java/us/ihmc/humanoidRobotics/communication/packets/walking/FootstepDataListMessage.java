@@ -1,25 +1,20 @@
 package us.ihmc.humanoidRobotics.communication.packets.walking;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Random;
 
+import us.ihmc.commons.MathTools;
 import us.ihmc.commons.RandomNumbers;
+import us.ihmc.communication.packets.ExecutionMode;
+import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.communication.packets.Packet;
 import us.ihmc.communication.packets.QueueableMessage;
-import us.ihmc.communication.packets.VisualizablePacket;
 import us.ihmc.communication.ros.generators.RosExportedField;
 import us.ihmc.communication.ros.generators.RosMessagePacket;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.humanoidRobotics.communication.TransformableDataObject;
-import us.ihmc.communication.packets.ExecutionMode;
-import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.humanoidRobotics.communication.packets.PacketValidityChecker;
-import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 @RosMessagePacket(documentation =
@@ -27,7 +22,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
       + " A message with a unique id equals to 0 will be interpreted as invalid and will not be processed by the controller. This rule does not apply to the fields of this message.",
                   rosPackage = RosMessagePacket.CORE_IHMC_PACKAGE,
                   topic = "/control/footstep_list")
-public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMessage> implements TransformableDataObject<FootstepDataListMessage>, Iterable<FootstepDataMessage>, VisualizablePacket
+public class FootstepDataListMessage extends Packet<FootstepDataListMessage>
 {
    @RosExportedField(documentation = "Defines the list of footstep to perform.")
    public ArrayList<FootstepDataMessage> footstepDataList = new ArrayList<FootstepDataMessage>();
@@ -55,14 +50,16 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
          + "\nfootstep list is finished. If the value is negative the defaultTransferDuration will be used.")
    public double finalTransferDuration = -1.0;
 
-   /** the time to delay this command on the controller side before being executed **/
-   public double executionDelayTime;
-
    /** If{@code false} the controller adjust each footstep height to be at the support sole height. */
    public boolean trustHeightOfFootsteps = true;
+   @RosExportedField(documentation = "Contains information on whether the robot can automatically adjust its footsteps to retain balance.")
+   public boolean areFootstepsAdjustable = true;
 
    /** If {@code true} the controller will adjust upcoming footsteps with the location error of previous steps. */
    public boolean offsetFootstepsWithExecutionError = false;
+
+   @RosExportedField(documentation = "Properties for queueing footstep lists.")
+   public QueueableMessage queueingProperties = new QueueableMessage();
 
    /**
     * Empty constructor for serialization.
@@ -71,6 +68,21 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
    public FootstepDataListMessage()
    {
       setUniqueId(VALID_MESSAGE_DEFAULT_ID);
+   }
+
+   public FootstepDataListMessage(FootstepDataListMessage other)
+   {
+      for(FootstepDataMessage otherFootstep : other.footstepDataList)
+         footstepDataList.add(new FootstepDataMessage(otherFootstep));
+      executionTiming = other.executionTiming;
+      defaultSwingDuration = other.defaultSwingDuration;
+      defaultTransferDuration = other.defaultTransferDuration;
+      finalTransferDuration = other.finalTransferDuration;
+      trustHeightOfFootsteps = other.trustHeightOfFootsteps;
+      areFootstepsAdjustable = other.areFootstepsAdjustable;
+      offsetFootstepsWithExecutionError = other.offsetFootstepsWithExecutionError;
+      if (other.queueingProperties != null)
+         queueingProperties.set(other.queueingProperties);
    }
 
    public FootstepDataListMessage(ArrayList<FootstepDataMessage> footstepDataList, double finalTransferDuration)
@@ -111,7 +123,7 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
       this.defaultSwingDuration = defaultSwingDuration;
       this.defaultTransferDuration = defaultTransferDuration;
       this.finalTransferDuration = finalTransferDuration;
-      setExecutionMode(executionMode, Packet.VALID_MESSAGE_DEFAULT_ID);
+      queueingProperties.setExecutionMode(executionMode, Packet.VALID_MESSAGE_DEFAULT_ID);
    }
 
    /**
@@ -138,7 +150,7 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
       this.defaultSwingDuration = defaultSwingDuration;
       this.defaultTransferDuration = defaultTransferDuration;
       this.finalTransferDuration = finalTransferDuration;
-      setExecutionMode(ExecutionMode.OVERRIDE, Packet.VALID_MESSAGE_DEFAULT_ID);
+      queueingProperties.setExecutionMode(ExecutionMode.OVERRIDE, Packet.VALID_MESSAGE_DEFAULT_ID);
    }
 
    public ArrayList<FootstepDataMessage> getDataList()
@@ -170,6 +182,9 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
    @Override
    public boolean epsilonEquals(FootstepDataListMessage otherList, double epsilon)
    {
+      if (!queueingProperties.epsilonEquals(otherList.queueingProperties, epsilon))
+         return false;
+
       for (int i = 0; i < size(); i++)
       {
          if (!otherList.get(i).epsilonEquals(get(i), epsilon))
@@ -203,7 +218,7 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
          return false;
       }
 
-      return super.epsilonEquals(otherList, epsilon);
+      return true;
    }
 
    @Override
@@ -232,32 +247,12 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
       else
       {
          return ("Starting Footstep: " + startingFootstep + "\n"
-               + "\tExecution Mode: " + getExecutionMode().toString() + "\n"
+               + "\tExecution Mode: " + queueingProperties.getExecutionMode().toString() + "\n"
                + "\tExecution Timing: " + this.executionTiming + "\n"
                + "\tTransfer Duration: " + this.defaultTransferDuration + "\n"
                + "\tSwing Duration: " + this.defaultSwingDuration + "\n"
                + "\tSize: " + this.size() + " Footsteps");
       }
-   }
-
-   @Override
-   public Iterator<FootstepDataMessage> iterator()
-   {
-      return footstepDataList.iterator();
-   }
-
-   @Override
-   public FootstepDataListMessage transform(RigidBodyTransform transform)
-   {
-      FootstepDataListMessage ret = new FootstepDataListMessage(defaultSwingDuration, defaultTransferDuration, finalTransferDuration);
-
-      for (FootstepDataMessage footstepData : footstepDataList)
-      {
-         FootstepDataMessage transformedFootstepData = footstepData.transform(transform);
-         ret.add(transformedFootstepData);
-      }
-
-      return ret;
    }
 
    public void setDefaultSwingDuration(double defaultSwingDuration)
@@ -277,7 +272,7 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
 
    public void setExecutionMode(ExecutionMode executionMode)
    {
-      setExecutionMode(executionMode, VALID_MESSAGE_DEFAULT_ID);
+      queueingProperties.setExecutionMode(executionMode, VALID_MESSAGE_DEFAULT_ID);
    }
 
    public void setExecutionTiming(ExecutionTiming executionTiming)
@@ -294,25 +289,28 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
     * returns the amount of time this command is delayed on the controller side before executing
     * @return the time to delay this command in seconds
     */
-   @Override
    public double getExecutionDelayTime()
    {
-      return executionDelayTime;
+      return queueingProperties.getExecutionDelayTime();
    }
 
    /**
     * sets the amount of time this command is delayed on the controller side before executing
     * @param delayTime the time in seconds to delay after receiving the command before executing
     */
-   @Override
    public void setExecutionDelayTime(double delayTime)
    {
-      this.executionDelayTime = delayTime;
+      queueingProperties.setExecutionDelayTime(delayTime);
    }
 
    public void setTrustHeightOfFootsteps(boolean trustHeight)
    {
       trustHeightOfFootsteps = trustHeight;
+   }
+
+   public void setAreFootstepsAdjustable(boolean areFootstepsAdjustable)
+   {
+      this.areFootstepsAdjustable = areFootstepsAdjustable;
    }
 
    public void setOffsetFootstepsWithExecutionError(boolean offsetFootstepsWithExecutionError)
@@ -323,6 +321,11 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
    public boolean isOffsetFootstepsWithExecutionError()
    {
       return offsetFootstepsWithExecutionError;
+   }
+
+   public QueueableMessage getQueueingProperties()
+   {
+      return queueingProperties;
    }
 
    public FootstepDataListMessage(Random random)
@@ -337,8 +340,8 @@ public class FootstepDataListMessage extends QueueableMessage<FootstepDataListMe
       this.defaultSwingDuration = RandomNumbers.nextDoubleWithEdgeCases(random, 0.1);
       this.defaultTransferDuration = RandomNumbers.nextDoubleWithEdgeCases(random, 0.1);
       this.finalTransferDuration = RandomNumbers.nextDoubleWithEdgeCases(random, 0.1);
-      this.executionMode = RandomNumbers.nextEnum(random, ExecutionMode.class);
       this.executionTiming = RandomNumbers.nextEnum(random, ExecutionTiming.class);
+      queueingProperties = new QueueableMessage(random);
    }
 
    /** {@inheritDoc} */

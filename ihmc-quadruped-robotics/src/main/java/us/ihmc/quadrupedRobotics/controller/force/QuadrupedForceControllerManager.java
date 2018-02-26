@@ -8,6 +8,7 @@ import us.ihmc.communication.net.PacketConsumer;
 import us.ihmc.communication.streamingData.GlobalDataProducer;
 import us.ihmc.quadrupedRobotics.communication.packets.QuadrupedForceControllerEventPacket;
 import us.ihmc.quadrupedRobotics.communication.packets.QuadrupedForceControllerStatePacket;
+import us.ihmc.quadrupedRobotics.controlModules.QuadrupedControlManagerFactory;
 import us.ihmc.quadrupedRobotics.controller.ControllerEvent;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedController;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerManager;
@@ -19,6 +20,7 @@ import us.ihmc.quadrupedRobotics.controller.force.states.QuadrupedForceBasedFree
 import us.ihmc.quadrupedRobotics.controller.force.states.QuadrupedForceBasedJointInitializationController;
 import us.ihmc.quadrupedRobotics.controller.force.states.QuadrupedForceBasedSoleWaypointController;
 import us.ihmc.quadrupedRobotics.controller.force.states.QuadrupedForceBasedStandPrepController;
+import us.ihmc.quadrupedRobotics.controller.forceDevelopment.states.QuadrupedStepController;
 import us.ihmc.quadrupedRobotics.model.QuadrupedPhysicalProperties;
 import us.ihmc.quadrupedRobotics.model.QuadrupedRuntimeEnvironment;
 import us.ihmc.quadrupedRobotics.output.OutputProcessorBuilder;
@@ -70,10 +72,11 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
    private final QuadrupedXGaitStepStream xGaitStepStream;
    private final QuadrupedStepStreamMultiplexer<QuadrupedForceControllerState> stepStreamMultiplexer;
 
-   private final FiniteStateMachine<QuadrupedForceControllerState, ControllerEvent> stateMachine;
+   private final FiniteStateMachine<QuadrupedForceControllerState, ControllerEvent, QuadrupedController> stateMachine;
    private final FiniteStateMachineYoVariableTrigger<QuadrupedForceControllerRequestedEvent> userEventTrigger;
    private final QuadrupedRuntimeEnvironment runtimeEnvironment;
    private final QuadrupedForceControllerToolbox controllerToolbox;
+   private final QuadrupedControlManagerFactory controlManagerFactory;
    private final OutputProcessor outputProcessor;
 
    private final AtomicReference<QuadrupedForceControllerRequestedEvent> requestedEvent = new AtomicReference<>();
@@ -82,6 +85,7 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
    {
       this.controllerToolbox = new QuadrupedForceControllerToolbox(runtimeEnvironment, physicalProperties, registry);
       this.runtimeEnvironment = runtimeEnvironment;
+
 
       // Initialize input providers.
       postureProvider = new QuadrupedPostureInputProvider(runtimeEnvironment.getGlobalDataProducer(), registry);
@@ -100,12 +104,17 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
       stepStreamMultiplexer.addStepStream(QuadrupedForceControllerState.STEP, preplannedStepStream);
       stepStreamMultiplexer.selectStepStream(QuadrupedForceControllerState.XGAIT);
 
+      // Initialize control modules
+      this.controlManagerFactory = new QuadrupedControlManagerFactory(controllerToolbox, postureProvider, registry);
+
+      controlManagerFactory.getOrCreateFeetManager();
+      controlManagerFactory.getOrCreateBodyOrientationManager();
+
       // Initialize output processor
       StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment.getControlDT(),
             runtimeEnvironment.getRobotTimestamp(), registry);
       FiniteStateMachineStateChangedListener stateChangedListener = stateChangeSmootherComponent.createFiniteStateMachineStateChangedListener();
-      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
-         controllerToolbox.getFootStateMachine().get(robotQuadrant).attachStateChangedListener(stateChangedListener);
+      controlManagerFactory.getOrCreateFeetManager().attachStateChangedListener(stateChangedListener);
       OutputProcessorBuilder outputProcessorBuilder = new OutputProcessorBuilder(runtimeEnvironment.getFullRobotModel());
       outputProcessorBuilder.addComponent(stateChangeSmootherComponent);
       outputProcessor = outputProcessorBuilder.build();
@@ -189,7 +198,7 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
       }
       if (preplannedStepProvider.isStepPlanAvailable())
       {
-         if (stateMachine.getState() == QuadrupedForceControllerState.STAND)
+         if (stateMachine.getCurrentStateEnum() == QuadrupedForceControllerState.STAND)
          {
             // trigger step event if preplanned steps are available in stand state
             lastEvent.set(QuadrupedForceControllerRequestedEvent.REQUEST_STEP);
@@ -201,7 +210,7 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
       stateMachine.process();
 
       // update contact state used for state estimation
-      switch (stateMachine.getState())
+      switch (stateMachine.getCurrentStateEnum())
       {
       case DO_NOTHING:
       case STAND_PREP:
@@ -238,7 +247,7 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
       outputProcessor.update();
 
       // Send state information
-      quadrupedForceControllerStatePacket.set(stateMachine.getState());
+      quadrupedForceControllerStatePacket.set(stateMachine.getCurrentStateEnum());
       
       if (runtimeEnvironment.getGlobalDataProducer() != null)
       {
@@ -270,22 +279,26 @@ public class QuadrupedForceControllerManager implements QuadrupedControllerManag
       return motionStatusHolder;
    }
 
-   private FiniteStateMachine<QuadrupedForceControllerState, ControllerEvent> buildStateMachine(QuadrupedRuntimeEnvironment runtimeEnvironment,
+   private FiniteStateMachine<QuadrupedForceControllerState, ControllerEvent, QuadrupedController> buildStateMachine(QuadrupedRuntimeEnvironment runtimeEnvironment,
          QuadrupedPostureInputProviderInterface inputProvider)
    {
       // Initialize controllers.
       final QuadrupedController jointInitializationController = new QuadrupedForceBasedJointInitializationController(runtimeEnvironment);
       final QuadrupedController doNothingController = new QuadrupedForceBasedDoNothingController(runtimeEnvironment, registry);
-      final QuadrupedController standPrepController = new QuadrupedForceBasedStandPrepController(runtimeEnvironment, controllerToolbox);
-      final QuadrupedController freezeController = new QuadrupedForceBasedFreezeController(runtimeEnvironment, controllerToolbox);
-      final QuadrupedController standController = new QuadrupedDcmBasedStandController(runtimeEnvironment, controllerToolbox, inputProvider);
-      final QuadrupedDcmBasedStepController stepController = new QuadrupedDcmBasedStepController(runtimeEnvironment, controllerToolbox, inputProvider,
-            stepStreamMultiplexer);
-      final QuadrupedController fallController = new QuadrupedForceBasedFallController(runtimeEnvironment, controllerToolbox);
-      final QuadrupedController soleWaypointController = new QuadrupedForceBasedSoleWaypointController(runtimeEnvironment, controllerToolbox,
-            soleWaypointInputProvider);
+      final QuadrupedController standPrepController = new QuadrupedForceBasedStandPrepController(controllerToolbox, controlManagerFactory, registry);
+      final QuadrupedController freezeController = new QuadrupedForceBasedFreezeController(controllerToolbox, controlManagerFactory, registry);
+      final QuadrupedController standController = new QuadrupedDcmBasedStandController(controllerToolbox, controlManagerFactory, inputProvider, registry);
+      /*
+      final QuadrupedDcmBasedStepController stepController = new QuadrupedDcmBasedStepController(controllerToolbox, controlManagerFactory, inputProvider,
+                                                                                                 stepStreamMultiplexer, registry);
+                                                                                                 */
+      final QuadrupedStepController stepController = new QuadrupedStepController(controllerToolbox, controlManagerFactory, inputProvider,
+                                                                                         stepStreamMultiplexer, registry);
+      final QuadrupedController fallController = new QuadrupedForceBasedFallController(controllerToolbox, controlManagerFactory, registry);
+      final QuadrupedController soleWaypointController = new QuadrupedForceBasedSoleWaypointController(controllerToolbox, controlManagerFactory,
+                                                                                                       soleWaypointInputProvider, registry);
 
-      FiniteStateMachineBuilder<QuadrupedForceControllerState, ControllerEvent> builder = new FiniteStateMachineBuilder<>(QuadrupedForceControllerState.class,
+      FiniteStateMachineBuilder<QuadrupedForceControllerState, ControllerEvent, QuadrupedController> builder = new FiniteStateMachineBuilder<>(QuadrupedForceControllerState.class,
             ControllerEvent.class, "forceControllerState", registry);
 
       builder.addState(QuadrupedForceControllerState.JOINT_INITIALIZATION, jointInitializationController);

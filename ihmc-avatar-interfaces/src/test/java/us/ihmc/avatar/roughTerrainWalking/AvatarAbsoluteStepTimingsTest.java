@@ -51,15 +51,14 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
    protected final static SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
-   private static final double swingStartTimeEpsilon = 0.016;
+   private static final double swingStartTimeEpsilon = 0.01;
 
    public void testTakingStepsWithAbsoluteTimings() throws SimulationExceededMaximumTimeException
    {
       String className = getClass().getSimpleName();
       CommonAvatarEnvironmentInterface environment = new TestingEnvironment();
       DRCRobotModel robotModel = getRobotModel();
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel);
-      drcSimulationTestHelper.setTestEnvironment(environment);
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
       drcSimulationTestHelper.createSimulation(className);
       ThreadTools.sleep(1000);
       SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
@@ -87,7 +86,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
 
       FootstepDataListMessage footstepMessage2 = new FootstepDataListMessage();
       footstepMessage2.setExecutionTiming(ExecutionTiming.CONTROL_ABSOLUTE_TIMINGS);
-      footstepMessage2.setExecutionMode(ExecutionMode.QUEUE, 1);
+      footstepMessage2.getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE, 1);
       footstepMessage2.setUniqueId(2);
 
       double takeOffTime = 0.0;

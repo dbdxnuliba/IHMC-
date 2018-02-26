@@ -50,7 +50,13 @@ public class AtlasPushRecoveryOverSteppingStonesTest extends AvatarPushRecoveryO
                      }
 
                      @Override
-                     public boolean useStepAdjustment()
+                     public boolean allowStepAdjustment()
+                     {
+                        return true;
+                     }
+
+                     @Override
+                     public boolean usePlanarRegionConstraints()
                      {
                         return true;
                      }
@@ -58,12 +64,6 @@ public class AtlasPushRecoveryOverSteppingStonesTest extends AvatarPushRecoveryO
                }
             };
 
-         }
-
-         @Override
-         public ICPWithTimeFreezingPlannerParameters getCapturePointPlannerParameters()
-         {
-            return new AtlasContinuousCMPPlannerParameters(new AtlasPhysicalProperties());
          }
       };
 

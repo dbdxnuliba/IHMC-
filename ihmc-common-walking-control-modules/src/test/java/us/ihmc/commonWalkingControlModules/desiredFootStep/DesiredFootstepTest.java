@@ -11,22 +11,26 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import us.ihmc.commons.MathTools;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.net.NetClassList;
 import us.ihmc.communication.net.PacketConsumer;
 import us.ihmc.communication.packetCommunicator.PacketCommunicator;
+import us.ihmc.communication.packets.ExecutionMode;
+import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.communication.packets.Packet;
 import us.ihmc.communication.packets.PacketDestination;
+import us.ihmc.communication.packets.QueueableMessage;
 import us.ihmc.communication.util.NetworkPorts;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.continuousIntegration.IntegrationCategory;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.communication.packets.ExecutionMode;
-import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.humanoidRobotics.communication.packets.walking.FootstepDataListMessage;
 import us.ihmc.humanoidRobotics.communication.packets.walking.FootstepDataMessage;
 import us.ihmc.humanoidRobotics.communication.packets.walking.FootstepStatus;
@@ -35,7 +39,6 @@ import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.tools.MemoryTools;
-import us.ihmc.commons.thread.ThreadTools;
 
 @ContinuousIntegrationPlan(categories = IntegrationCategory.FAST)
 public class DesiredFootstepTest
@@ -288,6 +291,7 @@ public class DesiredFootstepTest
       netClassList.registerPacketClass(ExecutionMode.class);
       netClassList.registerPacketClass(ExecutionTiming.class);
 
+      netClassList.registerPacketField(QueueableMessage.class);
       netClassList.registerPacketField(ArrayList.class);
       netClassList.registerPacketField(Point3D.class);
       netClassList.registerPacketField(Point3D[].class);
@@ -309,7 +313,7 @@ public class DesiredFootstepTest
       return server;
    }
 
-   private <T extends Packet> PacketCommunicator createStreamingDataConsumer(Class<T> clazz, PacketConsumer<T> consumer, NetworkPorts port) throws IOException
+   private <T extends Packet<T>> PacketCommunicator createStreamingDataConsumer(Class<T> clazz, PacketConsumer<T> consumer, NetworkPorts port) throws IOException
    {
       PacketCommunicator client = PacketCommunicator.createTCPPacketCommunicatorClient("localhost", port, getNetClassList());
       client.connect();
@@ -342,12 +346,32 @@ public class DesiredFootstepTest
          Footstep sentFootstep = sentFootsteps.get(i);
          Footstep receivedFootstep = receivedFootsteps.get(i);
 
-         if (!sentFootstep.epsilonEquals(receivedFootstep, 1e-4))
-         {
-            System.out.println("Test Broken");
-         }
-         assertTrue(sentFootstep.epsilonEquals(receivedFootstep, 1e-4));
+         assertTrue(areFoostepsEqual(sentFootstep, receivedFootstep, 1e-4));
       }
+   }
+
+   private boolean areFoostepsEqual(Footstep sentFootstep, Footstep receivedFootstep, double epsilon)
+   {
+      boolean arePosesEqual = sentFootstep.getFootstepPose().epsilonEquals(receivedFootstep.getFootstepPose(), epsilon);
+      boolean sameRobotSide = sentFootstep.getRobotSide() == receivedFootstep.getRobotSide();
+      boolean isTrustHeightTheSame = sentFootstep.getTrustHeight() == receivedFootstep.getTrustHeight();
+      // FIXME the field is set in FootstepDataListMessage only, which makes impossible to properly convert messages to footsteps.
+      boolean isAdjustableTheSame = true; //sentFootstep.getIsAdjustable() == receivedFootstep.getIsAdjustable();
+
+      boolean sameWaypoints = sentFootstep.getCustomPositionWaypoints().size() == receivedFootstep.getCustomPositionWaypoints().size();
+      if (sameWaypoints)
+      {
+         for (int i = 0; i < sentFootstep.getCustomPositionWaypoints().size(); i++)
+         {
+            FramePoint3D waypoint = sentFootstep.getCustomPositionWaypoints().get(i);
+            FramePoint3D otherWaypoint = receivedFootstep.getCustomPositionWaypoints().get(i);
+            sameWaypoints = sameWaypoints && waypoint.epsilonEquals(otherWaypoint, epsilon);
+         }
+      }
+
+      boolean sameBlendDuration = MathTools.epsilonEquals(sentFootstep.getSwingTrajectoryBlendDuration(), receivedFootstep.getSwingTrajectoryBlendDuration(), epsilon);
+
+      return arePosesEqual && sameRobotSide && isTrustHeightTheSame && isAdjustableTheSame && sameWaypoints && sameBlendDuration;
    }
 
    private void compareStatusSentWithReceived(ArrayList<FootstepStatus> sentFootstepStatus, ArrayList<FootstepStatus> receivedFootsteps)
@@ -399,14 +423,15 @@ public class DesiredFootstepTest
       @Override
       public void receivedPacket(FootstepDataListMessage packet)
       {
-         for (FootstepDataMessage footstepData : packet)
+         boolean adjustable = packet.areFootstepsAdjustable;
+         for (FootstepDataMessage footstepData : packet.footstepDataList)
          {
             List<Point2D> contactPoints = footstepData.getPredictedContactPoints();
             if (contactPoints != null && contactPoints.size() == 0)
                contactPoints = null;
             FramePose3D footstepPose = new FramePose3D(ReferenceFrame.getWorldFrame(), footstepData.getLocation(), footstepData.getOrientation());
 
-            Footstep footstep = new Footstep(robotSide, footstepPose, true, contactPoints);
+            Footstep footstep = new Footstep(robotSide, footstepPose, true, adjustable, contactPoints);
             footstep.setTrajectoryType(footstepData.getTrajectoryType());
             footstep.setSwingHeight(footstepData.getSwingHeight());
             reconstructedFootstepPath.add(footstep);

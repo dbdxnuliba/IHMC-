@@ -3,17 +3,15 @@ package us.ihmc.humanoidRobotics.communication.packets.wholebody;
 import java.util.ArrayList;
 import java.util.List;
 
-import us.ihmc.communication.packets.MultiplePacketHolder;
 import us.ihmc.communication.packets.Packet;
-import us.ihmc.communication.packets.VisualizablePacket;
 
 /**
  *  MessageOfMessages provides a generic way to send a collection of messages to the controller.
  */
-public class MessageOfMessages extends Packet<MessageOfMessages> implements VisualizablePacket, MultiplePacketHolder
+public class MessageOfMessages extends Packet<MessageOfMessages>
 {
    
-   private ArrayList<Packet<?>> packets = new ArrayList<>();
+   public List<Packet<?>> packets = new ArrayList<>();
    
    public MessageOfMessages()
    {
@@ -31,17 +29,17 @@ public class MessageOfMessages extends Packet<MessageOfMessages> implements Visu
    {
       setUniqueId(VALID_MESSAGE_DEFAULT_ID);
       packets.clear();
-      for(Packet<?> packet : messages)
-      {
-         packets.add(packet);
-      }
+      addPacket(messages);
    }
    
    public void addPacket(Packet<?>... messages)
    {
       for(Packet<?> packet : messages)
       {
-         packets.add(packet);
+         if (packet instanceof MessageOfMessages)
+            packets.addAll(((MessageOfMessages) packet).getPackets());
+         else
+            packets.add(packet);
       }
    }
 
@@ -50,7 +48,6 @@ public class MessageOfMessages extends Packet<MessageOfMessages> implements Visu
       packets.clear();
    }
 
-   @Override
    public List<Packet<?>> getPackets()
    {
       return packets;

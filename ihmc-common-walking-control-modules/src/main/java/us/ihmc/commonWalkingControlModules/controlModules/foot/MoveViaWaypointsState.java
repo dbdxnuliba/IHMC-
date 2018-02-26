@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FootControlModule.ConstraintType;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyTaskspaceControlState;
-import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.SpatialFeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.trajectories.SoftTouchdownPositionTrajectoryGenerator;
@@ -12,12 +11,10 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajectoryCommand;
-import us.ihmc.robotics.controllers.pidGains.YoPIDSE3Gains;
-import us.ihmc.robotics.math.frames.YoFrameVector;
+import us.ihmc.robotics.controllers.pidGains.PIDSE3GainsReadOnly;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.trajectories.providers.SettableDoubleProvider;
 import us.ihmc.robotics.trajectories.providers.SettablePositionProvider;
@@ -36,10 +33,8 @@ public class MoveViaWaypointsState extends AbstractFootControlState
    private final RigidBodyTaskspaceControlState taskspaceControlState;
    private final SpatialFeedbackControlCommand spatialFeedbackControlCommand = new SpatialFeedbackControlCommand();
 
-   private final YoFrameVector angularWeight;
-   private final YoFrameVector linearWeight;
-   private final Vector3D tempAngularWeightVector = new Vector3D();
-   private final Vector3D tempLinearWeightVector = new Vector3D();
+   private Vector3DReadOnly angularWeight;
+   private Vector3DReadOnly linearWeight;
 
    private final FramePose3D initialPose = new FramePose3D();
 
@@ -48,10 +43,14 @@ public class MoveViaWaypointsState extends AbstractFootControlState
    private final ReferenceFrame ankleFrame;
    private final LegSingularityAndKneeCollapseAvoidanceControlModule legSingularityAndKneeCollapseAvoidanceControlModule;
 
+   private final PIDSE3GainsReadOnly gains;
+
    public MoveViaWaypointsState(FootControlHelper footControlHelper, VectorProvider touchdownVelocityProvider, VectorProvider touchdownAccelerationProvider,
-         YoPIDSE3Gains gains, YoVariableRegistry registry)
+                                PIDSE3GainsReadOnly gains, YoVariableRegistry registry)
    {
       super(ConstraintType.MOVE_VIA_WAYPOINTS, footControlHelper);
+
+      this.gains = gains;
 
       RigidBody foot = controllerToolbox.getFullRobotModel().getFoot(robotSide);
       String namePrefix = foot.getName() + "MoveViaWaypoints";
@@ -59,9 +58,6 @@ public class MoveViaWaypointsState extends AbstractFootControlState
       isPerformingTouchdown = new YoBoolean(namePrefix + "IsPerformingTouchdown", registry);
       positionTrajectoryForDisturbanceRecovery = new SoftTouchdownPositionTrajectoryGenerator(namePrefix + "Touchdown", worldFrame, currentDesiredFootPosition,
             touchdownVelocityProvider, touchdownAccelerationProvider, touchdownInitialTimeProvider, registry);
-
-      angularWeight = new YoFrameVector(namePrefix + "AngularWeight", null, registry);
-      linearWeight = new YoFrameVector(namePrefix + "LinearWeight", null, registry);
 
       YoDouble yoTime = controllerToolbox.getYoTime();
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
@@ -76,15 +72,14 @@ public class MoveViaWaypointsState extends AbstractFootControlState
 
       spatialFeedbackControlCommand.set(rootBody, foot);
       spatialFeedbackControlCommand.setPrimaryBase(pelvis);
-      spatialFeedbackControlCommand.setGains(gains);
 
       legSingularityAndKneeCollapseAvoidanceControlModule = footControlHelper.getLegSingularityAndKneeCollapseAvoidanceControlModule();
    }
 
    public void setWeights(Vector3DReadOnly angularWeight, Vector3DReadOnly linearWeight)
    {
-      this.angularWeight.set(angularWeight);
-      this.linearWeight.set(linearWeight);
+      this.angularWeight = angularWeight;
+      this.linearWeight = linearWeight;
 
       taskspaceControlState.setWeights(angularWeight, linearWeight);
    }
@@ -96,9 +91,9 @@ public class MoveViaWaypointsState extends AbstractFootControlState
 
    public void handleFootTrajectoryCommand(FootTrajectoryCommand command)
    {
-      if (command.useCustomControlFrame())
+      if (command.getSE3Trajectory().useCustomControlFrame())
       {
-         command.getControlFramePose(controlFrameTransform);
+         command.getSE3Trajectory().getControlFramePose(controlFrameTransform);
          taskspaceControlState.setControlFramePose(controlFrameTransform);
       }
       else
@@ -109,7 +104,7 @@ public class MoveViaWaypointsState extends AbstractFootControlState
       controlFrame = taskspaceControlState.getControlFrame();
       initialPose.setToZero(controlFrame);
 
-      if (!taskspaceControlState.handlePoseTrajectoryCommand(command, initialPose))
+      if (!taskspaceControlState.handlePoseTrajectoryCommand(command.getSE3Trajectory(), initialPose))
       {
          taskspaceControlState.holdCurrent();
       }
@@ -155,9 +150,8 @@ public class MoveViaWaypointsState extends AbstractFootControlState
    {
       spatialFeedbackControlCommand.set(desiredPosition, desiredLinearVelocity, desiredLinearAcceleration);
       spatialFeedbackControlCommand.set(desiredOrientation, desiredAngularVelocity, desiredAngularAcceleration);
-      tempAngularWeightVector.set(angularWeight);
-      tempLinearWeightVector.set(linearWeight);
-      spatialFeedbackControlCommand.setWeightsForSolver(tempAngularWeightVector, tempLinearWeightVector);
+      spatialFeedbackControlCommand.setWeightsForSolver(angularWeight, linearWeight);
+      spatialFeedbackControlCommand.setGains(gains);
    }
 
    public void requestTouchdownForDisturbanceRecovery()
@@ -230,7 +224,7 @@ public class MoveViaWaypointsState extends AbstractFootControlState
    }
 
    @Override
-   public FeedbackControlCommand<?> getFeedbackControlCommand()
+   public SpatialFeedbackControlCommand getFeedbackControlCommand()
    {
       return spatialFeedbackControlCommand;
    }

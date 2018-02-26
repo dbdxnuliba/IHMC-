@@ -26,8 +26,8 @@ public class ValkyrieEndToEndAdjustFootstepMessageTest extends EndToEndAdjustFoo
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 18.1)
-   @Test(timeout = 80000)
+   @ContinuousIntegrationTest(estimatedDuration = 85.0)
+   @Test(timeout = 120000)
    public void testAdjustFootstepOnce() throws Exception
    {
       super.testAdjustFootstepOnce();

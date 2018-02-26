@@ -227,7 +227,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 50.0)
-   @Test(timeout = 300000)
+   @Test(timeout = 600000)
    public void testDispatchPelvisPoseBehavior() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -249,7 +249,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
 
       PelvisOrientationTrajectoryMessage pelvisPosePacket = createPelvisOrientationTrajectoryMessage(new Vector3D(0.0, 1.0, 0.0), Math.toRadians(5.0));
       FramePose3D desiredPelvisPose = new FramePose3D();
-      desiredPelvisPose.setOrientation(pelvisPosePacket.getLastTrajectoryPoint().orientation);
+      desiredPelvisPose.setOrientation(pelvisPosePacket.getSO3Trajectory().getLastTrajectoryPoint().orientation);
 
       pelvisOrientationTrajectoryBehavior.initialize();
       pelvisOrientationTrajectoryBehavior.setInput(pelvisPosePacket);
@@ -270,7 +270,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test(timeout = 600000)
    public void testDispatchWalkToLocationBehavior() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -327,7 +327,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test(timeout = 600000)
    public void testDispatchKarateKidDiagnosticBehavior() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -380,7 +380,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test(timeout = 600000)
    public void testDispatchWalkToLocationBehaviorAndStop() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -429,7 +429,7 @@ public abstract class HumanoidBehaviorDispatcherTest implements MultiRobotTestIn
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test(timeout = 600000)
    public void testDispatchWalkToLocationBehaviorPauseAndResume() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());

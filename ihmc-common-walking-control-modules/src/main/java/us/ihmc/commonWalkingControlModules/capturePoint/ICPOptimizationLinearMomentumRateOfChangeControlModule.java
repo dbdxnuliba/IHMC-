@@ -5,10 +5,9 @@ import us.ihmc.commonWalkingControlModules.configurations.ICPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.*;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationController;
-import us.ihmc.euclid.referenceFrame.FramePoint2D;
-import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
@@ -34,7 +33,8 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
    private final FrameConvexPolygon2d supportPolygon = new FrameConvexPolygon2d();
    private final YoBoolean desiredCMPinSafeArea;
 
-   
+   private final FrameVector2D perfectCMPDelta = new FrameVector2D();
+
    private final SideDependentList<RigidBodyTransform> transformsFromAnkleToSole = new SideDependentList<>();
 
    public ICPOptimizationLinearMomentumRateOfChangeControlModule(ReferenceFrames referenceFrames, BipedSupportPolygons bipedSupportPolygons,
@@ -70,7 +70,6 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
          transformsFromAnkleToSole.put(robotSide, ankleToSole);
       }
 
-      ICPOptimizationParameters icpOptimizationParameters = walkingControllerParameters.getICPOptimizationParameters();
       icpOptimizationController = new ICPOptimizationController(walkingControllerParameters, bipedSupportPolygons, icpControlPolygons,
                                                                 contactableFeet, controlDT, registry, yoGraphicsListRegistry);
    }
@@ -112,13 +111,26 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
    }
 
    @Override
-   public void computeCMPInternal(FramePoint2D desiredCMPPreviousValue)
+   public void computeCMPInternal(FramePoint2DReadOnly desiredCMPPreviousValue)
    {
-      icpOptimizationController.compute(yoTime.getDoubleValue(), desiredCapturePoint, desiredCapturePointVelocity, perfectCMP, capturePoint, omega0);
+      if (perfectCoP.containsNaN())
+      {
+         perfectCMPDelta.setToZero();
+         icpOptimizationController.compute(yoTime.getDoubleValue(), desiredCapturePoint, desiredCapturePointVelocity, perfectCMP, capturePoint,
+                                           capturePointVelocity, omega0);
+      }
+      else
+      {
+         perfectCMPDelta.sub(perfectCMP, perfectCoP);
+         icpOptimizationController.compute(yoTime.getDoubleValue(), desiredCapturePoint, desiredCapturePointVelocity, perfectCoP, perfectCMPDelta, capturePoint,
+                                           capturePointVelocity, omega0);
+      }
+
       icpOptimizationController.getDesiredCMP(desiredCMP);
 
       yoUnprojectedDesiredCMP.set(desiredCMP);
 
+      // FIXME this projection should be taken care of already
       // do projection here:
       if (!areaToProjectInto.isEmpty())
       {
@@ -134,18 +146,12 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
       }
    }
 
-   private final FramePose3D footstepPose = new FramePose3D();
-   private final FramePoint2D footstepPositionSolution = new FramePoint2D();
-
    @Override
    public boolean getUpcomingFootstepSolution(Footstep footstepToPack)
    {
       if (icpOptimizationController.useStepAdjustment())
       {
-         footstepToPack.getPose(footstepPose);
-         icpOptimizationController.getFootstepSolution(footstepPositionSolution);
-         footstepPose.setPosition(footstepPositionSolution);
-         footstepToPack.setPose(footstepPose);
+         icpOptimizationController.getFootstepSolution(footstepToPack);
       }
 
       return icpOptimizationController.wasFootstepAdjusted();

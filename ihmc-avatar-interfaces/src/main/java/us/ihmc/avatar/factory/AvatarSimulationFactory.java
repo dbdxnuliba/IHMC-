@@ -11,7 +11,6 @@ import us.ihmc.avatar.drcRobot.SimulatedDRCRobotTimeProvider;
 import us.ihmc.avatar.initialSetup.DRCGuiInitialSetup;
 import us.ihmc.avatar.initialSetup.DRCRobotInitialSetup;
 import us.ihmc.avatar.initialSetup.DRCSCSInitialSetup;
-import us.ihmc.avatar.sensors.DRCSimulatedIMUPublisher;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelHumanoidControllerFactory;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -59,7 +58,6 @@ import us.ihmc.wholeBodyController.DRCControllerThread;
 import us.ihmc.wholeBodyController.DRCOutputProcessor;
 import us.ihmc.wholeBodyController.DRCOutputProcessorWithStateChangeSmoother;
 import us.ihmc.wholeBodyController.DRCOutputProcessorWithTorqueOffsets;
-import us.ihmc.wholeBodyController.DRCRobotJointMap;
 import us.ihmc.wholeBodyController.concurrent.SingleThreadedThreadDataSynchronizer;
 import us.ihmc.wholeBodyController.concurrent.ThreadDataSynchronizer;
 import us.ihmc.wholeBodyController.concurrent.ThreadDataSynchronizerInterface;
@@ -80,6 +78,7 @@ public class AvatarSimulationFactory
    private final OptionalFactoryField<Boolean> doSmoothJointTorquesAtControllerStateChanges = new OptionalFactoryField<>("doSmoothJointTorquesAtControllerStateChanges");
    private final OptionalFactoryField<Boolean> addActualCMPVisualization = new OptionalFactoryField<>("addActualCMPVisualization");
    private final OptionalFactoryField<Boolean> createCollisionMeshes = new OptionalFactoryField<>("createCollisionMeshes");
+   private final OptionalFactoryField<Boolean> createYoVariableServer = new OptionalFactoryField<>("createYoVariableServer");
 
    // TO CONSTRUCT
    private HumanoidFloatingRootJointRobot humanoidFloatingRootJointRobot;
@@ -103,14 +102,10 @@ public class AvatarSimulationFactory
 
    private void setupYoVariableServer()
    {
-      if (robotModel.get().getLogSettings().isLog())
+      if (createYoVariableServer.get())
       {
-         yoVariableServer = new YoVariableServer(getClass(), new PeriodicNonRealtimeThreadSchedulerFactory(),
-                                                 robotModel.get().getLogModelProvider(), robotModel.get().getLogSettings(), robotModel.get().getEstimatorDT());
-      }
-      else
-      {
-         yoVariableServer = null;
+         yoVariableServer = new YoVariableServer(getClass(), new PeriodicNonRealtimeThreadSchedulerFactory(), robotModel.get().getLogModelProvider(),
+                                                 robotModel.get().getLogSettings(), robotModel.get().getEstimatorDT());
       }
    }
 
@@ -243,14 +238,6 @@ public class AvatarSimulationFactory
       if (simulatedHandController != null)
       {
          threadedRobotController.addController(simulatedHandController, controllerTicksPerSimulationTick, false);
-      }
-      DRCRobotJointMap jointMap = robotModel.get().getJointMap();
-      if (jointMap.getHeadName() != null)
-      {
-         DRCSimulatedIMUPublisher drcSimulatedIMUPublisher = new DRCSimulatedIMUPublisher(humanoidGlobalDataProducer.get(),
-                                                                                          stateEstimationThread.getSimulatedIMUOutput(),
-                                                                                          jointMap.getHeadName());
-         threadedRobotController.addController(drcSimulatedIMUPublisher, slowPublisherTicksPerSimulationTick, false);
       }
    }
 
@@ -409,6 +396,7 @@ public class AvatarSimulationFactory
       doSmoothJointTorquesAtControllerStateChanges.setDefaultValue(false);
       addActualCMPVisualization.setDefaultValue(true);
       createCollisionMeshes.setDefaultValue(false);
+      createYoVariableServer.setDefaultValue(false);
 
       FactoryTools.checkAllFactoryFieldsAreSet(this);
 
@@ -504,6 +492,11 @@ public class AvatarSimulationFactory
    public void setCreateCollisionMeshes(boolean createCollisionMeshes)
    {
       this.createCollisionMeshes.set(createCollisionMeshes);
+   }
+
+   public void setCreateYoVariableServer(boolean createYoVariableServer)
+   {
+      this.createYoVariableServer.set(createYoVariableServer);
    }
 
    public void setGravity(double gravity)

@@ -1,0 +1,202 @@
+package us.ihmc.parameterTuner.guiElements.main;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import us.ihmc.commons.PrintTools;
+import us.ihmc.parameterTuner.guiElements.GuiParameter;
+import us.ihmc.parameterTuner.guiElements.GuiParameterStatus;
+import us.ihmc.parameterTuner.guiElements.GuiRegistry;
+import us.ihmc.parameterTuner.guiElements.tree.ParameterTree;
+import us.ihmc.parameterTuner.guiElements.tree.ParameterTreeParameter;
+import us.ihmc.parameterTuner.guiElements.tree.ParameterTreeValue;
+import us.ihmc.parameterTuner.guiElements.tuners.TuningBoxManager;
+
+public class GuiController
+{
+   @FXML
+   private TextField searchFieldParameters;
+   @FXML
+   private TextField searchFieldNamespaces;
+   @FXML
+   private CheckBox hideNamespaces;
+   @FXML
+   private ParameterTree tree;
+   @FXML
+   private ScrollPane scrollPane;
+   @FXML
+   private VBox tuningBox;
+   @FXML
+   private StackPane inputPane;
+   @FXML
+   private ChoiceBox<GuiParameterStatus> statusFilter;
+
+   private final HashMap<String, GuiParameter> parameterMap = new HashMap<>();
+   private ChangeCollector changeCollector;
+   private TuningBoxManager tuningBoxManager;
+
+   public void initialize()
+   {
+      searchFieldParameters.textProperty().addListener(observable -> updateTree());
+      searchFieldNamespaces.textProperty().addListener(observable -> updateTree());
+      tuningBoxManager = new TuningBoxManager(tuningBox);
+
+      statusFilter.getItems().addAll(GuiParameterStatus.values());
+      statusFilter.getSelectionModel().select(GuiParameterStatus.ANY);
+      statusFilter.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> updateTree());
+
+      tree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+      tree.setOnMouseClicked(new EventHandler<MouseEvent>()
+      {
+         @Override
+         public void handle(MouseEvent mouseEvent)
+         {
+            if (mouseEvent.getClickCount() >= 2)
+            {
+               addSelectedParametersToTuner();
+            }
+         }
+
+      });
+      tree.setOnKeyPressed(new EventHandler<KeyEvent>()
+      {
+         @Override
+         public void handle(KeyEvent event)
+         {
+            if (event.getCode() == KeyCode.ENTER)
+            {
+               addSelectedParametersToTuner();
+            }
+         }
+      });
+      tree.setOnDragDetected(new EventHandler<MouseEvent>()
+      {
+         @Override
+         public void handle(MouseEvent event)
+         {
+            Dragboard dragboard = tree.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString("");
+            dragboard.setContent(clipboardContent);
+         }
+      });
+      scrollPane.setOnDragOver(new EventHandler<DragEvent>()
+      {
+         @Override
+         public void handle(DragEvent event)
+         {
+            event.acceptTransferModes(TransferMode.MOVE);
+         }
+      });
+      scrollPane.setOnDragDropped(new EventHandler<DragEvent>()
+      {
+         @Override
+         public void handle(DragEvent event)
+         {
+            addSelectedParametersToTuner();
+         }
+      });
+   }
+
+   private void addSelectedParametersToTuner()
+   {
+      ObservableList<TreeItem<ParameterTreeValue>> selectedItems = tree.getSelectionModel().getSelectedItems();
+      for (TreeItem<ParameterTreeValue> selectedItem : selectedItems)
+      {
+         if (selectedItem != null && !selectedItem.getValue().isRegistry())
+         {
+            GuiParameter parameter = ((ParameterTreeParameter) selectedItem.getValue()).getParameter();
+            tuningBoxManager.handleNewParameter(parameter);
+         }
+      }
+   }
+
+   @FXML
+   private void updateTree()
+   {
+      tree.filterRegistries(hideNamespaces.isSelected(), statusFilter.getValue(), searchFieldParameters.getText(), searchFieldNamespaces.getText());
+      searchFieldNamespaces.setDisable(hideNamespaces.isSelected());
+   }
+
+   public void addInputNode(Node node)
+   {
+      if (node != null)
+      {
+         inputPane.getChildren().add(node);
+      }
+   }
+
+   public void setRegistries(List<GuiRegistry> registries)
+   {
+      tree.setRegistries(registries);
+      updateTree();
+      tuningBoxManager.clearAllParameters();
+
+      changeCollector = new ChangeCollector();
+      parameterMap.clear();
+      List<GuiParameter> allParameters = new ArrayList<>();
+      registries.stream().forEach(registry -> allParameters.addAll(registry.getAllParameters()));
+      allParameters.stream().forEach(parameter -> {
+         parameter.addChangedListener(changeCollector);
+         parameter.addStatusUpdater();
+         parameter.saveStateForReset();
+         parameterMap.put(parameter.getUniqueName(), parameter);
+      });
+   }
+
+   public List<GuiParameter> pollChangedParameters()
+   {
+      if (changeCollector == null)
+      {
+         return null;
+      }
+
+      return changeCollector.getChangedParametersAndClear();
+   }
+
+   public void updateParameters(List<GuiParameter> externallyChangesParameters)
+   {
+      if (changeCollector == null)
+      {
+         return;
+      }
+
+      changeCollector.stopRecording();
+      externallyChangesParameters.stream().forEach(externalParameter -> {
+         GuiParameter localParameter = parameterMap.get(externalParameter.getUniqueName());
+         if (localParameter == null)
+         {
+            PrintTools.warn("Did not find " + externalParameter.getName() + " skipping...");
+         }
+         else
+         {
+            if (!localParameter.getCurrentValue().equals(externalParameter.getCurrentValue()))
+            {
+               localParameter.setValueAndStatus(externalParameter);
+               localParameter.saveStateForReset();
+            }
+         }
+      });
+      changeCollector.startRecording();
+   }
+}

@@ -3,21 +3,15 @@ package us.ihmc.quadrupedRobotics.controller.force.states;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBodyOrientationManager;
+import us.ihmc.quadrupedRobotics.controlModules.QuadrupedControlManagerFactory;
+import us.ihmc.quadrupedRobotics.controlModules.foot.QuadrupedFeetManager;
 import us.ihmc.quadrupedRobotics.controller.ControllerEvent;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedController;
 import us.ihmc.quadrupedRobotics.controller.force.QuadrupedForceControllerToolbox;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.DivergentComponentOfMotionController;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.DivergentComponentOfMotionEstimator;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.LinearInvertedPendulumModel;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedBodyOrientationController;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedComPositionController;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedFootStateMachine;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedStepTransitionCallback;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedTaskSpaceController;
-import us.ihmc.quadrupedRobotics.controller.force.toolbox.QuadrupedTaskSpaceEstimator;
+import us.ihmc.quadrupedRobotics.controller.force.toolbox.*;
 import us.ihmc.quadrupedRobotics.estimator.GroundPlaneEstimator;
 import us.ihmc.quadrupedRobotics.estimator.referenceFrames.QuadrupedReferenceFrames;
-import us.ihmc.quadrupedRobotics.model.QuadrupedRuntimeEnvironment;
 import us.ihmc.quadrupedRobotics.planning.ContactState;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedStepCrossoverProjection;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedContactSequence;
@@ -46,19 +40,12 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
    private final QuadrupedPostureInputProviderInterface postureProvider;
    private final QuadrupedStepStream stepStream;
    private final YoDouble robotTimestamp;
-   private final double controlDT;
    private final double gravity;
    private final double mass;
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    // parameters
    private final ParameterFactory parameterFactory = ParameterFactory.createWithRegistry(getClass(), registry);
-   private final DoubleArrayParameter bodyOrientationProportionalGainsParameter = parameterFactory
-         .createDoubleArray("bodyOrientationProportionalGains", 5000, 5000, 5000);
-   private final DoubleArrayParameter bodyOrientationDerivativeGainsParameter = parameterFactory
-         .createDoubleArray("bodyOrientationDerivativeGains", 750, 750, 750);
-   private final DoubleArrayParameter bodyOrientationIntegralGainsParameter = parameterFactory.createDoubleArray("bodyOrientationIntegralGains", 0, 0, 0);
-   private final DoubleParameter bodyOrientationMaxIntegralErrorParameter = parameterFactory.createDouble("bodyOrientationMaxIntegralError", 0);
    private final DoubleArrayParameter comPositionProportionalGainsParameter = parameterFactory.createDoubleArray("comPositionProportionalGains", 0, 0, 5000);
    private final DoubleArrayParameter comPositionDerivativeGainsParameter = parameterFactory.createDoubleArray("comPositionDerivativeGains", 0, 0, 750);
    private final DoubleArrayParameter comPositionIntegralGainsParameter = parameterFactory.createDoubleArray("comPositionIntegralGains", 0, 0, 0);
@@ -91,16 +78,15 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
    // feedback controllers
    private final FramePoint3D dcmPositionEstimate;
    private final DivergentComponentOfMotionEstimator dcmPositionEstimator;
-   private final DivergentComponentOfMotionController.Setpoints dcmPositionControllerSetpoints;
    private final DivergentComponentOfMotionController dcmPositionController;
    private final QuadrupedComPositionController.Setpoints comPositionControllerSetpoints;
    private final QuadrupedComPositionController comPositionController;
-   private final QuadrupedBodyOrientationController.Setpoints bodyOrientationControllerSetpoints;
-   private final QuadrupedBodyOrientationController bodyOrientationController;
-   private final QuadrantDependentList<QuadrupedFootStateMachine> footStateMachine;
+
+   private final QuadrupedBodyOrientationManager bodyOrientationManager;
+   private final QuadrupedFeetManager feetManager;
 
    // task space controller
-   private final QuadrupedTaskSpaceEstimator.Estimates taskSpaceEstimates;
+   private final QuadrupedTaskSpaceEstimates taskSpaceEstimates;
    private final QuadrupedTaskSpaceEstimator taskSpaceEstimator;
    private final QuadrupedTaskSpaceController.Commands taskSpaceControllerCommands;
    private final QuadrupedTaskSpaceController.Settings taskSpaceControllerSettings;
@@ -129,15 +115,15 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
    private final YoBoolean onLiftOffTriggered = new YoBoolean("onLiftOffTriggered", registry);
    private final YoBoolean onTouchDownTriggered = new YoBoolean("onTouchDownTriggered", registry);
 
-   public QuadrupedDcmBasedStepController(QuadrupedRuntimeEnvironment runtimeEnvironment, QuadrupedForceControllerToolbox controllerToolbox,
-         QuadrupedPostureInputProviderInterface postureProvider, QuadrupedStepStream stepStream)
+   public QuadrupedDcmBasedStepController(QuadrupedForceControllerToolbox controllerToolbox, QuadrupedControlManagerFactory controlManagerFactory,
+                                          QuadrupedPostureInputProviderInterface postureProvider, QuadrupedStepStream stepStream,
+                                          YoVariableRegistry parentRegistry)
    {
       this.postureProvider = postureProvider;
       this.stepStream = stepStream;
-      this.robotTimestamp = runtimeEnvironment.getRobotTimestamp();
-      this.controlDT = runtimeEnvironment.getControlDT();
+      this.robotTimestamp = controllerToolbox.getRuntimeEnvironment().getRobotTimestamp();
       this.gravity = 9.81;
-      this.mass = runtimeEnvironment.getFullRobotModel().getTotalMass();
+      this.mass = controllerToolbox.getRuntimeEnvironment().getFullRobotModel().getTotalMass();
 
       // frames
       QuadrupedReferenceFrames referenceFrames = controllerToolbox.getReferenceFrames();
@@ -150,16 +136,15 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       // feedback controllers
       dcmPositionEstimate = new FramePoint3D();
       dcmPositionEstimator = controllerToolbox.getDcmPositionEstimator();
-      dcmPositionControllerSetpoints = new DivergentComponentOfMotionController.Setpoints();
       dcmPositionController = controllerToolbox.getDcmPositionController();
       comPositionControllerSetpoints = new QuadrupedComPositionController.Setpoints();
       comPositionController = controllerToolbox.getComPositionController();
-      bodyOrientationControllerSetpoints = new QuadrupedBodyOrientationController.Setpoints();
-      bodyOrientationController = controllerToolbox.getBodyOrientationController();
-      footStateMachine = controllerToolbox.getFootStateMachine();
+
+      bodyOrientationManager = controlManagerFactory.getOrCreateBodyOrientationManager();
+      feetManager = controlManagerFactory.getOrCreateFeetManager();
 
       // task space controllers
-      taskSpaceEstimates = new QuadrupedTaskSpaceEstimator.Estimates();
+      taskSpaceEstimates = new QuadrupedTaskSpaceEstimates();
       taskSpaceEstimator = controllerToolbox.getTaskSpaceEstimator();
       taskSpaceControllerCommands = new QuadrupedTaskSpaceController.Commands();
       taskSpaceControllerSettings = new QuadrupedTaskSpaceController.Settings();
@@ -194,7 +179,7 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
                }
             });
 
-      runtimeEnvironment.getParentRegistry().addChild(registry);
+      parentRegistry.addChild(registry);
    }
 
    private void updateGains()
@@ -206,9 +191,6 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       comPositionController.getGains().setProportionalGains(comPositionProportionalGainsParameter.get());
       comPositionController.getGains().setIntegralGains(comPositionIntegralGainsParameter.get(), comPositionMaxIntegralErrorParameter.get());
       comPositionController.getGains().setDerivativeGains(comPositionDerivativeGainsParameter.get());
-      bodyOrientationController.getGains().setProportionalGains(bodyOrientationProportionalGainsParameter.get());
-      bodyOrientationController.getGains().setIntegralGains(bodyOrientationIntegralGainsParameter.get(), bodyOrientationMaxIntegralErrorParameter.get());
-      bodyOrientationController.getGains().setDerivativeGains(bodyOrientationDerivativeGainsParameter.get());
       taskSpaceControllerSettings.getContactForceLimits().setCoefficientOfFriction(coefficientOfFrictionParameter.get());
       taskSpaceControllerSettings.getVirtualModelControllerSettings().setJointDamping(jointDampingParameter.get());
       taskSpaceControllerSettings.getVirtualModelControllerSettings().setJointPositionLimitDamping(jointPositionLimitDampingParameter.get());
@@ -244,7 +226,7 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
 
       // update desired horizontal com forces
       computeDcmSetpoints();
-      dcmPositionController.compute(taskSpaceControllerCommands.getComForce(), dcmPositionControllerSetpoints, dcmPositionEstimate);
+      dcmPositionController.compute(taskSpaceControllerCommands.getComForce(), dcmPositionEstimate, dcmPositionController.getDCMPositionSetpoint(), dcmPositionController.getDCMVelocitySetpoint());
       taskSpaceControllerCommands.getComForce().changeFrame(supportFrame);
 
       // update desired com position, velocity, and vertical force
@@ -258,26 +240,13 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       comPositionController.compute(taskSpaceControllerCommands.getComForce(), comPositionControllerSetpoints, taskSpaceEstimates);
 
       // update desired body orientation, angular velocity, and torque
-      stepStream.getBodyOrientation(bodyOrientationReference);
-      bodyOrientationReference.changeFrame(bodyOrientationReferenceFrame.getParent());
-      bodyOrientationReferenceFrame.setOrientationAndUpdate(bodyOrientationReference);
-      bodyOrientationControllerSetpoints.getBodyOrientation().changeFrame(bodyOrientationReferenceFrame);
-      bodyOrientationControllerSetpoints.getBodyOrientation().set(postureProvider.getBodyOrientationInput());
-      bodyOrientationControllerSetpoints.getBodyOrientation().changeFrame(worldFrame);
-      double bodyOrientationYaw = bodyOrientationControllerSetpoints.getBodyOrientation().getYaw();
-      double bodyOrientationPitch = bodyOrientationControllerSetpoints.getBodyOrientation().getPitch();
-      double bodyOrientationRoll = bodyOrientationControllerSetpoints.getBodyOrientation().getRoll();
-      bodyOrientationControllerSetpoints.getBodyOrientation()
-            .setYawPitchRoll(bodyOrientationYaw, bodyOrientationPitch + groundPlaneEstimator.getPitch(bodyOrientationYaw), bodyOrientationRoll);
-      bodyOrientationControllerSetpoints.getBodyAngularVelocity().setToZero();
-      bodyOrientationControllerSetpoints.getComTorqueFeedforward().setToZero();
-      bodyOrientationController.compute(taskSpaceControllerCommands.getComTorque(), bodyOrientationControllerSetpoints, taskSpaceEstimates);
+      bodyOrientationManager.compute(taskSpaceControllerCommands.getComTorque(), stepStream.getBodyOrientation(), taskSpaceEstimates);
 
       // update desired contact state and sole forces
+      feetManager.compute(taskSpaceControllerCommands.getSoleForce(), taskSpaceEstimates);
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         footStateMachine.get(robotQuadrant).compute(taskSpaceControllerCommands.getSoleForce(robotQuadrant), taskSpaceEstimates);
-         taskSpaceControllerSettings.setContactState(robotQuadrant, footStateMachine.get(robotQuadrant).getContactState());
+         taskSpaceControllerSettings.setContactState(robotQuadrant, feetManager.getContactState(robotQuadrant));
       }
 
       // update joint setpoints
@@ -330,14 +299,14 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       if (robotTimestamp.getDoubleValue() <= dcmTransitionTrajectory.getEndTime())
       {
          dcmTransitionTrajectory.computeTrajectory(robotTimestamp.getDoubleValue());
-         dcmTransitionTrajectory.getPosition(dcmPositionControllerSetpoints.getDcmPosition());
-         dcmTransitionTrajectory.getVelocity(dcmPositionControllerSetpoints.getDcmVelocity());
+         dcmTransitionTrajectory.getPosition(dcmPositionController.getDCMPositionSetpoint());
+         dcmTransitionTrajectory.getVelocity(dcmPositionController.getDCMVelocitySetpoint());
       }
       else
       {
          dcmTrajectory.computeTrajectory(robotTimestamp.getDoubleValue());
-         dcmTrajectory.getPosition(dcmPositionControllerSetpoints.getDcmPosition());
-         dcmTrajectory.getVelocity(dcmPositionControllerSetpoints.getDcmVelocity());
+         dcmTrajectory.getPosition(dcmPositionController.getDCMPositionSetpoint());
+         dcmTrajectory.getVelocity(dcmPositionController.getDCMVelocitySetpoint());
       }
    }
 
@@ -345,13 +314,12 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
    {
       for (int i = 0; i < stepSequence.size(); i++)
       {
-         RobotQuadrant robotQuadrant = stepSequence.get(i).getRobotQuadrant();
          double currentTime = robotTimestamp.getDoubleValue();
          double startTime = stepSequence.get(i).getTimeInterval().getStartTime();
          double endTime = stepSequence.get(i).getTimeInterval().getEndTime();
          if (startTime < currentTime && currentTime < endTime)
          {
-            footStateMachine.get(robotQuadrant).triggerStep(stepSequence.get(i));
+            feetManager.triggerStep(stepSequence.get(i));
          }
       }
    }
@@ -379,7 +347,7 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       if (robotTimestamp.getDoubleValue() > dcmTransitionTrajectory.getEndTime())
       {
          // compute step adjustment for ongoing steps (proportional to dcm tracking error)
-         FramePoint3D dcmPositionSetpoint = dcmPositionControllerSetpoints.getDcmPosition();
+         FramePoint3D dcmPositionSetpoint = dcmPositionController.getDCMPositionSetpoint();
          dcmPositionSetpoint.changeFrame(instantaneousStepAdjustment.getReferenceFrame());
          dcmPositionEstimate.changeFrame(instantaneousStepAdjustment.getReferenceFrame());
          instantaneousStepAdjustment.set(dcmPositionEstimate);
@@ -401,7 +369,7 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
                stepGoalPosition.add(instantaneousStepAdjustment);
                crossoverProjection.project(stepGoalPosition, taskSpaceEstimates.getSolePosition(), robotQuadrant);
                groundPlaneEstimator.projectZ(stepGoalPosition);
-               footStateMachine.get(robotQuadrant).adjustStep(stepGoalPosition);
+               feetManager.adjustStep(robotQuadrant, stepGoalPosition);
             }
          }
       }
@@ -438,17 +406,14 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       updateEstimates();
 
       // initialize feedback controllers
-      dcmPositionControllerSetpoints.initialize(dcmPositionEstimate);
+      dcmPositionController.initializeSetpoint(dcmPositionEstimate);
       dcmPositionController.reset();
       comPositionControllerSetpoints.initialize(taskSpaceEstimates);
       comPositionController.reset();
-      bodyOrientationControllerSetpoints.initialize(taskSpaceEstimates);
-      bodyOrientationController.reset();
-      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
-      {
-         footStateMachine.get(robotQuadrant).registerStepTransitionCallback(this);
-         footStateMachine.get(robotQuadrant).reset();
-      }
+      bodyOrientationManager.initialize(taskSpaceEstimates);
+      feetManager.registerStepTransitionCallback(this);
+      feetManager.reset();
+      feetManager.requestFullContact();
 
       // initialize task space controller
       taskSpaceControllerSettings.initialize();
@@ -512,10 +477,7 @@ public class QuadrupedDcmBasedStepController implements QuadrupedController, Qua
       // clean up step stream
       stepStream.onExit();
 
-      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
-      {
-         footStateMachine.get(robotQuadrant).registerStepTransitionCallback(null);
-      }
+      feetManager.registerStepTransitionCallback(null);
    }
 
    public void halt()

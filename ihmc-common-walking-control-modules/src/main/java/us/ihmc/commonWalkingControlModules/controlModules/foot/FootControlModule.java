@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.configurations.AnkleIKSolver;
 import us.ihmc.commonWalkingControlModules.configurations.SwingTrajectoryParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.toeOffCalculator.ToeOffCalculator;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommandList;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommandList;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.DesiredFootstepCalculatorTools;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commonWalkingControlModules.trajectories.CoMHeightTimeDerivativesData;
@@ -23,12 +25,14 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajectoryCommand;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
-import us.ihmc.robotics.controllers.pidGains.YoPIDSE3Gains;
+import us.ihmc.robotModels.FullHumanoidRobotModel;
+import us.ihmc.robotics.controllers.pidGains.PIDSE3GainsReadOnly;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.providers.YoVelocityProvider;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachines.conditionBasedStateMachine.GenericStateMachine;
 import us.ihmc.robotics.stateMachines.conditionBasedStateMachine.StateMachineTools;
+import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -43,7 +47,7 @@ public class FootControlModule
    {
       FULL, TOES, SWING, MOVE_VIA_WAYPOINTS, TOUCHDOWN;
 
-      public boolean isLoaded()
+      public boolean isLoadBearing()
       {
          switch (this)
          {
@@ -84,9 +88,13 @@ public class FootControlModule
    private final FrameVector3D desiredLinearVelocity = new FrameVector3D();
    private final FrameVector3D desiredAngularVelocity = new FrameVector3D();
 
+   private final InverseDynamicsCommandList inverseDynamicsCommandList = new InverseDynamicsCommandList();
+   private final UnloadedAnkleControlModule ankleControlModule;
+
    public FootControlModule(RobotSide robotSide, ToeOffCalculator toeOffCalculator, WalkingControllerParameters walkingControllerParameters,
-         YoPIDSE3Gains swingFootControlGains, YoPIDSE3Gains holdPositionFootControlGains, YoPIDSE3Gains toeOffFootControlGains,
-         HighLevelHumanoidControllerToolbox controllerToolbox, ExplorationParameters explorationParameters, YoVariableRegistry parentRegistry)
+                            PIDSE3GainsReadOnly swingFootControlGains, PIDSE3GainsReadOnly holdPositionFootControlGains,
+                            PIDSE3GainsReadOnly toeOffFootControlGains, HighLevelHumanoidControllerToolbox controllerToolbox,
+                            ExplorationParameters explorationParameters, YoVariableRegistry parentRegistry)
    {
       contactableFoot = controllerToolbox.getContactableFeet().get(robotSide);
       controllerToolbox.setFootContactCoefficientOfFriction(robotSide, coefficientOfFriction);
@@ -147,6 +155,17 @@ public class FootControlModule
 
       requestExploration = new YoBoolean(namePrefix + "RequestExploration", registry);
       resetFootPolygon = new YoBoolean(namePrefix + "ResetFootPolygon", registry);
+
+      AnkleIKSolver ankleIKSolver = walkingControllerParameters.getAnkleIKSolver();
+      if (ankleIKSolver != null)
+      {
+         FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
+         ankleControlModule = new UnloadedAnkleControlModule(fullRobotModel, robotSide, ankleIKSolver, registry);
+      }
+      else
+      {
+         ankleControlModule = null;
+      }
    }
 
    private void setupContactStatesMap()
@@ -181,19 +200,19 @@ public class FootControlModule
       stateMachine.setCurrentState(ConstraintType.FULL);
    }
 
-   public void setWeights(Vector3DReadOnly highAngularFootWeight, Vector3DReadOnly highLinearFootWeight, Vector3DReadOnly defaultAngularFootWeight,
-                          Vector3DReadOnly defaultLinearFootWeight)
+   public void setWeights(Vector3DReadOnly loadedFootAngularWeight, Vector3DReadOnly loadedFootLinearWeight, Vector3DReadOnly footAngularWeight,
+                          Vector3DReadOnly footLinearWeight)
    {
-      swingState.setWeights(defaultAngularFootWeight, defaultLinearFootWeight);
-      moveViaWaypointsState.setWeights(defaultAngularFootWeight, defaultLinearFootWeight);
-      touchdownState.setWeights(defaultAngularFootWeight, defaultLinearFootWeight);
-      onToesState.setWeights(highAngularFootWeight, highLinearFootWeight);
-      supportState.setWeights(highAngularFootWeight, highLinearFootWeight);
+      swingState.setWeights(footAngularWeight, footLinearWeight);
+      moveViaWaypointsState.setWeights(footAngularWeight, footLinearWeight);
+      touchdownState.setWeights(footAngularWeight, footLinearWeight);
+      onToesState.setWeights(loadedFootAngularWeight, loadedFootLinearWeight);
+      supportState.setWeights(loadedFootAngularWeight, loadedFootLinearWeight);
    }
 
-   public void replanTrajectory(Footstep footstep, double swingTime, boolean continuousReplan)
+   public void setAdjustedFootstepAndTime(Footstep adjustedFootstep, double swingTime)
    {
-      swingState.replanTrajectory(footstep, swingTime, continuousReplan);
+      swingState.setAdjustedFootstepAndTime(adjustedFootstep, swingTime);
    }
 
    public void requestTouchdownForDisturbanceRecovery()
@@ -274,6 +293,11 @@ public class FootControlModule
       
 
       stateMachine.doAction();
+
+      if (ankleControlModule != null)
+      {
+         ankleControlModule.compute(stateMachine.getCurrentState());
+      }
    }
 
    // Used to restart the current state reseting the current state time
@@ -384,12 +408,27 @@ public class FootControlModule
 
    public InverseDynamicsCommand<?> getInverseDynamicsCommand()
    {
-      return stateMachine.getCurrentState().getInverseDynamicsCommand();
+      inverseDynamicsCommandList.clear();
+      inverseDynamicsCommandList.addCommand(stateMachine.getCurrentState().getInverseDynamicsCommand());
+      if (ankleControlModule != null)
+      {
+         inverseDynamicsCommandList.addCommand(ankleControlModule.getInverseDynamicsCommand());
+      }
+      return inverseDynamicsCommandList;
    }
 
    public FeedbackControlCommand<?> getFeedbackControlCommand()
    {
       return stateMachine.getCurrentState().getFeedbackControlCommand();
+   }
+
+   public JointDesiredOutputListReadOnly getJointDesiredData()
+   {
+      if (ankleControlModule != null)
+      {
+         return ankleControlModule.getJointDesiredOutputList();
+      }
+      return null;
    }
 
    public FeedbackControlCommandList createFeedbackControlTemplate()

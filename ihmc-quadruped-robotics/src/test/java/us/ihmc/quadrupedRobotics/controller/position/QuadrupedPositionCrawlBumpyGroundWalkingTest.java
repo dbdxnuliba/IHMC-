@@ -49,26 +49,23 @@ public abstract class QuadrupedPositionCrawlBumpyGroundWalkingTest implements Qu
    @After
    public void tearDown()
    {
+      conductor.concludeTesting();
       conductor = null;
       variables = null;
       
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 50.0)
-   @Test(timeout = 200000)
    public void testWalkingOverBumpyTerrain() throws SimulationExceededMaximumTimeException, ControllerFailureException, IOException
    {
       QuadrupedTestBehaviors.standUp(conductor, variables);
-      
+
       variables.getYoPlanarVelocityInputX().set(0.08);
       variables.getYoPlanarVelocityInputZ().set(0.05);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addSustainGoal(YoVariableTestGoal.doubleLessThan(variables.getYoTime(), variables.getYoTime().getDoubleValue() + 35.0));
       conductor.addTerminalGoal(YoVariableTestGoal.doubleGreaterThan(variables.getRobotBodyX(), 0.4));
       conductor.simulate();
-      
-      conductor.concludeTesting();
    }
 
 }

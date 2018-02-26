@@ -25,6 +25,8 @@ import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerData
 import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerDataReadOnly.Type;
 import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerToolbox;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.FootstepListVisualizer;
+import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -37,7 +39,6 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
-import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.humanoidRobotics.communication.packets.walking.FootTrajectoryMessage;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -55,7 +56,6 @@ import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
 import us.ihmc.tools.MemoryTools;
-import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
 public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTestInterface
@@ -70,40 +70,40 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    {
       return 0.15;
    }
-   
+
    //This can be negative if you want to push the foot into the ground hard
    protected double getDesiredTouchDownHeightInWorld()
    {
       return 0.0;
    }
-   
+
    //the center of the trajectory
    protected Point3D getCircleCenterFromAnkle(RobotSide robotSide)
    {
       return new Point3D(0.0, 0.0, 0.15);
    }
-   
+
    //how far out does the trajectory span from the circle center
    protected Vector3D getCircleRadius()
    {
       return new Vector3D(0.15, 0.15, 0.08);
    }
-   
+
    //get a random position, if the radius and center are well tunes, this should be kinematically feasible
    private Point3D getRandomPositionInSphere(Random random, RobotSide robotSide)
    {
       Point3D circleCenterFromAnkle = getCircleCenterFromAnkle(robotSide);
       Vector3D circleRadius = getCircleRadius();
-      
+
       Point3D min = new Point3D();
       Point3D max = new Point3D();
-      
+
       min.sub(circleCenterFromAnkle, circleRadius);
       max.add(circleCenterFromAnkle, circleRadius);
-      
+
       return RandomGeometry.nextPoint3D(random, min, max);
    }
-   
+
    //The first step in the test, send a FootTrajectoryMessage with a single point and simulate
    private boolean pickupFoot(RobotSide robotSide, RigidBody foot) throws SimulationExceededMaximumTimeException
    {
@@ -121,21 +121,21 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       return drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(timeToPickupFoot + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
    }
-   
+
    //Put the foot back on the ground, this doesn't have any special ground checks, it's just easier to read this way
    private boolean putFootOnGround(RobotSide robotSide, RigidBody foot, FramePose3D desiredPose) throws SimulationExceededMaximumTimeException
    {
       Point3D desiredPosition = new Point3D();
       Quaternion desiredOrientation = new Quaternion();
       double trajectoryTime = 1.0;
-      
+
       desiredPose.changeFrame(ReferenceFrame.getWorldFrame());
       desiredPose.setZ(getDesiredTouchDownHeightInWorld());
       desiredPose.get(desiredPosition, desiredOrientation);
-      
+
       FootTrajectoryMessage footTrajectoryMessage = new FootTrajectoryMessage(robotSide, trajectoryTime, desiredPosition, desiredOrientation);
       drcSimulationTestHelper.send(footTrajectoryMessage);
-      
+
       return drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.2 + trajectoryTime + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
    }
 
@@ -147,7 +147,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       Quaternion desiredOrientation = new Quaternion();
       double trajectoryTime = 1.0;
       String bodyName = foot.getName();
-      
+
       FramePose3D desiredRandomFootPose = new FramePose3D(foot.getBodyFixedFrame());
       desiredRandomFootPose.setOrientation(RandomGeometry.nextQuaternion(random, 1.0));
       desiredRandomFootPose.setPosition(getRandomPositionInSphere(random, robotSide));
@@ -160,10 +160,10 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       boolean result = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
       assertTrue(result);
-      
+
       EndToEndHandTrajectoryMessageTest.assertSingleWaypointExecuted(bodyName, desiredPosition, desiredOrientation, scs);
    }
-   
+
 
    //Picks up a foot, moves that foot to a position, and puts it down. Done using both sides
    @ContinuousIntegrationTest(estimatedDuration = 41.5)
@@ -174,8 +174,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       Random random = new Random(564574L);
 
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
       SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
@@ -190,10 +189,10 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       {
          RigidBody foot = fullRobotModel.getFoot(robotSide);
          FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
-         
+
          // First need to pick up the foot:
          assertTrue(pickupFoot(robotSide, foot));
-         
+
          // Now we can do the usual test. Asserts happen in the method
          moveFootToRandomPosition(random, robotSide, foot, scs);
 
@@ -206,46 +205,44 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
    //Picks up a foot and puts it down. Done using both sides
    @ContinuousIntegrationTest(estimatedDuration = 41.5)
-   @Test(timeout = 70000)
+   @Test(timeout = 120000)
    public void testPickUpAndPutDown() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
-      
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
-      
+
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
       assertTrue(success);
-      
+
       FullHumanoidRobotModel fullRobotModel = drcSimulationTestHelper.getControllerFullRobotModel();
-      
+
       for (RobotSide robotSide : RobotSide.values)
       {
          RigidBody foot = fullRobotModel.getFoot(robotSide);
          FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
-         
+
          // First need to pick up the foot:
          assertTrue(pickupFoot(robotSide, foot));
-         
+
          // Without forgetting to put the foot back on the ground
          assertTrue(putFootOnGround(robotSide, foot, initialFootPosition));
       }
-      
+
       drcSimulationTestHelper.createVideo(getSimpleRobotName(), 2);
    }
-   
-   
+
+
    //picks up a foot, moves it around in a ribbon shape, then puts the foot down, Done using both sides
    public void testMultipleTrajectoryPoints() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
 
       DRCRobotModel robotModel = getRobotModel();
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel);
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
 
@@ -263,7 +260,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          RigidBody foot = fullRobotModel.getFoot(robotSide);
          FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
          initialFootPosition.changeFrame(ReferenceFrame.getWorldFrame());
-         
+
          // First need to pick up the foot:
          assertTrue(pickupFoot(robotSide, foot));
 
@@ -282,7 +279,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          tempOrientation.changeFrame(ReferenceFrame.getWorldFrame());
 
          RecyclingArrayList<FrameEuclideanTrajectoryPoint> trajectoryPoints = createTrajectory(robotSide, foot, firstTrajectoryPointTime, numberOfTrajectoryPoints, 1, trajectoryTime);
-         
+
          ArrayDeque<FrameSE3TrajectoryPoint> frameSE3TrajectoryPoints = sendQueuedFootTrajectoryMessages(scs, robotSide, 1, trajectoryPoints);
 
          int expectedNumberOfPointsInGenerator = Math.min(RigidBodyTaskspaceControlState.maxPointsInGenerator, numberOfTrajectoryPoints + 1);
@@ -315,7 +312,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          // Without forgetting to put the foot back on the ground
         putFootOnGround(robotSide, foot, initialFootPosition);
       }
-      
+
       drcSimulationTestHelper.createVideo(robotModel.getSimpleRobotName(), 2);
    }
 
@@ -325,8 +322,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       DRCRobotModel robotModel = getRobotModel();
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
       DRCObstacleCourseStartingLocation selectedLocation = DRCObstacleCourseStartingLocation.RAMP_BOTTOM;
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel);
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, new FlatGroundEnvironment());
       drcSimulationTestHelper.setStartingLocation(selectedLocation);
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(4.0, 0.0, 0.0), new Point3D(10.0, 0.0, -0.1));
@@ -360,10 +356,10 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       double trajectoryTime = 0.5;
       FootTrajectoryMessage footTrajectoryMessage = new FootTrajectoryMessage(robotSide, trajectoryTime, desiredPose);
-      footTrajectoryMessage.setUseCustomControlFrame(true);
-      footTrajectoryMessage.setControlFrameOrientation(new Quaternion(controlFrameTransform.getRotationMatrix()));
-      footTrajectoryMessage.setControlFramePosition(new Point3D(controlFrameTransform.getTranslationVector()));
-      footTrajectoryMessage.getFrameInformation().setTrajectoryReferenceFrame(trajectoryFrame);
+      footTrajectoryMessage.getSe3Trajectory().setUseCustomControlFrame(true);
+      footTrajectoryMessage.getSe3Trajectory().setControlFrameOrientation(new Quaternion(controlFrameTransform.getRotationMatrix()));
+      footTrajectoryMessage.getSe3Trajectory().setControlFramePosition(new Point3D(controlFrameTransform.getTranslationVector()));
+      footTrajectoryMessage.getSe3Trajectory().getFrameInformation().setTrajectoryReferenceFrame(trajectoryFrame);
 
       drcSimulationTestHelper.send(footTrajectoryMessage);
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime));
@@ -373,18 +369,17 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       String className = LegSingularityAndKneeCollapseAvoidanceControlModule.class.getSimpleName();
       YoBoolean singularityEscape = (YoBoolean) scs.getVariable(namePrefix + className, namePrefix + "IsSwingSingularityAvoidanceUsed");
       assertFalse("Singularity escape should not be active.", singularityEscape.getBooleanValue());
-      
+
       drcSimulationTestHelper.createVideo(robotModel.getSimpleRobotName(), 2);
    }
-   
+
    //picks up the left foot, moves the foot around a sphere (ribbons yawed around the circle center)
    public void testQueuedMessages() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
 
       DRCRobotModel robotModel = getRobotModel();
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel);
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
 
@@ -397,7 +392,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       RobotSide robotSide = RobotSide.LEFT;
       RigidBody foot = fullRobotModel.getFoot(robotSide);
-      
+
       // First need to pick up the foot:
       assertTrue(pickupFoot(robotSide, foot));
 
@@ -472,7 +467,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
       EuclidCoreTestTools.assertTuple3DEquals(lastPoint.getPositionCopy(), currentDesiredPosition, 0.001);
       EuclidCoreTestTools.assertQuaternionEquals(lastPoint.getOrientationCopy(), currentDesiredOrientation, 0.001);
-      
+
       drcSimulationTestHelper.createVideo(robotModel.getSimpleRobotName(), 2);
    }
 
@@ -491,7 +486,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          FootTrajectoryMessage footTrajectoryMessage = new FootTrajectoryMessage(robotSide, numberOfTrajectoryPointsPerMessage);
          footTrajectoryMessage.setUniqueId(id);
          if (messageIndex > 0)
-            footTrajectoryMessage.setExecutionMode(ExecutionMode.QUEUE, id - 1);
+            footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE, id - 1);
          id++;
          double timeToSubtract = messageIndex == 0 ? 0.0 : trajectoryPoints.get(calculatorIndex - 1).getTime();
 
@@ -509,7 +504,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
             sphere.addSphere(0.01, new YoAppearanceRGBColor(FootstepListVisualizer.defaultFeetColors.get(robotSide), 0.0));
             scs.addStaticLinkGraphics(sphere);
 
-            footTrajectoryMessage.setTrajectoryPoint(i, time - timeToSubtract, desiredPosition, desiredOrientation, desiredLinearVelocity,
+            footTrajectoryMessage.getSe3Trajectory().setTrajectoryPoint(i, time - timeToSubtract, desiredPosition, desiredOrientation, desiredLinearVelocity,
                   desiredAngularVelocity, ReferenceFrame.getWorldFrame());
 
             FrameSE3TrajectoryPoint framePoint = new FrameSE3TrajectoryPoint(ReferenceFrame.getWorldFrame());
@@ -529,7 +524,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       assertTrue(success);
       return footTrajectoryPoints;
    }
-   
+
    //picks the foot up, sends queued messages, the last with the wrong previous queued message ID. (Should see sysout about this) Checks that the number of waypoints is cleared, then puts the foot back on the ground. Done for both sides
    @ContinuousIntegrationTest(estimatedDuration = 32.1)
    @Test(timeout = 30000)
@@ -537,8 +532,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
 
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
 
@@ -555,16 +549,16 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          RigidBody foot = fullRobotModel.getFoot(robotSide);
          FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
          initialFootPosition.changeFrame(ReferenceFrame.getWorldFrame());
-         
+
          // First need to pick up the foot:
          assertTrue(pickupFoot(robotSide, foot));
-         
+
          // Now we can do the usual test.
          double firstTrajectoryPointTime = 0.5;
          int numberOfTrajectoryPoints = 20;
          int numberOfMessages = 10;
          double trajectoryTime = 12.0;
-         
+
          ReferenceFrame ankleFrame = foot.getParentJoint().getFrameAfterJoint();
          FrameQuaternion tempOrientation = new FrameQuaternion(ankleFrame);
          tempOrientation.changeFrame(ReferenceFrame.getWorldFrame());
@@ -573,21 +567,21 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
                numberOfTrajectoryPoints, numberOfMessages, trajectoryTime);
 
          sendQueuedFootTrajectoryMessages(scs, robotSide, numberOfMessages, trajectoryPoints);
-         
+
          FootTrajectoryMessage footTrajectoryMessage = new FootTrajectoryMessage(robotSide, 5);
          footTrajectoryMessage.setUniqueId(100);
-         footTrajectoryMessage.setExecutionMode(ExecutionMode.QUEUE, 500); //not the right ID
+         footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE, 500); //not the right ID
          for(int i = 0; i < 5; i++)
          {
-            footTrajectoryMessage.setTrajectoryPoint(i, i, new Point3D(), new Quaternion(), new Vector3D(), new Vector3D(), ReferenceFrame.getWorldFrame());
+            footTrajectoryMessage.getSe3Trajectory().setTrajectoryPoint(i, i, new Point3D(), new Quaternion(), new Vector3D(), new Vector3D(), ReferenceFrame.getWorldFrame());
          }
          drcSimulationTestHelper.send(footTrajectoryMessage);
          success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(getRobotModel().getControllerDT() * 2);
          assertTrue(success);
-         
+
          String bodyName = fullRobotModel.getFoot(robotSide).getName();
          EndToEndHandTrajectoryMessageTest.assertNumberOfWaypoints(bodyName, 1, scs);
-         
+
          assertTrue(putFootOnGround(robotSide, foot, initialFootPosition));
       }
    }
@@ -599,7 +593,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       ReferenceFrame ankleFrame = foot.getParentJoint().getFrameAfterJoint();
       FramePoint3D circleCenter = new FramePoint3D(ankleFrame);
       circleCenter.set(getCircleCenterFromAnkle(robotSide));
-      
+
       FramePoint3D tempPoint = new FramePoint3D();
       FrameQuaternion tempOrientation1 = new FrameQuaternion(ankleFrame);
       tempOrientation1.changeFrame(ReferenceFrame.getWorldFrame());
@@ -643,8 +637,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       Random random = new Random(564574L);
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
 
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(new FlatGroundEnvironment());
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), new FlatGroundEnvironment());
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.setupCameraForUnitTest(new Point3D(0.0, 0.0, 0.5), new Point3D(6.0, 2.0, 2.0));
 
@@ -661,10 +654,10 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          RigidBody foot = fullRobotModel.getFoot(robotSide);
          FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
          initialFootPosition.changeFrame(ReferenceFrame.getWorldFrame());
-         
+
          // First need to pick up the foot:
          assertTrue(pickupFoot(robotSide, foot));
-         
+
          // send the queued messages.
          double firstTrajectoryPointTime = 0.5;
          int numberOfTrajectoryPointsPerMessage = 20;
