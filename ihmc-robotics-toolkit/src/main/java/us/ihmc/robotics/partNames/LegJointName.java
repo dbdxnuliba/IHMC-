@@ -52,6 +52,9 @@ public enum LegJointName
 
          case ANKLE_ROLL :
             return "ankle_roll";
+            
+         case TOE_PITCH :
+        	 return "toe_pitch";
 
          default :
             return "unknown";
@@ -79,6 +82,9 @@ public enum LegJointName
 
          case ANKLE_ROLL :
             return "a_roll";
+            
+         case TOE_PITCH :
+        	 return "t_pitch";
 
          default :
             return "unknown";
@@ -106,6 +112,9 @@ public enum LegJointName
 
          case ANKLE_PITCH :
             return "anklePitch";
+            
+         case TOE_PITCH :
+        	 return "toePitch";
 
          default :
             return "unknown Position";
@@ -141,6 +150,9 @@ public enum LegJointName
 
          case ANKLE_PITCH :
             return "AnklePitch";
+            
+         case TOE_PITCH :
+        	 return "toePitch";
 
          default :
             return "Unknown Position";
@@ -176,6 +188,9 @@ public enum LegJointName
 
          case ANKLE_ROLL :
             return xAxis();
+            
+         case TOE_PITCH :
+        	 return yAxis();
 
          default :
             throw new RuntimeException("Enum constant not handled.");

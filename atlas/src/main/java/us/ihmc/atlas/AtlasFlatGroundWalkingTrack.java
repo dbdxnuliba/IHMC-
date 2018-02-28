@@ -26,9 +26,11 @@ public class AtlasFlatGroundWalkingTrack
    public static void main(String[] args) throws JSAPException
    {
 
-      DRCRobotModel model = null;
-      model = AtlasRobotModelFactory.selectSimulationModelFromFlag(args);
+//      DRCRobotModel model = null;
+//      model = AtlasRobotModelFactory.selectSimulationModelFromFlag(args);
 
+      AtlasRobotModel model = new AtlasToeRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT, RobotTarget.SCS, false);
+      
       if (model == null)
          model = AtlasRobotModelFactory.selectModelFromGraphicSelector(defaultModelForGraphicSelector);
 

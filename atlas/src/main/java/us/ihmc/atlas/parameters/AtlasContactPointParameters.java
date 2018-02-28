@@ -46,15 +46,21 @@ public class AtlasContactPointParameters extends RobotContactPointParameters
       {
          if (footContactPoints != null)
          {
-            createFootContactPoints(footContactPoints);
+        	 createFootContactPoints(footContactPoints);
          }
          else if(USE_SIX_CONTACT_POINTS)
          {
             createFootContactPoints(new AtlasSixContactFoot());
          }
+         else if(atlasVersion == AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT)
+         {
+             System.out.println("creating toe!!! contact points");
+        	 createFootToeContactPoints();
+         }
          else
          {
-            createDefaultFootContactPoints();
+            System.out.println("creating default contact points");
+        	 createDefaultFootContactPoints();
          }
       }
 

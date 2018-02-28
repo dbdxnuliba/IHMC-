@@ -87,6 +87,11 @@ public abstract class RobotContactPointParameters implements ContactPointDefinit
    {
       createFootContactPoints(new DefaultFootContactPoints());
    }
+   
+   protected void createFootToeContactPoints()
+   {
+	   createFootContactPoints(new CustomFootToeContactPoints());
+   }
 
    protected final void clearSimulationContactPoints()
    {

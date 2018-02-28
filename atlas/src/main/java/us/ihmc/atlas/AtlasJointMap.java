@@ -18,6 +18,7 @@ import static us.ihmc.atlas.ros.AtlasOrderedJointMap.l_leg_hpx;
 import static us.ihmc.atlas.ros.AtlasOrderedJointMap.l_leg_hpy;
 import static us.ihmc.atlas.ros.AtlasOrderedJointMap.l_leg_hpz;
 import static us.ihmc.atlas.ros.AtlasOrderedJointMap.l_leg_kny;
+import static us.ihmc.atlas.ros.AtlasOrderedJointMap.l_leg_toe;
 import static us.ihmc.atlas.ros.AtlasOrderedJointMap.neck_ry;
 import static us.ihmc.robotics.partNames.ArmJointName.ELBOW_PITCH;
 import static us.ihmc.robotics.partNames.ArmJointName.ELBOW_ROLL;
@@ -32,6 +33,7 @@ import static us.ihmc.robotics.partNames.LegJointName.HIP_PITCH;
 import static us.ihmc.robotics.partNames.LegJointName.HIP_ROLL;
 import static us.ihmc.robotics.partNames.LegJointName.HIP_YAW;
 import static us.ihmc.robotics.partNames.LegJointName.KNEE_PITCH;
+import static us.ihmc.robotics.partNames.LegJointName.TOE_PITCH;
 import static us.ihmc.robotics.partNames.NeckJointName.PROXIMAL_NECK_PITCH;
 import static us.ihmc.robotics.partNames.SpineJointName.SPINE_PITCH;
 import static us.ihmc.robotics.partNames.SpineJointName.SPINE_ROLL;
@@ -83,7 +85,7 @@ public class AtlasJointMap implements DRCRobotJointMap
    public static final SideDependentList<String> footNames = new SideDependentList<>(getRobotSidePrefix(RobotSide.LEFT) + "foot",
                                                                                      getRobotSidePrefix(RobotSide.RIGHT) + "foot");
 
-   private final LegJointName[] legJoints = {HIP_YAW, HIP_ROLL, HIP_PITCH, KNEE_PITCH, ANKLE_PITCH, ANKLE_ROLL};
+   private final LegJointName[] legJoints; 
    private final ArmJointName[] armJoints;
    private final SpineJointName[] spineJoints = {SPINE_PITCH, SPINE_ROLL, SPINE_YAW};
    private final NeckJointName[] neckJoints = {PROXIMAL_NECK_PITCH};
@@ -118,6 +120,11 @@ public class AtlasJointMap implements DRCRobotJointMap
          armJoints = new ArmJointName[] {SHOULDER_YAW, SHOULDER_ROLL, ELBOW_PITCH, ELBOW_ROLL, FIRST_WRIST_PITCH, WRIST_ROLL, SECOND_WRIST_PITCH};
       else
          armJoints = new ArmJointName[] {SHOULDER_YAW, SHOULDER_ROLL, ELBOW_PITCH, ELBOW_ROLL};
+      
+      if (atlasVersion != AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT)
+    	  legJoints = new LegJointName[] {HIP_YAW, HIP_ROLL, HIP_PITCH, KNEE_PITCH, ANKLE_PITCH, ANKLE_ROLL};
+      else
+    	  legJoints = new LegJointName[] {HIP_YAW, HIP_ROLL, HIP_PITCH, KNEE_PITCH, ANKLE_PITCH, ANKLE_ROLL, TOE_PITCH}; // Adding toe pitch if using toe joint atlas version.
 
       for (RobotSide robotSide : RobotSide.values)
       {
@@ -156,6 +163,10 @@ public class AtlasJointMap implements DRCRobotJointMap
          armJointNames.put(forcedSideJointNames[l_arm_wrx], new ImmutablePair<RobotSide, ArmJointName>(robotSide, WRIST_ROLL));
          armJointNames.put(forcedSideJointNames[l_arm_wry2], new ImmutablePair<RobotSide, ArmJointName>(robotSide, SECOND_WRIST_PITCH));
 
+         if (atlasVersion == AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT)
+        	 legJointNames.put(forcedSideJointNames[l_leg_toe], new ImmutablePair<RobotSide, LegJointName>(robotSide, TOE_PITCH)); // Adding toe pitch if using toe joint atlas version.
+        	 
+         
       }
 
       spineJointNames.put(jointNames[back_bkz], SPINE_YAW);
@@ -322,7 +333,10 @@ public class AtlasJointMap implements DRCRobotJointMap
    @Override
    public String getJointBeforeFootName(RobotSide robotSide)
    {
-      return legJointStrings.get(robotSide).get(ANKLE_ROLL);
+	   if (atlasVersion == AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT)
+		   return legJointStrings.get(robotSide).get(TOE_PITCH);
+	   else 
+		   return legJointStrings.get(robotSide).get(ANKLE_ROLL);
    }
 
    @Override

@@ -11,7 +11,7 @@ import us.ihmc.wholeBodyController.DRCHandType;
 
 public enum AtlasRobotVersion
 {
-   ATLAS_UNPLUGGED_V5_NO_FOREARMS, ATLAS_UNPLUGGED_V5_NO_HANDS, ATLAS_UNPLUGGED_V5_DUAL_ROBOTIQ, ATLAS_UNPLUGGED_V5_ROBOTIQ_AND_SRI, ATLAS_UNPLUGGED_V5_TROOPER;
+   ATLAS_UNPLUGGED_V5_NO_FOREARMS, ATLAS_UNPLUGGED_V5_NO_HANDS, ATLAS_UNPLUGGED_V5_DUAL_ROBOTIQ, ATLAS_UNPLUGGED_V5_ROBOTIQ_AND_SRI, ATLAS_UNPLUGGED_V5_TROOPER,ATLAS_UNPLUGGED_V5_TOE_JOINT;
 
    private static String[] resourceDirectories;
    private final SideDependentList<RigidBodyTransform> offsetHandFromAttachmentPlate = new SideDependentList<RigidBodyTransform>();
@@ -22,6 +22,7 @@ public enum AtlasRobotVersion
       {
       case ATLAS_UNPLUGGED_V5_DUAL_ROBOTIQ:
       case ATLAS_UNPLUGGED_V5_TROOPER:
+      case ATLAS_UNPLUGGED_V5_TOE_JOINT:
          return DRCHandType.ROBOTIQ;
       case ATLAS_UNPLUGGED_V5_ROBOTIQ_AND_SRI:
          return DRCHandType.ROBOTIQ_AND_SRI;
@@ -46,6 +47,8 @@ public enum AtlasRobotVersion
       case ATLAS_UNPLUGGED_V5_DUAL_ROBOTIQ:
       case ATLAS_UNPLUGGED_V5_ROBOTIQ_AND_SRI:
          return "models/GFE/atlas_unplugged_v5_dual_robotiq.sdf";
+      case ATLAS_UNPLUGGED_V5_TOE_JOINT:
+    	 return "models/GFE/atlas_unplugged_v5_dual_robotiq_mod.sdf";
       case ATLAS_UNPLUGGED_V5_NO_FOREARMS:
          return "models/GFE/atlas_unplugged_v5_no_forearms.sdf";
       case ATLAS_UNPLUGGED_V5_TROOPER:
@@ -66,7 +69,7 @@ public enum AtlasRobotVersion
 
    public InputStream getSdfFileAsStream()
    {
-      return getClass().getClassLoader().getResourceAsStream(getSdfFile());
+	   return getClass().getClassLoader().getResourceAsStream(getSdfFile());
    }
 
    public RigidBodyTransform getOffsetFromAttachmentPlate(RobotSide side)
@@ -86,6 +89,7 @@ public enum AtlasRobotVersion
       {
       case ATLAS_UNPLUGGED_V5_DUAL_ROBOTIQ:
       case ATLAS_UNPLUGGED_V5_ROBOTIQ_AND_SRI:
+      case ATLAS_UNPLUGGED_V5_TOE_JOINT:
          distanceAttachmentPlateHand = 0.12; // On the palm.
          break;
       default:

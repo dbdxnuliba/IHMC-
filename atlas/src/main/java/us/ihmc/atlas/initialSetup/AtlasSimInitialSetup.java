@@ -70,6 +70,8 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
          {
             for (GroundContactPoint groundContactPoint : robot.getFootGroundContactPoints(robotSide))
             {
+            	System.out.println("ground contact point is "+groundContactPoint.getName());
+            	
                if(Double.isNaN(minZ) || Double.isInfinite(minZ))
                {
                   minZ = groundContactPoint.getPositionPoint().getZ();
@@ -87,10 +89,14 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
 
          // Hardcoded for gazebo integration
          //      double pelvisToFoot = 0.887;
-
+         
+         
          positionInWorld.setZ(groundZ + pelvisToFoot);
          positionInWorld.add(offset);
 
+
+         positionInWorld.setZ(0.9286147465454951);
+         
          robot.setPositionInWorld(positionInWorld);
 
          FrameQuaternion frameOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame(), rotation);
@@ -105,7 +111,7 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
       }
    }
 
-   private void setArmJointPosition(HumanoidFloatingRootJointRobot robot, DRCRobotJointMap jointMap, RobotSide robotSide, ArmJointName armJointName, double q)
+   protected void setArmJointPosition(HumanoidFloatingRootJointRobot robot, DRCRobotJointMap jointMap, RobotSide robotSide, ArmJointName armJointName, double q)
    {
       String armJointString = jointMap.getArmJointName(robotSide, armJointName);
       if (armJointString == null)

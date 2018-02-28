@@ -28,6 +28,7 @@ public class AtlasPhysicalProperties implements RobotPhysicalProperties
    private final double thighLength;
 
    private final SideDependentList<RigidBodyTransform> soleToAnkleFrameTransforms = new SideDependentList<>();
+   private final SideDependentList<RigidBodyTransform> toeToAnkleFrameTransforms = new SideDependentList<>();
    private final SideDependentList<RigidBodyTransform> handAttachmentPlateToWristTransforms = new SideDependentList<RigidBodyTransform>();
 
    public AtlasPhysicalProperties()
@@ -70,7 +71,9 @@ public class AtlasPhysicalProperties implements RobotPhysicalProperties
       for (RobotSide robotSide : RobotSide.values)
       {
          RigidBodyTransform soleToAnkleFrame = TransformTools.createTranslationTransform(footLengthForControl / 2.0 - footBackForControl, 0.0, -ankleHeight);
+         RigidBodyTransform toeToAnkleFrame = TransformTools.createTranslationTransform(footLengthForControl / 2.0 + footBackForControl, 0.0, -ankleHeight);
          soleToAnkleFrameTransforms.put(robotSide, soleToAnkleFrame);
+         toeToAnkleFrameTransforms.put(robotSide, toeToAnkleFrame);
 
          double y = robotSide.negateIfRightSide(0.1);
          double yaw = robotSide.negateIfRightSide(Math.PI / 2.0);
@@ -137,6 +140,11 @@ public class AtlasPhysicalProperties implements RobotPhysicalProperties
    public SideDependentList<RigidBodyTransform> getSoleToAnkleFrameTransforms()
    {
       return soleToAnkleFrameTransforms;
+   }
+   
+   public SideDependentList<RigidBodyTransform> getToeToAnkleFrameTransforms()
+   {
+      return toeToAnkleFrameTransforms;
    }
 
    @Override
