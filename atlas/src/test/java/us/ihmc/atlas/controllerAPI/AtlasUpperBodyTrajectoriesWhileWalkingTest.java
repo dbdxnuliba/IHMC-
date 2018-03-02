@@ -163,7 +163,10 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
             ArmTrajectoryMessage armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(robotSide, numberOfJoints, numberOfTrajectoryPoints);
             armTrajectoryMessage.setUniqueId(id);
             if (messageIndex > 0)
-               armTrajectoryMessage.getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE, id - 1);
+            {
+               armTrajectoryMessage.getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE.toByte());
+               armTrajectoryMessage.getQueueingProperties().setPreviousMessageId(id - 1);
+            }
             id++;
 
             TrajectoryPoint1DCalculator trajectoryPoint1DCalculator = new TrajectoryPoint1DCalculator();
@@ -213,9 +216,9 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
       ManualDesiredVelocityControlModule desiredVelocityControlModule = new ManualDesiredVelocityControlModule(
             desiredHeadingControlModule.getDesiredHeadingFrame(), registry);
 
-      RobotContactPointParameters contactPointParameters = robotModel.getContactPointParameters();
-      ContactableBodiesFactory contactableBodiesFactory = contactPointParameters.getContactableBodiesFactory();
-      SideDependentList<ContactableFoot> bipedFeet = contactableBodiesFactory.createFootContactableBodies(fullRobotModel, referenceFrames);
+      RobotContactPointParameters<RobotSide> contactPointParameters = robotModel.getContactPointParameters();
+      ContactableBodiesFactory<RobotSide> contactableBodiesFactory = contactPointParameters.getContactableBodiesFactory();
+      SideDependentList<ContactableFoot> bipedFeet = new SideDependentList<>(contactableBodiesFactory.createFootContactableBodies(fullRobotModel, referenceFrames));
 
       ComponentBasedDesiredFootstepCalculator desiredFootstepCalculator = new ComponentBasedDesiredFootstepCalculator(referenceFrames.getPelvisZUpFrame(),
             bipedFeet, desiredHeadingControlModule, desiredVelocityControlModule, registry);

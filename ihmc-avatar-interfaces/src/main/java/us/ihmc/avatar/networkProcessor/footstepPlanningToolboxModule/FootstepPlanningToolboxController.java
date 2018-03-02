@@ -179,7 +179,7 @@ public class FootstepPlanningToolboxController extends ToolboxController
          return false;
 
       planId.set(request.planId);
-      FootstepPlannerType requestedPlannerType = request.requestedPlannerType;
+      FootstepPlannerType requestedPlannerType = FootstepPlannerType.fromByte(request.requestedFootstepPlannerType);
 
       if (debug)
       {
@@ -211,7 +211,7 @@ public class FootstepPlanningToolboxController extends ToolboxController
       goalPose.setOrientation(new Quaternion(request.goalOrientationInWorld));
 
       FootstepPlanner planner = plannerMap.get(activePlanner.getEnumValue());
-      planner.setInitialStanceFoot(initialStancePose, request.initialStanceSide);
+      planner.setInitialStanceFoot(initialStancePose, RobotSide.fromByte(request.initialStanceRobotSide));
 
       FootstepPlannerGoal goal = new FootstepPlannerGoal();
       goal.setFootstepPlannerGoalType(FootstepPlannerGoalType.POSE_BETWEEN_FEET);
@@ -268,11 +268,11 @@ public class FootstepPlanningToolboxController extends ToolboxController
 
       planarRegionsList.ifPresent(result::setPlanarRegionsList);
       result.setPlanId(planId.getIntegerValue());
-      result.planningResult = status;
+      result.footstepPlanningResult = status.toByte();
       return result;
    }
 
-   private static SideDependentList<ConvexPolygon2D> createFootPolygonsFromContactPoints(RobotContactPointParameters contactPointParameters)
+   private static SideDependentList<ConvexPolygon2D> createFootPolygonsFromContactPoints(RobotContactPointParameters<RobotSide> contactPointParameters)
    {
       SideDependentList<ConvexPolygon2D> footPolygons = new SideDependentList<>();
       for (RobotSide side : RobotSide.values)

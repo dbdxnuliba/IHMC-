@@ -16,10 +16,12 @@ import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.robotics.sensors.ForceSensorDefinition;
 import us.ihmc.robotics.sensors.IMUDefinition;
-import us.ihmc.sensorProcessing.model.RobotMotionStatus;
 
 public class RobotConfigurationData extends Packet<RobotConfigurationData>
 {
+   public static final byte ROBOT_MOTION_STATUS_STANDING = 0;
+   public static final byte ROBOT_MOTION_STATUS_IN_MOTION = 1;
+
    public long timestamp = 0;
    public long sensorHeadPPSTimestamp;
    public int jointNameHash;
@@ -36,8 +38,7 @@ public class RobotConfigurationData extends Packet<RobotConfigurationData>
    //   public DenseMatrix64F[] momentAndForceDataAllForceSensors;
    public float[][] momentAndForceDataAllForceSensors;
    public IMUPacket[] imuSensorData;
-   public RobotMotionStatus robotMotionStatus;
-   public AuxiliaryRobotData auxiliaryRobotData;
+   public byte robotMotionStatus;
 
    public int lastReceivedPacketTypeID;
    public long lastReceivedPacketUniqueId;
@@ -73,7 +74,6 @@ public class RobotConfigurationData extends Packet<RobotConfigurationData>
          imuSensorData[i].set(other.imuSensorData[i]);
       }
       robotMotionStatus = other.robotMotionStatus;
-      auxiliaryRobotData.setAuxiliaryRobotData(other.auxiliaryRobotData);
       lastReceivedPacketTypeID = other.lastReceivedPacketTypeID;
       lastReceivedPacketUniqueId = other.lastReceivedPacketUniqueId;
       lastReceivedPacketRobotTimestamp = other.lastReceivedPacketRobotTimestamp;
@@ -217,12 +217,12 @@ public class RobotConfigurationData extends Packet<RobotConfigurationData>
       return sensorHeadPPSTimestamp;
    }
 
-   public void setRobotMotionStatus(RobotMotionStatus robotMotionStatus)
+   public void setRobotMotionStatus(byte robotMotionStatus)
    {
       this.robotMotionStatus = robotMotionStatus;
    }
 
-   public RobotMotionStatus getRobotMotionStatus()
+   public byte getRobotMotionStatus()
    {
       return robotMotionStatus;
    }
@@ -245,19 +245,6 @@ public class RobotConfigurationData extends Packet<RobotConfigurationData>
    public void setPelvisAngularVelocity(Vector3D pelvisAngularVelocityToPack)
    {
       pelvisAngularVelocity.set(pelvisAngularVelocityToPack);
-   }
-
-   public AuxiliaryRobotData getAuxiliaryRobotData()
-   {
-      return auxiliaryRobotData;
-   }
-
-   public void setAuxiliaryRobotData(AuxiliaryRobotData auxiliaryRobotData)
-   {
-      if (this.auxiliaryRobotData != null && auxiliaryRobotData != null)
-      {
-         this.auxiliaryRobotData.setAuxiliaryRobotData(auxiliaryRobotData);
-      }
    }
 
    public Vector3D32 getPelvisLinearAcceleration()

@@ -62,7 +62,7 @@ public abstract class AvatarSwingOverPlanarRegionsTest implements MultiRobotTest
 
       YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-      RobotContactPointParameters contactPointParameters = robotModel.getContactPointParameters();
+      RobotContactPointParameters<RobotSide> contactPointParameters = robotModel.getContactPointParameters();
       WalkingControllerParameters walkingControllerParameters = robotModel.getWalkingControllerParameters();
 
       AvatarSwingOverPlanarRegionsVisualizer swingOverPlanarRegionsVisualizer = null;
@@ -124,7 +124,7 @@ public abstract class AvatarSwingOverPlanarRegionsTest implements MultiRobotTest
          PrintTools.info("Step " + i + ": " + swingOverPlanarRegionsTrajectoryExpander.getStatus());
          PrintTools.info("Foot: " + robotSide + "  X: " + footstepX + "  Y: " + footstepY);
 
-         footstepData.setTrajectoryType(TrajectoryType.CUSTOM);
+         footstepData.setTrajectoryType(TrajectoryType.CUSTOM.toByte());
          Point3D waypointOne = new Point3D(swingOverPlanarRegionsTrajectoryExpander.getExpandedWaypoints().get(0));
          Point3D waypointTwo = new Point3D(swingOverPlanarRegionsTrajectoryExpander.getExpandedWaypoints().get(1));
          footstepData.setCustomPositionWaypoints(new Point3D[] {waypointOne, waypointTwo});

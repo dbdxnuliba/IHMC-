@@ -104,7 +104,7 @@ public class RosConnectedZeroPoseRobotConfigurationDataProducer extends Abstract
    {
       RigidBodyTransform pelvisPoseInMocapFrame = atomicPelvisPose.get();
       IMUDefinition[] imuDefinitions = fullRobotModel.getIMUDefinitions();
-      RobotConfigurationData robotConfigurationData = RobotConfigurationDataFactory.create(fullRobotModel.getOneDoFJoints(), forceSensorDefinitions, null, imuDefinitions);
+      RobotConfigurationData robotConfigurationData = RobotConfigurationDataFactory.create(fullRobotModel.getOneDoFJoints(), forceSensorDefinitions, imuDefinitions);
 
       for(int sensorNumber = 0; sensorNumber <  imuDefinitions.length; sensorNumber++)
       {
@@ -112,7 +112,7 @@ public class RosConnectedZeroPoseRobotConfigurationDataProducer extends Abstract
          imuPacket.set(RandomGeometry.nextVector3D32(random), RandomGeometry.nextQuaternion32(random), RandomGeometry.nextVector3D32(random));
       }
       
-      robotConfigurationData.setRobotMotionStatus(RobotMotionStatus.STANDING);
+      robotConfigurationData.setRobotMotionStatus(RobotMotionStatus.STANDING.toByte());
       
       robotConfigurationData.setTimestamp(totalNsecs);
       if(pelvisPoseInMocapFrame != null)
