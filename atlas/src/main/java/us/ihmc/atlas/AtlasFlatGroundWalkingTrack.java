@@ -18,7 +18,7 @@ import us.ihmc.simulationconstructionset.util.ground.FlatGroundProfile;
 
 public class AtlasFlatGroundWalkingTrack
 {
-   private static final DRCRobotModel defaultModelForGraphicSelector = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+   //private static final DRCRobotModel defaultModelForGraphicSelector = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
 
    private static final boolean USE_BUMPY_GROUND = false;
    private static final boolean USE_FEET_PERTURBER = false;
@@ -31,11 +31,11 @@ public class AtlasFlatGroundWalkingTrack
 
       AtlasRobotModel model = new AtlasToeRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT, RobotTarget.SCS, false);
       
-      if (model == null)
-         model = AtlasRobotModelFactory.selectModelFromGraphicSelector(defaultModelForGraphicSelector);
-
-      if (model == null)
-         throw new RuntimeException("No robot model selected");
+//      if (model == null)
+//         model = AtlasRobotModelFactory.selectModelFromGraphicSelector(defaultModelForGraphicSelector);
+//
+//      if (model == null)
+//         throw new RuntimeException("No robot model selected");
 
       DRCGuiInitialSetup guiInitialSetup = new DRCGuiInitialSetup(true, false);
 
