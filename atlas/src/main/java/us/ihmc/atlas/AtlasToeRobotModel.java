@@ -7,7 +7,6 @@ import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationconstructionset.HumanoidFloatingRootJointRobot;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
-import us.ihmc.wholeBodyController.FootContactPoints;
 
 public class AtlasToeRobotModel extends AtlasRobotModel {
 
@@ -22,30 +21,32 @@ public class AtlasToeRobotModel extends AtlasRobotModel {
 		return new AtlasSimSetup(groundHeight, initialYaw);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	@Override
+	public HumanoidFloatingRootJointRobot createHumanoidFloatingRootJointRobot(boolean createCollisionMeshes, boolean enableJointDamping)
+	{
+		boolean enableTorqueVelocityLimits = false;
+		HumanoidFloatingRootJointRobot humanoidFloatingRootJointRobot = new HumanoidFloatingRootJointRobot(super.getRobotDescription(), super.getJointMap(), enableJointDamping,
+				enableTorqueVelocityLimits);
+
+		// adding ground contact points for the ankle roll joint.
+		for (RobotSide robotSide : RobotSide.values)
+			humanoidFloatingRootJointRobot.addFootGroundContactPoints(robotSide,humanoidFloatingRootJointRobot.getOneDegreeOfFreedomJoint(super.getJointMap().getLegJointName(robotSide, LegJointName.ANKLE_ROLL)));
+
+		return humanoidFloatingRootJointRobot;
+	}
+
+
 	private class AtlasSimSetup extends AtlasSimInitialSetup {
 
 		public AtlasSimSetup(double groundHeight, double initialYaw) {
 			super(groundHeight, initialYaw);
-			System.out.println("ground toe height"+groundHeight);
 		}
-		
+
 		private boolean robotInitialized = false;
 
 		@Override
 		public void initializeRobot(HumanoidFloatingRootJointRobot robot, DRCRobotJointMap jointMap) {
 
-			System.out.println("atlas toe initial setup called");
 			if(!robotInitialized)
 			{
 				robot.getOneDegreeOfFreedomJoint(jointMap.getLegJointName(RobotSide.LEFT, LegJointName.TOE_PITCH)).setQ(0.0); 	//l_leg_toe

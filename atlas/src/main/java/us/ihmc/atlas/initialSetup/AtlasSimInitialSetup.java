@@ -69,9 +69,7 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
          for (RobotSide robotSide : RobotSide.values)
          {
             for (GroundContactPoint groundContactPoint : robot.getFootGroundContactPoints(robotSide))
-            {
-            	System.out.println("ground contact point is "+groundContactPoint.getName());
-            	
+            {            	
                if(Double.isNaN(minZ) || Double.isInfinite(minZ))
                {
                   minZ = groundContactPoint.getPositionPoint().getZ();
@@ -94,9 +92,6 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
          positionInWorld.setZ(groundZ + pelvisToFoot);
          positionInWorld.add(offset);
 
-
-         positionInWorld.setZ(0.9286147465454951);
-         
          robot.setPositionInWorld(positionInWorld);
 
          FrameQuaternion frameOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame(), rotation);

@@ -56,12 +56,10 @@ public class AtlasContactPointParameters extends RobotContactPointParameters<Rob
          }
          else if(atlasVersion == AtlasRobotVersion.ATLAS_UNPLUGGED_V5_TOE_JOINT)
          {
-             System.out.println("creating toe!!! contact points");
         	 createFootToeContactPoints();
          }
          else
          {
-            System.out.println("creating default contact points");
         	 createDefaultFootContactPoints();
          }
       }
