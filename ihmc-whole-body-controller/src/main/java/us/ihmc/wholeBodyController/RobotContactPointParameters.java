@@ -103,7 +103,7 @@ public abstract class RobotContactPointParameters<E extends Enum<E> & RobotSegme
    
    protected void createFootToeContactPoints()
    {
-	   createFootContactPoints(new CustomFootToeContactPoints());
+	   createFootContactPoints(new CustomFootToeContactPoints<>(robotSegments));
    }
 
    protected final void clearSimulationContactPoints()

@@ -11,27 +11,33 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Tuple2DBasics;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
-import us.ihmc.robotics.partNames.LegJointName;
+import us.ihmc.robotics.partNames.LeggedJointNameMap;
+import us.ihmc.robotics.robotSide.RobotSegment;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.robotics.robotSide.SegmentDependentList;
 
-public class CustomFootToeContactPoints implements FootContactPoints {
+public class CustomFootToeContactPoints<E extends Enum<E> & RobotSegment<E>>  implements FootContactPoints {
 
+	private final E[] robotSegments;
+	public CustomFootToeContactPoints(E[] robotSegments) {
+		this.robotSegments = robotSegments;
+	}
 	@Override
-	public Map<String, List<Tuple3DBasics>> getSimulationContactPoints(double footLength, double footWidth,
-			double toeWidth, DRCRobotJointMap jointMap,
-			SideDependentList<RigidBodyTransform> soleToAnkleFrameTransforms) {
-
+	public Map<String, List<Tuple3DBasics>> getSimulationContactPoints(double footLength, double footWidth, double toeWidth,
+			LeggedJointNameMap jointMap, SegmentDependentList soleToAnkleFrameTransforms) {
 		HashMap<String, List<Tuple3DBasics>> ret = new HashMap<>();
 
-		for (RobotSide robotSide : RobotSide.values)
+		String parentJointName;
+
+		for (E segment : robotSegments)
 		{
 			ArrayList<Tuple3DBasics> footContactPoints = new ArrayList<>();
-			ArrayList<Tuple3DBasics> toeContactPoints = new ArrayList<>();
 
-			String toeJointName = jointMap.getLegJointName(robotSide, LegJointName.TOE_PITCH);
-			String ankleJointName = jointMap.getLegJointName(robotSide, LegJointName.ANKLE_ROLL);
-
+			if(segment == RobotSide.LEFT)
+				parentJointName = "l_leg_akx";
+			else
+				parentJointName = "r_leg_akx";
+			
 			//SCS Sim contactPoints
 			int nContactPointsX = 2;
 			int nContactPointsY = 2;
@@ -50,26 +56,16 @@ public class CustomFootToeContactPoints implements FootContactPoints {
 				{
 					double x = (ix - 1.0) * dx - xOffset;
 					double y = (iy - 1.0) * dy - yOffset;
-					RigidBodyTransform transformToParentJointFrame = soleToAnkleFrameTransforms.get(robotSide);
+					RigidBodyTransform transformToParentJointFrame = (RigidBodyTransform) soleToAnkleFrameTransforms.get(segment);
 
 					Point3D contactPoint = new Point3D(x, y, 0.0);
 					transformToParentJointFrame.transform(contactPoint);
-
-					if(ix == 1)
-						footContactPoints.add(contactPoint);
-					else
-					{
-						contactPoint.setZ(-0.032); // adjusting for joint offset
-						contactPoint.setX(contactPoint.getX() - 0.01); // tuning
-						toeContactPoints.add(contactPoint);
-					}
+					footContactPoints.add(contactPoint);
 				}
 			}
 
-			ret.put(toeJointName, toeContactPoints);
-			ret.put(ankleJointName, footContactPoints);
+			ret.put(parentJointName, footContactPoints);
 		}
-
 		// adding extra contact points (temporary hack)
 		ArrayList<Tuple3DBasics> toeExtraContactPoints = new ArrayList<>();
 
@@ -90,56 +86,49 @@ public class CustomFootToeContactPoints implements FootContactPoints {
 		ret.put("l_leg_toe",toeExtraContactPoints);
 		ret.put("r_leg_toe",toeExtraContactPoints);
 
+		System.out.println("ret is"+ret);
+
 		return ret;
-
 	}
-
 	@Override
-	public SideDependentList<List<Tuple2DBasics>> getControllerContactPoints(double footLength, double footWidth, double toeWidth)
-	{
-		SideDependentList<List<Tuple2DBasics>> ret = new SideDependentList<>();
+	public SegmentDependentList<E, List<Tuple2DBasics>> getControllerContactPoints(double footLength, double footWidth, double toeWidth) {
+		SegmentDependentList<E, List<Tuple2DBasics>> ret = new SegmentDependentList<>(robotSegments[0].getClassType());
 
-		for (RobotSide robotSide : RobotSide.values)
+		for (E segment : robotSegments)
 		{
 			ArrayList<Tuple2DBasics> contactPoints = new ArrayList<>();
 			contactPoints.add(new Point2D(-footLength / 2.0, -footWidth / 2.0));
 			contactPoints.add(new Point2D(-footLength / 2.0, footWidth / 2.0));
 			contactPoints.add(new Point2D(footLength / 2.0, -toeWidth / 2.0));
 			contactPoints.add(new Point2D(footLength / 2.0, toeWidth / 2.0));
-			ret.put(robotSide, contactPoints);
+			ret.put(segment, contactPoints);
 		}
 
 		return ret;
 	}
-
 	@Override
-	public SideDependentList<Tuple2DBasics> getToeOffContactPoints(double footLength, double footWidth, double toeWidth)
-	{
-		SideDependentList<Tuple2DBasics> ret = new SideDependentList<>();
+	public SegmentDependentList<E, Tuple2DBasics> getToeOffContactPoints(double footLength, double footWidth, double toeWidth) {
+		SegmentDependentList<E, Tuple2DBasics> ret = new SegmentDependentList<>(robotSegments[0].getClassType());
 
-		for (RobotSide robotSide : RobotSide.values)
-			ret.put(robotSide, new Point2D(footLength / 2.0, 0.0));
+		for (E segment : robotSegments)
+			ret.put(segment, new Point2D(footLength / 2.0, 0.0));
 
 		return ret;
 	}
-
 	@Override
-	public SideDependentList<LineSegment2D> getToeOffContactLines(double footLength, double footWidth, double toeWidth)
-	{
-		SideDependentList<LineSegment2D> ret = new SideDependentList<>();
+	public SegmentDependentList<E, LineSegment2D> getToeOffContactLines(double footLength, double footWidth, double toeWidth) {
+		SegmentDependentList<E, LineSegment2D> ret = new SegmentDependentList<>(robotSegments[0].getClassType());
 
 		double footForward = footLength / 2.0;
 		double halfToeWidth = toeWidth / 2.0;
 
-		for (RobotSide robotSide : RobotSide.values)
-			ret.put(robotSide, new LineSegment2D(new Point2D(footForward, -halfToeWidth), new Point2D(footForward, halfToeWidth)));
+		for (E segment : robotSegments)
+			ret.put(segment, new LineSegment2D(new Point2D(footForward, -halfToeWidth), new Point2D(footForward, halfToeWidth)));
 
 		return ret;
 	}
-
 	@Override
-	public boolean useSoftContactPointParameters()
-	{
+	public boolean useSoftContactPointParameters() {
 		return false;
 	}
 
