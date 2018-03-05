@@ -72,16 +72,16 @@ public class CustomFootToeContactPoints<E extends Enum<E> & RobotSegment<E>>  im
 		// these are the six points around the toe. (already transformed)
 
 		// behind the toe joint
-		toeExtraContactPoints.add(new Point3D(-0.04, -0.043, -0.032));
-		toeExtraContactPoints.add(new Point3D(-0.04, 0.043, -0.032));       
-
-		// right ahead the toe joint
-		toeExtraContactPoints.add(new Point3D(0.04, -0.043, -0.032));
-		toeExtraContactPoints.add(new Point3D(0.04, 0.043, -0.032));
+//		toeExtraContactPoints.add(new Point3D(-0.04, -0.043, -0.032));
+//		toeExtraContactPoints.add(new Point3D(-0.04, 0.043, -0.032));       
+//
+//		// right ahead the toe joint
+//		toeExtraContactPoints.add(new Point3D(0.04, -0.043, -0.032));
+//		toeExtraContactPoints.add(new Point3D(0.04, 0.043, -0.032));
 
 		// far forward of the toe.
-		toeExtraContactPoints.add(new Point3D( 0.126, -0.043, -0.032 ));
-		toeExtraContactPoints.add(new Point3D( 0.126, 0.043, -0.032 ));
+//		toeExtraContactPoints.add(new Point3D( 0.126, -0.043, -0.032 ));
+//		toeExtraContactPoints.add(new Point3D( 0.126, 0.043, -0.032 ));
 
 		ret.put("l_leg_toe",toeExtraContactPoints);
 		ret.put("r_leg_toe",toeExtraContactPoints);
