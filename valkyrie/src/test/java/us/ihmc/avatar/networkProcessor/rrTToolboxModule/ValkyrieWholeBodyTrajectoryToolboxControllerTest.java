@@ -128,7 +128,7 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                  handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D();
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
       trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
       trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
@@ -181,7 +181,7 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectoryHand = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                      handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D();
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
       controlFramePose.appendTranslation(translationToGraspingFrame);
 
       trajectoryHand.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
@@ -247,7 +247,7 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                  handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D();
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
       trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
       trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());

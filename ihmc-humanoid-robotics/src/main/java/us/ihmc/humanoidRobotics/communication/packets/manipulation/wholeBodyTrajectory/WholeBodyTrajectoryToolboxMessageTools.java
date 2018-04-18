@@ -48,6 +48,12 @@ public class WholeBodyTrajectoryToolboxMessageTools
       };
    }
 
+   public static WaypointBasedTrajectoryMessage createTrajectoryMessage(RigidBody endEffector, double t0, double tf, 
+                                                                        FunctionTrajectory trajectoryToDiscretize, SelectionMatrix6D selectionMatrix)
+   {
+      return createTrajectoryMessage(endEffector, t0, tf, 0.1, trajectoryToDiscretize, selectionMatrix);
+   }
+   
    public static WaypointBasedTrajectoryMessage createTrajectoryMessage(RigidBody endEffector, double t0, double tf, double timeResolution,
                                                                         FunctionTrajectory trajectoryToDiscretize, SelectionMatrix6D selectionMatrix)
    {

@@ -89,7 +89,7 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
       SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution, handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D();
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
       trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
       trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
