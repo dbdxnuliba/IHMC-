@@ -5,24 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
-
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
+import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.PelvisICPBasedTranslationManager;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.ToeSlippingDetector;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOffsetTrajectoryWhileWalking;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlMode;
 import us.ihmc.commonWalkingControlModules.dynamicReachability.DynamicReachabilityCalculator;
-import us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.ICPControlGains;
-import us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.icpOptimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.JointLimitParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.euclid.geometry.Pose3D;
-import us.ihmc.robotics.controllers.PDGains;
-import us.ihmc.robotics.controllers.PIDGains;
-import us.ihmc.robotics.controllers.pidGains.PID3DGains;
-import us.ihmc.robotics.controllers.pidGains.PIDSE3Gains;
+import us.ihmc.robotics.controllers.pidGains.PIDGainsReadOnly;
+import us.ihmc.robotics.controllers.pidGains.implementations.PDGains;
+import us.ihmc.robotics.controllers.pidGains.implementations.PID3DConfiguration;
+import us.ihmc.robotics.controllers.pidGains.implementations.PIDSE3Configuration;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.sensorProcessing.stateEstimation.FootSwitchType;
 
@@ -149,21 +146,27 @@ public abstract class WalkingControllerParameters
    public abstract PDGains getCoMHeightControlGains();
 
    /**
-    * Returns a list with pairs of joint control gains and the names of the joints that the gain will
-    * be used for. The names of the joints are defined in the robots joint map. If a joint is not
-    * contained in one of the pairs, jointspace control is not supported for that joint.
+    * Returns a list of joint control gains for groups of joints.
+    * <p>
+    * Each {@link GroupParameter} contains gains for one joint group:</br>
+    *  - The name of the joint group that the gain is used for (e.g. Arms).</br>
+    *  - The gains for the joint group.</br>
+    *  - The names of all rigid bodies in the joint group.
+    * </p>
+    * If a joint is not contained in the list, jointspace control is not supported
+    * for that joint.
     *
     * @return list containing jointspace PID gains and the corresponding joints
     */
-   public List<ImmutablePair<PIDGains, List<String>>> getJointSpaceControlGains()
+   public List<GroupParameter<PIDGainsReadOnly>> getJointSpaceControlGains()
    {
       return new ArrayList<>();
    }
 
    /**
-    * Returns a list of triples containing taskspace orientation control gains.
+    * Returns a list of taskspace orientation control gains for groups of bodies.
     * <p>
-    * Each triple contains gains for one body group:</br>
+    * Each {@link GroupParameter} contains gains for one body group:</br>
     *  - The name of the body group that the gain is used for (e.g. Hands).</br>
     *  - The gains for the body group.</br>
     *  - The names of all rigid bodies in the body group.
@@ -175,15 +178,15 @@ public abstract class WalkingControllerParameters
     *
     * @return list containing orientation PID gains and the corresponding rigid bodies
     */
-   public List<ImmutableTriple<String, PID3DGains, List<String>>> getTaskspaceOrientationControlGains()
+   public List<GroupParameter<PID3DConfiguration>> getTaskspaceOrientationControlGains()
    {
       return new ArrayList<>();
    }
 
    /**
-    * Returns a list of triples containing taskspace position control gains.
+    * Returns a list of taskspace position control gains for groups of bodies.
     * <p>
-    * Each triple contains gains for one body group:</br>
+    * Each {@link GroupParameter} contains gains for one body group:</br>
     *  - The name of the body group that the gain is used for (e.g. Hands).</br>
     *  - The gains for the body group.</br>
     *  - The names of all rigid bodies in the body group.
@@ -193,9 +196,9 @@ public abstract class WalkingControllerParameters
     * taskspace position trajectories (or the position part of a pose trajectory) for a
     * rigid body.
     *
-    * @return list containing orientation PID gains and the corresponding rigid bodies
+    * @return list containing position PID gains and the corresponding rigid bodies
     */
-   public List<ImmutableTriple<String, PID3DGains, List<String>>> getTaskspacePositionControlGains()
+   public List<GroupParameter<PID3DConfiguration>> getTaskspacePositionControlGains()
    {
       return new ArrayList<>();
    }
@@ -248,20 +251,20 @@ public abstract class WalkingControllerParameters
    /**
     * Returns the gains used for the foot pose when in swing.
     */
-   public abstract PIDSE3Gains getSwingFootControlGains();
+   public abstract PIDSE3Configuration getSwingFootControlGains();
 
    /**
     * Returns the gains used for the foot when in support. Note that these gains are only used when the foot
     * is not loaded or close to tipping. Of that is not the case the foot pose when in support is not controlled
     * using a feedback controller.
     */
-   public abstract PIDSE3Gains getHoldPositionFootControlGains();
+   public abstract PIDSE3Configuration getHoldPositionFootControlGains();
 
    /**
     * Returns the gains used for the foot when in the toe off state. Note that some parts of the foot orientation
     * will not use these gains. The foot pitch for example is usually not controlled explicitly during tow off.
     */
-   public abstract PIDSE3Gains getToeOffFootControlGains();
+   public abstract PIDSE3Configuration getToeOffFootControlGains();
 
    /**
     * Specifies if the arm controller should be switching
@@ -404,6 +407,7 @@ public abstract class WalkingControllerParameters
     * This will be used if the foot switch type as defined in {@link #getFootSwitchType()} is set to
     * {@link FootSwitchType#WrenchBased}
     */
+   @Deprecated // this is duplicated in the state estimator parameters
    public abstract double getContactThresholdForce();
 
    /**
@@ -415,6 +419,7 @@ public abstract class WalkingControllerParameters
     * This will be used if the foot switch type as defined in {@link #getFootSwitchType()} is set to
     * {@link FootSwitchType#WrenchBased}
     */
+   @Deprecated // move this to the state estimator parameters
    public abstract double getSecondContactThresholdForceIgnoringCoP();
 
    /**
@@ -426,6 +431,7 @@ public abstract class WalkingControllerParameters
     * This will be used if the foot switch type as defined in {@link #getFootSwitchType()} is set to
     * {@link FootSwitchType#WrenchBased}
     */
+   @Deprecated // this is duplicated in the state estimator parameters
    public abstract double getCoPThresholdFraction();
 
    /**
@@ -436,6 +442,7 @@ public abstract class WalkingControllerParameters
     * This will be used if the foot switch type as defined in {@link #getFootSwitchType()} is set to
     * {@link FootSwitchType#KinematicBased}
     */
+   @Deprecated // this is duplicated in the state estimator parameters
    public double getContactThresholdHeight()
    {
       return 0.05;
@@ -779,5 +786,18 @@ public abstract class WalkingControllerParameters
    public double getMinSwingTrajectoryClearanceFromStanceFoot()
    {
       return Double.NEGATIVE_INFINITY;
+   }
+
+   /**
+    * A robot can implement an ankle IK solver. Optionally, the walking controller will add desired
+    * joint angles and velocities for the ankle to the output of the controller core. Depending on the
+    * implementation of the robots joint control this can be used to better track the foot pose on a
+    * robot. The desired torque and acceleration computed by the whole body controller will still
+    * be available. Note, that the output of this module might be inconsistent with the output of the
+    * whole body controller as it does not consider other objectives such as balancing.
+    */
+   public AnkleIKSolver getAnkleIKSolver()
+   {
+      return null;
    }
 }

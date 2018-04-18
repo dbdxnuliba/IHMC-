@@ -11,8 +11,8 @@ import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
 
 /**
  * <p>
@@ -129,7 +129,7 @@ public class BagOfBalls
 
       for (int i = 0; i < appearances.size(); i++)
       {
-         YoFramePoint yoFramePoint = new YoFramePoint(name + i, "", worldFrame, registry);
+         YoFramePoint3D yoFramePoint = new YoFramePoint3D(name + i, "", worldFrame, registry);
          YoGraphicPosition newPosition;
          if (graphicType != null)
             newPosition = new YoGraphicPosition(name + i, yoFramePoint, sizeInMeters, appearances.get(i), graphicType);
@@ -333,7 +333,7 @@ public class BagOfBalls
     *
     * @param location FramePoint to set the next ball to.
     */
-   public void setBallLoop(FramePoint3D location)
+   public void setBallLoop(FramePoint3DReadOnly location)
    {
       setBallLoop(location, null);
    }
@@ -345,9 +345,9 @@ public class BagOfBalls
     * @param location FramePoint to set the next ball to.
     * @param appearance Appearance to give the next ball.
     */
-   public void setBallLoop(FramePoint3D location, AppearanceDefinition appearance)
+   public void setBallLoop(FramePoint3DReadOnly location, AppearanceDefinition appearance)
    {
-      location.changeFrame(worldFrame);
+      location.checkReferenceFrameMatch(worldFrame);
 
       if (index >= yoGraphicPositions.size())
       {

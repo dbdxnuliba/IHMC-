@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.configurations.GroupParameter;
 import us.ihmc.commonWalkingControlModules.configurations.HighLevelControllerParameters;
-import us.ihmc.commonWalkingControlModules.configurations.JointGroupParameter;
 import us.ihmc.commonWalkingControlModules.controllerCore.parameters.JointAccelerationIntegrationParameters;
 import us.ihmc.commonWalkingControlModules.controllerCore.parameters.JointAccelerationIntegrationParametersReadOnly;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.WholeBodySetpointParameters;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
+import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.partNames.ArmJointName;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.partNames.NeckJointName;
@@ -42,7 +43,7 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
    }
 
    @Override
-   public List<JointGroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviors(HighLevelControllerName state)
+   public List<GroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviors(HighLevelControllerName state)
    {
       switch (state)
       {
@@ -59,9 +60,9 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
       }
    }
 
-   private List<JointGroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviorForWalking()
+   private List<GroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviorForWalking()
    {
-      List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors = new ArrayList<>();
+      List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors = new ArrayList<>();
       if (runningOnRealRobot)
       {
          // Can go up to kp = 30.0, kd = 3.0
@@ -122,9 +123,9 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
       return behaviors;
    }
 
-   private List<JointGroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviorForHangingAround()
+   private List<GroupParameter<JointDesiredBehaviorReadOnly>> getDesiredJointBehaviorForHangingAround()
    {
-      List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors = new ArrayList<>();
+      List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors = new ArrayList<>();
 
       configureSymmetricBehavior(behaviors, jointMap, ArmJointName.SHOULDER_PITCH, JointDesiredControlMode.EFFORT, 15.0, 1.5);
       configureSymmetricBehavior(behaviors, jointMap, ArmJointName.SHOULDER_ROLL, JointDesiredControlMode.EFFORT, 15.0, 1.5);
@@ -156,36 +157,36 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
       return behaviors;
    }
 
-   private static void configureBehavior(List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors, DRCRobotJointMap jointMap,
+   private static void configureBehavior(List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors, DRCRobotJointMap jointMap,
                                          SpineJointName jointName, JointDesiredControlMode controlMode, double stiffness, double damping)
    {
       JointDesiredBehavior jointBehavior = new JointDesiredBehavior(controlMode, stiffness, damping);
       List<String> names = Collections.singletonList(jointMap.getSpineJointName(jointName));
-      behaviors.add(new JointGroupParameter<>(jointName.toString(), jointBehavior, names));
+      behaviors.add(new GroupParameter<>(jointName.toString(), jointBehavior, names));
    }
 
-   private static void configureBehavior(List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors, DRCRobotJointMap jointMap,
+   private static void configureBehavior(List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors, DRCRobotJointMap jointMap,
                                          NeckJointName jointName, JointDesiredControlMode controlMode, double stiffness, double damping)
    {
       JointDesiredBehavior jointBehavior = new JointDesiredBehavior(controlMode, stiffness, damping);
       List<String> names = Collections.singletonList(jointMap.getNeckJointName(jointName));
-      behaviors.add(new JointGroupParameter<>(jointName.toString(), jointBehavior, names));
+      behaviors.add(new GroupParameter<>(jointName.toString(), jointBehavior, names));
    }
 
-   private static void configureSymmetricBehavior(List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors,
+   private static void configureSymmetricBehavior(List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors,
                                                   DRCRobotJointMap jointMap, LegJointName jointName, JointDesiredControlMode controlMode, double stiffness,
                                                   double damping)
    {
       JointDesiredBehavior jointBehavior = new JointDesiredBehavior(controlMode, stiffness, damping);
-      behaviors.add(new JointGroupParameter<>(jointName.toString(), jointBehavior, getLeftAndRightJointNames(jointMap, jointName)));
+      behaviors.add(new GroupParameter<>(jointName.toString(), jointBehavior, getLeftAndRightJointNames(jointMap, jointName)));
    }
 
-   private static void configureSymmetricBehavior(List<JointGroupParameter<JointDesiredBehaviorReadOnly>> behaviors,
+   private static void configureSymmetricBehavior(List<GroupParameter<JointDesiredBehaviorReadOnly>> behaviors,
                                                   DRCRobotJointMap jointMap, ArmJointName jointName, JointDesiredControlMode controlMode, double stiffness,
                                                   double damping)
    {
       JointDesiredBehavior jointBehavior = new JointDesiredBehavior(controlMode, stiffness, damping);
-      behaviors.add(new JointGroupParameter<>(jointName.toString(), jointBehavior, getLeftAndRightJointNames(jointMap, jointName)));
+      behaviors.add(new GroupParameter<>(jointName.toString(), jointBehavior, getLeftAndRightJointNames(jointMap, jointName)));
    }
 
    private static List<String> getLeftAndRightJointNames(DRCRobotJointMap jointMap, LegJointName legJointName)
@@ -251,18 +252,19 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
    }
 
    @Override
-   public List<JointGroupParameter<JointAccelerationIntegrationParametersReadOnly>> getJointAccelerationIntegrationParametersNoLoad()
+   public List<GroupParameter<JointAccelerationIntegrationParametersReadOnly>> getJointAccelerationIntegrationParameters()
    {
-      List<JointGroupParameter<JointAccelerationIntegrationParametersReadOnly>> ret = new ArrayList<>();
+      List<GroupParameter<JointAccelerationIntegrationParametersReadOnly>> ret = new ArrayList<>();
 
       for (LegJointName legJointName : new LegJointName[]{LegJointName.HIP_YAW, LegJointName.HIP_PITCH, LegJointName.HIP_ROLL})
       { // Hip joints
          JointAccelerationIntegrationParameters parameters = new JointAccelerationIntegrationParameters();
-         parameters.setAlphas(0.9992, 0.85);
+         parameters.setPositionBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.9992, 0.004));
+         parameters.setVelocityBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.85, 0.004));
          List<String> jointNames = new ArrayList<>();
          for (RobotSide robotSide : RobotSide.values)
             jointNames.add(jointMap.getLegJointName(robotSide, legJointName));
-         ret.add(new JointGroupParameter<>(legJointName.getCamelCaseName(), parameters, jointNames));
+         ret.add(new GroupParameter<>(legJointName.getCamelCaseName(), parameters, jointNames));
       }
 
       for (LegJointName legJointName : new LegJointName[]{LegJointName.KNEE_PITCH, LegJointName.ANKLE_PITCH, LegJointName.ANKLE_ROLL})
@@ -271,52 +273,53 @@ public class ValkyrieHighLevelControllerParameters implements HighLevelControlle
          List<String> jointNames = new ArrayList<>();
          for (RobotSide robotSide : RobotSide.values)
             jointNames.add(jointMap.getLegJointName(robotSide, legJointName));
-         ret.add(new JointGroupParameter<>(legJointName.getCamelCaseName(), parameters, jointNames));
+         ret.add(new GroupParameter<>(legJointName.getCamelCaseName(), parameters, jointNames));
       }
 
       for (SpineJointName spineJointName : jointMap.getSpineJointNames())
       { // Spine joints
          JointAccelerationIntegrationParameters parameters = new JointAccelerationIntegrationParameters();
-         parameters.setAlphas(0.9996, 0.85);
+         parameters.setPositionBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.9996, 0.004));
+         parameters.setVelocityBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.85, 0.004));
          List<String> jointNames = Collections.singletonList(jointMap.getSpineJointName(spineJointName));
-         ret.add(new JointGroupParameter<>(spineJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
+         ret.add(new GroupParameter<>(spineJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
       }
 
       for (ArmJointName armJointName : new ArmJointName[]{ArmJointName.ELBOW_ROLL})
       { // Forearm elbow joint
          JointAccelerationIntegrationParameters parameters = new JointAccelerationIntegrationParameters();
-         parameters.setAlphaPosition(0.9998);
-         parameters.setAlphaVelocity(0.84);
+         parameters.setPositionBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.9998, 0.004));
+         parameters.setVelocityBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.84, 0.004));
          parameters.setMaxPositionError(0.2);
          parameters.setMaxVelocity(2.0);
          List<String> jointNames = new ArrayList<>();
          for (RobotSide robotSide : RobotSide.values)
             jointNames.add(jointMap.getArmJointName(robotSide, armJointName));
-         ret.add(new JointGroupParameter<>(armJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
+         ret.add(new GroupParameter<>(armJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
       }
 
       for (ArmJointName armJointName : new ArmJointName[]{ArmJointName.FIRST_WRIST_PITCH, ArmJointName.WRIST_ROLL})
       { // Forearm wrist joints
          JointAccelerationIntegrationParameters parameters = new JointAccelerationIntegrationParameters();
-         parameters.setAlphaPosition(0.9995);
-         parameters.setAlphaVelocity(0.83);
+         parameters.setPositionBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.9995, 0.004));
+         parameters.setVelocityBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.83, 0.004));
          parameters.setMaxPositionError(0.2);
          parameters.setMaxVelocity(2.0);
          List<String> jointNames = new ArrayList<>();
          for (RobotSide robotSide : RobotSide.values)
             jointNames.add(jointMap.getArmJointName(robotSide, armJointName));
-         ret.add(new JointGroupParameter<>(armJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
+         ret.add(new GroupParameter<>(armJointName.getCamelCaseNameForStartOfExpression(), parameters, jointNames));
       }
 
       for (NeckJointName neckJointName : jointMap.getNeckJointNames())
       { // Neck joints
          JointAccelerationIntegrationParameters parameters = new JointAccelerationIntegrationParameters();
-         parameters.setAlphaPosition(0.9996);
-         parameters.setAlphaVelocity(0.95);
+         parameters.setPositionBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.9996, 0.004));
+         parameters.setVelocityBreakFrequency(AlphaFilteredYoVariable.computeBreakFrequencyGivenAlpha(0.95, 0.004));
          parameters.setMaxPositionError(0.2);
          parameters.setMaxVelocity(2.0);
          List<String> jointNames = Collections.singletonList(jointMap.getNeckJointName(neckJointName));
-         ret.add(new JointGroupParameter<>(neckJointName.getCamelCaseName(), parameters, jointNames));
+         ret.add(new GroupParameter<>(neckJointName.getCamelCaseName(), parameters, jointNames));
       }
 
       return ret;

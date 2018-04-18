@@ -64,6 +64,9 @@ camerasToCapture=[comma separated list of Decklink card ID's to capture]
 The Decklink cards are numbered sequentially starting from 0. Video resolution is auto-detected. If you want to log Decklink cards 0 and 2, set "loggedCameras=0,2". If you only want to log Decklink card 1, set "loggedCameras=1". If you do not want to log any cameras, remove the loggedCameras line or set it to an empty string.
 
 Alternatively, you can add `-Dihmc.publicBroadcast=true` and `-Dihmc.camerasToCapture` to the java command line arguments.
+
+Make sure a gateway within the same subnet is set for the interface that is connected to the logger. It does not need to exist on the network, but without a default gateway FastRTPS cannot reliably connect. 
+
  
 ## Starting the logger
 

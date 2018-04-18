@@ -10,6 +10,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.LowLe
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.RootJointDesiredConfigurationDataReadOnly;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.YoLowLevelOneDoFJointDesiredDataHolder;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.YoRootJointDesiredConfigurationData;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.virtualModelControl.VirtualModelControlCommandList;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.JointIndexHandler;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
@@ -92,7 +93,7 @@ public class WholeBodyControllerCore
       if (inverseKinematicsSolver != null)
          inverseKinematicsSolver.reset();
       if (virtualModelControlSolver != null)
-         virtualModelControlSolver.reset();
+         virtualModelControlSolver.initialize();
       yoLowLevelOneDoFJointDesiredDataHolder.clear();
    }
 
@@ -116,7 +117,7 @@ public class WholeBodyControllerCore
          break;
       case VIRTUAL_MODEL:
          if (virtualModelControlSolver != null)
-            virtualModelControlSolver.clear();
+            virtualModelControlSolver.reset();
          else
             throw new RuntimeException("The controller core mode: " + currentMode.getEnumValue() + "is not handled.");
          break;
@@ -259,16 +260,16 @@ public class WholeBodyControllerCore
    private void doVirtualModelControl()
    {
       feedbackController.computeVirtualModelControl();
-      InverseDynamicsCommandList feedbackControllerOutput = feedbackController.getVirtualModelControlOutput();
+      VirtualModelControlCommandList feedbackControllerOutput = feedbackController.getVirtualModelControlOutput();
       numberOfFBControllerEnabled.set(feedbackControllerOutput.getNumberOfCommands());
       virtualModelControlSolver.submitVirtualModelControlCommandList(feedbackControllerOutput);
       virtualModelControlSolver.compute();
-      feedbackController.computeAchievedAccelerations(); // FIXME
       LowLevelOneDoFJointDesiredDataHolder virtualModelControlOutput = virtualModelControlSolver.getOutput();
       RootJointDesiredConfigurationDataReadOnly virtualModelControlOutputForRootJoint = virtualModelControlSolver.getOutputForRootJoint();
       yoLowLevelOneDoFJointDesiredDataHolder.completeWith(virtualModelControlOutput);
       if (yoRootJointDesiredConfigurationData != null)
          yoRootJointDesiredConfigurationData.completeWith(virtualModelControlOutputForRootJoint);
+      controllerCoreOutput.setAndMatchFrameLinearMomentumRate(virtualModelControlSolver.getAchievedMomentumRateLinear());
    }
 
    private void doNothing()

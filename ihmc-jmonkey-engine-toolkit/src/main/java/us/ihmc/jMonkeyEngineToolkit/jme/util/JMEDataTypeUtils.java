@@ -3,10 +3,18 @@ package us.ihmc.jMonkeyEngineToolkit.jme.util;
 import java.awt.Color;
 import java.util.List;
 
-import com.jme3.math.*;
+import com.jme3.math.ColorRGBA;
+import com.jme3.math.Matrix3f;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Ray;
+import com.jme3.math.Transform;
+import com.jme3.math.Vector2f;
+import com.jme3.math.Vector3f;
 
+import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -17,7 +25,6 @@ import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.graphicsDescription.TexCoord2f;
 import us.ihmc.robotics.dataStructures.MutableColor;
-import us.ihmc.robotics.geometry.FramePose;
 import us.ihmc.robotics.geometry.Ray3d;
 
 public class JMEDataTypeUtils
@@ -124,7 +131,7 @@ public class JMEDataTypeUtils
       target.set((float) original.getX(), (float) original.getY(), (float) original.getZ(), (float) original.getS());
    }
 
-   public static void packFramePoseInJMEVector(FramePose original, Vector3f target)
+   public static void packFramePoseInJMEVector(FramePose3D original, Vector3f target)
    {
       target.set((float) original.getX(), (float) original.getY(), (float) original.getZ());
    }
@@ -137,17 +144,16 @@ public class JMEDataTypeUtils
    public static void packFrameOrientationInJMEQuaternion(FrameQuaternion original, Quaternion target)
    {
       us.ihmc.euclid.tuple4D.Quaternion quat4d = new us.ihmc.euclid.tuple4D.Quaternion();
-      packVectMathQuat4dInJMEQuaternion(original.getQuaternion(), target);
+      packVectMathQuat4dInJMEQuaternion(original, target);
    }
 
-   public static void packFramePoseInJMEQuaternion(FramePose original, Quaternion target)
+   public static void packFramePoseInJMEQuaternion(FramePose3D original, Quaternion target)
    {
-      us.ihmc.euclid.tuple4D.Quaternion quat4d = new us.ihmc.euclid.tuple4D.Quaternion();
-      original.getOrientation(quat4d);
+      us.ihmc.euclid.tuple4D.Quaternion quat4d = new us.ihmc.euclid.tuple4D.Quaternion(original.getOrientation());
       packVectMathQuat4dInJMEQuaternion(quat4d, target);
    }
 
-   public static void packFramePoseInJMEQuaternionAndVector(FramePose original, Vector3f targetVector, Quaternion targetQuaternion)
+   public static void packFramePoseInJMEQuaternionAndVector(FramePose3D original, Vector3f targetVector, Quaternion targetQuaternion)
    {
       packFramePoseInJMEVector(original, targetVector);
       packFramePoseInJMEQuaternion(original, targetQuaternion);
@@ -237,6 +243,13 @@ public class JMEDataTypeUtils
       }
 
       return ret;
+   }
+
+   public static Transform fromPose3DToJMETransform(Pose3D pose3D)
+   {
+      RigidBodyTransform transform = new RigidBodyTransform();
+      pose3D.get(transform);
+      return j3dTransform3DToJMETransform(transform);
    }
 
    public static Transform j3dTransform3DToJMETransform(RigidBodyTransform transform3D)
