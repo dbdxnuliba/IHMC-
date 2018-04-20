@@ -222,6 +222,7 @@ public class ReachingManifoldCommand
 
       for (int i = 0; i < manifoldConfigurationSpaces.size(); i++)
       {
+         // TODO : Move to helper or any manager.
          pose.appendTransform(manifoldConfigurationSpaces.get(i).getLocalRigidBodyTransform(configurationSpace.get(i)));
       }
 

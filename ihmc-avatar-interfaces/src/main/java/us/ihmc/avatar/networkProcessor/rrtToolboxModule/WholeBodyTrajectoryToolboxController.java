@@ -151,6 +151,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private long motionGenerationStartTime;
 
    private final CommandInputManager commandInputManager;
+   
+   private final InitialGuessManager initialGuessManager;
+   private final ExpandingManager expandingManager;
 
    public WholeBodyTrajectoryToolboxController(DRCRobotModel drcRobotModel, FullHumanoidRobotModel fullRobotModel, CommandInputManager commandInputManager,
                                                StatusMessageOutputManager statusOutputManager, YoVariableRegistry registry,
@@ -158,6 +161,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    {
       super(statusOutputManager, registry);
       this.commandInputManager = commandInputManager;
+      this.initialGuessManager = new InitialGuessManager();
+      this.expandingManager = new ExpandingManager();
 
       visualizedFullRobotModel = fullRobotModel;
       isDone.set(false);

@@ -2,10 +2,11 @@ package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTra
 
 import gnu.trove.list.TByteList;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple4D.Quaternion;
 
 public enum ConfigurationSpaceName
 {
-   X, Y, Z, ROLL, PITCH, YAW;
+   X, Y, Z, ROLL, PITCH, YAW, SE3;
 
    public static final ConfigurationSpaceName[] values = values();
 
@@ -31,34 +32,53 @@ public enum ConfigurationSpaceName
       case PITCH:
       case YAW:
          return 0.25 * Math.PI;
+      case SE3:
+         return 1.0;
       default:
          throw new RuntimeException("Unexpected value: " + this);
       }
    }
 
-   public RigidBodyTransform getLocalRigidBodyTransform(double configuration)
+   /**
+    * All configuration value for SE3 should be 0~1.
+    */
+   public RigidBodyTransform getLocalRigidBodyTransform(double... configuration)
    {
       RigidBodyTransform ret = new RigidBodyTransform();
 
       switch (this)
       {
       case X:
-         ret.appendTranslation(configuration, 0, 0);
+         ret.appendTranslation(configuration[0], 0, 0);
          break;
       case Y:
-         ret.appendTranslation(0, configuration, 0);
+         ret.appendTranslation(0, configuration[0], 0);
          break;
       case Z:
-         ret.appendTranslation(0, 0, configuration);
+         ret.appendTranslation(0, 0, configuration[0]);
          break;
       case ROLL:
-         ret.appendRollRotation(configuration);
+         ret.appendRollRotation(configuration[0]);
          break;
       case PITCH:
-         ret.appendPitchRotation(configuration);
+         ret.appendPitchRotation(configuration[0]);
          break;
       case YAW:
-         ret.appendYawRotation(configuration);
+         ret.appendYawRotation(configuration[0]);
+      case SE3:
+         Quaternion quat = new Quaternion();
+
+         double s = configuration[0];
+         double s1 = Math.sqrt(1 - s);
+         double s2 = Math.sqrt(s);
+
+         double theta1 = Math.PI * 2 * configuration[1];
+         double theta2 = Math.PI * 2 * configuration[2];
+
+         quat.set(Math.sin(theta1) * s1, Math.cos(theta1) * s1, Math.sin(theta2) * s2, Math.cos(theta2) * s2);
+         quat.norm();
+
+         ret.transform(quat);
          break;
       }
 
@@ -86,7 +106,7 @@ public enum ConfigurationSpaceName
          byteArray[i] = enumArray[i].toByte();
       return byteArray;
    }
-   
+
    public static ConfigurationSpaceName[] fromBytes(TByteList enumListAsBytes)
    {
       if (enumListAsBytes == null)
@@ -96,7 +116,7 @@ public enum ConfigurationSpaceName
          enumArray[i] = fromByte(enumListAsBytes.get(i));
       return enumArray;
    }
-   
+
    public static ConfigurationSpaceName[] fromBytes(byte[] enumArrayAsBytes)
    {
       if (enumArrayAsBytes == null)
