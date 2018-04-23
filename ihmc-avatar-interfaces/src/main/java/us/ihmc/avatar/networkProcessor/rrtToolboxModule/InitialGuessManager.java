@@ -1,22 +1,40 @@
 package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsSolver;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 
-public class InitialGuessManager
+public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
 {
-   private final SpatialNode initialGuess;
-      
-   private final HumanoidKinematicsSolver kinematicsSolver;   
+   private int terminalConditionNumberOfValidNodes;
+   private int numberOfValidNodes;
    
-   public InitialGuessManager(HumanoidKinematicsSolver kinematicsSolver)
+   public InitialGuessManager(int maximumNumberOfUpdate, int terminalConditionNumberOfValidNodes)
    {
-      this.initialGuess = 
-      this.kinematicsSolver = kinematicsSolver;
+      super(maximumNumberOfUpdate);
+      this.terminalConditionNumberOfValidNodes = terminalConditionNumberOfValidNodes;
+      this.numberOfValidNodes = 0;
    }
    
-   public void updateManager(SpatialNode guess)
+   @Override
+   public void initialize()
    {
-      
+      this.numberOfValidNodes = 0;
+      super.initialize();
+
    }
+
+   @Override
+   public SpatialNode getDesiredNode()
+   {
+      return null;
+   }
+
+   @Override
+   public boolean isDone()
+   {
+      return isExceedMaximumNumberOfUpdate() || numberOfValidNodes >= terminalConditionNumberOfValidNodes;
+   }
+
+
+
+
 }
