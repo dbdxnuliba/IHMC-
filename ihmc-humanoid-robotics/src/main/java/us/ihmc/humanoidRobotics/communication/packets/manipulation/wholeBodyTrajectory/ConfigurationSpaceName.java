@@ -1,6 +1,7 @@
 package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory;
 
 import gnu.trove.list.TByteList;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
@@ -45,7 +46,7 @@ public enum ConfigurationSpaceName
    public RigidBodyTransform getLocalRigidBodyTransform(double... configuration)
    {
       RigidBodyTransform ret = new RigidBodyTransform();
-
+      
       switch (this)
       {
       case X:
@@ -65,6 +66,7 @@ public enum ConfigurationSpaceName
          break;
       case YAW:
          ret.appendYawRotation(configuration[0]);
+         break;
       case SE3:
          Quaternion quat = new Quaternion();
 
