@@ -79,10 +79,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private final YoBoolean isDone = new YoBoolean("isDone", registry);
 
-   private final YoDouble jointlimitScore = new YoDouble("jointlimitScore", registry);
-
-   private final YoDouble bestScoreInitialGuess = new YoDouble("bestScoreInitialGuess", registry);
-
    private final YoBoolean isValidNode = new YoBoolean("isValidNode", registry);
 
    /*
@@ -113,13 +109,10 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    /*
     * Configuration and Time space Tree
     */
-   private SpatialNode rootNode = null;
    private SpatialNodeTree tree;
    private final List<SpatialNode> path = new ArrayList<>();
    private final double minTimeInterval = 0.05;
 
-   private int numberOfValidPosture = 0;
-   private int numberOfInvalidPosture = 0;
    private final YoInteger currentExpansionSize = new YoInteger("currentExpansionSize", registry);
    private final YoInteger maximumExpansionSize = new YoInteger("maximumExpansionSize", registry);
 
@@ -132,6 +125,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    /**
     * Toolbox state
     */
+   // TODO will be replaced with activated manager.
    private final YoEnum<CWBToolboxState> state = new YoEnum<>("state", registry, CWBToolboxState.class);
 
    private enum CWBToolboxState
@@ -417,7 +411,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             if (candidate.isValid())
             {
                tree.attachCandidate();
-               numberOfValidPosture++;
 
                // TODO: generic terminal conditions.
                if (trajectoryCommands != null)
@@ -449,7 +442,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             else
             {
                tree.dismissCandidate();
-               numberOfInvalidPosture++;
             }
          }
          else
@@ -467,135 +459,76 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          if (!isExpandingTerminalCondition)
          {
-            if (VERBOSE)
-               PrintTools.info("Failed to complete trajectory." + " " + numberOfValidPosture + " " + numberOfInvalidPosture);
-
             setOutputStatus(toolboxSolution, 2);
             activatedManager.terminalManager();
             terminateToolboxController();
          }
          else
          {
-            if (VERBOSE)
-               PrintTools.info("Successfully finished tree expansion. " + numberOfValidPosture + " " + numberOfInvalidPosture);
             state.set(CWBToolboxState.SHORTCUT_PATH);
             activatedManager.terminalManager();
          }
       }
    }
 
-   /**
-    * state == FIND_INITIAL_GUESS
-    */
-   //   private void findInitialGuessSub() // TODO : to enable this method, refine holding method.
-   //   {
-   //      SpatialData initialGuessData = toolboxData.createRandomInitialSpatialData();
-   //      //SpatialData initialGuessData = toolboxData.createRandomSpatialData();
-   //
-   //      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
-   //      updateValidity(initialGuessNode);
-   //
-   //      visualizedNode = initialGuessNode;
-   //
-   //      double jointScore;
-   //      if (visualizedNode.isValid())
-   //         jointScore = computeArmJointsLimitScore(humanoidKinematicsSolver.getDesiredFullRobotModel());
-   //      else
-   //         jointScore = 0.0;
-   //
-   //      jointlimitScore.set(jointScore);
-   //
-   //      if (bestScoreInitialGuess.getDoubleValue() < jointScore && initialGuessNode.isValid())
-   //      {
-   //         bestScoreInitialGuess.set(jointScore);
-   //
-   //         toolboxData.holdConfiguration(getSolverFullRobotModel());
-   //
-   //         SpatialData dummyData = toolboxData.createRandomSpatialData();
-   //         rootNode = new SpatialNode(dummyData);
-   //         rootNode.setConfiguration(initialGuessNode.getConfiguration());
-   //         rootNode.initializeSpatialData();
-   //
-   //      }
-   //
-   //      if (initialGuessNode.isValid())
-   //         currentNumberOfValidInitialGuesses.increment();
-   //
-   //      /*
-   //       * terminate finding initial guess.
-   //       */
-   //      currentNumberOfInitialGuesses.increment();
-   //
-   //      if (currentNumberOfInitialGuesses.getIntegerValue() >= desiredNumberOfInitialGuesses.getIntegerValue()
-   //            || currentNumberOfValidInitialGuesses.getIntegerValue() >= terminalConditionNumberOfValidInitialGuesses.getIntegerValue())
-   //      {
-   //         if (rootNode == null || !rootNode.isValid())
-   //         {
-   //            if (VERBOSE)
-   //               PrintTools.info("Did not find a single valid root node.");
-   //            setOutputStatus(toolboxSolution, 1);
-   //            terminateToolboxController();
-   //         }
-   //         else
-   //         {
-   //            if (VERBOSE)
-   //               PrintTools.info("Successfully finished initial guess stage. " + currentNumberOfInitialGuesses.getIntegerValue() + " "
-   //                     + currentNumberOfValidInitialGuesses.getIntegerValue());
-   //            state.set(CWBToolboxState.EXPAND_TREE);
-   //
-   //            toolboxData.updateInitialConfiguration();
-   //            tree = new SpatialNodeTree(rootNode);
-   //         }
-   //      }
-   //   }
-
    private void findInitialGuess()
    {
 //      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
 //      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
       
-      SpatialNode initialGuessNode = initialGuessManager.createRandomNode();
-      updateValidity(initialGuessNode);
-
-      visualizedNode = initialGuessNode;
-
-      double jointScore = 0.0;
-      if (initialGuessNode.isValid())
-      {
-         tree.addInitialNode(initialGuessNode);
-         currentNumberOfValidInitialGuesses.increment();
-         jointScore = computeArmJointsLimitScore(humanoidKinematicsSolver.getDesiredFullRobotModel());
-      }
-      jointlimitScore.set(jointScore);
-
-      nodePlotter.update(initialGuessNode, 1);
+//      SpatialNode initialGuessNode = activatedManager.createDesiredNode();
+//      updateValidity(initialGuessNode);
+//
+//      visualizedNode = initialGuessNode;
+//
+//      activatedManager.putDesiredNode(initialGuessNode);
+      
+//      if (initialGuessNode.isValid())
+//      {
+//         tree.addInitialNode(initialGuessNode);
+//         currentNumberOfValidInitialGuesses.increment();
+//      }
+      
+      
+//      nodePlotter.update(initialGuessNode, 1);
 
       /*
        * terminate finding initial guess.
        */
-      currentNumberOfInitialGuesses.increment();
 
-      if (currentNumberOfInitialGuesses.getIntegerValue() >= desiredNumberOfInitialGuesses.getIntegerValue()
-            || currentNumberOfValidInitialGuesses.getIntegerValue() >= terminalConditionNumberOfValidInitialGuesses.getIntegerValue())
+      
+      
+      
+      handleManager();
+      
+      if(activatedManager.isDone() == true)
       {
-         if (tree.getValidNodes().size() == 0)
+         if(activatedManager.hasFail())
          {
-            if (VERBOSE)
-               PrintTools.info("Did not find a single valid root node.");
+            PrintTools.info("has Fail");
             setOutputStatus(toolboxSolution, 1);
             activatedManager.terminalManager();
             terminateToolboxController();
          }
          else
          {
-            if (VERBOSE)
-               PrintTools.info("Successfully finished initial guess stage. " + currentNumberOfInitialGuesses.getIntegerValue() + " "
-                     + currentNumberOfValidInitialGuesses.getIntegerValue());
+            PrintTools.info("success");
             state.set(CWBToolboxState.EXPAND_TREE);
             expandingManager.initialize();
             activatedManager.terminalManager();
          }
       }
+   }
+   
+   private void handleManager()
+   {
+      SpatialNode desiredNode = activatedManager.createDesiredNode();
+      updateValidity(desiredNode);
+
+      visualizedNode = desiredNode;
+
+      activatedManager.putDesiredNode(desiredNode);
+      nodePlotter.update(desiredNode, 1);
    }
 
    @Override
@@ -640,16 +573,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
                                                          terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
       this.expandingManager = new ExpandingManager(DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
 
-      bestScoreInitialGuess.set(0.0);
-
-      numberOfValidPosture = 0;
-      numberOfInvalidPosture = 0;
-
-      rootNode = null;
       nodePlotter = new SpatialNodePlotter(toolboxData, visualize);
 
       // Initiate tree.
-      // TODO : findInitialGuessSub()
       tree = new SpatialNodeTree();
 
       if (trajectoryCommands != null)
@@ -915,18 +841,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       return distance / path.size();
-   }
-
-   private double computeArmJointsLimitScore(FullHumanoidRobotModel fullRobotModel)
-   {
-      double score = 0.0;
-      RigidBody chest = fullRobotModel.getChest();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         RigidBody hand = fullRobotModel.getHand(robotSide);
-         score += WholeBodyTrajectoryToolboxHelper.kinematicsChainLimitScore(chest, hand);
-      }
-      return score;
    }
 
    void updateRobotConfigurationData(RobotConfigurationData newConfigurationData)

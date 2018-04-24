@@ -205,7 +205,7 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
 
       trajectoryHead.getControlFramePositionInEndEffector().set(new Point3D(0.5, 0.0, 0.0));
       trajectoryHead.setWeight(0.01);
-      trajectories.add(trajectoryHead);
+      //trajectories.add(trajectoryHead);
 
       // run test      
       int maxNumberOfIterations = 10000;

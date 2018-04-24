@@ -9,6 +9,7 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
    
    private int numberOfUpdate;
    private int maximumNumberOfUpdate;
+   
 
    public WholeBodyTrajectoryToolboxManager(int maximumNumberOfUpdate)
    {
@@ -17,14 +18,12 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
       this.maximumNumberOfUpdate = maximumNumberOfUpdate;
    }
 
-   @Override
    public void initialize()
    {
       this.startTime = System.nanoTime();
       this.numberOfUpdate = 0;
    }
 
-   @Override
    public void update()
    {
       numberOfUpdate++;
