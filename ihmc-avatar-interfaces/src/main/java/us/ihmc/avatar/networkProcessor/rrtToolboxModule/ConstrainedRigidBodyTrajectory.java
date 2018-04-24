@@ -46,7 +46,7 @@ public class ConstrainedRigidBodyTrajectory
    private final RigidBodyTransform initialGuessHolder = new RigidBodyTransform();
    private final RigidBodyTransform initialGuessCandidate = new RigidBodyTransform();
 
-   private final boolean hasTrajectoryCommand;
+   //private final boolean hasTrajectoryCommand;
 
    private double weight;
    private static double DEFAULT_WEIGHT = 20.0;
@@ -68,7 +68,7 @@ public class ConstrainedRigidBodyTrajectory
          FramePose3D controlFramePose = new FramePose3D(trajectoryCommand.getControlFramePose());
          controlFramePose.changeFrame(trajectoryCommand.getEndEffector().getBodyFixedFrame());
          this.controlFramePose.set(controlFramePose);
-         this.hasTrajectoryCommand = true;
+         //this.hasTrajectoryCommand = true;
          if (Double.isNaN(trajectoryCommand.getWeight()) || trajectoryCommand.getWeight() < 0.0)
             weight = DEFAULT_WEIGHT;
          else
@@ -84,7 +84,7 @@ public class ConstrainedRigidBodyTrajectory
          trajectorySelectionMatrix.clearSelection();
 
          controlFramePose.setToZero();
-         this.hasTrajectoryCommand = false;
+         //this.hasTrajectoryCommand = false;
          weight = DEFAULT_WEIGHT;
       }
 
@@ -107,10 +107,10 @@ public class ConstrainedRigidBodyTrajectory
       }
    }
 
-   public boolean hasTrajectoryCommand()
-   {
-      return hasTrajectoryCommand;
-   }
+//   public boolean hasTrajectoryCommand()
+//   {
+//      return hasTrajectoryCommand;
+//   }
 
    public RigidBody getRigidBody()
    {
@@ -176,8 +176,8 @@ public class ConstrainedRigidBodyTrajectory
    {
       Pose3D pose = getPose(timeInTrajectory);
 
-      if (hasTrajectoryCommand)
-         pose.appendTransform(new RigidBodyTransform(initialGuessResult));
+//      if (hasTrajectoryCommand)
+//         pose.appendTransform(new RigidBodyTransform(initialGuessResult));
 
       RigidBodyTransform rigidBodyTransform = new RigidBodyTransform(poseToAppend.getOrientation(), poseToAppend.getPosition());
       pose.appendTransform(rigidBodyTransform);
@@ -264,28 +264,28 @@ public class ConstrainedRigidBodyTrajectory
       spatialData.appendSpatial(getRigidBody().getName(), configurationNames, configurationData, randomPose);
    }
 
-   public void holdConfiguration(RigidBody rigidBody)
-   {
-      if (hasTrajectoryCommand)
-      {
-         initialGuessHolder.set(initialGuessCandidate);
-      }
-      else
-      {
-         initialGuessHolder.set(rigidBody.getBodyFixedFrame().getTransformToWorldFrame());
-      }
-   }
-
-   public void updateInitialResult()
-   {
-      if (hasTrajectoryCommand)
-      {
-         initialGuessResult.set(initialGuessHolder);
-      }
-      else
-      {
-         waypoints.set(0, new Pose3D(initialGuessHolder));
-         waypoints.set(1, new Pose3D(initialGuessHolder));
-      }
-   }
+//   public void holdConfiguration(RigidBody rigidBody)
+//   {
+//      if (hasTrajectoryCommand)
+//      {
+//         initialGuessHolder.set(initialGuessCandidate);
+//      }
+//      else
+//      {
+//         initialGuessHolder.set(rigidBody.getBodyFixedFrame().getTransformToWorldFrame());
+//      }
+//   }
+//
+//   public void updateInitialResult()
+//   {
+//      if (hasTrajectoryCommand)
+//      {
+//         initialGuessResult.set(initialGuessHolder);
+//      }
+//      else
+//      {
+//         waypoints.set(0, new Pose3D(initialGuessHolder));
+//         waypoints.set(1, new Pose3D(initialGuessHolder));
+//      }
+//   }
 }

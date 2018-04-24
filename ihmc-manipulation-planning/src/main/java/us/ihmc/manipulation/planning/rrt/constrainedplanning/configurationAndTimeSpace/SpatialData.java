@@ -16,8 +16,6 @@ import us.ihmc.robotics.geometry.AngleTools;
  */
 public class SpatialData
 {
-   private static boolean VERBOSE = true;
-
    private final List<String> rigidBodyNames;
    private final List<Pose3D> rigidBodySpatials;
 

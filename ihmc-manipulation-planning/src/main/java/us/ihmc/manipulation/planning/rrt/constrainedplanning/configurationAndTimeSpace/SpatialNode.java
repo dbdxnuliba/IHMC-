@@ -7,8 +7,8 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class SpatialNode
 {
-   //private double time;
    private double progress;
+   private double time;
    private SpatialData spatialData;
 
    private SpatialNode parent;
@@ -24,16 +24,16 @@ public class SpatialNode
    {
       this(0.0, spatialData);
    }
-   
-   public SpatialNode(double progress, SpatialData spatialData)
+
+   public SpatialNode(double time, SpatialData spatialData)
    {
-      this.progress = progress;
+      this.time = time;
       this.spatialData = spatialData;
    }
 
    public SpatialNode(SpatialNode other)
    {
-      progress = other.progress;
+      time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
       if (other.parent != null)
@@ -252,11 +252,11 @@ public class SpatialNode
       return null;
    }
 
-   public void setSpatialsAndConfiguration(SpatialNode other)
-   {
-      time = other.time;
-      spatialData = new SpatialData(other.getSpatialData());
-      configuration = new KinematicsToolboxOutputStatus(other.configuration);
-      validity = other.validity;
-   }
+//   public void setSpatialsAndConfiguration(SpatialNode other)
+//   {
+//      time = other.time;
+//      spatialData = new SpatialData(other.getSpatialData());
+//      configuration = new KinematicsToolboxOutputStatus(other.configuration);
+//      validity = other.validity;
+//   }
 }
