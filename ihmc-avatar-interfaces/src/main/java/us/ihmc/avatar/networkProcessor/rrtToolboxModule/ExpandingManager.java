@@ -11,7 +11,7 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
    }
 
    @Override
-   public SpatialNode getDesiredNode()
+   public SpatialNode createRandomNode()
    {
       return null;
    }

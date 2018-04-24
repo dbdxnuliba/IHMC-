@@ -151,22 +151,22 @@ public class WholeBodyTrajectoryToolboxData
    /**
     * For findInitialGuessSub()
     */
-   public SpatialData createRandomInitialSpatialData()
-   {
-      SpatialData spatialData = new SpatialData();
-
-      for (int i = 0; i < allRigidBodies.size(); i++)
-      {
-         RigidBody rigidBody = allRigidBodies.get(i);
-
-         if (rigidBodyDataMap.get(rigidBody).hasTrajectoryCommand())
-         {
-            rigidBodyDataMap.get(rigidBody).appendRandomSpatial(spatialData);
-         }
-      }
-
-      return spatialData;
-   }
+//   public SpatialData createRandomInitialSpatialData()
+//   {
+//      SpatialData spatialData = new SpatialData();
+//
+//      for (int i = 0; i < allRigidBodies.size(); i++)
+//      {
+//         RigidBody rigidBody = allRigidBodies.get(i);
+//
+//         if (rigidBodyDataMap.get(rigidBody).hasTrajectoryCommand())
+//         {
+//            rigidBodyDataMap.get(rigidBody).appendRandomSpatial(spatialData);
+//         }
+//      }
+//
+//      return spatialData;
+//   }
 
    public SpatialData createRandomSpatialData()
    {
@@ -248,36 +248,36 @@ public class WholeBodyTrajectoryToolboxData
       return null;
    }
 
-   /**
-    * For findInitialGuessSub()
-    */
-   public void holdConfiguration(FullHumanoidRobotModel fullRobotModel)
-   {
-      for (int i = 0; i < allRigidBodies.size(); i++)
-      {
-         RigidBody rigidBody = allRigidBodies.get(i);
-
-         for (RigidBody candidateRigidBody : ScrewTools.computeSupportAndSubtreeSuccessors(ScrewTools.getRootBody(fullRobotModel.getElevator())))
-         {
-            if (candidateRigidBody.getName() == rigidBody.getName())
-            {
-               rigidBodyDataMap.get(rigidBody).holdConfiguration(candidateRigidBody);
-            }
-         }
-      }
-   }
-
-   /**
-    * For findInitialGuessSub()
-    */
-   public void updateInitialConfiguration()
-   {
-      for (int i = 0; i < allRigidBodies.size(); i++)
-      {
-         RigidBody rigidBody = allRigidBodies.get(i);
-         rigidBodyDataMap.get(rigidBody).updateInitialResult();
-      }
-   }
+//   /**
+//    * For findInitialGuessSub()
+//    */
+//   public void holdConfiguration(FullHumanoidRobotModel fullRobotModel)
+//   {
+//      for (int i = 0; i < allRigidBodies.size(); i++)
+//      {
+//         RigidBody rigidBody = allRigidBodies.get(i);
+//
+//         for (RigidBody candidateRigidBody : ScrewTools.computeSupportAndSubtreeSuccessors(ScrewTools.getRootBody(fullRobotModel.getElevator())))
+//         {
+//            if (candidateRigidBody.getName() == rigidBody.getName())
+//            {
+//               rigidBodyDataMap.get(rigidBody).holdConfiguration(candidateRigidBody);
+//            }
+//         }
+//      }
+//   }
+//
+//   /**
+//    * For findInitialGuessSub()
+//    */
+//   public void updateInitialConfiguration()
+//   {
+//      for (int i = 0; i < allRigidBodies.size(); i++)
+//      {
+//         RigidBody rigidBody = allRigidBodies.get(i);
+//         rigidBodyDataMap.get(rigidBody).updateInitialResult();
+//      }
+//   }
 
    public double getTrajectoryTime()
    {

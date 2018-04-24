@@ -27,6 +27,7 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Reac
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WholeBodyTrajectoryToolboxConfigurationCommand;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodeTree;
@@ -205,12 +206,14 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       case FIND_INITIAL_GUESS:
 
          activatedManager = initialGuessManager;
+         activatedManager.update();
          findInitialGuess();
 
          break;
       case EXPAND_TREE:
 
          activatedManager = expandingManager;
+         activatedManager.update();
          expandingTree();
 
          break;
@@ -484,73 +487,74 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    /**
     * state == FIND_INITIAL_GUESS
     */
-   private void findInitialGuessSub() // TODO : to enable this method, refine holding method.
-   {
-      SpatialData initialGuessData = toolboxData.createRandomInitialSpatialData();
-      //SpatialData initialGuessData = toolboxData.createRandomSpatialData();
-
-      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
-      updateValidity(initialGuessNode);
-
-      visualizedNode = initialGuessNode;
-
-      double jointScore;
-      if (visualizedNode.isValid())
-         jointScore = computeArmJointsLimitScore(humanoidKinematicsSolver.getDesiredFullRobotModel());
-      else
-         jointScore = 0.0;
-
-      jointlimitScore.set(jointScore);
-
-      if (bestScoreInitialGuess.getDoubleValue() < jointScore && initialGuessNode.isValid())
-      {
-         bestScoreInitialGuess.set(jointScore);
-
-         toolboxData.holdConfiguration(getSolverFullRobotModel());
-
-         SpatialData dummyData = toolboxData.createRandomSpatialData();
-         rootNode = new SpatialNode(dummyData);
-         rootNode.setConfiguration(initialGuessNode.getConfiguration());
-         rootNode.initializeSpatialData();
-
-      }
-
-      if (initialGuessNode.isValid())
-         currentNumberOfValidInitialGuesses.increment();
-
-      /*
-       * terminate finding initial guess.
-       */
-      currentNumberOfInitialGuesses.increment();
-
-      if (currentNumberOfInitialGuesses.getIntegerValue() >= desiredNumberOfInitialGuesses.getIntegerValue()
-            || currentNumberOfValidInitialGuesses.getIntegerValue() >= terminalConditionNumberOfValidInitialGuesses.getIntegerValue())
-      {
-         if (rootNode == null || !rootNode.isValid())
-         {
-            if (VERBOSE)
-               PrintTools.info("Did not find a single valid root node.");
-            setOutputStatus(toolboxSolution, 1);
-            terminateToolboxController();
-         }
-         else
-         {
-            if (VERBOSE)
-               PrintTools.info("Successfully finished initial guess stage. " + currentNumberOfInitialGuesses.getIntegerValue() + " "
-                     + currentNumberOfValidInitialGuesses.getIntegerValue());
-            state.set(CWBToolboxState.EXPAND_TREE);
-
-            toolboxData.updateInitialConfiguration();
-            tree = new SpatialNodeTree(rootNode);
-         }
-      }
-   }
+   //   private void findInitialGuessSub() // TODO : to enable this method, refine holding method.
+   //   {
+   //      SpatialData initialGuessData = toolboxData.createRandomInitialSpatialData();
+   //      //SpatialData initialGuessData = toolboxData.createRandomSpatialData();
+   //
+   //      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
+   //      updateValidity(initialGuessNode);
+   //
+   //      visualizedNode = initialGuessNode;
+   //
+   //      double jointScore;
+   //      if (visualizedNode.isValid())
+   //         jointScore = computeArmJointsLimitScore(humanoidKinematicsSolver.getDesiredFullRobotModel());
+   //      else
+   //         jointScore = 0.0;
+   //
+   //      jointlimitScore.set(jointScore);
+   //
+   //      if (bestScoreInitialGuess.getDoubleValue() < jointScore && initialGuessNode.isValid())
+   //      {
+   //         bestScoreInitialGuess.set(jointScore);
+   //
+   //         toolboxData.holdConfiguration(getSolverFullRobotModel());
+   //
+   //         SpatialData dummyData = toolboxData.createRandomSpatialData();
+   //         rootNode = new SpatialNode(dummyData);
+   //         rootNode.setConfiguration(initialGuessNode.getConfiguration());
+   //         rootNode.initializeSpatialData();
+   //
+   //      }
+   //
+   //      if (initialGuessNode.isValid())
+   //         currentNumberOfValidInitialGuesses.increment();
+   //
+   //      /*
+   //       * terminate finding initial guess.
+   //       */
+   //      currentNumberOfInitialGuesses.increment();
+   //
+   //      if (currentNumberOfInitialGuesses.getIntegerValue() >= desiredNumberOfInitialGuesses.getIntegerValue()
+   //            || currentNumberOfValidInitialGuesses.getIntegerValue() >= terminalConditionNumberOfValidInitialGuesses.getIntegerValue())
+   //      {
+   //         if (rootNode == null || !rootNode.isValid())
+   //         {
+   //            if (VERBOSE)
+   //               PrintTools.info("Did not find a single valid root node.");
+   //            setOutputStatus(toolboxSolution, 1);
+   //            terminateToolboxController();
+   //         }
+   //         else
+   //         {
+   //            if (VERBOSE)
+   //               PrintTools.info("Successfully finished initial guess stage. " + currentNumberOfInitialGuesses.getIntegerValue() + " "
+   //                     + currentNumberOfValidInitialGuesses.getIntegerValue());
+   //            state.set(CWBToolboxState.EXPAND_TREE);
+   //
+   //            toolboxData.updateInitialConfiguration();
+   //            tree = new SpatialNodeTree(rootNode);
+   //         }
+   //      }
+   //   }
 
    private void findInitialGuess()
    {
-      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
-
-      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
+//      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
+//      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
+      
+      SpatialNode initialGuessNode = initialGuessManager.createRandomNode();
       updateValidity(initialGuessNode);
 
       visualizedNode = initialGuessNode;
@@ -625,6 +629,16 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       configurationConverter.updateFullRobotModel(initialConfiguration);
 
       toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
+
+      
+      
+      
+      ExploringDefinition spatialDataDefinition = new ExploringDefinition(trajectoryCommands, rigidBodyCommands);
+
+      // initialize manager.
+      this.initialGuessManager = new InitialGuessManager(spatialDataDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
+                                                         terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
+      this.expandingManager = new ExpandingManager(DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
 
       bestScoreInitialGuess.set(0.0);
 
@@ -716,11 +730,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          desiredNumberOfInitialGuesses.set(newNumberOfInitialGuesses);
       else
          desiredNumberOfInitialGuesses.set(DEFAULT_NUMBER_OF_INITIAL_GUESSES_VALUE);
-
-      // initialize manager.
-      this.initialGuessManager = new InitialGuessManager(desiredNumberOfInitialGuesses.getIntegerValue(),
-                                                         terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
-      this.expandingManager = new ExpandingManager(DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
 
       // set initial configuration of full robot model in toolbox.
       if (newInitialConfiguration != null)

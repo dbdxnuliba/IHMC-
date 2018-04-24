@@ -6,7 +6,7 @@ public interface WholeBodyTrajectoryToolboxManagerInterface
 {
    abstract void initialize();
    
-   abstract SpatialNode getDesiredNode();
+   abstract SpatialNode createRandomNode();
 
    abstract void update();
    
