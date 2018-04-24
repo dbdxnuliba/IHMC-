@@ -1,6 +1,7 @@
 package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 
 import us.ihmc.commons.Conversions;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
 
 public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTrajectoryToolboxManagerInterface
 {
@@ -10,12 +11,14 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
    private int numberOfUpdate;
    private int maximumNumberOfUpdate;
    
+   protected ExploringDefinition exploringDefinition;
 
-   public WholeBodyTrajectoryToolboxManager(int maximumNumberOfUpdate)
+   public WholeBodyTrajectoryToolboxManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate)
    {
       this.startTime = System.nanoTime();
       this.numberOfUpdate = 0;
       this.maximumNumberOfUpdate = maximumNumberOfUpdate;
+      this.exploringDefinition = exploringDefinition;
    }
 
    public void initialize()
@@ -26,6 +29,7 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
 
    public void update()
    {
+      System.out.println(""+this.getClass() +" "+numberOfUpdate);
       numberOfUpdate++;
    }
    

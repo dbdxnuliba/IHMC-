@@ -9,7 +9,7 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 
 public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
 {
-   private ExploringDefinition exploringDefinition;
+   
    
    private int terminalConditionNumberOfValidNodes;
 
@@ -17,8 +17,7 @@ public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
 
    public InitialGuessManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate, int terminalConditionNumberOfValidNodes)
    {
-      super(maximumNumberOfUpdate);
-      this.exploringDefinition = exploringDefinition;
+      super(exploringDefinition, maximumNumberOfUpdate);
       this.terminalConditionNumberOfValidNodes = terminalConditionNumberOfValidNodes;
       this.initialGuesses = new ArrayList<SpatialNode>();
    }
@@ -44,8 +43,8 @@ public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
    public SpatialNode createDesiredNode()
    {
       SpatialData randomSpatialData = exploringDefinition.getRandomSpatialData();
-      SpatialNode node = new SpatialNode(randomSpatialData);
-      return node;
+      SpatialNode desiredNode = new SpatialNode(randomSpatialData);
+      return desiredNode;
    }
 
    @Override

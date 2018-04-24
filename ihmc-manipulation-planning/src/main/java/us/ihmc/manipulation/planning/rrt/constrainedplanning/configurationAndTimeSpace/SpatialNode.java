@@ -16,23 +16,31 @@ public class SpatialNode
    private boolean validity = true;
    private KinematicsToolboxOutputStatus configuration;
 
-   public SpatialNode()
-   {
-   }
-
    public SpatialNode(SpatialData spatialData)
    {
-      this(0.0, spatialData);
+      this(0.0, spatialData, 0.0);
    }
-
+   
+   public SpatialNode(SpatialData spatialData, double progress)
+   {
+      this(0.0, spatialData, progress);
+   }
+   
    public SpatialNode(double time, SpatialData spatialData)
    {
+      this(time, spatialData, 0.0);
+   }
+
+   public SpatialNode(double time, SpatialData spatialData, double progress)
+   {
+      this.progress = progress;
       this.time = time;
       this.spatialData = spatialData;
    }
 
    public SpatialNode(SpatialNode other)
    {
+      progress = other.progress;
       time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
@@ -205,6 +213,11 @@ public class SpatialNode
    public double getTime()
    {
       return time;
+   }
+   
+   public double getProgress()
+   {
+      return progress;
    }
 
    public void setConfiguration(KinematicsToolboxOutputStatus configuration)

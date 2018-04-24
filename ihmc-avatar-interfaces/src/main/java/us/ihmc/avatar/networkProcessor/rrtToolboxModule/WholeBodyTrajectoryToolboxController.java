@@ -17,12 +17,10 @@ import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.communication.packets.PacketDestination;
-import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
-import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxSettings;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
@@ -36,7 +34,6 @@ import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -200,14 +197,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       case FIND_INITIAL_GUESS:
 
          activatedManager = initialGuessManager;
-         activatedManager.update();
          findInitialGuess();
 
          break;
       case EXPAND_TREE:
 
          activatedManager = expandingManager;
-         activatedManager.update();
          expandingTree();
 
          break;
@@ -375,135 +370,134 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
     */
    private void expandingTree()
    {
-      currentExpansionSize.increment();
-      boolean isExpandingTerminalCondition = false;
+      handleManager();
 
-      boolean randomNodeHasParentNode = false;
-      int maximumPatientCounter = 1000;
-      while (!randomNodeHasParentNode)
+      //      currentExpansionSize.increment();
+      //      boolean isExpandingTerminalCondition = false;
+      //
+      //      boolean randomNodeHasParentNode = false;
+      //      int maximumPatientCounter = 1000;
+      //      while (!randomNodeHasParentNode)
+      //      {
+      //         SpatialNode randomNode;
+      //
+      //         SpatialData randomData = toolboxData.createRandomSpatialData();
+      //         double nextDouble = WholeBodyTrajectoryToolboxSettings.randomManager.nextDouble();
+      //         double randomTime = nextDouble * (1.0 + WholeBodyTrajectoryToolboxSettings.timeCoefficient * tree.getMostAdvancedTime());
+      //
+      //         randomNode = new SpatialNode(randomTime, randomData);
+      //
+      //         tree.setRandomNode(randomNode);
+      //         if (trajectoryCommands != null)
+      //            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(true);
+      //         if (manifoldCommands != null)
+      //            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(false);
+      //
+      //         if (randomNodeHasParentNode)
+      //         {
+      //            tree.limitCandidateDistanceFromParent(toolboxData.getTrajectoryTime());
+      //            SpatialNode candidate = tree.getCandidate();
+      //            updateValidity(candidate);
+      //
+      //            /*
+      //             * visualize
+      //             */
+      //            visualizedNode = new SpatialNode(candidate);
+      //            nodePlotter.update(candidate, 1);
+      //
+      //            if (candidate.isValid())
+      //            {
+      //               tree.attachCandidate();
+      //
+      //               // TODO: generic terminal conditions.
+      //               if (trajectoryCommands != null)
+      //               {
+      //                  if (tree.getMostAdvancedTime() >= toolboxData.getTrajectoryTime())
+      //                     isExpandingTerminalCondition = true;
+      //               }
+      //               else if (manifoldCommands != null)
+      //               {
+      //                  Pose3D testFrame = toolboxData.getTestFrame(tree.getLastNodeAdded());
+      //
+      //                  testFramePose.setPosition(testFrame.getPosition());
+      //                  testFramePose.setOrientation(testFrame.getOrientation());
+      //                  testFrameViz.setVisible(true);
+      //                  testFrameViz.update();
+      //
+      //                  // TODO : terminal condition for manifold command.
+      //                  double maximumDistanceFromManifolds = toolboxData.getMaximumDistanceFromManifolds(tree.getLastNodeAdded());
+      //                  minimumDistanceFromManifold.set(maximumDistanceFromManifolds);
+      //                  if (maximumDistanceFromManifolds < 0.05)
+      //                     isExpandingTerminalCondition = true;
+      //               }
+      //               else
+      //               {
+      //                  if (VERBOSE)
+      //                     PrintTools.warn("any command is available");
+      //               }
+      //            }
+      //            else
+      //            {
+      //               tree.dismissCandidate();
+      //            }
+      //         }
+      //         else
+      //         {
+      //            maximumPatientCounter--;
+      //            if (maximumPatientCounter == 0)
+      //               continue;
+      //         }
+      //      }
+
+      if (activatedManager.isDone() == true)
       {
-         SpatialNode randomNode;
-
-         SpatialData randomData = toolboxData.createRandomSpatialData();
-         double nextDouble = WholeBodyTrajectoryToolboxSettings.randomManager.nextDouble();
-         double randomTime = nextDouble * (1.0 + WholeBodyTrajectoryToolboxSettings.timeCoefficient * tree.getMostAdvancedTime());
-
-         randomNode = new SpatialNode(randomTime, randomData);
-
-         tree.setRandomNode(randomNode);
-         if (trajectoryCommands != null)
-            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(true);
-         if (manifoldCommands != null)
-            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(false);
-
-         if (randomNodeHasParentNode)
+         if (activatedManager.hasFail())
          {
-            tree.limitCandidateDistanceFromParent(toolboxData.getTrajectoryTime());
-            SpatialNode candidate = tree.getCandidate();
-            updateValidity(candidate);
-
-            /*
-             * visualize
-             */
-            visualizedNode = new SpatialNode(candidate);
-            nodePlotter.update(candidate, 1);
-
-            if (candidate.isValid())
-            {
-               tree.attachCandidate();
-
-               // TODO: generic terminal conditions.
-               if (trajectoryCommands != null)
-               {
-                  if (tree.getMostAdvancedTime() >= toolboxData.getTrajectoryTime())
-                     isExpandingTerminalCondition = true;
-               }
-               else if (manifoldCommands != null)
-               {
-                  Pose3D testFrame = toolboxData.getTestFrame(tree.getLastNodeAdded());
-
-                  testFramePose.setPosition(testFrame.getPosition());
-                  testFramePose.setOrientation(testFrame.getOrientation());
-                  testFrameViz.setVisible(true);
-                  testFrameViz.update();
-
-                  // TODO : terminal condition for manifold command.
-                  double maximumDistanceFromManifolds = toolboxData.getMaximumDistanceFromManifolds(tree.getLastNodeAdded());
-                  minimumDistanceFromManifold.set(maximumDistanceFromManifolds);
-                  if (maximumDistanceFromManifolds < 0.05)
-                     isExpandingTerminalCondition = true;
-               }
-               else
-               {
-                  if (VERBOSE)
-                     PrintTools.warn("any command is available");
-               }
-            }
-            else
-            {
-               tree.dismissCandidate();
-            }
-         }
-         else
-         {
-            maximumPatientCounter--;
-            if (maximumPatientCounter == 0)
-               continue;
-         }
-      }
-
-      /*
-       * terminate expanding tree.
-       */
-      if (currentExpansionSize.getIntegerValue() >= maximumExpansionSize.getIntegerValue() || isExpandingTerminalCondition)
-      {
-         if (!isExpandingTerminalCondition)
-         {
+            PrintTools.info("has Fail");
             setOutputStatus(toolboxSolution, 2);
             activatedManager.terminalManager();
             terminateToolboxController();
          }
          else
          {
+            PrintTools.info("success");
             state.set(CWBToolboxState.SHORTCUT_PATH);
+            //SHORTCUT_PATH.initialize();
             activatedManager.terminalManager();
          }
       }
+
    }
 
    private void findInitialGuess()
    {
-//      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
-//      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
-      
-//      SpatialNode initialGuessNode = activatedManager.createDesiredNode();
-//      updateValidity(initialGuessNode);
-//
-//      visualizedNode = initialGuessNode;
-//
-//      activatedManager.putDesiredNode(initialGuessNode);
-      
-//      if (initialGuessNode.isValid())
-//      {
-//         tree.addInitialNode(initialGuessNode);
-//         currentNumberOfValidInitialGuesses.increment();
-//      }
-      
-      
-//      nodePlotter.update(initialGuessNode, 1);
+      //      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
+      //      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
+
+      //      SpatialNode initialGuessNode = activatedManager.createDesiredNode();
+      //      updateValidity(initialGuessNode);
+      //
+      //      visualizedNode = initialGuessNode;
+      //
+      //      activatedManager.putDesiredNode(initialGuessNode);
+
+      //      if (initialGuessNode.isValid())
+      //      {
+      //         tree.addInitialNode(initialGuessNode);
+      //         currentNumberOfValidInitialGuesses.increment();
+      //      }
+
+      //      nodePlotter.update(initialGuessNode, 1);
 
       /*
        * terminate finding initial guess.
        */
 
-      
-      
-      
       handleManager();
-      
-      if(activatedManager.isDone() == true)
+
+      if (activatedManager.isDone() == true)
       {
-         if(activatedManager.hasFail())
+         if (activatedManager.hasFail())
          {
             PrintTools.info("has Fail");
             setOutputStatus(toolboxSolution, 1);
@@ -519,16 +513,23 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          }
       }
    }
-   
+
    private void handleManager()
    {
       SpatialNode desiredNode = activatedManager.createDesiredNode();
-      updateValidity(desiredNode);
 
-      visualizedNode = desiredNode;
+      if (desiredNode != null)
+      {
+         updateValidity(desiredNode);
 
-      activatedManager.putDesiredNode(desiredNode);
-      nodePlotter.update(desiredNode, 1);
+         activatedManager.putDesiredNode(desiredNode);
+
+         visualizedNode = desiredNode;
+
+         nodePlotter.update(desiredNode, 1);
+      }
+
+      activatedManager.update();
    }
 
    @Override
@@ -563,15 +564,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
 
-      
-      
-      
       ExploringDefinition spatialDataDefinition = new ExploringDefinition(trajectoryCommands, rigidBodyCommands);
 
       // initialize manager.
       this.initialGuessManager = new InitialGuessManager(spatialDataDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
                                                          terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
-      this.expandingManager = new ExpandingManager(DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+      this.expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
 
       nodePlotter = new SpatialNodePlotter(toolboxData, visualize);
 
