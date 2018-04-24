@@ -13,7 +13,7 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Rigi
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
-public class ExploringDefinition
+public abstract class ExploringDefinition
 {
    private static List<ExploringRigidBody> allExploringRigidBodies = new ArrayList<>();
 
@@ -24,16 +24,10 @@ public class ExploringDefinition
       Map<RigidBody, RigidBodyExplorationConfigurationCommand> rigidBodyToExploringMap = new HashMap<>();
 
       for (int i = 0; i < endEffectorTrajectories.size(); i++)
-      {
          rigidBodyToTrajectoryMap.put(endEffectorTrajectories.get(i).getEndEffector(), endEffectorTrajectories.get(i));
-         PrintTools.info("" + endEffectorTrajectories.get(i).getEndEffector());
-      }
 
       for (int i = 0; i < explorationConfigurations.size(); i++)
-      {
          rigidBodyToExploringMap.put(explorationConfigurations.get(i).getRigidBody(), explorationConfigurations.get(i));
-         PrintTools.info("" + explorationConfigurations.get(i).getRigidBody());
-      }
 
       Set<RigidBody> rigidBodySet = new HashSet<>();
       rigidBodySet.addAll(rigidBodyToTrajectoryMap.keySet());
@@ -50,6 +44,8 @@ public class ExploringDefinition
          allExploringRigidBodies.add(exploringRigidBody);
       }
    }
+
+   public abstract double getExploringProgress(SpatialNode node);
 
    public SpatialData getRandomSpatialData()
    {

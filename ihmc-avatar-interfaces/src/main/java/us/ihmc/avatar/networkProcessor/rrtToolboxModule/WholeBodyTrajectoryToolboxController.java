@@ -26,6 +26,8 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Rigi
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WholeBodyTrajectoryToolboxConfigurationCommand;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinitionOnConstrainedTrajectory;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinitionToReachingManifold;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodeTree;
@@ -106,6 +108,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    /*
     * Configuration and Time space Tree
     */
+   // TODO : should be removed.
    private SpatialNodeTree tree;
    private final List<SpatialNode> path = new ArrayList<>();
    private final double minTimeInterval = 0.05;
@@ -509,6 +512,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             PrintTools.info("success");
             state.set(CWBToolboxState.EXPAND_TREE);
             expandingManager.initialize();
+            expandingManager.getInitialGuesses(initialGuessManager.getValidInitialGuesses());
             activatedManager.terminalManager();
          }
       }
@@ -562,28 +566,30 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       configurationConverter.updateFullRobotModel(initialConfiguration);
 
+      // TODO : remove
       toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
-
-      ExploringDefinition spatialDataDefinition = new ExploringDefinition(trajectoryCommands, rigidBodyCommands);
-
-      // initialize manager.
-      this.initialGuessManager = new InitialGuessManager(spatialDataDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
-                                                         terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
-      this.expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
-
-      nodePlotter = new SpatialNodePlotter(toolboxData, visualize);
 
       // Initiate tree.
       tree = new SpatialNodeTree();
 
       if (trajectoryCommands != null)
       {
+         ExploringDefinition spatialDataDefinition = new ExploringDefinitionOnConstrainedTrajectory(trajectoryCommands, rigidBodyCommands);
+
+         initialGuessManager = new InitialGuessManager(spatialDataDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
+                                                            terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
+         expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+         
          state.set(CWBToolboxState.FIND_INITIAL_GUESS);
 
          initialGuessManager.initialize();
       }
       else if (manifoldCommands != null)
       {
+         ExploringDefinition spatialDataDefinition = new ExploringDefinitionToReachingManifold(null, manifoldCommands, rigidBodyCommands);
+
+         expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+         
          state.set(CWBToolboxState.EXPAND_TREE);
          SpatialData rootData = toolboxData.createRandomSpatialData();
          SpatialNode rootNode = new SpatialNode(rootData);
@@ -600,6 +606,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          return false;
       }
 
+      // TODO : toolboxData should be replaced with ExplorationDefinition.
+      nodePlotter = new SpatialNodePlotter(toolboxData, visualize);
       return true;
    }
 

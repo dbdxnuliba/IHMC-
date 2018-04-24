@@ -5,10 +5,10 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 public interface WholeBodyTrajectoryToolboxManagerInterface
 {
    abstract SpatialNode createDesiredNode();
-   
+
    abstract void putDesiredNode(SpatialNode desiredNode);
 
    abstract boolean isDone();
-   
+
    abstract boolean hasFail();
 }

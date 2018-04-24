@@ -7,7 +7,6 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class SpatialNode
 {
-   private double progress;
    private double time;
    private SpatialData spatialData;
 
@@ -18,29 +17,17 @@ public class SpatialNode
 
    public SpatialNode(SpatialData spatialData)
    {
-      this(0.0, spatialData, 0.0);
-   }
-   
-   public SpatialNode(SpatialData spatialData, double progress)
-   {
-      this(0.0, spatialData, progress);
-   }
-   
-   public SpatialNode(double time, SpatialData spatialData)
-   {
-      this(time, spatialData, 0.0);
+      this(0.0, spatialData);
    }
 
-   public SpatialNode(double time, SpatialData spatialData, double progress)
+   public SpatialNode(double time, SpatialData spatialData)
    {
-      this.progress = progress;
       this.time = time;
       this.spatialData = spatialData;
    }
 
    public SpatialNode(SpatialNode other)
    {
-      progress = other.progress;
       time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
@@ -214,11 +201,6 @@ public class SpatialNode
    {
       return time;
    }
-   
-   public double getProgress()
-   {
-      return progress;
-   }
 
    public void setConfiguration(KinematicsToolboxOutputStatus configuration)
    {
@@ -265,11 +247,11 @@ public class SpatialNode
       return null;
    }
 
-//   public void setSpatialsAndConfiguration(SpatialNode other)
-//   {
-//      time = other.time;
-//      spatialData = new SpatialData(other.getSpatialData());
-//      configuration = new KinematicsToolboxOutputStatus(other.configuration);
-//      validity = other.validity;
-//   }
+   //   public void setSpatialsAndConfiguration(SpatialNode other)
+   //   {
+   //      time = other.time;
+   //      spatialData = new SpatialData(other.getSpatialData());
+   //      configuration = new KinematicsToolboxOutputStatus(other.configuration);
+   //      validity = other.validity;
+   //   }
 }
