@@ -1,7 +1,8 @@
 package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory;
 
+import java.util.Random;
+
 import gnu.trove.list.TByteList;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
@@ -9,6 +10,8 @@ public enum ConfigurationSpaceName
 {
    X, Y, Z, ROLL, PITCH, YAW, SE3;
 
+   public static final Random random = new Random(1);
+   
    public static final ConfigurationSpaceName[] values = values();
 
    public double getDefaultExplorationLowerLimit()
