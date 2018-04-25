@@ -18,14 +18,14 @@ import us.ihmc.robotics.geometry.AngleTools;
  */
 public class SpatialData
 {
-   private final List<ExploringRigidBody> exploringRigidBodies;
+   private final List<String> exploringRigidBodyNames;
    private final List<Pose3D> rigidBodySpatials;
 
    private final List<ExploringConfigurationSpace> exploringConfigurationSpaces;
 
    public SpatialData()
    {
-      exploringRigidBodies = new ArrayList<ExploringRigidBody>();
+      exploringRigidBodyNames = new ArrayList<String>();
       rigidBodySpatials = new ArrayList<Pose3D>();
 
       exploringConfigurationSpaces = new ArrayList<ExploringConfigurationSpace>();
@@ -34,20 +34,22 @@ public class SpatialData
    public SpatialData(SpatialData other)
    {
       this();
-      exploringRigidBodies.addAll(other.exploringRigidBodies);
+      exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
       rigidBodySpatials.addAll(other.rigidBodySpatials);
-      exploringConfigurationSpaces.addAll(other.exploringConfigurationSpaces);
+      for (int i = 0; i < other.exploringConfigurationSpaces.size(); i++)
+         exploringConfigurationSpaces.add(new ExploringConfigurationSpace(other.exploringConfigurationSpaces.get(i)));
    }
 
-   public void appendSpatial(ExploringRigidBody exploringRigidBody, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform pose)
+   public void appendSpatial(String exploringRigidBodyName, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform pose)
    {
-      this.exploringRigidBodies.add(exploringRigidBody);
+      this.exploringRigidBodyNames.add(exploringRigidBodyName);
       this.rigidBodySpatials.add(new Pose3D(pose));
       this.exploringConfigurationSpaces.addAll(exploringConfigurations);
    }
 
    public void interpolate(SpatialData dataOne, SpatialData dataTwo, double alpha)
    {
+      // TODO : check rigid body name
       for (int i = 0; i < rigidBodySpatials.size(); i++)
          rigidBodySpatials.get(i).interpolate(dataOne.getRigidBodySpatials().get(i), dataTwo.getRigidBodySpatials().get(i), alpha);
 
@@ -143,7 +145,7 @@ public class SpatialData
 
    public String getRigidBodyName(int i)
    {
-      return exploringRigidBodies.get(i).getRigidBody().getName();
+      return exploringRigidBodyNames.get(i);
    }
 
    public List<Pose3D> getRigidBodySpatials()
@@ -153,9 +155,9 @@ public class SpatialData
 
    public int getNumberOfExploringRigidBodies()
    {
-      return exploringRigidBodies.size();
+      return exploringRigidBodyNames.size();
    }
-   
+
    public int getExploringDimension()
    {
       int exploringDimension = 0;
@@ -169,25 +171,12 @@ public class SpatialData
    public List<String> getExploringConfigurationNames()
    {
       List<String> names = new ArrayList<String>();
-
-      for (int i = 0; i < exploringRigidBodies.size(); i++)
+      
+      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
       {
-         ExploringRigidBody exploringRigidBody = this.exploringRigidBodies.get(i);
-         for (int j = 0; j < exploringRigidBody.getExploringConfigurationSpaces().size(); j++)
-         {
-            ExploringConfigurationSpace exploringConfigurationSpace = exploringRigidBody.getExploringConfigurationSpaces().get(j);
-            ConfigurationSpaceName configurationSpaceName = exploringConfigurationSpace.getConfigurationSpaceName();
-
-            if (configurationSpaceName == ConfigurationSpaceName.SE3)
-            {
-               names.add(exploringRigidBody.getRigidBody().getName() + "_" + ConfigurationSpaceName.SE3.name() + "_Roll");
-               names.add(exploringRigidBody.getRigidBody().getName() + "_" + ConfigurationSpaceName.SE3.name() + "_Pitch");
-               names.add(exploringRigidBody.getRigidBody().getName() + "_" + ConfigurationSpaceName.SE3.name() + "_Yaw");
-            }
-            else
-               names.add(exploringRigidBody.getRigidBody().getName() + "_" + configurationSpaceName.name());
-         }
-
+         ExploringConfigurationSpace exploringConfigurationSpace = exploringConfigurationSpaces.get(i);
+         for (int j = 0; j < exploringConfigurationSpace.getConfigurationNames().length; j++)
+            names.add("" + exploringConfigurationSpace.getConfigurationNames()[j]);
       }
 
       return names;

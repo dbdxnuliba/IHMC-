@@ -19,11 +19,6 @@ public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
       this.terminalConditionNumberOfValidNodes = terminalConditionNumberOfValidNodes;
       this.initialGuesses = new ArrayList<SpatialNode>();
    }
-
-   public void addInitialGuess(SpatialNode node)
-   {
-      initialGuesses.add(node);  
-   }
    
    public List<SpatialNode> getValidInitialGuesses()
    {
@@ -57,6 +52,12 @@ public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
       if(desiredNode.isValid())
       {
          initialGuesses.add(desiredNode);
+         
+//         TDoubleArrayList exploringConfigurations = desiredNode.getSpatialData().getExploringConfigurations();
+//         for(int j=0;j<exploringConfigurations.size();j++)
+//         {
+//            PrintTools.info("valid "+exploringConfigurations.get(j));
+//         }
       }
    }
 

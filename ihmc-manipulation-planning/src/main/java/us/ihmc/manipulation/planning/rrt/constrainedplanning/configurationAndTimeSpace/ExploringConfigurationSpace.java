@@ -3,9 +3,11 @@ package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTi
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class ExploringConfigurationSpace
 {
+   private String configurationNamePrefix;
    private final ConfigurationSpaceName configurationSpaceName;
 
    private TDoubleArrayList configuration = new TDoubleArrayList();
@@ -13,8 +15,16 @@ public class ExploringConfigurationSpace
    private double lowerLimit;
    private double upperLimit;
 
-   public ExploringConfigurationSpace(ConfigurationSpaceName configurationSpaceName, double lowerLimit, double upperLimit)
+   public ExploringConfigurationSpace(ExploringConfigurationSpace other)
    {
+      this(other.configurationNamePrefix, other.configurationSpaceName, other.lowerLimit, other.upperLimit);
+      for(int i=0;i<other.configuration.size();i++)
+         configuration.set(i, other.configuration.get(i));
+   }
+   
+   public ExploringConfigurationSpace(String prefix, ConfigurationSpaceName configurationSpaceName, double lowerLimit, double upperLimit)
+   {
+      configurationNamePrefix = prefix;
       this.configurationSpaceName = configurationSpaceName;
 
       if (configurationSpaceName == ConfigurationSpaceName.SE3)
@@ -29,7 +39,7 @@ public class ExploringConfigurationSpace
       this.lowerLimit = lowerLimit;
       this.upperLimit = upperLimit;
    }
-
+   
    public ConfigurationSpaceName getConfigurationSpaceName()
    {
       return configurationSpaceName;
@@ -38,6 +48,21 @@ public class ExploringConfigurationSpace
    public double[] getConfigurations()
    {
       return configuration.toArray();
+   }
+   
+   public String[] getConfigurationNames()
+   {
+      String[] configurationNames = new String[configuration.size()];
+      if(configurationSpaceName == ConfigurationSpaceName.SE3)
+      {
+         configurationNames[0] = configurationNamePrefix + configurationSpaceName.name() + "_Roll";
+         configurationNames[1] = configurationNamePrefix + configurationSpaceName.name() + "_Pitch";
+         configurationNames[2] = configurationNamePrefix + configurationSpaceName.name() + "_Yaw";
+      }
+      else
+         configurationNames[0] = configurationNamePrefix + configurationSpaceName.name();
+      
+      return configurationNames;
    }
 
    public void interpolate(ExploringConfigurationSpace one, ExploringConfigurationSpace two, double alpha)

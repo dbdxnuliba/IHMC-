@@ -65,6 +65,12 @@ public class SpatialNodePlotter
       }
    }
 
+   public void update(List<SpatialNode> path, int type)
+   {
+      for(int i=0;i<path.size();i++)
+         update(path.get(i), type);
+   }
+   
    /**
     * 1::node
     * 2::path
@@ -76,8 +82,6 @@ public class SpatialNodePlotter
       Color color;
       double diameter = 0.01;
       
-      TDoubleArrayList configurations = node.getSpatialData().getExploringConfigurations();
-
       for (int nodeIndex = 0; nodeIndex < dimensionOfConfigurations; nodeIndex++)
       {
          String prefix;
@@ -92,7 +96,7 @@ public class SpatialNodePlotter
             else
             {
                prefix = "" + cnt + "_invalid_" + nodeIndex;
-               diameter = 0.01;
+               diameter = 0.005;
                color = Color.red;
             }
             break;
@@ -110,6 +114,7 @@ public class SpatialNodePlotter
             break;
          }
 
+         TDoubleArrayList configurations = node.getSpatialData().getExploringConfigurations();
          double configurationData = configurations.get(nodeIndex);
 
          if (node.getParent() != null && node.isValid())

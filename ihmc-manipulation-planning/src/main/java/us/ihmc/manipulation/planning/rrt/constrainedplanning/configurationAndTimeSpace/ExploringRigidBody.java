@@ -8,6 +8,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.MathTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
@@ -24,6 +25,8 @@ public class ExploringRigidBody
    private final TDoubleArrayList waypointTimes = new TDoubleArrayList();
    private final ArrayList<Pose3D> waypoints = new ArrayList<Pose3D>();
 
+   private final Pose3D controlFramePose = new Pose3D();
+   
    private final SelectionMatrix6D trajectorySelectionMatrix = new SelectionMatrix6D();
    private final SelectionMatrix6D explorationSelectionMatrix = new SelectionMatrix6D();
 
@@ -64,6 +67,10 @@ public class ExploringRigidBody
          Pose3D originOfRigidBody = new Pose3D(rigidBody.getBodyFixedFrame().getTransformToWorldFrame());
          waypoints.add(originOfRigidBody);
          waypoints.add(originOfRigidBody);
+         
+         // TODO : for reaching, since there is no trajectory command, we should put proper hand control frame on this.         
+         controlFramePose.setToZero();
+         
          trajectorySelectionMatrix.clearSelection();
          weight = DEFAULT_WEIGHT;
       }
@@ -75,6 +82,11 @@ public class ExploringRigidBody
             waypointTimes.add(trajectoryCommand.getWaypointTime(i));
             waypoints.add(new Pose3D(trajectoryCommand.getWaypoint(i)));
          }
+         
+         FramePose3D controlFramePose = new FramePose3D(trajectoryCommand.getControlFramePose());
+         controlFramePose.changeFrame(trajectoryCommand.getEndEffector().getBodyFixedFrame());
+         this.controlFramePose.set(controlFramePose);
+         
          trajectorySelectionMatrix.set(trajectoryCommand.getSelectionMatrix());
 
          if (Double.isNaN(trajectoryCommand.getWeight()) || trajectoryCommand.getWeight() < 0.0)
@@ -87,7 +99,8 @@ public class ExploringRigidBody
       explorationSelectionMatrix.clearSelection();
       for (int i = 0; i < explorationCommand.getNumberOfDegreesOfFreedomToExplore(); i++)
       {
-         ExploringConfigurationSpace exploringConfigurationSpace = new ExploringConfigurationSpace(explorationCommand.getDegreeOfFreedomToExplore(i),
+         ExploringConfigurationSpace exploringConfigurationSpace = new ExploringConfigurationSpace(rigidBody.getName(),
+                                                                                                   explorationCommand.getDegreeOfFreedomToExplore(i),
                                                                                                    explorationCommand.getExplorationRangeLowerLimits(i),
                                                                                                    explorationCommand.getExplorationRangeUpperLimits(i));
 
@@ -123,7 +136,7 @@ public class ExploringRigidBody
          exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(pose);
       ;
 
-      spatialData.appendSpatial(this, exploringConfigurationSpaces, pose);
+      spatialData.appendSpatial(rigidBody.getName(), exploringConfigurationSpaces, pose);
    }
 
    private void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)
@@ -230,8 +243,8 @@ public class ExploringRigidBody
       KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(rigidBody);
       message.getDesiredPositionInWorld().set(desiredEndEffectorPose.getPosition());
       message.getDesiredOrientationInWorld().set(desiredEndEffectorPose.getOrientation());
-      //      message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
-      //      message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
       message.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getAngularPart()));
       message.getLinearSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getLinearPart()));
       message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));

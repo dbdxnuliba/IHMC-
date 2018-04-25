@@ -1,6 +1,7 @@
 package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tools.TupleTools;
 import us.ihmc.robotics.screwTheory.RigidBody;
@@ -10,10 +11,10 @@ public class SpatialNode
    private double time;
    private SpatialData spatialData;
 
-   private SpatialNode parent;
+   private SpatialNode parent = null;
 
    private boolean validity = true;
-   private KinematicsToolboxOutputStatus configuration;
+   private KinematicsToolboxOutputStatus configuration = null;
 
    public SpatialNode(SpatialData spatialData)
    {
@@ -23,7 +24,7 @@ public class SpatialNode
    public SpatialNode(double time, SpatialData spatialData)
    {
       this.time = time;
-      this.spatialData = spatialData;
+      this.spatialData = new SpatialData(spatialData);
    }
 
    public SpatialNode(SpatialNode other)
@@ -31,6 +32,7 @@ public class SpatialNode
       time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
+      // TODO : ?????
       if (other.parent != null)
          parent = new SpatialNode(other.parent);
       else
@@ -98,7 +100,6 @@ public class SpatialNode
    public void interpolate(SpatialNode nodeOne, SpatialNode nodeTwo, double alpha)
    {
       time = TupleTools.interpolate(nodeOne.time, nodeTwo.time, alpha);
-
       spatialData.interpolate(nodeOne.getSpatialData(), nodeTwo.getSpatialData(), alpha);
    }
 

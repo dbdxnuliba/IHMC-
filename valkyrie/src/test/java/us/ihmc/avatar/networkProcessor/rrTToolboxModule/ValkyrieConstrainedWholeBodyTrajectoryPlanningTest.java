@@ -16,6 +16,7 @@ import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
 import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
@@ -128,6 +129,7 @@ public class ValkyrieConstrainedWholeBodyTrajectoryPlanningTest extends AvatarWh
       
       RigidBody chest = fullRobotModel.getChest();
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.PITCH};
+      //ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
 
       // run test
@@ -136,4 +138,57 @@ public class ValkyrieConstrainedWholeBodyTrajectoryPlanningTest extends AvatarWh
       runTrajectoryTest(message, maxNumberOfIterations);
    }
    
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testValveMotion() throws Exception, UnreasonableAccelerationException
+   {
+      // trajectory parameter
+      double trajectoryTime = 5.0;
+      boolean closingDirectionCW = false;
+      double closingRadius = 0.2;
+      double closingAngle = Math.PI;
+      Vector3D valveNormalVector = new Vector3D(-1.0, 0.2, 0.0);
+      Point3D valveCenterPosition = new Point3D(0.5, -0.4, 1.1);
+
+      // wbt toolbox configuration message
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+      WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
+      configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
+      configuration.setMaximumExpansionSize(1000);
+
+      // trajectory message
+      List<WaypointBasedTrajectoryMessage> handTrajectories = new ArrayList<>();
+      List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+
+      double timeResolution = trajectoryTime / 100.0;
+
+      RobotSide robotSide = RobotSide.RIGHT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeClosingValveTrajectory(time, trajectoryTime, closingRadius, closingDirectionCW,
+                                                                                                      closingAngle, valveCenterPosition, valveNormalVector);
+
+      SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
+      selectionMatrix.resetSelection();
+      WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
+                                                                                                                 handFunction, selectionMatrix);
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
+
+      trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+
+      handTrajectories.add(trajectory);
+
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
+
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
+
+      // to hold left hand. TODO : implement.
+      //rigidBodyConfigurations.add(new RigidBodyExplorationConfigurationMessage(fullRobotModel.getHand(RobotSide.LEFT)));
+
+      // run test      
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
+      runTrajectoryTest(message, maxNumberOfIterations);
+   }
 }

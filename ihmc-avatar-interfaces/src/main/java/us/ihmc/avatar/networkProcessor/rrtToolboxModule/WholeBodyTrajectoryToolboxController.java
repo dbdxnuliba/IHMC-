@@ -115,11 +115,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private final List<SpatialNode> path = new ArrayList<>();
    private final double minTimeInterval = 0.05;
 
-   private final YoInteger currentExpansionSize = new YoInteger("currentExpansionSize", registry);
    private final YoInteger maximumExpansionSize = new YoInteger("maximumExpansionSize", registry);
-
-   private final YoInteger currentNumberOfValidInitialGuesses = new YoInteger("currentNumberOfValidInitialGuesses", registry);
-   private final YoInteger currentNumberOfInitialGuesses = new YoInteger("currentNumberOfInitialGuesses", registry);
    private final YoInteger desiredNumberOfInitialGuesses = new YoInteger("desiredNumberOfInitialGuesses", registry);
 
    private YoInteger numberOfIterationForShortcutOptimization = new YoInteger("numberOfIterationForShortcutOptimization", registry);
@@ -288,66 +284,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
     */
    private void shortcutPath()
    {
-      path.clear();
-
-      List<SpatialNode> revertedPath = new ArrayList<SpatialNode>();
-      SpatialNode currentNode = new SpatialNode(tree.getLastNodeAdded());
-      revertedPath.add(currentNode);
-
-      while (true)
-      {
-         currentNode = currentNode.getParent();
-         if (currentNode != null)
-            revertedPath.add(new SpatialNode(currentNode));
-         else
-            break;
-      }
-
-      int revertedPathSize = revertedPath.size();
-
-      path.add(new SpatialNode(revertedPath.get(revertedPathSize - 1)));
-
-      // filtering out too short time gap node.
-      // test ahead adding and attach only valid filtering.
-      // TODO : but still has problem. To test ahead whole shortcut would be too heavy.      
-      int currentIndex = 0;
-      int latestAddedIndexOfRevertedPath = revertedPathSize - 1;
-      for (int j = revertedPathSize - 2; j > 0; j--)
-      {
-         double timeGapWithLatestNode = revertedPath.get(j).getTime() - path.get(currentIndex).getTime();
-
-         if (timeGapWithLatestNode > minTimeInterval)
-         {
-            SpatialNode dummyNode = new SpatialNode(revertedPath.get(j));
-            dummyNode.setParent(path.get(currentIndex));
-            updateValidity(dummyNode);
-            if (dummyNode.isValid())
-            {
-               path.add(new SpatialNode(revertedPath.get(j)));
-               latestAddedIndexOfRevertedPath = j;
-               currentIndex++;
-            }
-            else
-            {
-               j = latestAddedIndexOfRevertedPath - 1;
-
-               path.add(new SpatialNode(revertedPath.get(j)));
-               latestAddedIndexOfRevertedPath = j;
-
-               currentIndex++;
-            }
-         }
-      }
-      path.add(new SpatialNode(revertedPath.get(0)));
-
-      // set every parent nodes.
-      for (int i = 0; i < path.size() - 1; i++)
-         path.get(i + 1).setParent(path.get(i));
-
-      // plotting before smoothing.
-      for (int i = 0; i < path.size(); i++)
-         nodePlotter.update(path.get(i), 2);
-
       // smoothing over one mile stone node.
       int numberOfShortcut = 0;
       for (int i = 0; i < numberOfIterationForShortcutOptimization.getIntegerValue(); i++)
@@ -361,8 +297,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       for (int i = 0; i < path.size(); i++)
          nodePlotter.update(path.get(i), 3);
 
-      if (VERBOSE)
-         PrintTools.info("the size of the path is " + path.size() + " before dismissing " + revertedPathSize + " shortcut " + numberOfShortcut);
+//      if (VERBOSE)
+//         PrintTools.info("the size of the path is " + path.size() + " before dismissing " + revertedPathSize + " shortcut " + numberOfShortcut);
 
       /*
        * terminate state
@@ -376,83 +312,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void expandingTree()
    {
       handleManager();
-
-      //      currentExpansionSize.increment();
-      //      boolean isExpandingTerminalCondition = false;
-      //
-      //      boolean randomNodeHasParentNode = false;
-      //      int maximumPatientCounter = 1000;
-      //      while (!randomNodeHasParentNode)
-      //      {
-      //         SpatialNode randomNode;
-      //
-      //         SpatialData randomData = toolboxData.createRandomSpatialData();
-      //         double nextDouble = WholeBodyTrajectoryToolboxSettings.randomManager.nextDouble();
-      //         double randomTime = nextDouble * (1.0 + WholeBodyTrajectoryToolboxSettings.timeCoefficient * tree.getMostAdvancedTime());
-      //
-      //         randomNode = new SpatialNode(randomTime, randomData);
-      //
-      //         tree.setRandomNode(randomNode);
-      //         if (trajectoryCommands != null)
-      //            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(true);
-      //         if (manifoldCommands != null)
-      //            randomNodeHasParentNode = tree.findNearestValidNodeToCandidate(false);
-      //
-      //         if (randomNodeHasParentNode)
-      //         {
-      //            tree.limitCandidateDistanceFromParent(toolboxData.getTrajectoryTime());
-      //            SpatialNode candidate = tree.getCandidate();
-      //            updateValidity(candidate);
-      //
-      //            /*
-      //             * visualize
-      //             */
-      //            visualizedNode = new SpatialNode(candidate);
-      //            nodePlotter.update(candidate, 1);
-      //
-      //            if (candidate.isValid())
-      //            {
-      //               tree.attachCandidate();
-      //
-      //               // TODO: generic terminal conditions.
-      //               if (trajectoryCommands != null)
-      //               {
-      //                  if (tree.getMostAdvancedTime() >= toolboxData.getTrajectoryTime())
-      //                     isExpandingTerminalCondition = true;
-      //               }
-      //               else if (manifoldCommands != null)
-      //               {
-      //                  Pose3D testFrame = toolboxData.getTestFrame(tree.getLastNodeAdded());
-      //
-      //                  testFramePose.setPosition(testFrame.getPosition());
-      //                  testFramePose.setOrientation(testFrame.getOrientation());
-      //                  testFrameViz.setVisible(true);
-      //                  testFrameViz.update();
-      //
-      //                  // TODO : terminal condition for manifold command.
-      //                  double maximumDistanceFromManifolds = toolboxData.getMaximumDistanceFromManifolds(tree.getLastNodeAdded());
-      //                  minimumDistanceFromManifold.set(maximumDistanceFromManifolds);
-      //                  if (maximumDistanceFromManifolds < 0.05)
-      //                     isExpandingTerminalCondition = true;
-      //               }
-      //               else
-      //               {
-      //                  if (VERBOSE)
-      //                     PrintTools.warn("any command is available");
-      //               }
-      //            }
-      //            else
-      //            {
-      //               tree.dismissCandidate();
-      //            }
-      //         }
-      //         else
-      //         {
-      //            maximumPatientCounter--;
-      //            if (maximumPatientCounter == 0)
-      //               continue;
-      //         }
-      //      }
       
       if (activatedManager.isDone() == true)
       {
@@ -468,6 +327,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             PrintTools.info("success");
             state.set(CWBToolboxState.SHORTCUT_PATH);
             //SHORTCUT_PATH.initialize();
+            nodePlotter.update(expandingManager.getPath(), 2);
+            path.addAll(expandingManager.getPath());
             activatedManager.terminalManager();
          }
       }
@@ -489,11 +350,22 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          }
          else
          {
-            PrintTools.info("success");
+            PrintTools.info("success "+initialGuessManager.getValidInitialGuesses().size());
             state.set(CWBToolboxState.EXPAND_TREE);
             expandingManager.initialize();
-            expandingManager.getInitialGuesses(initialGuessManager.getValidInitialGuesses());
+            expandingManager.setInitialGuesses(initialGuessManager.getValidInitialGuesses());
             activatedManager.terminalManager();
+            
+//            for(int i=0;i<initialGuessManager.getValidInitialGuesses().size();i++)
+//            {
+//               SpatialNode spatialNode = initialGuessManager.getValidInitialGuesses().get(i);
+//               TDoubleArrayList exploringConfigurations = spatialNode.getSpatialData().getExploringConfigurations();
+//               PrintTools.info(""+i);
+//               for(int j=0;j<exploringConfigurations.size();j++)
+//               {
+//                  PrintTools.info(""+exploringConfigurations.get(j));
+//               }
+//            }
          }
       }
    }
@@ -501,8 +373,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void handleManager()
    {
       SpatialNode desiredNode = activatedManager.createDesiredNode();
-      PrintTools.info(""+desiredNode.getTime());
-
+      
       if (desiredNode != null)
       {
          updateValidity(desiredNode);
@@ -513,6 +384,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          nodePlotter.update(desiredNode, 1);
       }
+      else
+         PrintTools.info("no node");
 
       activatedManager.update();
    }
