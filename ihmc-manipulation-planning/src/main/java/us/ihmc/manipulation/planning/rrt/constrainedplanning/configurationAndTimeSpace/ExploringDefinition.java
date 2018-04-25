@@ -45,7 +45,7 @@ public abstract class ExploringDefinition
          allExploringRigidBodies.add(exploringRigidBody);
       }
    }
-
+   
    public SpatialData getRandomSpatialData()
    {
       SpatialData randomSpatialData = new SpatialData();
@@ -76,4 +76,6 @@ public abstract class ExploringDefinition
    }
    
    public abstract double getExploringProgress(SpatialNode node);
+   
+   public abstract double getTrajectoryTime();
 }

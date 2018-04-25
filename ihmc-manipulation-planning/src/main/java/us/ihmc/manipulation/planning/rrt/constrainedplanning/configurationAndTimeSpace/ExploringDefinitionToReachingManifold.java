@@ -23,4 +23,10 @@ public class ExploringDefinitionToReachingManifold extends ExploringDefinition
       return 0;
    }
 
+   @Override
+   public double getTrajectoryTime()
+   {
+      return 0.0;
+   }
+
 }

@@ -15,7 +15,7 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
    private List<SpatialNode> inValidNodes = new ArrayList<SpatialNode>();
 
    private SpatialNode recentlyAddedNode = null;
-   
+
    private double advancedProgress = 0.0;
 
    private final static int maximumCountForWating = 100;
@@ -47,9 +47,9 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
       SpatialData randomSpatialData = exploringDefinition.getRandomSpatialData();
 
       double nextDouble = ConfigurationSpaceName.random.nextDouble();
-      double randomTime = nextDouble * (1.0 + timeCoefficient * advancedProgress);
-      
-      PrintTools.info("randomTime "+randomTime);
+      double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * advancedProgress);
+
+      PrintTools.info("randomTime " + randomTime);
 
       SpatialNode randomNode = new SpatialNode(randomTime, randomSpatialData);
       // find closest one.
@@ -89,6 +89,9 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
 
    private double getProgress()
    {
-      return exploringDefinition.getExploringProgress(recentlyAddedNode);
+      if (recentlyAddedNode != null)
+         return exploringDefinition.getExploringProgress(recentlyAddedNode);
+      else
+         return 0.0;
    }
 }

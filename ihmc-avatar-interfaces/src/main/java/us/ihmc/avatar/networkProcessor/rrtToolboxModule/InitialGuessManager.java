@@ -9,8 +9,6 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 
 public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
 {
-   
-   
    private int terminalConditionNumberOfValidNodes;
 
    private List<SpatialNode> initialGuesses;

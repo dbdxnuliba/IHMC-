@@ -453,7 +453,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       //               continue;
       //         }
       //      }
-
+      
       if (activatedManager.isDone() == true)
       {
          if (activatedManager.hasFail())
@@ -501,6 +501,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void handleManager()
    {
       SpatialNode desiredNode = activatedManager.createDesiredNode();
+      PrintTools.info(""+desiredNode.getTime());
 
       if (desiredNode != null)
       {
