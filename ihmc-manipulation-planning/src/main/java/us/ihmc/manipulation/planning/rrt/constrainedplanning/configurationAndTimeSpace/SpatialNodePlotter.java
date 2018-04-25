@@ -1,37 +1,39 @@
-package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
+package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.graphicsDescription.plotting.artifact.CircleArtifact;
 import us.ihmc.graphicsDescription.plotting.artifact.LineArtifact;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 import us.ihmc.plotting.Plotter;
 
 public class SpatialNodePlotter
 {
+   private ExploringDefinition spatialDefinition;
+
    private int dimensionOfConfigurations;
-   private double trajectoryTime;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
-   private double[] upperLimits;
-   private double[] lowerLimits;
 
    private int cnt;
 
    private boolean isFrameEnabled;
 
-   public SpatialNodePlotter(WholeBodyTrajectoryToolboxData toolboxData, boolean enabled)
+   public SpatialNodePlotter(ExploringDefinition spatialDefinition, boolean enabled)
    {
-      this.dimensionOfConfigurations = toolboxData.getExplorationDimension();
+      this.spatialDefinition = spatialDefinition;
+      SpatialData randomSpatialData = spatialDefinition.getRandomSpatialData();
+      dimensionOfConfigurations = randomSpatialData.getExploringDimension();
 
-      this.upperLimits = new double[dimensionOfConfigurations];
-      this.lowerLimits = new double[dimensionOfConfigurations];
-      this.trajectoryTime = toolboxData.getTrajectoryTime();
+      List<String> plotterNames = randomSpatialData.getExploringConfigurationNames();
 
-      for (int i = 0; i < dimensionOfConfigurations; i++)
+      PrintTools.info("########### "+dimensionOfConfigurations +" "+ plotterNames.size());
+      
+      for (int i = 0; i < plotterNames.size(); i++)
       {
          Plotter plotter = new Plotter();
 
@@ -43,10 +45,9 @@ public class SpatialNodePlotter
          plotter.setFocusPointX(0.5);
          plotter.setFocusPointY(0.0);
          plotters.add(plotter);
-         upperLimits[i] = Double.NEGATIVE_INFINITY;
-         lowerLimits[i] = Double.POSITIVE_INFINITY;
 
-         String plotterName = toolboxData.createRandomSpatialData().getConfigurationNames().get(i);
+         String plotterName = plotterNames.get(i);
+         PrintTools.info(""+i+" "+plotterName);
          isFrameEnabled = enabled;
          if (enabled)
             plotter.showInNewWindow(plotterName, false);
@@ -71,9 +72,11 @@ public class SpatialNodePlotter
     */
    public void update(SpatialNode node, int type)
    {
-      double normalizedTime = node.getTime() / trajectoryTime;
+      double progress = spatialDefinition.getExploringProgress(node);
       Color color;
       double diameter = 0.01;
+      
+      TDoubleArrayList configurations = node.getSpatialData().getExploringConfigurations();
 
       for (int nodeIndex = 0; nodeIndex < dimensionOfConfigurations; nodeIndex++)
       {
@@ -107,22 +110,22 @@ public class SpatialNodePlotter
             break;
          }
 
-         double configurationData = node.getConfigurationData(nodeIndex);
+         double configurationData = configurations.get(nodeIndex);
 
          if (node.getParent() != null && node.isValid())
          {
             SpatialNode parentNode = node.getParent();
-            double parentTime = parentNode.getTime() / trajectoryTime;
-            double parentConfigurationData = parentNode.getConfigurationData(nodeIndex);
+            double parentProgress = spatialDefinition.getExploringProgress(parentNode);
+            double parentConfigurationData = parentNode.getSpatialData().getExploringConfigurations().get(nodeIndex);
 
-            LineArtifact lineArtifact = new LineArtifact(prefix + "_line", new Point2D(parentTime, parentConfigurationData),
-                                                         new Point2D(normalizedTime, configurationData));
+            LineArtifact lineArtifact = new LineArtifact(prefix + "_line", new Point2D(parentProgress, parentConfigurationData),
+                                                         new Point2D(progress, configurationData));
 
             lineArtifact.setColor(color);
             plotters.get(nodeIndex).addArtifact(lineArtifact);
          }
 
-         CircleArtifact nodeArtifact = new CircleArtifact(prefix + "_node", normalizedTime, configurationData, diameter, true);
+         CircleArtifact nodeArtifact = new CircleArtifact(prefix + "_node", progress, configurationData, diameter, true);
          nodeArtifact.setColor(color);
 
          plotters.get(nodeIndex).addArtifact(nodeArtifact);

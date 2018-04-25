@@ -30,6 +30,7 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinitionToReachingManifold;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodePlotter;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodeTree;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.TreeStateVisualizer;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -60,7 +61,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private final WholeBodyTrajectoryToolboxOutputStatus toolboxSolution;
 
-   private WholeBodyTrajectoryToolboxData toolboxData;
+   private ExploringDefinition spatialDefinition;
+   //private WholeBodyTrajectoryToolboxData toolboxData;
 
    private List<RigidBodyExplorationConfigurationCommand> rigidBodyCommands = null;
    private List<WaypointBasedTrajectoryCommand> trajectoryCommands = null;
@@ -474,28 +476,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private void findInitialGuess()
    {
-      //      SpatialData initialGuessData = toolboxData.createRandomSpatialData();
-      //      SpatialNode initialGuessNode = new SpatialNode(initialGuessData);
-
-      //      SpatialNode initialGuessNode = activatedManager.createDesiredNode();
-      //      updateValidity(initialGuessNode);
-      //
-      //      visualizedNode = initialGuessNode;
-      //
-      //      activatedManager.putDesiredNode(initialGuessNode);
-
-      //      if (initialGuessNode.isValid())
-      //      {
-      //         tree.addInitialNode(initialGuessNode);
-      //         currentNumberOfValidInitialGuesses.increment();
-      //      }
-
-      //      nodePlotter.update(initialGuessNode, 1);
-
-      /*
-       * terminate finding initial guess.
-       */
-
       handleManager();
 
       if (activatedManager.isDone() == true)
@@ -567,18 +547,19 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       configurationConverter.updateFullRobotModel(initialConfiguration);
 
       // TODO : remove
-      toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
+      // toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
 
       // Initiate tree.
       tree = new SpatialNodeTree();
 
+//      ExploringDefinition spatialDefinition;
       if (trajectoryCommands != null)
       {
-         ExploringDefinition spatialDataDefinition = new ExploringDefinitionOnConstrainedTrajectory(trajectoryCommands, rigidBodyCommands);
+         spatialDefinition = new ExploringDefinitionOnConstrainedTrajectory(trajectoryCommands, rigidBodyCommands);
 
-         initialGuessManager = new InitialGuessManager(spatialDataDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
+         initialGuessManager = new InitialGuessManager(spatialDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
                                                             terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
-         expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+         expandingManager = new ExpandingManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
          
          state.set(CWBToolboxState.FIND_INITIAL_GUESS);
 
@@ -586,20 +567,21 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
       else if (manifoldCommands != null)
       {
-         ExploringDefinition spatialDataDefinition = new ExploringDefinitionToReachingManifold(null, manifoldCommands, rigidBodyCommands);
+         spatialDefinition = new ExploringDefinitionToReachingManifold(null, manifoldCommands, rigidBodyCommands);
 
-         expandingManager = new ExpandingManager(spatialDataDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+         expandingManager = new ExpandingManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
          
          state.set(CWBToolboxState.EXPAND_TREE);
-         SpatialData rootData = toolboxData.createRandomSpatialData();
-         SpatialNode rootNode = new SpatialNode(rootData);
-         rootNode.setConfiguration(initialConfiguration);
-         rootNode.initializeSpatialData();
-
-         nodePlotter.update(rootNode, 1);
-         tree.addInitialNode(rootNode);
-
+         
          expandingManager.initialize();
+         // TODO 
+//         SpatialData rootData = toolboxData.createRandomSpatialData();
+//         SpatialNode rootNode = new SpatialNode(rootData);
+//         rootNode.setConfiguration(initialConfiguration);
+//         rootNode.initializeSpatialData();
+//
+//         nodePlotter.update(rootNode, 1);
+//         tree.addInitialNode(rootNode);
       }
       else
       {
@@ -607,7 +589,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       // TODO : toolboxData should be replaced with ExplorationDefinition.
-      nodePlotter = new SpatialNodePlotter(toolboxData, visualize);
+      nodePlotter = new SpatialNodePlotter(spatialDefinition, visualize);
       return true;
    }
 
@@ -733,7 +715,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       humanoidKinematicsSolver.initialize();
-      humanoidKinematicsSolver.submit(toolboxData.createMessages(node));
+      humanoidKinematicsSolver.submit(spatialDefinition.createMessages(node));
       /*
        * result
        */
@@ -770,7 +752,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       if (visualize && visualizedNode != null)
       {
-         treeStateVisualizer.setCurrentNormalizedTime(visualizedNode.getTime() / toolboxData.getTrajectoryTime());
+         //treeStateVisualizer.setCurrentNormalizedTime(//sualizedNode.getTime() / toolboxData.getTrajectoryTime());
+         treeStateVisualizer.setCurrentNormalizedTime(spatialDefinition.getExploringProgress(visualizedNode));
          treeStateVisualizer.setCurrentCTTaskNodeValidity(visualizedNode.isValid());
          treeStateVisualizer.updateVisualizer();
 

@@ -3,8 +3,10 @@ package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTi
 import java.util.ArrayList;
 import java.util.List;
 
+import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import gnu.trove.list.array.TDoubleArrayList;
-import us.ihmc.commons.PrintTools;
+import us.ihmc.commons.MathTools;
+import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
@@ -107,22 +109,21 @@ public class ExploringRigidBody
       return rigidBody;
    }
 
-   // TODO : temporary to use appendSpatial in SpatialData.
+   public List<ExploringConfigurationSpace> getExploringConfigurationSpaces()
+   {
+      return exploringConfigurationSpaces;
+   }
+
    public void appendRandomSpatialData(SpatialData spatialData)
    {
-      String rigidBodyName = rigidBody.getName();
-      String[] configurationNames = new String[exploringConfigurationSpaces.size()];
-      double[] configurationData = new double[exploringConfigurationSpaces.size()];
       RigidBodyTransform pose = new RigidBodyTransform();
 
       for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-      {
-         configurationNames[i] = rigidBody + "_" + exploringConfigurationSpaces.get(i).getConfigurationSpaceName().name();
-         configurationData[i] = exploringConfigurationSpaces.get(i).getConfiguration();
-         pose.transform(exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform());
-      }
+         //pose.transform(exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform());
+         exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(pose);
+      ;
 
-      spatialData.appendSpatial(rigidBodyName, configurationNames, configurationData, pose);
+      spatialData.appendSpatial(this, exploringConfigurationSpaces, pose);
    }
 
    private void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)
@@ -181,5 +182,61 @@ public class ExploringRigidBody
          selectionMatrix.getAngularPart().selectZAxis(true);
 
       return selectionMatrix;
+   }
+
+   private Pose3D getPose(double time)
+   {
+      Pose3D current = new Pose3D();
+
+      Pose3D previous = null;
+      Pose3D next = null;
+      double t0 = Double.NaN;
+      double tf = Double.NaN;
+
+      for (int i = 1; i < waypoints.size(); i++)
+      {
+         t0 = waypointTimes.get(i - 1);
+         tf = waypointTimes.get(i);
+         previous = waypoints.get(i - 1);
+         next = waypoints.get(i);
+         if (time < tf)
+         {
+            break;
+         }
+      }
+
+      double alpha = (time - t0) / (tf - t0);
+      alpha = MathTools.clamp(alpha, 0, 1);
+
+      current.interpolate(previous, next, alpha);
+
+      return current;
+   }
+
+   private Pose3D appendPoseToTrajectory(double timeInTrajectory, Pose3D poseToAppend)
+   {
+      Pose3D pose = getPose(timeInTrajectory);
+
+      RigidBodyTransform rigidBodyTransform = new RigidBodyTransform(poseToAppend.getOrientation(), poseToAppend.getPosition());
+      pose.appendTransform(rigidBodyTransform);
+
+      return pose;
+   }
+
+   public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, Pose3D poseToAppend)
+   {
+      Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
+
+      KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(rigidBody);
+      message.getDesiredPositionInWorld().set(desiredEndEffectorPose.getPosition());
+      message.getDesiredOrientationInWorld().set(desiredEndEffectorPose.getOrientation());
+      //      message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      //      message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      message.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getAngularPart()));
+      message.getLinearSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getLinearPart()));
+      message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
+      message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
+
+      return message;
    }
 }

@@ -41,11 +41,6 @@ public class SpatialNode
          configuration = new KinematicsToolboxOutputStatus(other.configuration);
    }
 
-   public void initializeSpatialData()
-   {
-      spatialData.initializeData();
-   }
-
    public double getTimeGap(SpatialNode other)
    {
       if (getTime() > other.getTime())
@@ -162,16 +157,6 @@ public class SpatialNode
       return spatialNode;
    }
 
-   public double getConfigurationData(int index)
-   {
-      return spatialData.getConfigurationData().get(index);
-   }
-
-   public String getConfigurationName(int index)
-   {
-      return spatialData.getConfigurationNames().get(index);
-   }
-
    public SpatialData getSpatialData()
    {
       return spatialData;
@@ -222,16 +207,6 @@ public class SpatialNode
       return validity;
    }
 
-   public int getSize()
-   {
-      return spatialData.getRigidBodyNames().size();
-   }
-
-   public String getName(int index)
-   {
-      return spatialData.getRigidBodyNames().get(index);
-   }
-
    public Pose3D getSpatialData(int index)
    {
       return spatialData.getRigidBodySpatials().get(index);
@@ -239,9 +214,9 @@ public class SpatialNode
 
    public Pose3D getSpatialData(RigidBody rigidBody)
    {
-      for (int i = 0; i < spatialData.getRigidBodyNames().size(); i++)
+      for (int i = 0; i < spatialData.getNumberOfExploringRigidBodies(); i++)
       {
-         if (spatialData.getRigidBodyNames().get(i).equals(rigidBody.getName()))
+         if (spatialData.getRigidBodyName(i).equals(rigidBody.getName()))
             return getSpatialData(i);
       }
       return null;

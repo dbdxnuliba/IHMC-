@@ -2,23 +2,24 @@ package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
+import us.ihmc.commons.PrintTools;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 
 public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
 {
-   // Temp : for efficient debug.
-   private final Random random = new Random(1);
-
    private List<SpatialNode> validNodes = new ArrayList<SpatialNode>();
    private List<SpatialNode> inValidNodes = new ArrayList<SpatialNode>();
 
    private SpatialNode recentlyAddedNode = null;
+   
+   private double advancedProgress = 0.0;
 
    private final static int maximumCountForWating = 100;
+   private final static double timeCoefficient = 2.5;
 
    public ExpandingManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate)
    {
@@ -45,10 +46,12 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
       // create random node.
       SpatialData randomSpatialData = exploringDefinition.getRandomSpatialData();
 
-//      double nextDouble = random.nextDouble();
-//      double randomTime = nextDouble * (1.0 + WholeBodyTrajectoryToolboxSettings.timeCoefficient * tree.getMostAdvancedTime());
+      double nextDouble = ConfigurationSpaceName.random.nextDouble();
+      double randomTime = nextDouble * (1.0 + timeCoefficient * advancedProgress);
+      
+      PrintTools.info("randomTime "+randomTime);
 
-      SpatialNode randomNode = new SpatialNode(randomSpatialData);
+      SpatialNode randomNode = new SpatialNode(randomTime, randomSpatialData);
       // find closest one.
       // if no, re-try.
 

@@ -1,15 +1,11 @@
 package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
-import java.util.Random;
-
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 
 public class ExploringConfigurationSpace
 {
-   private final Random random = new Random(1);
-
    private final ConfigurationSpaceName configurationSpaceName;
 
    private TDoubleArrayList configuration = new TDoubleArrayList();
@@ -22,9 +18,13 @@ public class ExploringConfigurationSpace
       this.configurationSpaceName = configurationSpaceName;
 
       if (configurationSpaceName == ConfigurationSpaceName.SE3)
+      {
          this.configuration.addAll(new double[] {0, 0, 0});
+      }
       else
+      {
          this.configuration.add(0.0);
+      }
 
       this.lowerLimit = lowerLimit;
       this.upperLimit = upperLimit;
@@ -35,18 +35,24 @@ public class ExploringConfigurationSpace
       return configurationSpaceName;
    }
 
-   public double getConfiguration()
+   public double[] getConfigurations()
    {
-      // TODO : implement for SE3.
-      return configuration.get(0);
+      return configuration.toArray();
    }
 
-   public void setConfiguration(double configuration)
+   public void interpolate(ExploringConfigurationSpace one, ExploringConfigurationSpace two, double alpha)
    {
-      if (configurationSpaceName == ConfigurationSpaceName.SE3)
-         System.err.println("SE3 configuration has Quaternion value");
-      else
-         this.configuration.replace(0, configuration);
+      if (configurationSpaceName == one.configurationSpaceName && configurationSpaceName == two.configurationSpaceName)
+      {
+         for (int i = 0; i < configuration.size(); i++)
+         {
+            double double1 = one.configuration.get(i);
+            double double2 = two.configuration.get(i);
+            double doubleInterpolate = double1 + (double2 - double1) * alpha;
+
+            configuration.replace(i, doubleInterpolate);
+         }
+      }
    }
 
    public void setUpperLimit(double value)
@@ -63,7 +69,7 @@ public class ExploringConfigurationSpace
    {
       for (int i = 0; i < configuration.size(); i++)
       {
-         double randomConfiguration = random.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
+         double randomConfiguration = ConfigurationSpaceName.random.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
          configuration.replace(i, randomConfiguration);
       }
    }
@@ -75,8 +81,18 @@ public class ExploringConfigurationSpace
       double[] configuration = new double[this.configuration.size()];
 
       for (int i = 0; i < configuration.length; i++)
+      {
          configuration[i] = this.configuration.get(i);
+      }
 
       return configurationSpaceName.getLocalRigidBodyTransform(configuration);
+   }
+
+   public int getExploringDimension()
+   {
+      if (configurationSpaceName == ConfigurationSpaceName.SE3)
+         return 3;
+      else
+         return 1;
    }
 }
