@@ -289,7 +289,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       // Trajectory parameters
       double trajectoryTime = 10.0;
       double circleRadius = 0.25;
-      SideDependentList<Point3D> circleCenters = new SideDependentList<>(new Point3D(0.55, 0.4, 0.9), new Point3D(0.55, -0.4, 0.9));
+      SideDependentList<Point3D> circleCenters = new SideDependentList<>(new Point3D(0.55, 0.4, 1.0), new Point3D(0.55, -0.4, 1.0));
       Quaternion circleOrientation = new Quaternion();
       circleOrientation.appendYawRotation(Math.PI * 0.0);
       Quaternion handOrientation = new Quaternion(circleOrientation);

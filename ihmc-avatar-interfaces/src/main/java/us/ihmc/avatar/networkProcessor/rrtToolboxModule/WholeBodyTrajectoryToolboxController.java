@@ -2,7 +2,6 @@ package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,18 +27,16 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Whol
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinitionOnConstrainedTrajectory;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinitionToReachingManifold;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
+import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringProgressVisualizer;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodePlotter;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodeTree;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.TreeStateVisualizer;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -53,16 +50,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private static final int DEFAULT_NUMBER_OF_INITIAL_GUESSES_VALUE = 200;
    private static final int TERMINAL_CONDITION_NUMBER_OF_VALID_INITIAL_GUESSES = 20;
 
-   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-
-   private final Random randomManager = new Random(1);
-
    private final HumanoidKinematicsSolver humanoidKinematicsSolver;
 
    private final WholeBodyTrajectoryToolboxOutputStatus toolboxSolution;
-
-   private ExploringDefinition spatialDefinition;
-   //private WholeBodyTrajectoryToolboxData toolboxData;
 
    private List<RigidBodyExplorationConfigurationCommand> rigidBodyCommands = null;
    private List<WaypointBasedTrajectoryCommand> trajectoryCommands = null;
@@ -75,8 +65,10 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private final YoInteger currentNumberOfIterations = new YoInteger("currentNumberOfIterations", registry);
    private final YoInteger terminalConditionNumberOfValidInitialGuesses = new YoInteger("terminalConditionNumberOfValidInitialGuesses", registry);
 
-   // check the tree reaching the normalized time from 0.0 to 1.0.
-   private final YoDouble currentTrajectoryTime = new YoDouble("currentNormalizedTime", registry);
+   private final YoInteger maximumExpansionSize = new YoInteger("maximumExpansionSize", registry);
+   private final YoInteger desiredNumberOfInitialGuesses = new YoInteger("desiredNumberOfInitialGuesses", registry);
+
+   private YoInteger numberOfIterationForShortcutOptimization = new YoInteger("numberOfIterationForShortcutOptimization", registry);
 
    private final YoBoolean isDone = new YoBoolean("isDone", registry);
 
@@ -95,7 +87,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private FullHumanoidRobotModel visualizedFullRobotModel;
 
-   private TreeStateVisualizer treeStateVisualizer;
+   private ExploringProgressVisualizer treeStateVisualizer;
 
    private SpatialNodePlotter nodePlotter;
 
@@ -103,22 +95,14 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private final SideDependentList<YoGraphicCoordinateSystem> endeffectorFrame = new SideDependentList<>();
 
-   private final YoFramePoseUsingYawPitchRoll testFramePose;
-   private final YoGraphicCoordinateSystem testFrameViz;
-   private final YoDouble minimumDistanceFromManifold = new YoDouble("minimumDistanceFromManifold", registry);
+   // TODO :
+   //   private final YoFramePoseUsingYawPitchRoll testFramePose;
+   //   private final YoGraphicCoordinateSystem testFrameViz;
+   //   private final YoDouble minimumDistanceFromManifold = new YoDouble("minimumDistanceFromManifold", registry);
 
-   /*
-    * Configuration and Time space Tree
-    */
    // TODO : should be removed.
    private SpatialNodeTree tree;
    private final List<SpatialNode> path = new ArrayList<>();
-   private final double minTimeInterval = 0.05;
-
-   private final YoInteger maximumExpansionSize = new YoInteger("maximumExpansionSize", registry);
-   private final YoInteger desiredNumberOfInitialGuesses = new YoInteger("desiredNumberOfInitialGuesses", registry);
-
-   private YoInteger numberOfIterationForShortcutOptimization = new YoInteger("numberOfIterationForShortcutOptimization", registry);
 
    /**
     * Toolbox state
@@ -133,10 +117,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private final CommandInputManager commandInputManager;
 
-   private WholeBodyTrajectoryToolboxManager activatedManager;
+   private ExploringDefinition spatialDefinition;
 
+   private WholeBodyTrajectoryToolboxManager activatedManager;
    private InitialGuessManager initialGuessManager;
-   private ExpandingManager expandingManager;
+   private ExploringManager exploringManager;
 
    public WholeBodyTrajectoryToolboxController(DRCRobotModel drcRobotModel, FullHumanoidRobotModel fullRobotModel, CommandInputManager commandInputManager,
                                                StatusMessageOutputManager statusOutputManager, YoVariableRegistry registry,
@@ -151,7 +136,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       this.visualize = visualize;
       if (visualize)
       {
-         treeStateVisualizer = new TreeStateVisualizer("TreeStateVisualizer", "VisualizerGraphicsList", yoGraphicsListRegistry, registry);
+         treeStateVisualizer = new ExploringProgressVisualizer("TreeStateVisualizer", "VisualizerGraphicsList", yoGraphicsListRegistry, registry);
       }
       else
       {
@@ -179,9 +164,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       configurationConverter = new KinematicsToolboxOutputConverter(drcRobotModel);
 
-      testFramePose = new YoFramePoseUsingYawPitchRoll("testFramePose", ReferenceFrame.getWorldFrame(), registry);
-      testFrameViz = new YoGraphicCoordinateSystem("testFrameViz", testFramePose, 0.25);
-      yoGraphicsListRegistry.registerYoGraphic("testFrameYoGraphic", testFrameViz);
+//      testFramePose = new YoFramePoseUsingYawPitchRoll("testFramePose", ReferenceFrame.getWorldFrame(), registry);
+//      testFrameViz = new YoGraphicCoordinateSystem("testFrameViz", testFramePose, 0.25);
+//      yoGraphicsListRegistry.registerYoGraphic("testFrameYoGraphic", testFrameViz);
    }
 
    @Override
@@ -203,7 +188,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          break;
       case EXPAND_TREE:
 
-         activatedManager = expandingManager;
+         activatedManager = exploringManager;
          expandingTree();
 
          break;
@@ -297,8 +282,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       for (int i = 0; i < path.size(); i++)
          nodePlotter.update(path.get(i), 3);
 
-//      if (VERBOSE)
-//         PrintTools.info("the size of the path is " + path.size() + " before dismissing " + revertedPathSize + " shortcut " + numberOfShortcut);
+      //      if (VERBOSE)
+      //         PrintTools.info("the size of the path is " + path.size() + " before dismissing " + revertedPathSize + " shortcut " + numberOfShortcut);
 
       /*
        * terminate state
@@ -312,7 +297,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void expandingTree()
    {
       handleManager();
-      
+
       if (activatedManager.isDone() == true)
       {
          if (activatedManager.hasFail())
@@ -327,8 +312,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             PrintTools.info("success");
             state.set(CWBToolboxState.SHORTCUT_PATH);
             //SHORTCUT_PATH.initialize();
-            nodePlotter.update(expandingManager.getPath(), 2);
-            path.addAll(expandingManager.getPath());
+            nodePlotter.update(exploringManager.getPath(), 2);
+            path.addAll(exploringManager.getPath());
             activatedManager.terminalManager();
          }
       }
@@ -350,22 +335,22 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          }
          else
          {
-            PrintTools.info("success "+initialGuessManager.getValidInitialGuesses().size());
+            PrintTools.info("success " + initialGuessManager.getValidInitialGuesses().size());
             state.set(CWBToolboxState.EXPAND_TREE);
-            expandingManager.initialize();
-            expandingManager.setInitialGuesses(initialGuessManager.getValidInitialGuesses());
+            exploringManager.initialize();
+            exploringManager.setInitialGuesses(initialGuessManager.getValidInitialGuesses());
             activatedManager.terminalManager();
-            
-//            for(int i=0;i<initialGuessManager.getValidInitialGuesses().size();i++)
-//            {
-//               SpatialNode spatialNode = initialGuessManager.getValidInitialGuesses().get(i);
-//               TDoubleArrayList exploringConfigurations = spatialNode.getSpatialData().getExploringConfigurations();
-//               PrintTools.info(""+i);
-//               for(int j=0;j<exploringConfigurations.size();j++)
-//               {
-//                  PrintTools.info(""+exploringConfigurations.get(j));
-//               }
-//            }
+
+            //            for(int i=0;i<initialGuessManager.getValidInitialGuesses().size();i++)
+            //            {
+            //               SpatialNode spatialNode = initialGuessManager.getValidInitialGuesses().get(i);
+            //               TDoubleArrayList exploringConfigurations = spatialNode.getSpatialData().getExploringConfigurations();
+            //               PrintTools.info(""+i);
+            //               for(int j=0;j<exploringConfigurations.size();j++)
+            //               {
+            //                  PrintTools.info(""+exploringConfigurations.get(j));
+            //               }
+            //            }
          }
       }
    }
@@ -373,7 +358,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void handleManager()
    {
       SpatialNode desiredNode = activatedManager.createDesiredNode();
-      
+
       if (desiredNode != null)
       {
          updateValidity(desiredNode);
@@ -426,15 +411,15 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       // Initiate tree.
       tree = new SpatialNodeTree();
 
-//      ExploringDefinition spatialDefinition;
+      //      ExploringDefinition spatialDefinition;
       if (trajectoryCommands != null)
       {
          spatialDefinition = new ExploringDefinitionOnConstrainedTrajectory(trajectoryCommands, rigidBodyCommands);
 
          initialGuessManager = new InitialGuessManager(spatialDefinition, desiredNumberOfInitialGuesses.getIntegerValue(),
-                                                            terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
-         expandingManager = new ExpandingManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
-         
+                                                       terminalConditionNumberOfValidInitialGuesses.getIntegerValue());
+         exploringManager = new ExploringManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+
          state.set(CWBToolboxState.FIND_INITIAL_GUESS);
 
          initialGuessManager.initialize();
@@ -443,19 +428,19 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          spatialDefinition = new ExploringDefinitionToReachingManifold(null, manifoldCommands, rigidBodyCommands);
 
-         expandingManager = new ExpandingManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
-         
+         exploringManager = new ExploringManager(spatialDefinition, DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
+
          state.set(CWBToolboxState.EXPAND_TREE);
-         
-         expandingManager.initialize();
+
+         exploringManager.initialize();
          // TODO 
-//         SpatialData rootData = toolboxData.createRandomSpatialData();
-//         SpatialNode rootNode = new SpatialNode(rootData);
-//         rootNode.setConfiguration(initialConfiguration);
-//         rootNode.initializeSpatialData();
-//
-//         nodePlotter.update(rootNode, 1);
-//         tree.addInitialNode(rootNode);
+         //         SpatialData rootData = toolboxData.createRandomSpatialData();
+         //         SpatialNode rootNode = new SpatialNode(rootData);
+         //         rootNode.setConfiguration(initialConfiguration);
+         //         rootNode.initializeSpatialData();
+         //
+         //         nodePlotter.update(rootNode, 1);
+         //         tree.addInitialNode(rootNode);
       }
       else
       {
@@ -552,13 +537,13 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       //nodePlotter.closeAll();
       state.set(CWBToolboxState.DO_NOTHING);
 
-      double totalTime = initialGuessManager.getComputingTime() + expandingManager.getComputingTime();
+      double totalTime = initialGuessManager.getComputingTime() + exploringManager.getComputingTime();
 
       if (VERBOSE)
       {
          PrintTools.info("===========================================");
          PrintTools.info("initialGuessComputationTime is " + initialGuessManager.getComputingTime());
-         PrintTools.info("treeExpansionComputationTime is " + expandingManager.getComputingTime());
+         PrintTools.info("treeExpansionComputationTime is " + exploringManager.getComputingTime());
          //PrintTools.info("shortcutPathComputationTime is " + shortcutPathComputationTime.getDoubleValue());
          //PrintTools.info("motionGenerationComputationTime is " + motionGenerationComputationTime.getDoubleValue());
          PrintTools.info("toolbox executing time is " + totalTime + " seconds " + currentNumberOfIterations.getIntegerValue());
@@ -604,12 +589,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    /**
     * set fullRobotModel.
     */
-   private void updateVisualizerRobotConfiguration(KinematicsToolboxOutputStatus robotKinematicsConfiguration)
-   {
-      MessageTools.unpackDesiredJointState(robotKinematicsConfiguration, visualizedFullRobotModel.getRootJoint(),
-                                           FullRobotModelUtils.getAllJointsExcludingHands(visualizedFullRobotModel));
-   }
-
    private void updateVisualizerRobotConfiguration()
    {
       MessageTools.unpackDesiredJointState(visualizedNode.getConfiguration(), visualizedFullRobotModel.getRootJoint(),
@@ -621,18 +600,13 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
     */
    private void updateVisualizers()
    {
-      currentTrajectoryTime.set(visualizedNode.getTime());
       isValidNode.set(visualizedNode.isValid());
 
       if (visualize && visualizedNode != null)
       {
-         //treeStateVisualizer.setCurrentNormalizedTime(//sualizedNode.getTime() / toolboxData.getTrajectoryTime());
-         treeStateVisualizer.setCurrentNormalizedTime(spatialDefinition.getExploringProgress(visualizedNode));
-         treeStateVisualizer.setCurrentCTTaskNodeValidity(visualizedNode.isValid());
+         treeStateVisualizer.setRecentProgress(spatialDefinition.getExploringProgress(visualizedNode));
+         treeStateVisualizer.setDesiredNodeValidity(visualizedNode.isValid());
          treeStateVisualizer.updateVisualizer();
-
-         //FIXME TODO
-         //         treeVisualizer.update(visualizedNode);
       }
    }
 

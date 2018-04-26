@@ -9,7 +9,7 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 
-public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
+public class ExploringManager extends WholeBodyTrajectoryToolboxManager
 {
    private List<SpatialNode> validNodes = new ArrayList<SpatialNode>();
    private List<SpatialNode> inValidNodes = new ArrayList<SpatialNode>();
@@ -27,7 +27,7 @@ public class ExpandingManager extends WholeBodyTrajectoryToolboxManager
    private final double maxPositionDistance = 0.05;
    private final double maxOrientationDistance = Math.toRadians(10.0);
 
-   public ExpandingManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate)
+   public ExploringManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate)
    {
       super(exploringDefinition, maximumNumberOfUpdate);
    }
