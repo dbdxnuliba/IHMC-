@@ -21,14 +21,14 @@ public class SpatialData
    private final List<String> exploringRigidBodyNames;
    private final List<Pose3D> rigidBodySpatials;
 
-   private final List<ExploringConfigurationSpace> exploringConfigurationSpaces;
+   //private final List<ExploringConfigurationSpace> exploringConfigurationSpaces;
 
    public SpatialData()
    {
       exploringRigidBodyNames = new ArrayList<String>();
       rigidBodySpatials = new ArrayList<Pose3D>();
 
-      exploringConfigurationSpaces = new ArrayList<ExploringConfigurationSpace>();
+      //exploringConfigurationSpaces = new ArrayList<ExploringConfigurationSpace>();
    }
 
    public SpatialData(SpatialData other)
@@ -36,15 +36,15 @@ public class SpatialData
       this();
       exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
       rigidBodySpatials.addAll(other.rigidBodySpatials);
-      for (int i = 0; i < other.exploringConfigurationSpaces.size(); i++)
-         exploringConfigurationSpaces.add(new ExploringConfigurationSpace(other.exploringConfigurationSpaces.get(i)));
+//      for (int i = 0; i < other.exploringConfigurationSpaces.size(); i++)
+//         exploringConfigurationSpaces.add(new ExploringConfigurationSpace(other.exploringConfigurationSpaces.get(i)));
    }
 
    public void appendSpatial(String exploringRigidBodyName, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform pose)
    {
       this.exploringRigidBodyNames.add(exploringRigidBodyName);
       this.rigidBodySpatials.add(new Pose3D(pose));
-      this.exploringConfigurationSpaces.addAll(exploringConfigurations);
+//      this.exploringConfigurationSpaces.addAll(exploringConfigurations);
    }
 
    public void interpolate(SpatialData dataOne, SpatialData dataTwo, double alpha)
@@ -53,8 +53,8 @@ public class SpatialData
       for (int i = 0; i < rigidBodySpatials.size(); i++)
          rigidBodySpatials.get(i).interpolate(dataOne.getRigidBodySpatials().get(i), dataTwo.getRigidBodySpatials().get(i), alpha);
 
-      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-         exploringConfigurationSpaces.get(i).interpolate(dataOne.exploringConfigurationSpaces.get(i), dataTwo.exploringConfigurationSpaces.get(i), alpha);
+//      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
+//         exploringConfigurationSpaces.get(i).interpolate(dataOne.exploringConfigurationSpaces.get(i), dataTwo.exploringConfigurationSpaces.get(i), alpha);
    }
 
    public double getPositionDistance(SpatialData other)
@@ -158,40 +158,40 @@ public class SpatialData
       return exploringRigidBodyNames.size();
    }
 
-   public int getExploringDimension()
-   {
-      int exploringDimension = 0;
-
-      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-         exploringDimension = exploringDimension + exploringConfigurationSpaces.get(i).getExploringDimension();
-
-      return exploringDimension;
-   }
-
-   public List<String> getExploringConfigurationNames()
-   {
-      List<String> names = new ArrayList<String>();
-      
-      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-      {
-         ExploringConfigurationSpace exploringConfigurationSpace = exploringConfigurationSpaces.get(i);
-         for (int j = 0; j < exploringConfigurationSpace.getConfigurationNames().length; j++)
-            names.add("" + exploringConfigurationSpace.getConfigurationNames()[j]);
-      }
-
-      return names;
-   }
-
-   public TDoubleArrayList getExploringConfigurations()
-   {
-      TDoubleArrayList configurations = new TDoubleArrayList();
-
-      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-      {
-         ExploringConfigurationSpace exploringConfigurationSpace = exploringConfigurationSpaces.get(i);
-         configurations.addAll(exploringConfigurationSpace.getConfigurations());
-      }
-
-      return configurations;
-   }
+//   public int getExploringDimension()
+//   {
+//      int exploringDimension = 0;
+//
+//      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
+//         exploringDimension = exploringDimension + exploringConfigurationSpaces.get(i).getExploringDimension();
+//
+//      return exploringDimension;
+//   }
+//
+//   public List<String> getExploringConfigurationNames()
+//   {
+//      List<String> names = new ArrayList<String>();
+//      
+//      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
+//      {
+//         ExploringConfigurationSpace exploringConfigurationSpace = exploringConfigurationSpaces.get(i);
+//         for (int j = 0; j < exploringConfigurationSpace.getConfigurationNames().length; j++)
+//            names.add("" + exploringConfigurationSpace.getConfigurationNames()[j]);
+//      }
+//
+//      return names;
+//   }
+//
+//   public TDoubleArrayList getExploringConfigurations()
+//   {
+//      TDoubleArrayList configurations = new TDoubleArrayList();
+//
+//      for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
+//      {
+//         ExploringConfigurationSpace exploringConfigurationSpace = exploringConfigurationSpaces.get(i);
+//         configurations.addAll(exploringConfigurationSpace.getConfigurations());
+//      }
+//
+//      return configurations;
+//   }
 }

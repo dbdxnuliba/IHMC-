@@ -477,7 +477,8 @@ public class HumanoidMessageTools
                                                                                                          ConfigurationSpaceName[] degreesOfFreedomToExplore)
    {
       return createRigidBodyExplorationConfigurationMessage(rigidBody, degreesOfFreedomToExplore,
-                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationAmplitudeArray(degreesOfFreedomToExplore));
+                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationUpperLimitArray(degreesOfFreedomToExplore),
+                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationLowerLimitArray(degreesOfFreedomToExplore));
    }
 
    public static RigidBodyExplorationConfigurationMessage createRigidBodyExplorationConfigurationMessage(RigidBody rigidBody,
@@ -523,11 +524,11 @@ public class HumanoidMessageTools
       if (degreesOfFreedomToExplore1.length != explorationRangeUpperLimits.length || degreesOfFreedomToExplore1.length != explorationRangeLowerLimits.length)
          throw new RuntimeException("Inconsistent array lengths: unconstrainedDegreesOfFreedom.length = " + degreesOfFreedomToExplore1.length
                + ", explorationRangeLowerLimits.length = ");
-      
+
       message.getConfigurationSpaceNamesToExplore().reset();
       message.getExplorationRangeUpperLimits().reset();
       message.getExplorationRangeLowerLimits().reset();
-      
+
       message.getConfigurationSpaceNamesToExplore().add(degreesOfFreedomToExplore1);
       message.getExplorationRangeUpperLimits().add(explorationRangeUpperLimits);
       message.getExplorationRangeLowerLimits().add(explorationRangeLowerLimits);
@@ -660,7 +661,8 @@ public class HumanoidMessageTools
       footstep.getFootstepPose().checkReferenceFrameMatch(ReferenceFrame.getWorldFrame());
       message.getLocation().set(location);
       message.getOrientation().set(orientation);
-      MessageTools.copyData(footstep.getPredictedContactPoints().stream().map(Point3D::new).collect(Collectors.toList()), message.getPredictedContactPoints2d());
+      MessageTools.copyData(footstep.getPredictedContactPoints().stream().map(Point3D::new).collect(Collectors.toList()),
+                            message.getPredictedContactPoints2d());
       return message;
    }
 
@@ -934,7 +936,7 @@ public class HumanoidMessageTools
    {
       PelvisHeightTrajectoryMessage message = new PelvisHeightTrajectoryMessage();
       message.getEuclideanTrajectory().set(HumanoidMessageTools.createEuclideanTrajectoryMessage(trajectoryTime, new Point3D(0.0, 0.0, desiredHeight),
-                                                                                          trajectoryReferenceFrame.getNameBasedHashCode()));
+                                                                                                 trajectoryReferenceFrame.getNameBasedHashCode()));
       message.getEuclideanTrajectory().getFrameInformation().setDataReferenceFrameId(MessageTools.toFrameId(dataReferenceFrame));
       message.getEuclideanTrajectory().getSelectionMatrix().setXSelected(false);
       message.getEuclideanTrajectory().getSelectionMatrix().setYSelected(false);
@@ -952,8 +954,8 @@ public class HumanoidMessageTools
    public static PelvisHeightTrajectoryMessage createPelvisHeightTrajectoryMessage(double trajectoryTime, double desiredHeight)
    {
       PelvisHeightTrajectoryMessage message = new PelvisHeightTrajectoryMessage();
-      message.getEuclideanTrajectory().set(HumanoidMessageTools.createEuclideanTrajectoryMessage(trajectoryTime, new Point3D(0.0, 0.0, desiredHeight),
-                                                                                          ReferenceFrame.getWorldFrame()));
+      message.getEuclideanTrajectory()
+             .set(HumanoidMessageTools.createEuclideanTrajectoryMessage(trajectoryTime, new Point3D(0.0, 0.0, desiredHeight), ReferenceFrame.getWorldFrame()));
       message.getEuclideanTrajectory().getFrameInformation().setDataReferenceFrameId(MessageTools.toFrameId(ReferenceFrame.getWorldFrame()));
       message.getEuclideanTrajectory().getSelectionMatrix().setXSelected(false);
       message.getEuclideanTrajectory().getSelectionMatrix().setYSelected(false);
@@ -1584,8 +1586,8 @@ public class HumanoidMessageTools
       SE3TrajectoryMessage message = new SE3TrajectoryMessage();
       Vector3D zeroLinearVelocity = new Vector3D();
       Vector3D zeroAngularVelocity = new Vector3D();
-      message.getTaskspaceTrajectoryPoints().add().set(createSE3TrajectoryPointMessage(trajectoryTime, desiredPosition, desiredOrientation, zeroLinearVelocity,
-                                                                                  zeroAngularVelocity));
+      message.getTaskspaceTrajectoryPoints().add()
+             .set(createSE3TrajectoryPointMessage(trajectoryTime, desiredPosition, desiredOrientation, zeroLinearVelocity, zeroAngularVelocity));
       message.getFrameInformation().setTrajectoryReferenceFrameId(trajectoryReferenceFrameId);
       return message;
    }
@@ -1780,8 +1782,8 @@ public class HumanoidMessageTools
                                                                    QuaternionReadOnly desiredOrientation)
    {
       FootTrajectoryMessage message = new FootTrajectoryMessage();
-      message.getSe3Trajectory().set(HumanoidMessageTools.createSE3TrajectoryMessage(trajectoryTime, desiredPosition, desiredOrientation,
-                                                                              ReferenceFrame.getWorldFrame()));
+      message.getSe3Trajectory()
+             .set(HumanoidMessageTools.createSE3TrajectoryMessage(trajectoryTime, desiredPosition, desiredOrientation, ReferenceFrame.getWorldFrame()));
       message.setRobotSide(robotSide.toByte());
       return message;
    }
@@ -1853,7 +1855,7 @@ public class HumanoidMessageTools
          return;
       MessageTools.copyData(Arrays.stream(contactPoints).map(Point3D::new).collect(Collectors.toList()), message.getPredictedContactPoints2d());
    }
-   
+
    public static void packPredictedContactPoints(List<? extends Point2DReadOnly> contactPoints, FootstepDataMessage message)
    {
       if (contactPoints == null)
@@ -1866,7 +1868,7 @@ public class HumanoidMessageTools
          message.getPredictedContactPoints2d().add().set(contactPoints.get(i), 0.0);
       }
    }
-   
+
    public static List<Point2D> unpackPredictedContactPoints(FootstepDataMessage message)
    {
       return message.getPredictedContactPoints2d().stream().map(Point2D::new).collect(Collectors.toList());
@@ -2040,9 +2042,11 @@ public class HumanoidMessageTools
    public static FrameConvexPolygon2D unpackFootSupportPolygon(CapturabilityBasedStatus capturabilityBasedStatus, RobotSide robotSide)
    {
       if (robotSide == RobotSide.LEFT && capturabilityBasedStatus.getLeftFootSupportPolygon2d().size() > 0)
-         return new FrameConvexPolygon2D(ReferenceFrame.getWorldFrame(), Vertex3DSupplier.asVertex3DSupplier(capturabilityBasedStatus.getLeftFootSupportPolygon2d()));
+         return new FrameConvexPolygon2D(ReferenceFrame.getWorldFrame(),
+                                         Vertex3DSupplier.asVertex3DSupplier(capturabilityBasedStatus.getLeftFootSupportPolygon2d()));
       else if (capturabilityBasedStatus.getRightFootSupportPolygon2d() != null)
-         return new FrameConvexPolygon2D(ReferenceFrame.getWorldFrame(), Vertex3DSupplier.asVertex3DSupplier(capturabilityBasedStatus.getRightFootSupportPolygon2d()));
+         return new FrameConvexPolygon2D(ReferenceFrame.getWorldFrame(),
+                                         Vertex3DSupplier.asVertex3DSupplier(capturabilityBasedStatus.getRightFootSupportPolygon2d()));
       else
          return new FrameConvexPolygon2D(ReferenceFrame.getWorldFrame());
    }
@@ -2119,7 +2123,7 @@ public class HumanoidMessageTools
       for (int i = 0; i < jointspaceTrajectoryMessage.getJointTrajectoryMessages().size(); i++)
       {
          OneDoFJointTrajectoryMessage oneDoFJointTrajectoryMessage = jointspaceTrajectoryMessage.getJointTrajectoryMessages().get(i);
-         if(oneDoFJointTrajectoryMessage != null && !oneDoFJointTrajectoryMessage.getTrajectoryPoints().isEmpty())
+         if (oneDoFJointTrajectoryMessage != null && !oneDoFJointTrajectoryMessage.getTrajectoryPoints().isEmpty())
          {
             trajectoryTime = Math.max(trajectoryTime, oneDoFJointTrajectoryMessage.getTrajectoryPoints().getLast().getTime());
          }

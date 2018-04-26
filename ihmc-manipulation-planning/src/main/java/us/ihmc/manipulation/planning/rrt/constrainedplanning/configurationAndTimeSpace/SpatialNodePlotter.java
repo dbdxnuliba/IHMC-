@@ -6,7 +6,11 @@ import java.util.List;
 
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.PrintTools;
+import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.rotationConversion.RotationVectorConversion;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.plotting.artifact.CircleArtifact;
 import us.ihmc.graphicsDescription.plotting.artifact.LineArtifact;
 import us.ihmc.plotting.Plotter;
@@ -14,8 +18,6 @@ import us.ihmc.plotting.Plotter;
 public class SpatialNodePlotter
 {
    private ExploringDefinition spatialDefinition;
-
-   private int dimensionOfConfigurations;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
 
@@ -27,12 +29,18 @@ public class SpatialNodePlotter
    {
       this.spatialDefinition = spatialDefinition;
       SpatialData randomSpatialData = spatialDefinition.getRandomSpatialData();
-      dimensionOfConfigurations = randomSpatialData.getExploringDimension();
 
-      List<String> plotterNames = randomSpatialData.getExploringConfigurationNames();
+      List<String> plotterNames = new ArrayList<String>();
+      for (int i = 0; i < randomSpatialData.getNumberOfExploringRigidBodies(); i++)
+      {
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_px");
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_py");
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_pz");
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_rvx");
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_rvy");
+         plotterNames.add(randomSpatialData.getRigidBodyName(i) + "_rvz");
+      }
 
-      PrintTools.info("########### "+dimensionOfConfigurations +" "+ plotterNames.size());
-      
       for (int i = 0; i < plotterNames.size(); i++)
       {
          Plotter plotter = new Plotter();
@@ -47,7 +55,7 @@ public class SpatialNodePlotter
          plotters.add(plotter);
 
          String plotterName = plotterNames.get(i);
-         PrintTools.info(""+i+" "+plotterName);
+         PrintTools.info("" + i + " " + plotterName);
          isFrameEnabled = enabled;
          if (enabled)
             plotter.showInNewWindow(plotterName, false);
@@ -67,10 +75,10 @@ public class SpatialNodePlotter
 
    public void update(List<SpatialNode> path, int type)
    {
-      for(int i=0;i<path.size();i++)
+      for (int i = 0; i < path.size(); i++)
          update(path.get(i), type);
    }
-   
+
    /**
     * 1::node
     * 2::path
@@ -79,10 +87,13 @@ public class SpatialNodePlotter
    public void update(SpatialNode node, int type)
    {
       double progress = spatialDefinition.getExploringProgress(node);
+
+      TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
+
       Color color;
       double diameter = 0.01;
-      
-      for (int nodeIndex = 0; nodeIndex < dimensionOfConfigurations; nodeIndex++)
+
+      for (int configurationIndex = 0; configurationIndex < configurationsList.size(); configurationIndex++)
       {
          String prefix;
          switch (type)
@@ -90,22 +101,22 @@ public class SpatialNodePlotter
          case 1:
             if (node.isValid())
             {
-               prefix = "" + cnt + "_valid_" + nodeIndex;
+               prefix = "" + cnt + "_valid_" + configurationIndex;
                color = Color.blue;
             }
             else
             {
-               prefix = "" + cnt + "_invalid_" + nodeIndex;
+               prefix = "" + cnt + "_invalid_" + configurationIndex;
                diameter = 0.005;
                color = Color.red;
             }
             break;
          case 2:
-            prefix = "" + cnt + "_path_" + nodeIndex;
+            prefix = "" + cnt + "_path_" + configurationIndex;
             color = Color.black;
             break;
          case 3:
-            prefix = "" + cnt + "_shortcut_" + nodeIndex;
+            prefix = "" + cnt + "_shortcut_" + configurationIndex;
             color = Color.green;
             break;
          default:
@@ -114,29 +125,57 @@ public class SpatialNodePlotter
             break;
          }
 
-         TDoubleArrayList configurations = node.getSpatialData().getExploringConfigurations();
-         double configurationData = configurations.get(nodeIndex);
+         double configurationData = configurationsList.get(configurationIndex);
 
          if (node.getParent() != null && node.isValid())
          {
             SpatialNode parentNode = node.getParent();
             double parentProgress = spatialDefinition.getExploringProgress(parentNode);
-            double parentConfigurationData = parentNode.getSpatialData().getExploringConfigurations().get(nodeIndex);
+            double parentConfigurationData = getConfigurationsOfNode(parentNode).get(configurationIndex);
 
             LineArtifact lineArtifact = new LineArtifact(prefix + "_line", new Point2D(parentProgress, parentConfigurationData),
                                                          new Point2D(progress, configurationData));
 
             lineArtifact.setColor(color);
-            plotters.get(nodeIndex).addArtifact(lineArtifact);
+            plotters.get(configurationIndex).addArtifact(lineArtifact);
          }
 
          CircleArtifact nodeArtifact = new CircleArtifact(prefix + "_node", progress, configurationData, diameter, true);
          nodeArtifact.setColor(color);
 
-         plotters.get(nodeIndex).addArtifact(nodeArtifact);
-         plotters.get(nodeIndex).update();
+         plotters.get(configurationIndex).addArtifact(nodeArtifact);
+         plotters.get(configurationIndex).update();
       }
 
       cnt++;
+   }
+
+   private double[] getConfigurationsOfSpatial(Pose3D pose)
+   {
+      double[] configurations = new double[6];
+      configurations[0] = pose.getX();
+      configurations[1] = pose.getY();
+      configurations[2] = pose.getZ();
+      Vector3D rv = new Vector3D();
+      Quaternion orientation = new Quaternion(pose.getOrientation());
+      RotationVectorConversion.convertQuaternionToRotationVector(orientation, rv);
+      configurations[3] = rv.getX();
+      configurations[4] = rv.getY();
+      configurations[5] = rv.getZ();
+
+      return configurations;
+   }
+
+   private TDoubleArrayList getConfigurationsOfNode(SpatialNode node)
+   {
+      TDoubleArrayList configurationsList = new TDoubleArrayList();
+
+      for (int i = 0; i < node.getSpatialData().getRigidBodySpatials().size(); i++)
+      {
+         Pose3D spatial = node.getSpatialData(i);
+         configurationsList.addAll(getConfigurationsOfSpatial(spatial));
+      }
+
+      return configurationsList;
    }
 }

@@ -1,9 +1,9 @@
 package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
-import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class ExploringConfigurationSpace
 {
@@ -18,10 +18,10 @@ public class ExploringConfigurationSpace
    public ExploringConfigurationSpace(ExploringConfigurationSpace other)
    {
       this(other.configurationNamePrefix, other.configurationSpaceName, other.lowerLimit, other.upperLimit);
-      for(int i=0;i<other.configuration.size();i++)
+      for (int i = 0; i < other.configuration.size(); i++)
          configuration.set(i, other.configuration.get(i));
    }
-   
+
    public ExploringConfigurationSpace(String prefix, ConfigurationSpaceName configurationSpaceName, double lowerLimit, double upperLimit)
    {
       configurationNamePrefix = prefix;
@@ -36,48 +36,9 @@ public class ExploringConfigurationSpace
          this.configuration.add(0.0);
       }
 
+      // TODO : default set is required.
       this.lowerLimit = lowerLimit;
       this.upperLimit = upperLimit;
-   }
-   
-   public ConfigurationSpaceName getConfigurationSpaceName()
-   {
-      return configurationSpaceName;
-   }
-
-   public double[] getConfigurations()
-   {
-      return configuration.toArray();
-   }
-   
-   public String[] getConfigurationNames()
-   {
-      String[] configurationNames = new String[configuration.size()];
-      if(configurationSpaceName == ConfigurationSpaceName.SE3)
-      {
-         configurationNames[0] = configurationNamePrefix + configurationSpaceName.name() + "_Roll";
-         configurationNames[1] = configurationNamePrefix + configurationSpaceName.name() + "_Pitch";
-         configurationNames[2] = configurationNamePrefix + configurationSpaceName.name() + "_Yaw";
-      }
-      else
-         configurationNames[0] = configurationNamePrefix + configurationSpaceName.name();
-      
-      return configurationNames;
-   }
-
-   public void interpolate(ExploringConfigurationSpace one, ExploringConfigurationSpace two, double alpha)
-   {
-      if (configurationSpaceName == one.configurationSpaceName && configurationSpaceName == two.configurationSpaceName)
-      {
-         for (int i = 0; i < configuration.size(); i++)
-         {
-            double double1 = one.configuration.get(i);
-            double double2 = two.configuration.get(i);
-            double doubleInterpolate = double1 + (double2 - double1) * alpha;
-
-            configuration.replace(i, doubleInterpolate);
-         }
-      }
    }
 
    public void setUpperLimit(double value)
@@ -111,13 +72,5 @@ public class ExploringConfigurationSpace
       }
 
       return configurationSpaceName.getLocalRigidBodyTransform(configuration);
-   }
-
-   public int getExploringDimension()
-   {
-      if (configurationSpaceName == ConfigurationSpaceName.SE3)
-         return 3;
-      else
-         return 1;
    }
 }

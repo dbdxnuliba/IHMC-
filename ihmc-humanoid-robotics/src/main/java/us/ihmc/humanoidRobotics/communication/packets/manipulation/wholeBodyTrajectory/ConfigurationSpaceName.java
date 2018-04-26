@@ -3,6 +3,7 @@ package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTra
 import java.util.Random;
 
 import gnu.trove.list.TByteList;
+import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
@@ -11,17 +12,23 @@ public enum ConfigurationSpaceName
    X, Y, Z, ROLL, PITCH, YAW, SE3;
 
    public static final Random random = new Random(1);
-   
+
    public static final ConfigurationSpaceName[] values = values();
 
    public double getDefaultExplorationLowerLimit()
    {
-      return -getDefaultExplorationAmplitude();
+      if (this == SE3)
+         return 0.0;
+      else
+         return -getDefaultExplorationAmplitude();
    }
 
    public double getDefaultExplorationUpperLimit()
    {
-      return getDefaultExplorationAmplitude();
+      if (this == SE3)
+         return 1.0;
+      else
+         return getDefaultExplorationAmplitude();
    }
 
    public double getDefaultExplorationAmplitude()
@@ -49,7 +56,7 @@ public enum ConfigurationSpaceName
    public RigidBodyTransform getLocalRigidBodyTransform(double... configuration)
    {
       RigidBodyTransform ret = new RigidBodyTransform();
-      
+
       switch (this)
       {
       case X:
@@ -83,7 +90,9 @@ public enum ConfigurationSpaceName
          quat.set(Math.sin(theta1) * s1, Math.cos(theta1) * s1, Math.sin(theta2) * s2, Math.cos(theta2) * s2);
          quat.norm();
 
-         ret.transform(quat);
+         RotationMatrix rotationMatrix = new RotationMatrix(quat);
+         ret.setRotation(rotationMatrix);
+
          break;
       }
 
