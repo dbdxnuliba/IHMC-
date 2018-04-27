@@ -1,7 +1,7 @@
 package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 
 import us.ihmc.commons.Conversions;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
+import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinition;
 
 public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTrajectoryToolboxManagerInterface
 {

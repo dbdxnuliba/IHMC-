@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
+import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinition;
+import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialData;
+import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialNode;
 
 public class ExploringManager extends WholeBodyTrajectoryToolboxManager
 {

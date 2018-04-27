@@ -1,4 +1,4 @@
-package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
+package us.ihmc.manipulation.planning.rrt.exploringSpatial;
 
 import java.awt.Color;
 import java.util.ArrayList;
