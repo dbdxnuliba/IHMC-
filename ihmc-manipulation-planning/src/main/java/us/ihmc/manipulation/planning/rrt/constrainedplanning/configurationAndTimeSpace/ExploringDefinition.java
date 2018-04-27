@@ -9,7 +9,7 @@ import java.util.Set;
 
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import us.ihmc.commons.PrintTools;
-import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.robotics.screwTheory.RigidBody;
@@ -66,7 +66,7 @@ public abstract class ExploringDefinition
       {
          RigidBody rigidBody = allExploringRigidBodies.get(i).getRigidBody();
 
-         Pose3D poseToAppend = node.getSpatialData(rigidBody);
+         RigidBodyTransform poseToAppend = node.getSpatialData(rigidBody);
 
          KinematicsToolboxRigidBodyMessage message = allExploringRigidBodies.get(i).createMessage(timeInTrajectory, poseToAppend);
          messages.add(message);

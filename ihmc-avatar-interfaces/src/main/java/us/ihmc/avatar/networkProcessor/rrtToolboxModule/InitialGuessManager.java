@@ -52,12 +52,6 @@ public class InitialGuessManager extends WholeBodyTrajectoryToolboxManager
       if(desiredNode.isValid())
       {
          initialGuesses.add(desiredNode);
-         
-//         TDoubleArrayList exploringConfigurations = desiredNode.getSpatialData().getExploringConfigurations();
-//         for(int j=0;j<exploringConfigurations.size();j++)
-//         {
-//            PrintTools.info("valid "+exploringConfigurations.get(j));
-//         }
       }
    }
 

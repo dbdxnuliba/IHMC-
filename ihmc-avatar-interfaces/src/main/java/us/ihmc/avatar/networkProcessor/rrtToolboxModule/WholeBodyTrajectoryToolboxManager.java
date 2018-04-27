@@ -7,10 +7,10 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
 {
    private long startTime;
    private double computationTime = 0.0;
-   
+
    private int numberOfUpdate;
    private int maximumNumberOfUpdate;
-   
+
    protected ExploringDefinition exploringDefinition;
 
    public WholeBodyTrajectoryToolboxManager(ExploringDefinition exploringDefinition, int maximumNumberOfUpdate)
@@ -29,21 +29,20 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
 
    public void update()
    {
-      System.out.println(""+this.getClass() +" "+numberOfUpdate);
       numberOfUpdate++;
    }
-   
+
    public void terminalManager()
    {
       long endTime = System.nanoTime();
       computationTime = Conversions.nanosecondsToSeconds(endTime - startTime);
    }
-   
+
    protected boolean isExceedMaximumNumberOfUpdate()
    {
       return maximumNumberOfUpdate <= numberOfUpdate;
    }
-   
+
    public void setMaximumNumberOfUpdate(int value)
    {
       maximumNumberOfUpdate = value;
@@ -53,5 +52,5 @@ public abstract class WholeBodyTrajectoryToolboxManager implements WholeBodyTraj
    {
       return computationTime;
    }
-   
+
 }

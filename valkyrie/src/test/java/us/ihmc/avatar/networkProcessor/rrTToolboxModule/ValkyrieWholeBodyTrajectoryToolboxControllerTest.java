@@ -141,21 +141,25 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
 
       // run test
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null,
+                                                                                                               rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
 
+   /**
+    * REMARK : Drill motion can not be completed by means of simply putting selection matrix which of angularZ is false only.
+    */
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
    public void testDrillMotion() throws Exception, UnreasonableAccelerationException
    {
       // trajectory parameter
-      double trajectoryTime = 10.0;
+      double trajectoryTime = 15.0;
 
       boolean cuttingDirectionCW = true;
       double cuttingRadius = 0.3;
-      Vector3D wallNormalVector = new Vector3D(-1.0, 0.0, 0.0);
-      Point3D cuttingCenterPosition = new Point3D(0.7, -0.3, 1.1);
+      Vector3D wallNormalVector = new Vector3D(1.0, -2.0, 0.0);
+      Point3D cuttingCenterPosition = new Point3D(0.5, -0.5, 1.1);
 
       // wbt toolbox configuration message
       FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
@@ -172,13 +176,14 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       RobotSide robotSide = RobotSide.RIGHT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
 
-      Vector3D translationToGraspingFrame = new Vector3D(-0.0, 0.05, -0.1);
+      Vector3D translationToGraspingFrame = new Vector3D(-0.0, 0.05, 0.1);
 
       FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeCuttingWallTrajectory(time, trajectoryTime, cuttingRadius, cuttingDirectionCW,
                                                                                                      cuttingCenterPosition, wallNormalVector);
 
       SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
       selectionMatrix.resetSelection();
+      //selectionMatrix.selectAngularZ(false);
       WaypointBasedTrajectoryMessage trajectoryHand = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                      handFunction, selectionMatrix);
       Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
@@ -190,7 +195,6 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       trajectories.add(trajectoryHand);
 
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
-
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
 
       // keep sight on trajectory.
@@ -209,7 +213,8 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
 
       // run test      
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, trajectories, null, rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, trajectories, null,
+                                                                                                               rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
 
@@ -263,7 +268,8 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
 
       // run test      
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null,
+                                                                                                               rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
 
@@ -303,10 +309,12 @@ public class ValkyrieWholeBodyTrajectoryToolboxControllerTest extends AvatarWhol
       double[] explorationUpperLimits = {0.15, 0.05, 0.2};
       double[] explorationLowerLimits = {-0.0, -0.5, -0.2};
 
-      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, explorationSpaces, explorationUpperLimits, explorationLowerLimits));
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, explorationSpaces, explorationUpperLimits,
+                                                                                                      explorationLowerLimits));
 
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, null, reachingManifolds, rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, null, reachingManifolds,
+                                                                                                               rigidBodyConfigurations);
 
       // run toolbox
       runReachingTest(message, maxNumberOfIterations);

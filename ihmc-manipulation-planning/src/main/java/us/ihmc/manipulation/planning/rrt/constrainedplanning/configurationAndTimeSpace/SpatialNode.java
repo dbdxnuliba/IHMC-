@@ -1,9 +1,8 @@
 package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
-import us.ihmc.commons.PrintTools;
-import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tools.TupleTools;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class SpatialNode
@@ -51,27 +50,14 @@ public class SpatialNode
          return other.getTime() - getTime();
    }
 
-   public double getPositionDistance(SpatialNode other)
+   private double getPositionDistance(SpatialNode other)
    {
       return spatialData.getPositionDistance(other.getSpatialData());
    }
 
-   public double getOrientationDistance(SpatialNode other)
+   private double getOrientationDistance(SpatialNode other)
    {
       return spatialData.getOrientationDistance(other.getSpatialData());
-   }
-
-   /**
-    * Compute distance from this to other.
-    */
-   public double computeDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other)
-   {
-      double timeDistance = timeWeight * getTimeGap(other);
-      double positionDistance = positionWeight * getPositionDistance(other);
-      double orientationDistance = orientationWeight * getOrientationDistance(other);
-
-      double distance = timeDistance + positionDistance + orientationDistance;
-      return distance;
    }
 
    /**
@@ -101,61 +87,6 @@ public class SpatialNode
    {
       time = TupleTools.interpolate(nodeOne.time, nodeTwo.time, alpha);
       spatialData.interpolate(nodeOne.getSpatialData(), nodeTwo.getSpatialData(), alpha);
-   }
-
-   public SpatialNode createNodeWithinMaxDistance(double maxTimeInterval, double maxPositionDistance, double maxOrientationDistance, SpatialNode query)
-   {
-      double alpha = 1.0;
-
-      double timeGap = getTimeGap(query);
-
-      double greatestPositionDistance = spatialData.getMaximumPositionDistance(query.getSpatialData());
-      double greatestOrientationDistance = spatialData.getMaximumOrientationDistance(query.getSpatialData());
-
-      if (timeGap > maxTimeInterval)
-      {
-         alpha = Math.min(alpha, maxTimeInterval / timeGap);
-      }
-
-      if (greatestPositionDistance > maxPositionDistance)
-      {
-         alpha = Math.min(alpha, maxPositionDistance / greatestPositionDistance);
-      }
-
-      if (greatestOrientationDistance > maxOrientationDistance)
-      {
-         alpha = Math.min(alpha, maxOrientationDistance / greatestOrientationDistance);
-      }
-
-      if (alpha >= 1.0)
-      {
-         return new SpatialNode(query);
-      }
-      else if (alpha <= 0.0)
-      {
-         return new SpatialNode(this);
-      }
-      else
-      {
-         SpatialNode spatialNode = new SpatialNode(this);
-         spatialNode.interpolate(this, query, alpha);
-         return spatialNode;
-      }
-   }
-
-   public SpatialNode createNodeWithinTimeStep(double maxTimeInterval, SpatialNode query)
-   {
-      SpatialNode spatialNode = new SpatialNode(this);
-
-      double alpha = 1.0;
-      double timeGap = getTimeGap(query);
-      if (timeGap > maxTimeInterval)
-      {
-         alpha = Math.min(alpha, maxTimeInterval / timeGap);
-      }
-      spatialNode.interpolate(this, query, alpha);
-
-      return spatialNode;
    }
 
    public SpatialData getSpatialData()
@@ -208,12 +139,12 @@ public class SpatialNode
       return validity;
    }
 
-   public Pose3D getSpatialData(int index)
+   public RigidBodyTransform getSpatialData(int index)
    {
       return spatialData.getRigidBodySpatials().get(index);
    }
 
-   public Pose3D getSpatialData(RigidBody rigidBody)
+   public RigidBodyTransform getSpatialData(RigidBody rigidBody)
    {
       for (int i = 0; i < spatialData.getNumberOfExploringRigidBodies(); i++)
       {
@@ -222,12 +153,4 @@ public class SpatialNode
       }
       return null;
    }
-
-   //   public void setSpatialsAndConfiguration(SpatialNode other)
-   //   {
-   //      time = other.time;
-   //      spatialData = new SpatialData(other.getSpatialData());
-   //      configuration = new KinematicsToolboxOutputStatus(other.configuration);
-   //      validity = other.validity;
-   //   }
 }

@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import gnu.trove.list.array.TDoubleArrayList;
-import us.ihmc.commons.PrintTools;
-import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.rotationConversion.RotationVectorConversion;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Vector3D;
-import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.plotting.artifact.CircleArtifact;
 import us.ihmc.graphicsDescription.plotting.artifact.LineArtifact;
 import us.ihmc.plotting.Plotter;
@@ -55,7 +53,6 @@ public class SpatialNodePlotter
          plotters.add(plotter);
 
          String plotterName = plotterNames.get(i);
-         PrintTools.info("" + i + " " + plotterName);
          isFrameEnabled = enabled;
          if (enabled)
             plotter.showInNewWindow(plotterName, false);
@@ -99,17 +96,11 @@ public class SpatialNodePlotter
          switch (type)
          {
          case 1:
+            prefix = "" + cnt + "_node_" + configurationIndex;
             if (node.isValid())
-            {
-               prefix = "" + cnt + "_valid_" + configurationIndex;
                color = Color.blue;
-            }
             else
-            {
-               prefix = "" + cnt + "_invalid_" + configurationIndex;
-               diameter = 0.005;
                color = Color.red;
-            }
             break;
          case 2:
             prefix = "" + cnt + "_path_" + configurationIndex;
@@ -150,15 +141,15 @@ public class SpatialNodePlotter
       cnt++;
    }
 
-   private double[] getConfigurationsOfSpatial(Pose3D pose)
+   private double[] getConfigurationsOfSpatial(RigidBodyTransform transform)
    {
       double[] configurations = new double[6];
-      configurations[0] = pose.getX();
-      configurations[1] = pose.getY();
-      configurations[2] = pose.getZ();
+      configurations[0] = transform.getTranslationX();
+      configurations[1] = transform.getTranslationY();
+      configurations[2] = transform.getTranslationZ();
+
       Vector3D rv = new Vector3D();
-      Quaternion orientation = new Quaternion(pose.getOrientation());
-      RotationVectorConversion.convertQuaternionToRotationVector(orientation, rv);
+      RotationVectorConversion.convertMatrixToRotationVector(transform.getRotationMatrix(), rv);
       configurations[3] = rv.getX();
       configurations[4] = rv.getY();
       configurations[5] = rv.getZ();
@@ -172,7 +163,7 @@ public class SpatialNodePlotter
 
       for (int i = 0; i < node.getSpatialData().getRigidBodySpatials().size(); i++)
       {
-         Pose3D spatial = node.getSpatialData(i);
+         RigidBodyTransform spatial = node.getSpatialData(i);
          configurationsList.addAll(getConfigurationsOfSpatial(spatial));
       }
 

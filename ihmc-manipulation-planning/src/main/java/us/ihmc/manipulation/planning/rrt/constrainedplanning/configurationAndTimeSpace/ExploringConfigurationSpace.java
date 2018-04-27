@@ -1,13 +1,11 @@
 package us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace;
 
 import gnu.trove.list.array.TDoubleArrayList;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 
 public class ExploringConfigurationSpace
 {
-   private String configurationNamePrefix;
    private final ConfigurationSpaceName configurationSpaceName;
 
    private TDoubleArrayList configuration = new TDoubleArrayList();
@@ -17,14 +15,13 @@ public class ExploringConfigurationSpace
 
    public ExploringConfigurationSpace(ExploringConfigurationSpace other)
    {
-      this(other.configurationNamePrefix, other.configurationSpaceName, other.lowerLimit, other.upperLimit);
+      this(other.configurationSpaceName, other.lowerLimit, other.upperLimit);
       for (int i = 0; i < other.configuration.size(); i++)
          configuration.set(i, other.configuration.get(i));
    }
 
-   public ExploringConfigurationSpace(String prefix, ConfigurationSpaceName configurationSpaceName, double lowerLimit, double upperLimit)
+   public ExploringConfigurationSpace(ConfigurationSpaceName configurationSpaceName, double lowerLimit, double upperLimit)
    {
-      configurationNamePrefix = prefix;
       this.configurationSpaceName = configurationSpaceName;
 
       if (configurationSpaceName == ConfigurationSpaceName.SE3)

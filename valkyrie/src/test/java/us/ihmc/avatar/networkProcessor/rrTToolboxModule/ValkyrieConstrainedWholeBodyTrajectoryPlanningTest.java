@@ -15,6 +15,7 @@ import us.ihmc.avatar.networkProcessor.rrtToolboxModule.AvatarWholeBodyTrajector
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
 import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -128,9 +129,15 @@ public class ValkyrieConstrainedWholeBodyTrajectoryPlanningTest extends AvatarWh
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
       
       RigidBody chest = fullRobotModel.getChest();
-      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.PITCH};
-      //ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
+      //ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.YAW};
+      //ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.PITCH};
+      //ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.ROLL};
+      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
+      
+//      RigidBody pelvis = fullRobotModel.getPelvis();
+//      ConfigurationSpaceName[] pelvisExploringSpaces = {};
+//      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(pelvis, pelvisExploringSpaces));
 
       // run test
       int maxNumberOfIterations = 10000;
@@ -191,4 +198,6 @@ public class ValkyrieConstrainedWholeBodyTrajectoryPlanningTest extends AvatarWh
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
+
+   
 }

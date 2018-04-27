@@ -90,12 +90,12 @@ public class TrajectoryLibraryForDRC
    public static Pose3D computeCuttingWallTrajectory(double time, double trajectoryTime, double cuttingRadius, boolean cuttingDirectionCW,
                                                      Point3D cuttingCenterPosition, Vector3D wallNormalVector)
    {
-      Vector3D xAxisRotationMatrix = new Vector3D(0, 0, 1);
-      Vector3D yAxisRotationMatrix = new Vector3D();
+      Vector3D xAxisRotationMatrix = new Vector3D();
+      Vector3D yAxisRotationMatrix = new Vector3D(0, 0, 1);
       Vector3D zAxisRotationMatrix = new Vector3D(wallNormalVector);
 
       zAxisRotationMatrix.normalize();
-      yAxisRotationMatrix.cross(zAxisRotationMatrix, xAxisRotationMatrix);
+      xAxisRotationMatrix.cross(yAxisRotationMatrix, zAxisRotationMatrix);
 
       RotationMatrix cuttingRotationMatrix = new RotationMatrix();
       cuttingRotationMatrix.setColumns(xAxisRotationMatrix, yAxisRotationMatrix, zAxisRotationMatrix);
@@ -105,7 +105,7 @@ public class TrajectoryLibraryForDRC
       double phase = time / trajectoryTime;
 
       handControl.appendYawRotation(cuttingDirectionCW ? -phase * 2 * Math.PI : phase * 2 * Math.PI);
-      handControl.appendTranslation(0, cuttingRadius, 0);
+      handControl.appendTranslation(cuttingRadius, 0, 0);
       handControl.appendYawRotation(cuttingDirectionCW ? phase * 2 * Math.PI : -phase * 2 * Math.PI);
 
       return new Pose3D(handControl);

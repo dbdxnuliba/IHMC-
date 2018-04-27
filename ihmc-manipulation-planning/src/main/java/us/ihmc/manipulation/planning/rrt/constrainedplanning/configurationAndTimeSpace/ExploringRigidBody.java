@@ -26,7 +26,7 @@ public class ExploringRigidBody
    private final ArrayList<Pose3D> waypoints = new ArrayList<Pose3D>();
 
    private final Pose3D controlFramePose = new Pose3D();
-   
+
    private final SelectionMatrix6D trajectorySelectionMatrix = new SelectionMatrix6D();
    private final SelectionMatrix6D explorationSelectionMatrix = new SelectionMatrix6D();
 
@@ -67,10 +67,10 @@ public class ExploringRigidBody
          Pose3D originOfRigidBody = new Pose3D(rigidBody.getBodyFixedFrame().getTransformToWorldFrame());
          waypoints.add(originOfRigidBody);
          waypoints.add(originOfRigidBody);
-         
+
          // TODO : for reaching, since there is no trajectory command, we should put proper hand control frame on this.         
          controlFramePose.setToZero();
-         
+
          trajectorySelectionMatrix.clearSelection();
          weight = DEFAULT_WEIGHT;
       }
@@ -82,11 +82,11 @@ public class ExploringRigidBody
             waypointTimes.add(trajectoryCommand.getWaypointTime(i));
             waypoints.add(new Pose3D(trajectoryCommand.getWaypoint(i)));
          }
-         
+
          FramePose3D controlFramePose = new FramePose3D(trajectoryCommand.getControlFramePose());
          controlFramePose.changeFrame(trajectoryCommand.getEndEffector().getBodyFixedFrame());
          this.controlFramePose.set(controlFramePose);
-         
+
          trajectorySelectionMatrix.set(trajectoryCommand.getSelectionMatrix());
 
          if (Double.isNaN(trajectoryCommand.getWeight()) || trajectoryCommand.getWeight() < 0.0)
@@ -99,8 +99,7 @@ public class ExploringRigidBody
       explorationSelectionMatrix.clearSelection();
       for (int i = 0; i < explorationCommand.getNumberOfDegreesOfFreedomToExplore(); i++)
       {
-         ExploringConfigurationSpace exploringConfigurationSpace = new ExploringConfigurationSpace(rigidBody.getName(),
-                                                                                                   explorationCommand.getDegreeOfFreedomToExplore(i),
+         ExploringConfigurationSpace exploringConfigurationSpace = new ExploringConfigurationSpace(explorationCommand.getDegreeOfFreedomToExplore(i),
                                                                                                    explorationCommand.getExplorationRangeLowerLimits(i),
                                                                                                    explorationCommand.getExplorationRangeUpperLimits(i));
 
@@ -129,14 +128,12 @@ public class ExploringRigidBody
 
    public void appendRandomSpatialData(SpatialData spatialData)
    {
-      RigidBodyTransform pose = new RigidBodyTransform();
+      RigidBodyTransform transform = new RigidBodyTransform();
 
       for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
-         //pose.transform(exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform());
-         exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(pose);
-      ;
+         exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(transform);
 
-      spatialData.appendSpatial(rigidBody.getName(), exploringConfigurationSpaces, pose);
+      spatialData.addSpatial(rigidBody.getName(), exploringConfigurationSpaces, transform);
    }
 
    private void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)
@@ -226,17 +223,16 @@ public class ExploringRigidBody
       return current;
    }
 
-   private Pose3D appendPoseToTrajectory(double timeInTrajectory, Pose3D poseToAppend)
+   private Pose3D appendPoseToTrajectory(double timeInTrajectory, RigidBodyTransform transformToAppend)
    {
       Pose3D pose = getPose(timeInTrajectory);
 
-      RigidBodyTransform rigidBodyTransform = new RigidBodyTransform(poseToAppend.getOrientation(), poseToAppend.getPosition());
-      pose.appendTransform(rigidBodyTransform);
+      pose.appendTransform(transformToAppend);
 
       return pose;
    }
 
-   public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, Pose3D poseToAppend)
+   public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, RigidBodyTransform poseToAppend)
    {
       Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
 

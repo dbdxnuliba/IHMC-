@@ -30,7 +30,6 @@ import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTim
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringProgressVisualizer;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNode;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodePlotter;
-import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialNodeTree;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -95,13 +94,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private final SideDependentList<YoGraphicCoordinateSystem> endeffectorFrame = new SideDependentList<>();
 
-   // TODO :
-   //   private final YoFramePoseUsingYawPitchRoll testFramePose;
-   //   private final YoGraphicCoordinateSystem testFrameViz;
-   //   private final YoDouble minimumDistanceFromManifold = new YoDouble("minimumDistanceFromManifold", registry);
-
-   // TODO : should be removed.
-   private SpatialNodeTree tree;
    private final List<SpatialNode> path = new ArrayList<>();
 
    /**
@@ -163,10 +155,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       toolboxSolution.setDestination(-1);
 
       configurationConverter = new KinematicsToolboxOutputConverter(drcRobotModel);
-
-//      testFramePose = new YoFramePoseUsingYawPitchRoll("testFramePose", ReferenceFrame.getWorldFrame(), registry);
-//      testFrameViz = new YoGraphicCoordinateSystem("testFrameViz", testFramePose, 0.25);
-//      yoGraphicsListRegistry.registerYoGraphic("testFrameYoGraphic", testFrameViz);
    }
 
    @Override
@@ -231,11 +219,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
                                outputStatusToPack.getRobotConfigurations());
          outputStatusToPack.getTrajectoryTimes().reset();
          outputStatusToPack.getTrajectoryTimes().add(path.stream().mapToDouble(SpatialNode::getTime).toArray());
-
-         //if (VERBOSE)
-         //   for (int i = 0; i < path.size(); i++)
-         //      PrintTools.info("FINAL RESULT IS " + i + " " + path.get(i).isValid());
-
       }
       else
       {
@@ -249,9 +232,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
     */
    private void generateMotion()
    {
-      // TODO : WholeBodyTrajectoryBehavior should be created.
-      // TODO : WholeBodyTrajectoryToolboxOutputConverter should be used.
-
       /*
        * terminate generateMotion.
        */
@@ -270,20 +250,13 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private void shortcutPath()
    {
       // smoothing over one mile stone node.
-      int numberOfShortcut = 0;
       for (int i = 0; i < numberOfIterationForShortcutOptimization.getIntegerValue(); i++)
-      {
-         numberOfShortcut = i;
          if (updateShortcutPath(path) < 0.001)
             break;
-      }
 
       // plotting final result.
       for (int i = 0; i < path.size(); i++)
          nodePlotter.update(path.get(i), 3);
-
-      //      if (VERBOSE)
-      //         PrintTools.info("the size of the path is " + path.size() + " before dismissing " + revertedPathSize + " shortcut " + numberOfShortcut);
 
       /*
        * terminate state
@@ -302,14 +275,16 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          if (activatedManager.hasFail())
          {
-            PrintTools.info("has Fail");
+            if(VERBOSE)
+               PrintTools.info("has Fail");
             setOutputStatus(toolboxSolution, 2);
             activatedManager.terminalManager();
             terminateToolboxController();
          }
          else
          {
-            PrintTools.info("success");
+            if(VERBOSE)
+               PrintTools.info("success");
             state.set(CWBToolboxState.SHORTCUT_PATH);
             //SHORTCUT_PATH.initialize();
             nodePlotter.update(exploringManager.getPath(), 2);
@@ -328,29 +303,20 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          if (activatedManager.hasFail())
          {
-            PrintTools.info("has Fail");
+            if(VERBOSE)
+               PrintTools.info("has Fail");
             setOutputStatus(toolboxSolution, 1);
             activatedManager.terminalManager();
             terminateToolboxController();
          }
          else
          {
-            PrintTools.info("success " + initialGuessManager.getValidInitialGuesses().size());
+            if(VERBOSE)
+               PrintTools.info("success " + initialGuessManager.getValidInitialGuesses().size());
             state.set(CWBToolboxState.EXPAND_TREE);
             exploringManager.initialize();
             exploringManager.setInitialGuesses(initialGuessManager.getValidInitialGuesses());
             activatedManager.terminalManager();
-
-            //            for(int i=0;i<initialGuessManager.getValidInitialGuesses().size();i++)
-            //            {
-            //               SpatialNode spatialNode = initialGuessManager.getValidInitialGuesses().get(i);
-            //               TDoubleArrayList exploringConfigurations = spatialNode.getSpatialData().getExploringConfigurations();
-            //               PrintTools.info(""+i);
-            //               for(int j=0;j<exploringConfigurations.size();j++)
-            //               {
-            //                  PrintTools.info(""+exploringConfigurations.get(j));
-            //               }
-            //            }
          }
       }
    }
@@ -369,8 +335,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          nodePlotter.update(desiredNode, 1);
       }
-      else
-         PrintTools.info("no node");
 
       activatedManager.update();
    }
@@ -399,19 +363,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       // ******************************************************************************** //
       // Convert command into WholeBodyTrajectoryToolboxData.
       // ******************************************************************************** //
-
       if (VERBOSE)
          PrintTools.info("initialize CWB toolbox");
 
       configurationConverter.updateFullRobotModel(initialConfiguration);
 
-      // TODO : remove
-      // toolboxData = new WholeBodyTrajectoryToolboxData(configurationConverter.getFullRobotModel(), trajectoryCommands, manifoldCommands, rigidBodyCommands);
-
-      // Initiate tree.
-      tree = new SpatialNodeTree();
-
-      //      ExploringDefinition spatialDefinition;
+      // ExploringDefinition spatialDefinition;
       if (trajectoryCommands != null)
       {
          spatialDefinition = new ExploringDefinitionOnConstrainedTrajectory(trajectoryCommands, rigidBodyCommands);
@@ -433,21 +390,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          state.set(CWBToolboxState.EXPAND_TREE);
 
          exploringManager.initialize();
-         // TODO 
-         //         SpatialData rootData = toolboxData.createRandomSpatialData();
-         //         SpatialNode rootNode = new SpatialNode(rootData);
-         //         rootNode.setConfiguration(initialConfiguration);
-         //         rootNode.initializeSpatialData();
-         //
-         //         nodePlotter.update(rootNode, 1);
-         //         tree.addInitialNode(rootNode);
       }
       else
       {
          return false;
       }
 
-      // TODO : toolboxData should be replaced with ExplorationDefinition.
       nodePlotter = new SpatialNodePlotter(spatialDefinition, visualize);
       return true;
    }
@@ -545,7 +493,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          PrintTools.info("initialGuessComputationTime is " + initialGuessManager.getComputingTime());
          PrintTools.info("treeExpansionComputationTime is " + exploringManager.getComputingTime());
          //PrintTools.info("shortcutPathComputationTime is " + shortcutPathComputationTime.getDoubleValue());
-         //PrintTools.info("motionGenerationComputationTime is " + motionGenerationComputationTime.getDoubleValue());
          PrintTools.info("toolbox executing time is " + totalTime + " seconds " + currentNumberOfIterations.getIntegerValue());
          PrintTools.info("===========================================");
       }
@@ -674,7 +621,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       double distance = 0.0;
       for (int i = 0; i < path.size(); i++)
       {
-         distance += pathBeforeShortcut.get(i).computeDistance(0.0, tree.getPositionWeight(), tree.getOrientationWeight(), path.get(i));
+         distance += exploringManager.computeDistance(pathBeforeShortcut.get(i), path.get(i));
       }
 
       return distance / path.size();

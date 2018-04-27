@@ -17,6 +17,7 @@ public enum ConfigurationSpaceName
 
    public double getDefaultExplorationLowerLimit()
    {
+      System.out.println(getDefaultExplorationAmplitude());
       if (this == SE3)
          return 0.0;
       else
@@ -25,6 +26,7 @@ public enum ConfigurationSpaceName
 
    public double getDefaultExplorationUpperLimit()
    {
+      System.out.println(getDefaultExplorationAmplitude());
       if (this == SE3)
          return 1.0;
       else
@@ -42,7 +44,7 @@ public enum ConfigurationSpaceName
       case ROLL:
       case PITCH:
       case YAW:
-         return 0.25 * Math.PI;
+         return 0.3 * Math.PI;
       case SE3:
          return 1.0;
       default:
@@ -78,6 +80,22 @@ public enum ConfigurationSpaceName
          ret.appendYawRotation(configuration[0]);
          break;
       case SE3:
+
+         //         // uniform r p y
+         //         double theta1 = Math.PI * 2 * configuration[0];
+         //         double theta2 = Math.acos(1 - 2 * configuration[1]) + Math.PI * 0.5;
+         //         if(configuration[1] < 0.5)
+         //            if(theta2 < Math.PI)
+         //               theta2 = theta2 + Math.PI;
+         //            else
+         //               theta2 = theta2 - Math.PI;
+         //         double theta3 = Math.PI * 2 * configuration[2] - Math.PI;
+         //         
+         //         ret.appendRollRotation(theta1);
+         //         ret.appendPitchRotation(theta2);
+         //         ret.appendYawRotation(theta3);
+
+         //         uniform quat
          Quaternion quat = new Quaternion();
 
          double s = configuration[0];

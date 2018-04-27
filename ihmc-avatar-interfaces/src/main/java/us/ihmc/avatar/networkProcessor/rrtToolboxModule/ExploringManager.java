@@ -3,7 +3,6 @@ package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
 import java.util.ArrayList;
 import java.util.List;
 
-import us.ihmc.commons.PrintTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.ExploringDefinition;
 import us.ihmc.manipulation.planning.rrt.constrainedplanning.configurationAndTimeSpace.SpatialData;
@@ -19,7 +18,7 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
    private final static int maximumCountForWating = 100;
    private final static double timeCoefficient = 2.5;
 
-   private final double timeWeight = 0.5;
+   private final double timeWeight = 0.8;
    private final double positionWeight = 1.0;
    private final double orientationWeight = 1.0;
 
@@ -67,45 +66,44 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
 
       // TODO : filtering out too short time gap between path nodes.
       // TODO : set every parent nodes.
-//    path.add(new SpatialNode(revertedPath.get(revertedPathSize - 1)));
-//
-//    // filtering out too short time gap node.
-//    // test ahead adding and attach only valid filtering.
-//    // TODO : but still has problem. To test ahead whole shortcut would be too heavy.      
-//    int currentIndex = 0;
-//    int latestAddedIndexOfRevertedPath = revertedPathSize - 1;
-//    for (int j = revertedPathSize - 2; j > 0; j--)
-//    {
-//       double timeGapWithLatestNode = revertedPath.get(j).getTime() - path.get(currentIndex).getTime();
-//
-//       if (timeGapWithLatestNode > minTimeInterval)
-//       {
-//          SpatialNode dummyNode = new SpatialNode(revertedPath.get(j));
-//          dummyNode.setParent(path.get(currentIndex));
-//          updateValidity(dummyNode);
-//          if (dummyNode.isValid())
-//          {
-//             path.add(new SpatialNode(revertedPath.get(j)));
-//             latestAddedIndexOfRevertedPath = j;
-//             currentIndex++;
-//          }
-//          else
-//          {
-//             j = latestAddedIndexOfRevertedPath - 1;
-//
-//             path.add(new SpatialNode(revertedPath.get(j)));
-//             latestAddedIndexOfRevertedPath = j;
-//
-//             currentIndex++;
-//          }
-//       }
-//    }
-//    path.add(new SpatialNode(revertedPath.get(0)));
-//
-//    // set every parent nodes.
-//    for (int i = 0; i < path.size() - 1; i++)
-//       path.get(i + 1).setParent(path.get(i));
-
+      //    path.add(new SpatialNode(revertedPath.get(revertedPathSize - 1)));
+      //
+      //    // filtering out too short time gap node.
+      //    // test ahead adding and attach only valid filtering.
+      //    // TODO : but still has problem. To test ahead whole shortcut would be too heavy.      
+      //    int currentIndex = 0;
+      //    int latestAddedIndexOfRevertedPath = revertedPathSize - 1;
+      //    for (int j = revertedPathSize - 2; j > 0; j--)
+      //    {
+      //       double timeGapWithLatestNode = revertedPath.get(j).getTime() - path.get(currentIndex).getTime();
+      //
+      //       if (timeGapWithLatestNode > minTimeInterval)
+      //       {
+      //          SpatialNode dummyNode = new SpatialNode(revertedPath.get(j));
+      //          dummyNode.setParent(path.get(currentIndex));
+      //          updateValidity(dummyNode);
+      //          if (dummyNode.isValid())
+      //          {
+      //             path.add(new SpatialNode(revertedPath.get(j)));
+      //             latestAddedIndexOfRevertedPath = j;
+      //             currentIndex++;
+      //          }
+      //          else
+      //          {
+      //             j = latestAddedIndexOfRevertedPath - 1;
+      //
+      //             path.add(new SpatialNode(revertedPath.get(j)));
+      //             latestAddedIndexOfRevertedPath = j;
+      //
+      //             currentIndex++;
+      //          }
+      //       }
+      //    }
+      //    path.add(new SpatialNode(revertedPath.get(0)));
+      //
+      //    // set every parent nodes.
+      //    for (int i = 0; i < path.size() - 1; i++)
+      //       path.get(i + 1).setParent(path.get(i));
 
       return path;
    }
@@ -141,7 +139,7 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
       }
       if (nearestNode == null)
       {
-         System.out.println("could not find nearest node");
+         //System.out.println("could not find nearest node");
          return null;
       }
 
@@ -177,7 +175,7 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
       {
          validNodes.add(desiredNode);
          advancedProgress = Math.max(advancedProgress, exploringDefinition.getExploringProgress(desiredNode));
-         
+
          // TODO : implement for reaching.
          //               else if (manifoldCommands != null)
          //               {
@@ -208,6 +206,19 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
          return false;
       else
          return true;
+   }
+
+   /**
+    * Compute distance from this to other.
+    */
+   public double computeDistance(SpatialNode one, SpatialNode other)
+   {
+      double timeDistance = timeWeight * one.getTimeGap(other);
+      double positionDistance = positionWeight * one.getSpatialData().getPositionDistance(other.getSpatialData());
+      double orientationDistance = orientationWeight * one.getSpatialData().getOrientationDistance(other.getSpatialData());
+
+      double distance = timeDistance + positionDistance + orientationDistance;
+      return distance;
    }
 
    private SpatialNode findNearestValidNodeToRandomNode(SpatialNode randomNode)
