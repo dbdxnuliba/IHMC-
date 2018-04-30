@@ -4,79 +4,55 @@ import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.commons.PrintTools;
-import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotics.geometry.AngleTools;
 
 /**
  * this is data structure for plotting of the {@link SpatialNode}
- * @author shadylady
+ * @author Inho Lee.
  *
  */
 public class SpatialData
 {
-   private static boolean VERBOSE = true;
-
-   private final List<String> rigidBodyNames;
-   private final List<Pose3D> rigidBodySpatials;
-
-   private final List<String> configurationNames;
-   private final List<Double> configurationData;
+   private final List<String> exploringRigidBodyNames;
+   private final List<RigidBodyTransform> rigidBodySpatials;
 
    public SpatialData()
    {
-      rigidBodyNames = new ArrayList<String>();
-      rigidBodySpatials = new ArrayList<Pose3D>();
-      configurationNames = new ArrayList<String>();
-      configurationData = new ArrayList<Double>();
+      exploringRigidBodyNames = new ArrayList<String>();
+      rigidBodySpatials = new ArrayList<RigidBodyTransform>();
    }
 
    public SpatialData(SpatialData other)
    {
       this();
-      for (int i = 0; i < other.getRigidBodySpatials().size(); i++)
-         rigidBodySpatials.add(new Pose3D(other.getRigidBodySpatials().get(i)));
-      rigidBodyNames.addAll(other.getRigidBodyNames());
-      configurationNames.addAll(other.getConfigurationNames());
-      configurationData.addAll(other.getConfigurationData());
+      exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
+      rigidBodySpatials.addAll(other.rigidBodySpatials);
    }
 
-   public void initializeData()
+   public void addSpatial(String exploringRigidBodyName, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform transform)
    {
-      for (int i = 0; i < configurationData.size(); i++)
-      {
-         configurationData.set(i, 0.0);
-      }
-      for (int i = 0; i < rigidBodySpatials.size(); i++)
-      {
-         rigidBodySpatials.set(i, new Pose3D());
-      }
-   }
-
-   public void appendSpatial(String rigidBodyName, String[] configurationNames, double[] configurationData, RigidBodyTransform pose)
-   {
-      this.rigidBodyNames.add(rigidBodyName);
-      this.rigidBodySpatials.add(new Pose3D(pose));
-      for (int i = 0; i < configurationNames.length; i++)
-         this.configurationNames.add(configurationNames[i]);
-      for (int i = 0; i < configurationData.length; i++)
-         this.configurationData.add(configurationData[i]);
+      this.exploringRigidBodyNames.add(exploringRigidBodyName);
+      this.rigidBodySpatials.add(new RigidBodyTransform(transform));
    }
 
    public void interpolate(SpatialData dataOne, SpatialData dataTwo, double alpha)
    {
       for (int i = 0; i < rigidBodySpatials.size(); i++)
-         rigidBodySpatials.get(i).interpolate(dataOne.getRigidBodySpatials().get(i), dataTwo.getRigidBodySpatials().get(i), alpha);
-
-      for (int i = 0; i < configurationData.size(); i++)
       {
-         double double1 = dataOne.getConfigurationData().get(i);
-         double double2 = dataTwo.getConfigurationData().get(i);
-         double doubleInterpolate = double1 + (double2 - double1) * alpha;
+         RigidBodyTransform transformOne = dataOne.getRigidBodySpatials().get(i);
+         RigidBodyTransform transformTwo = dataTwo.getRigidBodySpatials().get(i);
 
-         configurationData.remove(i);
-         configurationData.add(i, doubleInterpolate);
+         Point3D interpolatedPoint = new Point3D();
+         interpolatedPoint.interpolate(transformOne.getTranslationVector(), transformTwo.getTranslationVector(), alpha);
+
+         RotationMatrix interpolatedRotationMatrix = new RotationMatrix();
+         interpolatedRotationMatrix.interpolate(transformOne.getRotationMatrix(), transformTwo.getRotationMatrix(), alpha);
+
+         rigidBodySpatials.get(i).setTranslation(interpolatedPoint);
+         rigidBodySpatials.get(i).setRotation(interpolatedRotationMatrix);
       }
    }
 
@@ -86,10 +62,14 @@ public class SpatialData
 
       for (int i = 0; i < rigidBodySpatials.size(); i++)
       {
-         if (rigidBodyNames.get(i) != other.getRigidBodyNames().get(i))
+         if (!getRigidBodyName(i).equals(other.getRigidBodyName(i)))
             PrintTools.warn("other spatial data has different order");
 
-         distance = distance + rigidBodySpatials.get(i).getPositionDistance(other.getRigidBodySpatials().get(i));
+         RigidBodyTransform transformOther = other.getRigidBodySpatials().get(i);
+
+         Point3D position = new Point3D(rigidBodySpatials.get(i).getTranslationVector());
+
+         distance = distance + position.distance(new Point3D(transformOther.getTranslationVector()));
       }
 
       return distance;
@@ -103,10 +83,10 @@ public class SpatialData
       {
          double orientationDistance;
 
-         if (rigidBodySpatials.get(i).getOrientation().equals(other.getRigidBodySpatials().get(i).getOrientation()))
+         if (rigidBodySpatials.get(i).getRotationMatrix().equals(other.getRigidBodySpatials().get(i).getRotationMatrix()))
             orientationDistance = 0.0;
          else
-            orientationDistance = rigidBodySpatials.get(i).getOrientationDistance(other.getRigidBodySpatials().get(i));
+            orientationDistance = rigidBodySpatials.get(i).getRotationMatrix().distance(other.getRigidBodySpatials().get(i).getRotationMatrix());
 
          orientationDistance = AngleTools.trimAngleMinusPiToPi(orientationDistance);
          orientationDistance = Math.abs(orientationDistance);
@@ -123,7 +103,11 @@ public class SpatialData
 
       for (int i = 0; i < rigidBodySpatials.size(); i++)
       {
-         double positionDistance = rigidBodySpatials.get(i).getPositionDistance(other.getRigidBodySpatials().get(i));
+         RigidBodyTransform transformOther = other.getRigidBodySpatials().get(i);
+
+         Point3D position = new Point3D(rigidBodySpatials.get(i).getTranslationVector());
+
+         double positionDistance = position.distance(new Point3D(transformOther.getTranslationVector()));
 
          if (distance < positionDistance)
             distance = positionDistance;
@@ -138,7 +122,7 @@ public class SpatialData
 
       for (int i = 0; i < rigidBodySpatials.size(); i++)
       {
-         double orientationDistance = rigidBodySpatials.get(i).getOrientationDistance(other.getRigidBodySpatials().get(i));
+         double orientationDistance = rigidBodySpatials.get(i).getRotationMatrix().distance(other.getRigidBodySpatials().get(i).getRotationMatrix());
          orientationDistance = AngleTools.trimAngleMinusPiToPi(orientationDistance);
          orientationDistance = Math.abs(orientationDistance);
          if (distance < orientationDistance)
@@ -148,42 +132,37 @@ public class SpatialData
       return distance;
    }
 
-   public Pose3D getTestFrame(List<ReachingManifoldCommand> manifolds)
-   {
-      for (int j = 0; j < manifolds.size(); j++)
-      {
-         for (int i = 0; i < rigidBodySpatials.size(); i++)
-         {
-            if (rigidBodyNames.get(i).equals(manifolds.get(j).getRigidBody().getName()))
-            {
-               ReachingManifoldCommand manifold = manifolds.get(j);
-               Pose3D currentSpatial = rigidBodySpatials.get(i);
+   //   // TODO : to find closest point on manifold for given spatial.
+   //   public Pose3D getTestFrame(List<ReachingManifoldCommand> manifolds)
+   //   {
+   //      for (int j = 0; j < manifolds.size(); j++)
+   //      {
+   //         for (int i = 0; i < rigidBodySpatials.size(); i++)
+   //         {
+   //            if (getRigidBodyName(i).equals(manifolds.get(j).getRigidBody().getName()))
+   //            {
+   //               ReachingManifoldCommand manifold = manifolds.get(j);
+   //               RigidBodyTransform currentSpatial = rigidBodySpatials.get(i);
+   //
+   //               return manifold.computeClosestPoseOnManifold(currentSpatial);
+   //            }
+   //         }
+   //      }
+   //      return null;
+   //   }
 
-               return manifold.computeClosestPoseOnManifold(currentSpatial);
-            }
-         }
-      }
-      return null;
+   public String getRigidBodyName(int i)
+   {
+      return exploringRigidBodyNames.get(i);
    }
 
-   public List<String> getRigidBodyNames()
-   {
-      return rigidBodyNames;
-   }
-
-   public List<Pose3D> getRigidBodySpatials()
+   public List<RigidBodyTransform> getRigidBodySpatials()
    {
       return rigidBodySpatials;
    }
 
-   public List<String> getConfigurationNames()
+   public int getNumberOfExploringRigidBodies()
    {
-      return configurationNames;
+      return exploringRigidBodyNames.size();
    }
-
-   public List<Double> getConfigurationData()
-   {
-      return configurationData;
-   }
-
 }

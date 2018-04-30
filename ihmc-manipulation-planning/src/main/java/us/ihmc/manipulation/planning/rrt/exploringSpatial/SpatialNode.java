@@ -1,8 +1,8 @@
 package us.ihmc.manipulation.planning.rrt.exploringSpatial;
 
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
-import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tools.TupleTools;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class SpatialNode
@@ -10,14 +10,10 @@ public class SpatialNode
    private double time;
    private SpatialData spatialData;
 
-   private SpatialNode parent;
+   private SpatialNode parent = null;
 
    private boolean validity = true;
-   private KinematicsToolboxOutputStatus configuration;
-
-   public SpatialNode()
-   {
-   }
+   private KinematicsToolboxOutputStatus configuration = null;
 
    public SpatialNode(SpatialData spatialData)
    {
@@ -27,7 +23,7 @@ public class SpatialNode
    public SpatialNode(double time, SpatialData spatialData)
    {
       this.time = time;
-      this.spatialData = spatialData;
+      this.spatialData = new SpatialData(spatialData);
    }
 
    public SpatialNode(SpatialNode other)
@@ -35,6 +31,7 @@ public class SpatialNode
       time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
+      // TODO : ?????
       if (other.parent != null)
          parent = new SpatialNode(other.parent);
       else
@@ -45,11 +42,6 @@ public class SpatialNode
          configuration = new KinematicsToolboxOutputStatus(other.configuration);
    }
 
-   public void initializeSpatialData()
-   {
-      spatialData.initializeData();
-   }
-
    public double getTimeGap(SpatialNode other)
    {
       if (getTime() > other.getTime())
@@ -58,27 +50,14 @@ public class SpatialNode
          return other.getTime() - getTime();
    }
 
-   public double getPositionDistance(SpatialNode other)
+   private double getPositionDistance(SpatialNode other)
    {
       return spatialData.getPositionDistance(other.getSpatialData());
    }
 
-   public double getOrientationDistance(SpatialNode other)
+   private double getOrientationDistance(SpatialNode other)
    {
       return spatialData.getOrientationDistance(other.getSpatialData());
-   }
-
-   /**
-    * Compute distance from this to other.
-    */
-   public double computeDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other)
-   {
-      double timeDistance = timeWeight * getTimeGap(other);
-      double positionDistance = positionWeight * getPositionDistance(other);
-      double orientationDistance = orientationWeight * getOrientationDistance(other);
-
-      double distance = timeDistance + positionDistance + orientationDistance;
-      return distance;
    }
 
    /**
@@ -107,73 +86,7 @@ public class SpatialNode
    public void interpolate(SpatialNode nodeOne, SpatialNode nodeTwo, double alpha)
    {
       time = TupleTools.interpolate(nodeOne.time, nodeTwo.time, alpha);
-
       spatialData.interpolate(nodeOne.getSpatialData(), nodeTwo.getSpatialData(), alpha);
-   }
-
-   public SpatialNode createNodeWithinMaxDistance(double maxTimeInterval, double maxPositionDistance, double maxOrientationDistance, SpatialNode query)
-   {
-      double alpha = 1.0;
-
-      double timeGap = getTimeGap(query);
-
-      double greatestPositionDistance = spatialData.getMaximumPositionDistance(query.getSpatialData());
-      double greatestOrientationDistance = spatialData.getMaximumOrientationDistance(query.getSpatialData());
-
-      if (timeGap > maxTimeInterval)
-      {
-         alpha = Math.min(alpha, maxTimeInterval / timeGap);
-      }
-
-      if (greatestPositionDistance > maxPositionDistance)
-      {
-         alpha = Math.min(alpha, maxPositionDistance / greatestPositionDistance);
-      }
-
-      if (greatestOrientationDistance > maxOrientationDistance)
-      {
-         alpha = Math.min(alpha, maxOrientationDistance / greatestOrientationDistance);
-      }
-
-      if (alpha >= 1.0)
-      {
-         return new SpatialNode(query);
-      }
-      else if (alpha <= 0.0)
-      {
-         return new SpatialNode(this);
-      }
-      else
-      {
-         SpatialNode spatialNode = new SpatialNode(this);
-         spatialNode.interpolate(this, query, alpha);
-         return spatialNode;
-      }
-   }
-
-   public SpatialNode createNodeWithinTimeStep(double maxTimeInterval, SpatialNode query)
-   {
-      SpatialNode spatialNode = new SpatialNode(this);
-
-      double alpha = 1.0;
-      double timeGap = getTimeGap(query);
-      if (timeGap > maxTimeInterval)
-      {
-         alpha = Math.min(alpha, maxTimeInterval / timeGap);
-      }
-      spatialNode.interpolate(this, query, alpha);
-
-      return spatialNode;
-   }
-
-   public double getConfigurationData(int index)
-   {
-      return spatialData.getConfigurationData().get(index);
-   }
-
-   public String getConfigurationName(int index)
-   {
-      return spatialData.getConfigurationNames().get(index);
    }
 
    public SpatialData getSpatialData()
@@ -226,36 +139,18 @@ public class SpatialNode
       return validity;
    }
 
-   public int getSize()
-   {
-      return spatialData.getRigidBodyNames().size();
-   }
-
-   public String getName(int index)
-   {
-      return spatialData.getRigidBodyNames().get(index);
-   }
-
-   public Pose3D getSpatialData(int index)
+   public RigidBodyTransform getSpatialData(int index)
    {
       return spatialData.getRigidBodySpatials().get(index);
    }
 
-   public Pose3D getSpatialData(RigidBody rigidBody)
+   public RigidBodyTransform getSpatialData(RigidBody rigidBody)
    {
-      for (int i = 0; i < spatialData.getRigidBodyNames().size(); i++)
+      for (int i = 0; i < spatialData.getNumberOfExploringRigidBodies(); i++)
       {
-         if (spatialData.getRigidBodyNames().get(i).equals(rigidBody.getName()))
+         if (spatialData.getRigidBodyName(i).equals(rigidBody.getName()))
             return getSpatialData(i);
       }
       return null;
-   }
-
-   public void setSpatialsAndConfiguration(SpatialNode other)
-   {
-      time = other.time;
-      spatialData = new SpatialData(other.getSpatialData());
-      configuration = new KinematicsToolboxOutputStatus(other.configuration);
-      validity = other.validity;
    }
 }
