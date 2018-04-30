@@ -18,7 +18,6 @@ import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
@@ -43,7 +42,6 @@ import us.ihmc.communication.controllerAPI.MessageUnpackingTools;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.communication.packets.PacketDestination;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -89,10 +87,10 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
    private static final AppearanceDefinition ghostApperance = YoAppearance.DarkGreen();
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
-   private static final boolean visualize = simulationTestingParameters.getCreateGUI();
+   protected static final boolean visualize = simulationTestingParameters.getCreateGUI();
    static
    {
-      simulationTestingParameters.setKeepSCSUp(false);
+      simulationTestingParameters.setKeepSCSUp(true);
       simulationTestingParameters.setDataBufferSize(1 << 16);
    }
 
@@ -105,7 +103,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
    private YoBoolean initializationSucceeded;
    private YoInteger numberOfIterations;
 
-   private SimulationConstructionSet scs;
+   protected SimulationConstructionSet scs;
 
    private HumanoidFloatingRootJointRobot robot;
    private HumanoidFloatingRootJointRobot ghost;
@@ -137,7 +135,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       commandInputManager = new CommandInputManager(WholeBodyTrajectoryToolboxModule.supportedCommands());
       commandConversionHelper = new WholeBodyTrajectoryToolboxCommandConverter(desiredFullRobotModel);
       commandInputManager.registerConversionHelper(commandConversionHelper);
-      commandInputManager.registerMessageUnpacker(WholeBodyTrajectoryToolboxMessage.class, MessageUnpackingTools.createWholeBodyTrajectoryToolboxMessageUnpacker());
+      commandInputManager.registerMessageUnpacker(WholeBodyTrajectoryToolboxMessage.class,
+                                                  MessageUnpackingTools.createWholeBodyTrajectoryToolboxMessageUnpacker());
 
       converter = new KinematicsToolboxOutputConverter(robotModel);
 
@@ -220,14 +219,12 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 100000)
    public void testOneBigCircle() throws Exception, UnreasonableAccelerationException
    {
       // Trajectory parameters
       double trajectoryTime = 10.0;
-      double circleRadius = 0.6; // Valkyrie, enable ypr, is available for 0.5 radius.
-      Point3D circleCenter = new Point3D(0.55, 0.2, 1.0);
+      double circleRadius = 0.5; // Valkyrie, enable ypr, is available for 0.5 radius.
+      Point3D circleCenter = new Point3D(0.6, 0.1, 1.0);
       Quaternion circleOrientation = new Quaternion();
       circleOrientation.appendYawRotation(Math.PI * 0.0);
       Quaternion handOrientation = new Quaternion(circleOrientation);
@@ -262,7 +259,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             selectionMatrix.resetSelection();
             selectionMatrix.clearAngularSelection();
             WaypointBasedTrajectoryMessage trajectory = createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution, handFunction, selectionMatrix);
-            Pose3D controlFramePose = new Pose3D();
+            Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
             trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
             trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
@@ -287,14 +284,12 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       runTrajectoryTest(message, 100000);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 100000)
    public void testHandCirclePositionAndYaw() throws Exception, UnreasonableAccelerationException
    {
       // Trajectory parameters
       double trajectoryTime = 10.0;
       double circleRadius = 0.25;
-      SideDependentList<Point3D> circleCenters = new SideDependentList<>(new Point3D(0.55, 0.4, 0.9), new Point3D(0.55, -0.4, 0.9));
+      SideDependentList<Point3D> circleCenters = new SideDependentList<>(new Point3D(0.55, 0.4, 1.0), new Point3D(0.55, -0.4, 1.0));
       Quaternion circleOrientation = new Quaternion();
       circleOrientation.appendYawRotation(Math.PI * 0.0);
       Quaternion handOrientation = new Quaternion(circleOrientation);
@@ -326,7 +321,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
          SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
          selectionMatrix.resetSelection();
          WaypointBasedTrajectoryMessage trajectory = createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution, handFunction, selectionMatrix);
-         Pose3D controlFramePose = new Pose3D();
+         Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
          trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
          trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
@@ -349,8 +344,6 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       runTrajectoryTest(message, 100000);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 100000)
    public void testHandCirclePositionAndYawPitchRoll() throws Exception, UnreasonableAccelerationException
    {
       // Trajectory parameters
@@ -389,7 +382,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
          SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
          selectionMatrix.resetSelection();
          WaypointBasedTrajectoryMessage trajectory = createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution, handFunction, selectionMatrix);
-         Pose3D controlFramePose = new Pose3D();
+         Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
          trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
          trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
@@ -654,7 +647,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       return new Pose3D(point, constantOrientation);
    }
 
-   private static Graphics3DObject createFunctionTrajectoryVisualization(FunctionTrajectory trajectoryToVisualize, double t0, double tf, double timeResolution,
+   protected static Graphics3DObject createFunctionTrajectoryVisualization(FunctionTrajectory trajectoryToVisualize, double t0, double tf, double timeResolution,
                                                                          double radius, AppearanceDefinition appearance)
    {
       int numberOfWaypoints = (int) Math.round((tf - t0) / timeResolution) + 1;
@@ -674,7 +667,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       return graphics;
    }
 
-   private static Graphics3DObject createTrajectoryMessageVisualization(WaypointBasedTrajectoryMessage trajectoryMessage, double radius,
+   protected static Graphics3DObject createTrajectoryMessageVisualization(WaypointBasedTrajectoryMessage trajectoryMessage, double radius,
                                                                         AppearanceDefinition appearance)
    {
       double t0 = trajectoryMessage.getWaypointTimes().get(0);
@@ -684,7 +677,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       return createFunctionTrajectoryVisualization(trajectoryToVisualize, t0, tf, timeResolution, radius, appearance);
    }
 
-   private static Graphics3DObject createTrajectoryMessageVisualization(ReachingManifoldMessage reachingMessage, double radius, AppearanceDefinition appearance)
+   protected static Graphics3DObject createTrajectoryMessageVisualization(ReachingManifoldMessage reachingMessage, double radius, AppearanceDefinition appearance)
    {
       int configurationValueResolution = 20;
       int numberOfPoints = (int) Math.pow(configurationValueResolution, reachingMessage.getManifoldConfigurationSpaceNames().size());

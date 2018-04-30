@@ -70,33 +70,6 @@ public class WholeBodyTrajectoryToolboxHelper
       return diffUpper * diffLower / (motionRange * motionRange);
    }
 
-   public static void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)
-   {
-      switch (configurationSpaceName)
-      {
-      case X:
-         selectionMatrix.selectLinearX(select);
-         break;
-      case Y:
-         selectionMatrix.selectLinearY(select);
-         break;
-      case Z:
-         selectionMatrix.selectLinearZ(select);
-         break;
-      case ROLL:
-         selectionMatrix.selectAngularX(select);
-         break;
-      case PITCH:
-         selectionMatrix.selectAngularY(select);
-         break;
-      case YAW:
-         selectionMatrix.selectAngularZ(select);
-         break;
-      default:
-         throw new RuntimeException("Unexpected enum value: " + configurationSpaceName);
-      }
-   }
-
    public static double computeTrajectoryPositionError(Pose3D solution, Pose3D expected, RigidBodyExplorationConfigurationMessage explorationMessage,
                                                        WaypointBasedTrajectoryMessage trajectory)
    {

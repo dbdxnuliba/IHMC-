@@ -26,7 +26,9 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
+import us.ihmc.manipulation.planning.rrt.exploringSpatial.TrajectoryLibraryForDRC;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
@@ -57,6 +59,22 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
       return getRobotModel().getSimpleRobotName();
    }
 
+   @Override
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testOneBigCircle() throws Exception, UnreasonableAccelerationException
+   {
+      super.testOneBigCircle();
+   }
+
+   @Override
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testHandCirclePositionAndYaw() throws Exception, UnreasonableAccelerationException
+   {
+      super.testHandCirclePositionAndYaw();
+   }
+   
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
    public void testMovingPaintDrum() throws Exception, UnreasonableAccelerationException
@@ -64,8 +82,8 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
       // Trajectory parameters
       double trajectoryTime = 5.0;
       double liftUpHeight = 0.2;
-      Point3D initialHandle = new Point3D(0.6, -0.4, 0.7);
-      Point3D goalHandle = new Point3D(0.55, 0.2, 0.7);
+      Point3D initialHandle = new Point3D(0.6, -0.5, 0.7);
+      Point3D goalHandle = new Point3D(0.55, 0.1, 0.7);
       Vector3D initialHandleConfiguration = new Vector3D(1.0, 0.0, 0.0);
 
       // WBT toolbox configuration message
@@ -89,7 +107,7 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
       SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution, handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D();
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
       trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
       trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
@@ -100,8 +118,6 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
       
-      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(fullRobotModel.getHand(RobotSide.LEFT)));
-
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
@@ -155,28 +171,73 @@ public class AtlasWholeBodyTrajectoryToolboxControllerTest extends AvatarWholeBo
 
       return new Pose3D(point, new Quaternion(initialOrientation));
    }
-
-   @Override
+   
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
-   public void testOneBigCircle() throws Exception, UnreasonableAccelerationException
+   public void testDrillMotion() throws Exception, UnreasonableAccelerationException
    {
-      super.testOneBigCircle();
-   }
+      // trajectory parameter
+      double trajectoryTime = 15.0;
 
-   @Override
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 120000)
-   public void testHandCirclePositionAndYaw() throws Exception, UnreasonableAccelerationException
-   {
-      super.testHandCirclePositionAndYaw();
-   }
+      boolean cuttingDirectionCW = true;
+      double cuttingRadius = 0.3;
+      Vector3D wallNormalVector = new Vector3D(1.0, -2.0, 0.0);
+      Point3D cuttingCenterPosition = new Point3D(0.5, -0.5, 1.1);
 
-   @Override
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 120000)
-   public void testHandCirclePositionAndYawPitchRoll() throws Exception, UnreasonableAccelerationException
-   {
-      super.testHandCirclePositionAndYawPitchRoll();
+      // wbt toolbox configuration message
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+      WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
+      configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
+      configuration.setMaximumExpansionSize(1000);
+
+      // trajectory message
+      List<WaypointBasedTrajectoryMessage> trajectories = new ArrayList<>();
+      List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+
+      double timeResolution = trajectoryTime / 100.0;
+
+      RobotSide robotSide = RobotSide.RIGHT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      Vector3D translationToGraspingFrame = new Vector3D(-0.0, 0.05, 0.1);
+
+      FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeCuttingWallTrajectory(time, trajectoryTime, cuttingRadius, cuttingDirectionCW,
+                                                                                                     cuttingCenterPosition, wallNormalVector);
+
+      SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
+      selectionMatrix.resetSelection();
+      //selectionMatrix.selectAngularZ(false);
+      WaypointBasedTrajectoryMessage trajectoryHand = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
+                                                                                                                     handFunction, selectionMatrix);
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
+      controlFramePose.appendTranslation(translationToGraspingFrame);
+
+      trajectoryHand.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      trajectoryHand.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+
+      trajectories.add(trajectoryHand);
+
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
+
+      // keep sight on trajectory.
+      RigidBody head = fullRobotModel.getHead();
+      SelectionMatrix6D selectionMatrixHead = new SelectionMatrix6D();
+      selectionMatrixHead.clearSelection();
+      selectionMatrixHead.selectLinearY(true);
+      selectionMatrixHead.selectLinearZ(true);
+
+      WaypointBasedTrajectoryMessage trajectoryHead = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(head, 0.0, trajectoryTime, timeResolution,
+                                                                                                                     handFunction, selectionMatrixHead);
+
+      trajectoryHead.getControlFramePositionInEndEffector().set(new Point3D(0.5, 0.0, 0.0));
+      trajectoryHead.setWeight(0.01);
+      //trajectories.add(trajectoryHead);
+
+      // run test      
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, trajectories, null,
+                                                                                                               rigidBodyConfigurations);
+      runTrajectoryTest(message, maxNumberOfIterations);
    }
 }

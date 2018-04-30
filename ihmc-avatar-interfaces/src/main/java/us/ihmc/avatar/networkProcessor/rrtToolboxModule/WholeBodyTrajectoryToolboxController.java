@@ -114,6 +114,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private WholeBodyTrajectoryToolboxManager activatedManager;
    private InitialGuessManager initialGuessManager;
    private ExploringManager exploringManager;
+   // TODO : shortcut manager will make simpler?
 
    public WholeBodyTrajectoryToolboxController(DRCRobotModel drcRobotModel, FullHumanoidRobotModel fullRobotModel, CommandInputManager commandInputManager,
                                                StatusMessageOutputManager statusOutputManager, YoVariableRegistry registry,
