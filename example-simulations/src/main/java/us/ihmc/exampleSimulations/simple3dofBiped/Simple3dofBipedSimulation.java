@@ -21,6 +21,32 @@ public class Simple3dofBipedSimulation
       groundContactModel.setZStiffness(10.0);
       groundContactModel.setZDamping(5.0);
 
+      CombinedTerrainObject3D terrainObject = createSlopeAndStepTerrainObject();
+      groundContactModel.setGroundProfile3D(terrainObject);
+
+      simple3dofBiped.setGroundContactModel(groundContactModel);
+
+      SimpleLeapOfFaithHeuristicController controller = new SimpleLeapOfFaithHeuristicController(simple3dofBiped);
+      simple3dofBiped.setController(controller);
+
+      SimulationConstructionSetParameters parameters = new SimulationConstructionSetParameters();
+      parameters.setCreateGUI(true);
+      parameters.setDataBufferSize(4096);
+
+      SimulationConstructionSet scs = new SimulationConstructionSet(simple3dofBiped, parameters);
+      scs.setSimulateNoFasterThanRealTime(true);
+
+      scs.setGroundVisible(false);
+      scs.addStaticLinkGraphics(terrainObject.getLinkGraphics());
+
+      scs.setDT(0.0001, 100);
+      scs.setSimulateDuration(200.0);
+
+      scs.startOnAThread();
+   }
+
+   private CombinedTerrainObject3D createSlopeAndStepTerrainObject()
+   {
       double rampDownOneStartX = 5.0;
       double rampDownOneEndX = 10.0;
       double rampDownOneBottomZ = -1.0;
@@ -71,27 +97,7 @@ public class Simple3dofBipedSimulation
       //      Point3D intersectionPoint = new Point3D();
       //      double maxXY = 100.0;
       //      SlopedPlaneGroundProfile profile3D = new SlopedPlaneGroundProfile(surfaceNormal, intersectionPoint, maxXY);
-      groundContactModel.setGroundProfile3D(terrainObject);
-
-      simple3dofBiped.setGroundContactModel(groundContactModel);
-
-      SimpleLeapOfFaithHeuristicController controller = new SimpleLeapOfFaithHeuristicController(simple3dofBiped);
-      simple3dofBiped.setController(controller);
-
-      SimulationConstructionSetParameters parameters = new SimulationConstructionSetParameters();
-      parameters.setCreateGUI(true);
-      parameters.setDataBufferSize(4096);
-
-      SimulationConstructionSet scs = new SimulationConstructionSet(simple3dofBiped, parameters);
-      scs.setSimulateNoFasterThanRealTime(true);
-
-      scs.setGroundVisible(false);
-      scs.addStaticLinkGraphics(terrainObject.getLinkGraphics());
-
-      scs.setDT(0.0001, 100);
-      scs.setSimulateDuration(200.0);
-
-      scs.startOnAThread();
+      return terrainObject;
    }
 
    public static void main(String[] args)

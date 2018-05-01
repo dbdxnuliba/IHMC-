@@ -23,31 +23,29 @@ import us.ihmc.yoVariables.variable.YoDouble;
 /**
  * <p>Title: SpringFlamingoController</p>
  *
- * <p>Description: Simple balistic walking controller for the SpringFlamingo simulation model.
+ * <p>Description: Simple ballistic walking controller for the SpringFlamingo simulation model.
  * Controls body pitch through hip torque, velocity through ankle torque. </p>
- *
- * @author not attributable
- * @version 1.0
+ * 
  */
 public class SpringFlamingoController implements RobotController
 {
-   /**
-    * Initialization 
-    */
-   
    private final YoVariableRegistry registry = new YoVariableRegistry("SpringFlamingoController");
-   
-   private double comPosX, comPosZ, comVelX, icpPos; //TODO modified
-//   private ICPVisualizer icpVisualizer;
-   
+
+   //   private double comPosX, comPosZ, comVelX, icpPos; //TODO modified
+   //   private ICPVisualizer icpVisualizer;
+
    // State Machine:
-   private enum States {SUPPORT, TOE_OFF, SWING, STRAIGHTEN}
+   private enum States
+   {
+      SUPPORT, TOE_OFF, SWING, STRAIGHTEN
+   }
 
    private final StateMachine<States> leftStateMachine, rightStateMachine;
    private final SideDependentList<StateMachine<States>> stateMachines;
 
    // Control Parameters:
-   private final DoubleParameter stand_gain = new DoubleParameter("stand_gain", "Gain for torquing the support ankle based on an error in desired x", registry, 0.0);
+   private final DoubleParameter stand_gain = new DoubleParameter("stand_gain", "Gain for torquing the support ankle based on an error in desired x", registry,
+                                                                  0.0);
    private final DoubleParameter x_d = new DoubleParameter("x_d", "Desired x location. Controlled with stand_gain", registry, 0.0);
 
    private final DoubleParameter v_nom = new DoubleParameter("v_nom", "Nominal velocity", registry, -0.4);
@@ -57,6 +55,9 @@ public class SpringFlamingoController implements RobotController
    private final DoubleParameter t_damp = new DoubleParameter("t_damp", "Hip damping", registry, 20.0);
 
    private final DoubleParameter knee_d = new DoubleParameter("knee_d", registry, 0.0);
+   private final DoubleParameter knee_toe_off_d = new DoubleParameter("knee_toe_off_d", registry, -0.1);
+   private final DoubleParameter timeToStartKneeCollapse = new DoubleParameter("timeToStartKneeCollapse", registry, 0.3);
+
    private final DoubleParameter knee_gain = new DoubleParameter("knee_gain", registry, 30.0);
    private final DoubleParameter knee_damp = new DoubleParameter("knee_damp", registry, 10.0);
    private final DoubleParameter hip_d = new DoubleParameter("hip_d", registry, 0.587059);
@@ -143,13 +144,9 @@ public class SpringFlamingoController implements RobotController
    private final SpringFlamingoRobot robot;
 
    private String name;
-   
-   private final SimpleMovingAverageFilteredYoVariable average_qd_x ; //TODO what is this? 
 
-   /**
-    * Constructor
-    */
-   
+   private final SimpleMovingAverageFilteredYoVariable average_qd_x; //TODO what is this? 
+
    public SpringFlamingoController(SpringFlamingoRobot robot, String name) // TODO SpringFlamingoController(SpringFlamingoRobot robot, String name, ICPVisualizer icpVisualizer) 
    {
       this.name = name;
@@ -171,8 +168,8 @@ public class SpringFlamingoController implements RobotController
       tauKnee = new SideDependentList<YoDouble>(robot.tau_lk, robot.tau_rk);
       tauAnkle = new SideDependentList<YoDouble>(robot.tau_la, robot.tau_ra);
 
-      average_qd_x = new SimpleMovingAverageFilteredYoVariable("average_qd_x", 100, robot.qd_x, registry );
-      
+      average_qd_x = new SimpleMovingAverageFilteredYoVariable("average_qd_x", 100, robot.qd_x, registry);
+
       // Create the state machines:
       leftStateMachine = new StateMachine<States>("leftState", "leftSwitchTime", States.class, robot.t, registry);
       rightStateMachine = new StateMachine<States>("rightState", "rightSwitchTime", States.class, robot.t, registry);
@@ -181,10 +178,9 @@ public class SpringFlamingoController implements RobotController
       setupStateMachines();
       createStateMachineWindow();
       initControl();
-      
+
    }
-   
-   
+
    //////////////////////////////////////////////////////
    public void createStateMachineWindow()
    {
@@ -223,8 +219,7 @@ public class SpringFlamingoController implements RobotController
       //    rightStateMachinePanel.createUpdaterThread(250);
    }
    //////////////////////////////////////////////////////////
-   
-   
+
    public YoVariableRegistry getYoVariableRegistry()
    {
       return registry;
@@ -248,35 +243,33 @@ public class SpringFlamingoController implements RobotController
 
       right_heel.set(-0.231515);
       max_hip_torque.set(0.0);
-      
-      
+
       DefaultParameterReader defaultParameterReader = new DefaultParameterReader();
       defaultParameterReader.readParametersInRegistry(registry);
-
    }
 
    public void doControl()
    {
-      balistic_walking_state_machine();
+      ballistic_walking_state_machine();
       average_qd_x.update();
    }
 
-//   private double passive_ankle_torques(double pos, double vel)
-//   {
-//      if (pos > ankle_limit_set.getDoubleValue())
-//         return (-ankle_limit_gain.getDoubleValue() * (ankle_limit_set.getDoubleValue() - pos) * (ankle_limit_set.getDoubleValue() - pos));
-//      else
-//         return (0.0);
-//   }
+   //   private double passive_ankle_torques(double pos, double vel)
+   //   {
+   //      if (pos > ankle_limit_set.getValue())
+   //         return (-ankle_limit_gain.getValue() * (ankle_limit_set.getValue() - pos) * (ankle_limit_set.getValue() - pos));
+   //      else
+   //         return (0.0);
+   //   }
 
    private double passive_ankle_torques(double pos, double vel)
    {
-       if (pos > ankle_limit_set.getValue())
+      if (pos > ankle_limit_set.getValue())
          return (ankle_limit_gain.getValue() * (ankle_limit_set.getValue() - pos));
-       else
-          return (0.0);
-   }   
-   
+      else
+         return (0.0);
+   }
+
    private double toe_off_ankle_torques(double pos, double vel)
    {
       return (push_gain.getValue() * (push_set.getValue() - pos) - push_damp.getValue() * vel);
@@ -287,7 +280,7 @@ public class SpringFlamingoController implements RobotController
       // States and Actions:
 
       State<States> leftSupportState = new SupportState(RobotSide.LEFT, States.SUPPORT);
-      State<States> rightSupportState = new SupportState(RobotSide.RIGHT, States.SUPPORT);  
+      State<States> rightSupportState = new SupportState(RobotSide.RIGHT, States.SUPPORT);
       State<States> leftToeOffState = new ToeOffState(RobotSide.LEFT, States.TOE_OFF);
       State<States> rightToeOffState = new ToeOffState(RobotSide.RIGHT, States.TOE_OFF);
       State<States> leftSwingState = new SwingState(RobotSide.LEFT, States.SWING);
@@ -296,16 +289,16 @@ public class SpringFlamingoController implements RobotController
       State<States> rightStraightenState = new StraightenState(RobotSide.RIGHT, States.STRAIGHTEN);
 
       // Transition Conditions:
-      StateTransitionCondition leftHealUnloaded = new HeelOffGroundCondition(RobotSide.LEFT);
+      StateTransitionCondition leftHeelUnloaded = new HeelOffGroundCondition(RobotSide.LEFT);
       StateTransitionCondition leftFootUnloaded = new ToeOffGroundCondition(RobotSide.LEFT);
       StateTransitionCondition leftFootTouchedDown = new HeelOnGroundCondition(RobotSide.LEFT);
 
-      StateTransitionCondition rightHealUnloaded = new HeelOffGroundCondition(RobotSide.RIGHT);
+      StateTransitionCondition rightHeelUnloaded = new HeelOffGroundCondition(RobotSide.RIGHT);
       StateTransitionCondition rightFootUnloaded = new ToeOffGroundCondition(RobotSide.RIGHT);
       StateTransitionCondition rightFootTouchedDown = new HeelOnGroundCondition(RobotSide.RIGHT);
 
       // Left State Transitions:
-      StateTransition<States> leftSupportToToeOff = new StateTransition<States>(States.TOE_OFF, leftHealUnloaded);
+      StateTransition<States> leftSupportToToeOff = new StateTransition<States>(States.TOE_OFF, leftHeelUnloaded);
       leftSupportToToeOff.addTimePassedCondition(min_support_time);
       leftSupportState.addStateTransition(leftSupportToToeOff);
 
@@ -319,7 +312,7 @@ public class SpringFlamingoController implements RobotController
       leftStraightenState.addStateTransition(leftStraightenToSupport);
 
       // Right State Transitions:
-      StateTransition<States> rightSupportToToeOff = new StateTransition<States>(States.TOE_OFF, rightHealUnloaded);
+      StateTransition<States> rightSupportToToeOff = new StateTransition<States>(States.TOE_OFF, rightHeelUnloaded);
       rightSupportToToeOff.addTimePassedCondition(min_support_time);
       rightSupportState.addStateTransition(rightSupportToToeOff);
 
@@ -332,13 +325,11 @@ public class SpringFlamingoController implements RobotController
       StateTransition<States> rightStraightenToSupport = new StateTransition<States>(States.SUPPORT, rightFootTouchedDown);
       rightStraightenState.addStateTransition(rightStraightenToSupport);
 
-
       // Assemble the Left State Machine:
       leftStateMachine.addState(leftSupportState);
       leftStateMachine.addState(leftToeOffState);
       leftStateMachine.addState(leftSwingState);
       leftStateMachine.addState(leftStraightenState);
-
 
       // Assemble the Right State Machine:
       rightStateMachine.addState(rightSupportState);
@@ -349,8 +340,8 @@ public class SpringFlamingoController implements RobotController
       // Set the Initial States:
       leftStateMachine.setCurrentState(States.STRAIGHTEN);
       rightStateMachine.setCurrentState(States.SUPPORT);
-   } 
-   
+   }
+
    //////////////////////////////////////////////  (1) Support
    private class SupportState extends State<States>
    {
@@ -384,6 +375,7 @@ public class SpringFlamingoController implements RobotController
       public void doTransitionIntoAction()
       {
       }
+
       public void doTransitionOutOfAction()
       {
       }
@@ -403,11 +395,17 @@ public class SpringFlamingoController implements RobotController
       public void doAction()
       {
          // Use hip to servo pitch
-         actHip.get(robotSide).set(-t_gain.getValue() * (desiredBodyPitch.getValue() - robot.q_pitch.getDoubleValue())
-               + t_damp.getValue() * robot.qd_pitch.getDoubleValue());
+         actHip.get(robotSide)
+               .set(-t_gain.getValue() * (desiredBodyPitch.getValue() - robot.q_pitch.getDoubleValue()) + t_damp.getValue() * robot.qd_pitch.getDoubleValue());
 
          // Keep knee straight
-         actKnee.get(robotSide).set(knee_gain.getValue() * (knee_d.getValue() - qKnee.get(robotSide).getDoubleValue())
+         double kneeToeOff = 0.0;
+         if (stateMachines.get(robotSide).timeInCurrentState() > timeToStartKneeCollapse.getValue())
+         {
+            kneeToeOff = knee_toe_off_d.getValue();
+         }
+         
+         actKnee.get(robotSide).set(knee_gain.getValue() * (kneeToeOff - qKnee.get(robotSide).getDoubleValue())
                - knee_damp.getValue() * qdKnee.get(robotSide).getDoubleValue());
 
          // Use ankle to servo speed, position
@@ -418,13 +416,15 @@ public class SpringFlamingoController implements RobotController
          pasAnkle.get(robotSide).set(passive_ankle_torques(qAnkle.get(robotSide).getDoubleValue(), qdAnkle.get(robotSide).getDoubleValue()));
 
          // Ankle push off
-         actAnkle.get(robotSide).set(actAnkle.get(robotSide).getDoubleValue() + toe_off_ankle_torques(qAnkle.get(robotSide).getDoubleValue(), qdAnkle.get(robotSide).getDoubleValue()));
+         actAnkle.get(robotSide).set(actAnkle.get(robotSide).getDoubleValue()
+               + toe_off_ankle_torques(qAnkle.get(robotSide).getDoubleValue(), qdAnkle.get(robotSide).getDoubleValue()));
 
       }
 
       public void doTransitionIntoAction()
       {
       }
+
       public void doTransitionOutOfAction()
       {
       }
@@ -465,7 +465,8 @@ public class SpringFlamingoController implements RobotController
          else
          {
             // Servo ankle level to the ground
-            heel.get(robotSide).set(-robot.q_pitch.getDoubleValue() - qHip.get(robotSide).getDoubleValue() - qKnee.get(robotSide).getDoubleValue() - qAnkle.get(robotSide).getDoubleValue());
+            heel.get(robotSide).set(-robot.q_pitch.getDoubleValue() - qHip.get(robotSide).getDoubleValue() - qKnee.get(robotSide).getDoubleValue()
+                  - qAnkle.get(robotSide).getDoubleValue());
             actAnkle.get(robotSide).set(-ankle_gain.getValue() * (ankle_d.getValue() - heel.get(robotSide).getDoubleValue())
                   - ankle_damp.getValue() * qdAnkle.get(robotSide).getDoubleValue());
          }
@@ -474,6 +475,7 @@ public class SpringFlamingoController implements RobotController
       public void doTransitionIntoAction()
       {
       }
+
       public void doTransitionOutOfAction()
       {
       }
@@ -502,7 +504,8 @@ public class SpringFlamingoController implements RobotController
                - swing_damp_knee.getValue() * qdKnee.get(robotSide).getDoubleValue());
 
          // Servo ankle level to the ground
-         heel.get(robotSide).set(-robot.q_pitch.getDoubleValue() - qHip.get(robotSide).getDoubleValue() - qKnee.get(robotSide).getDoubleValue() - qAnkle.get(robotSide).getDoubleValue());
+         heel.get(robotSide).set(-robot.q_pitch.getDoubleValue() - qHip.get(robotSide).getDoubleValue() - qKnee.get(robotSide).getDoubleValue()
+               - qAnkle.get(robotSide).getDoubleValue());
          actAnkle.get(robotSide).set(-ankle_gain.getValue() * (ankle_d.getValue() - heel.get(robotSide).getDoubleValue())
                - ankle_damp.getValue() * qdAnkle.get(robotSide).getDoubleValue());
       }
@@ -510,14 +513,15 @@ public class SpringFlamingoController implements RobotController
       public void doTransitionIntoAction()
       {
       }
+
       public void doTransitionOutOfAction()
       {
       }
    }
 
    ////////////////////////////////////////////////////  STATE MACHINE
-   private void balistic_walking_state_machine()
-   {   
+   private void ballistic_walking_state_machine()
+   {
       // Robot happens to walk in negative x direction.  Set vel positive just so it makes intuitive sense.
       vel.set(-robot.qd_x.getDoubleValue());
 
@@ -548,7 +552,7 @@ public class SpringFlamingoController implements RobotController
          // Transition Conditions:
          stateMachine.checkTransitionConditions();
       }
-      
+
       // Torques at the joints:
       for (RobotSide robotSide : RobotSide.values())
       {
@@ -556,7 +560,7 @@ public class SpringFlamingoController implements RobotController
          tauKnee.get(robotSide).set(actKnee.get(robotSide).getDoubleValue() + pasKnee.get(robotSide).getDoubleValue());
          tauAnkle.get(robotSide).set(actAnkle.get(robotSide).getDoubleValue() + pasAnkle.get(robotSide).getDoubleValue());
       }
-         
+
    }
 
    ////////////////////////////////////////////////////////////////////////
@@ -568,13 +572,14 @@ public class SpringFlamingoController implements RobotController
       {
          this.robotSide = robotSide;
       }
+
       public boolean checkCondition()
-      {      
+      {
          return (gcHeel_fz.get(robotSide).getDoubleValue() < force_thresh.getValue())
                && ((robot.qd_x.getDoubleValue() < 0.0) && (gcHeel_x.get(robotSide).getDoubleValue() > robot.q_x.getDoubleValue()))
-               && (gcHeel_x.get(robotSide).getDoubleValue() >   gcHeel_x.get(robotSide.getOppositeSide()).getDoubleValue());
+               && (gcHeel_x.get(robotSide).getDoubleValue() > gcHeel_x.get(robotSide.getOppositeSide()).getDoubleValue());
       }
-   }  
+   }
 
    public class ToeOffGroundCondition implements StateTransitionCondition
    {
@@ -583,7 +588,7 @@ public class SpringFlamingoController implements RobotController
       public ToeOffGroundCondition(RobotSide robotSide)
       {
          this.robotSide = robotSide;
-      }   
+      }
 
       public boolean checkCondition()
       {
@@ -591,7 +596,7 @@ public class SpringFlamingoController implements RobotController
       }
    }
 
-   public class HeelOnGroundCondition implements StateTransitionCondition   
+   public class HeelOnGroundCondition implements StateTransitionCondition
    {
       private final RobotSide robotSide;
 
@@ -605,7 +610,7 @@ public class SpringFlamingoController implements RobotController
          return (gcToe_fs.get(robotSide).getDoubleValue() == 1.0) || (gcHeel_fs.get(robotSide).getDoubleValue() == 1.0);
       }
    }
-   
+
    //////////////////////////////////////////////////////////////////////////////
    public YoVariableRegistry getRegistry()
    {
@@ -618,31 +623,31 @@ public class SpringFlamingoController implements RobotController
    }
 
    public void initialize()
-   {      
+   {
    }
 
    public String getDescription()
    {
       return getName();
    }
-   
+
    ///////////////////////////////////////////////////////////////////////////////
-//   private double getICP()
-//   {
-//      //Calculation
-//      comVelX = robot.getBodyVelocityX();
-//      comPosX = robot.getBodyPositionX();
-//      double omega0 = Math.sqrt(9.81 / comPosZ);
-//      
-//      FramePoint2d capturePoint = new FramePoint2d();
-//      FramePoint2d centerOfMassInWorld = new FramePoint2d(ReferenceFrame.getWorldFrame(), comPosX, 0.0);
-//      FrameVector2d centerOfMassVelocityInWorld = new FrameVector2d(ReferenceFrame.getWorldFrame(), comVelX, 0.0);
-//      CapturePointCalculator.computeCapturePoint(capturePoint, centerOfMassInWorld, centerOfMassVelocityInWorld, omega0);
-//      icpPos = capturePoint.getX();
-//      
-//      //Visualization
-//      icpVisualizer.setLocation(icpPos, 0.0, 0.0);
-//      
-//      return icpPos;
-//   }
+   //   private double getICP()
+   //   {
+   //      //Calculation
+   //      comVelX = robot.getBodyVelocityX();
+   //      comPosX = robot.getBodyPositionX();
+   //      double omega0 = Math.sqrt(9.81 / comPosZ);
+   //      
+   //      FramePoint2d capturePoint = new FramePoint2d();
+   //      FramePoint2d centerOfMassInWorld = new FramePoint2d(ReferenceFrame.getWorldFrame(), comPosX, 0.0);
+   //      FrameVector2d centerOfMassVelocityInWorld = new FrameVector2d(ReferenceFrame.getWorldFrame(), comVelX, 0.0);
+   //      CapturePointCalculator.computeCapturePoint(capturePoint, centerOfMassInWorld, centerOfMassVelocityInWorld, omega0);
+   //      icpPos = capturePoint.getX();
+   //      
+   //      //Visualization
+   //      icpVisualizer.setLocation(icpPos, 0.0, 0.0);
+   //      
+   //      return icpPos;
+   //   }
 }
