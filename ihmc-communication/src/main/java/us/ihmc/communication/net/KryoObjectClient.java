@@ -53,6 +53,7 @@ public class KryoObjectClient extends KryoObjectCommunicator
    public KryoObjectClient(InetAddress host, int tcpPort, NetClassList netClassList, int writeBufferSize, int receiveBufferSize, Serialization serialization)
    {
       super();
+
       this.client = new Client(writeBufferSize, receiveBufferSize, serialization);
       this.host = host;
       this.tcpPort = tcpPort;

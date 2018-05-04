@@ -54,12 +54,12 @@ public class ROS2Tools
       }
    }
 
-   public static <T> RealtimeRos2Publisher<T> createPublisher(RealtimeRos2Node realtimeRos2Node, TopicDataType<T> topicDataType, String topicName,
+   public static <T> ROS2ObjectPublisher<T> createPublisher(RealtimeRos2Node realtimeRos2Node, TopicDataType<T> topicDataType, String topicName,
                                                               ExceptionHandler exceptionHandler)
    {
       try
       {
-         return realtimeRos2Node.createPublisher(topicDataType, topicName);
+         return new ROS2ObjectPublisher<T>(realtimeRos2Node.createPublisher(topicDataType, topicName));
       }
       catch (IOException e)
       {
