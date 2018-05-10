@@ -19,6 +19,8 @@ public class GaussianCorruptorYoFrameQuaternion extends YoFrameQuaternion implem
    private final Vector3DReadOnly standardDeviation;
    private final QuaternionReadOnly input;
 
+   private final Vector3D noiseRotationVector = new Vector3D();
+
    private static Vector3DReadOnly convertStandardDeviationToVector(DoubleProvider standardDeviation)
    {
       return new Vector3DReadOnly()
@@ -96,8 +98,6 @@ public class GaussianCorruptorYoFrameQuaternion extends YoFrameQuaternion implem
       checkReferenceFrameMatch(input);
       update((QuaternionReadOnly) input);
    }
-
-   private final Vector3D noiseRotationVector = new Vector3D();
 
    public void update(QuaternionReadOnly input)
    { // TODO Not sure if that's the proper way to generate axis-dependent noise.
