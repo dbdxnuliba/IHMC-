@@ -39,6 +39,11 @@ public class RecycledLinkedListBuilder<T> implements List<T>
       {
          return previous;
       }
+      
+      public T getElement()
+      {
+         return element;
+      }
    }
 
    private RecycledLinkedListEntry<T> firstEntry;

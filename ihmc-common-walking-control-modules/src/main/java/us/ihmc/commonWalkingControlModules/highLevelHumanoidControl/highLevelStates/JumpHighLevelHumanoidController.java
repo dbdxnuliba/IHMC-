@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Map;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.CentroidalMotionPlannerParameters;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlannerParameters;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.CentroidalMomentumManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.FeetJumpManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpMessageHandler;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControlCoreToolbox;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;

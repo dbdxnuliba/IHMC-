@@ -2,11 +2,11 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 
 import java.util.Map;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.CentroidalMomentumManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.FeetJumpManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpMessageHandler;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.tuple3D.Vector3D;
@@ -86,7 +86,7 @@ public class LaunchState extends AbstractJumpState
    {
       centroidalMomentumManager.setGroundReactionForceProfile(motionPlanner.getGroundReactionForceProfile());
       centroidalMomentumManager.setCoMTrajectory(motionPlanner.getPositionTrajectory());
-      centroidalMomentumManager.setGroundTorqueProfile(motionPlanner.getGroundreactionTorqueProfile());
+      centroidalMomentumManager.setGroundTorqueProfile(motionPlanner.getGroundReactionTorqueProfile());
       centroidalMomentumManager.setCoMOrientationTrajectory(motionPlanner.getOrientationTrajectory());
       for (RobotSide robotSide : RobotSide.values)
       {

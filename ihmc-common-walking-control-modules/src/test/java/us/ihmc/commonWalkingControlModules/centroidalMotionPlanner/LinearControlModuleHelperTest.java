@@ -8,6 +8,9 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.junit.Test;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionNode;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlannerParameters;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.ControlModuleHelper;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;

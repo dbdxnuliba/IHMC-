@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;

@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.math.trajectories.Trajectory;

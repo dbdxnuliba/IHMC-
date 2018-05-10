@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.ForceTrajectory;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.PositionTrajectory;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;

@@ -1,5 +1,6 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.VectorEnum;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;

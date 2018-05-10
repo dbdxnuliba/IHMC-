@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import java.util.List;
 

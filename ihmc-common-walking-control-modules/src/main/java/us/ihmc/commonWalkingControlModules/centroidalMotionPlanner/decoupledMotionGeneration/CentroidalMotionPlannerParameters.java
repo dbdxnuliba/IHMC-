@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;

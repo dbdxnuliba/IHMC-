@@ -6,6 +6,9 @@ import org.junit.Test;
 
 import afu.org.checkerframework.common.reflection.qual.GetClass;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionNode;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlanner;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlannerParameters;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.ForceTrajectory;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;

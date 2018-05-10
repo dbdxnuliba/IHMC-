@@ -7,11 +7,11 @@ import java.util.Set;
 import org.apache.bcel.verifier.statics.DOUBLE_Upper;
 import org.ejml.data.DenseMatrix64F;
 
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.CentroidalMotionNode;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.CentroidalMotionPlanner;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.CentroidalMotionPlannerParameters;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.DependentVariableConstraintType;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.VectorEnum;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionNode;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlanner;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlannerParameters;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.DependentVariableConstraintType;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.ForceTrajectory;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;

@@ -82,4 +82,9 @@ public class ContactState
    {
       this.orientation.setIncludingFrame(orientationToSet);
    }
+
+   public ReferenceFrame getReferenceFrame()
+   {
+      return orientation.getReferenceFrame();
+   }
 }

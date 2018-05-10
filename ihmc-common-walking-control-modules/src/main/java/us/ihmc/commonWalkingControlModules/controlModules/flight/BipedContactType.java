@@ -41,12 +41,24 @@ public enum BipedContactType
       }
    }
 
+   public boolean areBothFeetSupported()
+   {
+      return isLeftFootSupported() && isRightFootSupported();
+   }
+
+   public boolean isOnlyOneFootSupported()
+   {
+      boolean leftFootSupported = isLeftFootSupported();
+      boolean rightFootSupported = isRightFootSupported();
+      return (leftFootSupported && !rightFootSupported) || (rightFootSupported && !leftFootSupported);
+   }
+
    private boolean throwUnhandledException()
    {
       throw new RuntimeException("Unhandled case");
    }
 
-   public boolean isSupported(RobotSide robotSide)
+   public boolean isFootSupported(RobotSide robotSide)
    {
       switch (robotSide)
       {

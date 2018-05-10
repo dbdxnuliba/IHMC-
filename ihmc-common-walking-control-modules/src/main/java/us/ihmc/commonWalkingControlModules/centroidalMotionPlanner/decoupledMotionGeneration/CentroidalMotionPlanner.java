@@ -1,10 +1,11 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import org.ejml.data.DenseMatrix64F;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.ForceTrajectory;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.PositionTrajectory;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.WholeBodyMotionPlanner;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -99,15 +100,15 @@ public class CentroidalMotionPlanner
       if (!Double.isFinite(nodeTime))
          return false;
       if (nodeList.getSize() == 0)
-         nodeList.getOrCreateFirstEntry().element.set(nodeToAdd);
-      else if (nodeList.getFirstEntry().element.getTime() > nodeTime)
-         nodeList.insertAtBeginning().element.set(nodeToAdd);
-      else if (nodeList.getLastEntry().element.getTime() < nodeTime)
-         nodeList.insertAtEnd().element.set(nodeToAdd);
+         nodeList.getOrCreateFirstEntry().getElement().set(nodeToAdd);
+      else if (nodeList.getFirstEntry().getElement().getTime() > nodeTime)
+         nodeList.insertAtBeginning().getElement().set(nodeToAdd);
+      else if (nodeList.getLastEntry().getElement().getTime() < nodeTime)
+         nodeList.insertAtEnd().getElement().set(nodeToAdd);
       else
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> existingNode = getFirstNodeAfter(nodeTime);
-         nodeList.insertBefore(existingNode).element.set(nodeToAdd);
+         nodeList.insertBefore(existingNode).getElement().set(nodeToAdd);
       }
       yoNumberOfNodesSubmitted.increment();
       return true;
@@ -118,7 +119,7 @@ public class CentroidalMotionPlanner
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> node = nodeList.getFirstEntry();
       while (node != null)
       {
-         if (node.element.getTime() > time)
+         if (node.getElement().getTime() > time)
             break;
          node = node.getNext();
       }
@@ -143,15 +144,15 @@ public class CentroidalMotionPlanner
    private void mergeNodesWithinEpsilon(double timeEpsilon)
    {
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> node = nodeList.getFirstEntry();
-      double nodeTime = node.element.getTime();
+      double nodeTime = node.getElement().getTime();
       while (node != null)
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> candidateNode = node.getNext();
          if (candidateNode == null)
             break;
-         if (nodeTime + timeEpsilon > candidateNode.element.getTime())
+         if (nodeTime + timeEpsilon > candidateNode.getElement().getTime())
          {
-            mergeNodes(node.element, candidateNode.element);
+            mergeNodes(node.getElement(), candidateNode.getElement());
             nodeList.remove(candidateNode);
          }
          else
@@ -186,8 +187,8 @@ public class CentroidalMotionPlanner
       for (int index = 1; entry.getNext() != null; index++)
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> nextEntry = entry.getNext();
-         double t0 = entry.element.getTime();
-         double tF = nextEntry.element.getTime();
+         double t0 = entry.getElement().getTime();
+         double tF = nextEntry.getElement().getTime();
          tempFinalValue.set(plannerFrame, forceValues[0].get(index, 0), forceValues[1].get(index, 0), forceValues[2].get(index, 0));
          tempFinalValueRate.set(plannerFrame, forceRateValues[0].get(index, 0), forceRateValues[1].get(index, 0), forceRateValues[2].get(index, 0));
 
@@ -221,8 +222,8 @@ public class CentroidalMotionPlanner
       for (int index = 1; entry.getNext() != null; index++)
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> nextEntry = entry.getNext();
-         double t0 = entry.element.getTime();
-         double tF = nextEntry.element.getTime();
+         double t0 = entry.getElement().getTime();
+         double tF = nextEntry.getElement().getTime();
          tempFinalValue.set(plannerFrame, forceValues[0].get(index, 0) * robotMassInverse, forceValues[1].get(index, 0) * robotMassInverse,
                             forceValues[2].get(index, 0) * robotMassInverse);
          tempFinalVelocity.set(plannerFrame, velocityValues[0].get(index, 0), velocityValues[1].get(index, 0), velocityValues[2].get(index, 0));
@@ -256,8 +257,8 @@ public class CentroidalMotionPlanner
       for (int index = 1; entry.getNext() != null; index++)
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> nextEntry = entry.getNext();
-         double t0 = entry.element.getTime();
-         double tF = nextEntry.element.getTime();
+         double t0 = entry.getElement().getTime();
+         double tF = nextEntry.getElement().getTime();
          tempFinalValue.set(plannerFrame, 0.0, 0.0, torqueValues.get(index, 0));
          tempFinalValueRate.set(plannerFrame, 0.0, 0.0, torqueRateValues.get(index, 0));
 
@@ -290,8 +291,8 @@ public class CentroidalMotionPlanner
       for (int index = 1; entry.getNext() != null; index++)
       {
          RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> nextEntry = entry.getNext();
-         double t0 = entry.element.getTime();
-         double tF = nextEntry.element.getTime();
+         double t0 = entry.getElement().getTime();
+         double tF = nextEntry.getElement().getTime();
          tempFinalValue.set(plannerFrame, 0.0, 0.0, torqueValues.get(index, 0) * robotZInertiaInverse);
          tempFinalVelocity.set(plannerFrame, 0.0, 0.0, yawRateValues.get(index, 0));
          tempFinalPosition.set(plannerFrame, 0.0, 0.0, yawValues.get(index, 0));

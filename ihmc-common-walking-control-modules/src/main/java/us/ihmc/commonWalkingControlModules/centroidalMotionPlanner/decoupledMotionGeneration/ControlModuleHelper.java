@@ -1,8 +1,10 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
@@ -293,7 +295,7 @@ public class ControlModuleHelper
    {
       deltaT.reshape(numberOfNodes - 1, 1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry = nodeList.getFirstEntry();
-      CentroidalMotionNode node = entry.element;
+      CentroidalMotionNode node = entry.getElement();
       double previousNodeTime = node.getTime();
       for (Axis axis : Axis.values)
       {
@@ -304,7 +306,7 @@ public class ControlModuleHelper
       entry = entry.getNext();
       for (int i = 0; entry != null; i++, entry = entry.getNext())
       {
-         node = entry.element;
+         node = entry.getElement();
          double nodeTime = node.getTime();
          deltaT.set(i, 0, nodeTime - previousNodeTime);
          previousNodeTime = nodeTime;
@@ -363,8 +365,8 @@ public class ControlModuleHelper
       entry = nodeList.getFirstEntry();
       for (int i = 0; i < numberOfAxis; i++)
       {
-         double p0 = entry.element.getPosition(Axis.values[i]);
-         double v0 = entry.element.getLinearVelocity(Axis.values[i]);
+         double p0 = entry.getElement().getPosition(Axis.values[i]);
+         double v0 = entry.getElement().getLinearVelocity(Axis.values[i]);
          if (!Double.isFinite(p0))
             throw new RuntimeException(getClass().getSimpleName() + ": Initial node must have specified position for axis " + Axis.values[i].toString());
          positionBias[i].set(0, 0, p0);
@@ -372,8 +374,8 @@ public class ControlModuleHelper
             throw new RuntimeException(getClass().getSimpleName() + ": Initial node must have specified velocity for axis " + Axis.values[i].toString());
          velocityBias[i].set(0, 0, v0);
       }
-      double theta0 = entry.element.getOrientation(yawAxis);
-      double w0 = entry.element.getAngularVelocity(yawAxis);
+      double theta0 = entry.getElement().getOrientation(yawAxis);
+      double w0 = entry.getElement().getAngularVelocity(yawAxis);
       if (!Double.isFinite(theta0))
          throw new RuntimeException(getClass().getSimpleName() + ": Initial node must have specified orientation for yaw ");
       yawBias.set(0, 0, theta0);
@@ -382,7 +384,7 @@ public class ControlModuleHelper
       yawRateBias.set(0, 0, w0);
 
       entry = nodeList.getFirstEntry();
-      CentroidalMotionNode node = entry.element;
+      CentroidalMotionNode node = entry.getElement();
       int rowIndex = 0;
       double deltaT0 = deltaT.get(rowIndex, 0);
       for (Axis axis : Axis.values)
@@ -464,7 +466,7 @@ public class ControlModuleHelper
       rowIndex++;
       for (entry = entry.getNext(); entry.getNext() != null; entry = entry.getNext(), rowIndex++)
       {
-         node = entry.element;
+         node = entry.getElement();
          double deltaTim1 = deltaT.get(rowIndex - 1, 0);
          double deltaTi = deltaT.get(rowIndex, 0);
          for (Axis axis : Axis.values)
@@ -584,7 +586,7 @@ public class ControlModuleHelper
          }
       }
 
-      node = entry.element;
+      node = entry.getElement();
       double deltaTF = deltaT.get(rowIndex - 1, 0);
       for (Axis axis : Axis.values)
       {

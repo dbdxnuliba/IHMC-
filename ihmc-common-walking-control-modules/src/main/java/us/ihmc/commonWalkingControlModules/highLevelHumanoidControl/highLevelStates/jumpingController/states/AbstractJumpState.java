@@ -2,9 +2,9 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpMessageHandler;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.WholeBodyMotionPlanner;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
