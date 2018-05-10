@@ -15,9 +15,9 @@ public class GaussianCorruptorYoDouble extends YoDouble implements ProcessingYoV
 
    private static DoubleProvider createStandardDeviationYoDouble(String namePrefix, double initialValue, YoVariableRegistry registry)
    {
-      YoDouble maxRate = new YoDouble(namePrefix + "StandardDeviation", registry);
-      maxRate.set(initialValue);
-      return maxRate;
+      YoDouble standardDeviation = new YoDouble(namePrefix + "StandardDeviation", registry);
+      standardDeviation.set(initialValue);
+      return standardDeviation;
    }
 
    public GaussianCorruptorYoDouble(String name, YoVariableRegistry registry, Random random, double standardDeviation)
