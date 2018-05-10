@@ -18,9 +18,9 @@ import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class GaussianCorruptorYoFrameVector3D extends YoFrameVector3D implements ProcessingYoVariable
 {
-   private final GaussianCorruptorYoVariable x, y, z;
+   private final GaussianCorruptorYoDouble x, y, z;
 
-   private GaussianCorruptorYoFrameVector3D(GaussianCorruptorYoVariable x, GaussianCorruptorYoVariable y, GaussianCorruptorYoVariable z,
+   private GaussianCorruptorYoFrameVector3D(GaussianCorruptorYoDouble x, GaussianCorruptorYoDouble y, GaussianCorruptorYoDouble z,
                                             ReferenceFrame referenceFrame)
    {
       super(x, y, z, referenceFrame);
@@ -34,9 +34,9 @@ public class GaussianCorruptorYoFrameVector3D extends YoFrameVector3D implements
                                                                                          Random random, DoubleProvider standardDeviation,
                                                                                          ReferenceFrame referenceFrame)
    {
-      GaussianCorruptorYoVariable x = new GaussianCorruptorYoVariable(createXName(namePrefix, nameSuffix), registry, random, standardDeviation);
-      GaussianCorruptorYoVariable y = new GaussianCorruptorYoVariable(createYName(namePrefix, nameSuffix), registry, random, standardDeviation);
-      GaussianCorruptorYoVariable z = new GaussianCorruptorYoVariable(createZName(namePrefix, nameSuffix), registry, random, standardDeviation);
+      GaussianCorruptorYoDouble x = new GaussianCorruptorYoDouble(createXName(namePrefix, nameSuffix), registry, random, standardDeviation);
+      GaussianCorruptorYoDouble y = new GaussianCorruptorYoDouble(createYName(namePrefix, nameSuffix), registry, random, standardDeviation);
+      GaussianCorruptorYoDouble z = new GaussianCorruptorYoDouble(createZName(namePrefix, nameSuffix), registry, random, standardDeviation);
 
       return new GaussianCorruptorYoFrameVector3D(x, y, z, referenceFrame);
    }
@@ -44,10 +44,10 @@ public class GaussianCorruptorYoFrameVector3D extends YoFrameVector3D implements
    public static GaussianCorruptorYoFrameVector3D createGaussianCorruptorYoFrameVector3D(String namePrefix, String nameSuffix, YoVariableRegistry registry,
                                                                                          Random random, DoubleProvider standardDeviation, YoFrameTuple3D input)
    {
-      GaussianCorruptorYoVariable x, y, z;
-      x = new GaussianCorruptorYoVariable(createXName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoX());
-      y = new GaussianCorruptorYoVariable(createYName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoY());
-      z = new GaussianCorruptorYoVariable(createZName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoZ());
+      GaussianCorruptorYoDouble x, y, z;
+      x = new GaussianCorruptorYoDouble(createXName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoX());
+      y = new GaussianCorruptorYoDouble(createYName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoY());
+      z = new GaussianCorruptorYoDouble(createZName(namePrefix, nameSuffix), registry, random, standardDeviation, input.getYoZ());
 
       return new GaussianCorruptorYoFrameVector3D(x, y, z, input.getReferenceFrame());
    }
@@ -56,9 +56,9 @@ public class GaussianCorruptorYoFrameVector3D extends YoFrameVector3D implements
                                                                                          Random random, Vector3DReadOnly standardDeviation,
                                                                                          ReferenceFrame referenceFrame)
    {
-      GaussianCorruptorYoVariable x = new GaussianCorruptorYoVariable(createXName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getX());
-      GaussianCorruptorYoVariable y = new GaussianCorruptorYoVariable(createYName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getY());
-      GaussianCorruptorYoVariable z = new GaussianCorruptorYoVariable(createZName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getZ());
+      GaussianCorruptorYoDouble x = new GaussianCorruptorYoDouble(createXName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getX());
+      GaussianCorruptorYoDouble y = new GaussianCorruptorYoDouble(createYName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getY());
+      GaussianCorruptorYoDouble z = new GaussianCorruptorYoDouble(createZName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getZ());
 
       return new GaussianCorruptorYoFrameVector3D(x, y, z, referenceFrame);
    }
@@ -66,10 +66,10 @@ public class GaussianCorruptorYoFrameVector3D extends YoFrameVector3D implements
    public static GaussianCorruptorYoFrameVector3D createGaussianCorruptorYoFrameVector3D(String namePrefix, String nameSuffix, YoVariableRegistry registry,
                                                                                          Random random, Vector3DReadOnly standardDeviation, YoFrameTuple3D input)
    {
-      GaussianCorruptorYoVariable x, y, z;
-      x = new GaussianCorruptorYoVariable(createXName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getX(), input.getYoX());
-      y = new GaussianCorruptorYoVariable(createYName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getY(), input.getYoY());
-      z = new GaussianCorruptorYoVariable(createZName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getZ(), input.getYoZ());
+      GaussianCorruptorYoDouble x, y, z;
+      x = new GaussianCorruptorYoDouble(createXName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getX(), input.getYoX());
+      y = new GaussianCorruptorYoDouble(createYName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getY(), input.getYoY());
+      z = new GaussianCorruptorYoDouble(createZName(namePrefix, nameSuffix), registry, random, () -> standardDeviation.getZ(), input.getYoZ());
 
       return new GaussianCorruptorYoFrameVector3D(x, y, z, input.getReferenceFrame());
    }

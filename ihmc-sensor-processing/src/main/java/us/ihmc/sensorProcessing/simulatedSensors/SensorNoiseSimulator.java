@@ -31,7 +31,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.robotics.math.corruptors.GaussianCorruptorYoFrameQuaternion;
 import us.ihmc.robotics.math.corruptors.GaussianCorruptorYoFrameVector3D;
-import us.ihmc.robotics.math.corruptors.GaussianCorruptorYoVariable;
+import us.ihmc.robotics.math.corruptors.GaussianCorruptorYoDouble;
 import us.ihmc.robotics.math.filters.ProcessingYoVariable;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.Wrench;
@@ -367,10 +367,10 @@ public class SensorNoiseSimulator
          int newProcessorID = processors.size();
          processorsIDs.put(jointName, newProcessorID);
          String suffix = sensorType.getProcessorNameSuffix(jointName, newProcessorID);
-         GaussianCorruptorYoVariable filter = new GaussianCorruptorYoVariable(prefix + suffix, registry, random, standardDeviation, intermediateJointSignal);
-         processedJointSignals.get(oneDoFJoint).add(filter);
+         GaussianCorruptorYoDouble processor = new GaussianCorruptorYoDouble(prefix + suffix, registry, random, standardDeviation, intermediateJointSignal);
+         processedJointSignals.get(oneDoFJoint).add(processor);
 
-         outputJointSignals.put(oneDoFJoint, filter);
+         outputJointSignals.put(oneDoFJoint, processor);
       }
 
       return processorsIDs;

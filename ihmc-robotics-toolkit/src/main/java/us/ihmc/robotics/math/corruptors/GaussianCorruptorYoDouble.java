@@ -7,7 +7,7 @@ import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-public class GaussianCorruptorYoVariable extends YoDouble implements ProcessingYoVariable
+public class GaussianCorruptorYoDouble extends YoDouble implements ProcessingYoVariable
 {
    private final Random random;
    private final DoubleProvider standardDeviation;
@@ -20,32 +20,32 @@ public class GaussianCorruptorYoVariable extends YoDouble implements ProcessingY
       return maxRate;
    }
 
-   public GaussianCorruptorYoVariable(String name, YoVariableRegistry registry, Random random, double standardDeviation)
+   public GaussianCorruptorYoDouble(String name, YoVariableRegistry registry, Random random, double standardDeviation)
    {
       this(name, registry, random, standardDeviation, null);
    }
 
-   public GaussianCorruptorYoVariable(String name, YoVariableRegistry registry, Random random, double standardDeviation, DoubleProvider inputVariable)
+   public GaussianCorruptorYoDouble(String name, YoVariableRegistry registry, Random random, double standardDeviation, DoubleProvider inputVariable)
    {
       this(name, "", registry, random, createStandardDeviationYoDouble(name, standardDeviation, registry), inputVariable);
    }
 
-   public GaussianCorruptorYoVariable(String name, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation)
+   public GaussianCorruptorYoDouble(String name, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation)
    {
       this(name, "", registry, random, standardDeviation, null);
    }
 
-   public GaussianCorruptorYoVariable(String name, String description, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation)
+   public GaussianCorruptorYoDouble(String name, String description, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation)
    {
       this(name, description, registry, random, standardDeviation, null);
    }
 
-   public GaussianCorruptorYoVariable(String name, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation, DoubleProvider inputVariable)
+   public GaussianCorruptorYoDouble(String name, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation, DoubleProvider inputVariable)
    {
       this(name, "", registry, random, standardDeviation, inputVariable);
    }
 
-   public GaussianCorruptorYoVariable(String name, String description, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation,
+   public GaussianCorruptorYoDouble(String name, String description, YoVariableRegistry registry, Random random, DoubleProvider standardDeviation,
                                       DoubleProvider inputVariable)
    {
       super(name, description, registry);
