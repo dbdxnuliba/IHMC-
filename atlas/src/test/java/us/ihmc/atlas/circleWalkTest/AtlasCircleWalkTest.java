@@ -15,7 +15,7 @@ public class AtlasCircleWalkTest extends HumanoidCircleWalkTest{
 	private final AtlasRobotModel robotModel = new AtlasRobotModel(version, RobotTarget.SCS, false);
 	private final AtlasJointMap jointMap = new AtlasJointMap(version, robotModel.getPhysicalProperties());
 
-	@Override
+	@Override()
    public void testCircleWalk() throws SimulationExceededMaximumTimeException
    {
       super.testCircleWalk();

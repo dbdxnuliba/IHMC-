@@ -447,7 +447,7 @@ public class DRCSimulationStarter implements SimulationStarterInterface
       for (int i = 0; i < controllerTransitionFactories.size(); i++)
          controllerFactory.addCustomStateTransition(controllerTransitionFactories.get(i));
 
-      controllerFactory.setInitialState(HighLevelControllerName.DO_NOTHING_BEHAVIOR);
+      controllerFactory.setInitialState(HighLevelControllerName.WALKING);
 
       controllerFactory.createQueuedControllerCommandGenerator(controllerCommands);
 
@@ -491,19 +491,19 @@ public class DRCSimulationStarter implements SimulationStarterInterface
    public void setupHighLevelStates(HighLevelHumanoidControllerFactory controllerFactory)
    {
       controllerFactory.useDefaultDoNothingControlState();
-      //controllerFactory.useDefaultWalkingControlState();
+      controllerFactory.useDefaultWalkingControlState();
       if(jumpControlParameters != null)
       {
-         controllerFactory.useDefaultJumpControllerState();
+         //controllerFactory.useDefaultJumpControllerState();
       }
 
-      //controllerFactory.addRequestableTransition(DO_NOTHING_BEHAVIOR, WALKING);
-      //controllerFactory.addRequestableTransition(WALKING, DO_NOTHING_BEHAVIOR);
+      controllerFactory.addRequestableTransition(DO_NOTHING_BEHAVIOR, WALKING);
+      controllerFactory.addRequestableTransition(WALKING, DO_NOTHING_BEHAVIOR);
       
       if(jumpControlParameters != null)
       {
-         controllerFactory.addRequestableTransition(DO_NOTHING_BEHAVIOR, HighLevelControllerName.JUMPING);
-         controllerFactory.addRequestableTransition(HighLevelControllerName.JUMPING, DO_NOTHING_BEHAVIOR);
+         //controllerFactory.addRequestableTransition(DO_NOTHING_BEHAVIOR, HighLevelControllerName.JUMPING);
+         //controllerFactory.addRequestableTransition(HighLevelControllerName.JUMPING, DO_NOTHING_BEHAVIOR);
       }
    }
 

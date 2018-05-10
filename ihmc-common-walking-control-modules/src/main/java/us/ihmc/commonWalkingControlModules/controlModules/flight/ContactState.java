@@ -6,12 +6,21 @@ import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.robotics.robotSide.RobotSegment;
+import us.ihmc.robotics.robotSide.RobotSide;
 
+/**
+ * Stores the centroidal state of a robot in 2.5D representation
+ * @author Apoorv
+ *
+ */
 public class ContactState
 {
-   private ContactType state;
+   private BipedContactType state;
    private double duration;
-   private final FramePose3D pose;
+   // TODO check if there is a better way to represent the support polygon orientation
+   private final FrameQuaternion orientation;
    private final ConvexPolygon2D supportPolygon;
 
    public ContactState()
@@ -21,7 +30,7 @@ public class ContactState
 
    public ContactState(ReferenceFrame referenceFrame)
    {
-      this.pose = new FramePose3D(referenceFrame);
+      this.orientation = new FrameQuaternion(referenceFrame);
       this.supportPolygon = new ConvexPolygon2D();
       reset();
    }
@@ -31,9 +40,10 @@ public class ContactState
       state = null;
       duration = Double.NaN;
       supportPolygon.clear();
+      orientation.setToZero();
    }
 
-   public void setContactType(ContactType stateToSet)
+   public void setContactType(BipedContactType stateToSet)
    {
       this.state = stateToSet;
    }
@@ -53,7 +63,7 @@ public class ContactState
       supportPolygonToSet.set(supportPolygon);
    }
 
-   public ContactType getContactType()
+   public BipedContactType getContactType()
    {
       return state;
    }
@@ -63,18 +73,13 @@ public class ContactState
       return duration;
    }
 
-   public void getCoMOrientation(FrameQuaternion comOrientation)
+   public void getOrientation(FrameQuaternion orientationToPack)
    {
-      comOrientation.setIncludingFrame(pose.getOrientation());
-   }
-   
-   public void setCoMOrientation(FrameQuaternion comOrientationToSet)
-   {
-      this.pose.setOrientation(comOrientationToSet);
+      orientationToPack.setIncludingFrame(this.orientation);
    }
 
-   public ReferenceFrame getReferenceFrame()
+   public void setOrientation(FrameQuaternion orientationToSet)
    {
-      return pose.getReferenceFrame();
+      this.orientation.setIncludingFrame(orientationToSet);
    }
 }

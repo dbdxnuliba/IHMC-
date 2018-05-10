@@ -110,9 +110,9 @@ public class Trajectory
 
    public void getDerivative(Trajectory trajectory, int order)
    {
-      trajectory.reshape(numberOfCoefficients - 1);
-      for (int i = 1; i < numberOfCoefficients; i++)
-         trajectory.setDirectlyFast(i - 1, getCoefficient(i) * (i));
+      trajectory.reshape(numberOfCoefficients - order);
+      for (int i = order; i < numberOfCoefficients; i++)
+         trajectory.setDirectlyFast(i - order, getCoefficient(i) * getCoefficientMultiplierForDerivative(order, i));
    }
 
    public int getCoefficientMultiplierForDerivative(int order, int exponent)

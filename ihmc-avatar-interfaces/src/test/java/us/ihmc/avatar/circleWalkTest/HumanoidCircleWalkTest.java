@@ -100,7 +100,7 @@ public abstract class HumanoidCircleWalkTest implements MultiRobotTestInterface
       return null;
    }
 
-   @Test(timeout = 30000)
+   @Test(timeout = 1000000)
    public void testCircleWalk() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());

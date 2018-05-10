@@ -52,26 +52,26 @@ public class JumpMessageHandler
       case LAUNCH:
          ContactState launchState = new ContactState(worldFrame);
          launchState.setDuration(0.4);
-         launchState.setCoMOrientation(currentOrientation);
+         launchState.setOrientation(currentOrientation);
          createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
          launchState.setSupportPolygon(tempPolygon);
-         launchState.setContactType(ContactType.DOUBLE_SUPPORT);
+         launchState.setContactType(BipedContactType.DOUBLE_SUPPORT);
          contactStateList.add(launchState);
       case FLIGHT:
          ContactState flightState = new ContactState(worldFrame);
          flightState.setDuration(0.15);
-         flightState.setCoMOrientation(currentOrientation);
+         flightState.setOrientation(currentOrientation);
          tempPolygon.clear();
          flightState.setSupportPolygon(tempPolygon);
-         flightState.setContactType(ContactType.NO_SUPPORT);
+         flightState.setContactType(BipedContactType.NO_SUPPORT);
          contactStateList.add(flightState);
       case LANDING:
          ContactState landingState = new ContactState(worldFrame);
          landingState.setDuration(0.4);
          createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
-         landingState.setCoMOrientation(finalOrientation);
+         landingState.setOrientation(finalOrientation);
          landingState.setSupportPolygon(tempPolygon);
-         landingState.setContactType(ContactType.DOUBLE_SUPPORT);
+         landingState.setContactType(BipedContactType.DOUBLE_SUPPORT);
          contactStateList.add(landingState);
          break;
       default:
