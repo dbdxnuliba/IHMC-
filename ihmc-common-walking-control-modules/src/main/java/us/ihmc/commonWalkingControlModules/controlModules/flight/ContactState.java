@@ -4,23 +4,21 @@ import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
-import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
-import us.ihmc.robotics.robotSide.RobotSegment;
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.ReferenceFrameHolder;
 
 /**
  * Stores the centroidal state of a robot in 2.5D representation
  * @author Apoorv
  *
  */
-public class ContactState
+public class ContactState implements ReferenceFrameHolder
 {
    private BipedContactType state;
    private double duration;
-   // TODO check if there is a better way to represent the support polygon orientation
-   private final FrameQuaternion orientation;
+   private final FramePose3D pose;
    private final ConvexPolygon2D supportPolygon;
 
    public ContactState()
@@ -30,7 +28,7 @@ public class ContactState
 
    public ContactState(ReferenceFrame referenceFrame)
    {
-      this.orientation = new FrameQuaternion(referenceFrame);
+      this.pose = new FramePose3D(referenceFrame);
       this.supportPolygon = new ConvexPolygon2D();
       reset();
    }
@@ -40,7 +38,7 @@ public class ContactState
       state = null;
       duration = Double.NaN;
       supportPolygon.clear();
-      orientation.setToZero();
+      pose.setToZero();
    }
 
    public void setContactType(BipedContactType stateToSet)
@@ -73,18 +71,42 @@ public class ContactState
       return duration;
    }
 
+   public void getPosition(FramePoint3D positionToPack)
+   {
+      positionToPack.setIncludingFrame(pose.getPosition());
+   }
+
+   public void setPosition(FramePoint3DReadOnly positionToSet)
+   {
+      pose.setPosition(positionToSet);
+   }
+
    public void getOrientation(FrameQuaternion orientationToPack)
    {
-      orientationToPack.setIncludingFrame(this.orientation);
+      orientationToPack.setIncludingFrame(this.pose.getOrientation());
    }
 
-   public void setOrientation(FrameQuaternion orientationToSet)
+   public void setOrientation(FrameQuaternionReadOnly orientationToSet)
    {
-      this.orientation.setIncludingFrame(orientationToSet);
+      this.pose.setOrientation(orientationToSet);
    }
 
+   public void set(ContactState other)
+   {
+      this.state = other.state;
+      this.duration = other.duration;
+      this.pose.setIncludingFrame(other.pose);
+      this.supportPolygon.addVertices(other.supportPolygon);
+   }
+
+   @Override
    public ReferenceFrame getReferenceFrame()
    {
-      return orientation.getReferenceFrame();
+      return pose.getReferenceFrame();
+   }
+
+   public int getNumberOfSupportPolygonVertices()
+   {
+      return supportPolygon.getNumberOfVertices();
    }
 }
