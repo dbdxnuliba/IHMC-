@@ -1,10 +1,11 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import afu.org.checkerframework.common.reflection.qual.GetClass;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionNode;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlanner;
@@ -58,11 +59,11 @@ public class CentroidalMotionPlannerTest
       RecycledLinkedListBuilder<CentroidalMotionNode> nodeList = motionPlanner.getNodeList();
       assertTrue(nodeList.getSize() == 3);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> node = nodeList.getFirstEntry();
-      assertTrue(node.element.getTime() == 0.0);
+      assertTrue(node.getElement().getTime() == 0.0);
       node = node.getNext();
-      assertTrue(node.element.getTime() == 0.1);
+      assertTrue(node.getElement().getTime() == 0.1);
       node = node.getNext();
-      assertTrue(node.element.getTime() == 0.5);
+      assertTrue(node.getElement().getTime() == 0.5);
    }
 
    @Test
@@ -98,11 +99,11 @@ public class CentroidalMotionPlannerTest
       assertTrue(nodeList.getSize() == 3);
 
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry = nodeList.getFirstEntry();
-      assertTrue("Node time: " + entry.element.getTime(), node1.getTime() == entry.element.getTime());
+      assertTrue("Node time: " + entry.getElement().getTime(), node1.getTime() == entry.getElement().getTime());
       entry = entry.getNext();
-      assertTrue("Node time: " + entry.element.getTime(), node2.getTime() == entry.element.getTime());
+      assertTrue("Node time: " + entry.getElement().getTime(), node2.getTime() == entry.getElement().getTime());
       entry = entry.getNext();
-      assertTrue("Node time: " + entry.element.getTime(), node3.getTime() == entry.element.getTime());
+      assertTrue("Node time: " + entry.getElement().getTime(), node3.getTime() == entry.getElement().getTime());
 
       motionPlanner.compute();
       ForceTrajectory force = motionPlanner.getForceProfile();

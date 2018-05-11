@@ -71,6 +71,16 @@ public class ContactState implements ReferenceFrameHolder
       return duration;
    }
 
+   public void setPose(FramePose3D poseToSet)
+   {
+      pose.setIncludingFrame(poseToSet);
+   }
+
+   public FramePose3D getPose()
+   {
+      return pose;
+   }
+
    public void getPosition(FramePoint3D positionToPack)
    {
       positionToPack.setIncludingFrame(pose.getPosition());
@@ -108,5 +118,12 @@ public class ContactState implements ReferenceFrameHolder
    public int getNumberOfSupportPolygonVertices()
    {
       return supportPolygon.getNumberOfVertices();
+   }
+
+   public String toString()
+   {
+      String toString = "SupportType: " + state.toString() + ",\nDuration: " + duration + ",\nPose: " + pose.toString() + ",\nSupportPolygon: "
+            + supportPolygon.toString();
+      return toString;
    }
 }

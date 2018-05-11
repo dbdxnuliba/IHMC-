@@ -18,7 +18,12 @@ public class CollinearForcePlannerParameters
       return 0.05;
    }
 
-   public int getMaxNumberOfPlanningSegments()
+   public double getMinPlannerSegmentTime()
+   {
+      return 0.01;
+   }
+
+   public int getNumberOfContactStatesToPlan()
    {
       return 60;
    }

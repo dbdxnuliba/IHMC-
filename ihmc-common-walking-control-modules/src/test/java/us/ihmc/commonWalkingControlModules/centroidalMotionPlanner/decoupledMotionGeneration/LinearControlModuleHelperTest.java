@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,6 +8,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.junit.Test;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionNode;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.CentroidalMotionPlannerParameters;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration.ControlModuleHelper;
@@ -63,9 +65,9 @@ public class LinearControlModuleHelperTest
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry1 = nodeList.getOrCreateFirstEntry();
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry2 = nodeList.insertAfter(entry1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry3 = nodeList.insertAfter(entry2);
-      CentroidalMotionNode node1 = entry1.element;
-      CentroidalMotionNode node2 = entry2.element;
-      CentroidalMotionNode node3 = entry3.element;
+      CentroidalMotionNode node1 = entry1.getElement();
+      CentroidalMotionNode node2 = entry2.getElement();
+      CentroidalMotionNode node3 = entry3.getElement();
 
       node1.setTime(0.0);
       node1.setForceConstraint(new FrameVector3D(worldFrame, 0.0, 0.0, 9.81 / 6.0));
@@ -101,9 +103,9 @@ public class LinearControlModuleHelperTest
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry1 = nodeList.getOrCreateFirstEntry();
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry2 = nodeList.insertAfter(entry1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry3 = nodeList.insertAfter(entry2);
-      CentroidalMotionNode node1 = entry1.element;
-      CentroidalMotionNode node2 = entry2.element;
-      CentroidalMotionNode node3 = entry3.element;
+      CentroidalMotionNode node1 = entry1.getElement();
+      CentroidalMotionNode node2 = entry2.getElement();
+      CentroidalMotionNode node3 = entry3.getElement();
 
       node1.setTime(0.0);
       node1.setForceConstraint(new FrameVector3D(worldFrame, 0.0, 0.0, 0.0));
@@ -155,9 +157,9 @@ public class LinearControlModuleHelperTest
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry1 = nodeList.getOrCreateFirstEntry();
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry2 = nodeList.insertAfter(entry1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry3 = nodeList.insertAfter(entry2);
-      CentroidalMotionNode node1 = entry1.element;
-      CentroidalMotionNode node2 = entry2.element;
-      CentroidalMotionNode node3 = entry3.element;
+      CentroidalMotionNode node1 = entry1.getElement();
+      CentroidalMotionNode node2 = entry2.getElement();
+      CentroidalMotionNode node3 = entry3.getElement();
 
       node1.setTime(0.0);
       node1.setForceConstraint(new FrameVector3D(worldFrame, 0.0, 0.0, 0.0));
@@ -209,9 +211,9 @@ public class LinearControlModuleHelperTest
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry1 = nodeList.getOrCreateFirstEntry();
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry2 = nodeList.insertAfter(entry1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry3 = nodeList.insertAfter(entry2);
-      CentroidalMotionNode node1 = entry1.element;
-      CentroidalMotionNode node2 = entry2.element;
-      CentroidalMotionNode node3 = entry3.element;
+      CentroidalMotionNode node1 = entry1.getElement();
+      CentroidalMotionNode node2 = entry2.getElement();
+      CentroidalMotionNode node3 = entry3.getElement();
 
       node1.setTime(0.0);
       double forceZValue = -2.0 * gravityZ;
@@ -264,9 +266,9 @@ public class LinearControlModuleHelperTest
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry1 = nodeList.getOrCreateFirstEntry();
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry2 = nodeList.insertAfter(entry1);
       RecycledLinkedListBuilder<CentroidalMotionNode>.RecycledLinkedListEntry<CentroidalMotionNode> entry3 = nodeList.insertAfter(entry2);
-      CentroidalMotionNode node1 = entry1.element;
-      CentroidalMotionNode node2 = entry2.element;
-      CentroidalMotionNode node3 = entry3.element;
+      CentroidalMotionNode node1 = entry1.getElement();
+      CentroidalMotionNode node2 = entry2.getElement();
+      CentroidalMotionNode node3 = entry3.getElement();
 
       double forceZValue = -1.0 * gravityZ;
       node1.setTime(0.0);

@@ -1,6 +1,10 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import org.ejml.data.DenseMatrix64F;
+
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
+import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -15,8 +19,11 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public class CollinearForceBasedPlannerOptimizationControlModule
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-   private final YoDouble maxPlannerSegmentTime;
-   private final YoInteger maxNumberOfPlanningSegments;
+
+   private final YoInteger numberOfSupportPolygonConstraintsPerSegment;
+   private final YoInteger numberOfCoMPositionConstraintsPerSegment;
+   private final YoInteger numberOfDynamicsConstraintsPerSegment;
+   private final YoInteger numberOfScalarConstraintsPerSegment;
 
    private final YoFramePoint initialCoMLocation;
    private final YoFramePoint initialCoPLocation;
@@ -25,15 +32,25 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final YoFramePoint finalCoPLocation;
    private final YoFrameVector finalCoMVelocity;
 
-   private final RecyclingArrayList<ContactState> motionPlannerNodeList;
    private final FrameVector3DReadOnly gravity;
    private final CollinearForceBasedPlannerIterationResult sqpSolution;
 
-   public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerIterationResult sqpSolution, FrameVector3DReadOnly gravity, YoVariableRegistry registry)
+   private final DenseMatrix64F solver_objH;
+   private final DenseMatrix64F solver_objf;
+   private final DenseMatrix64F solver_conAin;
+   private final DenseMatrix64F solver_conbin;
+   private final DenseMatrix64F solver_conAeq;
+   private final DenseMatrix64F solver_conbeq;
+   private final DenseMatrix64F solver_ub;
+   private final DenseMatrix64F solver_lb;
+   private final DenseMatrix64F solver_qpSoln;
+
+   private final ActiveSetQPSolver qpSolver;
+
+   public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerIterationResult sqpSolution, FrameVector3DReadOnly gravity,
+                                                              YoVariableRegistry registry)
    {
       String namePrefix = getClass().getSimpleName();
-      maxPlannerSegmentTime = new YoDouble(namePrefix + "MaxPlannerSegmentTime", registry);
-      maxNumberOfPlanningSegments = new YoInteger(namePrefix + "MaxNumberOfPlanningSegments", registry);
 
       initialCoMLocation = new YoFramePoint(namePrefix + "InitialCoMLocation", worldFrame, registry);
       initialCoPLocation = new YoFramePoint(namePrefix + "InitialCoPLocation", worldFrame, registry);
@@ -42,22 +59,37 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       finalCoPLocation = new YoFramePoint(namePrefix + "FinalCoPLocation", worldFrame, registry);
       finalCoMVelocity = new YoFrameVector(namePrefix + "FinalCoMVelocity", worldFrame, registry);
 
+      numberOfCoMPositionConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfCoMPositionConstraintsPerSegment", registry);
+      numberOfSupportPolygonConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfSupportPolygonConstraintsPerSegment", registry);
+      numberOfDynamicsConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfDynamicsConstraintsPerSegment", registry);
+      numberOfScalarConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfScalarConstraintsPerSegment", registry);
+
       this.sqpSolution = sqpSolution;
       this.gravity = gravity;
-      motionPlannerNodeList = new RecyclingArrayList<>(100, ContactState.class);
+
+      solver_objH = new DenseMatrix64F(0, 1);
+      solver_objf = new DenseMatrix64F(0, 1);
+      solver_conAin = new DenseMatrix64F(0, 1);
+      solver_conbin = new DenseMatrix64F(0, 1);
+      solver_conAeq = new DenseMatrix64F(0, 1);
+      solver_conbeq = new DenseMatrix64F(0, 1);
+      solver_lb = new DenseMatrix64F(0, 1);
+      solver_ub = new DenseMatrix64F(0, 1);
+      solver_qpSoln = new DenseMatrix64F(0, 1);
+
+      qpSolver = new JavaQuadProgSolver();
    }
 
-   public void initialize(double maxPlannerSegmentTime, int maxNumberOfPlanningSegments)
+   public void initialize(CollinearForcePlannerParameters parameters)
    {
-      this.maxPlannerSegmentTime.set(maxPlannerSegmentTime);
-      this.maxNumberOfPlanningSegments.set(maxNumberOfPlanningSegments);
+
    }
-   
+
    public void reset()
    {
-      motionPlannerNodeList.clear();
+      
    }
-   
+
    public void setInitialState(FramePoint3D initialCoMLocation, FrameVector3D initialCoMVelocity, FramePoint3D initialCoPLocation)
    {
       this.initialCoMLocation.set(initialCoMLocation);
@@ -72,32 +104,23 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       this.finalCoPLocation.set(finalCoPLocation);
    }
 
-   public void submitContactState(ContactState contactState)
-   {
-      motionPlannerNodeList.add().set(contactState);
-   }
-
    public void generateLinearizedSystemObjective()
    {
-      // TODO Auto-generated method stub
       
    }
 
    public void generateLinearizedSystemConstraints()
    {
-      // TODO Auto-generated method stub
-      
+
    }
 
    public void updateSolution()
    {
-      // TODO Auto-generated method stub
-      
+
    }
 
    public boolean compute()
    {
-      // TODO Auto-generated method stub
       return false;
    }
 }
