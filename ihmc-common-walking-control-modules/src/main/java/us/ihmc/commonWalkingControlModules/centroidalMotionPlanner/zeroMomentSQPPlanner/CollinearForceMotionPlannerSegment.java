@@ -8,12 +8,12 @@ public class CollinearForceMotionPlannerSegment
    private ContactState segmentContactState;
    private ContactState nextSegmentContactState;
    private boolean isContactStateChangingAfterSegment;
-   
+
    public void setContactState(ContactState contactStateToSave)
    {
       this.segmentContactState = contactStateToSave;
    }
-   
+
    public void setNextSegmentContactState(ContactState nextSegmentContactStateToSave)
    {
       this.nextSegmentContactState = nextSegmentContactStateToSave;
@@ -28,7 +28,7 @@ public class CollinearForceMotionPlannerSegment
    {
       return segmentContactState;
    }
-   
+
    public ContactState getNextSegmentContactState()
    {
       return nextSegmentContactState;
@@ -47,5 +47,11 @@ public class CollinearForceMotionPlannerSegment
    public double getSegmentDuration()
    {
       return duration;
+   }
+
+   public String toString()
+   {
+      return "Duration: " + duration + ", SupportState: " + segmentContactState.getContactType().toString() + ", StateChange: "
+            + isContactStateChangingAfterSegment;
    }
 }

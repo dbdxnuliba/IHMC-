@@ -1,9 +1,12 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+
 /**
  * The hyper parameters for the SQP running in the {@code CollinearForceBasedCoMMotionPlanner}
  * Should be extended as required for individual robots
- * @author apoorv
+ * @author Apoorv S
  *
  */
 public class CollinearForcePlannerParameters
@@ -36,5 +39,14 @@ public class CollinearForcePlannerParameters
    public double getIndividualAxisConvergenceThreshold()
    {
       return 1e-5;
+   }
+
+   /**
+    * 
+    * @return
+    */
+   public Point3DReadOnly getNominalCoMOffsetFromSupportPolygonCentroid()
+   {
+      return new Point3D(0.0, 0.0, 0.435);
    }
 }

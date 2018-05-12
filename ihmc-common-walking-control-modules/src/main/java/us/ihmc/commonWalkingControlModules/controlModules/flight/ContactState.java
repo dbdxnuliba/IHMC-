@@ -101,6 +101,11 @@ public class ContactState implements ReferenceFrameHolder
       this.pose.setOrientation(orientationToSet);
    }
 
+   public void getSupportPolygonCentroid(FramePoint3D tempFramePoint)
+   {
+      tempFramePoint.setIncludingFrame(pose.getReferenceFrame(), supportPolygon.getCentroid(), 0.0);
+   }
+
    public void set(ContactState other)
    {
       this.state = other.state;

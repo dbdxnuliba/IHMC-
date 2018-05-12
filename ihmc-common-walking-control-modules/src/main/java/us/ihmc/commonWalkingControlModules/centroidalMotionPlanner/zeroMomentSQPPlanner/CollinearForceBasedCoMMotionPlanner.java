@@ -4,11 +4,15 @@ import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.robotics.math.frames.YoFramePoint;
+import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -28,9 +32,17 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public class CollinearForceBasedCoMMotionPlanner
 {
+   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    public static final int numberOfScalarTrajectoryCoefficients = 4;
    public static final int numberOfCoMTrajectoryCoefficients = 8;
    public static final int numberOfCoPTrajectoryCoefficients = 8;
+
+   private final YoFramePoint initialCoMPosition;
+   private final YoFramePoint initialCoPPosition;
+   private final YoFrameVector initialCoMVelocity;
+   private final YoFramePoint finalCoMPosition;
+   private final YoFramePoint finalCoPPosition;
+   private final YoFrameVector finalCoMVelocity;
 
    private final YoVariableRegistry registry;
    private final YoDouble maxPlannerSegmentTime;
@@ -52,11 +64,21 @@ public class CollinearForceBasedCoMMotionPlanner
    private final CollinearForceBasedPlannerIterationResult sqpSolution;
    private final CollinearForceBasedPlannerOptimizationControlModule optimizationControlModule;
    private final CollinearForceBasedPlannerSeedSolutionGenerator initialSolutionGenerator;
+   private final FramePoint3D tempPoint = new FramePoint3D();
+   private final FrameVector3D tempVector = new FrameVector3D();
 
    public CollinearForceBasedCoMMotionPlanner(FrameVector3DReadOnly gravity, YoVariableRegistry parentRegistry)
    {
       String namePrefix = getClass().getSimpleName();
       registry = new YoVariableRegistry(namePrefix);
+ 
+      initialCoMPosition = new YoFramePoint(namePrefix + "InitialCoMLocation", worldFrame, registry);
+      initialCoPPosition = new YoFramePoint(namePrefix + "InitialCoPLocation", worldFrame, registry);
+      initialCoMVelocity = new YoFrameVector(namePrefix + "InitialCoMVelocity", worldFrame, registry);
+      finalCoMPosition = new YoFramePoint(namePrefix + "FinalCoMLocation", worldFrame, registry);
+      finalCoPPosition = new YoFramePoint(namePrefix + "FinalCoPLocation", worldFrame, registry);
+      finalCoMVelocity = new YoFrameVector(namePrefix + "FinalCoMVelocity", worldFrame, registry);
+
       hasPlanConverged = new YoBoolean(namePrefix + "HasPlannerConverged", registry);
       hasPlannerFailed = new YoBoolean(namePrefix + "HasPlannerFailed", registry);
       numberOfElapsedSQPIterations = new YoInteger(namePrefix + "NumberOfElapsedSQPIterations", registry);
@@ -72,7 +94,7 @@ public class CollinearForceBasedCoMMotionPlanner
 
       sqpSolution = new CollinearForceBasedPlannerIterationResult(gravity);
       optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, gravity, registry);
-      initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(); // TODO set this up
+      initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(gravity, registry); // TODO set this up
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
       segmentList = new RecyclingArrayList<>(100, CollinearForceMotionPlannerSegment.class);
       parentRegistry.addChild(registry);
@@ -87,6 +109,7 @@ public class CollinearForceBasedCoMMotionPlanner
       maxPlannerSegmentTime.set(parameters.getMaxPlannerSegmentTime());
       minPlannerSegmentTime.set(parameters.getMinPlannerSegmentTime());
       numberOfContactStatesToPlan.set(parameters.getNumberOfContactStatesToPlan());
+      initialSolutionGenerator.initialize(sqpSolution, parameters);
       optimizationControlModule.initialize(parameters);
    }
 
@@ -105,12 +128,32 @@ public class CollinearForceBasedCoMMotionPlanner
 
    public void setInitialState(FramePoint3D initialCoMLocation, FrameVector3D initialCoMVelocity, FramePoint3D initialCoPLocation)
    {
-      optimizationControlModule.setInitialState(initialCoMLocation, initialCoMVelocity, initialCoPLocation);
+      tempPoint.setIncludingFrame(initialCoMLocation);
+      tempPoint.changeFrame(worldFrame);
+      this.initialCoMPosition.set(tempPoint);
+
+      tempPoint.setIncludingFrame(initialCoPLocation);
+      tempPoint.changeFrame(worldFrame);
+      this.initialCoPPosition.set(tempPoint);
+      
+      tempVector.setIncludingFrame(initialCoMVelocity);
+      tempVector.changeFrame(worldFrame);
+      this.initialCoMVelocity.set(tempVector);
    }
 
    public void setFinalState(FramePoint3D finalCoMLocation, FrameVector3D finalCoMVelocity, FrameVector3D finalCoPLocation)
    {
-      optimizationControlModule.setFinalState(finalCoMLocation, finalCoMVelocity, finalCoPLocation);
+      tempPoint.setIncludingFrame(finalCoMLocation);
+      tempPoint.changeFrame(worldFrame);
+      this.finalCoMPosition.set(tempPoint);
+
+      tempPoint.setIncludingFrame(finalCoPLocation);
+      tempPoint.changeFrame(worldFrame);
+      this.finalCoPPosition.set(tempPoint);
+      
+      tempVector.setIncludingFrame(finalCoMVelocity);
+      tempVector.changeFrame(worldFrame);
+      this.finalCoMVelocity.set(tempVector);
    }
 
    private void processContactStateList()
@@ -154,7 +197,7 @@ public class CollinearForceBasedCoMMotionPlanner
    private int getNumberOfSegmentsInContactStates(double contactStateDuration)
    {
       int quotient = (int) Math.floor(contactStateDuration / maxPlannerSegmentTime.getDoubleValue());
-      double remainder = contactStateDuration - quotient * minPlannerSegmentTime.getDoubleValue();
+      double remainder = contactStateDuration - quotient * maxPlannerSegmentTime.getDoubleValue();
       if (remainder < minPlannerSegmentTime.getDoubleValue())
          return quotient - 1;
       else
@@ -242,13 +285,15 @@ public class CollinearForceBasedCoMMotionPlanner
 
    private void setupOptimizationControlModule()
    {
-      // TODO Auto-generated method stub
-
+      
    }
 
    private void generateSeedSolution()
    {
-      
+      initialSolutionGenerator.submitSegmentList(segmentList);
+      initialSolutionGenerator.setInitialState(initialCoMPosition, initialCoPPosition, initialCoMVelocity);
+      initialSolutionGenerator.setFinalState(finalCoMPosition, finalCoPPosition, finalCoMVelocity);
+      initialSolutionGenerator.computeSeedSolution();
    }
 
    private boolean isFirstQPRun()
@@ -264,5 +309,10 @@ public class CollinearForceBasedCoMMotionPlanner
    public boolean hasPlannerFailed()
    {
       return hasPlannerFailed.getBooleanValue();
+   }
+
+   public List<CollinearForceMotionPlannerSegment> getSegmentList()
+   {
+      return segmentList;
    }
 }
