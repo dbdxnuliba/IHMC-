@@ -111,7 +111,7 @@ public class ContactState implements ReferenceFrameHolder
       this.state = other.state;
       this.duration = other.duration;
       this.pose.setIncludingFrame(other.pose);
-      this.supportPolygon.addVertices(other.supportPolygon);
+      this.supportPolygon.set(other.supportPolygon);
    }
 
    @Override

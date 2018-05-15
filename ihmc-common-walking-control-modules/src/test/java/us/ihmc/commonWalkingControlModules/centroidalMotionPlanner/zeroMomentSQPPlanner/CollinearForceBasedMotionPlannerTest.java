@@ -119,7 +119,7 @@ public class CollinearForceBasedMotionPlannerTest
    {
       assertTrue(false);
    }
-   
+
    private void generateSupportPolygon(ConvexPolygon2D polygonToSet, double centroidX, double centroidY, double length, double width)
    {
       polygonToSet.clear();
