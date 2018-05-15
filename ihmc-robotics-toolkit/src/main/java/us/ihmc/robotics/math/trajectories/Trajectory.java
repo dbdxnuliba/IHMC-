@@ -149,6 +149,13 @@ public class Trajectory
       return coefficientVector;
    }
 
+   public void getCoefficientVector(DenseMatrix64F coefficientVectorToSet)
+   {
+      coefficientVectorToSet.reshape(numberOfCoefficients, 1);
+      for (int i = 0; i < numberOfCoefficients; i++)
+         coefficientVectorToSet.set(i, 0, coefficients[i]);
+   }
+
    public double[] getCoefficients()
    {
       setCoefficientsCopy();
@@ -799,13 +806,13 @@ public class Trajectory
       for (; row < maximumNumberOfCoefficients; row++)
          coefficients[row] = Double.NaN;
    }
-   
+
    private void setCoefficientsCopy()
    {
       for (int row = 0; row < numberOfCoefficients; row++)
          coefficientsCopy[row] = coefficients[row];
    }
-   
+
    public void reshape(int numberOfCoefficientsRequired)
    {
       if (numberOfCoefficientsRequired > maximumNumberOfCoefficients)

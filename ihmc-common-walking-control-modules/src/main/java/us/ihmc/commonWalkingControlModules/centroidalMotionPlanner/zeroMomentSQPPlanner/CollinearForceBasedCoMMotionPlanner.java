@@ -71,7 +71,7 @@ public class CollinearForceBasedCoMMotionPlanner
    {
       String namePrefix = getClass().getSimpleName();
       registry = new YoVariableRegistry(namePrefix);
- 
+
       initialCoMPosition = new YoFramePoint(namePrefix + "InitialCoMLocation", worldFrame, registry);
       initialCoPPosition = new YoFramePoint(namePrefix + "InitialCoPLocation", worldFrame, registry);
       initialCoMVelocity = new YoFrameVector(namePrefix + "InitialCoMVelocity", worldFrame, registry);
@@ -93,7 +93,7 @@ public class CollinearForceBasedCoMMotionPlanner
       individualAxisConvergenceThreshold = new YoDouble(namePrefix + "IndividualAxisConvergenceThreshold", registry);
 
       sqpSolution = new CollinearForceBasedPlannerIterationResult(gravity);
-      optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, gravity, registry);
+      optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, gravity, registry);
       initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(gravity, registry); // TODO set this up
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
       segmentList = new RecyclingArrayList<>(100, CollinearForceMotionPlannerSegment.class);
@@ -135,7 +135,7 @@ public class CollinearForceBasedCoMMotionPlanner
       tempPoint.setIncludingFrame(initialCoPLocation);
       tempPoint.changeFrame(worldFrame);
       this.initialCoPPosition.set(tempPoint);
-      
+
       tempVector.setIncludingFrame(initialCoMVelocity);
       tempVector.changeFrame(worldFrame);
       this.initialCoMVelocity.set(tempVector);
@@ -150,7 +150,7 @@ public class CollinearForceBasedCoMMotionPlanner
       tempPoint.setIncludingFrame(finalCoPLocation);
       tempPoint.changeFrame(worldFrame);
       this.finalCoPPosition.set(tempPoint);
-      
+
       tempVector.setIncludingFrame(finalCoMVelocity);
       tempVector.changeFrame(worldFrame);
       this.finalCoMVelocity.set(tempVector);
@@ -266,8 +266,6 @@ public class CollinearForceBasedCoMMotionPlanner
       {
          if (!hasPlanConverged() && !hasPlannerFailed())
          {
-            optimizationControlModule.generateLinearizedSystemObjective();
-            optimizationControlModule.generateLinearizedSystemConstraints();
             if (!optimizationControlModule.compute())
             {
                hasPlannerFailed.set(true);

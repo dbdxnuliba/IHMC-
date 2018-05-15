@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
