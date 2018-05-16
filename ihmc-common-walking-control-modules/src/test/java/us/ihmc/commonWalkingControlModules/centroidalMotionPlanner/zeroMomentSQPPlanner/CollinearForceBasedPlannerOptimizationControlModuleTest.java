@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.sun.media.jfxmedia.events.NewFrameEvent;
-
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -45,4 +43,25 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
       PrintTools.debug(optimizationControlModule.toString());
    }
 
+   private final List<Double> tempDoubleList = new ArrayList<>();
+   private List<Double> generateNodeTimesForConstraints(double segmentDuration, int numberOfConstraints, boolean includeStartTime, boolean includeEndTime)
+   {
+      tempDoubleList.clear();
+      int divisor = includeStartTime && includeEndTime ? numberOfConstraints - 1
+            : includeEndTime || includeStartTime ? numberOfConstraints : numberOfConstraints + 1;
+      double dt = segmentDuration / divisor;
+      for (int i = includeStartTime ? 0 : 1; i < divisor; i++)
+         tempDoubleList.add(dt * i);
+      if (includeEndTime)
+         tempDoubleList.add(dt * divisor);
+      return tempDoubleList;
+   }
+
+   @Test
+   public void testNodeTimeGeneration()
+   {
+      generateNodeTimesForConstraints(0.1, 4, false, false);
+      for(int i = 0; i < tempDoubleList.size(); i++)
+         PrintTools.debug(tempDoubleList.get(i) +"\n");
+   }
 }

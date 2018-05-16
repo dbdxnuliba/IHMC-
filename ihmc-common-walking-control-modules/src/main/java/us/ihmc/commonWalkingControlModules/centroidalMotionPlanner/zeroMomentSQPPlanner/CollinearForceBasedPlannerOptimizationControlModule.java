@@ -6,12 +6,11 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import afu.org.checkerframework.checker.units.qual.A;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.Axis;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -143,7 +142,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private final DenseMatrix64F tempJ1 = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempC1 = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F tempA = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F tempA1 = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F tempA2 = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempJ2 = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempC2 = new DenseMatrix64F(0, 1);
 
@@ -183,41 +183,64 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       for (int i = 0; i < segmentList.size(); i++)
       {
          ContactState contactState = segmentList.get(i).getContactState();
-         List<Double> nodeTimes = generateScalarLimitConstraintNodeTimesForSegment(segmentList.get(i).getSegmentDuration());
-         scalarTrajectories.get(i).getCoefficientVector(tempA);;
-         constraintGenerationHelper.generateScalarConstraintMatrix(tempJ1, tempC1, tempA, numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, nodeTimes);
-         if(contactState.getContactType().isRobotSupported())
+         List<Double> nodeTimes = generateNodeTimesForConstraints(segmentList.get(i).getSegmentDuration(),
+                                                                  numberOfScalarConstraintsPerSegment.getIntegerValue(), false, false);
+         scalarTrajectories.get(i).getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateScalarConstraintMatrix(tempJ1, tempC1, tempA1, numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                   nodeTimes);
+         if (contactState.getContactType().isRobotSupported())
          {
-            
+            CommonOps.scale(-1.0, tempJ1);
+            CommonOps.scale(-1.0, tempC1);
+            inequalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
          }
          else
-         {
-            
-         }
+            equalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
       }
-   }
-
-   private List<Double> generateScalarLimitConstraintNodeTimesForSegment(double segmentDuration)
-   {
-      tempDoubleList.clear();
-      int numberOfConstraints = numberOfScalarConstraintsPerSegment.getIntegerValue();
-      double dt = segmentDuration / (numberOfConstraints - 1);
-      for (int i = 0; i < numberOfScalarConstraintsPerSegment.getIntegerValue(); i++)
-         tempDoubleList.add(dt * i);
-      return tempDoubleList;
    }
 
    private void generateCoMLocationConstraintsFromContactStates()
    {
-      for (int i = 0; i < segmentList.size(); i++)
-      {
-         
-      }
+
    }
+
+   private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
 
    private void generateCoPLocationConstraintsFromContactStates()
    {
-      
+      List<Trajectory3D> copTrajectories = sqpSolution.copTrajectories;
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         CollinearForceMotionPlannerSegment segment = segmentList.get(i);
+         ContactState contactState = segment.getContactState();
+         if (contactState.getContactType().isRobotSupported())
+         {
+            Trajectory3D copTrajectory = copTrajectories.get(i);
+            contactState.getSupportPolygon(tempPolygon);
+            List<Double> nodeTimes = generateNodeTimesForConstraints(segment.getSegmentDuration(),
+                                                                     numberOfSupportPolygonConstraintsPerSegment.getIntegerValue(), true, true);
+            Trajectory xAxisCoPTrajectory = copTrajectory.getTrajectory(Axis.X);
+            Trajectory yAxisCoPTrajectory = copTrajectory.getTrajectory(Axis.Y);
+            xAxisCoPTrajectory.getCoefficientVector(tempA1);
+            yAxisCoPTrajectory.getCoefficientVector(tempA2);
+            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygon, nodeTimes,
+                                                                        numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1);
+            inequalityConstraintHandler.addIntraSegmentMultiAxisCoPConstraint(i, tempJ1, tempJ2, tempC1);
+         }
+      }
+   }
+
+   private List<Double> generateNodeTimesForConstraints(double segmentDuration, int numberOfConstraints, boolean includeStartTime, boolean includeEndTime)
+   {
+      tempDoubleList.clear();
+      int divisor = includeStartTime && includeEndTime ? numberOfConstraints - 1
+            : includeEndTime || includeStartTime ? numberOfConstraints : numberOfConstraints + 1;
+      double dt = segmentDuration / divisor;
+      for (int i = includeStartTime ? 0 : 1; i < divisor; i++)
+         tempDoubleList.add(dt * i);
+      if (includeEndTime)
+         tempDoubleList.add(dt * divisor);
+      return tempDoubleList;
    }
 
    public void generateScalarSmoothnessConstraints()
@@ -228,12 +251,12 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       {
          double segmentDuration = segmentList.get(i).getSegmentDuration();
          Trajectory segment = scalarTrajectories.get(i);
-         segment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, scalarTrajectoryOrder,
+         segment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, scalarTrajectoryOrder,
                                                                                 maxDegreeOfScalarSmoothnessConstraints.getIntegerValue(), segmentDuration);
          Trajectory nextSegment = scalarTrajectories.get(i + 1);
-         nextSegment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA, scalarTrajectoryOrder,
+         nextSegment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, scalarTrajectoryOrder,
                                                                                 maxDegreeOfScalarSmoothnessConstraints.getIntegerValue(), segmentDuration);
          equalityConstraintHandler.addInterSegmentScalarConstraint(i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
 
@@ -252,12 +275,12 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          for (Axis axis : copAxis)
          {
             Trajectory axisSegmentTrajectory = segment.getTrajectory(axis);
-            axisSegmentTrajectory.getCoefficientVector(tempA);
-            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, copTrajectoryOrder,
+            axisSegmentTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, copTrajectoryOrder,
                                                                                    maxDegreeOfCoPSmoothnessConstraints.getIntegerValue(), segmentDuration);
             Trajectory axisNextSegmentTrajectory = nextSegment.getTrajectory(axis);
-            axisNextSegmentTrajectory.getCoefficientVector(tempA);
-            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA, copTrajectoryOrder,
+            axisNextSegmentTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, copTrajectoryOrder,
                                                                                    maxDegreeOfCoPSmoothnessConstraints.getIntegerValue(), segmentDuration);
             equalityConstraintHandler.addInterSegmentCoPConstraint(axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
          }
@@ -276,12 +299,12 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          for (Axis axis : comAxis)
          {
             Trajectory axisSegmentTrajectory = segment.getTrajectory(axis);
-            axisSegmentTrajectory.getCoefficientVector(tempA);
-            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, comTrajectoryOrder,
+            axisSegmentTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, comTrajectoryOrder,
                                                                                    maxDegreeOfCoMSmoothnessConstraints.getIntegerValue(), segmentDuration);
             Trajectory axisNextSegmentTrajectory = nextSegment.getTrajectory(axis);
-            axisNextSegmentTrajectory.getCoefficientVector(tempA);
-            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA, comTrajectoryOrder,
+            axisNextSegmentTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, comTrajectoryOrder,
                                                                                    maxDegreeOfCoMSmoothnessConstraints.getIntegerValue(), segmentDuration);
             equalityConstraintHandler.addInterSegmentCoMConstraint(axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
          }
@@ -299,16 +322,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    {
       double initialOmega = -gravity.getZ() / desiredInitialCoMPosition.getZ();
       Trajectory firstScalarSegment = sqpSolution.scalarProfile.get(0);
-      firstScalarSegment.getCoefficientVector(tempA);
-      constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, firstScalarSegment.getNumberOfCoefficients() - 1, 0, 0.0);
+      firstScalarSegment.getCoefficientVector(tempA1);
+      constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstScalarSegment.getNumberOfCoefficients() - 1, 0, 0.0);
       CommonOps.subtract(initialOmega, tempC1, tempC1);
       equalityConstraintHandler.addIntraSegmentScalarConstraint(0, tempJ1, tempC1);
 
       double finalOmega = -gravity.getZ() / desiredFinalCoMPosition.getZ();
       int lastSegmentIndex = numberOfSegments.getIntegerValue() - 1;
       Trajectory lastScalarSegment = sqpSolution.scalarProfile.get(lastSegmentIndex);
-      lastScalarSegment.getCoefficientVector(tempA);
-      constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, lastScalarSegment.getNumberOfCoefficients() - 1, 0,
+      lastScalarSegment.getCoefficientVector(tempA1);
+      constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, lastScalarSegment.getNumberOfCoefficients() - 1, 0,
                                                                              lastScalarSegment.getFinalTime());
       CommonOps.subtract(finalOmega, tempC1, tempC1);
       equalityConstraintHandler.addIntraSegmentScalarConstraint(lastSegmentIndex, tempJ1, tempC1);
@@ -323,15 +346,15 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       {
          double desiredInitalValue = desiredInitialCoPPosition.getElement(axis.ordinal());
          Trajectory firstAxisSegment = firstCoPSegment.getTrajectory(axis);
-         firstAxisSegment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, firstAxisSegment.getNumberOfCoefficients() - 1, 0, 0.0);
+         firstAxisSegment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstAxisSegment.getNumberOfCoefficients() - 1, 0, 0.0);
          CommonOps.subtract(desiredInitalValue, tempC1, tempC1);
          equalityConstraintHandler.addIntraSegmentCoPConstraint(axis, 0, tempJ1, tempC1);
 
          double desiredFinalValue = desiredFinalCoPPosition.getElement(axis.ordinal());
          Trajectory lastAxisSegment = lastCoPSegment.getTrajectory(axis);
-         lastAxisSegment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, lastAxisSegment.getNumberOfCoefficients() - 1, 0,
+         lastAxisSegment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, lastAxisSegment.getNumberOfCoefficients() - 1, 0,
                                                                                 lastAxisSegment.getFinalTime());
          CommonOps.subtract(desiredFinalValue, tempC1, tempC1);
          equalityConstraintHandler.addIntraSegmentCoPConstraint(axis, lastSegmentIndex, tempJ1, tempC1);
@@ -349,16 +372,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          tempC2.set(0, 0, desiredInitialCoMPosition.getElement(axis.ordinal()));
          tempC2.set(1, 0, desiredInitialCoMVelocity.getElement(axis.ordinal()));
          Trajectory firstAxisSegment = firstCoMSegment.getTrajectory(axis);
-         firstAxisSegment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA, firstAxisSegment.getNumberOfCoefficients() - 1, 1, 0.0);
+         firstAxisSegment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstAxisSegment.getNumberOfCoefficients() - 1, 1, 0.0);
          CommonOps.subtractEquals(tempC2, tempC1);
          equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, 0, tempJ1, tempC2);
 
          tempC2.set(0, 0, desiredFinalCoMPosition.getElement(axis.ordinal()));
          tempC2.set(1, 0, desiredFinalCoMVelocity.getElement(axis.ordinal()));
          Trajectory lastAxisSegment = lastCoMSegment.getTrajectory(axis);
-         lastAxisSegment.getCoefficientVector(tempA);
-         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC1, tempA, lastAxisSegment.getNumberOfCoefficients() - 1, 1,
+         lastAxisSegment.getCoefficientVector(tempA1);
+         constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC1, tempA1, lastAxisSegment.getNumberOfCoefficients() - 1, 1,
                                                                                 lastAxisSegment.getFinalTime());
          CommonOps.subtractEquals(tempC2, tempC1);
          equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, lastSegmentIndex, tempJ1, tempC2);
@@ -381,7 +404,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          Trajectory3D comTrajectory = sqpSolution.comTrajectories.get(i);
          Trajectory3D copTrajectory = sqpSolution.copTrajectories.get(i);
          Trajectory scalarTrajectory = sqpSolution.scalarProfile.get(i);
-         List<Double> nodeTimesList = generateDynamicsCollocationConstraintNodeTimesForSegment(segmentList.get(i).getSegmentDuration());
+         List<Double> nodeTimesList = generateNodeTimesForConstraints(segmentList.get(i).getSegmentDuration(),
+                                                                      numberOfDynamicsConstraintsPerSegment.getIntegerValue(), false, true);
          // TODO include Z axis in loop after getting the Z profile from the contact state
          for (Axis axis : copAxis)
          {
@@ -394,7 +418,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                               nodeTimesList, comCoefficients, copCoefficients, scalarCoefficients,
                                                                               numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1,
                                                                               numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
-                                                                              numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, gravity.getElement(axis.ordinal()));
+                                                                              numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                              gravity.getElement(axis.ordinal()));
             equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
          }
          Trajectory zCoMTrajectory = comTrajectory.getTrajectory(Axis.Z);
@@ -406,23 +431,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                            nodeTimesList, comCoefficients, copCoefficients, scalarCoefficients,
                                                                            numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1,
                                                                            numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
-                                                                           numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, gravity.getElement(Axis.Z.ordinal()));
+                                                                           numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                           gravity.getElement(Axis.Z.ordinal()));
          equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(i, comConstraints, scalarConstraints, constraintViolation);
       }
    }
 
-   private List<Double> generateDynamicsCollocationConstraintNodeTimesForSegment(double segmentDuration)
-   {
-      tempDoubleList.clear();
-      int numberOfConstraints = numberOfDynamicsConstraintsPerSegment.getIntegerValue();
-      double dt = segmentDuration / (numberOfConstraints - 1);
-      for (int i = 0; i < numberOfDynamicsConstraintsPerSegment.getIntegerValue(); i++)
-         tempDoubleList.add(dt * i);
-      return tempDoubleList;
-   }
-
    private void submitQPMatricesAndRunOptimization()
    {
-
+      qpSolver.setQuadraticCostFunction(solver_objH, solver_objH, 0.0);
+      qpSolver.setLinearEqualityConstraints(equalityConstraintHandler.getCoefficientMatrix(), equalityConstraintHandler.getBiasMatrix());
+      qpSolver.setLinearInequalityConstraints(inequalityConstraintHandler.getCoefficientMatrix(), inequalityConstraintHandler.getBiasMatrix());
    }
 }
