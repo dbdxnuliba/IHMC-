@@ -65,6 +65,21 @@ public class ConstraintGenerationHelper
 
    }
 
+   public void generateScalarConstraintMatrix(DenseMatrix64F coefficientMatrixToSet, DenseMatrix64F biasMatrixToSet, DenseMatrix64F scalarCoefficientMatrix,
+                                              int polynomialOrder, List<Double> nodeTimes)
+   {
+      coefficientMatrixToSet.reshape(nodeTimes.size(), polynomialOrder + 1);
+      biasMatrixToSet.reshape(nodeTimes.size(), 1);
+
+      for (int i = 0; i < nodeTimes.size(); i++)
+      {
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrixForScalar, tempBiasMatrixForScalar, scalarCoefficientMatrix, polynomialOrder, 0,
+                                                     nodeTimes.get(i));
+         CommonOps.insert(tempCoeffMatrixForScalar, coefficientMatrixToSet, i, 0);
+         CommonOps.insert(tempBiasMatrixForScalar, biasMatrixToSet, i, 0);
+      }
+   }
+
    private final DenseMatrix64F tempCoeffMatrixForCoM = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempCoeffMatrixForCoP = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempCoeffMatrixForScalar = new DenseMatrix64F(0, 1);
@@ -76,7 +91,7 @@ public class ConstraintGenerationHelper
                                                       DenseMatrix64F scalarCoefficientMatrixToSet, DenseMatrix64F biasMatrixToSet,
                                                       List<Double> timeNodesForConstraints, DenseMatrix64F comCoefficients, DenseMatrix64F copCoefficients,
                                                       DenseMatrix64F scalarCoefficients, int comPolynomialOrder, int copPolynomialOrder,
-                                                      int scalarPolynomialOrder)
+                                                      int scalarPolynomialOrder, double gravity)
    {
       comCoefficientMatrixToSet.reshape(timeNodesForConstraints.size(), comPolynomialOrder + 1);
       copCoefficientMatrixToSet.reshape(timeNodesForConstraints.size(), copPolynomialOrder + 1);
@@ -88,16 +103,21 @@ public class ConstraintGenerationHelper
          generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrixForCoM, tempBiasMatrixForCoM, comCoefficients, comPolynomialOrder, 0, nodeTime);
          generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrixForCoP, tempBiasMatrixForCoP, copCoefficients, copPolynomialOrder, 0, nodeTime);
          generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrixForScalar, tempBiasMatrixForScalar, scalarCoefficients, scalarPolynomialOrder, 0, nodeTime);
+         double u = tempBiasMatrixForScalar.get(0, 0);
+         double x = tempBiasMatrixForCoM.get(0, 0);
+         double v = tempBiasMatrixForCoP.get(0, 0);
          for (int j = comPolynomialOrder; j >= 2; j--)
-            tempCoeffMatrixForCoM.set(0, j, tempCoeffMatrixForCoM.get(0, j - 2) * j * (j - 1) - tempBiasMatrixForScalar.get(0, 0) * tempCoeffMatrixForCoM.get(0, j));
+            tempCoeffMatrixForCoM.set(0, j,
+                                      tempCoeffMatrixForCoM.get(0, j - 2) * j * (j - 1) - u * tempCoeffMatrixForCoM.get(0, j));
          for (int j = 1; j >= 0; j--)
-            tempCoeffMatrixForCoM.set(0, j, -tempBiasMatrixForScalar.get(0, 0) * tempCoeffMatrixForCoM.get(0, j));
-         CommonOps.scale(tempBiasMatrixForScalar.get(0, 0), tempCoeffMatrixForCoP);
-         CommonOps.scale(tempBiasMatrixForCoP.get(0, 0) - tempBiasMatrixForCoM.get(0, 0), tempCoeffMatrixForScalar);
-         
+            tempCoeffMatrixForCoM.set(0, j, -u * tempCoeffMatrixForCoM.get(0, j));
+         CommonOps.scale(u, tempCoeffMatrixForCoP);
+         CommonOps.scale(v - x, tempCoeffMatrixForScalar);
+
          CommonOps.insert(tempCoeffMatrixForCoM, comCoefficientMatrixToSet, i, 0);
          CommonOps.insert(tempCoeffMatrixForCoP, copCoefficientMatrixToSet, i, 0);
          CommonOps.insert(tempCoeffMatrixForScalar, scalarCoefficientMatrixToSet, i, 0);
+         biasMatrixToSet.set(i,  0, u * (x - v) + gravity);
       }
    }
 }

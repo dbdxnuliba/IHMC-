@@ -7,6 +7,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import afu.org.checkerframework.checker.units.qual.A;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.Axis;
@@ -50,8 +52,6 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private final DenseMatrix64F solver_objH;
    private final DenseMatrix64F solver_objf;
-   private final DenseMatrix64F solver_ub;
-   private final DenseMatrix64F solver_lb;
    private final ConstraintMatrixHandler inequalityConstraintHandler;
    private final ConstraintMatrixHandler equalityConstraintHandler;
    private final DenseMatrix64F solver_qpSoln;
@@ -100,8 +100,6 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
       solver_objH = new DenseMatrix64F(0, 1);
       solver_objf = new DenseMatrix64F(0, 1);
-      solver_lb = new DenseMatrix64F(0, 1);
-      solver_ub = new DenseMatrix64F(0, 1);
       solver_qpSoln = new DenseMatrix64F(0, 1);
 
       qpSolver = new JavaQuadProgSolver();
@@ -160,9 +158,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoMSmoothnessConstraints();
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
-      generateCoPLocationConstraintsFromContactStates(segmentList);
-      generateCoMLocationConstraintsFromContactStates(segmentList);
-      generateScalarConstraintsFromContactStates(segmentList);
+      generateCoPLocationConstraintsFromContactStates();
+      generateCoMLocationConstraintsFromContactStates();
+      generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();
       generateInitialFinalScalarConstraintsFromDesireds();
@@ -179,22 +177,47 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       inequalityConstraintHandler.reshape();
    }
 
-   private void generateScalarConstraintsFromContactStates(List<CollinearForceMotionPlannerSegment> segmentList)
+   private void generateScalarConstraintsFromContactStates()
    {
-      // TODO Auto-generated method stub
-
+      List<Trajectory> scalarTrajectories = sqpSolution.scalarProfile;
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         ContactState contactState = segmentList.get(i).getContactState();
+         List<Double> nodeTimes = generateScalarLimitConstraintNodeTimesForSegment(segmentList.get(i).getSegmentDuration());
+         scalarTrajectories.get(i).getCoefficientVector(tempA);;
+         constraintGenerationHelper.generateScalarConstraintMatrix(tempJ1, tempC1, tempA, numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, nodeTimes);
+         if(contactState.getContactType().isRobotSupported())
+         {
+            
+         }
+         else
+         {
+            
+         }
+      }
    }
 
-   private void generateCoMLocationConstraintsFromContactStates(List<CollinearForceMotionPlannerSegment> segmentList)
+   private List<Double> generateScalarLimitConstraintNodeTimesForSegment(double segmentDuration)
    {
-      // TODO Auto-generated method stub
-
+      tempDoubleList.clear();
+      int numberOfConstraints = numberOfScalarConstraintsPerSegment.getIntegerValue();
+      double dt = segmentDuration / (numberOfConstraints - 1);
+      for (int i = 0; i < numberOfScalarConstraintsPerSegment.getIntegerValue(); i++)
+         tempDoubleList.add(dt * i);
+      return tempDoubleList;
    }
 
-   private void generateCoPLocationConstraintsFromContactStates(List<CollinearForceMotionPlannerSegment> segmentList)
+   private void generateCoMLocationConstraintsFromContactStates()
    {
-      // TODO Auto-generated method stub
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         
+      }
+   }
 
+   private void generateCoPLocationConstraintsFromContactStates()
+   {
+      
    }
 
    public void generateScalarSmoothnessConstraints()
@@ -369,18 +392,29 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             scalarTrajectory.getCoefficientVector(scalarCoefficients);
             constraintGenerationHelper.generateDynamicsCollocationConstraints(comConstraints, copConstraints, scalarConstraints, constraintViolation,
                                                                               nodeTimesList, comCoefficients, copCoefficients, scalarCoefficients,
-                                                                              numberOfCoMTrajectoryCoefficients.getIntegerValue(),
-                                                                              numberOfCoPTrajectoryCoefficients.getIntegerValue(),
-                                                                              numberOfScalarTrajectoryCoefficients.getIntegerValue());
+                                                                              numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                              numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                              numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, gravity.getElement(axis.ordinal()));
             equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
          }
+         Trajectory zCoMTrajectory = comTrajectory.getTrajectory(Axis.Z);
+         zCoMTrajectory.getCoefficientVector(comCoefficients);
+         copCoefficients.reshape(1, numberOfCoPTrajectoryCoefficients.getIntegerValue());
+         copCoefficients.zero();
+         scalarTrajectory.getCoefficientVector(scalarCoefficients);
+         constraintGenerationHelper.generateDynamicsCollocationConstraints(comConstraints, copConstraints, scalarConstraints, constraintViolation,
+                                                                           nodeTimesList, comCoefficients, copCoefficients, scalarCoefficients,
+                                                                           numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                           numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
+                                                                           numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1, gravity.getElement(Axis.Z.ordinal()));
+         equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(i, comConstraints, scalarConstraints, constraintViolation);
       }
    }
 
    private List<Double> generateDynamicsCollocationConstraintNodeTimesForSegment(double segmentDuration)
    {
       tempDoubleList.clear();
-      int numberOfConstraints = numberOfCoMPositionConstraintsPerSegment.getIntegerValue();
+      int numberOfConstraints = numberOfDynamicsConstraintsPerSegment.getIntegerValue();
       double dt = segmentDuration / (numberOfConstraints - 1);
       for (int i = 0; i < numberOfDynamicsConstraintsPerSegment.getIntegerValue(); i++)
          tempDoubleList.add(dt * i);

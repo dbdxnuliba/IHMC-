@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import javax.management.RuntimeErrorException;
 import javax.xml.bind.SchemaOutputResolver;
 
 import org.ejml.data.DenseMatrix64F;
@@ -186,6 +187,8 @@ public class ConstraintMatrixHandler
    public void addIntraSegmentMultiQuantityConstraints(Axis axis, int segmentIndex, DenseMatrix64F comCoefficients, DenseMatrix64F copCoefficients,
                                                        DenseMatrix64F scalarCoefficients, DenseMatrix64F bias)
    {
+      if (axis == Axis.Z)
+         throw new RuntimeException("Invalid axis specified. For Z axis use the dedicated method");
       if (comCoefficients.getNumRows() != copCoefficients.getNumRows() || comCoefficients.getNumRows() != scalarCoefficients.getNumRows()
             || comCoefficients.getNumRows() != bias.getNumRows())
          throw new RuntimeException("Numbers of rows mismatch between specified constraint coefficient and / or bias matrices");
@@ -202,6 +205,26 @@ public class ConstraintMatrixHandler
       int scalarInsertionIndex = segmentColsStart + scalarOffset;
       CommonOps.insert(comCoefficients, tempMatrix, 0, comInsertionIndex);
       CommonOps.insert(copCoefficients, tempMatrix, 0, copInsertionIndex);
+      CommonOps.insert(scalarCoefficients, tempMatrix, 0, scalarInsertionIndex);
+      insertRowsIntoConstraintMatrix(tempMatrix, bias);
+   }
+
+   public void addIntraSegmentMultiQuantityConstraintsForZAxis(int segmentIndex, DenseMatrix64F comCoefficients, DenseMatrix64F scalarCoefficients,
+                                                               DenseMatrix64F bias)
+   {
+      if (comCoefficients.getNumRows() != scalarCoefficients.getNumRows() || comCoefficients.getNumRows() != bias.getNumRows())
+         throw new RuntimeException("Numbers of rows mismatch between specified constraint coefficient and / or bias matrices");
+      if (comCoefficients.getNumCols() != numberOfCoMCoefficients.getIntegerValue()
+            || scalarCoefficients.getNumRows() != numberOfScalarCoefficients.getIntegerValue() || bias.getNumCols() != 1)
+         throw new RuntimeException("Number of columns for specified constraints matrices do not match their expected value");
+
+      tempMatrix.reshape(comCoefficients.getNumRows(), numCols);
+      tempMatrix.zero();
+
+      int segmentColsStart = segmentIndex * colsPerSegment;
+      int comInsertionIndex = segmentColsStart + comOffset + Axis.Z.ordinal() * numberOfCoMCoefficients.getIntegerValue();
+      int scalarInsertionIndex = segmentColsStart + scalarOffset;
+      CommonOps.insert(comCoefficients, tempMatrix, 0, comInsertionIndex);
       CommonOps.insert(scalarCoefficients, tempMatrix, 0, scalarInsertionIndex);
       insertRowsIntoConstraintMatrix(tempMatrix, bias);
    }
