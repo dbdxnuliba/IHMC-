@@ -16,7 +16,7 @@ public class CollinearForcePlannerParameters
       return 10;
    }
 
-   public double getMaxPlannerSegmentTime()
+   public double getNominalPlannerSegmentTime()
    {
       return 0.05;
    }

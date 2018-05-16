@@ -1,5 +1,7 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import javax.xml.bind.SchemaOutputResolver;
+
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -146,22 +148,81 @@ public class ConstraintMatrixHandler
 
    public void addIntraSegmentScalarConstraint(int segmentIndex, DenseMatrix64F segmentCoefficentMatrix, DenseMatrix64F segmentBiasMatrix)
    {
+      if (segmentCoefficentMatrix.getNumRows() != segmentBiasMatrix.getNumRows())
+         throw new RuntimeException("Number of rows mismath in the specified constraint coefficient and bias matrices");
+      if (segmentCoefficentMatrix.getNumCols() != numberOfScalarCoefficients.getIntegerValue() || segmentBiasMatrix.getNumCols() != 1)
+         throw new RuntimeException("Number of columns for specified coefficient or bias matrix do not match their expected value");
 
+      tempMatrix.reshape(segmentCoefficentMatrix.getNumRows(), numCols);
+      tempMatrix.zero();
+      int colIndexToInsertSegment = segmentIndex * colsPerSegment + scalarOffset;
+      CommonOps.insert(segmentCoefficentMatrix, tempMatrix, 0, colIndexToInsertSegment);
+      insertRowsIntoConstraintMatrix(tempMatrix, segmentBiasMatrix);
    }
 
    public void addIntraSegmentCoPConstraint(Axis axis, int segmentIndex, DenseMatrix64F segmentCoefficentMatrix, DenseMatrix64F segmentBiasMatrix)
    {
+      if (segmentCoefficentMatrix.getNumRows() != segmentBiasMatrix.getNumRows())
+         throw new RuntimeException("Number of rows mismath in the specified constraint coefficient and bias matrices");
+      if (segmentCoefficentMatrix.getNumCols() != numberOfCoPCoefficients.getIntegerValue() || segmentBiasMatrix.getNumCols() != 1)
+         throw new RuntimeException("Number of columns for specified coefficient or bias matrix do not match their expected value");
 
+      tempMatrix.reshape(segmentCoefficentMatrix.getNumRows(), numCols);
+      tempMatrix.zero();
+      int colIndexToInsertSegment = segmentIndex * colsPerSegment + copOffset + axis.ordinal() * numberOfCoPCoefficients.getIntegerValue();
+      CommonOps.insert(segmentCoefficentMatrix, tempMatrix, 0, colIndexToInsertSegment);
+      insertRowsIntoConstraintMatrix(tempMatrix, segmentBiasMatrix);
    }
 
    public void addIntraSegmentCoMConstraint(Axis axis, int segmentIndex, DenseMatrix64F segmentCoefficentMatrix, DenseMatrix64F segmentBiasMatrix)
    {
+      tempMatrix.reshape(segmentCoefficentMatrix.getNumRows(), numCols);
+      tempMatrix.zero();
+      int colIndexToInsertSegment = segmentIndex * colsPerSegment + comOffset + axis.ordinal() * numberOfCoMCoefficients.getIntegerValue();
+      CommonOps.insert(segmentCoefficentMatrix, tempMatrix, 0, colIndexToInsertSegment);
+      insertRowsIntoConstraintMatrix(tempMatrix, segmentBiasMatrix);
+   }
 
+   public void addIntraSegmentMultiQuantityConstraints(Axis axis, int segmentIndex, DenseMatrix64F comCoefficients, DenseMatrix64F copCoefficients,
+                                                       DenseMatrix64F scalarCoefficients, DenseMatrix64F bias)
+   {
+      if (comCoefficients.getNumRows() != copCoefficients.getNumRows() || comCoefficients.getNumRows() != scalarCoefficients.getNumRows()
+            || comCoefficients.getNumRows() != bias.getNumRows())
+         throw new RuntimeException("Numbers of rows mismatch between specified constraint coefficient and / or bias matrices");
+      if (comCoefficients.getNumCols() != numberOfCoMCoefficients.getIntegerValue() || copCoefficients.getNumCols() != numberOfCoPCoefficients.getIntegerValue()
+            || scalarCoefficients.getNumRows() != numberOfScalarCoefficients.getIntegerValue() || bias.getNumCols() != 1)
+         throw new RuntimeException("Number of columns for specified constraints matrices do not match their expected value");
+
+      tempMatrix.reshape(copCoefficients.getNumRows(), numCols);
+      tempMatrix.zero();
+
+      int segmentColsStart = segmentIndex * colsPerSegment;
+      int comInsertionIndex = segmentColsStart + comOffset + axis.ordinal() * numberOfCoMCoefficients.getIntegerValue();
+      int copInsertionIndex = segmentColsStart + copOffset + axis.ordinal() * numberOfCoPCoefficients.getIntegerValue();
+      int scalarInsertionIndex = segmentColsStart + scalarOffset;
+      CommonOps.insert(comCoefficients, tempMatrix, 0, comInsertionIndex);
+      CommonOps.insert(copCoefficients, tempMatrix, 0, copInsertionIndex);
+      CommonOps.insert(scalarCoefficients, tempMatrix, 0, scalarInsertionIndex);
+      insertRowsIntoConstraintMatrix(tempMatrix, bias);
+   }
+
+   private void insertRowsIntoConstraintMatrix(DenseMatrix64F constraintCoefficients, DenseMatrix64F biasMatrix)
+   {
+      int numberOfRows = A.getNumRows();
+      A.reshape(numberOfRows + constraintCoefficients.getNumRows(), numCols, true);
+      CommonOps.insert(constraintCoefficients, A, numberOfRows, 0);
+
+      b.reshape(numberOfRows + biasMatrix.getNumRows(), 1, true);
+      CommonOps.insert(biasMatrix, b, numberOfRows, 0);
    }
 
    public void addIntraSegmentConstraint(int segmentIndex, DenseMatrix64F segmentCoefficientMatrix, DenseMatrix64F segmentBiasMatrix)
    {
-
+      tempMatrix.reshape(segmentCoefficientMatrix.getNumRows(), numCols);
+      tempMatrix.zero();
+      int colIndexToInsertSegment = segmentIndex * colsPerSegment;
+      CommonOps.insert(segmentCoefficientMatrix, tempMatrix, 0, colIndexToInsertSegment);
+      insertRowsIntoConstraintMatrix(tempMatrix, segmentBiasMatrix);
    }
 
    public DenseMatrix64F getCoefficientMatrix()
@@ -173,4 +234,5 @@ public class ConstraintMatrixHandler
    {
       return b;
    }
+
 }

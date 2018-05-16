@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ejml.data.DenseMatrix64F;
@@ -57,7 +58,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private final ActiveSetQPSolver qpSolver;
 
-   private final ConstraintGenerator constraintGenerationHelper;
+   private final ConstraintGenerationHelper constraintGenerationHelper;
    private List<CollinearForceMotionPlannerSegment> segmentList;
    private final Axis[] copAxis = new Axis[] {Axis.X, Axis.Y};
    private final Axis[] comAxis = Axis.values;
@@ -95,7 +96,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                               numberOfScalarTrajectoryCoefficients);
       inequalityConstraintHandler = new ConstraintMatrixHandler(numberOfPlanningSegments, numberOfCoMTrajectoryCoefficients, numberOfCoPTrajectoryCoefficients,
                                                                 numberOfScalarTrajectoryCoefficients);
-      constraintGenerationHelper = new ConstraintGenerator();
+      constraintGenerationHelper = new ConstraintGenerationHelper();
 
       solver_objH = new DenseMatrix64F(0, 1);
       solver_objf = new DenseMatrix64F(0, 1);
@@ -341,10 +342,49 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       }
    }
 
+   private final DenseMatrix64F comConstraints = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F copConstraints = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F scalarConstraints = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F constraintViolation = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F comCoefficients = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F copCoefficients = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F scalarCoefficients = new DenseMatrix64F(0, 1);
+   private final List<Double> tempDoubleList = new ArrayList<>();
+
    private void generateDynamicsConstraintsForSegments()
    {
-      // TODO Auto-generated method stub
+      for (int i = 0; i < numberOfSegments.getIntegerValue(); i++)
+      {
+         Trajectory3D comTrajectory = sqpSolution.comTrajectories.get(i);
+         Trajectory3D copTrajectory = sqpSolution.copTrajectories.get(i);
+         Trajectory scalarTrajectory = sqpSolution.scalarProfile.get(i);
+         List<Double> nodeTimesList = generateDynamicsCollocationConstraintNodeTimesForSegment(segmentList.get(i).getSegmentDuration());
+         // TODO include Z axis in loop after getting the Z profile from the contact state
+         for (Axis axis : copAxis)
+         {
+            Trajectory axisCoMTrajectory = comTrajectory.getTrajectory(axis);
+            Trajectory axisCoPTrajectory = copTrajectory.getTrajectory(axis);
+            axisCoMTrajectory.getCoefficientVector(comCoefficients);
+            axisCoPTrajectory.getCoefficientVector(copCoefficients);
+            scalarTrajectory.getCoefficientVector(scalarCoefficients);
+            constraintGenerationHelper.generateDynamicsCollocationConstraints(comConstraints, copConstraints, scalarConstraints, constraintViolation,
+                                                                              nodeTimesList, comCoefficients, copCoefficients, scalarCoefficients,
+                                                                              numberOfCoMTrajectoryCoefficients.getIntegerValue(),
+                                                                              numberOfCoPTrajectoryCoefficients.getIntegerValue(),
+                                                                              numberOfScalarTrajectoryCoefficients.getIntegerValue());
+            equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
+         }
+      }
+   }
 
+   private List<Double> generateDynamicsCollocationConstraintNodeTimesForSegment(double segmentDuration)
+   {
+      tempDoubleList.clear();
+      int numberOfConstraints = numberOfCoMPositionConstraintsPerSegment.getIntegerValue();
+      double dt = segmentDuration / (numberOfConstraints - 1);
+      for (int i = 0; i < numberOfDynamicsConstraintsPerSegment.getIntegerValue(); i++)
+         tempDoubleList.add(dt * i);
+      return tempDoubleList;
    }
 
    private void submitQPMatricesAndRunOptimization()

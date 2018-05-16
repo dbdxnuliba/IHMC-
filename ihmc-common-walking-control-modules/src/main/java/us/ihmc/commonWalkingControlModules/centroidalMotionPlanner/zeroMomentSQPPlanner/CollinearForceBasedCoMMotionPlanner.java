@@ -45,7 +45,7 @@ public class CollinearForceBasedCoMMotionPlanner
    private final YoFrameVector finalCoMVelocity;
 
    private final YoVariableRegistry registry;
-   private final YoDouble maxPlannerSegmentTime;
+   private final YoDouble nominalPlannerSegmentTime;
    private final YoDouble minPlannerSegmentTime;
    private final YoInteger numberOfContactStatesToPlan;
    private final YoInteger maxNumberOfSQPIterations;
@@ -85,7 +85,7 @@ public class CollinearForceBasedCoMMotionPlanner
       numberOfPlanningSegments = new YoInteger(namePrefix + "NumberOfPlanningSegments", registry);
       numberOfContactStates = new YoInteger(namePrefix + "NumberOfContactStates", registry);
 
-      maxPlannerSegmentTime = new YoDouble(namePrefix + "MaxPlannerSegmentTime", registry);
+      nominalPlannerSegmentTime = new YoDouble(namePrefix + "MaxPlannerSegmentTime", registry);
       minPlannerSegmentTime = new YoDouble(namePrefix + "MinPlannerSegmentTime", registry);
       numberOfContactStatesToPlan = new YoInteger(namePrefix + "NumberOfContactStatesToPlan", registry);
       maxNumberOfSQPIterations = new YoInteger(namePrefix + "MaxNumberOfSQPIterations", registry);
@@ -106,7 +106,7 @@ public class CollinearForceBasedCoMMotionPlanner
       maxNumberOfSQPIterations.set(parameters.getMaxSQPIterations());
       consolidatedConvergenceThreshold.set(parameters.getConsolidatedConvergenceThreshold());
       individualAxisConvergenceThreshold.set(parameters.getIndividualAxisConvergenceThreshold());
-      maxPlannerSegmentTime.set(parameters.getMaxPlannerSegmentTime());
+      nominalPlannerSegmentTime.set(parameters.getNominalPlannerSegmentTime());
       minPlannerSegmentTime.set(parameters.getMinPlannerSegmentTime());
       numberOfContactStatesToPlan.set(parameters.getNumberOfContactStatesToPlan());
       initialSolutionGenerator.initialize(sqpSolution, parameters);
@@ -171,13 +171,13 @@ public class CollinearForceBasedCoMMotionPlanner
             CollinearForceMotionPlannerSegment segment = segmentList.add();
             segment.setContactState(contactState);
             segment.setNextSegmentContactState(contactState);
-            segment.setSegmentDuration(maxPlannerSegmentTime.getDoubleValue());
+            segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
             segment.setContactStateChangeFlag(false);
          }
          CollinearForceMotionPlannerSegment segment = segmentList.add();
          segment.setContactState(contactState);
          segment.setNextSegmentContactState(nextContactState);
-         segment.setSegmentDuration(contactStateDuration - numberOfSegmentsInContactState * maxPlannerSegmentTime.getDoubleValue());
+         segment.setSegmentDuration(contactStateDuration - numberOfSegmentsInContactState * nominalPlannerSegmentTime.getDoubleValue());
          segment.setContactStateChangeFlag(true);
          contactState = nextContactState;
       }
@@ -189,15 +189,15 @@ public class CollinearForceBasedCoMMotionPlanner
          CollinearForceMotionPlannerSegment segment = segmentList.add();
          segment.setContactState(contactState);
          segment.setNextSegmentContactState(contactState);
-         segment.setSegmentDuration(maxPlannerSegmentTime.getDoubleValue());
+         segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
          segment.setContactStateChangeFlag(false);
       }
    }
 
    private int getNumberOfSegmentsInContactStates(double contactStateDuration)
    {
-      int quotient = (int) Math.floor(contactStateDuration / maxPlannerSegmentTime.getDoubleValue());
-      double remainder = contactStateDuration - quotient * maxPlannerSegmentTime.getDoubleValue();
+      int quotient = (int) Math.floor(contactStateDuration / nominalPlannerSegmentTime.getDoubleValue());
+      double remainder = contactStateDuration - quotient * nominalPlannerSegmentTime.getDoubleValue();
       if (remainder < minPlannerSegmentTime.getDoubleValue())
          return quotient - 1;
       else
