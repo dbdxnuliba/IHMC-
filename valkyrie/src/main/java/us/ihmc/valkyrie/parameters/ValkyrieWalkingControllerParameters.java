@@ -345,7 +345,7 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       double zetaXY = runningOnRealRobot ? 0.9 : 0.8; // 0.7
       double zetaZ = runningOnRealRobot ? 1.00 : 0.8; // 0.7
       double maxAccel = runningOnRealRobot ? 18.0 : 18.0;
-      double maxJerk = runningOnRealRobot ? 270.0 : 270.0;
+      double maxJerk = runningOnRealRobot ? 720.0 : 270.0;
 
       DefaultPID3DGains gains = new DefaultPID3DGains(GainCoupling.XY, false);
       gains.setProportionalGains(kpXY, kpXY, kpZ);
@@ -382,7 +382,7 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       double zetaXY = runningOnRealRobot ? 0.8 : 0.8;
       double zetaZ = runningOnRealRobot ? 0.8 : 0.8;
       double maxAccel = runningOnRealRobot ? 12.0 : 18.0;
-      double maxJerk = runningOnRealRobot ? 180.0 : 270.0;
+      double maxJerk = runningOnRealRobot ? 360.0 : 270.0;
 
       DefaultPID3DGains gains = new DefaultPID3DGains(GainCoupling.XY, false);
       gains.setProportionalGains(kpXY, kpXY, kpZ);
@@ -619,7 +619,7 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       double zetaOrientationXY = runningOnRealRobot ? 0.7 : 0.7;
       double zetaOrientationZ = runningOnRealRobot ? 0.5 : 0.7;
       double maxLinearAcceleration = runningOnRealRobot ? 10.0 : Double.POSITIVE_INFINITY;
-      double maxLinearJerk = runningOnRealRobot ? 150.0 : Double.POSITIVE_INFINITY;
+      double maxLinearJerk = runningOnRealRobot ? 250.0 : Double.POSITIVE_INFINITY;
       double maxAngularAcceleration = runningOnRealRobot ? 100.0 : Double.POSITIVE_INFINITY;
       double maxAngularJerk = runningOnRealRobot ? 1500.0 : Double.POSITIVE_INFINITY;
 
