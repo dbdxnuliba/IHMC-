@@ -41,12 +41,23 @@ public class CollinearForcePlannerParameters
       return 1e-5;
    }
 
-   /**
-    * 
-    * @return
-    */
    public Point3DReadOnly getNominalCoMOffsetFromSupportPolygonCentroid()
    {
       return new Point3D(0.0, 0.0, 0.435);
+   }
+
+   public double getSupportPolygonMXYOffsetForCoMConstraint()
+   {
+      return 0.10;
+   }
+
+   public double getMaxZHeight()
+   {
+      return 0.45;
+   }
+   
+   public double getMinZHeight()
+   {
+      return 0.3;
    }
 }

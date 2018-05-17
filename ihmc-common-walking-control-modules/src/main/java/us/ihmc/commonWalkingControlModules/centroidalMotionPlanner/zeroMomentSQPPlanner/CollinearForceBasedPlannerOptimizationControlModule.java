@@ -81,9 +81,6 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       maxDegreeOfCoMSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeCoMSmoothnessConstraint", registry);
       maxDegreeOfCoPSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeCoPSmoothnessConstraint", registry);
       maxDegreeOfScalarSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeScalarSmoothnessConstraint", registry);
-      comSupportPolygonXYConstraintOffset = new YoDouble(namePrefix + "CoMSupportPolygonConstraintOffset", registry);
-      comZMaxHeightConstraint = new YoDouble(namePrefix + "CoMZMaxHeight", registry);
-      comZMinHeightConstraint = new YoDouble(namePrefix + "CoMZMinHeight", registry);
       // AS: These are YoVariablized for logging and hard coded as anything else will under/over constrain the QP.
       maxDegreeOfCoMSmoothnessConstraints.set(1);
       maxDegreeOfCoPSmoothnessConstraints.set(1);
@@ -97,6 +94,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       numberOfCoPTrajectoryCoefficients.set(CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients);
       numberOfScalarTrajectoryCoefficients = new YoInteger(namePrefix + "NumberOfScalarTrajectoryCoefficients", registry);
       numberOfScalarTrajectoryCoefficients.set(CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients);
+      comSupportPolygonXYConstraintOffset = new YoDouble(namePrefix + "CoMSupportPolygonConstraintOffset", registry);
+      comZMaxHeightConstraint = new YoDouble(namePrefix + "CoMZMaxHeight", registry);
+      comZMinHeightConstraint = new YoDouble(namePrefix + "CoMZMinHeight", registry);
       this.sqpSolution = sqpSolution;
       this.gravity = gravity;
 
@@ -116,7 +116,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    public void initialize(CollinearForcePlannerParameters parameters)
    {
-
+      comSupportPolygonXYConstraintOffset.set(parameters.getSupportPolygonMXYOffsetForCoMConstraint());
+      comZMaxHeightConstraint.set(parameters.getMaxZHeight());
+      comZMinHeightConstraint.set(parameters.getMinZHeight());
    }
 
    public void reset()
