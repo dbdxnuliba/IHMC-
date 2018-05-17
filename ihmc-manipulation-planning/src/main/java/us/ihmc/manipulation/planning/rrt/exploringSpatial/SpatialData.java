@@ -28,8 +28,9 @@ public class SpatialData
    public SpatialData(SpatialData other)
    {
       this();
+      for(int i=0;i<other.rigidBodySpatials.size();i++)
+         rigidBodySpatials.add(new RigidBodyTransform(other.rigidBodySpatials.get(i)));
       exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
-      rigidBodySpatials.addAll(other.rigidBodySpatials);
    }
 
    public void addSpatial(String exploringRigidBodyName, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform transform)
