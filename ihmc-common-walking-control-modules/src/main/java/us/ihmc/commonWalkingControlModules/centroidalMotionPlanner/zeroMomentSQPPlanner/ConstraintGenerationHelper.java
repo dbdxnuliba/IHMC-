@@ -131,18 +131,18 @@ public class ConstraintGenerationHelper
    public void generateSupportPolygonConstraint(DenseMatrix64F xAxisConstraintCoefficientToSet, DenseMatrix64F yAxisConstraintCoefficientToSet,
                                                 DenseMatrix64F biasMatrixToSet, DenseMatrix64F xAxisTrajectoryCoefficients,
                                                 DenseMatrix64F yAxisTrajectoryCoefficients, ConvexPolygon2D supportPolygon, List<Double> nodeTimes,
-                                                int copTrajectoryOrder)
+                                                int trajectoryOrder)
    {
       int numberOfConstraintPerTime = supportPolygon.getNumberOfVertices();
-      xAxisConstraintCoefficientToSet.reshape(nodeTimes.size() * numberOfConstraintPerTime, copTrajectoryOrder + 1);
-      yAxisConstraintCoefficientToSet.reshape(nodeTimes.size() * numberOfConstraintPerTime, copTrajectoryOrder + 1);
+      xAxisConstraintCoefficientToSet.reshape(nodeTimes.size() * numberOfConstraintPerTime, trajectoryOrder + 1);
+      yAxisConstraintCoefficientToSet.reshape(nodeTimes.size() * numberOfConstraintPerTime, trajectoryOrder + 1);
       biasMatrixToSet.reshape(nodeTimes.size() * numberOfConstraintPerTime, 1);
       for (int i = 0; i < nodeTimes.size(); i++)
       {
          Point2DReadOnly initialPoint = supportPolygon.getVertex(numberOfConstraintPerTime - 1);
-         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, xAxisTrajectoryCoefficients, copTrajectoryOrder, 0,
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, xAxisTrajectoryCoefficients, trajectoryOrder, 0,
                                                      nodeTimes.get(i));
-         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix2, tempBiasMatrix2, yAxisTrajectoryCoefficients, copTrajectoryOrder, 0,
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix2, tempBiasMatrix2, yAxisTrajectoryCoefficients, trajectoryOrder, 0,
                                                      nodeTimes.get(i));
          for (int j = 0; j < numberOfConstraintPerTime; j++)
          {
@@ -161,6 +161,23 @@ public class ConstraintGenerationHelper
             biasMatrixToSet.set(i * numberOfConstraintPerTime + j, 0, bias - tempBiasMatrix1.get(0, 0) * xCoefficient - tempBiasMatrix2.get(0, 0) * yCoefficient);
             initialPoint = finalPoint;
          }
+      }
+   }
+
+   public void generateZAxisUpperLowerLimitConstraint(DenseMatrix64F coefficientMatrixToSet, DenseMatrix64F biasMatrixToSet, DenseMatrix64F trajectoryCoefficients, double maxValue,
+                                                      double minValue, List<Double> nodeTimes, int trajectoryOrder)
+   {
+      coefficientMatrixToSet.reshape(2 * nodeTimes.size(), trajectoryOrder + 1);
+      biasMatrixToSet.reshape(2 * nodeTimes.size(), 1);
+      for(int i = 0; i < nodeTimes.size(); i++)
+      {
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, trajectoryCoefficients, trajectoryOrder, 0, nodeTimes.get(i));
+         CommonOps.insert(tempCoeffMatrix1, coefficientMatrixToSet, 2 * i, 0);
+         double bias = tempBiasMatrix1.get(0, 0);
+         biasMatrixToSet.set(2 * i, 0, maxValue - bias);
+         CommonOps.scale(-1.0, tempCoeffMatrix1);
+         CommonOps.insert(tempCoeffMatrix1, coefficientMatrixToSet, 2 * i + 1, 0);
+         biasMatrixToSet.set(2 * i + 1, 0, -minValue + bias);
       }
    }
 }

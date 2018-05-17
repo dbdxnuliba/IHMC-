@@ -15,11 +15,13 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
+import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 // TODO Optimize generation of smoothness constraints
@@ -34,6 +36,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final YoInteger maxDegreeOfCoMSmoothnessConstraints;
    private final YoInteger maxDegreeOfCoPSmoothnessConstraints;
    private final YoInteger maxDegreeOfScalarSmoothnessConstraints;
+   private final YoDouble comSupportPolygonXYConstraintOffset;
+   private final YoDouble comZMaxHeightConstraint;
+   private final YoDouble comZMinHeightConstraint;
 
    private final YoInteger numberOfSegments;
    private final YoInteger numberOfCoMTrajectoryCoefficients;
@@ -62,6 +67,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final Axis[] copAxis = new Axis[] {Axis.X, Axis.Y};
    private final Axis[] comAxis = Axis.values;
 
+   private final ConvexPolygonScaler polygonScaler;
+
    public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerIterationResult sqpSolution, YoInteger numberOfPlanningSegments,
                                                               FrameVector3DReadOnly gravity, YoVariableRegistry registry)
    {
@@ -74,7 +81,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       maxDegreeOfCoMSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeCoMSmoothnessConstraint", registry);
       maxDegreeOfCoPSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeCoPSmoothnessConstraint", registry);
       maxDegreeOfScalarSmoothnessConstraints = new YoInteger(namePrefix + "MaxDegreeScalarSmoothnessConstraint", registry);
-
+      comSupportPolygonXYConstraintOffset = new YoDouble(namePrefix + "CoMSupportPolygonConstraintOffset", registry);
+      comZMaxHeightConstraint = new YoDouble(namePrefix + "CoMZMaxHeight", registry);
+      comZMinHeightConstraint = new YoDouble(namePrefix + "CoMZMinHeight", registry);
       // AS: These are YoVariablized for logging and hard coded as anything else will under/over constrain the QP.
       maxDegreeOfCoMSmoothnessConstraints.set(1);
       maxDegreeOfCoPSmoothnessConstraints.set(1);
@@ -96,6 +105,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       inequalityConstraintHandler = new ConstraintMatrixHandler(numberOfPlanningSegments, numberOfCoMTrajectoryCoefficients, numberOfCoPTrajectoryCoefficients,
                                                                 numberOfScalarTrajectoryCoefficients);
       constraintGenerationHelper = new ConstraintGenerationHelper();
+      polygonScaler = new ConvexPolygonScaler();
 
       solver_objH = new DenseMatrix64F(0, 1);
       solver_objf = new DenseMatrix64F(0, 1);
@@ -201,10 +211,36 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private void generateCoMLocationConstraintsFromContactStates()
    {
-
+      List<Trajectory3D> comTrajectories = sqpSolution.comTrajectories;
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         ContactState contactState = segmentList.get(i).getContactState();
+         if (contactState.getContactType().isRobotSupported())
+         {
+            Trajectory3D comTrajectory = comTrajectories.get(i);
+            contactState.getSupportPolygon(tempPolygon);
+            polygonScaler.scaleConvexPolygon(tempPolygon, -comSupportPolygonXYConstraintOffset.getDoubleValue(), tempPolygonForScaling);
+            List<Double> nodeTimes = generateNodeTimesForConstraints(segmentList.get(i).getSegmentDuration(),
+                                                                     numberOfCoMPositionConstraintsPerSegment.getIntegerValue(), true, true);
+            Trajectory xTrajectory = comTrajectory.getTrajectoryX();
+            Trajectory yTrajectory = comTrajectory.getTrajectoryY();
+            Trajectory zTrajectory = comTrajectory.getTrajectoryZ();
+            xTrajectory.getCoefficientVector(tempA1);
+            yTrajectory.getCoefficientVector(tempA2);
+            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygonForScaling, nodeTimes,
+                                                                        numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
+            inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(i, tempJ1, tempJ2, tempC1);
+            zTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateZAxisUpperLowerLimitConstraint(tempJ1, tempC1, tempA1, comZMaxHeightConstraint.getDoubleValue(),
+                                                                              comZMinHeightConstraint.getDoubleValue(), nodeTimes, 
+                                                                              numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
+            inequalityConstraintHandler.addIntraSegmentCoMConstraint(Axis.Z, i, tempJ1, tempC1);
+         }
+      }
    }
 
    private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
+   private final ConvexPolygon2D tempPolygonForScaling = new ConvexPolygon2D();
 
    private void generateCoPLocationConstraintsFromContactStates()
    {
@@ -219,8 +255,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             contactState.getSupportPolygon(tempPolygon);
             List<Double> nodeTimes = generateNodeTimesForConstraints(segment.getSegmentDuration(),
                                                                      numberOfSupportPolygonConstraintsPerSegment.getIntegerValue(), true, true);
-            Trajectory xAxisCoPTrajectory = copTrajectory.getTrajectory(Axis.X);
-            Trajectory yAxisCoPTrajectory = copTrajectory.getTrajectory(Axis.Y);
+            Trajectory xAxisCoPTrajectory = copTrajectory.getTrajectoryX();
+            Trajectory yAxisCoPTrajectory = copTrajectory.getTrajectoryY();
             xAxisCoPTrajectory.getCoefficientVector(tempA1);
             yAxisCoPTrajectory.getCoefficientVector(tempA2);
             constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygon, nodeTimes,
