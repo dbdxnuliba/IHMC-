@@ -354,6 +354,10 @@ public class ValkyrieJointMap implements DRCRobotJointMap
 //            getLegJointName(RobotSide.RIGHT, LegJointName.ANKLE_ROLL),
             getSpineJointName(SpineJointName.SPINE_PITCH),
             getSpineJointName(SpineJointName.SPINE_ROLL),
+            getArmJointName(RobotSide.LEFT, ArmJointName.WRIST_ROLL),
+            getArmJointName(RobotSide.LEFT, ArmJointName.FIRST_WRIST_PITCH),
+            getArmJointName(RobotSide.RIGHT, ArmJointName.WRIST_ROLL),
+            getArmJointName(RobotSide.RIGHT, ArmJointName.FIRST_WRIST_PITCH),
       };
       return ret;
    }
