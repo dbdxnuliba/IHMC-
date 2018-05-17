@@ -18,8 +18,8 @@ public class LogParticipantSettings
    public static final Pair<String, ReliabilityKind> resourceBundle = new ImmutablePair<>("resourceBundle", ReliabilityKind.RELIABLE);
    public static final Pair<String, ReliabilityKind> variableChange = new ImmutablePair<>("changeVariable", ReliabilityKind.RELIABLE);
    public static final Pair<String, ReliabilityKind> clearLog = new ImmutablePair<>("clearLog", ReliabilityKind.RELIABLE);
-   public static final Pair<String, ReliabilityKind> timestamp = new ImmutablePair<>("timestamps", ReliabilityKind.BEST_EFFORT);
-   public static final Pair<String, ReliabilityKind> data = new ImmutablePair<>("data", ReliabilityKind.BEST_EFFORT);
+   public static final Pair<String, ReliabilityKind> timestamp = new ImmutablePair<>("timestamps", ReliabilityKind.RELIABLE);
+   public static final Pair<String, ReliabilityKind> data = new ImmutablePair<>("data", ReliabilityKind.RELIABLE);
    
    public static final String modelFileTypeName = "us::ihmc::robotDataLogger::modelFile";
    public static final String resourceBundleTypeName = "us::ihmc::robotDataLogger::resourceBundle";
