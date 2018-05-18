@@ -19,6 +19,8 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
             * Unique ID used to identify this message, should preferably be consecutively increasing.
             */
    public long sequence_id_;
+   public int source_;
+   public int destination_;
    /**
             * Defines the list of footstep to perform.
             */
@@ -87,6 +89,10 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
    {
       sequence_id_ = other.sequence_id_;
 
+      source_ = other.source_;
+
+      destination_ = other.destination_;
+
       footstep_data_list_.set(other.footstep_data_list_);
       execution_timing_ = other.execution_timing_;
 
@@ -118,6 +124,24 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
    public long getSequenceId()
    {
       return sequence_id_;
+   }
+
+   public void setSource(int source)
+   {
+      source_ = source;
+   }
+   public int getSource()
+   {
+      return source_;
+   }
+
+   public void setDestination(int destination)
+   {
+      destination_ = destination;
+   }
+   public int getDestination()
+   {
+      return destination_;
    }
 
 
@@ -291,6 +315,10 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.source_, other.source_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.destination_, other.destination_, epsilon)) return false;
+
       if (this.footstep_data_list_.size() != other.footstep_data_list_.size()) { return false; }
       else
       {
@@ -328,6 +356,10 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
 
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
+      if(this.source_ != otherMyClass.source_) return false;
+
+      if(this.destination_ != otherMyClass.destination_) return false;
+
       if (!this.footstep_data_list_.equals(otherMyClass.footstep_data_list_)) return false;
       if(this.execution_timing_ != otherMyClass.execution_timing_) return false;
 
@@ -356,6 +388,10 @@ public class FootstepDataListMessage extends Packet<FootstepDataListMessage> imp
       builder.append("FootstepDataListMessage {");
       builder.append("sequence_id=");
       builder.append(this.sequence_id_);      builder.append(", ");
+      builder.append("source=");
+      builder.append(this.source_);      builder.append(", ");
+      builder.append("destination=");
+      builder.append(this.destination_);      builder.append(", ");
       builder.append("footstep_data_list=");
       builder.append(this.footstep_data_list_);      builder.append(", ");
       builder.append("execution_timing=");

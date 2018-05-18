@@ -42,6 +42,10 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 50; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.FootstepDataMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
@@ -73,6 +77,12 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
    public final static int getCdrSerializedSize(controller_msgs.msg.dds.FootstepDataListMessage data, int current_alignment)
    {
       int initial_alignment = current_alignment;
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
@@ -113,6 +123,10 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
    {
       cdr.write_type_4(data.getSequenceId());
 
+      cdr.write_type_2(data.getSource());
+
+      cdr.write_type_2(data.getDestination());
+
       if(data.getFootstepDataList().size() <= 50)
       cdr.write_type_e(data.getFootstepDataList());else
           throw new RuntimeException("footstep_data_list field exceeds the maximum length");
@@ -138,6 +152,10 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
    {
       data.setSequenceId(cdr.read_type_4());
       	
+      data.setSource(cdr.read_type_2());
+      	
+      data.setDestination(cdr.read_type_2());
+      	
       cdr.read_type_e(data.getFootstepDataList());	
       data.setExecutionTiming(cdr.read_type_9());
       	
@@ -161,6 +179,8 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
    public final void serialize(controller_msgs.msg.dds.FootstepDataListMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
+      ser.write_type_2("source", data.getSource());
+      ser.write_type_2("destination", data.getDestination());
       ser.write_type_e("footstep_data_list", data.getFootstepDataList());
       ser.write_type_9("execution_timing", data.getExecutionTiming());
       ser.write_type_6("default_swing_duration", data.getDefaultSwingDuration());
@@ -177,6 +197,8 @@ public class FootstepDataListMessagePubSubType implements us.ihmc.pubsub.TopicDa
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.FootstepDataListMessage data)
    {
       data.setSequenceId(ser.read_type_4("sequence_id"));
+      data.setSource(ser.read_type_2("source"));
+      data.setDestination(ser.read_type_2("destination"));
       ser.read_type_e("footstep_data_list", data.getFootstepDataList());
       data.setExecutionTiming(ser.read_type_9("execution_timing"));
       data.setDefaultSwingDuration(ser.read_type_6("default_swing_duration"));

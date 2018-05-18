@@ -98,7 +98,7 @@ public class CommandInputManager
     */
    public CommandInputManager(String name, List<Class<? extends Command<?, ?>>> commandsToRegister)
    {
-      this(name, commandsToRegister, 16);
+      this(name, commandsToRegister, 100);
    }
 
    /**
@@ -221,6 +221,7 @@ public class CommandInputManager
       if (nextCommand == null)
       {
          PrintTools.warn(this, printStatementPrefix + "The buffer for the message: " + message.getClass().getSimpleName() + " is full. Message ignored.");
+//         new Throwable().printStackTrace();
          return;
       }
 

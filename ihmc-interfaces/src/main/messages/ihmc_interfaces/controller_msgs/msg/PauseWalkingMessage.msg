@@ -2,6 +2,9 @@
 # This message pauses the execution of a list of footsteps.
 # If this message is in the middle of executing a footstep, the robot will finish the step and pause when back in double support.
 
+int32 source 0
+int32 destination 0
+
 # Unique ID used to identify this message, should preferably be consecutively increasing.
 uint32 sequence_id
 

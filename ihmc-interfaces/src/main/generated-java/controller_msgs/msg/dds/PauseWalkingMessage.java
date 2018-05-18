@@ -13,6 +13,8 @@ import us.ihmc.pubsub.TopicDataType;
        */
 public class PauseWalkingMessage extends Packet<PauseWalkingMessage> implements Settable<PauseWalkingMessage>, EpsilonComparable<PauseWalkingMessage>
 {
+   public int source_;
+   public int destination_;
    /**
             * Unique ID used to identify this message, should preferably be consecutively increasing.
             */
@@ -34,10 +36,32 @@ public class PauseWalkingMessage extends Packet<PauseWalkingMessage> implements 
 
    public void set(PauseWalkingMessage other)
    {
+      source_ = other.source_;
+
+      destination_ = other.destination_;
+
       sequence_id_ = other.sequence_id_;
 
       pause_ = other.pause_;
 
+   }
+
+   public void setSource(int source)
+   {
+      source_ = source;
+   }
+   public int getSource()
+   {
+      return source_;
+   }
+
+   public void setDestination(int destination)
+   {
+      destination_ = destination;
+   }
+   public int getDestination()
+   {
+      return destination_;
    }
 
    /**
@@ -88,6 +112,10 @@ public class PauseWalkingMessage extends Packet<PauseWalkingMessage> implements 
       if(other == null) return false;
       if(other == this) return true;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.source_, other.source_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.destination_, other.destination_, epsilon)) return false;
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.pause_, other.pause_, epsilon)) return false;
@@ -105,6 +133,10 @@ public class PauseWalkingMessage extends Packet<PauseWalkingMessage> implements 
 
       PauseWalkingMessage otherMyClass = (PauseWalkingMessage) other;
 
+      if(this.source_ != otherMyClass.source_) return false;
+
+      if(this.destination_ != otherMyClass.destination_) return false;
+
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
       if(this.pause_ != otherMyClass.pause_) return false;
@@ -119,6 +151,10 @@ public class PauseWalkingMessage extends Packet<PauseWalkingMessage> implements 
       StringBuilder builder = new StringBuilder();
 
       builder.append("PauseWalkingMessage {");
+      builder.append("source=");
+      builder.append(this.source_);      builder.append(", ");
+      builder.append("destination=");
+      builder.append(this.destination_);      builder.append(", ");
       builder.append("sequence_id=");
       builder.append(this.sequence_id_);      builder.append(", ");
       builder.append("pause=");

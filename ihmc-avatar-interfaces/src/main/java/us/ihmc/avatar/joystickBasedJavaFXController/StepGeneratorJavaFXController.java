@@ -41,6 +41,7 @@ import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.footstepGenerator.ContinuousStepGenerator;
+import us.ihmc.commons.Conversions;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packetCommunicator.PacketCommunicator;
@@ -90,6 +91,8 @@ public class StepGeneratorJavaFXController
    private final BooleanProvider isInDoubleSupport = () -> isLeftFootInSupport.get() && isRightFootInSupport.get();
    private final HumanoidRobotKickMessenger kickMessenger;
    private final HumanoidRobotPunchMessenger punchMessenger;
+   
+   private final long startTime = System.nanoTime();
 
    public StepGeneratorJavaFXController(JavaFXMessager messager, WalkingControllerParameters walkingControllerParameters, PacketCommunicator packetCommunicator,
                                         JavaFXRobotVisualizer javaFXRobotVisualizer, HumanoidRobotKickMessenger kickMessenger,
@@ -265,6 +268,7 @@ public class StepGeneratorJavaFXController
 
    private void sendFootsteps()
    {
+      System.out.println("Sending: " + Conversions.nanosecondsToMilliseconds(System.nanoTime() - startTime));
       FootstepDataListMessage footstepsToSend = footstepsToSendReference.getAndSet(null);
       if (footstepsToSend != null && isWalking.get())
       {

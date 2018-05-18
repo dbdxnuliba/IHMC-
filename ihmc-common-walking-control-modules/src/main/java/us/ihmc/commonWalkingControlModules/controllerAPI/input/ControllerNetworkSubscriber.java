@@ -4,6 +4,7 @@ import controller_msgs.msg.dds.InvalidPacketNotificationPacket;
 import controller_msgs.msg.dds.MessageCollection;
 import controller_msgs.msg.dds.MessageCollectionNotification;
 import us.ihmc.commonWalkingControlModules.controllerAPI.input.MessageCollector.MessageIDExtractor;
+import us.ihmc.commons.Conversions;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.MessageUnpackingTools.MessageUnpacker;
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ControllerNetworkSubscriber implements Runnable, CloseableAndDisposable
 {
-   private static final boolean DEBUG = false;
+   private static final boolean DEBUG = true;
 
    private final int buffersCapacity = 16;
    /** The input API to which the received messages should be submitted. */
@@ -183,11 +184,13 @@ public class ControllerNetworkSubscriber implements Runnable, CloseableAndDispos
       }
    }
 
+   private long startTime = System.nanoTime();
+   
    @SuppressWarnings("unchecked")
    private <T extends Packet<T>> void receivedMessage(Packet<?> message)
    {
       if (DEBUG)
-         PrintTools.debug(ControllerNetworkSubscriber.this, "Received message: " + message.getClass().getSimpleName() + ", " + message);
+         PrintTools.debug(ControllerNetworkSubscriber.this, Conversions.nanosecondsToMilliseconds(System.nanoTime() - startTime) + " Received message: " + message.getClass().getSimpleName() + ", " + message);
 
       if (messageCollector.isCollecting() && messageCollector.interceptMessage(message))
       {
