@@ -15,11 +15,11 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
  * @author Apoorv S
  *
  */
-public class ConstraintGenerationHelper
+public class CollinearForcePlannerOptimizationControlModuleHelper
 {
    private final DenseMatrix64F xPowers = new DenseMatrix64F(0, 1);
 
-   public ConstraintGenerationHelper()
+   public CollinearForcePlannerOptimizationControlModuleHelper()
    {
 
    }
@@ -140,10 +140,8 @@ public class ConstraintGenerationHelper
       for (int i = 0; i < nodeTimes.size(); i++)
       {
          Point2DReadOnly initialPoint = supportPolygon.getVertex(numberOfConstraintPerTime - 1);
-         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, xAxisTrajectoryCoefficients, trajectoryOrder, 0,
-                                                     nodeTimes.get(i));
-         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix2, tempBiasMatrix2, yAxisTrajectoryCoefficients, trajectoryOrder, 0,
-                                                     nodeTimes.get(i));
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, xAxisTrajectoryCoefficients, trajectoryOrder, 0, nodeTimes.get(i));
+         generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix2, tempBiasMatrix2, yAxisTrajectoryCoefficients, trajectoryOrder, 0, nodeTimes.get(i));
          for (int j = 0; j < numberOfConstraintPerTime; j++)
          {
             Point2DReadOnly finalPoint = supportPolygon.getVertex(j);
@@ -155,21 +153,23 @@ public class ConstraintGenerationHelper
             tempConstraint2.reshape(tempCoeffMatrix2.getNumRows(), tempCoeffMatrix2.getNumCols());
             CommonOps.scale(xCoefficient, tempCoeffMatrix1, tempConstraint1);
             CommonOps.scale(yCoefficient, tempCoeffMatrix2, tempConstraint2);
-            
+
             CommonOps.insert(tempConstraint1, xAxisConstraintCoefficientToSet, i * numberOfConstraintPerTime + j, 0);
             CommonOps.insert(tempConstraint2, yAxisConstraintCoefficientToSet, i * numberOfConstraintPerTime + j, 0);
-            biasMatrixToSet.set(i * numberOfConstraintPerTime + j, 0, bias - tempBiasMatrix1.get(0, 0) * xCoefficient - tempBiasMatrix2.get(0, 0) * yCoefficient);
+            biasMatrixToSet.set(i * numberOfConstraintPerTime + j, 0,
+                                bias - tempBiasMatrix1.get(0, 0) * xCoefficient - tempBiasMatrix2.get(0, 0) * yCoefficient);
             initialPoint = finalPoint;
          }
       }
    }
 
-   public void generateZAxisUpperLowerLimitConstraint(DenseMatrix64F coefficientMatrixToSet, DenseMatrix64F biasMatrixToSet, DenseMatrix64F trajectoryCoefficients, double maxValue,
-                                                      double minValue, List<Double> nodeTimes, int trajectoryOrder)
+   public void generateZAxisUpperLowerLimitConstraint(DenseMatrix64F coefficientMatrixToSet, DenseMatrix64F biasMatrixToSet,
+                                                      DenseMatrix64F trajectoryCoefficients, double maxValue, double minValue, List<Double> nodeTimes,
+                                                      int trajectoryOrder)
    {
       coefficientMatrixToSet.reshape(2 * nodeTimes.size(), trajectoryOrder + 1);
       biasMatrixToSet.reshape(2 * nodeTimes.size(), 1);
-      for(int i = 0; i < nodeTimes.size(); i++)
+      for (int i = 0; i < nodeTimes.size(); i++)
       {
          generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrix1, tempBiasMatrix1, trajectoryCoefficients, trajectoryOrder, 0, nodeTimes.get(i));
          CommonOps.insert(tempCoeffMatrix1, coefficientMatrixToSet, 2 * i, 0);
@@ -179,5 +179,23 @@ public class ConstraintGenerationHelper
          CommonOps.insert(tempCoeffMatrix1, coefficientMatrixToSet, 2 * i + 1, 0);
          biasMatrixToSet.set(2 * i + 1, 0, -minValue + bias);
       }
+   }
+
+   public void generateAccelerationMinimizationObjective(DenseMatrix64F HMatrixToSet, DenseMatrix64F fMatrixToSet, DenseMatrix64F comTrajectoryCoefficients,
+                                                         int copTrajectoryOrder, double segmentDuration)
+   {
+      HMatrixToSet.reshape(copTrajectoryOrder + 1, copTrajectoryOrder + 1);
+      fMatrixToSet.reshape(copTrajectoryOrder + 1, 1);
+      for (int i = 0; i < copTrajectoryOrder - 1; i++)
+         for (int j = 0; j < copTrajectoryOrder - 1; j++)
+            HMatrixToSet.set(i + 2, j + 2, (i + 2) * (i + 1) * (j + 2) * (j + 1) * Math.pow(segmentDuration, i + j + 1) / (i + j + 1));
+      for (int i = 0; i < copTrajectoryOrder - 1; i++)
+      {
+         double coeff = 0.0f;
+         for (int j = 0; j < copTrajectoryOrder - 1; j++)
+            coeff += (j + 2) * (j + 1) * Math.pow(segmentDuration, i + j + 1) / (i + j + 1) * comTrajectoryCoefficients.get(j + 2, 0);
+         fMatrixToSet.set(i + 2, 0, coeff * (i + 2) * (i + 1));
+      }
+      PrintTools.debug(fMatrixToSet.toString());
    }
 }

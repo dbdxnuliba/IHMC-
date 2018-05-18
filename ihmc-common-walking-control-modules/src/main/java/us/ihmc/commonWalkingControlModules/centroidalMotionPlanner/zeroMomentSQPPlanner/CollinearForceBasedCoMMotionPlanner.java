@@ -223,7 +223,7 @@ public class CollinearForceBasedCoMMotionPlanner
       return contactStateList;
    }
 
-   private boolean checkIsDynamicsViolationIsBelowThresholds()
+   private boolean checkIsDynamicsViolationBelowThresholds()
    {
       double totalDynamicsViolation = 0.0;
       if (!sqpSolution.didIterationConverge())
@@ -272,7 +272,7 @@ public class CollinearForceBasedCoMMotionPlanner
                break;
             }
             optimizationControlModule.updateSolution();
-            hasPlanConverged.set(checkIsDynamicsViolationIsBelowThresholds());
+            hasPlanConverged.set(checkIsDynamicsViolationBelowThresholds());
             numberOfElapsedSQPIterations.increment();
             hasPlannerFailed.set(numberOfElapsedSQPIterations.getIntegerValue() > maxNumberOfSQPIterations.getIntegerValue());
          }

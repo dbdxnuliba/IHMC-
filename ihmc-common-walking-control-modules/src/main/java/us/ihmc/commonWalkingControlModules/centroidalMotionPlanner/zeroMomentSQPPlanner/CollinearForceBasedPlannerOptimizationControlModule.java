@@ -20,6 +20,7 @@ import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
+import us.ihmc.tools.exceptions.NoConvergenceException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -62,7 +63,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private final ActiveSetQPSolver qpSolver;
 
-   private final ConstraintGenerationHelper constraintGenerationHelper;
+   private final CollinearForcePlannerOptimizationControlModuleHelper constraintGenerationHelper;
    private List<CollinearForceMotionPlannerSegment> segmentList;
    private final Axis[] copAxis = new Axis[] {Axis.X, Axis.Y};
    private final Axis[] comAxis = Axis.values;
@@ -104,7 +105,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                               numberOfScalarTrajectoryCoefficients);
       inequalityConstraintHandler = new ConstraintMatrixHandler(numberOfPlanningSegments, numberOfCoMTrajectoryCoefficients, numberOfCoPTrajectoryCoefficients,
                                                                 numberOfScalarTrajectoryCoefficients);
-      constraintGenerationHelper = new ConstraintGenerationHelper();
+      constraintGenerationHelper = new CollinearForcePlannerOptimizationControlModuleHelper();
       polygonScaler = new ConvexPolygonScaler();
 
       solver_objH = new DenseMatrix64F(0, 1);
@@ -144,7 +145,35 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private void generateAccelerationMinimizationObjective()
    {
+      int numberOfDecisionVariables = numberOfSegments.getIntegerValue() * (comAxis.length * numberOfCoMTrajectoryCoefficients.getIntegerValue()
+            + copAxis.length * numberOfCoPTrajectoryCoefficients.getIntegerValue() + numberOfScalarTrajectoryCoefficients.getIntegerValue());
+      solver_objH.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
+      solver_objf.reshape(numberOfDecisionVariables, 1);
+      solver_objH.zero();
+      solver_objf.zero();
+      List<Trajectory3D> comTrajectories = sqpSolution.comTrajectories;
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         double segmentDuration = segmentList.get(i).getSegmentDuration();
+         Trajectory3D comTrajectory = comTrajectories.get(i);
+         for (Axis axis : comAxis)
+         {
+            Trajectory axisCoMTrajectory = comTrajectory.getTrajectory(axis);
+            axisCoMTrajectory.getCoefficientVector(tempA1);
+            constraintGenerationHelper.generateAccelerationMinimizationObjective(tempJ1, tempC1, tempA1,
+                                                                                 numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1, segmentDuration);
+            addIntraSegmentObjective(i, axis, tempJ1, tempC1);
+         }
+      }
+   }
 
+   private void addIntraSegmentObjective(int segmentIndex, Axis axis, DenseMatrix64F H, DenseMatrix64F f)
+   {
+      int indexToInsertAt = segmentIndex * (comAxis.length * numberOfCoMTrajectoryCoefficients.getIntegerValue()
+            + copAxis.length * numberOfCoPTrajectoryCoefficients.getIntegerValue() + numberOfScalarTrajectoryCoefficients.getIntegerValue())
+            + axis.ordinal() * numberOfCoMTrajectoryCoefficients.getIntegerValue();
+      CommonOps.insert(H, solver_objH, indexToInsertAt, indexToInsertAt);
+      CommonOps.insert(f, solver_objf, indexToInsertAt, 0);
    }
 
    public void submitSegmentList(List<CollinearForceMotionPlannerSegment> segmentList)
@@ -178,8 +207,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateInitialFinalScalarConstraintsFromDesireds();
       generateDynamicsConstraintsForSegments();
       generateAccelerationMinimizationObjective();
-      submitQPMatricesAndRunOptimization();
-      return false;
+      return submitQPMatricesAndRunOptimization();
    }
 
    private void reshapeMatrices()
@@ -234,7 +262,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(i, tempJ1, tempJ2, tempC1);
             zTrajectory.getCoefficientVector(tempA1);
             constraintGenerationHelper.generateZAxisUpperLowerLimitConstraint(tempJ1, tempC1, tempA1, comZMaxHeightConstraint.getDoubleValue(),
-                                                                              comZMinHeightConstraint.getDoubleValue(), nodeTimes, 
+                                                                              comZMinHeightConstraint.getDoubleValue(), nodeTimes,
                                                                               numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
             inequalityConstraintHandler.addIntraSegmentCoMConstraint(Axis.Z, i, tempJ1, tempC1);
          }
@@ -475,10 +503,19 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       }
    }
 
-   private void submitQPMatricesAndRunOptimization()
+   private boolean submitQPMatricesAndRunOptimization()
    {
-      qpSolver.setQuadraticCostFunction(solver_objH, solver_objH, 0.0);
+      qpSolver.setQuadraticCostFunction(solver_objH, solver_objf, 0.0);
       qpSolver.setLinearEqualityConstraints(equalityConstraintHandler.getCoefficientMatrix(), equalityConstraintHandler.getBiasMatrix());
       qpSolver.setLinearInequalityConstraints(inequalityConstraintHandler.getCoefficientMatrix(), inequalityConstraintHandler.getBiasMatrix());
+      try
+      {
+         qpSolver.solve(solver_qpSoln);
+      }
+      catch (NoConvergenceException e)
+      {
+         return false;
+      }
+      return true;
    }
 }
