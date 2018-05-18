@@ -25,7 +25,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
-// TODO Optimize generation of smoothness constraints
+// TODO Optimize generation of constraints
 public class CollinearForceBasedPlannerOptimizationControlModule
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
@@ -190,7 +190,44 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    public void updateSolution()
    {
+      int nofCoMCoeffs = numberOfCoMTrajectoryCoefficients.getIntegerValue();
+      int nofCoPCoeffs = numberOfCoPTrajectoryCoefficients.getIntegerValue();
+      int nofScalarCoeffs = numberOfScalarTrajectoryCoefficients.getIntegerValue();
+      int colsPerSegment = 3 * nofCoMCoeffs + 2 * nofCoPCoeffs + 1 * nofScalarCoeffs;
+      List<Trajectory3D> comTrajectories = sqpSolution.comTrajectories;
+      List<Trajectory3D> copTrajectories = sqpSolution.copTrajectories;
+      List<Trajectory> scalarTrajectories = sqpSolution.scalarProfile;
+      for (int i = 0; i < segmentList.size(); i++)
+      {
+         Trajectory3D comTrajectory = comTrajectories.get(i);
+         Trajectory3D copTrajectory = copTrajectories.get(i);
+         Trajectory scalarTrajectory = scalarTrajectories.get(i);
+         int segmentIndex = i * colsPerSegment;
+         // Update CoM solution
+         for (Axis axis : comAxis)
+         {
+            Trajectory axisTrajectory = comTrajectory.getTrajectory(axis);
+            int axisIndex = segmentIndex + axis.ordinal() * nofCoMCoeffs;
+            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoMCoeffs, 0, 1, tempJ1, 0, nofCoMCoeffs);
+            for(int j = 0; j < nofCoMCoeffs; j++)
+               axisTrajectory.setDirectly(j, axisTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
+         }
+         // Update CoP solution
+         for (Axis axis : copAxis)
+         {
+            Trajectory axisTrajectory = copTrajectory.getTrajectory(axis);
+            int axisIndex = segmentIndex + 3 * nofCoMCoeffs + axis.ordinal() * nofCoPCoeffs;
+            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoPCoeffs, 0, 1, tempJ1, 0, nofCoPCoeffs);
+            for(int j = 0; j < nofCoPCoeffs; j++)
+               axisTrajectory.setDirectly(j, axisTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
 
+         }
+         // Update scalar solution         
+         int axisIndex = segmentIndex + 3 * nofCoMCoeffs + 2 * nofCoPCoeffs;
+         CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofScalarCoeffs, 0, 1, tempJ1, 0, nofScalarCoeffs);
+         for(int j = 0; j < nofScalarCoeffs; j++)
+            scalarTrajectory.setDirectly(j, scalarTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
+      }
    }
 
    public boolean compute()
