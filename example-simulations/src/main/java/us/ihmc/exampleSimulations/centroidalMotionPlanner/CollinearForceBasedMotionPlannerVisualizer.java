@@ -25,6 +25,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPolygon;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicShape;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePose;
@@ -67,8 +68,8 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final YoFrameVector groundReactionForce;
 
    // Foot viz parameters
-   private final YoAppearanceRGBColor leftFootAppearance = new YoAppearanceRGBColor(Color.CYAN, 0.5);
-   private final YoAppearanceRGBColor rightFootAppearance = new YoAppearanceRGBColor(Color.GREEN, 0.5);
+   private final SideDependentList<YoAppearanceRGBColor> footAppearance = new SideDependentList<>(new YoAppearanceRGBColor(Color.CYAN, 0.5),
+                                                                                                  new YoAppearanceRGBColor(Color.GREEN, 0.5));
    private final double ankleToToeX = 0.0725;
    private final double ankleToToeY = 0.0225;
    private final double ankleToMidX = 0.03625;
@@ -80,6 +81,12 @@ public class CollinearForceBasedMotionPlannerVisualizer
                                                                                 new Point2D(-ankleToHeelX, -ankleToHeelY),
                                                                                 new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
                                                                             .collect(Collectors.toList());
+
+   private final RecyclingArrayList<SideDependentList<Point2D>> footstepLocations = new RecyclingArrayList<>(new SideDependentListBuilder());
+   private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
+   private final double defaultSupportDurationForJumping = 0.6;
+   private final double defaultFlightDurationForJumping = 0.1;
+
    // Contact state viz 
    private final YoAppearanceRGBColor contactStateAppearance = new YoAppearanceRGBColor(Color.BLUE, 0.0);
    // Track viz 
@@ -106,7 +113,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       for (RobotSide side : RobotSide.values)
       {
          Graphics3DObject footViz = new Graphics3DObject();
-         footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, side == RobotSide.LEFT ? leftFootAppearance : rightFootAppearance);
+         footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, footAppearance.get(side));
          YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose", worldFrame, registry);
          currentFootPose.put(side, footPose);
          footVizList.add(new YoGraphicShape(side.getCamelCaseName() + "FootViz", footViz, footPose, 1.0));
@@ -122,7 +129,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          {
             Graphics3DObject footViz = new Graphics3DObject();
             footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, getContactStateAppearance(i));
-            YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose", worldFrame, registry);
+            YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose" + i, worldFrame, registry);
             contactPose.put(side, footPose);
             contactStateVizList.add(new YoGraphicShape("ContactState" + i + side.getCamelCaseName() + "SupportPolygon", footViz, footPose, 1.0));
          }
@@ -158,28 +165,22 @@ public class CollinearForceBasedMotionPlannerVisualizer
 
    private YoAppearanceRGBColor getContactStateAppearance(int index)
    {
-      return new YoAppearanceRGBColor(Color.getHSBColor((float) index / (float) maxNumberOfContactStatesToVisualize * 255, 80, 80), 0.0);
+      return new YoAppearanceRGBColor(Color.getHSBColor((float)index / (float) maxNumberOfContactStatesToVisualize, 0.8f, 0.8f), 0.0);
    }
-
-   private final RecyclingArrayList<Point2D> leftFootstepLocations = new RecyclingArrayList<>(Point2D.class);
-   private final RecyclingArrayList<Point2D> rightFootstepLocations = new RecyclingArrayList<>(Point2D.class);
-   private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
-   private final double defaultSupportDurationForJumping = 0.6;
-   private final double defaultFlightDurationForJumping = 0.1;
 
    private void generateContactStatePlan()
    {
       switch (motion)
       {
       case WALK:
-         populateAlternatingSteps(5, 0.0, 0.0, 0.3, 0.1, RobotSide.LEFT);
+         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.1, 0.3, 0.0, RobotSide.LEFT);
          break;
       case JUMP:
          generateFootstepPlanForJumping(5, 0.0, 0.0, 0.1, 0.3, 0.0);
          break;
       case RUN:
-         populateAlternatingSteps(5, 0.0, 0.0, 0.3, 0.1, RobotSide.RIGHT);
-         break;
+         //generateFootstepPlanForWalking(5, 0.0, 0.0, 0.3, 0.1, RobotSide.RIGHT);
+         //break;
       default:
          throw new RuntimeException("Why you do this ?");
       }
@@ -199,70 +200,59 @@ public class CollinearForceBasedMotionPlannerVisualizer
       supportPolygonToSet.update();
    }
 
-   private void populateAlternatingSteps(int numberOfSteps, double xInitial, double yInitial, double stepLength, double stepWidth, RobotSide startSide)
+   private void generateFootstepPlanForWalking(int numberOfSteps, double xInitial, double yInitial, double feetWidth, double xStep, double yStep,
+                                               RobotSide startSide)
    {
-      leftFootstepLocations.add().set(xInitial, yInitial + stepWidth);
-      rightFootstepLocations.add().set(xInitial, yInitial - stepWidth);
-      double stepX = xInitial;
-      RobotSide side = startSide;
-      for (int i = 0; i < numberOfSteps - 1; i++)
-      {
-         stepX += stepLength / 2.0;
-         switch (side)
-         {
-         case LEFT:
-            leftFootstepLocations.add().set(stepX, yInitial + stepWidth);
-            break;
-         case RIGHT:
-            leftFootstepLocations.add().set(stepX, yInitial - stepWidth);
-            break;
-         }
-         side = side.getOppositeSide();
-      }
-      switch (side)
-      {
-      case LEFT:
-         leftFootstepLocations.add().set(stepX, yInitial + stepWidth);
-         break;
-      case RIGHT:
-         leftFootstepLocations.add().set(stepX, yInitial - stepWidth);
-         break;
-      }
-   }
-
-   private void generateFootstepPlanForWalking(int numberOfSteps, double xInitial, double yInitial, double feetWidth, double xStep, double yStep, RobotSide robotSide)
-   {
-      leftFootstepLocations.clear();
-      rightFootstepLocations.clear();
+      footstepLocations.clear();
       double stepX = xInitial;
       double stepY = yInitial;
+      SideDependentList<Point2D> footstepLocation = footstepLocations.add();
+      footstepLocation.get(RobotSide.LEFT).set(stepX, stepY + feetWidth);
+      footstepLocation.get(RobotSide.RIGHT).set(stepX, stepY - feetWidth);
+      RobotSide side = startSide;
       for (int i = 0; i < numberOfSteps; i++)
       {
-         
+         footstepLocation = footstepLocations.add();
+         footstepLocation.get(side).set(Double.NaN, Double.NaN);
+         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth));
+         footstepLocation = footstepLocations.add();
+         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth));
+         stepX += xStep / 2.0;
+         stepY += yStep / 2.0;
+         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfRightSide(feetWidth));
       }
    }
 
    private void generateFootstepPlanForJumping(int numberOfJumps, double xInitial, double yInitial, double feetWidth, double xJump, double yJump)
    {
-      leftFootstepLocations.clear();
-      rightFootstepLocations.clear();
+      footstepLocations.clear();
       for (int i = 0; i < numberOfJumps; i++)
       {
-         leftFootstepLocations.add().set(xInitial + i * xJump, yInitial + feetWidth + i * yJump);
-         rightFootstepLocations.add().set(xInitial + i * xJump, yInitial - feetWidth + i * yJump);
-         leftFootstepLocations.add().set(Double.NaN, Double.NaN);
-         rightFootstepLocations.add().set(Double.NaN, Double.NaN);
+         SideDependentList<Point2D> footstepNode1 = footstepLocations.add();
+         SideDependentList<Point2D> footstepNode2 = footstepLocations.add();
+         for (RobotSide side : RobotSide.values)
+         {
+            footstepNode1.get(side).set(xInitial + i * xJump, yInitial + side.negateIfRightSide(feetWidth) + i * yJump);
+            footstepNode2.get(side).set(Double.NaN, Double.NaN);
+         }
       }
-      leftFootstepLocations.add().set(xInitial + numberOfJumps * xJump, yInitial + feetWidth + numberOfJumps * yJump);
-      rightFootstepLocations.add().set(xInitial + numberOfJumps * xJump, yInitial - feetWidth + numberOfJumps * yJump);
+      SideDependentList<Point2D> footstepNode1 = footstepLocations.add();
+      for (RobotSide side : RobotSide.values)
+         footstepNode1.get(side).set(xInitial + numberOfJumps * xJump, yInitial + side.negateIfRightSide(feetWidth) + numberOfJumps * yJump);
    }
 
    private void updateContactStateVisualization()
    {
-      int numberOfContactStatesToVisualize = Math.min(maxNumberOfContactStatesToVisualize, contactStates.size());
+      int numberOfContactStatesToVisualize = Math.min(maxNumberOfContactStatesToVisualize, footstepLocations.size());
       for (int i = 0; i < numberOfContactStatesToVisualize; i++)
       {
-
+         SideDependentList<Point2D> feetLocation = footstepLocations.get(i);
+         PrintTools.debug("Contact State " + i + ": " + feetLocation.get(RobotSide.LEFT).toString() + " " + feetLocation.get(RobotSide.RIGHT).toString());
+         for(RobotSide side: RobotSide.values)
+         {
+            Point2D footPosition = feetLocation.get(side);
+            contactPoses.get(i).get(side).setPosition(footPosition.getX(), footPosition.getY(), 0.0);
+         }
       }
    }
 
@@ -276,6 +266,18 @@ public class CollinearForceBasedMotionPlannerVisualizer
       motionPlanner.clearContactStateList();
       for (int i = 0; i < contactStates.size(); i++)
          motionPlanner.appendContactStateToList(contactStates.get(i));
+   }
+
+   private class SideDependentListBuilder extends GenericTypeBuilder<SideDependentList<Point2D>>
+   {
+      @Override
+      public SideDependentList<Point2D> newInstance()
+      {
+         SideDependentList<Point2D> list = new SideDependentList<Point2D>();
+         for (RobotSide side : RobotSide.values)
+            list.put(side, new Point2D());
+         return list;
+      }
    }
 
    public static void main(String[] args)
