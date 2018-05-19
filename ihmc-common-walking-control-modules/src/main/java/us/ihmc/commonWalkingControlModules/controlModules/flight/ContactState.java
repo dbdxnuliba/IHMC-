@@ -71,12 +71,12 @@ public class ContactState implements ReferenceFrameHolder
       return duration;
    }
 
-   public void setPose(FramePose3D poseToSet)
+   public void setSupportPolygonFramePose(FramePose3D poseToSet)
    {
       pose.setIncludingFrame(poseToSet);
    }
 
-   public FramePose3D getPose()
+   public FramePose3D getSupportPolygonFramePose()
    {
       return pose;
    }

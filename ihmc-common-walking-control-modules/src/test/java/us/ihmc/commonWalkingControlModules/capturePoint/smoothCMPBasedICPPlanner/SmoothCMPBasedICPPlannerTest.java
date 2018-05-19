@@ -291,7 +291,7 @@ public class SmoothCMPBasedICPPlannerTest
    private void setupCurrentFootPoseVisualization()
    {
       currentFootLocations = new SideDependentList<>();
-      for (RobotSide side : RobotSide.values())
+      for (RobotSide side : RobotSide.values)
       {
          Graphics3DObject footstepGraphic = new Graphics3DObject();
          footstepGraphic.addExtrudedPolygon(contactPointsInFootFrame, footstepHeight, side == RobotSide.LEFT ? leftFootstepColor : rightFootstepColor);

@@ -204,27 +204,30 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          Trajectory scalarTrajectory = scalarTrajectories.get(i);
          int segmentIndex = i * colsPerSegment;
          // Update CoM solution
+         tempJ1.reshape(nofCoMCoeffs, 1);
          for (Axis axis : comAxis)
          {
             Trajectory axisTrajectory = comTrajectory.getTrajectory(axis);
             int axisIndex = segmentIndex + axis.ordinal() * nofCoMCoeffs;
-            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoMCoeffs, 0, 1, tempJ1, 0, nofCoMCoeffs);
+            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoMCoeffs, 0, 1, tempJ1, 0, 0);
             for(int j = 0; j < nofCoMCoeffs; j++)
                axisTrajectory.setDirectly(j, axisTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
          }
          // Update CoP solution
+         tempJ1.reshape(nofCoPCoeffs, 1);
          for (Axis axis : copAxis)
          {
             Trajectory axisTrajectory = copTrajectory.getTrajectory(axis);
             int axisIndex = segmentIndex + 3 * nofCoMCoeffs + axis.ordinal() * nofCoPCoeffs;
-            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoPCoeffs, 0, 1, tempJ1, 0, nofCoPCoeffs);
+            CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofCoPCoeffs, 0, 1, tempJ1, 0, 0);
             for(int j = 0; j < nofCoPCoeffs; j++)
                axisTrajectory.setDirectly(j, axisTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
 
          }
          // Update scalar solution         
+         tempJ1.reshape(nofScalarCoeffs, 1);
          int axisIndex = segmentIndex + 3 * nofCoMCoeffs + 2 * nofCoPCoeffs;
-         CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofScalarCoeffs, 0, 1, tempJ1, 0, nofScalarCoeffs);
+         CommonOps.extract(solver_qpSoln, axisIndex, axisIndex + nofScalarCoeffs, 0, 1, tempJ1, 0, 0);
          for(int j = 0; j < nofScalarCoeffs; j++)
             scalarTrajectory.setDirectly(j, scalarTrajectory.getCoefficient(j) + tempJ1.get(j, 0));
       }
