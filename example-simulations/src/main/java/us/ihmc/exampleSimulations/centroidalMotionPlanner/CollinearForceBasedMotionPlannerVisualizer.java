@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.bcel.verifier.statics.DOUBLE_Upper;
+
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
@@ -106,7 +108,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
       plannerParameters = new CollinearForcePlannerParameters();
       motionPlanner.initialize(plannerParameters);
-      maxNumberOfContactStatesToVisualize = 10; //plannerParameters.getNumberOfContactStatesToPlan();
+      maxNumberOfContactStatesToVisualize = 15; //plannerParameters.getNumberOfContactStatesToPlan();
 
       graphicsListRegistry = new YoGraphicsListRegistry();
       YoGraphicsList footVizList = new YoGraphicsList("FootVizList");
@@ -165,7 +167,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
 
    private YoAppearanceRGBColor getContactStateAppearance(int index)
    {
-      return new YoAppearanceRGBColor(Color.getHSBColor((float)index / (float) maxNumberOfContactStatesToVisualize, 0.8f, 0.8f), 0.0);
+      return new YoAppearanceRGBColor(Color.getHSBColor((float) index / (float) maxNumberOfContactStatesToVisualize, 0.8f, 0.8f), 0.0);
    }
 
    private void generateContactStatePlan()
@@ -173,14 +175,14 @@ public class CollinearForceBasedMotionPlannerVisualizer
       switch (motion)
       {
       case WALK:
-         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.1, 0.3, 0.0, RobotSide.LEFT);
+         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.LEFT);
          break;
       case JUMP:
-         generateFootstepPlanForJumping(5, 0.0, 0.0, 0.1, 0.3, 0.0);
+         generateFootstepPlanForJumping(5, 0.0, 0.0, 0.15, 0.15, 0.0);
          break;
       case RUN:
-         //generateFootstepPlanForWalking(5, 0.0, 0.0, 0.3, 0.1, RobotSide.RIGHT);
-         //break;
+         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.RIGHT);
+         break;
       default:
          throw new RuntimeException("Why you do this ?");
       }
@@ -200,6 +202,36 @@ public class CollinearForceBasedMotionPlannerVisualizer
       supportPolygonToSet.update();
    }
 
+   private void generateFootstepPlanForRunning(int numberOfSteps, double xInitial, double yInitial, double feetWidth, double xStep, double yStep,
+                                               RobotSide startSide)
+   {
+      footstepLocations.clear();
+      SideDependentList<Point2D> feetLocations = footstepLocations.add();
+      double stepX = xInitial;
+      double stepY = yInitial;
+      RobotSide side = startSide;
+      feetLocations.get(RobotSide.LEFT).set(stepX, stepY + feetWidth / 2.0);
+      feetLocations.get(RobotSide.RIGHT).set(stepX, stepY - feetWidth / 2.0);
+      feetLocations = footstepLocations.add();
+      feetLocations.get(side).set(Double.NaN, Double.NaN);
+      feetLocations.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
+      for (int i = 0; i < numberOfSteps; i++)
+      {
+         feetLocations = footstepLocations.add();
+         feetLocations.get(side).set(Double.NaN, Double.NaN);
+         feetLocations.get(side.getOppositeSide()).set(Double.NaN, Double.NaN);
+         feetLocations = footstepLocations.add();
+         stepX += xStep / 2.0;
+         stepY += yStep / 2.0;
+         feetLocations.get(side).set(stepX, stepY + side.negateIfRightSide(feetWidth / 2.0));
+         side = side.getOppositeSide();
+         feetLocations.get(side).set(Double.NaN, Double.NaN);
+      }
+      feetLocations = footstepLocations.add();
+      feetLocations.get(side).set(stepX, stepY + side.negateIfRightSide(feetWidth / 2.0));
+      feetLocations.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
+   }
+
    private void generateFootstepPlanForWalking(int numberOfSteps, double xInitial, double yInitial, double feetWidth, double xStep, double yStep,
                                                RobotSide startSide)
    {
@@ -207,20 +239,27 @@ public class CollinearForceBasedMotionPlannerVisualizer
       double stepX = xInitial;
       double stepY = yInitial;
       SideDependentList<Point2D> footstepLocation = footstepLocations.add();
-      footstepLocation.get(RobotSide.LEFT).set(stepX, stepY + feetWidth);
-      footstepLocation.get(RobotSide.RIGHT).set(stepX, stepY - feetWidth);
+      footstepLocation.get(RobotSide.LEFT).set(stepX, stepY + feetWidth / 2.0);
+      footstepLocation.get(RobotSide.RIGHT).set(stepX, stepY - feetWidth / 2.0);
       RobotSide side = startSide;
       for (int i = 0; i < numberOfSteps; i++)
       {
          footstepLocation = footstepLocations.add();
          footstepLocation.get(side).set(Double.NaN, Double.NaN);
-         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth));
+         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
          footstepLocation = footstepLocations.add();
-         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth));
+         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
          stepX += xStep / 2.0;
          stepY += yStep / 2.0;
-         footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfRightSide(feetWidth));
+         footstepLocation.get(side).set(stepX, stepY + side.negateIfRightSide(feetWidth / 2.0));
+         side = side.getOppositeSide();
       }
+      footstepLocation = footstepLocations.add();
+      footstepLocation.get(side).set(Double.NaN, Double.NaN);
+      footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
+      footstepLocation = footstepLocations.add();
+      footstepLocation.get(side).set(stepX, stepY + side.negateIfRightSide(feetWidth / 2.0));
+      footstepLocation.get(side.getOppositeSide()).set(stepX, stepY + side.negateIfLeftSide(feetWidth / 2.0));
    }
 
    private void generateFootstepPlanForJumping(int numberOfJumps, double xInitial, double yInitial, double feetWidth, double xJump, double yJump)
@@ -232,27 +271,33 @@ public class CollinearForceBasedMotionPlannerVisualizer
          SideDependentList<Point2D> footstepNode2 = footstepLocations.add();
          for (RobotSide side : RobotSide.values)
          {
-            footstepNode1.get(side).set(xInitial + i * xJump, yInitial + side.negateIfRightSide(feetWidth) + i * yJump);
+            footstepNode1.get(side).set(xInitial + i * xJump, yInitial + side.negateIfRightSide(feetWidth / 2.0) + i * yJump);
             footstepNode2.get(side).set(Double.NaN, Double.NaN);
          }
       }
       SideDependentList<Point2D> footstepNode1 = footstepLocations.add();
       for (RobotSide side : RobotSide.values)
-         footstepNode1.get(side).set(xInitial + numberOfJumps * xJump, yInitial + side.negateIfRightSide(feetWidth) + numberOfJumps * yJump);
+         footstepNode1.get(side).set(xInitial + numberOfJumps * xJump, yInitial + side.negateIfRightSide(feetWidth / 2.0) + numberOfJumps * yJump);
    }
 
    private void updateContactStateVisualization()
    {
       int numberOfContactStatesToVisualize = Math.min(maxNumberOfContactStatesToVisualize, footstepLocations.size());
-      for (int i = 0; i < numberOfContactStatesToVisualize; i++)
+      int i = 0;
+      for (i = 0; i < numberOfContactStatesToVisualize; i++)
       {
          SideDependentList<Point2D> feetLocation = footstepLocations.get(i);
          PrintTools.debug("Contact State " + i + ": " + feetLocation.get(RobotSide.LEFT).toString() + " " + feetLocation.get(RobotSide.RIGHT).toString());
-         for(RobotSide side: RobotSide.values)
+         for (RobotSide side : RobotSide.values)
          {
             Point2D footPosition = feetLocation.get(side);
-            contactPoses.get(i).get(side).setPosition(footPosition.getX(), footPosition.getY(), 0.0);
+            contactPoses.get(i).get(side).setPosition(footPosition.getX(), footPosition.getY(), i * 0.01);
          }
+      }
+      for (; i < contactPoses.size(); i++)
+      {
+         for (RobotSide side : RobotSide.values)
+            contactPoses.get(i).get(side).setToNaN();
       }
    }
 
