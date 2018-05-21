@@ -20,7 +20,7 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
       YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName() + "Registry");
       YoInteger numberOfPlanningSegments = new YoInteger("NumberOfPlanningSegments", registry);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, -9.81);
-      CollinearForceBasedPlannerIterationResult sqpSolution = new CollinearForceBasedPlannerIterationResult(gravity);
+      CollinearForceBasedPlannerResult sqpSolution = new CollinearForceBasedPlannerResult(gravity, registry);
       CollinearForceBasedPlannerOptimizationControlModule optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution,
                                                                                                                                               numberOfPlanningSegments,
                                                                                                                                               gravity,

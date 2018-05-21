@@ -13,6 +13,8 @@ import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
+import us.ihmc.robotics.math.trajectories.Trajectory;
+import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -57,11 +59,13 @@ public class CollinearForceBasedCoMMotionPlanner
    private final YoInteger numberOfElapsedSQPIterations;
    private final YoBoolean hasPlanConverged;
    private final YoBoolean hasPlannerFailed;
+   private final YoBoolean hasInitialStateBeenSet;
+   private final YoBoolean hasFinalStateBeenSet;
 
    private final RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentList;
    private final RecyclingArrayList<ContactState> contactStateList;
 
-   private final CollinearForceBasedPlannerIterationResult sqpSolution;
+   private final CollinearForceBasedPlannerResult sqpSolution;
    private final CollinearForceBasedPlannerOptimizationControlModule optimizationControlModule;
    private final CollinearForceBasedPlannerSeedSolutionGenerator initialSolutionGenerator;
    private final FramePoint3D tempPoint = new FramePoint3D();
@@ -81,6 +85,8 @@ public class CollinearForceBasedCoMMotionPlanner
 
       hasPlanConverged = new YoBoolean(namePrefix + "HasPlannerConverged", registry);
       hasPlannerFailed = new YoBoolean(namePrefix + "HasPlannerFailed", registry);
+      hasInitialStateBeenSet = new YoBoolean(namePrefix + "HasInitialStateBeenSet", registry);
+      hasFinalStateBeenSet = new YoBoolean(namePrefix + "HasFinalStateBeenSet", registry);
       numberOfElapsedSQPIterations = new YoInteger(namePrefix + "NumberOfElapsedSQPIterations", registry);
       numberOfPlanningSegments = new YoInteger(namePrefix + "NumberOfPlanningSegments", registry);
       numberOfContactStates = new YoInteger(namePrefix + "NumberOfContactStates", registry);
@@ -92,7 +98,7 @@ public class CollinearForceBasedCoMMotionPlanner
       consolidatedConvergenceThreshold = new YoDouble(namePrefix + "ConsolidatedConvergenceThreshold", registry);
       individualAxisConvergenceThreshold = new YoDouble(namePrefix + "IndividualAxisConvergenceThreshold", registry);
 
-      sqpSolution = new CollinearForceBasedPlannerIterationResult(gravity);
+      sqpSolution = new CollinearForceBasedPlannerResult(gravity, registry);
       optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, gravity, registry);
       initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(gravity, registry); // TODO set this up
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
@@ -124,10 +130,29 @@ public class CollinearForceBasedCoMMotionPlanner
       segmentList.clear();
       optimizationControlModule.reset();
       initialSolutionGenerator.reset();
+      clearInitialState();
+      clearFinalState();
+   }
+   
+   public void clearInitialState()
+   {
+      hasInitialStateBeenSet.set(false);
+      initialCoMPosition.setToNaN();
+      initialCoMVelocity.setToNaN();
+      initialCoPPosition.setToNaN();
+   }
+   
+   public void clearFinalState()
+   {
+      hasFinalStateBeenSet.set(false);
+      finalCoMPosition.setToNaN();
+      finalCoMVelocity.setToNaN();
+      finalCoPPosition.setToNaN();
    }
 
    public void setInitialState(FramePoint3D initialCoMLocation, FrameVector3D initialCoMVelocity, FramePoint3D initialCoPLocation)
    {
+      hasInitialStateBeenSet.set(true);
       tempPoint.setIncludingFrame(initialCoMLocation);
       tempPoint.changeFrame(worldFrame);
       this.initialCoMPosition.set(tempPoint);
@@ -143,6 +168,7 @@ public class CollinearForceBasedCoMMotionPlanner
 
    public void setFinalState(FramePoint3D finalCoMLocation, FrameVector3D finalCoMVelocity, FrameVector3D finalCoPLocation)
    {
+      hasFinalStateBeenSet.set(true);
       tempPoint.setIncludingFrame(finalCoMLocation);
       tempPoint.changeFrame(worldFrame);
       this.finalCoMPosition.set(tempPoint);
@@ -283,7 +309,25 @@ public class CollinearForceBasedCoMMotionPlanner
 
    private void setupOptimizationControlModule()
    {
-      
+      if(hasInitialStateBeenSet.getBooleanValue())
+         optimizationControlModule.setDesiredInitialState(initialCoMPosition, initialCoPPosition, initialCoMVelocity);
+      else
+      {
+         segmentList.get(0).getContactState().getSupportPolygonCentroid(tempPoint);
+         tempPoint.changeFrame(worldFrame);
+         tempVector.setToZero(worldFrame);
+         optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
+      }
+      if(hasFinalStateBeenSet.getBooleanValue())
+         optimizationControlModule.setDesiredFinalState(initialCoMPosition, finalCoPPosition, finalCoMVelocity);
+      else
+      {
+         segmentList.getLast().getContactState().getSupportPolygonCentroid(tempPoint);
+         tempPoint.changeFrame(worldFrame);
+         tempVector.setToZero(worldFrame);
+         optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
+      }
+      optimizationControlModule.submitSegmentList(segmentList);
    }
 
    private void generateSeedSolution()
@@ -312,5 +356,25 @@ public class CollinearForceBasedCoMMotionPlanner
    public List<CollinearForceMotionPlannerSegment> getSegmentList()
    {
       return segmentList;
+   }
+
+   public List<Trajectory3D> getCoMTrajectory()
+   {
+      return sqpSolution.comTrajectories;
+   }
+
+   public List<Trajectory3D> getCoPTrajectory()
+   {
+      return sqpSolution.copTrajectories;
+   }
+
+   public List<Trajectory> getScalarTrajectory()
+   {
+      return sqpSolution.scalarProfile;
+   }
+
+   public CollinearForceBasedPlannerResult getSQPSolution()
+   {
+      return sqpSolution;
    }
 }

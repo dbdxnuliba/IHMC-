@@ -7,6 +7,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.Axis;
@@ -46,7 +47,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final YoInteger numberOfCoPTrajectoryCoefficients;
    private final YoInteger numberOfScalarTrajectoryCoefficients;
    private final FrameVector3DReadOnly gravity;
-   private final CollinearForceBasedPlannerIterationResult sqpSolution;
+   private final CollinearForceBasedPlannerResult sqpSolution;
 
    private final FramePoint3D desiredInitialCoMPosition = new FramePoint3D();
    private final FramePoint3D desiredFinalCoMPosition = new FramePoint3D();
@@ -70,7 +71,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private final ConvexPolygonScaler polygonScaler;
 
-   public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerIterationResult sqpSolution, YoInteger numberOfPlanningSegments,
+   public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerResult sqpSolution, YoInteger numberOfPlanningSegments,
                                                               FrameVector3DReadOnly gravity, YoVariableRegistry registry)
    {
       String namePrefix = getClass().getSimpleName();
@@ -136,7 +137,21 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       this.desiredInitialCoPPosition.setIncludingFrame(initialCoPLocation);
    }
 
+   public void setDesiredInitialState(FramePoint3D initialCoMLocation, FramePoint3D initialCoPLocation, FrameVector3D initialCoMVelocity)
+   {
+      this.desiredInitialCoMPosition.setIncludingFrame(initialCoMLocation);
+      this.desiredInitialCoMVelocity.setIncludingFrame(initialCoMVelocity);
+      this.desiredInitialCoPPosition.setIncludingFrame(initialCoPLocation);
+   }
+
    public void setDesiredFinalState(YoFramePoint finalCoMLocation, YoFramePoint finalCoPLocation, YoFrameVector finalCoMVelocity)
+   {
+      this.desiredFinalCoMPosition.setIncludingFrame(finalCoMLocation);
+      this.desiredFinalCoMVelocity.setIncludingFrame(finalCoMVelocity);
+      this.desiredFinalCoPPosition.setIncludingFrame(finalCoPLocation);
+   }
+
+   public void setDesiredFinalState(FramePoint3D finalCoMLocation, FramePoint3D finalCoPLocation, FrameVector3D finalCoMVelocity)
    {
       this.desiredFinalCoMPosition.setIncludingFrame(finalCoMLocation);
       this.desiredFinalCoMVelocity.setIncludingFrame(finalCoMVelocity);
@@ -530,7 +545,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          }
          Trajectory zCoMTrajectory = comTrajectory.getTrajectory(Axis.Z);
          zCoMTrajectory.getCoefficientVector(comCoefficients);
-         copCoefficients.reshape(1, numberOfCoPTrajectoryCoefficients.getIntegerValue());
+         copCoefficients.reshape(numberOfCoPTrajectoryCoefficients.getIntegerValue(), 1);
          copCoefficients.zero();
          scalarTrajectory.getCoefficientVector(scalarCoefficients);
          constraintGenerationHelper.generateDynamicsCollocationConstraints(comConstraints, copConstraints, scalarConstraints, constraintViolation,
@@ -556,6 +571,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       {
          return false;
       }
-      return true;
+      return !doesSolutionContainNaN();
+   }
+
+   private boolean doesSolutionContainNaN()
+   {
+      if(solver_qpSoln.numCols != 1)
+         return true;
+      for(int i = 0; i < solver_qpSoln.numRows; i++)
+         if(!Double.isFinite(solver_qpSoln.get(i, 0)))
+            return true;
+      return false;
    }
 }

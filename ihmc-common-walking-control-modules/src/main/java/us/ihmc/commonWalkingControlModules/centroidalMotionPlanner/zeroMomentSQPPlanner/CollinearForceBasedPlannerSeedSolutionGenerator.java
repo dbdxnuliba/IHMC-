@@ -1,7 +1,7 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -32,7 +32,7 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
    private final FrameVector3D finalCoMVelocity = new FrameVector3D();
    private RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentList;
 
-   private CollinearForceBasedPlannerIterationResult sqpSolution;
+   private CollinearForceBasedPlannerResult sqpSolution;
    private final YoFramePoint comNominalOffsetFromSupportPolygonCentroid;
    private final Point3D tempPoint = new Point3D();
    private final FramePoint3D tempFramePoint = new FramePoint3D();
@@ -49,7 +49,7 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
     * Specifies the data structure in which the seed solution is to be saved
     * @param seedResultToSet
     */
-   void initialize(CollinearForceBasedPlannerIterationResult seedResultToSet, CollinearForcePlannerParameters parameters)
+   void initialize(CollinearForceBasedPlannerResult seedResultToSet, CollinearForcePlannerParameters parameters)
    {
       this.sqpSolution = seedResultToSet;
       Point3DReadOnly nominalCoMOffset = parameters.getNominalCoMOffsetFromSupportPolygonCentroid();
@@ -105,13 +105,29 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
          tempFramePoint.changeFrame(worldFrame);
          tempFramePoint.add(comNominalOffsetFromSupportPolygonCentroid.getX(), comNominalOffsetFromSupportPolygonCentroid.getY(),
                             comNominalOffsetFromSupportPolygonCentroid.getZ());
-         comTrajectory.setConstant(0.0, segment.getSegmentDuration(), tempFramePoint);
-         copTrajectory.setConstant(0.0, segment.getSegmentDuration(), tempFramePoint);
-         if(contactType.isRobotSupported())
-            scalarTrajectory.setConstant(0.0, segment.getSegmentDuration(), (0.0 - gravity.getZ()) / (comNominalOffsetFromSupportPolygonCentroid.getZ()));
+         setConstant(comTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
+         setConstant(copTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
+         if (contactType.isRobotSupported())
+            setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(),
+                        (0.0 - gravity.getZ()) / (comNominalOffsetFromSupportPolygonCentroid.getZ()));
          else
-            scalarTrajectory.setConstant(0.0, segment.getSegmentDuration(), 0.0);
-            
+            setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(), 0.0);
+
       }
+   }
+
+   private void setConstant(Trajectory3D trajectory, int numberOfCoefficients, double duration, FramePoint3D constantPoint)
+   {
+      for (Axis axis : Axis.values)
+         setConstant(trajectory.getTrajectory(axis), numberOfCoefficients, duration, constantPoint.getElement(axis.ordinal()));
+   }
+
+   private void setConstant(Trajectory trajectory, int numberOfCoefficients, double duration, double value)
+   {
+      trajectory.setInitialTime(0.0);
+      trajectory.setFinalTime(duration);
+      trajectory.setDirectly(0, value);
+      for (int i = 1; i < numberOfCoefficients; i++)
+         trajectory.setDirectly(i, 0.0);
    }
 }

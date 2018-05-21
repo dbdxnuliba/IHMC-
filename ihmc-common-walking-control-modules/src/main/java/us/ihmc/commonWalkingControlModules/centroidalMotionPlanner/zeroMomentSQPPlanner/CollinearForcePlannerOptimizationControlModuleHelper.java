@@ -65,11 +65,6 @@ public class CollinearForcePlannerOptimizationControlModuleHelper
       CommonOps.mult(constraintCoefficentsToSet, polynomialCoefficient, constraintBiasToSet);
    }
 
-   public void generateLocationConstraintMatrix()
-   {
-
-   }
-
    public void generateScalarConstraintMatrix(DenseMatrix64F coefficientMatrixToSet, DenseMatrix64F biasMatrixToSet, DenseMatrix64F scalarCoefficientMatrix,
                                               int polynomialOrder, List<Double> nodeTimes)
    {
@@ -101,7 +96,7 @@ public class CollinearForcePlannerOptimizationControlModuleHelper
       comCoefficientMatrixToSet.reshape(timeNodesForConstraints.size(), comPolynomialOrder + 1);
       copCoefficientMatrixToSet.reshape(timeNodesForConstraints.size(), copPolynomialOrder + 1);
       scalarCoefficientMatrixToSet.reshape(timeNodesForConstraints.size(), scalarPolynomialOrder + 1);
-
+      biasMatrixToSet.reshape(timeNodesForConstraints.size(), 1);
       for (int i = 0; i < timeNodesForConstraints.size(); i++)
       {
          double nodeTime = timeNodesForConstraints.get(i);
@@ -196,6 +191,5 @@ public class CollinearForcePlannerOptimizationControlModuleHelper
             coeff += (j + 2) * (j + 1) * Math.pow(segmentDuration, i + j + 1) / (i + j + 1) * comTrajectoryCoefficients.get(j + 2, 0);
          fMatrixToSet.set(i + 2, 0, coeff * (i + 2) * (i + 1));
       }
-      PrintTools.debug(fMatrixToSet.toString());
    }
 }

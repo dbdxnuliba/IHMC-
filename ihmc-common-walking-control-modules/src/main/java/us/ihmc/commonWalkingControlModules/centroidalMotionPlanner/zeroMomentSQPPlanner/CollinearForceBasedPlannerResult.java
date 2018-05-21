@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -7,9 +8,13 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.robotics.math.frames.YoFramePoint;
+import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
 
 /**
  * Stores the output of the {@code CollinearForceBasedCoMMotionPlanner}. This can be used to 
@@ -19,14 +24,14 @@ import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
  * @author Apoorv S
  *
  */
-public class CollinearForceBasedPlannerIterationResult
+public class CollinearForceBasedPlannerResult
 {
    private static final int numberOfCoefficientsForComputedAccelerationTrajectory = Math.max(CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients,
                                                                                              CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients)
          + CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients - 1;
    private final static int defaultNumberOfSegments = 100;
 
-   ReferenceFrame referenceFrame;
+   private ReferenceFrame referenceFrame = ReferenceFrame.getWorldFrame();
    int iterationCount;
    boolean qpConvergenceFlag;
 
@@ -39,6 +44,11 @@ public class CollinearForceBasedPlannerIterationResult
    private final FrameVector3D comVelocity = new FrameVector3D();
    private final FrameVector3D comAcceleration = new FrameVector3D();
    private final FrameVector3DReadOnly gravity;
+   private final YoFramePoint yoCoMPosition;
+   private final YoFramePoint yoCoPPosition;
+   private final YoFrameVector yoCoMVelocity;
+   private final YoFrameVector yoCoMAcceleration;
+   private final YoDouble yoScalar;
 
    private TrajectoryMathTools trajectoryMathToolbox = new TrajectoryMathTools(numberOfCoefficientsForComputedAccelerationTrajectory);
    private final Trajectory accelerationFromDifferentiation = new Trajectory(CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients - 2);
@@ -46,7 +56,7 @@ public class CollinearForceBasedPlannerIterationResult
    private final Trajectory tempTrajectory = new Trajectory(numberOfCoefficientsForComputedAccelerationTrajectory);
    private final Trajectory dynamicsErrorTrajectory = new Trajectory(numberOfCoefficientsForComputedAccelerationTrajectory);
 
-   public CollinearForceBasedPlannerIterationResult(FrameVector3DReadOnly gravity)
+   public CollinearForceBasedPlannerResult(FrameVector3DReadOnly gravity, YoVariableRegistry registry)
    {
       comTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new GenericTypeBuilder<Trajectory3D>()
       {
@@ -78,6 +88,11 @@ public class CollinearForceBasedPlannerIterationResult
 
       });
       this.gravity = gravity;
+      yoCoMPosition = new YoFramePoint("SQPOutputCoMPosition", referenceFrame, registry);
+      yoCoPPosition = new YoFramePoint("SQPOutputCoPPosition", referenceFrame, registry);
+      yoCoMVelocity = new YoFrameVector("SQPOutputCoMVelocity", referenceFrame, registry);
+      yoCoMAcceleration = new YoFrameVector("SQPOutputCoMAcceleration", referenceFrame, registry);
+      yoScalar = new YoDouble("SQPOutputScalar", registry);
       reset();
    }
 
@@ -106,6 +121,12 @@ public class CollinearForceBasedPlannerIterationResult
       comAcceleration.sub(comPosition, copPosition);
       comAcceleration.scale(scalarValue);
       comAcceleration.add(gravity);
+      
+      yoCoMPosition.set(comPosition);
+      yoCoMVelocity.set(comVelocity);
+      yoCoMAcceleration.set(comAcceleration);
+      yoCoPPosition.set(copPosition);
+      yoScalar.set(scalarValue);
    }
 
    public FramePoint3D getDesiredCoMPosition()
@@ -130,10 +151,14 @@ public class CollinearForceBasedPlannerIterationResult
 
    private int getCurrentSegmentFromTime(double timeInState)
    {
+      double segmentStartTime = 0.0;
       for (int i = 0; i < comTrajectories.size(); i++)
       {
-         if (comTrajectories.get(i).getInitialTime() < timeInState && comTrajectories.get(i).getFinalTime() >= timeInState)
+         double initialTime = comTrajectories.get(i).getInitialTime() + segmentStartTime;
+         double finalTime = comTrajectories.get(i).getFinalTime() + segmentStartTime;
+         if (initialTime <= timeInState && finalTime >= timeInState)
             return i;
+         segmentStartTime = finalTime;
       }
       return -1;
    }
