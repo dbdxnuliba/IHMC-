@@ -10,6 +10,7 @@ import org.apache.bcel.verifier.statics.DOUBLE_Upper;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -51,7 +52,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private static final double gravityZ = -9.81;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private final TestMotion motion = TestMotion.JUMP;
+   private final TestMotion motion = TestMotion.RUN;
    private final YoVariableRegistry registry;
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
    private final CollinearForcePlannerParameters plannerParameters;
@@ -186,6 +187,41 @@ public class CollinearForceBasedMotionPlannerVisualizer
       default:
          throw new RuntimeException("Why you do this ?");
       }
+      generateContactStateFromFootstepPlan();
+   }
+
+   private void generateContactStateFromFootstepPlan()
+   {
+      contactStates.clear();
+      for(int i = 0; i < footstepLocations.size(); i++)
+      {
+         ContactState contactState = contactStates.add();
+         contactState.reset();
+         Point2D leftFootPos = footstepLocations.get(i).get(RobotSide.LEFT);
+         Point2D rightFootPos = footstepLocations.get(i).get(RobotSide.RIGHT);
+         generateSupportPolygon(tempPolygon, leftFootPos, rightFootPos);
+         contactState.setSupportPolygon(tempPolygon);
+         if(leftFootPos.containsNaN() && rightFootPos.containsNaN())
+         {
+            contactState.setContactType(BipedContactType.NO_SUPPORT);
+            contactState.setDuration(0.1);
+         }
+         else if(leftFootPos.containsNaN() && !rightFootPos.containsNaN())
+         {
+            contactState.setContactType(BipedContactType.RIGHT_SINGLE_SUPPORT);
+            contactState.setDuration(0.5);
+         }
+         else if(rightFootPos.containsNaN() && !leftFootPos.containsNaN())
+         {
+            contactState.setContactType(BipedContactType.LEFT_SINGLE_SUPPORT);
+            contactState.setDuration(0.5);
+         }
+         else
+         {
+            contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
+            contactState.setDuration(0.1);
+         }
+      }
    }
 
    private void generateSupportPolygon(ConvexPolygon2D supportPolygonToSet, Point2D leftFootLocation, Point2D rightFootLocation)
@@ -194,9 +230,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
       for (int i = 0; i < defaultFootPolygonPointsInAnkleFrame.size(); i++)
       {
          Point2D supportPolygonVertex = defaultFootPolygonPointsInAnkleFrame.get(i);
-         if (leftFootLocation != null)
+         if (!leftFootLocation.containsNaN())
             supportPolygonToSet.addVertex(supportPolygonVertex.getX() + leftFootLocation.getX(), supportPolygonVertex.getY() + leftFootLocation.getY());
-         if (rightFootLocation != null)
+         if (!rightFootLocation.containsNaN())
             supportPolygonToSet.addVertex(supportPolygonVertex.getX() + rightFootLocation.getX(), supportPolygonVertex.getY() + rightFootLocation.getY());
       }
       supportPolygonToSet.update();
@@ -287,7 +323,6 @@ public class CollinearForceBasedMotionPlannerVisualizer
       for (i = 0; i < numberOfContactStatesToVisualize; i++)
       {
          SideDependentList<Point2D> feetLocation = footstepLocations.get(i);
-         PrintTools.debug("Contact State " + i + ": " + feetLocation.get(RobotSide.LEFT).toString() + " " + feetLocation.get(RobotSide.RIGHT).toString());
          for (RobotSide side : RobotSide.values)
          {
             Point2D footPosition = feetLocation.get(side);
