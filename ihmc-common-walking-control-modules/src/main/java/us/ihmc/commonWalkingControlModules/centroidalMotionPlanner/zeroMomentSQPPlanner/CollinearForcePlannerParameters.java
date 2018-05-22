@@ -60,4 +60,19 @@ public class CollinearForcePlannerParameters
    {
       return 0.3;
    }
+
+   public int getNumberOfCollocationConstraintsPerSegment()
+   {
+      return 5;
+   }
+
+   public int getNumberOfCoMPositionConstraintsPerSegment()
+   {
+      return 4;
+   }
+
+   public int getNumberOfSupportPolygonConstraintsPerSegment()
+   {
+      return 4;
+   }
 }

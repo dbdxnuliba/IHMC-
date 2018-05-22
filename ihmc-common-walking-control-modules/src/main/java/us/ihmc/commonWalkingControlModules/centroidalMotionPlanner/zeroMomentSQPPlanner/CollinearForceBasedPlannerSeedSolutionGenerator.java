@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -102,17 +103,19 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
          Trajectory3D copTrajectory = copTrajectories.add();
          Trajectory scalarTrajectory = scalarProfile.add();
          segment.getContactState().getSupportPolygonCentroid(tempFramePoint);
+         if(tempFramePoint.containsNaN())
+            tempFramePoint.setToZero(worldFrame);
          tempFramePoint.changeFrame(worldFrame);
          tempFramePoint.add(comNominalOffsetFromSupportPolygonCentroid.getX(), comNominalOffsetFromSupportPolygonCentroid.getY(),
                             comNominalOffsetFromSupportPolygonCentroid.getZ());
          setConstant(comTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
+         tempFramePoint.sub(0.0, 0.0, comNominalOffsetFromSupportPolygonCentroid.getZ());
          setConstant(copTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
          if (contactType.isRobotSupported())
             setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(),
                         (0.0 - gravity.getZ()) / (comNominalOffsetFromSupportPolygonCentroid.getZ()));
          else
             setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(), 0.0);
-
       }
    }
 

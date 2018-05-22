@@ -116,10 +116,14 @@ public class CollinearForceBasedPlannerResult
          throw new RuntimeException("Unable to find segment associated with the provided time in state");
       Trajectory3D currentCoMTrajectory = comTrajectories.get(currentSegmentIndex);
       Trajectory3D currentCoPTrajectory = copTrajectories.get(currentSegmentIndex);
-      currentCoMTrajectory.compute(timeInState);
+      Trajectory currentScalarTrajectory = scalarProfile.get(currentSegmentIndex);
+      double segmentStartTime = getSegmentStartTime(currentSegmentIndex);
+      currentCoMTrajectory.compute(timeInState - segmentStartTime);
+      currentCoPTrajectory.compute(timeInState - segmentStartTime);
+      currentScalarTrajectory.compute(timeInState - segmentStartTime);
       comPosition.setIncludingFrame(referenceFrame, currentCoMTrajectory.getPosition());
       copPosition.setIncludingFrame(referenceFrame, currentCoPTrajectory.getPosition());
-      double scalarValue = scalarProfile.get(currentSegmentIndex).getPosition();
+      double scalarValue = currentScalarTrajectory.getPosition();
       comVelocity.setIncludingFrame(referenceFrame, currentCoMTrajectory.getVelocity());
       comAcceleration.changeFrame(referenceFrame);
       comAcceleration.sub(comPosition, copPosition);
@@ -131,6 +135,14 @@ public class CollinearForceBasedPlannerResult
       yoCoMAcceleration.set(comAcceleration);
       yoCoPPosition.set(copPosition);
       yoScalar.set(scalarValue);
+   }
+
+   private double getSegmentStartTime(int currentSegmentIndex)
+   {
+      double startTime = 0.0;
+      for(int i = 0; i < currentSegmentIndex; i++)
+         startTime += comTrajectories.get(i).getFinalTime();
+      return startTime;
    }
 
    public FramePoint3D getDesiredCoMPosition()
@@ -186,5 +198,18 @@ public class CollinearForceBasedPlannerResult
    public boolean didIterationConverge()
    {
       return qpConvergenceFlag;
+   }
+   
+   public String toString()
+   {
+      String ret = "";
+      for(int i = 0; i < comTrajectories.size(); i++)
+      {
+         ret += "Segment: " + i + "\n";
+         ret += "CoM: " + comTrajectories.get(i).toString() + "\n";
+         ret += "CoP: " + copTrajectories.get(i).toString() + "\n";
+         ret += "Scalar: " + scalarProfile.get(i).toString() + "\n";
+      }
+      return ret;
    }
 }

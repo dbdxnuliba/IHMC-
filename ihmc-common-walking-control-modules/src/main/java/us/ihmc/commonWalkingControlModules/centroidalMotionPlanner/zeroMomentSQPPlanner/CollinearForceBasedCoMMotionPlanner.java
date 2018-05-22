@@ -317,6 +317,7 @@ public class CollinearForceBasedCoMMotionPlanner
       {
          segmentList.get(0).getContactState().getSupportPolygonCentroid(tempPoint);
          tempPoint.changeFrame(worldFrame);
+         tempPoint.setZ(0.435);
          tempVector.setToZero(worldFrame);
          optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
       }
@@ -326,8 +327,9 @@ public class CollinearForceBasedCoMMotionPlanner
       {
          segmentList.getLast().getContactState().getSupportPolygonCentroid(tempPoint);
          tempPoint.changeFrame(worldFrame);
+         tempPoint.setZ(0.435);
          tempVector.setToZero(worldFrame);
-         optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
+         optimizationControlModule.setDesiredFinalState(tempPoint, tempPoint, tempVector);
       }
       optimizationControlModule.submitSegmentList(segmentList);
    }

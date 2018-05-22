@@ -50,7 +50,6 @@ public class ConstraintGenerationHelperTest
       DenseMatrix64F H = new DenseMatrix64F(0, 1);
       DenseMatrix64F f = new DenseMatrix64F(0, 1);
       DenseMatrix64F coefficients = new DenseMatrix64F(8, 1);
-      //coefficients.setData(new double[] {0.0, 0.0, 1.0 / 2.0 , 1.0 / (3.0 * 2.0), 1.0 / (4.0 * 3.0), 1.0 / (5.0 * 4.0), 1.0 / (6.0 * 5.0), 1.0 / (7.0 * 6.0)});
       coefficients.setData(new double[] {1.0, 2.0, 3.0, 4.0});
       helper.generateAccelerationMinimizationObjective(H, f, coefficients, 3, 1.0);
    }

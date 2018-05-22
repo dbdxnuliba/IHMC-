@@ -95,7 +95,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final YoAppearanceRGBColor contactStateAppearance = new YoAppearanceRGBColor(Color.BLUE, 0.0);
    // Track viz 
    private final YoAppearanceRGBColor comTrackAppearance = new YoAppearanceRGBColor(Color.WHITE, 0.0);
-   private final YoAppearanceRGBColor copTrackAppearance = new YoAppearanceRGBColor(Color.RED, 0.0);
+   private final YoAppearanceRGBColor copTrackAppearance = new YoAppearanceRGBColor(Color.ORANGE, 0.0);
 
    private final int maxNumberOfContactStatesToVisualize;
    private final int maxNumberOfContactStatesToSubmit;
@@ -145,8 +145,8 @@ public class CollinearForceBasedMotionPlannerVisualizer
       graphicsListRegistry.registerYoGraphicsList(contactStateVizList);
       comTrack = new BagOfBalls(100, 0.005, namePrefix + "CoMTrack", comTrackAppearance, registry, graphicsListRegistry);
       copTrack = new BagOfBalls(100, 0.005, namePrefix + "CoPTrack", copTrackAppearance, registry, graphicsListRegistry);
-      groundReactionForce = new YoGraphicVector(namePrefix + "GroundReactionForce", copPosition, groundForce, new YoAppearanceRGBColor(Color.RED, 0.0));
-
+      groundReactionForce = new YoGraphicVector(namePrefix + "GroundReactionForce", copPosition, groundForce, new YoAppearanceRGBColor(Color.RED, 0.5));
+      graphicsListRegistry.registerYoGraphic("ForceViz", groundReactionForce);
       scsParameters = new SimulationConstructionSetParameters();
       Robot robot = new Robot("DummyRobot");
       yoTime = robot.getYoTime();
@@ -419,7 +419,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          populateContactStatesToSubmit(i);
          updateContactStateVisualization(0);
          submitContactStates();
-         motionPlanner.runIterations(4);
+         motionPlanner.runIterations(8);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
          double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
          for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
