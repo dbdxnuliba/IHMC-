@@ -6,6 +6,7 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.ConstraintMatrixHandler.ConstraintName;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
@@ -17,6 +18,7 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
+import us.ihmc.robotics.math.frames.YoFrameOrientationInMultipleFrames;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
@@ -30,7 +32,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public class CollinearForceBasedPlannerOptimizationControlModule
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-
+   private final YoInteger errorCode; 
    private final YoInteger numberOfSupportPolygonConstraintsPerSegment;
    private final YoInteger numberOfCoMPositionConstraintsPerSegment;
    private final YoInteger numberOfDynamicsConstraintsPerSegment;
@@ -76,6 +78,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    {
       String namePrefix = getClass().getSimpleName();
 
+      errorCode =  new YoInteger(namePrefix + "ErrorCode", registry);
       numberOfCoMPositionConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfCoMPositionConstraintsPerSegment", registry);
       numberOfSupportPolygonConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfSupportPolygonConstraintsPerSegment", registry);
       numberOfDynamicsConstraintsPerSegment = new YoInteger(namePrefix + "NumberOfDynamicsConstraintsPerSegment", registry);
@@ -128,6 +131,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       segmentList = null;
       equalityConstraintHandler.reshape();
       inequalityConstraintHandler.reshape();
+      errorCode.set(0);
    }
 
    public void setDesiredInitialState(YoFramePoint initialCoMLocation, YoFramePoint initialCoPLocation, YoFrameVector initialCoMVelocity)
@@ -287,10 +291,10 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          {
             CommonOps.scale(-1.0, tempJ1);
             CommonOps.scale(-1.0, tempC1);
-            inequalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
+            inequalityConstraintHandler.addIntraSegmentScalarConstraint(ConstraintName.Limits_Scalar, i, tempJ1, tempC1);
          }
          else
-            equalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
+            equalityConstraintHandler.addIntraSegmentScalarConstraint(ConstraintName.Limits_Scalar, i, tempJ1, tempC1);
       }
    }
 
@@ -314,12 +318,12 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             yTrajectory.getCoefficientVector(tempA2);
             constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygonForScaling, nodeTimes,
                                                                         numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
-            inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(i, tempJ1, tempJ2, tempC1);
+            inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(ConstraintName.Limits_CoM, i, tempJ1, tempJ2, tempC1);
             zTrajectory.getCoefficientVector(tempA1);
             constraintGenerationHelper.generateZAxisUpperLowerLimitConstraint(tempJ1, tempC1, tempA1, comZMaxHeightConstraint.getDoubleValue(),
                                                                               comZMinHeightConstraint.getDoubleValue(), nodeTimes,
                                                                               numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
-            inequalityConstraintHandler.addIntraSegmentCoMConstraint(Axis.Z, i, tempJ1, tempC1);
+            inequalityConstraintHandler.addIntraSegmentCoMConstraint(ConstraintName.Limits_CoM, Axis.Z, i, tempJ1, tempC1);
          }
       }
    }
@@ -346,7 +350,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             yAxisCoPTrajectory.getCoefficientVector(tempA2);
             constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygon, nodeTimes,
                                                                         numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1);
-            inequalityConstraintHandler.addIntraSegmentMultiAxisCoPConstraint(i, tempJ1, tempJ2, tempC1);
+            inequalityConstraintHandler.addIntraSegmentMultiAxisCoPConstraint(ConstraintName.Limits_CoP, i, tempJ1, tempJ2, tempC1);
          }
       }
    }
@@ -379,7 +383,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          nextSegment.getCoefficientVector(tempA1);
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, scalarTrajectoryOrder,
                                                                                 maxDegreeOfScalarSmoothnessConstraints.getIntegerValue(), segmentDuration);
-         equalityConstraintHandler.addInterSegmentScalarConstraint(i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
+         equalityConstraintHandler.addInterSegmentScalarConstraint(ConstraintName.Smoothness_Scalar, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
 
       }
    }
@@ -403,7 +407,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             axisNextSegmentTrajectory.getCoefficientVector(tempA1);
             constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, copTrajectoryOrder,
                                                                                    maxDegreeOfCoPSmoothnessConstraints.getIntegerValue(), segmentDuration);
-            equalityConstraintHandler.addInterSegmentCoPConstraint(axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
+            equalityConstraintHandler.addInterSegmentCoPConstraint(ConstraintName.Smoothness_CoP, axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
          }
       }
    }
@@ -427,7 +431,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             axisNextSegmentTrajectory.getCoefficientVector(tempA1);
             constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC2, tempA1, comTrajectoryOrder,
                                                                                    maxDegreeOfCoMSmoothnessConstraints.getIntegerValue(), segmentDuration);
-            equalityConstraintHandler.addInterSegmentCoMConstraint(axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
+            equalityConstraintHandler.addInterSegmentCoMConstraint(ConstraintName.Smoothness_CoM, axis, i, tempJ1, tempC1, i + 1, tempJ2, tempC2);
          }
       }
    }
@@ -446,7 +450,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       firstScalarSegment.getCoefficientVector(tempA1);
       constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstScalarSegment.getNumberOfCoefficients() - 1, 0, 0.0);
       CommonOps.subtract(initialOmega, tempC1, tempC1);
-      equalityConstraintHandler.addIntraSegmentScalarConstraint(0, tempJ1, tempC1);
+      equalityConstraintHandler.addIntraSegmentScalarConstraint(ConstraintName.EndPoint_Scalar, 0, tempJ1, tempC1);
 
       double finalOmega = -gravity.getZ() / desiredFinalCoMPosition.getZ();
       int lastSegmentIndex = numberOfSegments.getIntegerValue() - 1;
@@ -455,7 +459,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, lastScalarSegment.getNumberOfCoefficients() - 1, 0,
                                                                              lastScalarSegment.getFinalTime());
       CommonOps.subtract(finalOmega, tempC1, tempC1);
-      equalityConstraintHandler.addIntraSegmentScalarConstraint(lastSegmentIndex, tempJ1, tempC1);
+      equalityConstraintHandler.addIntraSegmentScalarConstraint(ConstraintName.EndPoint_Scalar, lastSegmentIndex, tempJ1, tempC1);
    }
 
    private void generateInitialFinalCoPLocationConstraintsFromDesireds()
@@ -470,7 +474,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          firstAxisSegment.getCoefficientVector(tempA1);
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstAxisSegment.getNumberOfCoefficients() - 1, 0, 0.0);
          CommonOps.subtract(desiredInitalValue, tempC1, tempC1);
-         equalityConstraintHandler.addIntraSegmentCoPConstraint(axis, 0, tempJ1, tempC1);
+         equalityConstraintHandler.addIntraSegmentCoPConstraint(ConstraintName.EndPoint_CoP, axis, 0, tempJ1, tempC1);
 
          double desiredFinalValue = desiredFinalCoPPosition.getElement(axis.ordinal());
          Trajectory lastAxisSegment = lastCoPSegment.getTrajectory(axis);
@@ -478,7 +482,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, lastAxisSegment.getNumberOfCoefficients() - 1, 0,
                                                                                 lastAxisSegment.getFinalTime());
          CommonOps.subtract(desiredFinalValue, tempC1, tempC1);
-         equalityConstraintHandler.addIntraSegmentCoPConstraint(axis, lastSegmentIndex, tempJ1, tempC1);
+         equalityConstraintHandler.addIntraSegmentCoPConstraint(ConstraintName.EndPoint_CoP, axis, lastSegmentIndex, tempJ1, tempC1);
       }
    }
 
@@ -496,7 +500,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          firstAxisSegment.getCoefficientVector(tempA1);
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ1, tempC1, tempA1, firstAxisSegment.getNumberOfCoefficients() - 1, 1, 0.0);
          CommonOps.subtractEquals(tempC2, tempC1);
-         equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, 0, tempJ1, tempC2);
+         equalityConstraintHandler.addIntraSegmentCoMConstraint(ConstraintName.EndPoint_CoM, axis, 0, tempJ1, tempC2);
 
          tempC2.set(0, 0, desiredFinalCoMPosition.getElement(axis.ordinal()));
          tempC2.set(1, 0, desiredFinalCoMVelocity.getElement(axis.ordinal()));
@@ -505,7 +509,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC1, tempA1, lastAxisSegment.getNumberOfCoefficients() - 1, 1,
                                                                                 lastAxisSegment.getFinalTime());
          CommonOps.subtractEquals(tempC2, tempC1);
-         equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, lastSegmentIndex, tempJ1, tempC2);
+         equalityConstraintHandler.addIntraSegmentCoMConstraint(ConstraintName.EndPoint_CoM, axis, lastSegmentIndex, tempJ1, tempC2);
       }
    }
 
@@ -541,7 +545,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                               numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
                                                                               numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
                                                                               gravity.getElement(axis.ordinal()));
-            equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
+            equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(ConstraintName.Dynamics, axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
          }
          Trajectory zCoMTrajectory = comTrajectory.getTrajectory(Axis.Z);
          zCoMTrajectory.getCoefficientVector(comCoefficients);
@@ -554,14 +558,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                            numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
                                                                            numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
                                                                            gravity.getElement(Axis.Z.ordinal()));
-         equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(i, comConstraints, scalarConstraints, constraintViolation);
+         equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(ConstraintName.Dynamics, i, comConstraints, scalarConstraints, constraintViolation);
       }
    }
 
    private boolean submitQPMatricesAndRunOptimization()
    {
       qpSolver.setQuadraticCostFunction(solver_objH, solver_objf, 0.0);
+      PrintTools.debug("Equality constraints");
       qpSolver.setLinearEqualityConstraints(equalityConstraintHandler.getCoefficientMatrix(), equalityConstraintHandler.getBiasMatrix());
+      PrintTools.debug("Inequality constraints");
       qpSolver.setLinearInequalityConstraints(inequalityConstraintHandler.getCoefficientMatrix(), inequalityConstraintHandler.getBiasMatrix());
       try
       {
@@ -569,9 +575,16 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       }
       catch (NoConvergenceException e)
       {
+         errorCode.set(-1);
          return false;
       }
-      return !doesSolutionContainNaN();
+      boolean doesSolnContainNaN = doesSolutionContainNaN();
+      if(doesSolnContainNaN)
+      {
+         errorCode.set(-2);
+      }
+      PrintTools.debug("Solver has finished running");
+      return !doesSolnContainNaN;
    }
 
    private boolean doesSolutionContainNaN()

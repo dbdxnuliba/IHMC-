@@ -8,9 +8,11 @@ import java.util.stream.Stream;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceMotionPlannerSegment;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -178,7 +180,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.RIGHT);
          break;
       case JUMP:
-         generateFootstepPlanForJumping(5, 0.0, 0.0, 0.15, 0.15, 0.0);
+         generateFootstepPlanForJumping(1, 0.0, 0.0, 0.15, 0.15, 0.0);
          break;
       case RUN:
          generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.RIGHT);
@@ -198,7 +200,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          contactState.reset();
          Point2D leftFootPos = footstepLocations.get(i).get(RobotSide.LEFT);
          Point2D rightFootPos = footstepLocations.get(i).get(RobotSide.RIGHT);
-         generateSupportPolygon(tempPolygon, leftFootPos, rightFootPos);
+         generateMinimalVertexSupportPolygon(tempPolygon, leftFootPos, rightFootPos);
          contactState.setSupportPolygon(tempPolygon);
          if (leftFootPos.containsNaN() && rightFootPos.containsNaN())
          {
@@ -218,8 +220,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
          else
          {
             contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
-            contactState.setDuration(0.1);
+            contactState.setDuration(0.5);
          }
+         PrintTools.debug("ContactState " + i + contactState.toString());
       }
    }
 
@@ -234,6 +237,77 @@ public class CollinearForceBasedMotionPlannerVisualizer
          if (!rightFootLocation.containsNaN())
             supportPolygonToSet.addVertex(supportPolygonVertex.getX() + rightFootLocation.getX(), supportPolygonVertex.getY() + rightFootLocation.getY());
       }
+      supportPolygonToSet.update();
+   }
+
+   private static final List<Point2D> vertexList = new ArrayList<>();
+   static
+   {
+      for (int i = 0; i < 12; i++)
+         vertexList.add(new Point2D());
+   }
+
+   private void generateMinimalVertexSupportPolygon(ConvexPolygon2D supportPolygonToSet, Point2D leftFootLocation, Point2D rightFootLocation)
+   {
+      supportPolygonToSet.clear();
+      int numberOfVertices = 0;
+      // Consolidate all the vertices to be added to the support polygon
+      for (int i = 0; i < defaultFootPolygonPointsInAnkleFrame.size(); i++)
+      {
+         Point2D supportPolygonVertex = defaultFootPolygonPointsInAnkleFrame.get(i);
+         if (!leftFootLocation.containsNaN())
+            vertexList.get(numberOfVertices++).set(supportPolygonVertex.getX() + leftFootLocation.getX(),
+                                                   supportPolygonVertex.getY() + leftFootLocation.getY());
+         if (!rightFootLocation.containsNaN())
+            vertexList.get(numberOfVertices++).set(supportPolygonVertex.getX() + rightFootLocation.getX(),
+                                                   supportPolygonVertex.getY() + rightFootLocation.getY());
+      }
+      // Generate the minimal vertex polygon. New gift wrapping algorithm
+      // Get the max X max Y element. 
+      int candidateVertexIndex = 0;
+      for (int i = 1; i < numberOfVertices; i++)
+      {
+         if (vertexList.get(i).getX() > vertexList.get(candidateVertexIndex).getX())
+            candidateVertexIndex = i;
+         else if (vertexList.get(i).getX() == vertexList.get(candidateVertexIndex).getX()
+               && vertexList.get(i).getY() > vertexList.get(candidateVertexIndex).getY())
+            candidateVertexIndex = i;
+      }
+      // Place the top right vertex at the beginning of list
+      Point2D topRightVertex = vertexList.get(candidateVertexIndex);
+      Point2D firstVertex = vertexList.get(0);
+      vertexList.set(0, topRightVertex);
+      vertexList.set(candidateVertexIndex, firstVertex);
+      // Start the marching
+      for (int i = 1; i < numberOfVertices; i++)
+      {
+         Point2D lastComputedPoint = vertexList.get(i - 1);
+         Point2D candidatePoint = vertexList.get(i);
+         // Find the next one 
+         for (int j = i + 1; j < numberOfVertices; j++)
+         {
+            Point2D pointUnderConsideration = vertexList.get(j);
+            double det = (pointUnderConsideration.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
+                  - (pointUnderConsideration.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
+            boolean swap = det > 0.0 || (det == 0.0 && lastComputedPoint.distance(pointUnderConsideration) > lastComputedPoint.distance(candidatePoint));
+            if (swap)
+            {
+               vertexList.set(j, candidatePoint);
+               vertexList.set(i, pointUnderConsideration);
+               candidatePoint = pointUnderConsideration;
+            }
+         }
+         double det2 = (firstVertex.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
+               - (firstVertex.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
+         boolean terminate = det2 > 0.0 || (det2 == 0.0 && lastComputedPoint.distance(candidatePoint) < lastComputedPoint.distance(firstVertex));
+         if (terminate)
+         {
+            numberOfVertices = i;
+            break;
+         }
+      }
+      // Submit the computed vertices to the polygon. Polygon will recompute but that cant be avoided right now
+      supportPolygonToSet.addVertices(vertexList, numberOfVertices);
       supportPolygonToSet.update();
    }
 
@@ -334,7 +408,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
             contactPoses.get(i).get(side).setToNaN();
       }
    }
-   
+
    private List<ContactState> contactStatesForPlanner = new ArrayList<>();
 
    private void runMotionPlanner()
@@ -342,23 +416,28 @@ public class CollinearForceBasedMotionPlannerVisualizer
       generateContactStatePlan();
       int i = 0;
       //for (int i = 0; i < contactStates.size(); i++)
-      {
-         populateContactStatesToSubmit(i);
-         updateContactStateVisualization(0);
-         submitContactStates();
-         motionPlanner.runIterations(1);
-         CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
-         double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
-         for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
-         {
-            sqpSolution.compute(t);
-            this.comPosition.set(sqpSolution.getDesiredCoMPosition());
-            this.copPosition.set(sqpSolution.getDesiredCoPPosition());
-            this.groundForce.set(sqpSolution.getDesiredCoMAcceleration());
-            updateCoMCoPVisualization();
-            tick();
-         }
-      }
+      //{
+      populateContactStatesToSubmit(i);
+      updateContactStateVisualization(0);
+      submitContactStates();
+      List<CollinearForceMotionPlannerSegment> segmentList = motionPlanner.getSegmentList();
+      motionPlanner.processContactStateList();
+      PrintTools.debug("\n\n Segment List");
+      for (int k = 0; k < segmentList.size(); k++)
+         PrintTools.debug(segmentList.get(k).toString());
+      //         motionPlanner.runIterations(0);
+      //         CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
+      //         double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
+      //         for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
+      //         {
+      //            sqpSolution.compute(t);
+      //            this.comPosition.set(sqpSolution.getDesiredCoMPosition());
+      //            this.copPosition.set(sqpSolution.getDesiredCoPPosition());
+      //            this.groundForce.set(sqpSolution.getDesiredCoMAcceleration());
+      //            updateCoMCoPVisualization();
+      //            tick();
+      //         }
+      //      }
    }
 
    private void updateCoMCoPVisualization()
@@ -367,7 +446,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       copTrack.setBallLoop(copPosition);
       groundReactionForce.update();
    }
-   
+
    private void tick()
    {
       yoTime.add(dt);
@@ -381,7 +460,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       for (int i = 0; i < numberOfContactStatesForPlanner; i++)
          contactStatesForPlanner.add(contactStates.get(i + firstContactStateIndex));
    }
-   
+
    private void submitContactStates()
    {
       motionPlanner.clearContactStateList();

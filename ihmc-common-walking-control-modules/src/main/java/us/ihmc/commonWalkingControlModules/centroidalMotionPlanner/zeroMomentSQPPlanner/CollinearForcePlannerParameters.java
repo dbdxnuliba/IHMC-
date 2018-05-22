@@ -18,12 +18,12 @@ public class CollinearForcePlannerParameters
 
    public double getNominalPlannerSegmentTime()
    {
-      return 0.05;
+      return 0.1;
    }
 
    public double getMinPlannerSegmentTime()
    {
-      return 0.01;
+      return 0.1;
    }
 
    public int getNumberOfContactStatesToPlan()

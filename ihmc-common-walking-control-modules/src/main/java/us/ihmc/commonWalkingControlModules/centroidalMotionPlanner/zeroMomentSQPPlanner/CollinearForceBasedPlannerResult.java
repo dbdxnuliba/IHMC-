@@ -15,6 +15,7 @@ import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
  * Stores the output of the {@code CollinearForceBasedCoMMotionPlanner}. This can be used to 
@@ -48,6 +49,7 @@ public class CollinearForceBasedPlannerResult
    private final YoFramePoint yoCoPPosition;
    private final YoFrameVector yoCoMVelocity;
    private final YoFrameVector yoCoMAcceleration;
+   private final YoInteger yoCurrentSegmentIndex;
    private final YoDouble yoScalar;
 
    private TrajectoryMathTools trajectoryMathToolbox = new TrajectoryMathTools(numberOfCoefficientsForComputedAccelerationTrajectory);
@@ -88,6 +90,7 @@ public class CollinearForceBasedPlannerResult
 
       });
       this.gravity = gravity;
+      yoCurrentSegmentIndex = new YoInteger("SQPOutputSegmentIndex", registry);
       yoCoMPosition = new YoFramePoint("SQPOutputCoMPosition", referenceFrame, registry);
       yoCoPPosition = new YoFramePoint("SQPOutputCoPPosition", referenceFrame, registry);
       yoCoMVelocity = new YoFrameVector("SQPOutputCoMVelocity", referenceFrame, registry);
@@ -108,6 +111,7 @@ public class CollinearForceBasedPlannerResult
    public void compute(double timeInState)
    {
       int currentSegmentIndex = getCurrentSegmentFromTime(timeInState);
+      yoCurrentSegmentIndex.set(currentSegmentIndex);
       if (currentSegmentIndex < 0)
          throw new RuntimeException("Unable to find segment associated with the provided time in state");
       Trajectory3D currentCoMTrajectory = comTrajectories.get(currentSegmentIndex);

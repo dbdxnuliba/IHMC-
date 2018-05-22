@@ -182,7 +182,7 @@ public class CollinearForceBasedCoMMotionPlanner
       this.finalCoMVelocity.set(tempVector);
    }
 
-   private void processContactStateList()
+   public void processContactStateList()
    {
       ContactState contactState = contactStateList.get(0);
       int i = 0;

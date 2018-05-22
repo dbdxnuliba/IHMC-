@@ -573,7 +573,7 @@ public class JavaQuadProgSolver extends AbstractSimpleActiveSetQPSolver
                if (requireInequalityConstraintsSatisfied)
                { // the active set clearly wasn't satisfied, so the solution isn't valid.
                   PrintTools.debug("Got invalid solution");
-                  CommonOps.fill(solutionToPack, Double.NaN);
+                  //CommonOps.fill(solutionToPack, Double.NaN);
                   CommonOps.fill(lagrangeEqualityConstraintMultipliersToPack, Double.POSITIVE_INFINITY);
                   CommonOps.fill(lagrangeInequalityConstraintMultipliersToPack, Double.POSITIVE_INFINITY);
                   CommonOps.fill(lagrangeLowerBoundMultipliersToPack, Double.POSITIVE_INFINITY);

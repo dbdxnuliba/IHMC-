@@ -51,7 +51,7 @@ public class CollinearForceMotionPlannerSegment
 
    public String toString()
    {
-      return "Duration: " + duration + ", SupportState: " + segmentContactState.getContactType().toString() + ", StateChange: "
+      return "Duration: " + duration + ", SupportState: " + segmentContactState.toString() + ", StateChange: "
             + isContactStateChangingAfterSegment;
    }
 }
