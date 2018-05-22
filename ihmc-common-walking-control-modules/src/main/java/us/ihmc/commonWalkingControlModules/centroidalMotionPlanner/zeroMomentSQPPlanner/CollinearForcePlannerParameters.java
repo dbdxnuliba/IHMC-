@@ -75,4 +75,9 @@ public class CollinearForcePlannerParameters
    {
       return 4;
    }
+
+   public int getNumberOfScalarConstraintsPerSegment()
+   {
+      return 3;
+   }
 }

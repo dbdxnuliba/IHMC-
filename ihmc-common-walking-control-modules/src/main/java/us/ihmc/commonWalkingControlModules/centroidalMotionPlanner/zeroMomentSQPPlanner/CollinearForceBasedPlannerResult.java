@@ -5,6 +5,8 @@ import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
@@ -44,6 +46,7 @@ public class CollinearForceBasedPlannerResult
    private final FramePoint3D copPosition = new FramePoint3D();
    private final FrameVector3D comVelocity = new FrameVector3D();
    private final FrameVector3D comAcceleration = new FrameVector3D();
+   private final FrameVector3D groundReactionForce = new FrameVector3D();
    private final FrameVector3DReadOnly gravity;
    private final YoFramePoint yoCoMPosition;
    private final YoFramePoint yoCoPPosition;
@@ -125,11 +128,13 @@ public class CollinearForceBasedPlannerResult
       copPosition.setIncludingFrame(referenceFrame, currentCoPTrajectory.getPosition());
       double scalarValue = currentScalarTrajectory.getPosition();
       comVelocity.setIncludingFrame(referenceFrame, currentCoMTrajectory.getVelocity());
+      groundReactionForce.changeFrame(referenceFrame);
+      groundReactionForce.sub(comPosition, copPosition);
+      groundReactionForce.scale(scalarValue);
       comAcceleration.changeFrame(referenceFrame);
-      comAcceleration.sub(comPosition, copPosition);
-      comAcceleration.scale(scalarValue);
+      comAcceleration.setIncludingFrame(groundReactionForce);
       comAcceleration.add(gravity);
-      
+      groundReactionForce.scale(0.1);
       yoCoMPosition.set(comPosition);
       yoCoMVelocity.set(comVelocity);
       yoCoMAcceleration.set(comAcceleration);
@@ -145,22 +150,22 @@ public class CollinearForceBasedPlannerResult
       return startTime;
    }
 
-   public FramePoint3D getDesiredCoMPosition()
+   public FramePoint3DReadOnly getDesiredCoMPosition()
    {
       return comPosition;
    }
 
-   public FrameVector3D getDesiredCoMVelocity()
+   public FrameVector3DReadOnly getDesiredCoMVelocity()
    {
       return comVelocity;
    }
 
-   public FramePoint3D getDesiredCoPPosition()
+   public FramePoint3DReadOnly getDesiredCoPPosition()
    {
       return copPosition;
    }
 
-   public FrameVector3D getDesiredCoMAcceleration()
+   public FrameVector3DReadOnly getDesiredCoMAcceleration()
    {
       return comAcceleration;
    }
@@ -211,5 +216,10 @@ public class CollinearForceBasedPlannerResult
          ret += "Scalar: " + scalarProfile.get(i).toString() + "\n";
       }
       return ret;
+   }
+
+   public FrameVector3DReadOnly getDesiredGroundReactionForce()
+   {
+      return groundReactionForce;
    }
 }

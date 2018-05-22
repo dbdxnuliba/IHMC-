@@ -419,15 +419,15 @@ public class CollinearForceBasedMotionPlannerVisualizer
          populateContactStatesToSubmit(i);
          updateContactStateVisualization(0);
          submitContactStates();
-         motionPlanner.runIterations(8);
+         motionPlanner.runIterations(3);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
-         double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
+         double currentStateDuration = 1.1;
          for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
          {
             sqpSolution.compute(t);
             this.comPosition.set(sqpSolution.getDesiredCoMPosition());
             this.copPosition.set(sqpSolution.getDesiredCoPPosition());
-            this.groundForce.set(sqpSolution.getDesiredCoMAcceleration());
+            this.groundForce.set(sqpSolution.getDesiredGroundReactionForce());
             updateCoMCoPVisualization();
             tick();
          }
