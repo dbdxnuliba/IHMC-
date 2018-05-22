@@ -184,6 +184,7 @@ public class CollinearForceBasedCoMMotionPlanner
 
    public void processContactStateList()
    {
+      segmentList.clear();
       ContactState contactState = contactStateList.get(0);
       int i = 0;
       int numberOfContactStatesToProcess = Math.min(numberOfContactStatesToPlan.getIntegerValue(), numberOfContactStates.getIntegerValue() - 1);
@@ -218,6 +219,7 @@ public class CollinearForceBasedCoMMotionPlanner
          segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
          segment.setContactStateChangeFlag(false);
       }
+      PrintTools.debug("Number of segments:" + segmentList.size());
    }
 
    private int getNumberOfSegmentsInContactStates(double contactStateDuration)

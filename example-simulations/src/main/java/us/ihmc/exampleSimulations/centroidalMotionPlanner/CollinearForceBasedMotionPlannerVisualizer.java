@@ -222,7 +222,6 @@ public class CollinearForceBasedMotionPlannerVisualizer
             contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
             contactState.setDuration(0.5);
          }
-         PrintTools.debug("ContactState " + i + contactState.toString());
       }
    }
 
@@ -416,28 +415,23 @@ public class CollinearForceBasedMotionPlannerVisualizer
       generateContactStatePlan();
       int i = 0;
       //for (int i = 0; i < contactStates.size(); i++)
-      //{
-      populateContactStatesToSubmit(i);
-      updateContactStateVisualization(0);
-      submitContactStates();
-      List<CollinearForceMotionPlannerSegment> segmentList = motionPlanner.getSegmentList();
-      motionPlanner.processContactStateList();
-      PrintTools.debug("\n\n Segment List");
-      for (int k = 0; k < segmentList.size(); k++)
-         PrintTools.debug(segmentList.get(k).toString());
-      //         motionPlanner.runIterations(0);
-      //         CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
-      //         double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
-      //         for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
-      //         {
-      //            sqpSolution.compute(t);
-      //            this.comPosition.set(sqpSolution.getDesiredCoMPosition());
-      //            this.copPosition.set(sqpSolution.getDesiredCoPPosition());
-      //            this.groundForce.set(sqpSolution.getDesiredCoMAcceleration());
-      //            updateCoMCoPVisualization();
-      //            tick();
-      //         }
-      //      }
+      {
+         populateContactStatesToSubmit(i);
+         updateContactStateVisualization(0);
+         submitContactStates();
+         motionPlanner.runIterations(4);
+         CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
+         double currentStateDuration = contactStatesForPlanner.get(0).getDuration();
+         for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
+         {
+            sqpSolution.compute(t);
+            this.comPosition.set(sqpSolution.getDesiredCoMPosition());
+            this.copPosition.set(sqpSolution.getDesiredCoPPosition());
+            this.groundForce.set(sqpSolution.getDesiredCoMAcceleration());
+            updateCoMCoPVisualization();
+            tick();
+         }
+      }
    }
 
    private void updateCoMCoPVisualization()
