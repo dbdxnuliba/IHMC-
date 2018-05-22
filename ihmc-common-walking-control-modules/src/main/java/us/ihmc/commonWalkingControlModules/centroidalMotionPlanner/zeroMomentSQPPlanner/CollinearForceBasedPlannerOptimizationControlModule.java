@@ -261,7 +261,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
       generateCoPLocationConstraintsFromContactStates();
-      //generateCoMLocationConstraintsFromContactStates();
+      generateCoMLocationConstraintsFromContactStates();
       generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();
@@ -317,7 +317,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             yTrajectory.getCoefficientVector(tempA2);
             constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygonForScaling, nodeTimes,
                                                                         numberOfCoMTrajectoryCoefficients.getIntegerValue() - 1);
-            inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(i, tempJ1, tempJ2, tempC1);
+            //inequalityConstraintHandler.addIntraSegmentMultiAxisCoMXYConstraint(i, tempJ1, tempJ2, tempC1);
             zTrajectory.getCoefficientVector(tempA1);
             constraintGenerationHelper.generateZAxisUpperLowerLimitConstraint(tempJ1, tempC1, tempA1, comZMaxHeightConstraint.getDoubleValue(),
                                                                               comZMinHeightConstraint.getDoubleValue(), nodeTimes,
@@ -566,6 +566,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
    private boolean submitQPMatricesAndRunOptimization()
    {
+      sqpSolution.iterationCount++;
       regularization.reshape(solver_objH.numRows, solver_objH.numCols);
       CommonOps.setIdentity(regularization);
       CommonOps.scale(1.0e-4, regularization);
@@ -586,10 +587,9 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       }
       boolean doesSolnContainNaN = doesSolutionContainNaN();
       if (doesSolnContainNaN)
-      {
          errorCode.set(-2);
-      }
-      PrintTools.debug("Iteration complete");
+      else
+         sqpSolution.qpConvergenceFlag = true;
       return !doesSolnContainNaN;
    }
 

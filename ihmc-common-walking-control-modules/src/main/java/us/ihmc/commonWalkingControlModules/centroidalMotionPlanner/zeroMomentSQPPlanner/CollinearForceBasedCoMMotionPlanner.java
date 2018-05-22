@@ -53,7 +53,10 @@ public class CollinearForceBasedCoMMotionPlanner
    private final YoInteger maxNumberOfSQPIterations;
    private final YoDouble consolidatedConvergenceThreshold;
    private final YoDouble individualAxisConvergenceThreshold;
-
+   
+   private final YoDouble dynamicsViolation;
+   private final YoDouble[] axisDynamicsViolation = new YoDouble[Axis.values.length];
+   
    private final YoInteger numberOfContactStates;
    private final YoInteger numberOfPlanningSegments;
    private final YoInteger numberOfElapsedSQPIterations;
@@ -83,6 +86,9 @@ public class CollinearForceBasedCoMMotionPlanner
       finalCoPPosition = new YoFramePoint(namePrefix + "FinalCoPLocation", worldFrame, registry);
       finalCoMVelocity = new YoFrameVector(namePrefix + "FinalCoMVelocity", worldFrame, registry);
 
+      dynamicsViolation = new YoDouble(namePrefix + "CummulativeDynamicsViolation", registry);
+      for(Axis axis : Axis.values)
+         axisDynamicsViolation[axis.ordinal()] = new YoDouble(namePrefix + axis.toString() + "DynamicsViolation", registry);
       hasPlanConverged = new YoBoolean(namePrefix + "HasPlannerConverged", registry);
       hasPlannerFailed = new YoBoolean(namePrefix + "HasPlannerFailed", registry);
       hasInitialStateBeenSet = new YoBoolean(namePrefix + "HasInitialStateBeenSet", registry);
@@ -132,6 +138,7 @@ public class CollinearForceBasedCoMMotionPlanner
       initialSolutionGenerator.reset();
       clearInitialState();
       clearFinalState();
+      sqpSolution.reset();
    }
    
    public void clearInitialState()
@@ -253,19 +260,19 @@ public class CollinearForceBasedCoMMotionPlanner
 
    private boolean checkIsDynamicsViolationBelowThresholds()
    {
-      double totalDynamicsViolation = 0.0;
-      if (!sqpSolution.didIterationConverge())
-         return false;
+      dynamicsViolation.set(0.0);
+      boolean flag = true; 
+      flag &= !sqpSolution.didIterationConverge();
+
       for (Axis axis : Axis.values)
       {
-         double axisViolation = Math.abs(sqpSolution.getViolation(axis));
-         totalDynamicsViolation += axisViolation;
-         if (axisViolation > individualAxisConvergenceThreshold.getDoubleValue())
-            return false;
+         YoDouble axisViolation = axisDynamicsViolation[axis.ordinal()];
+         axisViolation.set(Math.abs(sqpSolution.getViolation(axis)));
+         dynamicsViolation.add(axisViolation);
+         flag &= axisViolation.getDoubleValue() < individualAxisConvergenceThreshold.getDoubleValue();
       }
-      if (totalDynamicsViolation > consolidatedConvergenceThreshold.getDoubleValue())
-         return false;
-      return true;
+      flag &= dynamicsViolation.getDoubleValue() < consolidatedConvergenceThreshold.getDoubleValue();
+      return flag;
    }
 
    private boolean isNodeValid(ContactState contactStateToCheck)

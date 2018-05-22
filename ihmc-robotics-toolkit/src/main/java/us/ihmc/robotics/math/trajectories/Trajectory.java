@@ -111,6 +111,8 @@ public class Trajectory
    public void getDerivative(Trajectory trajectory, int order)
    {
       trajectory.reshape(numberOfCoefficients - order);
+      trajectory.setInitialTime(tInitial);
+      trajectory.setFinalTime(tFinal);
       for (int i = order; i < numberOfCoefficients; i++)
          trajectory.setDirectlyFast(i - order, getCoefficient(i) * getCoefficientMultiplierForDerivative(order, i));
    }

@@ -58,7 +58,7 @@ public class CollinearForcePlannerParameters
    
    public double getMinZHeight()
    {
-      return 0.3;
+      return 0.1;
    }
 
    public int getNumberOfCollocationConstraintsPerSegment()

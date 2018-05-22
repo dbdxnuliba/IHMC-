@@ -105,7 +105,7 @@ public class CollinearForceBasedPlannerResult
    public void reset()
    {
       qpConvergenceFlag = false;
-      iterationCount = -1;
+      iterationCount = 0;
       comTrajectories.clear();
       copTrajectories.clear();
       scalarProfile.clear();
