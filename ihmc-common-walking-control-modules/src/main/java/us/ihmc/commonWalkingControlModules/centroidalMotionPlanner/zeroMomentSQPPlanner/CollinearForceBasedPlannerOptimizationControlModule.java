@@ -119,7 +119,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       solver_qpSoln = new DenseMatrix64F(0, 1);
 
       qpSolver = new JavaQuadProgSolver();
-      qpSolver.setMaxNumberOfIterations(10000);
+      qpSolver.setMaxNumberOfIterations(500);
       
       timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
       qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);

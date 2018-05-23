@@ -187,7 +187,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          generateFootstepPlanForJumping(5, 0.0, 0.0, 0.15, 0.15, 0.0);
          break;
       case RUN:
-         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.5, 0.0, RobotSide.RIGHT);
+         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.75, 0.0, RobotSide.RIGHT);
          break;
       default:
          throw new RuntimeException("Why you do this ?");
