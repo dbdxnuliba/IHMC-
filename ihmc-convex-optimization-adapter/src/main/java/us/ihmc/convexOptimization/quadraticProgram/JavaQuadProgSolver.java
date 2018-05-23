@@ -652,7 +652,7 @@ public class JavaQuadProgSolver extends AbstractSimpleActiveSetQPSolver
             currentStep = takeStepInPrimalAndDualSpace(solutionToPack, stepLength, fullStepLength, mostViolatedConstraintIndex);
          }
       }
-      PrintTools.debug("Too many iterations");
+      PrintTools.debug("Too many iterations " + maxNumberOfIterations);
       CommonOps.fill(solutionToPack, Double.NaN);
       CommonOps.fill(lagrangeEqualityConstraintMultipliersToPack, Double.POSITIVE_INFINITY);
       CommonOps.fill(lagrangeInequalityConstraintMultipliersToPack, Double.POSITIVE_INFINITY);

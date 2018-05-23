@@ -52,6 +52,7 @@ public class CollinearForceBasedPlannerResult
    private final YoFramePoint yoCoPPosition;
    private final YoFrameVector yoCoMVelocity;
    private final YoFrameVector yoCoMAcceleration;
+   private final YoFrameVector yoGroundReactionForce;
    private final YoInteger yoCurrentSegmentIndex;
    private final YoDouble yoScalar;
 
@@ -98,6 +99,7 @@ public class CollinearForceBasedPlannerResult
       yoCoPPosition = new YoFramePoint("SQPOutputCoPPosition", referenceFrame, registry);
       yoCoMVelocity = new YoFrameVector("SQPOutputCoMVelocity", referenceFrame, registry);
       yoCoMAcceleration = new YoFrameVector("SQPOutputCoMAcceleration", referenceFrame, registry);
+      yoGroundReactionForce = new YoFrameVector("SQPOutputGroundReactionForce", referenceFrame, registry);
       yoScalar = new YoDouble("SQPOutputScalar", registry);
       reset();
    }
@@ -116,7 +118,7 @@ public class CollinearForceBasedPlannerResult
       int currentSegmentIndex = getCurrentSegmentFromTime(timeInState);
       yoCurrentSegmentIndex.set(currentSegmentIndex);
       if (currentSegmentIndex < 0)
-         throw new RuntimeException("Unable to find segment associated with the provided time in state");
+         throw new RuntimeException("Unable to find segment associated with the provided time in state " + timeInState);
       Trajectory3D currentCoMTrajectory = comTrajectories.get(currentSegmentIndex);
       Trajectory3D currentCoPTrajectory = copTrajectories.get(currentSegmentIndex);
       Trajectory currentScalarTrajectory = scalarProfile.get(currentSegmentIndex);
@@ -134,7 +136,8 @@ public class CollinearForceBasedPlannerResult
       comAcceleration.changeFrame(referenceFrame);
       comAcceleration.setIncludingFrame(groundReactionForce);
       comAcceleration.add(gravity);
-      groundReactionForce.scale(0.1);
+      groundReactionForce.scale(18.0);
+      yoGroundReactionForce.set(groundReactionForce);
       yoCoMPosition.set(comPosition);
       yoCoMVelocity.set(comVelocity);
       yoCoMAcceleration.set(comAcceleration);

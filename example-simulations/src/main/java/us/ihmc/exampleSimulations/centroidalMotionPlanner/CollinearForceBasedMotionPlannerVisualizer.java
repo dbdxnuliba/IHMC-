@@ -25,8 +25,10 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicShape;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFramePose;
 import us.ihmc.robotics.math.frames.YoFrameVector;
@@ -51,7 +53,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private static final double gravityZ = -9.81;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private final TestMotion motion = TestMotion.JUMP;
+   private final TestMotion motion = TestMotion.WALK;
    private final YoVariableRegistry registry;
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
    private final CollinearForcePlannerParameters plannerParameters;
@@ -100,13 +102,14 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final int maxNumberOfContactStatesToVisualize;
    private final int maxNumberOfContactStatesToSubmit;
    private final RecyclingArrayList<ContactState> contactStates = new RecyclingArrayList<>(ContactState.class);
+   private final double forceScalingFactor = 0.001;
 
    public CollinearForceBasedMotionPlannerVisualizer()
    {
       String namePrefix = getClass().getSimpleName();
       registry = new YoVariableRegistry(namePrefix);
       dt = new YoDouble(namePrefix + "VizDT", registry);
-      dt.set(0.001);
+      dt.set(0.01);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, gravityZ);
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
       plannerParameters = new CollinearForcePlannerParameters();
@@ -121,10 +124,10 @@ public class CollinearForceBasedMotionPlannerVisualizer
          footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, footAppearance.get(side));
          YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose", worldFrame, registry);
          currentFootPose.put(side, footPose);
-         footVizList.add(new YoGraphicShape(side.getCamelCaseName() + "FootViz", footViz, footPose, 1.0));
+         YoGraphicShape yoGraphic = new YoGraphicShape(side.getCamelCaseName() + "FootViz", footViz, footPose, 1.0);
+         footVizList.add(yoGraphic);
       }
       graphicsListRegistry.registerYoGraphicsList(footVizList);
-
       YoGraphicsList contactStateVizList = new YoGraphicsList("ContactStateViz");
       for (int i = 0; i < maxNumberOfContactStatesToVisualize; i++)
       {
@@ -136,15 +139,16 @@ public class CollinearForceBasedMotionPlannerVisualizer
             footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, getContactStateAppearance(i));
             YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose" + i, worldFrame, registry);
             contactPose.put(side, footPose);
-            contactStateVizList.add(new YoGraphicShape("ContactState" + i + side.getCamelCaseName() + "SupportPolygon", footViz, footPose, 1.0));
+            YoGraphicShape yoGraphic = new YoGraphicShape("ContactState" + i + side.getCamelCaseName() + "SupportPolygon", footViz, footPose, 1.0);
+            contactStateVizList.add(yoGraphic);
          }
       }
+      graphicsListRegistry.registerYoGraphicsList(contactStateVizList);
       comPosition = new YoFramePoint(namePrefix + "CoMPosition", worldFrame, registry);
       copPosition = new YoFramePoint(namePrefix + "CoPPosition", worldFrame, registry);
       groundForce = new YoFrameVector(namePrefix + "GroundForce", worldFrame, registry);
-      graphicsListRegistry.registerYoGraphicsList(contactStateVizList);
-      comTrack = new BagOfBalls(100, 0.005, namePrefix + "CoMTrack", comTrackAppearance, registry, graphicsListRegistry);
-      copTrack = new BagOfBalls(100, 0.005, namePrefix + "CoPTrack", copTrackAppearance, registry, graphicsListRegistry);
+      comTrack = new BagOfBalls(1000, 0.001, namePrefix + "CoMTrack", comTrackAppearance, registry, graphicsListRegistry);
+      copTrack = new BagOfBalls(1000, 0.001, namePrefix + "CoPTrack", copTrackAppearance, registry, graphicsListRegistry);
       groundReactionForce = new YoGraphicVector(namePrefix + "GroundReactionForce", copPosition, groundForce, new YoAppearanceRGBColor(Color.RED, 0.5));
       graphicsListRegistry.registerYoGraphic("ForceViz", groundReactionForce);
       scsParameters = new SimulationConstructionSetParameters();
@@ -177,13 +181,13 @@ public class CollinearForceBasedMotionPlannerVisualizer
       switch (motion)
       {
       case WALK:
-         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.RIGHT);
+         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.5, 0.0, RobotSide.RIGHT);
          break;
       case JUMP:
-         generateFootstepPlanForJumping(1, 0.0, 0.0, 0.15, 0.15, 0.0);
+         generateFootstepPlanForJumping(5, 0.0, 0.0, 0.15, 0.15, 0.0);
          break;
       case RUN:
-         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.3, 0.0, RobotSide.RIGHT);
+         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.5, 0.0, RobotSide.RIGHT);
          break;
       default:
          throw new RuntimeException("Why you do this ?");
@@ -220,7 +224,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
          else
          {
             contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
-            contactState.setDuration(0.5);
+            contactState.setDuration(motion == TestMotion.JUMP ? 0.5 : motion == TestMotion.RUN? 0.3 : 0.2);
          }
       }
    }
@@ -419,15 +423,16 @@ public class CollinearForceBasedMotionPlannerVisualizer
          populateContactStatesToSubmit(i);
          updateContactStateVisualization(0);
          submitContactStates();
-         motionPlanner.runIterations(3);
+         motionPlanner.runIterations(1);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
-         double currentStateDuration = 1.1;
+         double currentStateDuration = 10.0;
          for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
          {
             sqpSolution.compute(t);
             this.comPosition.set(sqpSolution.getDesiredCoMPosition());
             this.copPosition.set(sqpSolution.getDesiredCoPPosition());
             this.groundForce.set(sqpSolution.getDesiredGroundReactionForce());
+            this.groundForce.scale(forceScalingFactor);
             updateCoMCoPVisualization();
             tick();
          }

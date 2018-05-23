@@ -23,12 +23,12 @@ public class CollinearForcePlannerParameters
 
    public double getMinPlannerSegmentTime()
    {
-      return 0.1;
+      return 0.05;
    }
 
    public int getNumberOfContactStatesToPlan()
    {
-      return 6;
+      return 15;
    }
 
    public double getConsolidatedConvergenceThreshold()
@@ -58,17 +58,17 @@ public class CollinearForcePlannerParameters
    
    public double getMinZHeight()
    {
-      return 0.1;
+      return 0.15;
    }
 
    public int getNumberOfCollocationConstraintsPerSegment()
    {
-      return 5;
+      return 2;
    }
 
    public int getNumberOfCoMPositionConstraintsPerSegment()
    {
-      return 4;
+      return 2;
    }
 
    public int getNumberOfSupportPolygonConstraintsPerSegment()
@@ -78,6 +78,6 @@ public class CollinearForcePlannerParameters
 
    public int getNumberOfScalarConstraintsPerSegment()
    {
-      return 3;
+      return 4;
    }
 }

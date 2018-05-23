@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
+import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.tools.exceptions.NoConvergenceException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -70,6 +72,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final Axis[] comAxis = Axis.values;
 
    private final ConvexPolygonScaler polygonScaler;
+   private final ExecutionTimer timer;
+   private final YoDouble qpSolveTime;
 
    public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerResult sqpSolution, YoInteger numberOfPlanningSegments,
                                                               FrameVector3DReadOnly gravity, YoVariableRegistry registry)
@@ -115,6 +119,10 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       solver_qpSoln = new DenseMatrix64F(0, 1);
 
       qpSolver = new JavaQuadProgSolver();
+      qpSolver.setMaxNumberOfIterations(10000);
+      
+      timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
+      qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);
    }
 
    public void initialize(CollinearForcePlannerParameters parameters)
@@ -134,6 +142,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       equalityConstraintHandler.reshape();
       inequalityConstraintHandler.reshape();
       errorCode.set(0);
+      qpSolveTime.set(0.0);
    }
 
    public void setDesiredInitialState(YoFramePoint initialCoMLocation, YoFramePoint initialCoPLocation, YoFrameVector initialCoMVelocity)
@@ -567,11 +576,14 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private boolean submitQPMatricesAndRunOptimization()
    {
       sqpSolution.iterationCount++;
-      regularization.reshape(solver_objH.numRows, solver_objH.numCols);
+      int problemSize = solver_objH.numRows;
+      PrintTools.debug("QPSize: " + problemSize);
+      regularization.reshape(problemSize, problemSize);
       CommonOps.setIdentity(regularization);
-      CommonOps.scale(1.0e-4, regularization);
+      CommonOps.scale(1.0e-3, regularization);
       CommonOps.addEquals(solver_objH, regularization);
 
+      timer.startMeasurement();
       qpSolver.setQuadraticCostFunction(solver_objH, solver_objf, 0.0);
       qpSolver.setLinearEqualityConstraints(equalityConstraintHandler.getCoefficientMatrix(), equalityConstraintHandler.getBiasMatrix());
       qpSolver.setLinearInequalityConstraints(inequalityConstraintHandler.getCoefficientMatrix(), inequalityConstraintHandler.getBiasMatrix());
@@ -590,6 +602,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          errorCode.set(-2);
       else
          sqpSolution.qpConvergenceFlag = true;
+      timer.stopMeasurement();
+      qpSolveTime.add(timer.getCurrentTime().getDoubleValue());
       return !doesSolnContainNaN;
    }
 
