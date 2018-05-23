@@ -26,6 +26,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
+import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
@@ -42,6 +43,7 @@ import us.ihmc.simulationconstructionset.SimulationConstructionSetParameters;
 import us.ihmc.simulationconstructionset.gui.tools.SimulationOverheadPlotterFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoEnum;
 
 public class CollinearForceBasedMotionPlannerVisualizer
 {
@@ -53,7 +55,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private static final double gravityZ = -9.81;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private final TestMotion motion = TestMotion.WALK;
+   private final TestMotion motion = TestMotion.RUN;
    private final YoVariableRegistry registry;
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
    private final CollinearForcePlannerParameters plannerParameters;
@@ -92,7 +94,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
    private final double defaultSupportDurationForJumping = 0.6;
    private final double defaultFlightDurationForJumping = 0.1;
-
+   private final YoEnum<BipedContactType> contactStateEnum;
    // Contact state viz 
    private final YoAppearanceRGBColor contactStateAppearance = new YoAppearanceRGBColor(Color.BLUE, 0.0);
    // Track viz 
@@ -110,6 +112,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       registry = new YoVariableRegistry(namePrefix);
       dt = new YoDouble(namePrefix + "VizDT", registry);
       dt.set(0.01);
+      contactStateEnum = new YoEnum<>(namePrefix + "ContactState", registry, BipedContactType.class);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, gravityZ);
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
       plannerParameters = new CollinearForcePlannerParameters();
@@ -173,7 +176,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
 
    private YoAppearanceRGBColor getContactStateAppearance(int index)
    {
-      return new YoAppearanceRGBColor(Color.getHSBColor((float) index / (float) maxNumberOfContactStatesToVisualize, 0.8f, 0.8f), 0.0);
+      return new YoAppearanceRGBColor(Color.getHSBColor((float) index / (float) maxNumberOfContactStatesToVisualize, 0.8f, 0.8f), 0.75);
    }
 
    private void generateContactStatePlan()
@@ -181,13 +184,13 @@ public class CollinearForceBasedMotionPlannerVisualizer
       switch (motion)
       {
       case WALK:
-         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.5, 0.0, RobotSide.RIGHT);
+         generateFootstepPlanForWalking(5, 0.0, 0.0, 0.15, 0.2, 0.0, RobotSide.RIGHT);
          break;
       case JUMP:
          generateFootstepPlanForJumping(5, 0.0, 0.0, 0.15, 0.15, 0.0);
          break;
       case RUN:
-         generateFootstepPlanForRunning(5, 0.0, 0.0, 0.15, 0.75, 0.0, RobotSide.RIGHT);
+         generateFootstepPlanForRunning(6, 0.0, 0.0, 0.15, 0.6, 0.0, RobotSide.RIGHT);
          break;
       default:
          throw new RuntimeException("Why you do this ?");
@@ -205,26 +208,30 @@ public class CollinearForceBasedMotionPlannerVisualizer
          Point2D leftFootPos = footstepLocations.get(i).get(RobotSide.LEFT);
          Point2D rightFootPos = footstepLocations.get(i).get(RobotSide.RIGHT);
          generateMinimalVertexSupportPolygon(tempPolygon, leftFootPos, rightFootPos);
+         PrintTools.debug(leftFootPos.toString() + " " + rightFootPos.toString() + " " + tempPolygon.getCentroid().toString());
          contactState.setSupportPolygon(tempPolygon);
          if (leftFootPos.containsNaN() && rightFootPos.containsNaN())
          {
             contactState.setContactType(BipedContactType.NO_SUPPORT);
-            contactState.setDuration(0.1);
+            contactState.setDuration(0.15);
          }
          else if (leftFootPos.containsNaN() && !rightFootPos.containsNaN())
          {
             contactState.setContactType(BipedContactType.RIGHT_SINGLE_SUPPORT);
-            contactState.setDuration(0.5);
+            contactState.setDuration(motion == TestMotion.RUN ? 0.3 :0.4);
          }
          else if (rightFootPos.containsNaN() && !leftFootPos.containsNaN())
          {
             contactState.setContactType(BipedContactType.LEFT_SINGLE_SUPPORT);
-            contactState.setDuration(0.5);
+            contactState.setDuration(motion == TestMotion.RUN ? 0.3 : 0.4);
          }
          else
          {
             contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
-            contactState.setDuration(motion == TestMotion.JUMP ? 0.5 : motion == TestMotion.RUN? 0.3 : 0.2);
+            if(i != 0 && i != contactStates.size() - 1)
+               contactState.setDuration(motion == TestMotion.JUMP ? 0.5 : motion == TestMotion.RUN? 0.3 : 0.2);
+            else
+               contactState.setDuration(motion == TestMotion.RUN ? 0.3 : 0.4);
          }
       }
    }
@@ -250,6 +257,8 @@ public class CollinearForceBasedMotionPlannerVisualizer
          vertexList.add(new Point2D());
    }
 
+   private final ConvexPolygonScaler polygonScaler = new ConvexPolygonScaler();
+   private final ConvexPolygon2D tempPolygonForScaling = new ConvexPolygon2D();
    private void generateMinimalVertexSupportPolygon(ConvexPolygon2D supportPolygonToSet, Point2D leftFootLocation, Point2D rightFootLocation)
    {
       supportPolygonToSet.clear();
@@ -264,6 +273,12 @@ public class CollinearForceBasedMotionPlannerVisualizer
          if (!rightFootLocation.containsNaN())
             vertexList.get(numberOfVertices++).set(supportPolygonVertex.getX() + rightFootLocation.getX(),
                                                    supportPolygonVertex.getY() + rightFootLocation.getY());
+      }
+      if(numberOfVertices == 0)
+      {
+         supportPolygonToSet.clear();
+         supportPolygonToSet.update();
+         return;
       }
       // Generate the minimal vertex polygon. New gift wrapping algorithm
       // Get the max X max Y element. 
@@ -310,8 +325,10 @@ public class CollinearForceBasedMotionPlannerVisualizer
          }
       }
       // Submit the computed vertices to the polygon. Polygon will recompute but that cant be avoided right now
-      supportPolygonToSet.addVertices(vertexList, numberOfVertices);
-      supportPolygonToSet.update();
+      tempPolygonForScaling.clear();
+      tempPolygonForScaling.addVertices(vertexList, numberOfVertices);
+      tempPolygonForScaling.update();
+      polygonScaler.scaleConvexPolygon(tempPolygonForScaling, 0.005, supportPolygonToSet);
    }
 
    private void generateFootstepPlanForRunning(int numberOfSteps, double xInitial, double yInitial, double feetWidth, double xStep, double yStep,
@@ -396,6 +413,11 @@ public class CollinearForceBasedMotionPlannerVisualizer
    {
       int numberOfContactStatesToVisualize = Math.min(maxNumberOfContactStatesToVisualize, footstepLocations.size() - firstFootStepIndex);
       int i = 0;
+      for (; i < firstFootStepIndex; i++)
+      {
+         for (RobotSide side : RobotSide.values)
+            contactPoses.get(i).get(side).setToNaN();
+      }
       for (i = firstFootStepIndex; i < numberOfContactStatesToVisualize + firstFootStepIndex; i++)
       {
          SideDependentList<Point2D> feetLocation = footstepLocations.get(i);
@@ -426,8 +448,20 @@ public class CollinearForceBasedMotionPlannerVisualizer
          motionPlanner.runIterations(1);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
          double currentStateDuration = 10.0;
+         int contactStateIndex = 0;
+         contactStateEnum.set(contactStates.get(contactStateIndex).getContactType());
+         double stateEndTime = contactStates.get(contactStateIndex).getDuration();
          for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
          {
+            if(t > stateEndTime)
+            {
+               contactStateIndex++;
+               if(contactStateIndex == contactStates.size())
+                  break;
+               stateEndTime += contactStates.get(contactStateIndex).getDuration();
+               contactStateEnum.set(contactStates.get(contactStateIndex).getContactType());
+               updateContactStateVisualization(contactStateIndex);
+            }
             sqpSolution.compute(t);
             this.comPosition.set(sqpSolution.getDesiredCoMPosition());
             this.copPosition.set(sqpSolution.getDesiredCoPPosition());

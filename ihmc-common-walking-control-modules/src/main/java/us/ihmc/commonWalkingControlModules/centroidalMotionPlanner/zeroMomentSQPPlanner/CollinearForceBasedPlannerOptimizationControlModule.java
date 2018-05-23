@@ -119,7 +119,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       solver_qpSoln = new DenseMatrix64F(0, 1);
 
       qpSolver = new JavaQuadProgSolver();
-      qpSolver.setMaxNumberOfIterations(500);
+      qpSolver.setMaxNumberOfIterations(10000);
       
       timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
       qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);
@@ -285,6 +285,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       numberOfSegments.set(segmentList.size());
       equalityConstraintHandler.reshape();
       inequalityConstraintHandler.reshape();
+      solver_objH.reshape(0, 0);
+      solver_objf.reshape(0, 0);
    }
 
    private void generateScalarConstraintsFromContactStates()
@@ -580,7 +582,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       PrintTools.debug("QPSize: " + problemSize);
       regularization.reshape(problemSize, problemSize);
       CommonOps.setIdentity(regularization);
-      CommonOps.scale(1.0e-3, regularization);
+      CommonOps.scale(1e-3, regularization);
       CommonOps.addEquals(solver_objH, regularization);
 
       timer.startMeasurement();

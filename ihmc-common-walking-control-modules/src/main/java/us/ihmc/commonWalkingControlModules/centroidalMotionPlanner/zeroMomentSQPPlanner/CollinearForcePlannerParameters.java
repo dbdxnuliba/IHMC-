@@ -28,7 +28,7 @@ public class CollinearForcePlannerParameters
 
    public int getNumberOfContactStatesToPlan()
    {
-      return 6;
+      return 15;
    }
 
    public double getConsolidatedConvergenceThreshold()
@@ -73,7 +73,7 @@ public class CollinearForcePlannerParameters
 
    public int getNumberOfSupportPolygonConstraintsPerSegment()
    {
-      return 4;
+      return 3;
    }
 
    public int getNumberOfScalarConstraintsPerSegment()
