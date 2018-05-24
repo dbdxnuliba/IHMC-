@@ -301,7 +301,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          constraintGenerationHelper.generateScalarConstraintMatrix(tempJ1, tempC1, tempA1, numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
                                                                    nodeTimes);
          CommonOps.scale(-1.0, tempJ1);
-         if (contactState.getContactType().isRobotSupported())
+         if (contactState.isSupported())
             inequalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
          else
             equalityConstraintHandler.addIntraSegmentScalarConstraint(i, tempJ1, tempC1);
@@ -314,7 +314,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       for (int i = 0; i < segmentList.size(); i++)
       {
          ContactState contactState = segmentList.get(i).getContactState();
-         if (contactState.getContactType().isRobotSupported())
+         if (contactState.isSupported())
          {
             Trajectory3D comTrajectory = comTrajectories.get(i);
             contactState.getSupportPolygon(tempPolygon);
@@ -348,7 +348,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       {
          CollinearForceMotionPlannerSegment segment = segmentList.get(i);
          ContactState contactState = segment.getContactState();
-         if (contactState.getContactType().isRobotSupported())
+         if (contactState.isSupported())
          {
             Trajectory3D copTrajectory = copTrajectories.get(i);
             contactState.getSupportPolygon(tempPolygon);

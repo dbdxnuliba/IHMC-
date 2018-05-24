@@ -8,13 +8,10 @@ import java.util.stream.Stream;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceMotionPlannerSegment;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -25,16 +22,12 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicShape;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFramePose;
 import us.ihmc.robotics.math.frames.YoFrameVector;
-import us.ihmc.robotics.math.trajectories.Trajectory;
-import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.simulationconstructionset.Robot;
@@ -42,8 +35,8 @@ import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.SimulationConstructionSetParameters;
 import us.ihmc.simulationconstructionset.gui.tools.SimulationOverheadPlotterFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
 
 public class CollinearForceBasedMotionPlannerVisualizer
 {
@@ -94,8 +87,8 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
    private final double defaultSupportDurationForJumping = 0.6;
    private final double defaultFlightDurationForJumping = 0.1;
-   private final YoEnum<BipedContactType> contactStateEnum;
-   // Contact state viz 
+   private final YoBoolean isSupported;
+   // Contact state viz
    private final YoAppearanceRGBColor contactStateAppearance = new YoAppearanceRGBColor(Color.BLUE, 0.0);
    // Track viz 
    private final YoAppearanceRGBColor comTrackAppearance = new YoAppearanceRGBColor(Color.WHITE, 0.0);
@@ -112,7 +105,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       registry = new YoVariableRegistry(namePrefix);
       dt = new YoDouble(namePrefix + "VizDT", registry);
       dt.set(0.01);
-      contactStateEnum = new YoEnum<>(namePrefix + "ContactState", registry, BipedContactType.class);
+      isSupported = new YoBoolean(namePrefix + "IsSupported", registry);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, gravityZ);
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
       plannerParameters = new CollinearForcePlannerParameters();
@@ -212,42 +205,24 @@ public class CollinearForceBasedMotionPlannerVisualizer
          contactState.setSupportPolygon(tempPolygon);
          if (leftFootPos.containsNaN() && rightFootPos.containsNaN())
          {
-            contactState.setContactType(BipedContactType.NO_SUPPORT);
             contactState.setDuration(0.15);
          }
          else if (leftFootPos.containsNaN() && !rightFootPos.containsNaN())
          {
-            contactState.setContactType(BipedContactType.RIGHT_SINGLE_SUPPORT);
             contactState.setDuration(motion == TestMotion.RUN ? 0.3 :0.4);
          }
          else if (rightFootPos.containsNaN() && !leftFootPos.containsNaN())
          {
-            contactState.setContactType(BipedContactType.LEFT_SINGLE_SUPPORT);
             contactState.setDuration(motion == TestMotion.RUN ? 0.3 : 0.4);
          }
          else
          {
-            contactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
             if(i != 0 && i != contactStates.size() - 1)
                contactState.setDuration(motion == TestMotion.JUMP ? 0.5 : motion == TestMotion.RUN? 0.3 : 0.2);
             else
                contactState.setDuration(motion == TestMotion.RUN ? 0.3 : 0.4);
          }
       }
-   }
-
-   private void generateSupportPolygon(ConvexPolygon2D supportPolygonToSet, Point2D leftFootLocation, Point2D rightFootLocation)
-   {
-      supportPolygonToSet.clear();
-      for (int i = 0; i < defaultFootPolygonPointsInAnkleFrame.size(); i++)
-      {
-         Point2D supportPolygonVertex = defaultFootPolygonPointsInAnkleFrame.get(i);
-         if (!leftFootLocation.containsNaN())
-            supportPolygonToSet.addVertex(supportPolygonVertex.getX() + leftFootLocation.getX(), supportPolygonVertex.getY() + leftFootLocation.getY());
-         if (!rightFootLocation.containsNaN())
-            supportPolygonToSet.addVertex(supportPolygonVertex.getX() + rightFootLocation.getX(), supportPolygonVertex.getY() + rightFootLocation.getY());
-      }
-      supportPolygonToSet.update();
    }
 
    private static final List<Point2D> vertexList = new ArrayList<>();
@@ -315,9 +290,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
                candidatePoint = pointUnderConsideration;
             }
          }
-         double det2 = (firstVertex.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
-               - (firstVertex.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
-         boolean terminate = det2 > 0.0 || (det2 == 0.0 && lastComputedPoint.distance(candidatePoint) < lastComputedPoint.distance(firstVertex));
+         double det2 = (topRightVertex.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
+               - (topRightVertex.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
+         boolean terminate = det2 > 0.0 || (det2 == 0.0 && lastComputedPoint.distance(candidatePoint) < lastComputedPoint.distance(topRightVertex));
          if (terminate)
          {
             numberOfVertices = i;
@@ -445,11 +420,11 @@ public class CollinearForceBasedMotionPlannerVisualizer
          populateContactStatesToSubmit(i);
          updateContactStateVisualization(0);
          submitContactStates();
-         motionPlanner.runIterations(1);
+         motionPlanner.runIterations(2);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
          double currentStateDuration = 10.0;
          int contactStateIndex = 0;
-         contactStateEnum.set(contactStates.get(contactStateIndex).getContactType());
+         isSupported.set(true);
          double stateEndTime = contactStates.get(contactStateIndex).getDuration();
          for (double t = 0.0; t < currentStateDuration; t += dt.getDoubleValue())
          {
@@ -459,7 +434,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
                if(contactStateIndex == contactStates.size())
                   break;
                stateEndTime += contactStates.get(contactStateIndex).getDuration();
-               contactStateEnum.set(contactStates.get(contactStateIndex).getContactType());
+               isSupported.set(contactStates.get(contactStateIndex).isSupported());
                updateContactStateVisualization(contactStateIndex);
             }
             sqpSolution.compute(t);

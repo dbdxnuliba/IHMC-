@@ -1,5 +1,7 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
+import javax.crypto.spec.PSource;
+
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -16,7 +18,6 @@ import us.ihmc.euclid.referenceFrame.interfaces.ReferenceFrameHolder;
  */
 public class ContactState implements ReferenceFrameHolder
 {
-   private BipedContactType state;
    private double duration;
    private final FramePose3D pose;
    private final ConvexPolygon2D supportPolygon;
@@ -35,15 +36,9 @@ public class ContactState implements ReferenceFrameHolder
 
    public void reset()
    {
-      state = null;
       duration = Double.NaN;
       supportPolygon.clear();
       pose.setToZero();
-   }
-
-   public void setContactType(BipedContactType stateToSet)
-   {
-      this.state = stateToSet;
    }
 
    public void setSupportPolygon(ConvexPolygon2D supportPolygonToSet)
@@ -61,11 +56,11 @@ public class ContactState implements ReferenceFrameHolder
       supportPolygonToSet.set(supportPolygon);
    }
 
-   public BipedContactType getContactType()
+   public boolean isSupported()
    {
-      return state;
+      return supportPolygon.getNumberOfVertices() > 0;
    }
-
+   
    public double getDuration()
    {
       return duration;
@@ -108,7 +103,6 @@ public class ContactState implements ReferenceFrameHolder
 
    public void set(ContactState other)
    {
-      this.state = other.state;
       this.duration = other.duration;
       this.pose.setIncludingFrame(other.pose);
       this.supportPolygon.set(other.supportPolygon);
@@ -127,8 +121,13 @@ public class ContactState implements ReferenceFrameHolder
 
    public String toString()
    {
-      String toString = "SupportType: " + state.toString() + ",\nDuration: " + duration + ",\nPose: " + pose.toString() + ",\nSupportPolygon: "
+      String toString = "isSupported: " + isSupported() + ",\nDuration: " + duration + ",\nPose: " + pose.toString() + ",\nSupportPolygon: "
             + supportPolygon.toString();
       return toString;
+   }
+
+   public void setPoseToZero(ReferenceFrame referenceFrame)
+   {
+      pose.setToZero(referenceFrame);
    }
 }

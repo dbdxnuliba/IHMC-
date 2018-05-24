@@ -1,7 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
-import us.ihmc.commons.PrintTools;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -98,11 +97,11 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
       for (int i = 0; i < segmentList.size(); i++)
       {
          CollinearForceMotionPlannerSegment segment = segmentList.get(i);
-         BipedContactType contactType = segment.getContactState().getContactType();
+         ContactState contactState = segment.getContactState();
          Trajectory3D comTrajectory = comTrajectories.add();
          Trajectory3D copTrajectory = copTrajectories.add();
          Trajectory scalarTrajectory = scalarProfile.add();
-         segment.getContactState().getSupportPolygonCentroid(tempFramePoint);
+         contactState.getSupportPolygonCentroid(tempFramePoint);
          if(tempFramePoint.containsNaN())
             tempFramePoint.setToZero(worldFrame);
          tempFramePoint.changeFrame(worldFrame);
@@ -111,7 +110,7 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
          setConstant(comTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
          tempFramePoint.sub(0.0, 0.0, comNominalOffsetFromSupportPolygonCentroid.getZ());
          setConstant(copTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
-         if (contactType.isRobotSupported())
+         if (contactState.isSupported())
             setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(),
                         (0.0 - gravity.getZ()) / (comNominalOffsetFromSupportPolygonCentroid.getZ()));
          else

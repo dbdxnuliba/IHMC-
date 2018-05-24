@@ -2,7 +2,6 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 
 import java.util.List;
 
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
@@ -279,11 +278,9 @@ public class CollinearForceBasedCoMMotionPlanner
    {
       if (contactStateToCheck.getDuration() <= 0.0f)
          return false;
-      if (contactStateToCheck.getContactType() == null)
-         return false;
       if (contactStateToCheck.getReferenceFrame() == null)
          return false;
-      if (contactStateToCheck.getContactType().isRobotSupported() && contactStateToCheck.getNumberOfSupportPolygonVertices() <= 0)
+      if (contactStateToCheck.isSupported() && contactStateToCheck.getNumberOfSupportPolygonVertices() <= 0)
          return false;
       return true;
    }

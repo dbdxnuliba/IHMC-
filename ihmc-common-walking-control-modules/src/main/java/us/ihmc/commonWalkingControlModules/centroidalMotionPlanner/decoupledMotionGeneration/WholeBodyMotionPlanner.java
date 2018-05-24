@@ -4,7 +4,6 @@ import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.ForceTrajectory;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.trajectories.PositionTrajectory;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -128,8 +127,8 @@ public class WholeBodyMotionPlanner
       for (int i = 0; i < contactStateList.size() - 1; i++)
       {
          ContactState contactState = contactStateList.get(i);
-         BipedContactType contactType = contactState.getContactType();
-         BipedContactType nextContactType = contactStateList.get(i + 1).getContactType();
+         boolean isStateSupported = contactState.isSupported();
+         boolean isNextStateSupported = contactStateList.get(i + 1).isSupported();
          contactState.getSupportPolygon(tempPolygon);
          tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
          positionUpperBound.setIncludingFrame(tempPosition);
@@ -152,24 +151,21 @@ public class WholeBodyMotionPlanner
             nodeTime += plannerDT;
             motionNode.reset();
             motionNode.setTime(nodeTime);
-            switch (contactType)
+            if(isStateSupported)
             {
-            case NO_SUPPORT:
-               motionNode.setZeroForceConstraint();
-               motionNode.setZeroForceRateConstraint();
-               motionNode.setZeroTorqueConstraint();
-               motionNode.setZeroTorqueRateConstraint();
-               break;
-            case DOUBLE_SUPPORT:
                motionNode.setForceObjective(nominalForce);
                motionNode.setForceRateObjective(nominalForceRate);
                motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
                motionNode.setTorqueObjective(nominalTorque);
                motionNode.setTorqueRateObjective(nominalTorqueRate);
                motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
-               break;
-            default:
-               throw new RuntimeException("Unknown support state. Cannot populate motion planner nodes");
+            }
+            else
+            {
+               motionNode.setZeroForceConstraint();
+               motionNode.setZeroForceRateConstraint();
+               motionNode.setZeroTorqueConstraint();
+               motionNode.setZeroTorqueRateConstraint();
             }
             motionPlanner.submitNode(motionNode);
          }
@@ -177,11 +173,11 @@ public class WholeBodyMotionPlanner
          nodeTime += finalNodeDuration;
          motionNode.reset();
          motionNode.setTime(nodeTime);
-         if (contactType == BipedContactType.NO_SUPPORT || nextContactType == BipedContactType.NO_SUPPORT)
+         if (!isStateSupported || !isNextStateSupported)
          {
             motionNode.setZeroForceConstraint();
             motionNode.setZeroForceRateConstraint();
-            if(nextContactType == BipedContactType.NO_SUPPORT)
+            if(!isNextStateSupported)
             {
                positionJumpUpperBound.setIncludingFrame(tempPosition);
                positionJumpUpperBound.add(positionJumpUpperBoundDelta);
@@ -203,7 +199,7 @@ public class WholeBodyMotionPlanner
       }
       {
          ContactState contactState = contactStateList.get(contactStateList.size() - 1);
-         BipedContactType contactType = contactState.getContactType();
+         boolean isStateSupported = contactState.isSupported();
          double contactStateDuration = contactState.getDuration();
          contactState.getSupportPolygon(tempPolygon);
          tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
@@ -226,24 +222,21 @@ public class WholeBodyMotionPlanner
             nodeTime += plannerDT;
             motionNode.reset();
             motionNode.setTime(nodeTime);
-            switch (contactType)
+            if(isStateSupported)
             {
-            case NO_SUPPORT:
-               motionNode.setZeroForceConstraint();
-               motionNode.setZeroForceRateConstraint();
-               motionNode.setZeroTorqueConstraint();
-               motionNode.setZeroTorqueRateConstraint();
-               break;
-            case DOUBLE_SUPPORT:
                motionNode.setForceObjective(nominalForce);
                motionNode.setForceRateObjective(nominalForceRate);
                motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
                motionNode.setTorqueObjective(nominalTorque);
                motionNode.setTorqueRateObjective(nominalTorqueRate);
                motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
-               break;
-            default:
-               throw new RuntimeException("Unknown support state. Cannot populate motion planner nodes");
+            }
+            else
+            {
+               motionNode.setZeroForceConstraint();
+               motionNode.setZeroForceRateConstraint();
+               motionNode.setZeroTorqueConstraint();
+               motionNode.setZeroTorqueRateConstraint();
             }
             motionPlanner.submitNode(motionNode);
          }
@@ -251,7 +244,7 @@ public class WholeBodyMotionPlanner
          nodeTime += finalNodeDuration;
          motionNode.reset();
          motionNode.setTime(nodeTime);
-         if (contactType == BipedContactType.NO_SUPPORT)
+         if (isStateSupported)
          {
             motionNode.setZeroForceConstraint();
             motionNode.setZeroForceRateConstraint();

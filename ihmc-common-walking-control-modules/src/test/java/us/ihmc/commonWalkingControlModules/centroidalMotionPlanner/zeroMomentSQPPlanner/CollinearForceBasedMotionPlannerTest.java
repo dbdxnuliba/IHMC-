@@ -3,7 +3,6 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,7 +10,6 @@ import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 
-import us.ihmc.commonWalkingControlModules.controlModules.flight.BipedContactType;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -44,7 +42,6 @@ public class CollinearForceBasedMotionPlannerTest
       FramePose3D tempPose = new FramePose3D(worldFrame);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
       tempContactState.setDuration(0.4);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
@@ -52,14 +49,12 @@ public class CollinearForceBasedMotionPlannerTest
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.NO_SUPPORT);
       tempContactState.setDuration(0.2);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
       tempContactState.setDuration(0.4);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
@@ -80,7 +75,6 @@ public class CollinearForceBasedMotionPlannerTest
       FramePose3D tempPose = new FramePose3D(worldFrame);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
       tempContactState.setDuration(0.40);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
@@ -88,14 +82,12 @@ public class CollinearForceBasedMotionPlannerTest
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.NO_SUPPORT);
       tempContactState.setDuration(0.1);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
-      tempContactState.setContactType(BipedContactType.DOUBLE_SUPPORT);
       tempContactState.setDuration(0.4);
       tempContactState.setSupportPolygonFramePose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
