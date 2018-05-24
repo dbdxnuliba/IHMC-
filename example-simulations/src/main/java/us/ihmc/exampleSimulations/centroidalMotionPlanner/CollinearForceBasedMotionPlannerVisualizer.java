@@ -30,6 +30,7 @@ import us.ihmc.robotics.math.frames.YoFramePose;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.SimulationConstructionSetParameters;
@@ -98,6 +99,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final int maxNumberOfContactStatesToSubmit;
    private final RecyclingArrayList<ContactState> contactStates = new RecyclingArrayList<>(ContactState.class);
    private final double forceScalingFactor = 0.001;
+   private final ExecutionTimer timer;
 
    public CollinearForceBasedMotionPlannerVisualizer()
    {
@@ -147,6 +149,8 @@ public class CollinearForceBasedMotionPlannerVisualizer
       copTrack = new BagOfBalls(1000, 0.001, namePrefix + "CoPTrack", copTrackAppearance, registry, graphicsListRegistry);
       groundReactionForce = new YoGraphicVector(namePrefix + "GroundReactionForce", copPosition, groundForce, new YoAppearanceRGBColor(Color.RED, 0.5));
       graphicsListRegistry.registerYoGraphic("ForceViz", groundReactionForce);
+
+      timer = new ExecutionTimer(getClass().getSimpleName() + "Timer", registry);
       scsParameters = new SimulationConstructionSetParameters();
       Robot robot = new Robot("DummyRobot");
       yoTime = robot.getYoTime();
@@ -413,6 +417,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
 
    private void runMotionPlanner()
    {
+      timer.startMeasurement();
       generateContactStatePlan();
       int i = 0;
       //for (int i = 0; i < contactStates.size(); i++)
@@ -420,8 +425,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
          populateContactStatesToSubmit(i);
          updateContactStateVisualization(0);
          submitContactStates();
-         motionPlanner.runIterations(2);
+         motionPlanner.runIterations(1);
          CollinearForceBasedPlannerResult sqpSolution = motionPlanner.getSQPSolution();
+         timer.stopMeasurement();
          double currentStateDuration = 10.0;
          int contactStateIndex = 0;
          isSupported.set(true);

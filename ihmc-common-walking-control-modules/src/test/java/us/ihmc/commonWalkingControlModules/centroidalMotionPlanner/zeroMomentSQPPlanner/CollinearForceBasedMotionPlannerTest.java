@@ -43,20 +43,20 @@ public class CollinearForceBasedMotionPlannerTest
 
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       tempContactState.setSupportPolygon(tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.2);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
       tempContactState.setSupportPolygon(tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
@@ -76,20 +76,20 @@ public class CollinearForceBasedMotionPlannerTest
 
       tempContactState.reset();
       tempContactState.setDuration(0.40);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       tempContactState.setSupportPolygon(tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.1);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setSupportPolygonFramePose(tempPose);
+      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
       tempContactState.setSupportPolygon(tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
