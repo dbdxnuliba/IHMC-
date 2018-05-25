@@ -1,8 +1,12 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.nio.file.FileVisitResult;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jme3.math.Plane.Side;
+
+import boofcv.abst.geo.fitting.GenerateMotionPnP;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
 import us.ihmc.commons.MathTools;
@@ -15,6 +19,7 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose2DReadOnly;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
@@ -31,12 +36,11 @@ public class ContactStatePlanGenerator
 {
    private double defaultPrecision = 1e-4;
 
-   private FramePose2D tempPoseForLeftFoot = new FramePose2D();
-   private FramePose2D tempPoseForRightFoot = new FramePose2D();
-   private FramePose2D tempPose = new FramePose2D();
-   private ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
-   private ArrayList<Point2D> tempVertexList = new ArrayList<>();
-   private RigidBodyTransform tempTransform = new RigidBodyTransform();
+   private final FramePose2D tempPoseForLeftFoot = new FramePose2D();
+   private final FramePose2D tempPoseForRightFoot = new FramePose2D();
+   private final FramePose2D tempPose = new FramePose2D();
+   private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
+   private final ArrayList<Point2D> tempVertexList = new ArrayList<>();
 
    public ContactStatePlanGenerator(int maxNumberOfSupportPolygonVertices, double defaultPrecision)
    {
@@ -90,32 +94,68 @@ public class ContactStatePlanGenerator
    {
       boolean isLeftFootSupported = leftAnklePose != null && !leftAnklePose.containsNaN() && leftFootSupportPolygon.getNumberOfVertices() > 0;
       boolean isRightFootSupported = rightAnklePose != null && !rightAnklePose.containsNaN() && rightFootSupportPolygon.getNumberOfVertices() > 0;
-      int numberOfVertices = 0;
       if (isRightFootSupported && isLeftFootSupported)
-      {
-         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(supportPolygonPose, rightAnklePose, rightFootSupportPolygon, numberOfVertices);
-         numberOfVertices += rightFootSupportPolygon.getNumberOfVertices();
-         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(supportPolygonPose, leftAnklePose, leftFootSupportPolygon, numberOfVertices);
-         numberOfVertices += leftFootSupportPolygon.getNumberOfVertices();
-         roundVertexCoordinatesToPrecision(precision, numberOfVertices);
-         generateMinimalVertexSupportPolygon(tempPolygon, tempVertexList, numberOfVertices);
-      }
+         changePoseAndMergePolygons(tempPolygon, supportPolygonPose, leftAnklePose, leftFootSupportPolygon, rightAnklePose, rightFootSupportPolygon, precision);
       else if (isLeftFootSupported)
-      {
-         tempPolygon.set(leftFootSupportPolygon);
-         TransformHelperTools.transformFromPoseToPose(leftAnklePose, supportPolygonPose, tempPolygon);
-      }
+         getPolygonInDesiredPose(tempPolygon, supportPolygonPose, leftAnklePose, leftFootSupportPolygon);
       else if (isRightFootSupported)
-      {
-         tempPolygon.set(rightFootSupportPolygon);
-         TransformHelperTools.transformFromPoseToPose(leftAnklePose, supportPolygonPose, tempPolygon);
-      }
+         getPolygonInDesiredPose(tempPolygon, supportPolygonPose, rightAnklePose, rightFootSupportPolygon);
       else
-      {
          tempPolygon.clearAndUpdate();
-      }
       contactStateToPopulate.setPose(supportPolygonPose);
       contactStateToPopulate.setSupportPolygon(tempPolygon);
+   }
+
+   public void setSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly supportPolygonPose, ConvexPolygon2D supportPolygon)
+   {
+      contactStateToPopulate.setPose(supportPolygonPose);
+      contactStateToPopulate.setSupportPolygon(supportPolygon);
+   }
+
+   public void changePoseAndSetSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly desiredPose, FramePose2DReadOnly supportPolygonPose,
+                                              ConvexPolygon2D supportPolygon)
+   {
+      tempPolygon.set(supportPolygon);
+      TransformHelperTools.transformFromPoseToPose(supportPolygonPose, desiredPose, tempPolygon);
+      setSupportPolygon(contactStateToPopulate, desiredPose, tempPolygon);
+   }
+
+   public void getPolygonInDesiredPose(ConvexPolygon2D polygonToSet, FramePose2DReadOnly desiredPose, FramePose2DReadOnly poseForPolygon1,
+                                       ConvexPolygon2D polygon1)
+   {
+      polygonToSet.set(polygon1);
+      TransformHelperTools.transformFromPoseToPose(poseForPolygon1, desiredPose, polygonToSet);
+   }
+
+   public void mergePolygons(ConvexPolygon2D polygonToSet, ConvexPolygon2D polygon1, ConvexPolygon2D polygon2, double precision)
+   {
+      int maxNumberOfVertices = polygon1.getNumberOfVertices() + polygon2.getNumberOfVertices();
+      if (maxNumberOfVertices > tempVertexList.size())
+         throw new RuntimeException("Not enough vertices to combine the polygons");
+      for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
+         tempVertexList.get(i).set(polygon1.getVertex(i));
+      for (int i = 0; i < polygon2.getNumberOfVertices(); i++)
+         tempVertexList.get(i + polygon1.getNumberOfVertices()).set(polygon2.getVertex(i));
+      roundVertexCoordinatesToPrecision(precision, maxNumberOfVertices);
+      generateMinimalVertexSupportPolygon(polygonToSet, tempVertexList, maxNumberOfVertices);
+   }
+
+   public void changePoseAndMergePolygons(ConvexPolygon2D polygonToSet, FramePose2DReadOnly desiredPose, FramePose2DReadOnly poseForPolygon1,
+                                          ConvexPolygon2D polygon1, FramePose2DReadOnly poseForPolygon2, ConvexPolygon2D polygon2, double precision)
+   {
+      int maxNumberOfVertices = polygon1.getNumberOfVertices() + polygon2.getNumberOfVertices();
+      if (maxNumberOfVertices > tempVertexList.size())
+         throw new RuntimeException("Not enough vertices to combine the polygons");
+      tempPolygon.set(polygon1);
+      TransformHelperTools.transformFromPoseToPose(poseForPolygon1, desiredPose, tempPolygon);
+      for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
+         tempVertexList.get(i).set(tempPolygon.getVertex(i));
+      tempPolygon.set(polygon2);
+      TransformHelperTools.transformFromPoseToPose(poseForPolygon2, desiredPose, tempPolygon);
+      for (int i = 0; i < polygon2.getNumberOfVertices(); i++)
+         tempVertexList.get(i + polygon1.getNumberOfVertices()).set(tempPolygon.getVertex(i));
+      roundVertexCoordinatesToPrecision(precision, maxNumberOfVertices);
+      generateMinimalVertexSupportPolygon(polygonToSet, tempVertexList, maxNumberOfVertices);
    }
 
    private void roundVertexCoordinatesToPrecision(double precision, int numberOfVertices)
@@ -184,17 +224,6 @@ public class ContactStatePlanGenerator
       polygonToSet.setAndUpdate(vertexList, numberOfVertices);
    }
 
-   private void addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(FramePose2DReadOnly desiredPose, FramePose2DReadOnly anklePose,
-                                                                              ConvexPolygon2D footSupportPolygonInAnkleFrame, int firstIndex)
-   {
-      for (int i = 0; i < footSupportPolygonInAnkleFrame.getNumberOfVertices(); i++)
-      {
-         Point2D vertexToSet = tempVertexList.get(i + firstIndex);
-         vertexToSet.set(footSupportPolygonInAnkleFrame.getVertex(i));
-         TransformHelperTools.transformFromPoseToPose(anklePose, desiredPose, vertexToSet);
-      }
-   }
-
    // AS: From this point on all functions are specific to the kind of behavior wanted from the contact state plan
 
    /**
@@ -232,7 +261,9 @@ public class ContactStatePlanGenerator
       addPose(tempPoseForRightFoot, tempPose, rightAnklePoseOffset);
 
       ContactState firstGroundState = contactStates.get(0);
-      computeAndSetSupportPolygon(firstGroundState, tempPose, tempPoseForLeftFoot, tempPoseForRightFoot, leftFootSupportPolygon, rightFootSupportPolygon);
+      changePoseAndMergePolygons(tempPolygon, initialPelvisPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                 defaultPrecision);
+      setSupportPolygon(firstGroundState, initialPelvisPose, tempPolygon);
       firstGroundState.setDuration(groundDuration);
       for (int i = 0; i < numberOfJumps; i++)
       {
@@ -252,18 +283,150 @@ public class ContactStatePlanGenerator
       }
    }
 
-   public void generateContactStatePlanForRunning(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftFootPose,
-                                                  FramePose2DReadOnly rightFootPose, FramePose2DReadOnly poseDelta, RobotSide firstStepSide,
-                                                  boolean useLastStepToEndRun)
+   public void generateContactStatePlanForWalking(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,
+                                                  FramePose2DReadOnly initialRightAnklePose, Point2DReadOnly stepSize, RobotSide firstStepSide,
+                                                  double singleSupportDuration, double transferDuration, double initialDoubleSupportDuration,
+                                                  double finalDoubleSupportDuration, boolean useLastStepToEndWalk, ConvexPolygon2D leftFootSupportPolygon,
+                                                  ConvexPolygon2D rightFootSupportPolygon)
    {
-      
+      if (contactStates.size() < numberOfSteps * 2 + 1)
+         throw new RuntimeException("Contact state list does not contain enough elements to store contact states for " + numberOfSteps + " steps");
+      ContactState initialDoubleSupportState = contactStates.get(0);
+      initialDoubleSupportState.setDuration(initialDoubleSupportDuration);
+      tempPoseForLeftFoot.set(initialLeftAnklePose);
+      tempPoseForRightFoot.set(initialRightAnklePose);
+      computeAveragePose(tempPose, initialLeftAnklePose, initialRightAnklePose);
+      changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                 defaultPrecision);
+      setSupportPolygon(initialDoubleSupportState, tempPose, tempPolygon);
+      RobotSide stepSide = firstStepSide;
+      double halfStepX = stepSize.getX() / 2.0;
+      double halfStepY = stepSize.getY() / 2.0;
+      for (int i = 0; i < numberOfSteps - 1; i++)
+      {
+         ContactState singleSupportState = contactStates.get(2 * i + 1);
+         singleSupportState.setDuration(singleSupportDuration);
+         if (stepSide == RobotSide.LEFT)
+         {
+            setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+         }
+         else
+         {
+            setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+         }
+         ContactState transferState = contactStates.get(2 * i + 2);
+         transferState.setDuration(transferDuration);
+         computeAveragePose(tempPose, initialLeftAnklePose, initialRightAnklePose);
+         changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                    defaultPrecision);
+         setSupportPolygon(transferState, tempPose, tempPolygon);
+         stepSide = stepSide.getOppositeSide();
+         if (stepSide == RobotSide.LEFT)
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+         else
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+      }
+      ContactState singleSupportState = contactStates.get(2 * numberOfSteps - 1);
+      singleSupportState.setDuration(singleSupportDuration);
+      if (stepSide == RobotSide.LEFT)
+      {
+         setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
+         if (!useLastStepToEndWalk)
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+      }
+      else
+      {
+         setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
+         if (!useLastStepToEndWalk)
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+      }
+      ContactState finalDoubleSupportState = contactStates.get(2 * numberOfSteps);
+      finalDoubleSupportState.setDuration(finalDoubleSupportDuration);
+      computeAveragePose(tempPose, initialLeftAnklePose, initialRightAnklePose);
+      changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                 defaultPrecision);
+      setSupportPolygon(finalDoubleSupportState, tempPose, tempPolygon);
    }
 
-   public void generateContactStatePlanForWalking(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftFootPose,
-                                                  FramePose2DReadOnly rightFootPose, double xStep, double yStep, double yawStep, RobotSide firstStepSide,
-                                                  boolean useLastStepToEndWalk)
+   public void generateContactStatePlanForRunning(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,
+                                                  FramePose2DReadOnly initialRightAnklePose, Point2DReadOnly stepSize, RobotSide firstStepSide,
+                                                  double flightDuration, double singleSupportDuration, double initialDoubleSupportDuration,
+                                                  double finalDoubleSupportDuration, boolean useLastStepToEndWalk, ConvexPolygon2D leftFootSupportPolygon,
+                                                  ConvexPolygon2D rightFootSupportPolygon)
    {
+      if (contactStates.size() < numberOfSteps * 2 + 2)
+         throw new RuntimeException("Contact state list does not contain enough elements to store contact states for " + numberOfSteps + " steps");
 
+      ContactState initialDoubleSupportState = contactStates.get(0);
+      initialDoubleSupportState.setDuration(initialDoubleSupportDuration);
+      tempPoseForLeftFoot.set(initialLeftAnklePose);
+      tempPoseForRightFoot.set(initialRightAnklePose);
+      computeAveragePose(tempPose, initialLeftAnklePose, initialRightAnklePose);
+      changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                 defaultPrecision);
+      setSupportPolygon(initialDoubleSupportState, tempPose, tempPolygon);
+      RobotSide stepSide = firstStepSide;
+      double halfStepX = stepSize.getX() / 2.0;
+      double halfStepY = stepSize.getY() / 2.0;
+
+      for (int i = 0; i < numberOfSteps - 1; i++)
+      {
+         ContactState singleSupportState = contactStates.get(2 * i + 1);
+         singleSupportState.setDuration(singleSupportDuration);
+
+         ContactState flightState = contactStates.get(2 * i + 2);
+         flightState.setDuration(flightDuration);
+         if (stepSide == RobotSide.LEFT)
+         {
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+            setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
+            tempPolygon.clear();
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+            computeAveragePose(tempPose, tempPoseForLeftFoot, tempPoseForRightFoot);
+            setSupportPolygon(flightState, tempPose, tempPolygon);
+         }
+         else
+         {
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+            setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
+            tempPolygon.clear();
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+            computeAveragePose(tempPose, tempPoseForLeftFoot, tempPoseForRightFoot);
+            setSupportPolygon(flightState, tempPose, tempPolygon);
+         }
+         stepSide = stepSide.getOppositeSide();
+      }
+      ContactState singleSupportState = contactStates.get(2 * numberOfSteps - 1);
+      singleSupportState.setDuration(flightDuration);
+      if (stepSide == RobotSide.LEFT)
+         setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
+      else
+         setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
+      ContactState finalDoubleSupportState = contactStates.get(2 * numberOfSteps);
+      finalDoubleSupportState.setDuration(finalDoubleSupportDuration);
+      if (!useLastStepToEndWalk)
+      {
+         if (stepSide == RobotSide.LEFT)
+            tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+         else
+            tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+         computeAveragePose(tempPose, tempPoseForLeftFoot, tempPoseForRightFoot);
+      }
+      changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
+                                 defaultPrecision);
+      setSupportPolygon(finalDoubleSupportState, tempPose, tempPolygon);
+   }
+
+   private void computeAveragePose(FramePose2D poseToSet, FramePose2DReadOnly pose1, FramePose2DReadOnly pose2)
+   {
+      pose1.checkReferenceFrameMatch(pose2);
+      poseToSet.setReferenceFrame(pose1.getReferenceFrame());
+      double x = 0.5 * (pose1.getX() + pose2.getX());
+      double y = 0.5 * (pose1.getY() + pose2.getY());
+      double yaw = 0.5 * (pose1.getYaw() + pose2.getYaw());
+      poseToSet.set(x, y, yaw);
    }
 
    private void addPose(FramePose2D poseToSet, FramePose2DReadOnly pose1, Pose2DReadOnly pose2)
