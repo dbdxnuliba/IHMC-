@@ -6,9 +6,9 @@ import us.ihmc.graphicsDescription.GraphicsUpdatable;
 
 public class GraphicsUpdatablePlaybackListener implements PlaybackListener
 {
-   private final ArrayList<GraphicsUpdatable> graphicsUpdatableList;
+   private final ArrayList<? extends GraphicsUpdatable> graphicsUpdatableList;
 
-   public GraphicsUpdatablePlaybackListener(ArrayList<GraphicsUpdatable> graphicsUpdatableList)
+   public GraphicsUpdatablePlaybackListener(ArrayList<? extends GraphicsUpdatable> graphicsUpdatableList)
    {
       this.graphicsUpdatableList = graphicsUpdatableList;
    }
