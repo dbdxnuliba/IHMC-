@@ -4,15 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Pose2DReadOnly;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose2DReadOnly;
-import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
@@ -27,23 +29,25 @@ import us.ihmc.robotics.robotSide.SideDependentList;
  */
 public class ContactStatePlanGenerator
 {
-   private FramePose2D tempPose = new FramePose2D();
-   private FrameConvexPolygon2d tempPolygon = new FrameConvexPolygon2d();
-   private ArrayList<FramePoint2D> tempVertexList = new ArrayList<>();
-   private RigidBodyTransform tempTransform = new RigidBodyTransform();
    private double defaultPrecision = 1e-4;
+
+   private FramePose2D tempPoseForLeftFoot = new FramePose2D();
+   private FramePose2D tempPoseForRightFoot = new FramePose2D();
+   private FramePose2D tempPose = new FramePose2D();
+   private ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
+   private ArrayList<Point2D> tempVertexList = new ArrayList<>();
+   private RigidBodyTransform tempTransform = new RigidBodyTransform();
 
    public ContactStatePlanGenerator(int maxNumberOfSupportPolygonVertices, double defaultPrecision)
    {
-      for (int i = 0; i < maxNumberOfSupportPolygonVertices; i++)
-         tempVertexList.add(new FramePoint2D());
+      this(maxNumberOfSupportPolygonVertices);
       this.defaultPrecision = defaultPrecision;
    }
 
    public ContactStatePlanGenerator(int maxNumberOfSupportPolygonVertices)
    {
       for (int i = 0; i < maxNumberOfSupportPolygonVertices; i++)
-         tempVertexList.add(new FramePoint2D());
+         tempVertexList.add(new Point2D());
    }
 
    public void computeAndSetSupportPolygon(ContactState contactStateToPopulate, ReferenceFrame supportPolygonReferenceFrame,
@@ -80,7 +84,7 @@ public class ContactStatePlanGenerator
          computeAndSetSupportPolygon(contactStateList.get(i), supportPolygonReferenceFrame, anklePoses.get(i), footSupportPolygonsInAnkleFrame);
    }
 
-   public void computeAndSetSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly poseToGenerateSupportPolygon,
+   public void computeAndSetSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly supportPolygonPose,
                                            FramePose2DReadOnly leftAnklePose, FramePose2DReadOnly rightAnklePose, ConvexPolygon2D leftFootSupportPolygon,
                                            ConvexPolygon2D rightFootSupportPolygon, double precision)
    {
@@ -89,9 +93,9 @@ public class ContactStatePlanGenerator
       int numberOfVertices = 0;
       if (isRightFootSupported && isLeftFootSupported)
       {
-         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(poseToGenerateSupportPolygon, rightAnklePose, rightFootSupportPolygon, numberOfVertices);
+         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(supportPolygonPose, rightAnklePose, rightFootSupportPolygon, numberOfVertices);
          numberOfVertices += rightFootSupportPolygon.getNumberOfVertices();
-         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(poseToGenerateSupportPolygon, leftAnklePose, leftFootSupportPolygon, numberOfVertices);
+         addVerticesInCentroidalPoseFrameToListFromAnklePoseAndPolygon(supportPolygonPose, leftAnklePose, leftFootSupportPolygon, numberOfVertices);
          numberOfVertices += leftFootSupportPolygon.getNumberOfVertices();
          roundVertexCoordinatesToPrecision(precision, numberOfVertices);
          generateMinimalVertexSupportPolygon(tempPolygon, tempVertexList, numberOfVertices);
@@ -102,25 +106,25 @@ public class ContactStatePlanGenerator
          contactStateToPopulate.setSupportPolygon(rightFootSupportPolygon);
       else
       {
-         tempPolygon.clearAndUpdate(poseToGenerateSupportPolygon.getReferenceFrame());
-         contactStateToPopulate.setSupportPolygon(tempPolygon.getGeometryObject());
+         tempPolygon.clearAndUpdate();
+         contactStateToPopulate.setSupportPolygon(tempPolygon);
       }
-      contactStateToPopulate.setPose(poseToGenerateSupportPolygon);
-      contactStateToPopulate.setSupportPolygon(tempPolygon.getGeometryObject());
+      contactStateToPopulate.setPose(supportPolygonPose);
+      contactStateToPopulate.setSupportPolygon(tempPolygon);
    }
 
    private void roundVertexCoordinatesToPrecision(double precision, int numberOfVertices)
    {
       for (int i = 0; i < numberOfVertices; i++)
       {
-         FramePoint2D vertexToRound = tempVertexList.get(i);
+         Point2D vertexToRound = tempVertexList.get(i);
          double newX = MathTools.roundToPrecision(vertexToRound.getX(), precision);
          double newY = MathTools.roundToPrecision(vertexToRound.getY(), precision);
          vertexToRound.set(newX, newY);
       }
    }
 
-   public void generateMinimalVertexSupportPolygon(FrameConvexPolygon2d polygonToSet, ArrayList<FramePoint2D> vertexList, int numberOfVertices)
+   public void generateMinimalVertexSupportPolygon(ConvexPolygon2D polygonToSet, ArrayList<Point2D> vertexList, int numberOfVertices)
    {
       if (numberOfVertices == 0)
       {
@@ -140,19 +144,19 @@ public class ContactStatePlanGenerator
             candidateVertexIndex = i;
       }
       // Place the top right vertex at the beginning of list
-      FramePoint2D topRightVertex = vertexList.get(candidateVertexIndex);
-      FramePoint2D firstVertex = vertexList.get(0);
+      Point2D topRightVertex = vertexList.get(candidateVertexIndex);
+      Point2D firstVertex = vertexList.get(0);
       vertexList.set(0, topRightVertex);
       vertexList.set(candidateVertexIndex, firstVertex);
       // Start the marching
       for (int i = 1; i < numberOfVertices; i++)
       {
-         FramePoint2D lastComputedPoint = vertexList.get(i - 1);
-         FramePoint2D candidatePoint = vertexList.get(i);
+         Point2D lastComputedPoint = vertexList.get(i - 1);
+         Point2D candidatePoint = vertexList.get(i);
          // Find the next one 
          for (int j = i + 1; j < numberOfVertices; j++)
          {
-            FramePoint2D pointUnderConsideration = vertexList.get(j);
+            Point2D pointUnderConsideration = vertexList.get(j);
             double det = (pointUnderConsideration.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
                   - (pointUnderConsideration.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
             boolean swap = det > 0.0 || (det == 0.0 && lastComputedPoint.distance(pointUnderConsideration) > lastComputedPoint.distance(candidatePoint));
@@ -180,12 +184,78 @@ public class ContactStatePlanGenerator
    {
       for (int i = 0; i < footSupportPolygonInAnkleFrame.getNumberOfVertices(); i++)
       {
-         FramePoint2D vertexToSet = tempVertexList.get(i + firstIndex);
-         vertexToSet.setIncludingFrame(anklePose.getPosition());
-         vertexToSet.add(footSupportPolygonInAnkleFrame.getVertex(i));
-         vertexToSet.changeFrame(desiredPose.getReferenceFrame());
-         desiredPose.get(tempTransform);
-         vertexToSet.applyInverseTransform(tempTransform);
+         Point2D vertexToSet = tempVertexList.get(i + firstIndex);
+         vertexToSet.set(footSupportPolygonInAnkleFrame.getVertex(i));
+         TransformHelperTools.transformFromPoseToPose(anklePose, desiredPose, vertexToSet);
       }
+   }
+
+   
+   // AS: From this point on all functions are specific to the kind of behavior wanted from the contact state plan
+
+   /**
+    * Generates a contact state plan that move the robot by the value specified in {@code pelvisPoseChangePerJump}. The feet are held at a constant 
+    * pose offset from the pelvis pose. 
+    * @param contactStates the list of contact states to be populated. Should be of size (2 * {@code numberOfJumps} + 1) 
+    * @param numberOfJumps the number of jumps to be planned
+    * @param initialPelvisPose initial pose of the pelvis. The reference frame of this pose is used as the reference frame in which the plan is generated
+    * @param pelvisPoseChangePerJump the change in the pelvis pose after every jump
+    * @param leftAnklePoseOffset the offset of the left ankle frame
+    * @param rightAnklePoseOffset the offset of the right ankle frame
+    * @param flightDuration the duration of the flight phase
+    * @param groundDuration the duration of the double support phase
+    * @param footSupportPolygon the support polygon in ankle frames for both feet
+    */
+   public void generateContactStatePlanForJumping(List<ContactState> contactStates, int numberOfJumps, FramePose2DReadOnly initialPelvisPose,
+                                                  Pose2DReadOnly pelvisPoseChangePerJump, Pose2DReadOnly leftAnklePoseOffset,
+                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration, ConvexPolygon2D footSupportPolygon)
+   {
+      if (contactStates.size() < numberOfJumps * 2 + 1)
+         throw new RuntimeException("Contact state list does not contain enough elements to store contact states for " + numberOfJumps + " jumps");
+      
+      tempPose.setIncludingFrame(initialPelvisPose);
+      addPose(tempPoseForLeftFoot, tempPose, leftAnklePoseOffset);
+      addPose(tempPoseForRightFoot, tempPose, rightAnklePoseOffset);
+      
+      ContactState firstGroundState = contactStates.get(0);
+      computeAndSetSupportPolygon(firstGroundState, tempPose, tempPoseForLeftFoot, tempPoseForRightFoot, footSupportPolygon, footSupportPolygon);
+      firstGroundState.setDuration(groundDuration);
+      for (int i = 0; i < numberOfJumps; i++)
+      {
+         ContactState flightState = contactStates.get(2 * i + 1);
+         flightState.setPose(tempPose);
+         tempPolygon.clear();
+         flightState.setSupportPolygon(tempPolygon);
+         flightState.setDuration(flightDuration);
+         
+         addPose(tempPose, tempPose, pelvisPoseChangePerJump);
+         
+         ContactState groundState = contactStates.get(2 * i + 2);
+         groundState.setPose(tempPose);
+         firstGroundState.getSupportPolygon(tempPolygon);
+         groundState.setSupportPolygon(tempPolygon);
+         groundState.setDuration(groundDuration);
+      }
+   }
+
+   public void generateContactStatePlanForRunning(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftFootPose,
+                                                  FramePose2DReadOnly rightFootPose, FramePose2DReadOnly poseDelta, RobotSide firstStepSide,
+                                                  boolean useLastStepToEndRun)
+   {
+      
+   }
+
+   public void generateContactStatePlanForWalking(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftFootPose,
+                                                  FramePose2DReadOnly rightFootPose, double xStep, double yStep, double yawStep, RobotSide firstStepSide,
+                                                  boolean useLastStepToEndWalk)
+   {
+
+   }
+
+   private void addPose(FramePose2D poseToSet, FramePose2DReadOnly pose1, Pose2DReadOnly pose2)
+   {
+      poseToSet.setIncludingFrame(pose1);
+      poseToSet.appendTranslation(pose2.getPosition());
+      poseToSet.appendRotation(pose2.getOrientation());
    }
 }

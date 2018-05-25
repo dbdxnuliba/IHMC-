@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -14,8 +15,11 @@ import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.Pose2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -36,25 +40,20 @@ public class ContactStatePlanGeneratorTest
    {
       double epsilon = Epsilons.ONE_BILLIONTH;
       ContactStatePlanGenerator generator = new ContactStatePlanGenerator(12);
-      FrameConvexPolygon2d problemPoly = new FrameConvexPolygon2d();
-      List<Point2D> defaultFootPolygonPointsInAnkleFrame = Stream.of(new Point2D(ankleToToeX, ankleToToeY), new Point2D(ankleToToeX, -ankleToToeY),
-                                                                     new Point2D(ankleToMidX, -ankleToMidY), new Point2D(-ankleToHeelX, -ankleToHeelY),
-                                                                     new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
-                                                                 .collect(Collectors.toList());
-      ArrayList<FramePoint2D> vertexList = new ArrayList<>();
+      ConvexPolygon2D problemPoly = new ConvexPolygon2D();
+      List<Point2D> defaultFootPolygonPointsInAnkleFrame = generateDefaultFootSupportPolygonVertexList();
+      ArrayList<Point2D> vertexList = new ArrayList<>();
       for (int i = 0; i < defaultFootPolygonPointsInAnkleFrame.size(); i++)
       {
-         FramePoint2D leftFootPoint = new FramePoint2D();
-         leftFootPoint.set(ReferenceFrame.getWorldFrame(), defaultFootPolygonPointsInAnkleFrame.get(i).getX(),
-                           defaultFootPolygonPointsInAnkleFrame.get(i).getY() + width);
-         FramePoint2D rightFootPoint = new FramePoint2D();
-         rightFootPoint.set(ReferenceFrame.getWorldFrame(), defaultFootPolygonPointsInAnkleFrame.get(i).getX(),
-                            defaultFootPolygonPointsInAnkleFrame.get(i).getY() - width);
+         Point2D leftFootPoint = new Point2D();
+         leftFootPoint.set(defaultFootPolygonPointsInAnkleFrame.get(i).getX(), defaultFootPolygonPointsInAnkleFrame.get(i).getY() + width);
+         Point2D rightFootPoint = new Point2D();
+         rightFootPoint.set(defaultFootPolygonPointsInAnkleFrame.get(i).getX(), defaultFootPolygonPointsInAnkleFrame.get(i).getY() - width);
          vertexList.add(leftFootPoint);
          vertexList.add(rightFootPoint);
       }
-      vertexList.add(new FramePoint2D());
-      vertexList.add(new FramePoint2D());
+      vertexList.add(new Point2D());
+      vertexList.add(new Point2D());
       generator.generateMinimalVertexSupportPolygon(problemPoly, vertexList, defaultFootPolygonPointsInAnkleFrame.size() * 2);
       assertEquals("Resultant poly is " + problemPoly.toString(), 6, problemPoly.getNumberOfVertices());
       FramePoint2D pointForTesting = new FramePoint2D();
@@ -77,25 +76,20 @@ public class ContactStatePlanGeneratorTest
    {
       double epsilon = Epsilons.ONE_BILLIONTH;
       ContactStatePlanGenerator generator = new ContactStatePlanGenerator(12, 1e-5);
-      FrameConvexPolygon2d problemPoly = new FrameConvexPolygon2d();
-      List<Point2D> defaultFootPolygonPointsInAnkleFrame = Stream.of(new Point2D(ankleToToeX, ankleToToeY), new Point2D(ankleToToeX, -ankleToToeY),
-                                                                     new Point2D(ankleToMidX, -ankleToMidY), new Point2D(-ankleToHeelX, -ankleToHeelY),
-                                                                     new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
-                                                                 .collect(Collectors.toList());
-      ArrayList<FramePoint2D> vertexList = new ArrayList<>();
+      ConvexPolygon2D problemPoly = new ConvexPolygon2D();
+      List<Point2D> defaultFootPolygonPointsInAnkleFrame = generateDefaultFootSupportPolygonVertexList();
+      ArrayList<Point2D> vertexList = new ArrayList<>();
       for (int i = 0; i < defaultFootPolygonPointsInAnkleFrame.size(); i++)
       {
-         FramePoint2D leftFootPoint = new FramePoint2D();
-         leftFootPoint.set(ReferenceFrame.getWorldFrame(), defaultFootPolygonPointsInAnkleFrame.get(i).getX(),
-                           defaultFootPolygonPointsInAnkleFrame.get(i).getY() + width);
-         FramePoint2D rightFootPoint = new FramePoint2D();
-         rightFootPoint.set(ReferenceFrame.getWorldFrame(), defaultFootPolygonPointsInAnkleFrame.get(i).getY(),
-                            -defaultFootPolygonPointsInAnkleFrame.get(i).getX() - width);
+         Point2D leftFootPoint = new Point2D();
+         leftFootPoint.set(defaultFootPolygonPointsInAnkleFrame.get(i).getX(), defaultFootPolygonPointsInAnkleFrame.get(i).getY() + width);
+         Point2D rightFootPoint = new Point2D();
+         rightFootPoint.set(defaultFootPolygonPointsInAnkleFrame.get(i).getY(), -defaultFootPolygonPointsInAnkleFrame.get(i).getX() - width);
          vertexList.add(leftFootPoint);
          vertexList.add(rightFootPoint);
       }
-      vertexList.add(new FramePoint2D());
-      vertexList.add(new FramePoint2D());
+      vertexList.add(new Point2D());
+      vertexList.add(new Point2D());
       generator.generateMinimalVertexSupportPolygon(problemPoly, vertexList, defaultFootPolygonPointsInAnkleFrame.size() * 2);
       assertEquals("Resultant poly is " + problemPoly.toString(), 8, problemPoly.getNumberOfVertices());
       FramePoint2D pointForTesting = new FramePoint2D();
@@ -117,14 +111,28 @@ public class ContactStatePlanGeneratorTest
       EuclidCoreTestTools.assertPoint2DGeometricallyEquals(pointForTesting, problemPoly.getVertex(7), epsilon);
    }
 
+   private List<Point2D> generateDefaultFootSupportPolygonVertexList()
+   {
+      return Stream.of(new Point2D(ankleToToeX, ankleToToeY), new Point2D(ankleToToeX, -ankleToToeY), new Point2D(ankleToMidX, -ankleToMidY),
+                       new Point2D(-ankleToHeelX, -ankleToHeelY), new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
+                   .collect(Collectors.toList());
+   }
+
+   private List<Point2D> generateSimpleFootSupportPolygonVertexList()
+   {
+      return Stream.of(new Point2D(0.1, 0.2), new Point2D(0.1, -0.2), new Point2D(-0.1, -0.2), new Point2D(-0.1, 0.2)).collect(Collectors.toList());
+   }
+
+   private ConvexPolygon2D generateSimpleFootSupportPolygon()
+   {
+      return new ConvexPolygon2D(generateSimpleFootSupportPolygonVertexList());
+   }
+   
    @Test(timeout = 200)
    public void testContactStateSupportPolygonGeneration()
    {
       double epsilon = Epsilons.ONE_BILLIONTH;
-      ConvexPolygon2D defaultFootPolygon = new ConvexPolygon2D(Stream.of(new Point2D(ankleToToeX, ankleToToeY), new Point2D(ankleToToeX, -ankleToToeY),
-                                                                         new Point2D(ankleToMidX, -ankleToMidY), new Point2D(-ankleToHeelX, -ankleToHeelY),
-                                                                         new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
-                                                                     .collect(Collectors.toList()));
+      ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
       ContactStatePlanGenerator generator = new ContactStatePlanGenerator(12, 1e-5);
       ContactState contactStateToTest = new ContactState();
       generator.computeAndSetSupportPolygon(contactStateToTest, new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.0), 0.0),
@@ -156,10 +164,7 @@ public class ContactStatePlanGeneratorTest
    public void testContactStateSupportPolygonGenerationWithPoseRotation()
    {
       double epsilon = Epsilons.ONE_BILLIONTH;
-      ConvexPolygon2D defaultFootPolygon = new ConvexPolygon2D(Stream.of(new Point2D(ankleToToeX, ankleToToeY), new Point2D(ankleToToeX, -ankleToToeY),
-                                                                         new Point2D(ankleToMidX, -ankleToMidY), new Point2D(-ankleToHeelX, -ankleToHeelY),
-                                                                         new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
-                                                                     .collect(Collectors.toList()));
+      ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
       ContactStatePlanGenerator generator = new ContactStatePlanGenerator(12, 1e-5);
       ContactState contactStateToTest = new ContactState();
       generator.computeAndSetSupportPolygon(contactStateToTest, new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.0), Math.PI / 2),
@@ -184,5 +189,39 @@ public class ContactStatePlanGeneratorTest
       EuclidCoreTestTools.assertPoint2DGeometricallyEquals(pointForTesting, polygonToTest.getVertex(4), epsilon);
       pointForTesting.set(-ankleToToeY - width, -ankleToToeX);
       EuclidCoreTestTools.assertPoint2DGeometricallyEquals(pointForTesting, polygonToTest.getVertex(5), epsilon);
+   }
+
+   private ConvexPolygon2D generateDefaultFootSupportPolygon()
+   {
+      return new ConvexPolygon2D(generateDefaultFootSupportPolygonVertexList());
+   }
+
+   @Test(timeout = 200)
+   public void testJumpPlanGeneration()
+   {
+      ConvexPolygon2D defaultSupportPolygonAnkleFrame = generateDefaultFootSupportPolygon();
+      FramePose2D initialPelvisPose = new FramePose2D();
+      Pose2D pelvisPoseChangePerJump = new Pose2D(0.1, 0.1, Math.PI / 4);
+      int numberOfJumps = 2;
+      ArrayList<ContactState> contactStates = new ArrayList<>();
+      for (int i = 0; i < 2 * numberOfJumps + 1; i++)
+         contactStates.add(new ContactState());
+      Pose2D rightAnklePoseOffset = new Pose2D(0.0, -0.1, 0.0);
+      Pose2D leftAnklePoseOffset = new Pose2D(0.0, 0.1, 0.0);
+      ContactStatePlanGenerator contactStatePlanGenerationHelper = new ContactStatePlanGenerator(12, 1e-5);
+      contactStatePlanGenerationHelper.generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump,
+                                                                          leftAnklePoseOffset, rightAnklePoseOffset, 0.1, 0.3, defaultSupportPolygonAnkleFrame);
+      Stream.of(contactStates).forEach((state) -> PrintTools.debug(state.toString()));
+   }
+
+   @Test(timeout = 200)
+   public void testContactStateSupportPolygonSetting()
+   {
+      ContactState contactStateToTest = new ContactState(ReferenceFrame.getWorldFrame());
+      contactStateToTest.setSupportPolygon(generateSimpleFootSupportPolygon());
+      contactStateToTest.setPosition(new FramePoint3D(ReferenceFrame.getWorldFrame(), 1.0, 1.0, 0.0));
+      contactStateToTest.setOrientation(new FrameQuaternion(ReferenceFrame.getWorldFrame(), Math.PI / 2, 0.0, 0.0));
+      FrameConvexPolygon2d polygon = new FrameConvexPolygon2d();
+      contactStateToTest.getSupportPolygon(ReferenceFrame.getWorldFrame(), polygon);
    }
 }
