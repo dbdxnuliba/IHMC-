@@ -84,9 +84,9 @@ public class ContactStatePlanGenerator
          computeAndSetSupportPolygon(contactStateList.get(i), supportPolygonReferenceFrame, anklePoses.get(i), footSupportPolygonsInAnkleFrame);
    }
 
-   public void computeAndSetSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly supportPolygonPose,
-                                           FramePose2DReadOnly leftAnklePose, FramePose2DReadOnly rightAnklePose, ConvexPolygon2D leftFootSupportPolygon,
-                                           ConvexPolygon2D rightFootSupportPolygon, double precision)
+   public void computeAndSetSupportPolygon(ContactState contactStateToPopulate, FramePose2DReadOnly supportPolygonPose, FramePose2DReadOnly leftAnklePose,
+                                           FramePose2DReadOnly rightAnklePose, ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon,
+                                           double precision)
    {
       boolean isLeftFootSupported = leftAnklePose != null && !leftAnklePose.containsNaN() && leftFootSupportPolygon.getNumberOfVertices() > 0;
       boolean isRightFootSupported = rightAnklePose != null && !rightAnklePose.containsNaN() && rightFootSupportPolygon.getNumberOfVertices() > 0;
@@ -195,7 +195,6 @@ public class ContactStatePlanGenerator
       }
    }
 
-   
    // AS: From this point on all functions are specific to the kind of behavior wanted from the contact state plan
 
    /**
@@ -213,17 +212,27 @@ public class ContactStatePlanGenerator
     */
    public void generateContactStatePlanForJumping(List<ContactState> contactStates, int numberOfJumps, FramePose2DReadOnly initialPelvisPose,
                                                   Pose2DReadOnly pelvisPoseChangePerJump, Pose2DReadOnly leftAnklePoseOffset,
-                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration, ConvexPolygon2D footSupportPolygon)
+                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration,
+                                                  ConvexPolygon2D footSupportPolygon)
+   {
+      generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump, leftAnklePoseOffset, rightAnklePoseOffset,
+                                         flightDuration, groundDuration, footSupportPolygon, footSupportPolygon);
+   }
+
+   public void generateContactStatePlanForJumping(List<ContactState> contactStates, int numberOfJumps, FramePose2DReadOnly initialPelvisPose,
+                                                  Pose2DReadOnly pelvisPoseChangePerJump, Pose2DReadOnly leftAnklePoseOffset,
+                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration,
+                                                  ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon)
    {
       if (contactStates.size() < numberOfJumps * 2 + 1)
          throw new RuntimeException("Contact state list does not contain enough elements to store contact states for " + numberOfJumps + " jumps");
-      
+
       tempPose.setIncludingFrame(initialPelvisPose);
       addPose(tempPoseForLeftFoot, tempPose, leftAnklePoseOffset);
       addPose(tempPoseForRightFoot, tempPose, rightAnklePoseOffset);
-      
+
       ContactState firstGroundState = contactStates.get(0);
-      computeAndSetSupportPolygon(firstGroundState, tempPose, tempPoseForLeftFoot, tempPoseForRightFoot, footSupportPolygon, footSupportPolygon);
+      computeAndSetSupportPolygon(firstGroundState, tempPose, tempPoseForLeftFoot, tempPoseForRightFoot, leftFootSupportPolygon, rightFootSupportPolygon);
       firstGroundState.setDuration(groundDuration);
       for (int i = 0; i < numberOfJumps; i++)
       {
@@ -232,9 +241,9 @@ public class ContactStatePlanGenerator
          tempPolygon.clear();
          flightState.setSupportPolygon(tempPolygon);
          flightState.setDuration(flightDuration);
-         
+
          addPose(tempPose, tempPose, pelvisPoseChangePerJump);
-         
+
          ContactState groundState = contactStates.get(2 * i + 2);
          groundState.setPose(tempPose);
          firstGroundState.getSupportPolygon(tempPolygon);
