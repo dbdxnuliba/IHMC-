@@ -14,24 +14,45 @@ public enum ConfigurationSpaceName
    public static final Random random = new Random(1);
 
    public static final ConfigurationSpaceName[] values = values();
-
-   public double getDefaultExplorationLowerLimit()
-   {
-      System.out.println(getDefaultExplorationAmplitude());
-      if (this == SE3)
-         return 0.0;
-      else
-         return -getDefaultExplorationAmplitude();
-   }
-
+   
    public double getDefaultExplorationUpperLimit()
    {
-      System.out.println(getDefaultExplorationAmplitude());
-      if (this == SE3)
+      switch (this)
+      {
+      case X:
+      case Y:
+      case Z:
          return 1.0;
-      else
-         return getDefaultExplorationAmplitude();
+      case ROLL:
+      case PITCH:
+      case YAW:
+         return 0.3 * Math.PI;
+      case SE3:
+         return 1.0;
+      default:
+         throw new RuntimeException("Unexpected value: " + this);
+      }
    }
+   
+   public double getDefaultExplorationLowerLimit()
+   {
+      switch (this)
+      {
+      case X:
+      case Y:
+      case Z:
+         return 0.8;
+      case ROLL:
+      case PITCH:
+      case YAW:
+         return -0.3 * Math.PI;
+      case SE3:
+         return -1.0;
+      default:
+         throw new RuntimeException("Unexpected value: " + this);
+      }
+   }
+   
 
    public double getDefaultExplorationAmplitude()
    {
@@ -40,7 +61,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return 1.0;
+         return 0.15;
       case ROLL:
       case PITCH:
       case YAW:
