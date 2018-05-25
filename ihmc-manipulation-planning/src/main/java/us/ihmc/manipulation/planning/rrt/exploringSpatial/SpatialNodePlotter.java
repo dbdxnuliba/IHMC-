@@ -1,10 +1,14 @@
 package us.ihmc.manipulation.planning.rrt.exploringSpatial;
 
 import java.awt.Color;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.rotationConversion.RotationVectorConversion;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -90,6 +94,26 @@ public class SpatialNodePlotter
       Color color;
       double diameter = 0.01;
 
+      //TEMP
+      SpatialNode saveNode = new SpatialNode(node);
+      switch (type)
+      {
+      case 1:
+         if (saveNode.isValid())
+            validNodes.add(saveNode);
+         else
+            inValidNodes.add(saveNode);
+         break;
+      case 2:
+         path.add(saveNode);
+         break;
+      case 3:
+         shortcutpath.add(saveNode);
+         break;
+      default:
+         break;
+      }
+
       for (int configurationIndex = 0; configurationIndex < configurationsList.size(); configurationIndex++)
       {
          String prefix;
@@ -168,5 +192,168 @@ public class SpatialNodePlotter
       }
 
       return configurationsList;
+   }
+
+   // TEMP
+   private List<SpatialNode> validNodes = new ArrayList<SpatialNode>();
+   private List<SpatialNode> inValidNodes = new ArrayList<SpatialNode>();
+   private List<SpatialNode> path = new ArrayList<SpatialNode>();
+   private List<SpatialNode> shortcutpath = new ArrayList<SpatialNode>();
+
+   public void saveNodes()
+   {
+      PrintTools.info("bbbbbbbbbbbbbbbbbb");
+      PrintTools.info("" + validNodes.size());
+      PrintTools.info("" + inValidNodes.size());
+      PrintTools.info("" + path.size());
+      PrintTools.info("" + shortcutpath.size());
+      
+      for(int i=0;i<validNodes.get(0).getSpatialData().getNumberOfExploringRigidBodies();i++)
+      {
+         PrintTools.info("" + validNodes.get(0).getSpatialData().getRigidBodyName(i));
+      }
+
+      String FILENAME = "C:\\Users\\inhol\\Documents\\MATLAB\\savingdata.txt";
+      BufferedWriter bw = null;
+      FileWriter fw = null;
+
+      try
+      {
+         String content = "";
+
+         for (int i = 0; i < validNodes.size(); i++)
+         {
+            SpatialNode node = validNodes.get(i);
+
+            double progress = spatialDefinition.getExploringProgress(node);
+            TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
+
+            String nodedata = "1" + "\t" + progress;
+            for (int j = 0; j < configurationsList.size(); j++)
+            {
+               nodedata = nodedata + "\t" + configurationsList.get(j);
+            }
+            
+            String parentnodedata = "";
+            if(validNodes.get(i).getParent() != null)
+            {
+               SpatialNode parentnode = validNodes.get(i).getParent();
+
+               double parentprogress = spatialDefinition.getExploringProgress(parentnode);
+               TDoubleArrayList parentconfigurationsList = getConfigurationsOfNode(parentnode);
+
+               parentnodedata = parentnodedata + "\t" + parentprogress;
+               for (int j = 0; j < parentconfigurationsList.size(); j++)
+               {
+                  parentnodedata = parentnodedata + "\t" + parentconfigurationsList.get(j);
+               }
+            }
+            nodedata = nodedata + parentnodedata;
+            nodedata = nodedata + "\n";
+
+            content = content + nodedata;
+         }
+         
+         for (int i = 0; i < inValidNodes.size(); i++)
+         {
+            SpatialNode node = inValidNodes.get(i);
+
+            double progress = spatialDefinition.getExploringProgress(node);
+            TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
+
+            String nodedata = "2" + "\t" + progress;
+            for (int j = 0; j < configurationsList.size(); j++)
+            {
+               nodedata = nodedata + "\t" + configurationsList.get(j);
+            }
+            nodedata = nodedata + "\n";
+
+            content = content + nodedata;
+         }
+         
+         for (int i = 0; i < path.size(); i++)
+         {
+            SpatialNode node = path.get(i);
+
+            double progress = spatialDefinition.getExploringProgress(node);
+            TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
+
+            String nodedata = "3" + "\t" + progress;
+            for (int j = 0; j < configurationsList.size(); j++)
+            {
+               nodedata = nodedata + "\t" + configurationsList.get(j);
+            }
+            nodedata = nodedata + "\n";
+
+            content = content + nodedata;
+         }
+         
+         for (int i = 0; i < shortcutpath.size(); i++)
+         {
+            SpatialNode node = shortcutpath.get(i);
+
+            double progress = spatialDefinition.getExploringProgress(node);
+            TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
+
+            String nodedata = "4" + "\t" + progress;
+            for (int j = 0; j < configurationsList.size(); j++)
+            {
+               nodedata = nodedata + "\t" + configurationsList.get(j);
+            }
+            
+            String parentnodedata = "";
+            if(shortcutpath.get(i).getParent() != null)
+            {
+               SpatialNode parentnode = shortcutpath.get(i).getParent();
+
+               double parentprogress = spatialDefinition.getExploringProgress(parentnode);
+               TDoubleArrayList parentconfigurationsList = getConfigurationsOfNode(parentnode);
+
+               parentnodedata = parentnodedata + "\t" + parentprogress;
+               for (int j = 0; j < parentconfigurationsList.size(); j++)
+               {
+                  parentnodedata = parentnodedata + "\t" + parentconfigurationsList.get(j);
+               }
+            }
+            nodedata = nodedata + parentnodedata;
+            nodedata = nodedata + "\n";
+
+            content = content + nodedata;
+         }
+
+
+         fw = new FileWriter(FILENAME);
+         bw = new BufferedWriter(fw);
+         bw.write(content);
+
+         System.out.println("Done");
+
+      }
+      catch (IOException e)
+      {
+
+         e.printStackTrace();
+
+      } finally
+      {
+
+         try
+         {
+
+            if (bw != null)
+               bw.close();
+
+            if (fw != null)
+               fw.close();
+
+         }
+         catch (IOException ex)
+         {
+
+            ex.printStackTrace();
+
+         }
+
+      }
    }
 }

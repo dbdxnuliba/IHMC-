@@ -182,6 +182,14 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
+      
+      RigidBody chest = fullRobotModel.getChest();
+      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
+      
+      RigidBody pelvis = fullRobotModel.getPelvis();
+      ConfigurationSpaceName[] pelvisExploringSpaces = {ConfigurationSpaceName.Z};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(pelvis, pelvisExploringSpaces));
 
       // run test      
       int maxNumberOfIterations = 10000;

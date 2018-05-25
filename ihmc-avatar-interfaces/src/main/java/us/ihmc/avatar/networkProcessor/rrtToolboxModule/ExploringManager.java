@@ -22,7 +22,7 @@ public class ExploringManager extends WholeBodyTrajectoryToolboxManager
    private final double positionWeight = 1.0;
    private final double orientationWeight = 1.0;
 
-   private final double maxTimeInterval = 1 / 2.0;
+   private final double maxTimeInterval = 1 / 8.0; // 1/ 2.0 is original
    private final double maxPositionDistance = 0.05;
    private final double maxOrientationDistance = Math.toRadians(10.0);
 

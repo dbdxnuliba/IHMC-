@@ -238,6 +238,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
        */
       if (true)
       {
+         PrintTools.info("inho delete next line");
+         nodePlotter.saveNodes();
          setOutputStatus(toolboxSolution, 4);
          setOutputStatus(toolboxSolution, path);
 
