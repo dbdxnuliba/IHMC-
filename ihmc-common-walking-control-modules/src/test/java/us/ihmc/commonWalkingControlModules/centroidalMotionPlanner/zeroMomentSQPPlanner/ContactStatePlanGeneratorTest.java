@@ -211,7 +211,6 @@ public class ContactStatePlanGeneratorTest
       ContactStatePlanGenerator contactStatePlanGenerationHelper = new ContactStatePlanGenerator(12, 1e-5);
       contactStatePlanGenerationHelper.generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump,
                                                                           leftAnklePoseOffset, rightAnklePoseOffset, 0.1, 0.3, defaultSupportPolygonAnkleFrame);
-      Stream.of(contactStates).forEach((state) -> PrintTools.debug(state.toString()));
    }
 
    @Test(timeout = 200)

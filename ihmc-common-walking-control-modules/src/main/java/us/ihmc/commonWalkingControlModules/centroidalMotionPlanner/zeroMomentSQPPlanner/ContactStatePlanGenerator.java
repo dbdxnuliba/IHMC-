@@ -101,13 +101,18 @@ public class ContactStatePlanGenerator
          generateMinimalVertexSupportPolygon(tempPolygon, tempVertexList, numberOfVertices);
       }
       else if (isLeftFootSupported)
-         contactStateToPopulate.setSupportPolygon(leftFootSupportPolygon);
+      {
+         tempPolygon.set(leftFootSupportPolygon);
+         TransformHelperTools.transformFromPoseToPose(leftAnklePose, supportPolygonPose, tempPolygon);
+      }
       else if (isRightFootSupported)
-         contactStateToPopulate.setSupportPolygon(rightFootSupportPolygon);
+      {
+         tempPolygon.set(rightFootSupportPolygon);
+         TransformHelperTools.transformFromPoseToPose(leftAnklePose, supportPolygonPose, tempPolygon);
+      }
       else
       {
          tempPolygon.clearAndUpdate();
-         contactStateToPopulate.setSupportPolygon(tempPolygon);
       }
       contactStateToPopulate.setPose(supportPolygonPose);
       contactStateToPopulate.setSupportPolygon(tempPolygon);
