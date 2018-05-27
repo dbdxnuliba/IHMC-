@@ -1,171 +1,261 @@
 package us.ihmc.exampleSimulations.centroidalMotionPlanner;
 
 import java.awt.Color;
-import java.util.EnumSet;
-import java.util.Set;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.ejml.data.DenseMatrix64F;
 
-import us.ihmc.avatar.drcRobot.RobotPhysicalProperties;
-import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
-import us.ihmc.robotModels.FullRobotModel;
-import us.ihmc.robotModels.FullRobotModelFactory;
-import us.ihmc.robotModels.FullRobotModelFromDescription;
-import us.ihmc.robotics.partNames.ArmJointName;
-import us.ihmc.robotics.partNames.JointNameMap;
-import us.ihmc.robotics.partNames.JointRole;
-import us.ihmc.robotics.partNames.LegJointName;
-import us.ihmc.robotics.partNames.NeckJointName;
-import us.ihmc.robotics.partNames.SpineJointName;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
+import us.ihmc.robotics.math.frames.YoFramePoint;
+import us.ihmc.robotics.math.frames.YoFramePoint2d;
+import us.ihmc.robotics.math.frames.YoFramePose;
+import us.ihmc.robotics.math.frames.YoFrameQuaternion;
+import us.ihmc.robotics.math.frames.YoFrameVector;
+import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotController.RobotController;
 import us.ihmc.robotics.robotDescription.FloatingJointDescription;
 import us.ihmc.robotics.robotDescription.LinkDescription;
 import us.ihmc.robotics.robotDescription.LinkGraphicsDescription;
 import us.ihmc.robotics.robotDescription.RobotDescription;
-import us.ihmc.robotics.robotSide.RobotSegment;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
+import us.ihmc.simulationconstructionset.ExternalForcePoint;
 import us.ihmc.simulationconstructionset.FloatingJoint;
-import us.ihmc.simulationconstructionset.Robot;
+import us.ihmc.simulationconstructionset.FloatingRootJointRobot;
+import us.ihmc.simulationconstructionset.Joint;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 /**
- * A customization robot that represents the CoM of a system
+ * A customizable robot that represents the CoM of a system. Some things that you should 
+ * be able to do
+ * <ul>
+ * <li> add custom feet visualizations  
+ * <li> add controllers to control the system
+ * <li> 
+ * </ul>
  * @author Apoorv S
  *
  */
-public class CentroidalDynamicsRobot implements FullRobotModelFactory
+public class CentroidalDynamicsRobot
 {
    private final String robotName;
    private final RobotDescription robotDescription;
-   private final JointNameMap<RobotCentroidal> jointMap;
    private final CentroidalRobotPhysicalProperties physicalProperties;
+   private final Point3D defaultInitialPosition = new Point3D();
+   private final Quaternion defaultInitialOrientation = new Quaternion();
 
    public CentroidalDynamicsRobot(String robotName, CentroidalRobotPhysicalProperties physicalProperties)
    {
       this.robotName = robotName;
-      this.robotDescription = new CentroidalRobotDescription(robotName);
-      this.jointMap = new CentroidalRobotJointMap();
+      this.robotDescription = new CentroidalRobotDescription(physicalProperties);
       this.physicalProperties = physicalProperties;
+      intializeDefaults();
    }
 
-   @Override
+   private void intializeDefaults()
+   {
+      defaultInitialPosition.set(0.0, 0.0, physicalProperties.getNominalHeight());
+      defaultInitialOrientation.setToZero();
+   }
+
+   public Pair<FloatingRootJointRobot, ExternalForcePointController> createRobotAndController(YoGraphicsListRegistry graphicsListRegistry)
+   {
+      FloatingRootJointRobot floatingRootJointRobot = new FloatingRootJointRobot(getRobotDescription());
+      initialize(floatingRootJointRobot, defaultInitialPosition, defaultInitialOrientation);
+      CentroidalRobotEstimator estimator = new CentroidalRobotEstimator(floatingRootJointRobot.getRootJoint(), graphicsListRegistry);
+      ExternalForcePointController controller = new ExternalForcePointController(floatingRootJointRobot.getRootJoint(), physicalProperties,
+                                                                                 graphicsListRegistry);
+      floatingRootJointRobot.setController(estimator);
+      floatingRootJointRobot.setController(controller);
+      return new ImmutablePair<FloatingRootJointRobot, ExternalForcePointController>(floatingRootJointRobot, controller);
+   }
+
+   private void initialize(FloatingRootJointRobot floatingRootJointRobot, Point3DReadOnly initialPosition, QuaternionReadOnly initialOrientation)
+   {
+      floatingRootJointRobot.setPositionInWorld(initialPosition);
+      floatingRootJointRobot.setOrientation(initialOrientation);
+   }
+
    public RobotDescription getRobotDescription()
    {
       return robotDescription;
    }
 
-   @Override
-   public FullRobotModel createFullRobotModel()
+   public abstract class CentroidalRobotPhysicalProperties
    {
-      RobotDescription robotDescription = new CentroidalRobotDescription(robotName);
-      FullRobotModelFromDescription fullRobotModel = new FullRobotModelFromDescription(robotDescription, getJointMap(), null);
-      return fullRobotModel;
+      public abstract double getMass();
+
+      public abstract double getNominalHeight();
+
+      public abstract SideDependentList<ConvexPolygon2D> getDefaultSupportPolygons();
+
+      public abstract DenseMatrix64F getInertia();
    }
 
-   public JointNameMap<RobotCentroidal> getJointMap()
+   public class CentroidalRobotDescription extends RobotDescription
    {
-      return jointMap;
-   }
-
-   public enum RobotCentroidal implements RobotSegment<RobotCentroidal>
-   {
-      BODY;
-
-      public static final RobotCentroidal[] values = values();
-      public static final EnumSet<RobotCentroidal> set = EnumSet.allOf(RobotCentroidal.class);
-
-      @Override
-      public RobotCentroidal[] getValues()
+      public CentroidalRobotDescription(double mass, double Ixx, double Ixy, double Ixz, double Iyy, double Iyz, double Izz)
       {
-         return values;
+         this(mass, new DenseMatrix64F(3, 3, true, Ixx, Ixy, Ixz, Ixy, Iyy, Iyz, Ixz, Iyz, Izz));
       }
 
-      @Override
-      public Class<RobotCentroidal> getClassType()
+      public CentroidalRobotDescription(double mass, double Ixx, double Iyy, double Izz)
       {
-         return RobotCentroidal.class;
+         this(mass, Ixx, 0.0, 0.0, Iyy, 0.0, Izz);
       }
 
-      @Override
-      public EnumSet<RobotCentroidal> getEnumSet()
+      public CentroidalRobotDescription(CentroidalRobotPhysicalProperties physicalProperties)
       {
-         return set;
-      }
-   }
-
-   public class CentroidalRobotInitialSetup
-   {
-      Vector3D initialPosition = new Vector3D();
-      Quaternion orientation = new Quaternion();
-
-      public CentroidalRobotInitialSetup()
-      {
-         
+         this(physicalProperties.getMass(), physicalProperties.getInertia());
       }
 
-      public void initializeRobot(Robot robot)
+      public CentroidalRobotDescription(double mass, DenseMatrix64F inertiaTensor)
       {
-         FloatingJoint rootJoint = (FloatingJoint) robot.getRootJoints().get(0);
-         rootJoint.setPosition(initialPosition);
-         rootJoint.setQuaternion(orientation);
-      }
-
-      public void setInitialYaw(double yaw)
-      {
-         orientation.setToYawQuaternion(yaw);
-      }
-
-      public double getInitialYaw()
-      {
-         return orientation.getYaw();
-      }
-
-      public void setInitialGroundHeight(double groundHeight)
-      {
-         initialPosition.setZ(groundHeight);
-      }
-
-      public double getInitialGroundHeight()
-      {
-         return initialPosition.getZ();
-      }
-
-      public void setOffset(Vector3D additionalOffset)
-      {
-         initialPosition.add(additionalOffset);
-      }
-
-      public void getOffset(Vector3D offsetToPack)
-      {
-         offsetToPack.set(initialPosition);
+         super("CentroidalBot");
+         FloatingJointDescription rootJoint = new FloatingJointDescription("RootJoint");
+         LinkDescription rootLink = new LinkDescription("RootLink");
+         LinkGraphicsDescription rootLinkGraphics = new LinkGraphicsDescription();
+         rootLinkGraphics.addEllipsoid(0.025, 0.025, 0.025, new YoAppearanceRGBColor(Color.BLUE, 0.5));
+         rootLink.setLinkGraphics(rootLinkGraphics);
+         rootLink.setMass(mass);
+         rootLink.setMomentOfInertia(inertiaTensor);
+         rootJoint.setLink(rootLink);
+         addRootJoint(rootJoint);
       }
    }
 
    public class CentroidalRobotEstimator implements RobotController
    {
-      private final FloatingJoint estimatedRootJoint;
-      private final FloatingInverseDynamicsJoint controllerRootJoint;
-      private final Point3D position = new Point3D();
-      private final Vector3D velocity = new Vector3D();
-      private final Vector3D acceleration = new Vector3D();
-      private final Quaternion orientation = new Quaternion();
-      private final Vector3D angularVelocity = new Vector3D();
-      private final Vector3D angularAcceleration = new Vector3D();
-      private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
-      private final FullRobotModel robotModel;
+      private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+      private final YoVariableRegistry registry = new YoVariableRegistry("EstimatorRegistry");
+      private final FloatingJoint rootJoint;
+      private final CentroidalRobotState state;
+      private final YoFramePose pose;
+      private final PoseReferenceFrame poseFrame;
+      private final String namePrefix = "estimated";
 
-      DenseMatrix64F tempMatrix = new DenseMatrix64F(3, 1);
+      // Variables for cals 
+      private final FramePoint3D tempPoint = new FramePoint3D();
+      private final FrameVector3D tempVector = new FrameVector3D();
+      private final FrameQuaternion tempQuaternion = new FrameQuaternion();
 
-      public CentroidalRobotEstimator(FloatingJoint rootJoint, FullRobotModel controllerRobotModel)
+      public CentroidalRobotEstimator(FloatingJoint rootJoint, YoGraphicsListRegistry graphicsListRegistry)
       {
-         this.estimatedRootJoint = rootJoint;
-         this.robotModel = controllerRobotModel;
-         this.controllerRootJoint = robotModel.getRootJoint();
+         this.rootJoint = rootJoint;
+         state = new CentroidalRobotState(namePrefix, registry);
+         pose = new YoFramePose(namePrefix + "Pose", worldFrame, registry);
+         poseFrame = new PoseReferenceFrame(namePrefix + "Pose", worldFrame);
+         if (graphicsListRegistry != null)
+         {
+            YoGraphicCoordinateSystem poseGraphic = new YoGraphicCoordinateSystem(namePrefix + "PoseGraphic", pose, 0.1);
+            YoFramePoint2d yoPoint = new YoFramePoint2d(pose.getYoX(), pose.getYoY(), pose.getReferenceFrame());
+            YoArtifactPosition positionArtifact = new YoArtifactPosition(namePrefix, yoPoint, GraphicType.BALL_WITH_CROSS, Color.BLACK, 0.002);
+            graphicsListRegistry.registerYoGraphic("EstimatorGraphicsList", poseGraphic);
+            graphicsListRegistry.registerArtifact("EstimatorArtifactList", positionArtifact);
+         }
+      }
+
+      @Override
+      public void initialize()
+      {
+         doControl();
+      }
+
+      @Override
+      public YoVariableRegistry getYoVariableRegistry()
+      {
+         return registry;
+      }
+
+      @Override
+      public String getName()
+      {
+         return "CentroidalRobotEstimator";
+      }
+
+      @Override
+      public String getDescription()
+      {
+         return "Provides an estimation of the robot's current pose";
+      }
+
+      @Override
+      public void doControl()
+      {
+         rootJoint.getPosition(tempPoint);
+         rootJoint.getQuaternion(tempQuaternion);
+         poseFrame.setPoseAndUpdate(tempPoint, tempQuaternion);
+         pose.set(tempPoint, tempQuaternion);
+
+         state.setPosition(tempPoint);
+         state.setOrientation(tempQuaternion);
+
+         rootJoint.getVelocity(tempVector);
+         state.setLinearVelocity(tempVector);
+
+         rootJoint.getLinearAcceleration(tempVector);
+         state.setLinearAcceleration(tempVector);
+
+         rootJoint.getAngularVelocity(tempVector, poseFrame);
+         tempVector.changeFrame(worldFrame);
+         state.setAngularVelocity(tempVector);
+
+         rootJoint.getAngularAcceleration(tempVector, poseFrame);
+         tempVector.changeFrame(worldFrame);
+         state.setAngularAcceleration(tempVector);
+      }
+
+      public CentroidalRobotState getState()
+      {
+         return state;
+      }
+   }
+
+   public class ExternalForcePointController implements RobotController
+   {
+      private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+      private final String namePrefix = "controller";
+      private final YoVariableRegistry registry = new YoVariableRegistry("ControllerRegistry");
+      private final ExternalForcePoint forcePoint;
+      private final YoFramePoint cop;
+      private final YoFrameVector force;
+
+      // Variables for setting and getting 
+      private final FramePoint3D tempPoint = new FramePoint3D();
+      private final FrameVector3D tempVector = new FrameVector3D();
+
+      public ExternalForcePointController(Joint joint, CentroidalRobotPhysicalProperties physicalProperties, YoGraphicsListRegistry graphicsListRegistry)
+      {
+         forcePoint = new ExternalForcePoint("controllerForcePoint", registry);
+         force = new YoFrameVector(namePrefix + "Force", worldFrame, registry);
+         cop = new YoFramePoint(namePrefix + "CoP", worldFrame, registry);
+         joint.addExternalForcePoint(forcePoint);
+         if (graphicsListRegistry != null)
+         {
+            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceGraphoc", cop.getYoX(), cop.getYoY(), cop.getYoZ(), force.getYoX(),
+                                                               force.getYoY(), force.getYoZ(), 1.0, new YoAppearanceRGBColor(Color.RED, 0.0), true);
+            YoGraphicPosition copGraphic = new YoGraphicPosition(namePrefix + "CoPGraphic", cop, 1.0, new YoAppearanceRGBColor(Color.ORANGE, 0.0));
+            graphicsListRegistry.registerArtifact("ControllerForceArtifact", copGraphic.createArtifact());
+            graphicsListRegistry.registerYoGraphic("ControllerForceGraphic", forceGraphic);
+            graphicsListRegistry.registerYoGraphic("ControllerForceGraphic", copGraphic);
+         }
       }
 
       @Override
@@ -183,232 +273,126 @@ public class CentroidalDynamicsRobot implements FullRobotModelFactory
       @Override
       public String getName()
       {
-         return getClass().getSimpleName();
+         return "ExternalForceController";
       }
 
       @Override
       public String getDescription()
       {
-         return "Estimator for the centroidal dynamics robot";
+         return "Exerts a force from an external point on the root joint of robot";
       }
 
       @Override
       public void doControl()
       {
-         estimatedRootJoint.getPositionAndVelocity(position, velocity);
-         estimatedRootJoint.getLinearAccelerationInWorld(acceleration);
-         estimatedRootJoint.getRotationToWorld(orientation);
-         estimatedRootJoint.getAngularVelocityInBody(angularVelocity);
-         estimatedRootJoint.getAngularAccelerationInBody(angularAcceleration);
+         // Add CoP foot polygon constraints here if needed.
+         forcePoint.setOffsetWorld(cop.getX(), cop.getY(), cop.getZ());
+         forcePoint.setForce(force.getX(), force.getY(), force.getZ());
+      }
 
-         controllerRootJoint.setPosition(position);
-         controllerRootJoint.setRotation(orientation);
-         tempMatrix.reshape(6, 1);
-         angularVelocity.get(0, tempMatrix);
-         velocity.get(3, tempMatrix);
-         controllerRootJoint.setVelocity(tempMatrix, 0);
+      public void setCoP(FramePoint3DReadOnly copToSet)
+      {
+         tempPoint.setIncludingFrame(copToSet);
+         tempPoint.changeFrame(worldFrame);
+         cop.set(tempPoint);
+      }
+
+      public void setForce(FrameVector3DReadOnly forceToSet)
+      {
+         tempVector.setIncludingFrame(forceToSet);
+         tempVector.changeFrame(worldFrame);
+         force.set(tempVector);
       }
    }
 
-   public class CentroidalRobotJointMap implements JointNameMap<RobotCentroidal>
+   public class CentroidalRobotState
    {
+      private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+      private final YoFramePoint position;
+      private final YoFrameVector linearVelocity;
+      private final YoFrameVector linearAcceleration;
+      private final YoFrameQuaternion orientation;
+      private final YoFrameVector angularVelocity;
+      private final YoFrameVector angularAcceleration;
 
-      @Override
-      public LegJointName[] getLegJointNames()
+      public CentroidalRobotState(String namePrefix, YoVariableRegistry registry)
       {
-         return null;
+         position = new YoFramePoint(namePrefix + "Position", worldFrame, registry);
+         linearVelocity = new YoFrameVector(namePrefix + "LinearVelocity", worldFrame, registry);
+         linearAcceleration = new YoFrameVector(namePrefix + "LinearAcceleration", worldFrame, registry);
+         orientation = new YoFrameQuaternion(namePrefix + "Orientation", worldFrame, registry);
+         angularVelocity = new YoFrameVector(namePrefix + "AngularVelocity", worldFrame, registry);
+         angularAcceleration = new YoFrameVector(namePrefix + "AngularAccleration", worldFrame, registry);
       }
 
-      @Override
-      public ArmJointName[] getArmJointNames()
+      public void set(CentroidalRobotState other)
       {
-         return null;
+         position.set(other.position);
+         linearVelocity.set(other.linearVelocity);
+         linearAcceleration.set(other.linearAcceleration);
+         orientation.set(other.orientation);
+         angularVelocity.set(other.angularVelocity);
+         angularAcceleration.set(other.angularAcceleration);
       }
 
-      @Override
-      public SpineJointName[] getSpineJointNames()
+      public void getPosition(FramePoint3D positionToSet)
       {
-         return null;
+         positionToSet.setIncludingFrame(position);
       }
 
-      @Override
-      public NeckJointName[] getNeckJointNames()
+      public void setPosition(FramePoint3D positionToSet)
       {
-         return null;
+         position.set(positionToSet);
       }
 
-      @Override
-      public String getModelName()
+      public void getLinearVelocity(FrameVector3D linearVelocityToSet)
       {
-         return robotName;
+         linearVelocityToSet.setIncludingFrame(linearVelocity);
       }
 
-      @Override
-      public JointRole getJointRole(String jointName)
+      public void setLinearVelocity(FrameVector3D linearVelocityToSet)
       {
-         return null;
+         linearVelocity.set(linearVelocityToSet);
       }
 
-      @Override
-      public NeckJointName getNeckJointName(String jointName)
+      public void getLinearAcceleration(FrameVector3D linearAccelerationToSet)
       {
-         return null;
+         linearAccelerationToSet.setIncludingFrame(linearAcceleration);
       }
 
-      @Override
-      public SpineJointName getSpineJointName(String jointName)
+      public void setLinearAcceleration(FrameVector3D linearAccelerationToSet)
       {
-         return null;
+         linearAcceleration.set(linearAccelerationToSet);
       }
 
-      @Override
-      public String getRootBodyName()
+      public void getOrientation(FrameQuaternion orientationToSet)
       {
-         return null;
+         orientationToSet.setIncludingFrame(orientation);
       }
 
-      @Override
-      public String getUnsanitizedRootJointInSdf()
+      public void setOrientation(FrameQuaternion orientationToSet)
       {
-         return null;
+         orientation.set(orientationToSet);
       }
 
-      @Override
-      public String getHeadName()
+      public void getAngularVelocity(FrameVector3D angularVelocityToSet)
       {
-         return null;
+         angularVelocityToSet.setIncludingFrame(angularVelocity);
       }
 
-      @Override
-      public boolean isTorqueVelocityLimitsEnabled()
+      public void setAngularVelocity(FrameVector3D angularVelocityToSet)
       {
-         return false;
+         angularVelocity.set(angularVelocityToSet);
       }
 
-      @Override
-      public Set<String> getLastSimulatedJoints()
+      public void getAngularAcceleration(FrameVector3D angularAccelerationToSet)
       {
-         return null;
+         angularAccelerationToSet.setIncludingFrame(angularAcceleration);
       }
 
-      @Override
-      public String[] getJointNamesBeforeFeet()
+      public void setAngularAcceleration(FrameVector3D angularAccelerationToSet)
       {
-         return null;
-      }
-
-      @Override
-      public RobotCentroidal[] getRobotSegments()
-      {
-         return null;
-      }
-
-      @Override
-      public RobotCentroidal getEndEffectorsRobotSegment(String jointNameBeforeEndEffector)
-      {
-         return null;
-      }
-   }
-
-   public class CentroidalRobotPhysicalProperties implements RobotPhysicalProperties
-   {
-      public CentroidalRobotPhysicalProperties()
-      {
-         
-      }
-
-      @Override
-      public SideDependentList<RigidBodyTransform> getHandAttachmentPlateToWristTransforms()
-      {
-         // TODO Auto-generated method stub
-         return null;
-      }
-
-      @Override
-      public SideDependentList<RigidBodyTransform> getSoleToAnkleFrameTransforms()
-      {
-         // TODO Auto-generated method stub
-         return null;
-      }
-
-      @Override
-      public double getThighLength()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getShinLength()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getActualFootLength()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getActualFootWidth()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getFootForwardForControl()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getFootBackForControl()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getFootLengthForControl()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getToeWidthForControl()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-
-      @Override
-      public double getFootWidthForControl()
-      {
-         // TODO Auto-generated method stub
-         return 0;
-      }
-   }
-   
-   public class CentroidalRobotDescription extends RobotDescription
-   {
-      public CentroidalRobotDescription(String namePrefix)
-      {
-         super(namePrefix);
-         FloatingJointDescription rootJoint = new FloatingJointDescription(namePrefix + "RootJoint");
-         LinkDescription rootLink = new LinkDescription(namePrefix + "RootLink");
-         LinkGraphicsDescription rootLinkGraphics = new LinkGraphicsDescription();
-         rootLinkGraphics.addEllipsoid(xRadius, yRadius, zRadius, new YoAppearanceRGBColor(Color.BLUE, 0.5));
-         rootLink.setLinkGraphics(rootLinkGraphics);
-         rootLink.setMass(robotMass);
-         rootLink.setMomentOfInertia(momentOfInertia);
-         addRootJoint(rootJoint);
-         rootJoint.setLink(rootLink);
+         angularAcceleration.set(angularAccelerationToSet);
       }
    }
 }
