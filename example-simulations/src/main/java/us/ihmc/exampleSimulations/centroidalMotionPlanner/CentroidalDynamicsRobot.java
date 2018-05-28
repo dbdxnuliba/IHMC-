@@ -20,8 +20,8 @@ import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.robotics.math.frames.YoFramePoint;
@@ -75,16 +75,15 @@ public class CentroidalDynamicsRobot
       defaultInitialOrientation.setToZero();
    }
 
-   public Pair<FloatingRootJointRobot, ExternalForcePointController> createRobotAndController(YoGraphicsListRegistry graphicsListRegistry)
+   public FloatingRootJointRobot addControllerAndCreateRobot(CentroidalRobotController controller, YoGraphicsListRegistry graphicsListRegistry)
    {
       FloatingRootJointRobot floatingRootJointRobot = new FloatingRootJointRobot(getRobotDescription());
       initialize(floatingRootJointRobot, defaultInitialPosition, defaultInitialOrientation);
       CentroidalRobotEstimator estimator = new CentroidalRobotEstimator(floatingRootJointRobot.getRootJoint(), graphicsListRegistry);
-      ExternalForcePointController controller = new ExternalForcePointController(floatingRootJointRobot.getRootJoint(), physicalProperties,
-                                                                                 graphicsListRegistry);
+      estimator.setStateToUpdate(controller.getState());
       floatingRootJointRobot.setController(estimator);
       floatingRootJointRobot.setController(controller);
-      return new ImmutablePair<FloatingRootJointRobot, ExternalForcePointController>(floatingRootJointRobot, controller);
+      return floatingRootJointRobot;
    }
 
    private void initialize(FloatingRootJointRobot floatingRootJointRobot, Point3DReadOnly initialPosition, QuaternionReadOnly initialOrientation)
@@ -146,7 +145,7 @@ public class CentroidalDynamicsRobot
       private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
       private final YoVariableRegistry registry = new YoVariableRegistry("EstimatorRegistry");
       private final FloatingJoint rootJoint;
-      private final CentroidalRobotState state;
+      private CentroidalRobotState state;
       private final YoFramePose pose;
       private final PoseReferenceFrame poseFrame;
       private final String namePrefix = "estimated";
@@ -159,7 +158,6 @@ public class CentroidalDynamicsRobot
       public CentroidalRobotEstimator(FloatingJoint rootJoint, YoGraphicsListRegistry graphicsListRegistry)
       {
          this.rootJoint = rootJoint;
-         state = new CentroidalRobotState(namePrefix, registry);
          pose = new YoFramePose(namePrefix + "Pose", worldFrame, registry);
          poseFrame = new PoseReferenceFrame(namePrefix + "Pose", worldFrame);
          if (graphicsListRegistry != null)
@@ -172,9 +170,16 @@ public class CentroidalDynamicsRobot
          }
       }
 
+      public void setStateToUpdate(CentroidalRobotState stateToUpdate)
+      {
+         this.state = stateToUpdate;
+      }
+
       @Override
       public void initialize()
       {
+         if(state == null)
+            throw new RuntimeException("State object to update has not been set");
          doControl();
       }
 
@@ -226,13 +231,18 @@ public class CentroidalDynamicsRobot
       {
          return state;
       }
+
+      public void getState(CentroidalRobotState stateToSet)
+      {
+         stateToSet.set(state);
+      }
    }
 
-   public class ExternalForcePointController implements RobotController
+   public abstract class CentroidalRobotController implements RobotController
    {
+      protected final YoVariableRegistry registry = new YoVariableRegistry("ControllerRegistry");
+      private final CentroidalRobotState state;
       private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-      private final String namePrefix = "controller";
-      private final YoVariableRegistry registry = new YoVariableRegistry("ControllerRegistry");
       private final ExternalForcePoint forcePoint;
       private final YoFramePoint cop;
       private final YoFrameVector force;
@@ -241,27 +251,23 @@ public class CentroidalDynamicsRobot
       private final FramePoint3D tempPoint = new FramePoint3D();
       private final FrameVector3D tempVector = new FrameVector3D();
 
-      public ExternalForcePointController(Joint joint, CentroidalRobotPhysicalProperties physicalProperties, YoGraphicsListRegistry graphicsListRegistry)
+      public CentroidalRobotController(String namePrefix, Joint joint, CentroidalRobotPhysicalProperties physicalProperties,
+                                       YoGraphicsListRegistry graphicsListRegistry)
       {
          forcePoint = new ExternalForcePoint("controllerForcePoint", registry);
+         state = new CentroidalRobotState(namePrefix + "State", registry);
          force = new YoFrameVector(namePrefix + "Force", worldFrame, registry);
          cop = new YoFramePoint(namePrefix + "CoP", worldFrame, registry);
          joint.addExternalForcePoint(forcePoint);
          if (graphicsListRegistry != null)
          {
-            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceGraphoc", cop.getYoX(), cop.getYoY(), cop.getYoZ(), force.getYoX(),
+            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceGraphic", cop.getYoX(), cop.getYoY(), cop.getYoZ(), force.getYoX(),
                                                                force.getYoY(), force.getYoZ(), 1.0, new YoAppearanceRGBColor(Color.RED, 0.0), true);
             YoGraphicPosition copGraphic = new YoGraphicPosition(namePrefix + "CoPGraphic", cop, 1.0, new YoAppearanceRGBColor(Color.ORANGE, 0.0));
             graphicsListRegistry.registerArtifact("ControllerForceArtifact", copGraphic.createArtifact());
             graphicsListRegistry.registerYoGraphic("ControllerForceGraphic", forceGraphic);
             graphicsListRegistry.registerYoGraphic("ControllerForceGraphic", copGraphic);
          }
-      }
-
-      @Override
-      public void initialize()
-      {
-
       }
 
       @Override
@@ -273,7 +279,7 @@ public class CentroidalDynamicsRobot
       @Override
       public String getName()
       {
-         return "ExternalForceController";
+         return "CentroidalRobotController";
       }
 
       @Override
@@ -282,10 +288,8 @@ public class CentroidalDynamicsRobot
          return "Exerts a force from an external point on the root joint of robot";
       }
 
-      @Override
-      public void doControl()
+      public void finalizeControlInputs()
       {
-         // Add CoP foot polygon constraints here if needed.
          forcePoint.setOffsetWorld(cop.getX(), cop.getY(), cop.getZ());
          forcePoint.setForce(force.getX(), force.getY(), force.getZ());
       }
@@ -302,6 +306,11 @@ public class CentroidalDynamicsRobot
          tempVector.setIncludingFrame(forceToSet);
          tempVector.changeFrame(worldFrame);
          force.set(tempVector);
+      }
+
+      public CentroidalRobotState getState()
+      {
+         return state;
       }
    }
 
