@@ -1,4 +1,4 @@
-package us.ihmc.exampleSimulations.centroidalMotionPlanner;
+package us.ihmc.commonWalkingControlModules.collinearForcePlanner;
 
 import java.awt.Color;
 import java.util.ArrayList;
