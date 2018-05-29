@@ -991,6 +991,19 @@ public class HumanoidMessageTools
       return message;
    }
 
+   public static FootstepStatusMessage createFootstepStatus(FootstepStatus status, int footstepIndex, RobotSide robotSide)
+   {
+      FootstepStatusMessage message = new FootstepStatusMessage();
+      message.setFootstepStatus(status.toByte());
+      message.setFootstepIndex(footstepIndex);
+      message.getDesiredFootPositionInWorld().setToNaN();
+      message.getDesiredFootOrientationInWorld().setToNaN();
+      message.getActualFootPositionInWorld().setToNaN();
+      message.getActualFootOrientationInWorld().setToNaN();
+      message.setRobotSide(robotSide.toByte());
+      return message;
+   }
+
    public static FootstepStatusMessage createFootstepStatus(FootstepStatus status, int footstepIndex, Point3D actualFootPositionInWorld,
                                                             Quaternion actualFootOrientationInWorld)
    {
@@ -1107,7 +1120,7 @@ public class HumanoidMessageTools
    public static HandJointAnglePacket createHandJointAnglePacket(RobotSide robotSide, boolean connected, boolean calibrated, double[] jointAngles)
    {
       HandJointAnglePacket message = new HandJointAnglePacket();
-      message.setRobotSide(robotSide.toByte());
+      message.setRobotSide(robotSide == null ? -1 : robotSide.toByte());
       message.getJointAngles().add(jointAngles);
       message.setConnected(connected);
       message.setCalibrated(calibrated);

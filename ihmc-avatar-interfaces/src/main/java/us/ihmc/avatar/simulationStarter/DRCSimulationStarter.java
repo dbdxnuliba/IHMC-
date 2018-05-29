@@ -1,5 +1,13 @@
 package us.ihmc.avatar.simulationStarter;
 
+import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.DO_NOTHING_BEHAVIOR;
+import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.WALKING;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import controller_msgs.msg.dds.HighLevelStateMessage;
 import us.ihmc.avatar.DRCLidar;
 import us.ihmc.avatar.DRCStartingLocation;
@@ -15,15 +23,13 @@ import us.ihmc.avatar.networkProcessor.DRCNetworkProcessor;
 import us.ihmc.commonWalkingControlModules.configurations.HighLevelControllerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPWithTimeFreezingPlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
-import us.ihmc.commonWalkingControlModules.desiredHeadingAndVelocity.HeadingAndVelocityEvaluationScriptParameters;
+import us.ihmc.commonWalkingControlModules.desiredFootStep.footstepGenerator.HeadingAndVelocityEvaluationScriptParameters;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ContactableBodiesFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerStateTransitionFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControllerStateFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelHumanoidControllerFactory;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
-import us.ihmc.communication.CommunicationOptions;
 import us.ihmc.communication.PacketRouter;
-import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.communication.net.LocalObjectCommunicator;
 import us.ihmc.communication.packetCommunicator.PacketCommunicator;
@@ -42,7 +48,6 @@ import us.ihmc.humanoidRobotics.kryo.IHMCCommunicationKryoNetClassList;
 import us.ihmc.jMonkeyEngineToolkit.Graphics3DAdapter;
 import us.ihmc.jMonkeyEngineToolkit.GroundProfile3D;
 import us.ihmc.jMonkeyEngineToolkit.camera.CameraConfiguration;
-import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotDataVisualizer.logger.BehaviorVisualizer;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.controllers.ControllerFailureListener;
@@ -52,9 +57,9 @@ import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.sensorProcessing.parameters.DRCRobotCameraParameters;
 import us.ihmc.sensorProcessing.parameters.DRCRobotLidarParameters;
 import us.ihmc.sensorProcessing.parameters.DRCRobotSensorInformation;
+import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
 import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
 import us.ihmc.simulationToolkit.SCSPlaybackListener;
-import us.ihmc.simulationconstructionset.HumanoidFloatingRootJointRobot;
 import us.ihmc.simulationconstructionset.PlaybackListener;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.tools.TimestampProvider;
@@ -62,14 +67,6 @@ import us.ihmc.tools.processManagement.JavaProcessSpawner;
 import us.ihmc.util.PeriodicNonRealtimeThreadScheduler;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
 import us.ihmc.wholeBodyController.RobotContactPointParameters;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.DO_NOTHING_BEHAVIOR;
-import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.WALKING;
 
 public class DRCSimulationStarter implements SimulationStarterInterface
 {
@@ -104,7 +101,6 @@ public class DRCSimulationStarter implements SimulationStarterInterface
     * It is bidirectional meaning that it carries commands to be executed by the controller and that the controller is able to send feedback the other way to whoever is listening to the PacketCommunicator.
     */
    private PacketCommunicator controllerPacketCommunicator;
-   private RealtimeRos2Node realtimeRos2Node;
 
    /** The output PacketCommunicator of the simulation carries sensor information (LIDAR, camera, etc.) and is used as input of the network processor. */
    private LocalObjectCommunicator scsSensorOutputPacketCommunicator;
@@ -348,21 +344,16 @@ public class DRCSimulationStarter implements SimulationStarterInterface
 
       networkParameters.enableLocalControllerCommunicator(true);
 
-      if (CommunicationOptions.USE_KRYO)
+      controllerPacketCommunicator = PacketCommunicator
+            .createIntraprocessPacketCommunicator(NetworkPorts.CONTROLLER_PORT, new IHMCCommunicationKryoNetClassList());
+      try
       {
-         controllerPacketCommunicator = PacketCommunicator
-               .createIntraprocessPacketCommunicator(NetworkPorts.CONTROLLER_PORT, new IHMCCommunicationKryoNetClassList());
-         try
-         {
-            controllerPacketCommunicator.connect();
-         }
-         catch (IOException e)
-         {
-            throw new RuntimeException(e);
-         }
+         controllerPacketCommunicator.connect();
       }
-      if (CommunicationOptions.USE_ROS2)
-         realtimeRos2Node = ROS2Tools.createReatimeRos2Node(PubSubImplementation.INTRAPROCESS, this.getClass().getSimpleName(), ROS2Tools.RUNTIME_EXCEPTION);
+      catch (IOException e)
+      {
+         throw new RuntimeException(e);
+      }
    }
 
    /**
@@ -449,7 +440,7 @@ public class DRCSimulationStarter implements SimulationStarterInterface
       controllerFactory.attachControllerFailureListeners(controllerFailureListeners);
       if (setupControllerNetworkSubscriber)
          controllerFactory.createControllerNetworkSubscriber(new PeriodicNonRealtimeThreadScheduler("CapturabilityBasedStatusProducer"),
-                                                             controllerPacketCommunicator, realtimeRos2Node);
+                                                             controllerPacketCommunicator);
 
       for (int i = 0; i < highLevelControllerFactories.size(); i++)
          controllerFactory.addCustomControlState(highLevelControllerFactories.get(i));

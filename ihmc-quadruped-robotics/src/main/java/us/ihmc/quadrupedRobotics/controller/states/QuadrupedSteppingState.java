@@ -1,6 +1,7 @@
 package us.ihmc.quadrupedRobotics.controller.states;
 
 import controller_msgs.msg.dds.QuadrupedFootstepStatusMessage;
+import controller_msgs.msg.dds.QuadrupedGroundPlaneMessage;
 import controller_msgs.msg.dds.QuadrupedSteppingStateChangeMessage;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControlCoreToolbox;
@@ -16,6 +17,8 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.quadrupedRobotics.communication.commands.QuadrupedRequestedSteppingStateCommand;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBalanceManager;
@@ -48,6 +51,7 @@ import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static us.ihmc.humanoidRobotics.footstep.FootstepUtils.worldFrame;
@@ -87,6 +91,8 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
    private final QuadrupedJointSpaceManager jointSpaceManager;
 
    private final FramePoint3D tempPoint = new FramePoint3D();
+   private final FrameVector3D tempVector = new FrameVector3D();
+   private final RigidBodyTransform tempTransform = new RigidBodyTransform();
 
    private ControllerCoreOutputReadOnly controllerCoreOutput;
 
@@ -94,6 +100,7 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
 
    private final QuadrantDependentList<QuadrupedFootstepStatusMessage> footstepStatusMessages = new QuadrantDependentList<>();
    private final YoInteger stepIndex = new YoInteger("currentStepIndex", registry);
+   private final QuadrupedGroundPlaneMessage groundPlaneMessage = new QuadrupedGroundPlaneMessage();
 
    private final ExecutionTimer controllerCoreTimer = new ExecutionTimer("controllerCoreTimer", 1.0, registry);
    private final ControllerCoreCommand controllerCoreCommand = new ControllerCoreCommand(WholeBodyControllerCoreMode.VIRTUAL_MODEL);
@@ -230,13 +237,14 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
 
       // report footstep status message
       QuadrupedFootstepStatusMessage footstepStatusMessage = footstepStatusMessages.get(thisStepQuadrant);
-      Vector3DReadOnly solePosition = controllerToolbox.getReferenceFrames().getSoleFrame(thisStepQuadrant).getTransformToWorldFrame()
-                                                       .getTranslationVector();
+      controllerToolbox.getReferenceFrames().getSoleFrame(thisStepQuadrant).getTransformToDesiredFrame(tempTransform, worldFrame);
+      tempTransform.getTranslation(tempVector);
+
       double currentTime = runtimeEnvironment.getRobotTimestamp().getDoubleValue();
 
       footstepStatusMessage.setFootstepStatus(QuadrupedFootstepStatusMessage.FOOTSTEP_STATUS_COMPLETED);
       footstepStatusMessage.getActualStepInterval().setEndTime(currentTime);
-      footstepStatusMessage.getActualTouchdownPositionInWorld().set(solePosition);
+      footstepStatusMessage.getActualTouchdownPositionInWorld().set(tempVector);
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
    }
 
@@ -299,14 +307,7 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
       commandConsumer.update();
       commandConsumer.consumeFootCommands();
       commandConsumer.consumeBodyCommands();
-
-      // update ground plane estimate
-      groundPlaneEstimator.clearContactPoints();
-      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
-      {
-         groundPlaneEstimator.addContactPoint(groundPlanePositions.get(robotQuadrant));
-      }
-      groundPlaneEstimator.compute();
+      updateAndReportGroundPlaneEstimate();
 
       if (stepMessageHandler.isStepPlanAvailable())
       {
@@ -340,6 +341,23 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
       controllerCore.submitControllerCoreCommand(controllerCoreCommand);
       controllerCore.compute();
       controllerCoreTimer.stopMeasurement();
+   }
+
+   private void updateAndReportGroundPlaneEstimate()
+   {
+      // update ground plane estimate
+      groundPlaneEstimator.clearContactPoints();
+      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
+      {
+         groundPlaneEstimator.addContactPoint(groundPlanePositions.get(robotQuadrant));
+      }
+      groundPlaneEstimator.compute();
+
+      groundPlaneEstimator.getPlanePoint(tempPoint);
+      groundPlaneEstimator.getPlaneNormal(tempVector);
+      groundPlaneMessage.region_origin_.set(tempPoint);
+      groundPlaneMessage.region_normal_.set(tempVector);
+      statusMessageOutputManager.reportStatusMessage(groundPlaneMessage);
    }
 
    private void updateManagers()

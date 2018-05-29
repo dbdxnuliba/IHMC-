@@ -16,20 +16,19 @@ import us.ihmc.quadrupedRobotics.controller.states.QuadrupedPositionBasedCrawlCo
 import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
 import us.ihmc.quadrupedRobotics.model.QuadrupedPhysicalProperties;
 import us.ihmc.quadrupedRobotics.model.QuadrupedRuntimeEnvironment;
-import us.ihmc.quadrupedRobotics.output.JointControlComponent;
+import us.ihmc.quadrupedRobotics.output.JointIntegratorComponent;
 import us.ihmc.quadrupedRobotics.output.OutputProcessorBuilder;
 import us.ihmc.quadrupedRobotics.output.StateChangeSmootherComponent;
 import us.ihmc.quadrupedRobotics.planning.ContactState;
 import us.ihmc.robotModels.FullQuadrupedRobotModelFactory;
 import us.ihmc.robotics.robotController.OutputProcessor;
-import us.ihmc.robotics.robotController.RobotController;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.stateMachine.core.StateChangedListener;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.extra.EventTrigger;
 import us.ihmc.robotics.stateMachine.factories.EventBasedStateMachineFactory;
-import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.sensorProcessing.model.RobotMotionStatusHolder;
+import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.tools.thread.CloseableAndDisposable;
 import us.ihmc.tools.thread.CloseableAndDisposableRegistry;
 import us.ihmc.util.PeriodicThreadScheduler;
@@ -81,14 +80,14 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
    public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, FullQuadrupedRobotModelFactory modelFactory,
                                      QuadrupedPhysicalProperties physicalProperties, QuadrupedPositionBasedCrawlControllerParameters crawlControllerParameters,
-                                     QuadrupedInitialPositionParameters initialPositionParameters, QuadrupedControlMode controlMode) throws IOException
+                                     QuadrupedInitialPositionParameters initialPositionParameters, QuadrupedControlMode controlMode)
    {
       this(runtimeEnvironment, modelFactory, physicalProperties, crawlControllerParameters, initialPositionParameters,
            QuadrupedControllerEnum.JOINT_INITIALIZATION, controlMode);
    }
 
    public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, QuadrupedPhysicalProperties physicalProperties,
-                                     QuadrupedInitialPositionParameters initialPositionParameters, QuadrupedControllerEnum initialState) throws IOException
+                                     QuadrupedInitialPositionParameters initialPositionParameters, QuadrupedControllerEnum initialState)
    {
       this(runtimeEnvironment, null, physicalProperties, null, initialPositionParameters, initialState, QuadrupedControlMode.FORCE);
    }
@@ -96,7 +95,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
    public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, FullQuadrupedRobotModelFactory modelFactory,
                                      QuadrupedPhysicalProperties physicalProperties, QuadrupedPositionBasedCrawlControllerParameters crawlControllerParameters,
                                      QuadrupedInitialPositionParameters initialPositionParameters, QuadrupedControllerEnum initialState,
-                                     QuadrupedControlMode controlMode) throws IOException
+                                     QuadrupedControlMode controlMode)
    {
       this.controllerToolbox = new QuadrupedControllerToolbox(runtimeEnvironment, physicalProperties, registry, runtimeEnvironment.getGraphicsListRegistry());
       this.runtimeEnvironment = runtimeEnvironment;
@@ -123,7 +122,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
       // Initialize output processor
       StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, registry);
-      JointControlComponent jointControlComponent = new JointControlComponent(runtimeEnvironment, registry);
+      JointIntegratorComponent jointControlComponent = new JointIntegratorComponent(runtimeEnvironment, registry);
       controlManagerFactory.getOrCreateFeetManager().attachStateChangedListener(stateChangeSmootherComponent.createFiniteStateMachineStateChangedListener());
       OutputProcessorBuilder outputProcessorBuilder = new OutputProcessorBuilder(runtimeEnvironment.getFullRobotModel());
       outputProcessorBuilder.addComponent(stateChangeSmootherComponent);
@@ -365,10 +364,10 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       return factory.build(initialState);
    }
 
-   public void createControllerNetworkSubscriber(PeriodicThreadScheduler scheduler, PacketCommunicator packetCommunicator, RealtimeRos2Node realtimeRos2Node)
+   public void createControllerNetworkSubscriber(PeriodicThreadScheduler scheduler, PacketCommunicator packetCommunicator)
    {
       ControllerNetworkSubscriber controllerNetworkSubscriber = new ControllerNetworkSubscriber(commandInputManager, statusMessageOutputManager, scheduler,
-                                                                                                packetCommunicator, realtimeRos2Node);
+                                                                                                packetCommunicator);
       //      controllerNetworkSubscriber.registerSubcriberWithMessageUnpacker(WholeBodyTrajectoryMessage.class, 9, MessageUnpackingTools.createWholeBodyTrajectoryMessageUnpacker());
       controllerNetworkSubscriber.addMessageCollector(QuadrupedControllerAPIDefinition.createDefaultMessageIDExtractor());
       controllerNetworkSubscriber.addMessageValidator(QuadrupedControllerAPIDefinition.createDefaultMessageValidation());

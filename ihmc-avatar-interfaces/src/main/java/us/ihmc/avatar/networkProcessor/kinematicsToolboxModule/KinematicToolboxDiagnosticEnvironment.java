@@ -30,7 +30,7 @@ import us.ihmc.sensorProcessing.sensorProcessors.SensorRawOutputMapReadOnly;
 import us.ihmc.sensorProcessing.simulatedSensors.AuxiliaryRobotDataProvider;
 import us.ihmc.sensorProcessing.simulatedSensors.SDFPerfectSimulatedSensorReader;
 import us.ihmc.sensorProcessing.stateEstimation.IMUSensorReadOnly;
-import us.ihmc.simulationconstructionset.HumanoidFloatingRootJointRobot;
+import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
 import us.ihmc.util.PeriodicNonRealtimeThreadScheduler;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
 
@@ -91,6 +91,7 @@ public class KinematicToolboxDiagnosticEnvironment
       parameters.enableKinematicsToolbox(true);
       parameters.enableKinematicsToolboxVisualizer(true);
       parameters.enableLocalControllerCommunicator(true);
+      parameters.setEnableJoystickBasedStepping(true);
       new DRCNetworkProcessor(drcRobotModel, parameters);
    }
 

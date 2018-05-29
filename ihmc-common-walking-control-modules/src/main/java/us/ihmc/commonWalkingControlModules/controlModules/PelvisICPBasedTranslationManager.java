@@ -42,6 +42,7 @@ public class PelvisICPBasedTranslationManager
    private final YoDouble frozenOffsetDecayAlpha = new YoDouble("frozenOffsetDecayAlpha", registry);
 
    private final YoFramePoint2D desiredPelvisPosition = new YoFramePoint2D("desiredPelvis", worldFrame, registry);
+   private final YoFramePoint2D currentPelvisPosition = new YoFramePoint2D("currentPelvis", worldFrame, registry);
 
    private final YoDouble initialPelvisPositionTime = new YoDouble("initialPelvisPositionTime", registry);
 
@@ -94,7 +95,7 @@ public class PelvisICPBasedTranslationManager
    {
       supportPolygonSafeMargin.set(pelvisTranslationICPSupportPolygonSafeMargin);
       frozenOffsetDecayAlpha.set(0.998);
-      
+
       yoTime = controllerToolbox.getYoTime();
       controlDT = controllerToolbox.getControlDT();
       pelvisZUpFrame = controllerToolbox.getPelvisZUpFrame();
@@ -134,6 +135,10 @@ public class PelvisICPBasedTranslationManager
 
    public void compute(RobotSide supportLeg, FramePoint2D actualICP)
    {
+      tempPosition2d.setToZero(pelvisZUpFrame);
+      tempPosition2d.changeFrame(worldFrame);
+      currentPelvisPosition.set(tempPosition2d);
+
       if (isFrozen.getBooleanValue())
       {
          icpOffsetForFreezing.scale(frozenOffsetDecayAlpha.getDoubleValue());
@@ -224,15 +229,16 @@ public class PelvisICPBasedTranslationManager
       if (!linearSelectionMatrix.isXSelected() && !linearSelectionMatrix.isYSelected())
          return; // The user does not want to control the x and y of the pelvis, do nothing.
 
-      switch (se3Trajectory.getExecutionMode())
+      if (se3Trajectory.getExecutionMode() == ExecutionMode.OVERRIDE)
       {
-      case OVERRIDE:
          isReadyToHandleQueuedCommands.set(true);
          clearCommandQueue(se3Trajectory.getCommandId());
          initialPelvisPositionTime.set(yoTime.getDoubleValue());
          initializeTrajectoryGenerator(command, 0.0);
          return;
-      case QUEUE:
+      }
+      else if (se3Trajectory.getExecutionMode() == ExecutionMode.QUEUE)
+      {
          boolean success = queuePelvisTrajectoryCommand(command);
          if (!success)
          {
@@ -241,9 +247,10 @@ public class PelvisICPBasedTranslationManager
             holdCurrentPosition();
          }
          return;
-      default:
+      }
+      else
+      {
          PrintTools.warn(this, "Unknown " + ExecutionMode.class.getSimpleName() + " value: " + se3Trajectory.getExecutionMode() + ". Command ignored.");
-         break;
       }
    }
 
