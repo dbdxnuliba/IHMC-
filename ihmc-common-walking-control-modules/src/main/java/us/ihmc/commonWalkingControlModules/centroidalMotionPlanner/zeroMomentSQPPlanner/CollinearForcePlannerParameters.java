@@ -63,7 +63,7 @@ public class CollinearForcePlannerParameters
 
    public int getNumberOfCollocationConstraintsPerSegment()
    {
-      return 2;
+      return 5;
    }
 
    public int getNumberOfCoMPositionConstraintsPerSegment()
@@ -79,5 +79,10 @@ public class CollinearForcePlannerParameters
    public int getNumberOfScalarConstraintsPerSegment()
    {
       return 4;
+   }
+
+   public double getRobotMass()
+   {
+      return 18.0;
    }
 }

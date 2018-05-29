@@ -49,10 +49,12 @@ public class CollinearForceBasedPlannerResult
    private final YoFramePoint yoCoMPosition;
    private final YoFramePoint yoCoPPosition;
    private final YoFrameVector yoCoMVelocity;
-   private final YoFrameVector yoCoMAcceleration;
+   private final YoFrameVector yoCoMDynamicsAcceleration;
+   private final YoFrameVector yoCoMDesiredAcceleration;
    private final YoFrameVector yoGroundReactionForce;
    private final YoInteger yoCurrentSegmentIndex;
    private final YoDouble yoScalar;
+   private final YoDouble mass;
 
    private TrajectoryMathTools trajectoryMathToolbox = new TrajectoryMathTools(numberOfCoefficientsForComputedAccelerationTrajectory);
    private final Trajectory accelerationFromDifferentiation = new Trajectory(CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients - 2);
@@ -91,11 +93,13 @@ public class CollinearForceBasedPlannerResult
          }
 
       });
+      mass = new YoDouble("Mass", registry);
       yoCurrentSegmentIndex = new YoInteger("SQPOutputSegmentIndex", registry);
       yoCoMPosition = new YoFramePoint("SQPOutputCoMPosition", referenceFrame, registry);
       yoCoPPosition = new YoFramePoint("SQPOutputCoPPosition", referenceFrame, registry);
       yoCoMVelocity = new YoFrameVector("SQPOutputCoMVelocity", referenceFrame, registry);
-      yoCoMAcceleration = new YoFrameVector("SQPOutputCoMAcceleration", referenceFrame, registry);
+      yoCoMDynamicsAcceleration = new YoFrameVector("SQPOutputCoMDynamicsAcceleration", referenceFrame, registry);
+      yoCoMDesiredAcceleration = new YoFrameVector("SQPOutputCoMDesiredAcceleration", referenceFrame, registry);
       yoGroundReactionForce = new YoFrameVector("SQPOutputGroundReactionForce", referenceFrame, registry);
       yoScalar = new YoDouble("SQPOutputScalar", registry);
       reset();
@@ -113,9 +117,13 @@ public class CollinearForceBasedPlannerResult
    public void compute(double timeInState)
    {
       int currentSegmentIndex = getCurrentSegmentFromTime(timeInState);
-      yoCurrentSegmentIndex.set(currentSegmentIndex);
       if (currentSegmentIndex < 0)
-         throw new RuntimeException("Unable to find segment associated with the provided time in state " + timeInState);
+      {
+         currentSegmentIndex = comTrajectories.size() - 1;
+         timeInState = comTrajectories.get(currentSegmentIndex).getFinalTime() + getSegmentStartTime(currentSegmentIndex);
+         //throw new RuntimeException("Unable to find segment associated with the provided time in state " + timeInState);
+      }
+      yoCurrentSegmentIndex.set(currentSegmentIndex);
       Trajectory3D currentCoMTrajectory = comTrajectories.get(currentSegmentIndex);
       Trajectory3D currentCoPTrajectory = copTrajectories.get(currentSegmentIndex);
       Trajectory currentScalarTrajectory = scalarProfile.get(currentSegmentIndex);
@@ -127,17 +135,23 @@ public class CollinearForceBasedPlannerResult
       copPosition.setIncludingFrame(referenceFrame, currentCoPTrajectory.getPosition());
       double scalarValue = currentScalarTrajectory.getPosition();
       comVelocity.setIncludingFrame(referenceFrame, currentCoMTrajectory.getVelocity());
+      comAcceleration.setIncludingFrame(referenceFrame, currentCoMTrajectory.getAcceleration());
+      yoCoMDesiredAcceleration.set(comAcceleration);
       groundReactionForce.changeFrame(referenceFrame);
       groundReactionForce.sub(comPosition, copPosition);
       groundReactionForce.scale(scalarValue);
       comAcceleration.changeFrame(referenceFrame);
       comAcceleration.setIncludingFrame(groundReactionForce);
       comAcceleration.add(gravity);
-      groundReactionForce.scale(18.0);
+      groundReactionForce.scale(mass.getDoubleValue());
       yoGroundReactionForce.set(groundReactionForce);
+      
+      groundReactionForce.setIncludingFrame(yoCoMDesiredAcceleration);
+      groundReactionForce.sub(gravity);
+      groundReactionForce.scale(mass.getDoubleValue());
       yoCoMPosition.set(comPosition);
       yoCoMVelocity.set(comVelocity);
-      yoCoMAcceleration.set(comAcceleration);
+      yoCoMDynamicsAcceleration.set(comAcceleration);
       yoCoPPosition.set(copPosition);
       yoScalar.set(scalarValue);
    }
@@ -145,7 +159,7 @@ public class CollinearForceBasedPlannerResult
    private double getSegmentStartTime(int currentSegmentIndex)
    {
       double startTime = 0.0;
-      for(int i = 0; i < currentSegmentIndex; i++)
+      for (int i = 0; i < currentSegmentIndex; i++)
          startTime += comTrajectories.get(i).getFinalTime();
       return startTime;
    }
@@ -204,11 +218,11 @@ public class CollinearForceBasedPlannerResult
    {
       return qpConvergenceFlag;
    }
-   
+
    public String toString()
    {
       String ret = "";
-      for(int i = 0; i < comTrajectories.size(); i++)
+      for (int i = 0; i < comTrajectories.size(); i++)
       {
          ret += "Segment: " + i + "\n";
          ret += "CoM: " + comTrajectories.get(i).toString() + "\n";
@@ -223,8 +237,9 @@ public class CollinearForceBasedPlannerResult
       return groundReactionForce;
    }
 
-   public void initialize(FrameVector3DReadOnly gravity)
+   public void initialize(FrameVector3DReadOnly gravity, double mass)
    {
       this.gravity = gravity;
+      this.mass.set(mass);
    }
 }

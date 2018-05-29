@@ -218,6 +218,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       sqpOutput.compute(timeInState);
       desiredCoP.set(sqpOutput.getDesiredCoPPosition());
       plannedCoM.set(sqpOutput.getDesiredCoMPosition());
+      plannedCoP.set(desiredCoP);
       desiredGroundReactionForce.set(sqpOutput.getDesiredGroundReactionForce());
       updateYoVariables();
       if (updateGraphics)
@@ -255,7 +256,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       state.getLinearVelocity(initialCoMVelocity);
       initialCoPPosition.setIncludingFrame(desiredCoP);
       motionPlanner.setInitialState(initialCoMPosition, initialCoMVelocity, initialCoPPosition);
-      motionPlanner.runIterations(1);
+      motionPlanner.runIterations(2);
       lastStateChange.set(controllerTime);
    }
 }

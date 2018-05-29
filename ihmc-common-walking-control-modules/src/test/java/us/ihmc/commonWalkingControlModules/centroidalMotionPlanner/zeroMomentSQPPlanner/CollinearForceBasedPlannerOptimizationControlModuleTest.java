@@ -25,7 +25,7 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
                                                                                                                                               numberOfPlanningSegments,
 
                                                                                                                                               registry);
-      sqpSolution.initialize(gravity);
+      sqpSolution.initialize(gravity, 18.0);
       optimizationControlModule.initialize(new CollinearForcePlannerParameters(), gravity);
       optimizationControlModule.reset();
       List<CollinearForceMotionPlannerSegment> segmentList = new ArrayList<>();

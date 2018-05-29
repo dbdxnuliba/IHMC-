@@ -35,8 +35,8 @@ public class CollinearForceBasedCoMMotionPlanner
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    public static final int numberOfScalarTrajectoryCoefficients = 4;
-   public static final int numberOfCoMTrajectoryCoefficients = 4;
-   public static final int numberOfCoPTrajectoryCoefficients = 4;
+   public static final int numberOfCoMTrajectoryCoefficients = 8;
+   public static final int numberOfCoPTrajectoryCoefficients = 8;
 
    private final YoFramePoint initialCoMPosition;
    private final YoFramePoint initialCoPPosition;
@@ -121,7 +121,7 @@ public class CollinearForceBasedCoMMotionPlanner
       minPlannerSegmentTime.set(parameters.getMinPlannerSegmentTime());
       numberOfContactStatesToPlan.set(parameters.getNumberOfContactStatesToPlan());
       
-      sqpSolution.initialize(gravity);
+      sqpSolution.initialize(gravity, parameters.getRobotMass());
       initialSolutionGenerator.initialize(sqpSolution, gravity, parameters);
       optimizationControlModule.initialize(parameters, gravity);
    }

@@ -18,6 +18,7 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
+import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
@@ -119,7 +120,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
       qpSolver = new JavaQuadProgSolver();
       qpSolver.setMaxNumberOfIterations(10000);
-
+      qpSolver.setConvergenceThreshold(1e-17);
       timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
       qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);
    }
@@ -269,8 +270,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoMSmoothnessConstraints();
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
-      //generateCoPLocationConstraintsFromContactStates();
-      //generateCoMLocationConstraintsFromContactStates();
+      generateCoPLocationConstraintsFromContactStates();
+      generateCoMLocationConstraintsFromContactStates();
       generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();
@@ -338,6 +339,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       }
    }
 
+   private final FrameConvexPolygon2d tempFramePolygon = new FrameConvexPolygon2d();
    private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
    private final ConvexPolygon2D tempPolygonForScaling = new ConvexPolygon2D();
 
@@ -351,14 +353,14 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          if (contactState.isSupported())
          {
             Trajectory3D copTrajectory = copTrajectories.get(i);
-            contactState.getSupportPolygon(tempPolygon);
+            contactState.getSupportPolygon(worldFrame, tempFramePolygon);
             List<Double> nodeTimes = generateNodeTimesForConstraints(segment.getSegmentDuration(),
                                                                      numberOfSupportPolygonConstraintsPerSegment.getIntegerValue(), true, true);
             Trajectory xAxisCoPTrajectory = copTrajectory.getTrajectoryX();
             Trajectory yAxisCoPTrajectory = copTrajectory.getTrajectoryY();
             xAxisCoPTrajectory.getCoefficientVector(tempA1);
             yAxisCoPTrajectory.getCoefficientVector(tempA2);
-            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempPolygon, nodeTimes,
+            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempFramePolygon.getConvexPolygon2d(), nodeTimes,
                                                                         numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1);
             inequalityConstraintHandler.addIntraSegmentMultiAxisCoPConstraint(i, tempJ1, tempJ2, tempC1);
          }
