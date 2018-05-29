@@ -30,8 +30,8 @@ public class CollinearForceBasedMotionPlannerTest
    public void setupTest()
    {
       registry = new YoVariableRegistry("MotionPlannerTestRegistry");
-      motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
-      motionPlanner.initialize(new CollinearForcePlannerParameters());
+      motionPlanner = new CollinearForceBasedCoMMotionPlanner(registry);
+      motionPlanner.initialize(new CollinearForcePlannerParameters(), gravity);
    }
 
    @Test

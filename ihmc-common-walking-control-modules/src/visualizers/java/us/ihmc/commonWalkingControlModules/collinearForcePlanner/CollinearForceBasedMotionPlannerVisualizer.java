@@ -109,9 +109,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
       dt.set(0.01);
       isSupported = new YoBoolean(namePrefix + "IsSupported", registry);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, gravityZ);
-      motionPlanner = new CollinearForceBasedCoMMotionPlanner(gravity, registry);
+      motionPlanner = new CollinearForceBasedCoMMotionPlanner(registry);
       plannerParameters = new CollinearForcePlannerParameters();
-      motionPlanner.initialize(plannerParameters);
+      motionPlanner.initialize(plannerParameters, gravity);
       maxNumberOfContactStatesToVisualize = 15; //plannerParameters.getNumberOfContactStatesToPlan();
       maxNumberOfContactStatesToSubmit = plannerParameters.getNumberOfContactStatesToPlan();
       graphicsListRegistry = new YoGraphicsListRegistry();

@@ -1,12 +1,10 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
-import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
@@ -47,7 +45,7 @@ public class CollinearForceBasedPlannerResult
    private final FrameVector3D comVelocity = new FrameVector3D();
    private final FrameVector3D comAcceleration = new FrameVector3D();
    private final FrameVector3D groundReactionForce = new FrameVector3D();
-   private final FrameVector3DReadOnly gravity;
+   private FrameVector3DReadOnly gravity;
    private final YoFramePoint yoCoMPosition;
    private final YoFramePoint yoCoPPosition;
    private final YoFrameVector yoCoMVelocity;
@@ -62,7 +60,7 @@ public class CollinearForceBasedPlannerResult
    private final Trajectory tempTrajectory = new Trajectory(numberOfCoefficientsForComputedAccelerationTrajectory);
    private final Trajectory dynamicsErrorTrajectory = new Trajectory(numberOfCoefficientsForComputedAccelerationTrajectory);
 
-   public CollinearForceBasedPlannerResult(FrameVector3DReadOnly gravity, YoVariableRegistry registry)
+   public CollinearForceBasedPlannerResult(YoVariableRegistry registry)
    {
       comTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new GenericTypeBuilder<Trajectory3D>()
       {
@@ -93,7 +91,6 @@ public class CollinearForceBasedPlannerResult
          }
 
       });
-      this.gravity = gravity;
       yoCurrentSegmentIndex = new YoInteger("SQPOutputSegmentIndex", registry);
       yoCoMPosition = new YoFramePoint("SQPOutputCoMPosition", referenceFrame, registry);
       yoCoPPosition = new YoFramePoint("SQPOutputCoPPosition", referenceFrame, registry);
@@ -224,5 +221,10 @@ public class CollinearForceBasedPlannerResult
    public FrameVector3DReadOnly getDesiredGroundReactionForce()
    {
       return groundReactionForce;
+   }
+
+   public void initialize(FrameVector3DReadOnly gravity)
+   {
+      this.gravity = gravity;
    }
 }

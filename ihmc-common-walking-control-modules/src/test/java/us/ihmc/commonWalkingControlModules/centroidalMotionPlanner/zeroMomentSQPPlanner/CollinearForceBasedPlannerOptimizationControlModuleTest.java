@@ -20,11 +20,13 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
       YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName() + "Registry");
       YoInteger numberOfPlanningSegments = new YoInteger("NumberOfPlanningSegments", registry);
       FrameVector3D gravity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, -9.81);
-      CollinearForceBasedPlannerResult sqpSolution = new CollinearForceBasedPlannerResult(gravity, registry);
+      CollinearForceBasedPlannerResult sqpSolution = new CollinearForceBasedPlannerResult(registry);
       CollinearForceBasedPlannerOptimizationControlModule optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution,
                                                                                                                                               numberOfPlanningSegments,
-                                                                                                                                              gravity,
+
                                                                                                                                               registry);
+      sqpSolution.initialize(gravity);
+      optimizationControlModule.initialize(new CollinearForcePlannerParameters(), gravity);
       optimizationControlModule.reset();
       List<CollinearForceMotionPlannerSegment> segmentList = new ArrayList<>();
       for (int i = 0; i < 4; i++)
@@ -44,6 +46,7 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
    }
 
    private final List<Double> tempDoubleList = new ArrayList<>();
+
    private List<Double> generateNodeTimesForConstraints(double segmentDuration, int numberOfConstraints, boolean includeStartTime, boolean includeEndTime)
    {
       tempDoubleList.clear();
@@ -61,7 +64,7 @@ public class CollinearForceBasedPlannerOptimizationControlModuleTest
    public void testNodeTimeGeneration()
    {
       generateNodeTimesForConstraints(0.1, 4, false, false);
-      for(int i = 0; i < tempDoubleList.size(); i++)
-         PrintTools.debug(tempDoubleList.get(i) +"\n");
+      for (int i = 0; i < tempDoubleList.size(); i++)
+         PrintTools.debug(tempDoubleList.get(i) + "\n");
    }
 }

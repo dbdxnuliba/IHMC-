@@ -48,7 +48,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final YoInteger numberOfCoMTrajectoryCoefficients;
    private final YoInteger numberOfCoPTrajectoryCoefficients;
    private final YoInteger numberOfScalarTrajectoryCoefficients;
-   private final FrameVector3DReadOnly gravity;
+   private FrameVector3DReadOnly gravity;
    private final CollinearForceBasedPlannerResult sqpSolution;
 
    private final FramePoint3D desiredInitialCoMPosition = new FramePoint3D();
@@ -76,7 +76,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final YoDouble qpSolveTime;
 
    public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerResult sqpSolution, YoInteger numberOfPlanningSegments,
-                                                              FrameVector3DReadOnly gravity, YoVariableRegistry registry)
+                                                              YoVariableRegistry registry)
    {
       String namePrefix = getClass().getSimpleName();
 
@@ -105,7 +105,6 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       comZMaxHeightConstraint = new YoDouble(namePrefix + "CoMZMaxHeight", registry);
       comZMinHeightConstraint = new YoDouble(namePrefix + "CoMZMinHeight", registry);
       this.sqpSolution = sqpSolution;
-      this.gravity = gravity;
 
       equalityConstraintHandler = new ConstraintMatrixHandler(numberOfPlanningSegments, numberOfCoMTrajectoryCoefficients, numberOfCoPTrajectoryCoefficients,
                                                               numberOfScalarTrajectoryCoefficients);
@@ -120,13 +119,14 @@ public class CollinearForceBasedPlannerOptimizationControlModule
 
       qpSolver = new JavaQuadProgSolver();
       qpSolver.setMaxNumberOfIterations(10000);
-      
+
       timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
       qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);
    }
 
-   public void initialize(CollinearForcePlannerParameters parameters)
+   public void initialize(CollinearForcePlannerParameters parameters, FrameVector3DReadOnly gravity)
    {
+      this.gravity = gravity;
       numberOfDynamicsConstraintsPerSegment.set(parameters.getNumberOfCollocationConstraintsPerSegment());
       numberOfCoMPositionConstraintsPerSegment.set(parameters.getNumberOfCoMPositionConstraintsPerSegment());
       numberOfSupportPolygonConstraintsPerSegment.set(parameters.getNumberOfSupportPolygonConstraintsPerSegment());
@@ -554,8 +554,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                               numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
                                                                               numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
                                                                               gravity.getElement(axis.ordinal()));
-            equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints,
-                                                                              scalarConstraints, constraintViolation);
+            equalityConstraintHandler.addIntraSegmentMultiQuantityConstraints(axis, i, comConstraints, copConstraints, scalarConstraints, constraintViolation);
          }
          Trajectory zCoMTrajectory = comTrajectory.getTrajectory(Axis.Z);
          zCoMTrajectory.getCoefficientVector(comCoefficients);
@@ -568,8 +567,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
                                                                            numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1,
                                                                            numberOfScalarTrajectoryCoefficients.getIntegerValue() - 1,
                                                                            gravity.getElement(Axis.Z.ordinal()));
-         equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(i, comConstraints, scalarConstraints,
-                                                                                   constraintViolation);
+         equalityConstraintHandler.addIntraSegmentMultiQuantityConstraintsForZAxis(i, comConstraints, scalarConstraints, constraintViolation);
       }
    }
 

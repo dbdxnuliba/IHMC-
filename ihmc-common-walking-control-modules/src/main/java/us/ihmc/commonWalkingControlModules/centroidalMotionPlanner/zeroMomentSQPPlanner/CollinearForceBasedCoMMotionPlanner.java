@@ -73,7 +73,7 @@ public class CollinearForceBasedCoMMotionPlanner
    private final FramePoint3D tempPoint = new FramePoint3D();
    private final FrameVector3D tempVector = new FrameVector3D();
 
-   public CollinearForceBasedCoMMotionPlanner(FrameVector3DReadOnly gravity, YoVariableRegistry parentRegistry)
+   public CollinearForceBasedCoMMotionPlanner(YoVariableRegistry parentRegistry)
    {
       String namePrefix = getClass().getSimpleName();
       registry = new YoVariableRegistry(namePrefix);
@@ -103,16 +103,16 @@ public class CollinearForceBasedCoMMotionPlanner
       consolidatedConvergenceThreshold = new YoDouble(namePrefix + "ConsolidatedConvergenceThreshold", registry);
       individualAxisConvergenceThreshold = new YoDouble(namePrefix + "IndividualAxisConvergenceThreshold", registry);
 
-      sqpSolution = new CollinearForceBasedPlannerResult(gravity, registry);
-      optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, gravity, registry);
-      initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(gravity, registry); // TODO set this up
+      sqpSolution = new CollinearForceBasedPlannerResult(registry);
+      optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, registry);
+      initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(registry); // TODO set this up
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
       segmentList = new RecyclingArrayList<>(100, CollinearForceMotionPlannerSegment.class);
       parentRegistry.addChild(registry);
       reset();
    }
 
-   public void initialize(CollinearForcePlannerParameters parameters)
+   public void initialize(CollinearForcePlannerParameters parameters, FrameVector3DReadOnly gravity)
    {
       maxNumberOfSQPIterations.set(parameters.getMaxSQPIterations());
       consolidatedConvergenceThreshold.set(parameters.getConsolidatedConvergenceThreshold());
@@ -120,8 +120,10 @@ public class CollinearForceBasedCoMMotionPlanner
       nominalPlannerSegmentTime.set(parameters.getNominalPlannerSegmentTime());
       minPlannerSegmentTime.set(parameters.getMinPlannerSegmentTime());
       numberOfContactStatesToPlan.set(parameters.getNumberOfContactStatesToPlan());
-      initialSolutionGenerator.initialize(sqpSolution, parameters);
-      optimizationControlModule.initialize(parameters);
+      
+      sqpSolution.initialize(gravity);
+      initialSolutionGenerator.initialize(sqpSolution, gravity, parameters);
+      optimizationControlModule.initialize(parameters, gravity);
    }
 
    public void reset()

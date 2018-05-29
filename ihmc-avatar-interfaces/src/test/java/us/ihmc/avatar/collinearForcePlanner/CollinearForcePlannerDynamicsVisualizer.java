@@ -10,6 +10,7 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.ContactStatePlanGenerator;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.Pose2D;
@@ -39,7 +40,6 @@ import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFramePose;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotDescription.GroundContactPointDescription;
 import us.ihmc.robotics.robotDescription.JointDescription;
@@ -58,6 +58,8 @@ import us.ihmc.simulationconstructionset.examples.centroidalDynamicsRobot.Centro
 import us.ihmc.simulationconstructionset.examples.centroidalDynamicsRobot.CentroidalRobotController;
 import us.ihmc.simulationconstructionset.examples.centroidalDynamicsRobot.CentroidalRobotPhysicalProperties;
 import us.ihmc.simulationconstructionset.gui.tools.SimulationOverheadPlotterFactory;
+import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
+import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
 import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -80,78 +82,35 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    private final YoGraphicsListRegistry graphicsListRegistry = new YoGraphicsListRegistry();
    private final SideDependentList<YoFramePose> solePose = new SideDependentList<>();
    private final SideDependentList<ConvexPolygon2D> feetSupportPolygon = new SideDependentList<>();
-   private final SideDependentList<Boolean> footOnGround = new SideDependentList<Boolean>(true, true);
    private final SideDependentList<Vector3D> soleToFootFrameOffset = new SideDependentList<>();
-   private final YoFrameConvexPolygon2d supportPolygonForPlotter;
    private final ArrayList<YoGraphicPolygon3D> contactStateViz = new ArrayList<>();
    private final ArrayList<YoFramePose> contactStateLabels = new ArrayList<>();
    private final List<ContactState> contactStatePlan = new ArrayList<>();
    private final ContactStatePlanGenerator contactStatePlanner;
    private final Robot robot;
-   private final CentroidalRobotController robotController;
+   private final CollinearForceVisualizationController robotController;
    private final SimulationConstructionSet scs;
-   private final YoDouble yoTime;
    private final YoDouble dt = new YoDouble("dT", registry);
-
-   private final YoFramePoint plannedCoM;
-   private final YoFramePoint plannedCoP;
-   private final YoFramePoint dynamicsCoM;
-   private final YoFramePoint dynamicsCoP;
-   private final BagOfBalls plannedCoMTrack;
-   private final BagOfBalls plannedCoPTrack;
-   private final BagOfBalls dynamicsCoMTrack;
-   private final BagOfBalls dynamicsCoPTrack;
-
-   private final SideDependentList<Color> feetPolygonColor = new SideDependentList<Color>(new Color(0.85f, 0.35f, 0.65f, 1.0f),
-                                                                                          new Color(0.15f, 0.8f, 0.15f, 1.0f));
 
    public CollinearForcePlannerDynamicsVisualizer(DRCRobotModel robotModel, DRCRobotJointMap jointMap)
    {
       RobotDescription robotDescription = robotModel.getRobotDescription();
       getFootSupportPolygonAndCreateSoleFrames(jointMap, robotDescription);
-      supportPolygonForPlotter = createFeetGraphics(jointMap, robotDescription);
+      createFeetGraphics(jointMap, robotDescription);
       contactStatePlanner = createContactStatePlanner();
       PlaybackListener contactStatePlaybackListener = createContactStateGraphics();
 
-      plannedCoM = new YoFramePoint("PlannedCoM", worldFrame, registry);
-      plannedCoP = new YoFramePoint("PlannedCoP", worldFrame, registry);
-      dynamicsCoM = new YoFramePoint("DynamicsCoM", worldFrame, registry);
-      dynamicsCoP = new YoFramePoint("DynamicsCoP", worldFrame, registry);
-      plannedCoMTrack = new BagOfBalls(100, 0.001, "PlannedCoM", new YoAppearanceRGBColor(Color.BLACK, 0.0), graphicsSubRegistry, graphicsListRegistry);
-      plannedCoPTrack = new BagOfBalls(100, 0.001, "PlannedCoP", new YoAppearanceRGBColor(Color.RED, 0.0), graphicsSubRegistry, graphicsListRegistry);
-      dynamicsCoMTrack = new BagOfBalls(100, 0.001, "DynamicsCoM", new YoAppearanceRGBColor(Color.WHITE, 0.0), graphicsSubRegistry, graphicsListRegistry);
-      dynamicsCoPTrack = new BagOfBalls(100, 0.001, "DynamicsCoP", new YoAppearanceRGBColor(Color.ORANGE, 0.0), graphicsSubRegistry, graphicsListRegistry);
-
-      YoGraphicsList pointList = new YoGraphicsList("SimulatorTrackPointGraphicsList");
-      ArtifactList pointArtifactList = new ArtifactList("SimulatorTrackPointArtifactList");
-      YoGraphicPosition plannedCoMViz = new YoGraphicPosition("plannedCoMViz", plannedCoM, 0.005, new YoAppearanceRGBColor(Color.BLACK, 0.0), GraphicType.BALL);
-      pointList.add(plannedCoMViz);
-      pointArtifactList.add(plannedCoMViz.createArtifact());
-      YoGraphicPosition plannedCoPViz = new YoGraphicPosition("plannedCoPViz", plannedCoP, 0.005, new YoAppearanceRGBColor(Color.RED, 0.0), GraphicType.BALL);
-      pointList.add(plannedCoPViz);
-      pointArtifactList.add(plannedCoPViz.createArtifact());
-      YoGraphicPosition dynamicsCoMViz = new YoGraphicPosition("dynamicsCoMViz", dynamicsCoM, 0.005, new YoAppearanceRGBColor(Color.WHITE, 0.0),
-                                                               GraphicType.BALL_WITH_ROTATED_CROSS);
-      pointList.add(dynamicsCoMViz);
-      pointArtifactList.add(dynamicsCoMViz.createArtifact());
-      YoGraphicPosition dynamicsCoPViz = new YoGraphicPosition("dynamicsCoPViz", dynamicsCoP, 0.005, new YoAppearanceRGBColor(Color.ORANGE, 0.0),
-                                                               GraphicType.BALL_WITH_ROTATED_CROSS);
-      pointList.add(dynamicsCoPViz);
-      pointArtifactList.add(dynamicsCoPViz.createArtifact());
-      graphicsListRegistry.registerArtifactList(pointArtifactList);
-      graphicsListRegistry.registerYoGraphicsList(pointList);
       robotController = getOrCreateRobotController();
       robot = getOrCreateCentroidalDynamicsRobot(robotController);
       scs = createAndSetupSCS(robot, contactStatePlaybackListener);
-      yoTime = scs.getRobots()[0].getYoTime();
       initialize();
    }
 
-   private CentroidalRobotController getOrCreateRobotController()
+   private CollinearForceVisualizationController getOrCreateRobotController()
    {
       if (robotController != null)
          return robotController;
-      CollinearForceControlModule controller = new CollinearForceControlModule();
+      CollinearForceVisualizationController controller = new CollinearForceVisualizationController(solePose, feetSupportPolygon, graphicsListRegistry);
       controller.setupController(18.0, new FrameVector3D(worldFrame, 0.0, 0.0, -9.81));
       return controller;
    }
@@ -201,7 +160,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private SimulationConstructionSet createAndSetupSCS(Robot robot, PlaybackListener contactStatePlaybackListener)
    {
-      dt.set(0.001);
+      dt.set(0.0004);
       SimulationConstructionSetParameters parameters = new SimulationConstructionSetParameters();
       SimulationConstructionSet scs = new SimulationConstructionSet(robot, parameters);
       registry.addChild(graphicsSubRegistry);
@@ -268,7 +227,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       }
    }
 
-   private YoFrameConvexPolygon2d createFeetGraphics(DRCRobotJointMap jointMap, RobotDescription robotDescription)
+   private void createFeetGraphics(DRCRobotJointMap jointMap, RobotDescription robotDescription)
    {
       YoGraphicsList footGraphicsList = new YoGraphicsList("FootGraphics");
       ArtifactList footArtifactsList = new ArtifactList("FootPlotterGraphics");
@@ -286,45 +245,22 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
                                                          footPose.getOrientation(), 1.0);
          YoFramePose soleFramePose = solePose.get(side);
          YoGraphicCoordinateSystem footFrameGraphic = new YoGraphicCoordinateSystem(side.getCamelCaseName() + "FootFrameGraphic", soleFramePose, 0.1);
-         PoseReferenceFrame soleFrame = new PoseReferenceFrame("SoleReferenceFrame", worldFrame);
-         YoFrameConvexPolygon2d yoFootPolygon = new YoFrameConvexPolygon2d(side.getCamelCaseName() + "FootSupportPolygon", worldFrame,
-                                                                           feetSupportPolygon.get(side).getNumberOfVertices(), graphicsSubRegistry);
-         yoFootPolygon.setConvexPolygon2d(feetSupportPolygon.get(side));
-         YoArtifactPolygon footPolygonArtifact = new YoArtifactPolygon(side.getCamelCaseName() + "FootSupportPolygon", yoFootPolygon,
-                                                                       feetPolygonColor.get(side), false);
          soleFramePose.attachVariableChangedListener(new VariableChangedListener()
          {
             FramePose3D tempPose = new FramePose3D();
-            ConvexPolygon2D footPolygonForListener = feetSupportPolygon.get(side);
-            FrameConvexPolygon2d tempPolygon = new FrameConvexPolygon2d();
-
             @Override
             public void notifyOfVariableChange(YoVariable<?> v)
             {
                soleFramePose.getFramePose(tempPose);
-               // Update the plotter viz
-               soleFrame.setPoseAndUpdate(tempPose);
-               if (footOnGround.get(side))
-                  tempPolygon.setIncludingFrame(soleFrame, footPolygonForListener);
-               else
-                  tempPolygon.clearAndUpdate(worldFrame);
-               tempPolygon.changeFrame(worldFrame);
-               yoFootPolygon.setFrameConvexPolygon2d(tempPolygon);
-               // Update the foot viz
                tempPose.appendTranslation(soleToFootFrameOffset.get(side));
                footPose.set(tempPose);
             }
          });
-         footArtifactsList.add(footPolygonArtifact);
          footGraphicsList.add(footGraphic);
          footGraphicsList.add(footFrameGraphic);
       }
-      YoFrameConvexPolygon2d robotSupportPolygon = new YoFrameConvexPolygon2d(namePrefix + "SupportPolygon", worldFrame, 12, graphicsSubRegistry);
-      YoArtifactPolygon robotSupportPolygonArtifact = new YoArtifactPolygon("supportPolygon", robotSupportPolygon, Color.PINK, false);
-      footArtifactsList.add(robotSupportPolygonArtifact);
       graphicsListRegistry.registerArtifactList(footArtifactsList);
       graphicsListRegistry.registerYoGraphicsList(footGraphicsList);
-      return robotSupportPolygon;
    }
 
    private void initialize()
@@ -341,56 +277,36 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    public void run()
    {
+      BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
       prepareContactStatePlan(Motion.RUN);
-      updateVisualizationAndTickSCS();
-   }
-
-   private void updateVisualizationAndTickSCS()
-   {
-      updateTracks();
-      updateDoubleSupportPolygonVisualization();
-      updateContactStateVisualization();
-      yoTime.add(dt);
-      scs.tickAndUpdate();
-   }
-
-   private void updateTracks()
-   {
-      plannedCoMTrack.setBallLoop(plannedCoM);
-      plannedCoPTrack.setBallLoop(plannedCoP);
-      dynamicsCoMTrack.setBallLoop(dynamicsCoM);
-      dynamicsCoPTrack.setBallLoop(dynamicsCoP);
-   }
-
-   private void updateDoubleSupportPolygonVisualization()
-   {
-      tempPolygon.clear(worldFrame);
-      for (RobotSide side : RobotSide.values)
+      List<ContactState> contactStatePlanForController = new ArrayList<>();
+      for (int i = 0; i < contactStatePlan.size(); i++)
       {
-         if (!footOnGround.get(side))
-            continue;
-         ConvexPolygon2D footSupportPolygon = feetSupportPolygon.get(side);
-         solePose.get(side).getFramePose(tempPose);
-         for (int i = 0; i < footSupportPolygon.getNumberOfVertices(); i++)
+         contactStatePlanForController.clear();
+         for (int j = i; j < contactStatePlan.size(); j++)
+            contactStatePlanForController.add(contactStatePlan.get(j));
+         updateContactStateVisualization(contactStatePlanForController);
+         robotController.submitContactStateList(contactStatePlanForController);
+         ContactState currentState = contactStatePlanForController.get(0);
+         try
          {
-            tempPoint2D.setIncludingFrame(solePose.get(side).getReferenceFrame(), footSupportPolygon.getVertex(i));
-            TransformHelperTools.transformFromPoseToReferenceFrame(tempPose, tempPoint2D);
-            tempPoint2D.changeFrame(worldFrame);
-            tempPolygon.addVertex(tempPoint2D);
+            simulationRunner.simulateAndBlockAndCatchExceptions(currentState.getDuration());
+         }
+         catch (SimulationExceededMaximumTimeException e)
+         {
+            e.printStackTrace();
          }
       }
-      tempPolygon.update();
-      supportPolygonForPlotter.setFrameConvexPolygon2d(tempPolygon);
    }
 
-   private void updateContactStateVisualization()
+   private void updateContactStateVisualization(List<ContactState> contactStatesToVisualize)
    {
       int i = 0;
-      int numberOfContactStatesToViz = Math.min(contactStatePlan.size(), maxNumberOfContactStatesToVisualize);
+      int numberOfContactStatesToViz = Math.min(contactStatesToVisualize.size(), maxNumberOfContactStatesToVisualize);
       for (i = 0; i < numberOfContactStatesToViz; i++)
       {
          framePointList.clear();
-         ContactState contactState = contactStatePlan.get(i);
+         ContactState contactState = contactStatesToVisualize.get(i);
          contactState.getSupportPolygon(worldFrame, tempPolygon);
          // Setting some Z here to improve the visualization 
          for (int j = 0; j < tempPolygon.getNumberOfVertices(); j++)

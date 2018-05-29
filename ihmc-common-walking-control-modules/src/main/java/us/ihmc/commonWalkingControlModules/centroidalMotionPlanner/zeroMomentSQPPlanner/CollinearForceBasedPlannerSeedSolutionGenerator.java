@@ -33,24 +33,25 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
    private RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentList;
 
    private CollinearForceBasedPlannerResult sqpSolution;
+   private FrameVector3DReadOnly gravity;
    private final YoFramePoint comNominalOffsetFromSupportPolygonCentroid;
    private final Point3D tempPoint = new Point3D();
    private final FramePoint3D tempFramePoint = new FramePoint3D();
-   private final FrameVector3DReadOnly gravity;
 
-   public CollinearForceBasedPlannerSeedSolutionGenerator(FrameVector3DReadOnly gravity, YoVariableRegistry registry)
+   public CollinearForceBasedPlannerSeedSolutionGenerator(YoVariableRegistry registry)
    {
       String namePrefix = getClass().getSimpleName();
       comNominalOffsetFromSupportPolygonCentroid = new YoFramePoint(namePrefix + "NominalCoMOffsetFromSupportPolygonCentroid", worldFrame, registry);
-      this.gravity = gravity;
    }
 
    /**
     * Specifies the data structure in which the seed solution is to be saved
     * @param seedResultToSet
     */
-   void initialize(CollinearForceBasedPlannerResult seedResultToSet, CollinearForcePlannerParameters parameters)
+   void initialize(CollinearForceBasedPlannerResult seedResultToSet, FrameVector3DReadOnly gravity, CollinearForcePlannerParameters parameters)
    {
+      gravity.checkReferenceFrameMatch(worldFrame);
+      this.gravity = gravity;
       this.sqpSolution = seedResultToSet;
       Point3DReadOnly nominalCoMOffset = parameters.getNominalCoMOffsetFromSupportPolygonCentroid();
       if (nominalCoMOffset.getZ() < 1e-3)
