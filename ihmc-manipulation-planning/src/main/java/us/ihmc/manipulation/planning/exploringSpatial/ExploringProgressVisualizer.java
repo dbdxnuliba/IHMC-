@@ -1,4 +1,4 @@
-package us.ihmc.manipulation.planning.rrt.exploringSpatial;
+package us.ihmc.manipulation.planning.exploringSpatial;
 
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;

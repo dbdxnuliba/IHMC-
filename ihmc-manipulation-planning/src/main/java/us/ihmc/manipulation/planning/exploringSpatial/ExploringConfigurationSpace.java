@@ -1,4 +1,4 @@
-package us.ihmc.manipulation.planning.rrt.exploringSpatial;
+package us.ihmc.manipulation.planning.exploringSpatial;
 
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.transform.RigidBodyTransform;

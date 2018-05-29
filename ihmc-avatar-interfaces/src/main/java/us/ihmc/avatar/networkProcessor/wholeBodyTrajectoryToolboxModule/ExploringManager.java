@@ -1,12 +1,12 @@
-package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
+package us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinition;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialData;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialNode;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinition;
+import us.ihmc.manipulation.planning.exploringSpatial.SpatialData;
+import us.ihmc.manipulation.planning.exploringSpatial.SpatialNode;
 
 public class ExploringManager extends WholeBodyTrajectoryToolboxManager
 {

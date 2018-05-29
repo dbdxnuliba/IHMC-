@@ -1,4 +1,4 @@
-package us.ihmc.manipulation.planning.rrt.exploringSpatial;
+package us.ihmc.manipulation.planning.exploringSpatial;
 
 import java.awt.Color;
 import java.io.BufferedWriter;

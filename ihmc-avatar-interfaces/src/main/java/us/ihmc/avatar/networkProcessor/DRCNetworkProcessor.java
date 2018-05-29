@@ -15,7 +15,7 @@ import us.ihmc.avatar.networkProcessor.modules.mocap.MocapPlanarRegionsListManag
 import us.ihmc.avatar.networkProcessor.modules.uiConnector.ControllerFilteredConnectionModule;
 import us.ihmc.avatar.networkProcessor.modules.uiConnector.UiConnectionModule;
 import us.ihmc.avatar.networkProcessor.quadTreeHeightMap.HeightQuadTreeToolboxModule;
-import us.ihmc.avatar.networkProcessor.rrtToolboxModule.WholeBodyTrajectoryToolboxModule;
+import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxModule;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.PacketRouter;

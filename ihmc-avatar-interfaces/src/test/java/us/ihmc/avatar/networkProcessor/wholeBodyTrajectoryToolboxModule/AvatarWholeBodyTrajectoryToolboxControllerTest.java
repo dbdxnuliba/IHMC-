@@ -1,4 +1,4 @@
-package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
+package us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -35,6 +35,10 @@ import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematic
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxCommandConverter;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
+import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxCommandConverter;
+import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxController;
+import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxHelper;
+import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxModule;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
@@ -84,6 +88,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements MultiRobotTestInterface
 {
    protected static final boolean VERBOSE = false;
+   private static final boolean GHOSTINGREEN = true;
 
    private static final AppearanceDefinition ghostApperance = YoAppearance.DarkGreen();
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
@@ -155,7 +160,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       DRCRobotModel ghostRobotModel = getGhostRobotModel();
       RobotDescription robotDescription = ghostRobotModel.getRobotDescription();
       robotDescription.setName("Ghost");
-      //KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), ghostApperance);
+      if(GHOSTINGREEN)
+         KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), ghostApperance);
       ghost = ghostRobotModel.createHumanoidFloatingRootJointRobot(false);
       ghost.setDynamic(false);
       ghost.setGravity(0);

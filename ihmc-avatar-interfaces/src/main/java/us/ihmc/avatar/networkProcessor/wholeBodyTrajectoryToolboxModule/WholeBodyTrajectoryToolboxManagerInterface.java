@@ -1,6 +1,6 @@
-package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
+package us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule;
 
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialNode;
+import us.ihmc.manipulation.planning.exploringSpatial.SpatialNode;
 
 public interface WholeBodyTrajectoryToolboxManagerInterface
 {

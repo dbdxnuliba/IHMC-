@@ -1,4 +1,4 @@
-package us.ihmc.avatar.networkProcessor.rrtToolboxModule;
+package us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +24,12 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Reac
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WholeBodyTrajectoryToolboxConfigurationCommand;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinition;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinitionOnConstrainedTrajectory;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringDefinitionToReachingManifold;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.ExploringProgressVisualizer;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialNode;
-import us.ihmc.manipulation.planning.rrt.exploringSpatial.SpatialNodePlotter;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinition;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinitionOnConstrainedTrajectory;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinitionToReachingManifold;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringProgressVisualizer;
+import us.ihmc.manipulation.planning.exploringSpatial.SpatialNode;
+import us.ihmc.manipulation.planning.exploringSpatial.SpatialNodePlotter;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotSide.RobotSide;

@@ -1,4 +1,4 @@
-package us.ihmc.manipulation.planning.rrt.exploringSpatial;
+package us.ihmc.manipulation.planning.exploringSpatial;
 
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.rotationConversion.RotationMatrixConversion;
