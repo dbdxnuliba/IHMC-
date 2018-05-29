@@ -247,12 +247,12 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       PIDGains spineGains = new PIDGains("_SpineJointGains");
       boolean runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
 
-      double kp = 50.0;
-      double zeta = runningOnRealRobot ? 0.3 : 0.8;
+      double kp = 80.0;
+      double zeta = runningOnRealRobot ? 0.8 : 0.8;
       double ki = 0.0;
       double maxIntegralError = 0.0;
-      double maxAccel = runningOnRealRobot ? 20.0 : Double.POSITIVE_INFINITY;
-      double maxJerk = runningOnRealRobot ? 100.0 : Double.POSITIVE_INFINITY;
+      double maxAccel = runningOnRealRobot ? 12.0 : Double.POSITIVE_INFINITY;
+      double maxJerk = runningOnRealRobot ? 360.0 : Double.POSITIVE_INFINITY;
 
       spineGains.setKp(kp);
       spineGains.setZeta(zeta);
