@@ -91,7 +91,8 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    private final CollinearForceVisualizationController robotController;
    private final SimulationConstructionSet scs;
    private final YoDouble dt = new YoDouble("dT", registry);
-
+   private final YoDouble yoTime;
+   
    public CollinearForcePlannerDynamicsVisualizer(DRCRobotModel robotModel, DRCRobotJointMap jointMap)
    {
       RobotDescription robotDescription = robotModel.getRobotDescription();
@@ -103,6 +104,8 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       robotController = getOrCreateRobotController();
       robot = getOrCreateCentroidalDynamicsRobot(robotController);
       scs = createAndSetupSCS(robot, contactStatePlaybackListener);
+      yoTime = robot.getYoTime();
+      robotController.setControllerTime(yoTime);
       initialize();
    }
 
@@ -278,7 +281,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.RUN);
+      prepareContactStatePlan(Motion.WALK);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
       for (int i = 0; i < contactStatePlan.size(); i++)
       {
@@ -286,7 +289,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
          for (int j = i; j < contactStatePlan.size(); j++)
             contactStatePlanForController.add(contactStatePlan.get(j));
          updateContactStateVisualization(contactStatePlanForController);
-         robotController.submitContactStateList(contactStatePlanForController);
+         robotController.submitContactStateList(contactStatePlanForController, yoTime.getDoubleValue());
          ContactState currentState = contactStatePlanForController.get(0);
          try
          {
@@ -363,14 +366,14 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private void prepareWalkingContactStatePlan()
    {
-      int numberOfSteps = 5;
+      int numberOfSteps = 2;
       createContactStates(numberOfSteps * 2 + 1);
       Point2D stepSize = new Point2D(0.2, 0.1);
       solePose.get(RobotSide.LEFT).getFramePose(tempPose);
       FramePose2D leftSolePose = new FramePose2D(tempPose);
       solePose.get(RobotSide.RIGHT).getFramePose(tempPose);
       FramePose2D rightSolePose = new FramePose2D(tempPose);
-      contactStatePlanner.generateContactStatePlanForWalking(contactStatePlan, numberOfSteps, leftSolePose, rightSolePose, stepSize, RobotSide.LEFT, 0.3, 0.1,
+      contactStatePlanner.generateContactStatePlanForWalking(contactStatePlan, numberOfSteps, leftSolePose, rightSolePose, stepSize, RobotSide.LEFT, 0.4, 0.2,
                                                              0.2, 0.2, true, feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT));
    }
 

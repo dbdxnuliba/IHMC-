@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
@@ -41,8 +42,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private final YoVariableRegistry registry = new YoVariableRegistry(namePrefix + "Registry");
    private final YoFrameVector gravity;
    private final YoDouble mass;
+   private YoDouble time;
+   private final YoDouble lastStateChange;
 
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
+   private final CollinearForceBasedPlannerResult sqpOutput;
    private CentroidalStateReadOnly state;
    private YoFramePoint desiredCoP;
    private YoFrameVector desiredGroundReactionForce;
@@ -77,6 +81,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    public CollinearForceVisualizationController(SideDependentList<YoFramePose> solePoses, SideDependentList<ConvexPolygon2D> feetSupportPolygonInSoleFrame,
                                                 YoGraphicsListRegistry graphicsListRegistry)
    {
+      this.lastStateChange = new YoDouble(namePrefix + "LastStateChange", registry);
       this.mass = new YoDouble(namePrefix + "Mass", registry);
       this.gravity = new YoFrameVector(namePrefix + "Gravity", worldFrame, registry);
       this.solePoses = solePoses;
@@ -87,7 +92,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
          footOnGround.set(side, new YoBoolean(side.getCamelCaseName() + "FootOnGround", registry));
 
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(registry);
-
+      sqpOutput = motionPlanner.getSQPSolution();
       plannedCoM = new YoFramePoint("PlannedCoM", worldFrame, registry);
       plannedCoP = new YoFramePoint("PlannedCoP", worldFrame, registry);
       dynamicsCoM = new YoFramePoint("DynamicsCoM", worldFrame, registry);
@@ -96,6 +101,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       updateGraphics = graphicsListRegistry != null;
       if (updateGraphics)
          createVisualization(graphicsListRegistry);
+   }
+
+   public void setControllerTime(YoDouble controllerTime)
+   {
+      time = controllerTime;
    }
 
    private void createVisualization(YoGraphicsListRegistry graphicsListRegistry)
@@ -164,9 +174,9 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       {
          tempPolygon.clear();
          YoFramePose solePose = solePoses.get(side);
-         
+
          footOnGround.get(side).set(solePose.getZ() < 1e-4);
-         if(footOnGround.get(side).getBooleanValue())
+         if (footOnGround.get(side).getBooleanValue())
          {
             tempPolygon.setIncludingFrame(solePose.getReferenceFrame(), defaultSupportPolygons.get(side));
             solePose.getFramePose(tempPose);
@@ -176,9 +186,9 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
          }
       }
       tempPolygon.clear();
-      for(RobotSide side : RobotSide.values)
+      for (RobotSide side : RobotSide.values)
       {
-         if(footOnGround.get(side).getBooleanValue())
+         if (footOnGround.get(side).getBooleanValue())
             tempPolygon.addVertices(feetPolygonsInWorldFrame.get(side).getFrameConvexPolygon2d());
       }
       tempPolygon.update();
@@ -204,7 +214,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    @Override
    public void doControl()
    {
-      // TODO implement this 
+      double timeInState = time.getDoubleValue() - lastStateChange.getDoubleValue();
+      sqpOutput.compute(timeInState);
+      desiredCoP.set(sqpOutput.getDesiredCoPPosition());
+      plannedCoM.set(sqpOutput.getDesiredCoMPosition());
+      desiredGroundReactionForce.set(sqpOutput.getDesiredGroundReactionForce());
       updateYoVariables();
       if (updateGraphics)
          updateVisualization();
@@ -229,9 +243,19 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       return registry;
    }
 
-   public void submitContactStateList(List<ContactState> contactStatePlanForController)
+   private final FramePoint3D initialCoMPosition = new FramePoint3D();
+   private final FrameVector3D initialCoMVelocity = new FrameVector3D();
+   private final FramePoint3D initialCoPPosition = new FramePoint3D();
+   public void submitContactStateList(List<ContactState> contactStatePlanForController, double controllerTime)
    {
-      // TODO Auto-generated method stub
-
+      motionPlanner.reset();
+      for (int i = 0; i < contactStatePlanForController.size(); i++)
+         motionPlanner.appendContactStateToList(contactStatePlanForController.get(i));
+      state.getPosition(initialCoMPosition);
+      state.getLinearVelocity(initialCoMVelocity);
+      initialCoPPosition.setIncludingFrame(desiredCoP);
+      motionPlanner.setInitialState(initialCoMPosition, initialCoMVelocity, initialCoPPosition);
+      motionPlanner.runIterations(1);
+      lastStateChange.set(controllerTime);
    }
 }
