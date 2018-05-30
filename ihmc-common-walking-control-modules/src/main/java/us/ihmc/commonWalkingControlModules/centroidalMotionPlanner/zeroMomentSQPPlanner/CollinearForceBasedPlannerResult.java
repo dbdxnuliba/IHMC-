@@ -135,23 +135,19 @@ public class CollinearForceBasedPlannerResult
       copPosition.setIncludingFrame(referenceFrame, currentCoPTrajectory.getPosition());
       double scalarValue = currentScalarTrajectory.getPosition();
       comVelocity.setIncludingFrame(referenceFrame, currentCoMTrajectory.getVelocity());
-      comAcceleration.setIncludingFrame(referenceFrame, currentCoMTrajectory.getAcceleration());
-      yoCoMDesiredAcceleration.set(comAcceleration);
+
       groundReactionForce.changeFrame(referenceFrame);
       groundReactionForce.sub(comPosition, copPosition);
       groundReactionForce.scale(scalarValue);
-      comAcceleration.changeFrame(referenceFrame);
       comAcceleration.setIncludingFrame(groundReactionForce);
       comAcceleration.add(gravity);
       groundReactionForce.scale(mass.getDoubleValue());
-      yoGroundReactionForce.set(groundReactionForce);
       
-      groundReactionForce.setIncludingFrame(yoCoMDesiredAcceleration);
-      groundReactionForce.sub(gravity);
-      groundReactionForce.scale(mass.getDoubleValue());
+      yoGroundReactionForce.set(groundReactionForce);
       yoCoMPosition.set(comPosition);
       yoCoMVelocity.set(comVelocity);
       yoCoMDynamicsAcceleration.set(comAcceleration);
+      yoCoMDesiredAcceleration.set(currentCoMTrajectory.getAcceleration());
       yoCoPPosition.set(copPosition);
       yoScalar.set(scalarValue);
    }
@@ -166,22 +162,27 @@ public class CollinearForceBasedPlannerResult
 
    public FramePoint3DReadOnly getDesiredCoMPosition()
    {
-      return comPosition;
+      return yoCoMPosition;
    }
 
    public FrameVector3DReadOnly getDesiredCoMVelocity()
    {
-      return comVelocity;
+      return yoCoMVelocity;
    }
 
    public FramePoint3DReadOnly getDesiredCoPPosition()
    {
-      return copPosition;
+      return yoCoPPosition;
    }
 
    public FrameVector3DReadOnly getDesiredCoMAcceleration()
    {
-      return comAcceleration;
+      return yoCoMDesiredAcceleration;
+   }
+
+   public FrameVector3DReadOnly getDynamicsCoMAcceleration()
+   {
+      return yoCoMDynamicsAcceleration;
    }
 
    private int getCurrentSegmentFromTime(double timeInState)
@@ -241,5 +242,10 @@ public class CollinearForceBasedPlannerResult
    {
       this.gravity = gravity;
       this.mass.set(mass);
+   }
+
+   public double getScalar()
+   {
+      return yoScalar.getDoubleValue();
    }
 }

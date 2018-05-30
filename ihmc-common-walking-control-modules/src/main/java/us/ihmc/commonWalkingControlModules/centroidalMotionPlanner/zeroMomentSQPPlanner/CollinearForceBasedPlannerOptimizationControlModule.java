@@ -1,6 +1,5 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
-import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +74,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    private final ConvexPolygonScaler polygonScaler;
    private final ExecutionTimer timer;
    private final YoDouble qpSolveTime;
+   private final YoInteger lastRunSolverIterations;
+   private final YoInteger totalIterations;
 
    public CollinearForceBasedPlannerOptimizationControlModule(CollinearForceBasedPlannerResult sqpSolution, YoInteger numberOfPlanningSegments,
                                                               YoVariableRegistry registry)
@@ -119,10 +120,11 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       solver_qpSoln = new DenseMatrix64F(0, 1);
 
       qpSolver = new JavaQuadProgSolver();
-      qpSolver.setMaxNumberOfIterations(10000);
-      qpSolver.setConvergenceThreshold(1e-17);
+
       timer = new ExecutionTimer(namePrefix + "ExecutionTimer", registry);
       qpSolveTime = new YoDouble(namePrefix + "SolverRunTime", registry);
+      lastRunSolverIterations = new YoInteger(namePrefix + "NumberOfSolverIterations", registry);
+      totalIterations = new YoInteger(namePrefix + "TotalNumberOfSolverIterations", registry);
    }
 
    public void initialize(CollinearForcePlannerParameters parameters, FrameVector3DReadOnly gravity)
@@ -271,7 +273,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
       generateCoPLocationConstraintsFromContactStates();
-      generateCoMLocationConstraintsFromContactStates();
+      //generateCoMLocationConstraintsFromContactStates();
       generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();
@@ -318,8 +320,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          if (contactState.isSupported())
          {
             Trajectory3D comTrajectory = comTrajectories.get(i);
-            contactState.getSupportPolygon(tempPolygon);
-            polygonScaler.scaleConvexPolygon(tempPolygon, -comSupportPolygonXYConstraintOffset.getDoubleValue(), tempPolygonForScaling);
+            contactState.getSupportPolygon(worldFrame, tempFramePolygon);
+            polygonScaler.scaleConvexPolygon(tempFramePolygon.getConvexPolygon2d(), -comSupportPolygonXYConstraintOffset.getDoubleValue(), tempPolygonForScaling);
             List<Double> nodeTimes = generateNodeTimesForConstraints(segmentList.get(i).getSegmentDuration(),
                                                                      numberOfCoMPositionConstraintsPerSegment.getIntegerValue(), true, true);
             Trajectory xTrajectory = comTrajectory.getTrajectoryX();
@@ -360,8 +362,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
             Trajectory yAxisCoPTrajectory = copTrajectory.getTrajectoryY();
             xAxisCoPTrajectory.getCoefficientVector(tempA1);
             yAxisCoPTrajectory.getCoefficientVector(tempA2);
-            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempFramePolygon.getConvexPolygon2d(), nodeTimes,
-                                                                        numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1);
+            constraintGenerationHelper.generateSupportPolygonConstraint(tempJ1, tempJ2, tempC1, tempA1, tempA2, tempFramePolygon.getConvexPolygon2d(),
+                                                                        nodeTimes, numberOfCoPTrajectoryCoefficients.getIntegerValue() - 1);
             inequalityConstraintHandler.addIntraSegmentMultiAxisCoPConstraint(i, tempJ1, tempJ2, tempC1);
          }
       }
@@ -541,7 +543,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          Trajectory3D copTrajectory = sqpSolution.copTrajectories.get(i);
          Trajectory scalarTrajectory = sqpSolution.scalarProfile.get(i);
          List<Double> nodeTimesList = generateNodeTimesForConstraints(segmentList.get(i).getSegmentDuration(),
-                                                                      numberOfDynamicsConstraintsPerSegment.getIntegerValue(), false, true);
+                                                                      numberOfDynamicsConstraintsPerSegment.getIntegerValue(), true, true);
          // TODO include Z axis in loop after getting the Z profile from the contact state
          for (Axis axis : copAxis)
          {
@@ -586,13 +588,15 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       CommonOps.addEquals(solver_objH, regularization);
 
       timer.startMeasurement();
+      qpSolver.clear();
       qpSolver.setQuadraticCostFunction(solver_objH, solver_objf, 0.0);
       qpSolver.setLinearEqualityConstraints(equalityConstraintHandler.getCoefficientMatrix(), equalityConstraintHandler.getBiasMatrix());
       qpSolver.setLinearInequalityConstraints(inequalityConstraintHandler.getCoefficientMatrix(), inequalityConstraintHandler.getBiasMatrix());
 
       try
       {
-         qpSolver.solve(solver_qpSoln);
+         lastRunSolverIterations.set(qpSolver.solve(solver_qpSoln));
+         totalIterations.add(lastRunSolverIterations.getIntegerValue());
       }
       catch (NoConvergenceException e)
       {

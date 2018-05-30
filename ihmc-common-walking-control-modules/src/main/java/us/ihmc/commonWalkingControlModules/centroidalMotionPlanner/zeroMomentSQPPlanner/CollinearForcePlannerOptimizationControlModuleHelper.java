@@ -105,9 +105,13 @@ public class CollinearForcePlannerOptimizationControlModuleHelper
          generateDerivativeCoefficientsAndBiasMatrix(tempCoeffMatrixForScalar, tempBiasMatrixForScalar, scalarCoefficients, scalarPolynomialOrder, 0, nodeTime);
          double u = tempBiasMatrixForScalar.get(0, 0);
          double x = tempBiasMatrix2.get(0, 0);
+         double xddot = 0.0;
          double v = tempBiasMatrix1.get(0, 0);
          for (int j = comPolynomialOrder; j >= 2; j--)
+         {
+            xddot += tempCoeffMatrix2.get(0, j - 2) * j * (j - 1) * comCoefficients.get(j, 0);
             tempCoeffMatrix2.set(0, j, tempCoeffMatrix2.get(0, j - 2) * j * (j - 1) - u * tempCoeffMatrix2.get(0, j));
+         }
          for (int j = 1; j >= 0; j--)
             tempCoeffMatrix2.set(0, j, -u * tempCoeffMatrix2.get(0, j));
          CommonOps.scale(u, tempCoeffMatrix1);
@@ -116,7 +120,7 @@ public class CollinearForcePlannerOptimizationControlModuleHelper
          CommonOps.insert(tempCoeffMatrix2, comCoefficientMatrixToSet, i, 0);
          CommonOps.insert(tempCoeffMatrix1, copCoefficientMatrixToSet, i, 0);
          CommonOps.insert(tempCoeffMatrixForScalar, scalarCoefficientMatrixToSet, i, 0);
-         biasMatrixToSet.set(i, 0, u * (x - v) + gravity);
+         biasMatrixToSet.set(i, 0, u * (x - v) + gravity - xddot);
       }
    }
 

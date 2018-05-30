@@ -127,7 +127,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
          @Override
          public double getNominalHeight()
          {
-            return 0.45;
+            return 0.435;
          }
 
          @Override
@@ -283,9 +283,15 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.JUMP);
+      prepareContactStatePlan(Motion.RUN);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
-      robotController.submitContactStateList(contactStatePlan, yoTime.getDoubleValue());
+      robotController.submitContactStateList(contactStatePlan);
+      for (int i = 0; i < 2; i++)
+      {
+         robotController.runIteration();
+         scs.tickAndUpdate(i * dt.getDoubleValue());
+      }
+      robotController.setTimeForStateChange(yoTime.getDoubleValue());
       for (int i = 0; i < contactStatePlan.size(); i++)
       {
          contactStatePlanForController.clear();
@@ -397,7 +403,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       Pose2D leftAnklePoseOffset = new Pose2D(0.0, 0.1, 0.0);
       Pose2D rightAnklePoseOffset = new Pose2D(0.0, -0.1, 0.0);
       contactStatePlanner.generateContactStatePlanForJumping(contactStatePlan, numberOfJumps, pelvisPose, pelvisPoseChangePerJump, leftAnklePoseOffset,
-                                                             rightAnklePoseOffset, 0.10, 0.5, feetSupportPolygon.get(RobotSide.LEFT),
+                                                             rightAnklePoseOffset, 0.15, 0.50, feetSupportPolygon.get(RobotSide.LEFT),
                                                              feetSupportPolygon.get(RobotSide.RIGHT));
    }
 }

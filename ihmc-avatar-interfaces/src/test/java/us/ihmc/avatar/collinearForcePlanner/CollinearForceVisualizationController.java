@@ -3,11 +3,14 @@ package us.ihmc.avatar.collinearForcePlanner;
 import java.awt.Color;
 import java.util.List;
 
+import org.ejml.data.DenseMatrix64F;
+
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
+import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -48,6 +51,8 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
    private final CollinearForceBasedPlannerResult sqpOutput;
    private CentroidalStateReadOnly state;
+   //private final YoFramePoint desiredCoM;
+   //private final YoFrameVector desiredCoMAcceleration;
    private YoFramePoint desiredCoP;
    private YoFrameVector desiredGroundReactionForce;
 
@@ -216,9 +221,10 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    {
       double timeInState = time.getDoubleValue() - lastStateChange.getDoubleValue();
       sqpOutput.compute(timeInState);
-      desiredCoP.set(sqpOutput.getDesiredCoPPosition());
+
+      plannedCoP.set(sqpOutput.getDesiredCoPPosition());
       plannedCoM.set(sqpOutput.getDesiredCoMPosition());
-      plannedCoP.set(desiredCoP);
+      desiredCoP.set(plannedCoP);
       desiredGroundReactionForce.set(sqpOutput.getDesiredGroundReactionForce());
       updateYoVariables();
       if (updateGraphics)
@@ -247,7 +253,8 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private final FramePoint3D initialCoMPosition = new FramePoint3D();
    private final FrameVector3D initialCoMVelocity = new FrameVector3D();
    private final FramePoint3D initialCoPPosition = new FramePoint3D();
-   public void submitContactStateList(List<ContactState> contactStatePlanForController, double controllerTime)
+
+   public void submitContactStateList(List<ContactState> contactStatePlanForController)
    {
       motionPlanner.reset();
       for (int i = 0; i < contactStatePlanForController.size(); i++)
@@ -256,7 +263,24 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       state.getLinearVelocity(initialCoMVelocity);
       initialCoPPosition.setIncludingFrame(desiredCoP);
       motionPlanner.setInitialState(initialCoMPosition, initialCoMVelocity, initialCoPPosition);
-      motionPlanner.runIterations(2);
+   }
+
+   public void runIteration()
+   {
+      motionPlanner.runIterations(1);
+   }
+
+   public void setTimeForStateChange(double controllerTime)
+   {
       lastStateChange.set(controllerTime);
    }
+
+   private final JavaQuadProgSolver qpSolver = new JavaQuadProgSolver();
+   private final DenseMatrix64F solver_H = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F solver_f = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F solver_Aeq = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F solver_beq = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F solver_Ain = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F solver_bin = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F qpSoln = new DenseMatrix64F(0, 1);
 }
