@@ -273,7 +273,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
       generateCoPLocationConstraintsFromContactStates();
-      //generateCoMLocationConstraintsFromContactStates();
+      generateCoMLocationConstraintsFromContactStates();
       generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();
@@ -317,6 +317,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       for (int i = 0; i < segmentList.size(); i++)
       {
          ContactState contactState = segmentList.get(i).getContactState();
+         PrintTools.debug("Segment " + i + " is supported " + contactState.isSupported());
          if (contactState.isSupported())
          {
             Trajectory3D comTrajectory = comTrajectories.get(i);
@@ -584,7 +585,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       PrintTools.debug("QPSize: " + problemSize);
       regularization.reshape(problemSize, problemSize);
       CommonOps.setIdentity(regularization);
-      CommonOps.scale(1e-3, regularization);
+      CommonOps.scale(1.0e-4, regularization);
       CommonOps.addEquals(solver_objH, regularization);
 
       timer.startMeasurement();

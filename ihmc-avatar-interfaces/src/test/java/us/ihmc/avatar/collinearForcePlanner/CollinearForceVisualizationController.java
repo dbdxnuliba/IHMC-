@@ -10,6 +10,7 @@ import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQP
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -258,7 +259,10 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    {
       motionPlanner.reset();
       for (int i = 0; i < contactStatePlanForController.size(); i++)
+      {
+         PrintTools.debug(contactStatePlanForController.get(i).isSupported() + " " + i);
          motionPlanner.appendContactStateToList(contactStatePlanForController.get(i));
+      }
       state.getPosition(initialCoMPosition);
       state.getLinearVelocity(initialCoMVelocity);
       initialCoPPosition.setIncludingFrame(desiredCoP);

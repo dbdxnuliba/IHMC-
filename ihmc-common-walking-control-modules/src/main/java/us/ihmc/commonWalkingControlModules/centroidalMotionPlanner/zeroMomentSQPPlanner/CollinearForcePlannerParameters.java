@@ -53,7 +53,7 @@ public class CollinearForcePlannerParameters
 
    public double getMaxZHeight()
    {
-      return 0.45;
+      return 0.5;
    }
    
    public double getMinZHeight()

@@ -356,7 +356,7 @@ public class ContactStatePlanGenerator
                                                   double finalDoubleSupportDuration, boolean useLastStepToEndWalk, ConvexPolygon2D leftFootSupportPolygon,
                                                   ConvexPolygon2D rightFootSupportPolygon)
    {
-      if (contactStates.size() < numberOfSteps * 2 + 2)
+      if (contactStates.size() < numberOfSteps * 2 + 1)
          throw new RuntimeException("Contact state list does not contain enough elements to store contact states for " + numberOfSteps + " steps");
 
       ContactState initialDoubleSupportState = contactStates.get(0);
