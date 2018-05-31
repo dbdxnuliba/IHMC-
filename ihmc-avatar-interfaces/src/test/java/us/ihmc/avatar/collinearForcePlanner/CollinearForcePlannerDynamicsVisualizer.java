@@ -283,7 +283,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.RUN);
+      prepareContactStatePlan(Motion.JUMP);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
       robotController.submitContactStateList(contactStatePlan);
       for (int i = 0; i < 10; i++)
@@ -374,7 +374,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private void prepareWalkingContactStatePlan()
    {
-      int numberOfSteps = 4;
+      int numberOfSteps = 2;
       createContactStates(numberOfSteps * 2 + 1);
       Point2D stepSize = new Point2D(0.3, 0.0);
       solePose.get(RobotSide.LEFT).getFramePose(tempPose);
@@ -394,7 +394,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private void prepareJumpingContactStatePlan()
    {
-      int numberOfJumps = 3;
+      int numberOfJumps = 1;
       createContactStates(numberOfJumps * 2 + 1);
       FramePose2D pelvisPose = new FramePose2D();
       pelvisPose.setPosition((solePose.get(RobotSide.LEFT).getX() + solePose.get(RobotSide.RIGHT).getX()) / 2.0,

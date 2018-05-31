@@ -200,7 +200,7 @@ public class CollinearForceBasedCoMMotionPlanner
       {
          ContactState nextContactState = contactStateList.get(i + 1);
          double contactStateDuration = contactState.getDuration();
-         int numberOfSegmentsInContactState = getNumberOfSegmentsInContactStates(contactStateDuration);
+         int numberOfSegmentsInContactState = 0; //getNumberOfSegmentsInContactStates(contactStateDuration);
          for (int j = 0; j < numberOfSegmentsInContactState; j++)
          {
             CollinearForceMotionPlannerSegment segment = segmentList.add();
@@ -218,13 +218,14 @@ public class CollinearForceBasedCoMMotionPlanner
       }
 
       double contactStateDuration = contactState.getDuration();
-      int numberOfSegmentsInContactState = getNumberOfSegmentsInContactStates(contactStateDuration) + 1;
+      int numberOfSegmentsInContactState = 1; //getNumberOfSegmentsInContactStates(contactStateDuration) + 1;
       for (int j = 0; j < numberOfSegmentsInContactState; j++)
       {
          CollinearForceMotionPlannerSegment segment = segmentList.add();
          segment.setContactState(contactState);
          segment.setNextSegmentContactState(contactState);
-         segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
+         segment.setSegmentDuration(contactStateDuration);
+         //segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
          segment.setContactStateChangeFlag(false);
       }
       PrintTools.debug("Number of segments:" + segmentList.size());
