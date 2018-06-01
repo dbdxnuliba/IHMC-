@@ -70,6 +70,7 @@ public class CollinearForceBasedCoMMotionPlanner
    private final CollinearForceBasedPlannerResult sqpSolution;
    private final CollinearForceBasedPlannerOptimizationControlModule optimizationControlModule;
    private final CollinearForceBasedPlannerSeedSolutionGenerator initialSolutionGenerator;
+   private final SmartContactStateProcessor contactStateProcessor;
    private final FramePoint3D tempPoint = new FramePoint3D();
    private final FrameVector3D tempVector = new FrameVector3D();
 
@@ -106,6 +107,7 @@ public class CollinearForceBasedCoMMotionPlanner
       sqpSolution = new CollinearForceBasedPlannerResult(registry);
       optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, registry);
       initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(registry); // TODO set this up
+      contactStateProcessor = new SmartContactStateProcessor(namePrefix, registry);
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
       segmentList = new RecyclingArrayList<>(100, CollinearForceMotionPlannerSegment.class);
       parentRegistry.addChild(registry);
@@ -124,6 +126,7 @@ public class CollinearForceBasedCoMMotionPlanner
       sqpSolution.initialize(gravity, parameters.getRobotMass());
       initialSolutionGenerator.initialize(sqpSolution, gravity, parameters);
       optimizationControlModule.initialize(parameters, gravity);
+      contactStateProcessor.initialize(parameters.getNumberOfSegmentsPerContactStateChange());
    }
 
    public void reset()
@@ -192,53 +195,7 @@ public class CollinearForceBasedCoMMotionPlanner
 
    public void processContactStateList()
    {
-      segmentList.clear();
-      ContactState contactState = contactStateList.get(0);
-      int i = 0;
-      int numberOfContactStatesToProcess = Math.min(numberOfContactStatesToPlan.getIntegerValue(), numberOfContactStates.getIntegerValue() - 1);
-      for (; i < numberOfContactStatesToProcess; i++)
-      {
-         ContactState nextContactState = contactStateList.get(i + 1);
-         double contactStateDuration = contactState.getDuration();
-         int numberOfSegmentsInContactState = 0; //getNumberOfSegmentsInContactStates(contactStateDuration);
-         for (int j = 0; j < numberOfSegmentsInContactState; j++)
-         {
-            CollinearForceMotionPlannerSegment segment = segmentList.add();
-            segment.setContactState(contactState);
-            segment.setNextSegmentContactState(contactState);
-            segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
-            segment.setContactStateChangeFlag(false);
-         }
-         CollinearForceMotionPlannerSegment segment = segmentList.add();
-         segment.setContactState(contactState);
-         segment.setNextSegmentContactState(nextContactState);
-         segment.setSegmentDuration(contactStateDuration - numberOfSegmentsInContactState * nominalPlannerSegmentTime.getDoubleValue());
-         segment.setContactStateChangeFlag(true);
-         contactState = nextContactState;
-      }
-
-      double contactStateDuration = contactState.getDuration();
-      int numberOfSegmentsInContactState = 1; //getNumberOfSegmentsInContactStates(contactStateDuration) + 1;
-      for (int j = 0; j < numberOfSegmentsInContactState; j++)
-      {
-         CollinearForceMotionPlannerSegment segment = segmentList.add();
-         segment.setContactState(contactState);
-         segment.setNextSegmentContactState(contactState);
-         segment.setSegmentDuration(contactStateDuration);
-         //segment.setSegmentDuration(nominalPlannerSegmentTime.getDoubleValue());
-         segment.setContactStateChangeFlag(false);
-      }
-      PrintTools.debug("Number of segments:" + segmentList.size());
-   }
-
-   private int getNumberOfSegmentsInContactStates(double contactStateDuration)
-   {
-      int quotient = (int) Math.floor(contactStateDuration / nominalPlannerSegmentTime.getDoubleValue());
-      double remainder = contactStateDuration - quotient * nominalPlannerSegmentTime.getDoubleValue();
-      if (remainder < minPlannerSegmentTime.getDoubleValue())
-         return quotient - 1;
-      else
-         return quotient;
+      contactStateProcessor.processContactStates(contactStateList, segmentList);
    }
 
    public void clearContactStateList()
@@ -250,6 +207,7 @@ public class CollinearForceBasedCoMMotionPlanner
    {
       if (isNodeValid(contactStateToAppend))
       {
+         PrintTools.debug(contactStateToAppend.toString());
          numberOfContactStates.increment();
          contactStateList.add().set(contactStateToAppend);
       }
@@ -329,7 +287,7 @@ public class CollinearForceBasedCoMMotionPlanner
          optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
       }
       if(hasFinalStateBeenSet.getBooleanValue())
-         optimizationControlModule.setDesiredFinalState(initialCoMPosition, finalCoPPosition, finalCoMVelocity);
+         optimizationControlModule.setDesiredFinalState(finalCoMPosition, finalCoPPosition, finalCoMVelocity);
       else
       {
          segmentList.getLast().getContactState().getSupportPolygonCentroid(tempPoint);

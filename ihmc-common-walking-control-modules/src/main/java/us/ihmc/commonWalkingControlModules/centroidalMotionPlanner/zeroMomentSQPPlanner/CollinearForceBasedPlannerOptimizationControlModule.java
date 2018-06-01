@@ -317,7 +317,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       for (int i = 0; i < segmentList.size(); i++)
       {
          ContactState contactState = segmentList.get(i).getContactState();
-         PrintTools.debug("Segment " + i + " is supported " + contactState.isSupported());
+         PrintTools.debug("Segment " + i + " is supported " + contactState.isSupported() + ", Duration: " + segmentList.get(i).getSegmentDuration());
          if (contactState.isSupported())
          {
             Trajectory3D comTrajectory = comTrajectories.get(i);
@@ -523,7 +523,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          constraintGenerationHelper.generateDerivativeCoefficientsAndBiasMatrix(tempJ2, tempC1, tempA1, lastAxisSegment.getNumberOfCoefficients() - 1, 1,
                                                                                 lastAxisSegment.getFinalTime());
          CommonOps.subtractEquals(tempC2, tempC1);
-         equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, lastSegmentIndex, tempJ1, tempC2);
+         equalityConstraintHandler.addIntraSegmentCoMConstraint(axis, lastSegmentIndex, tempJ2, tempC2);
       }
    }
 

@@ -286,7 +286,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       prepareContactStatePlan(Motion.JUMP);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
       robotController.submitContactStateList(contactStatePlan);
-      for (int i = 0; i < 10; i++)
+      for (int i = 0; i < 2; i++)
       {
          robotController.runIteration();
          scs.tickAndUpdate(i * dt.getDoubleValue());
@@ -374,9 +374,9 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private void prepareWalkingContactStatePlan()
    {
-      int numberOfSteps = 2;
+      int numberOfSteps = 3;
       createContactStates(numberOfSteps * 2 + 1);
-      Point2D stepSize = new Point2D(0.3, 0.0);
+      Point2D stepSize = new Point2D(0.4, 0.0);
       solePose.get(RobotSide.LEFT).getFramePose(tempPose);
       FramePose2D leftSolePose = new FramePose2D(tempPose);
       solePose.get(RobotSide.RIGHT).getFramePose(tempPose);

@@ -85,4 +85,9 @@ public class CollinearForcePlannerParameters
    {
       return 18.0;
    }
+
+   public int getNumberOfSegmentsPerContactStateChange()
+   {
+      return 3;
+   }
 }

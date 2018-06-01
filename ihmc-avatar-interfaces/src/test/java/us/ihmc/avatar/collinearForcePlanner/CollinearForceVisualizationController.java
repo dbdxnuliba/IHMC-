@@ -260,7 +260,6 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       motionPlanner.reset();
       for (int i = 0; i < contactStatePlanForController.size(); i++)
       {
-         PrintTools.debug(contactStatePlanForController.get(i).isSupported() + " " + i);
          motionPlanner.appendContactStateToList(contactStatePlanForController.get(i));
       }
       state.getPosition(initialCoMPosition);
