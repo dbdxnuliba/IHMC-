@@ -35,8 +35,8 @@ public class CollinearForceBasedCoMMotionPlanner
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    public static final int numberOfScalarTrajectoryCoefficients = 4;
-   public static final int numberOfCoMTrajectoryCoefficients = 8;
-   public static final int numberOfCoPTrajectoryCoefficients = 8;
+   public static final int numberOfCoMTrajectoryCoefficients = 6;
+   public static final int numberOfCoPTrajectoryCoefficients = 6;
 
    private final YoFramePoint initialCoMPosition;
    private final YoFramePoint initialCoPPosition;
@@ -207,7 +207,7 @@ public class CollinearForceBasedCoMMotionPlanner
    {
       if (isNodeValid(contactStateToAppend))
       {
-         PrintTools.debug(contactStateToAppend.toString());
+         //PrintTools.debug(contactStateToAppend.toString());
          numberOfContactStates.increment();
          contactStateList.add().set(contactStateToAppend);
       }

@@ -146,6 +146,8 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       inequalityConstraintHandler.reshape();
       errorCode.set(0);
       qpSolveTime.set(0.0);
+      lastRunSolverIterations.set(0);
+      totalIterations.set(0);
    }
 
    public void setDesiredInitialState(YoFramePoint initialCoMLocation, YoFramePoint initialCoPLocation, YoFrameVector initialCoMVelocity)
@@ -317,7 +319,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       for (int i = 0; i < segmentList.size(); i++)
       {
          ContactState contactState = segmentList.get(i).getContactState();
-         PrintTools.debug("Segment " + i + " is supported " + contactState.isSupported() + ", Duration: " + segmentList.get(i).getSegmentDuration());
+         //PrintTools.debug("Segment " + i + " is supported " + contactState.isSupported() + ", Duration: " + segmentList.get(i).getSegmentDuration());
          if (contactState.isSupported())
          {
             Trajectory3D comTrajectory = comTrajectories.get(i);
@@ -582,10 +584,10 @@ public class CollinearForceBasedPlannerOptimizationControlModule
    {
       sqpSolution.iterationCount++;
       int problemSize = solver_objH.numRows;
-      PrintTools.debug("QPSize: " + problemSize);
+      //PrintTools.debug("QPSize: " + problemSize);
       regularization.reshape(problemSize, problemSize);
       CommonOps.setIdentity(regularization);
-      CommonOps.scale(1.0e-4, regularization);
+      CommonOps.scale(1.0e-3, regularization);
       CommonOps.addEquals(solver_objH, regularization);
 
       timer.startMeasurement();
