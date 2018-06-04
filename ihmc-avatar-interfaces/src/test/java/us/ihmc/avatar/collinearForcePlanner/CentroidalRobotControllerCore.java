@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryIOTools;
@@ -20,6 +21,7 @@ import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
@@ -47,8 +49,6 @@ public class CentroidalRobotControllerCore
    // Optimization outputs
    private final YoFrameVector achievedLinearMomentumRateOfChange;
    private final YoFrameVector achievedAngularMomentumRateOfChange;
-   private final YoFrameVector achievedGroundReactionForce;
-   private final YoFramePoint achievedCenterOfPressure;
 
    // Optimization inputs
    private final YoFramePoint currentCenterOfMass;
@@ -85,8 +85,6 @@ public class CentroidalRobotControllerCore
       String namePrefix = "ControllerCore";
       achievedLinearMomentumRateOfChange = new YoFrameVector(namePrefix + "AchievedLinearMomentumRateOfChange", worldFrame, registry);
       achievedAngularMomentumRateOfChange = new YoFrameVector(namePrefix + "AchievedAngularMomentumRateOfChange", worldFrame, registry);
-      achievedGroundReactionForce = new YoFrameVector(namePrefix + "AchievedGroundReactionForce", worldFrame, registry);
-      achievedCenterOfPressure = new YoFramePoint(namePrefix + "AchievedCenterOfPressure", worldFrame, registry);
 
       currentCenterOfMass = new YoFramePoint(namePrefix + "CenterOfMass", worldFrame, registry);
       desiredLinearMomentumRateOfChange = new YoFrameVector(namePrefix + "DesiredLinearMomentumRateOfChange", worldFrame, registry);
@@ -159,11 +157,29 @@ public class CentroidalRobotControllerCore
    public void setLinearMomentumWeights(FrameVector3DReadOnly linearMomentumWeights)
    {
       this.linearMomentumWeights.set(linearMomentumWeights);
+      updateLinearMomentumWeightMatrix(this.linearMomentumWeights);
+   }
+
+   private void updateLinearMomentumWeightMatrix(FrameVector3DReadOnly linearMomentumWeights)
+   {
+      linearWeights.reshape(3, 3);
+      linearWeights.zero();
+      for (int i = 0; i < 3; i++)
+         linearWeights.set(i, i, linearMomentumWeights.getElement(i));
    }
 
    public void setAngularMomentumWeights(FrameVector3DReadOnly angularMomentumWeights)
    {
       this.angularMomentumWeights.set(angularMomentumWeights);
+      updateAngularMomentumWeightMatrix(this.angularMomentumWeights);
+   }
+
+   private void updateAngularMomentumWeightMatrix(FrameVector3DReadOnly angularMomentumWeights)
+   {
+      angularWeights.reshape(3, 3);
+      angularWeights.zero();
+      for (int i = 0; i < 3; i++)
+         angularWeights.set(i, i, angularMomentumWeights.getElement(i));
    }
 
    public void setDesiredLinearMomentumRateOfChange(FrameVector3DReadOnly desiredLinearMomentumRateOfChange)
@@ -186,14 +202,21 @@ public class CentroidalRobotControllerCore
       linearMomentumRateOfChangeToSet.setIncludingFrame(this.achievedLinearMomentumRateOfChange);
    }
 
-   public void getAchievedCenterOfPressure(FramePoint3D centerOfPressureToSet)
+   public void setFeetLocations(FramePoint3DReadOnly leftSoleCentroid, FramePoint3DReadOnly rightSoleCentroid)
    {
-      centerOfPressureToSet.setIncludingFrame(this.achievedCenterOfPressure);
+      ankleLocation.get(RobotSide.LEFT).set(leftSoleCentroid);
+      ankleLocation.get(RobotSide.RIGHT).set(rightSoleCentroid);
    }
 
-   public void getGroundReactionForce(FrameVector3D groundReactionForceToSet)
+   public void updateFootContactState(boolean isLeftFootInContact, boolean isRightFootInContact)
    {
-      groundReactionForceToSet.setIncludingFrame(this.achievedGroundReactionForce);
+      footOnGround.get(RobotSide.LEFT).set(isLeftFootInContact);
+      footOnGround.get(RobotSide.RIGHT).set(isRightFootInContact);
+   }
+   
+   public void setCenterOfMassLocation(FramePoint3DReadOnly centerOfMass)
+   {
+      currentCenterOfMass.set(centerOfMass);
    }
 
    private final ConvexPolygon2D supportPolygonForComputation = new ConvexPolygon2D();
@@ -219,6 +242,7 @@ public class CentroidalRobotControllerCore
             }
          }
       }
+      supportPolygonForComputation.update();
       supportPolygon.setConvexPolygon2d(supportPolygonForComputation);
    }
 
@@ -228,9 +252,9 @@ public class CentroidalRobotControllerCore
       generateObjective();
    }
 
-   private final DenseMatrix64F tempJacobian = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F tempObjective = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F tempWeights = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F linearMomentumJacobian = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F linearMomentumObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F linearWeights = new DenseMatrix64F(0, 1);
 
    // The order of the decision variables (coordinates of the force vector 
    // in terms of the basis vectors ordered corresponding to the support polygon vertices)
@@ -239,32 +263,47 @@ public class CentroidalRobotControllerCore
       int numberOfDecisionVariables = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
       solver_H.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
       solver_f.reshape(numberOfDecisionVariables, 1);
+      solver_H.zero();
+      solver_f.zero();
       generateLinearMomentumRateOfChangeObjective();
       generateAngularMomentumRateOfChangeObjective();
+      generateForceMinimizationObjective();
+   }
+
+   private final DenseMatrix64F tempJacobian = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F tempObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F tempWeights = new DenseMatrix64F(0, 1);
+
+   private void generateForceMinimizationObjective()
+   {
+      int numberOfForceVectors = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
+      tempJacobian.reshape(numberOfForceVectors, numberOfForceVectors);
+      tempObjective.reshape(numberOfForceVectors, 1);
+      CommonOps.setIdentity(tempJacobian);
+      tempObjective.zero();
+      tempWeights.reshape(numberOfForceVectors, numberOfForceVectors);
+      CommonOps.setIdentity(tempWeights);
+      CommonOps.scale(0.001, tempWeights);
+      addObjective(tempJacobian, tempObjective, tempWeights);
    }
 
    private void generateLinearMomentumRateOfChangeObjective()
    {
-      tempJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
+      linearMomentumJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
       for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
       {
          for (int j = 0; j < numberOfFrictionConeVectors; j++)
          {
             for (int k = 0; k < 3; k++)
             {
-               tempJacobian.set(k, i * numberOfFrictionConeVectors + j, frictionConeBasisVectors.get(j).getElement(k));
+               linearMomentumJacobian.set(k, i * numberOfFrictionConeVectors + j, frictionConeBasisVectors.get(j).getElement(k));
             }
          }
       }
 
-      tempObjective.reshape(3, 1);
-      desiredLinearMomentumRateOfChange.get(0, tempObjective);
-
-      tempWeights.reshape(3, 3);
-      tempWeights.zero();
-      for (int i = 0; i < 3; i++)
-         tempWeights.set(i, i, linearMomentumWeights.getElement(i));
-      addObjective(tempJacobian, tempObjective, tempWeights);
+      linearMomentumObjective.reshape(3, 1);
+      desiredLinearMomentumRateOfChange.get(0, linearMomentumObjective);
+      addObjective(linearMomentumJacobian, linearMomentumObjective, linearWeights);
    }
 
    private final Point3D tempX = new Point3D();
@@ -272,10 +311,14 @@ public class CentroidalRobotControllerCore
    private final Vector3D tempR = new Vector3D();
    private final Vector3D tempTau = new Vector3D();
 
+   private final DenseMatrix64F angularMomentumJacobian = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F angularMomentumObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F angularWeights = new DenseMatrix64F(0, 1);
+
    private final void generateAngularMomentumRateOfChangeObjective()
    {
       tempX.set(currentCenterOfMass);
-      tempJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
+      angularMomentumJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
       for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
       {
          tempV.set(supportPolygon.getFrameVertex(i));
@@ -284,18 +327,12 @@ public class CentroidalRobotControllerCore
          {
             tempTau.cross(tempR, frictionConeBasisVectors.get(j));
             for (int k = 0; k < 3; k++)
-               tempJacobian.set(k, i * numberOfFrictionConeVectors + j, tempTau.getElement(k));
+               angularMomentumJacobian.set(k, i * numberOfFrictionConeVectors + j, tempTau.getElement(k));
          }
       }
-
-      tempObjective.reshape(3, 1);
-      desiredAngularMomentumRateOfChange.get(0, tempObjective);
-
-      tempWeights.reshape(3, 3);
-      tempWeights.zero();
-      for (int i = 0; i < 3; i++)
-         tempWeights.set(i, i, angularMomentumWeights.getElement(i));
-      addObjective(tempJacobian, tempObjective, tempWeights);
+      angularMomentumObjective.reshape(3, 1);
+      desiredAngularMomentumRateOfChange.get(0, angularMomentumObjective);
+      addObjective(angularMomentumJacobian, angularMomentumObjective, angularWeights);
    }
 
    private final DenseMatrix64F tempH = new DenseMatrix64F(0, 1);
@@ -305,6 +342,9 @@ public class CentroidalRobotControllerCore
    private void addObjective(DenseMatrix64F jacobian, DenseMatrix64F objective, DenseMatrix64F weight)
    {
       // (qT JT - cT)W (Jq - c) = qT JT W J q - qT JT W c - cT W Jq + cT W c 
+      int numberOfDecisionVariables = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
+      tempH.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
+      tempf.reshape(numberOfDecisionVariables, 1);
       tempJtW.reshape(jacobian.numCols, jacobian.numRows);
       CommonOps.multTransA(jacobian, weight, tempJtW);
       CommonOps.mult(tempJtW, objective, tempf);
@@ -325,33 +365,30 @@ public class CentroidalRobotControllerCore
       solver_bin.zero();
    }
 
-   private void addLessThanInequalityConstraint(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective)
-   {
-
-   }
-
-   private void addGreaterThanInequalityConstriant(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective)
-   {
-      
-   }
-
-   private void addEqualityConstraint(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective)
-   {
-
-   }
-
    private void submitMatricesAndRunOptimization()
    {
       qpSolver.setQuadraticCostFunction(solver_H, solver_f, 0.0);
       // qpSolver.setLinearEqualityConstraints(solver_Aeq, solver_beq);
       qpSolver.setLinearInequalityConstraints(solver_Ain, solver_bin);
-      qpSolver.setUpperBounds(solver_ub);
-      qpSolver.setLowerBounds(solver_lb);
+      //qpSolver.setUpperBounds(solver_ub);
+      //qpSolver.setLowerBounds(solver_lb);
       qpSolver.solve(qpSolution);
    }
 
+   private final DenseMatrix64F tempMatrix = new DenseMatrix64F(0, 1);
+
    private void putOptimizationResultsIntoYoVariables()
    {
+      tempMatrix.reshape(linearMomentumJacobian.numRows, qpSolution.numCols);
+      CommonOps.mult(linearMomentumJacobian, qpSolution, tempMatrix);
+      achievedLinearMomentumRateOfChange.set(tempMatrix);
+      tempMatrix.reshape(angularMomentumJacobian.numRows, qpSolution.numCols);
+      CommonOps.mult(angularMomentumJacobian, qpSolution, tempMatrix);
+      achievedAngularMomentumRateOfChange.set(tempMatrix);
+   }
 
+   public List<? extends Vector3DReadOnly> getFrictionCone()
+   {
+      return frictionConeBasisVectors;
    }
 }
