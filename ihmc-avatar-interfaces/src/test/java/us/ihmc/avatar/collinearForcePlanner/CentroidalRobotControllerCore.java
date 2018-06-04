@@ -1,5 +1,6 @@
 package us.ihmc.avatar.collinearForcePlanner;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -15,6 +16,7 @@ import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tools.EuclidCoreTools;
@@ -22,10 +24,15 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
+import us.ihmc.robotics.math.frames.YoFramePoint2d;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -79,6 +86,9 @@ public class CentroidalRobotControllerCore
    private final DenseMatrix64F solver_ub = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F qpSolution = new DenseMatrix64F(0, 1);
 
+   private final List<YoFrameVector> forceVectors = new ArrayList<>();
+   private final boolean updateGraphics;
+
    public CentroidalRobotControllerCore(SideDependentList<ConvexPolygon2D> defaultFootSupportPolygons, YoVariableRegistry parentRegistry,
                                         YoGraphicsListRegistry graphicsListRegistry)
    {
@@ -107,6 +117,27 @@ public class CentroidalRobotControllerCore
       angularMomentumWeights = new YoFrameVector(namePrefix + "AngularMomentumOptimizationWeights", worldFrame, registry);
       coefficientOfFriction = new YoDouble(namePrefix + "CoefficientOfFriction", registry);
       qpSolver = new JavaQuadProgSolver();
+      if (graphicsListRegistry != null)
+      {
+         updateGraphics = true;
+         YoGraphicsList graphicsList = new YoGraphicsList("ControllerCoreGraphics");
+         YoDouble groundHeightCoordinate = new YoDouble(namePrefix + "GroundHeight", registry);
+         groundHeightCoordinate.set(0.0);
+         YoAppearanceRGBColor forceApperance = new YoAppearanceRGBColor(Color.BLUE, 0.0);
+         ArrayList<YoFramePoint2d> supportPolygonVertices = supportPolygon.getYoFramePoints();
+         for (int i = 0; i < maxNumberOfVertices; i++)
+         {
+            YoFramePoint2d vertex = supportPolygonVertices.get(i);
+            YoFrameVector forceVector = new YoFrameVector(namePrefix, worldFrame, registry);
+            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceVector", vertex.getYoX(), vertex.getYoY(), groundHeightCoordinate,
+                                                               forceVector.getYoX(), forceVector.getYoY(), forceVector.getYoZ(), 0.01, forceApperance, true);
+            forceVectors.add(forceVector);
+            graphicsList.add(forceGraphic);
+         }
+         graphicsListRegistry.registerYoGraphicsList(graphicsList);
+      }
+      else
+         updateGraphics = false;
       parentRegistry.addChild(registry);
    }
 
@@ -213,7 +244,7 @@ public class CentroidalRobotControllerCore
       footOnGround.get(RobotSide.LEFT).set(isLeftFootInContact);
       footOnGround.get(RobotSide.RIGHT).set(isRightFootInContact);
    }
-   
+
    public void setCenterOfMassLocation(FramePoint3DReadOnly centerOfMass)
    {
       currentCenterOfMass.set(centerOfMass);
@@ -385,6 +416,24 @@ public class CentroidalRobotControllerCore
       tempMatrix.reshape(angularMomentumJacobian.numRows, qpSolution.numCols);
       CommonOps.mult(angularMomentumJacobian, qpSolution, tempMatrix);
       achievedAngularMomentumRateOfChange.set(tempMatrix);
+      updateGraphics();
+   }
+
+   private final Vector3D computedForceAtSupportPolygonVertex = new Vector3D();
+
+   private void updateGraphics()
+   {
+      if (updateGraphics)
+      {
+         for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
+         {
+            computedForceAtSupportPolygonVertex.setToZero();
+            for (int j = 0; j < numberOfFrictionConeVectors; j++)
+               computedForceAtSupportPolygonVertex.scaleAdd(qpSolution.get(i * numberOfFrictionConeVectors + j, 0), frictionConeBasisVectors.get(j),
+                                                            computedForceAtSupportPolygonVertex);
+            forceVectors.get(i).set(computedForceAtSupportPolygonVertex);
+         }
+      }
    }
 
    public List<? extends Vector3DReadOnly> getFrictionCone()
