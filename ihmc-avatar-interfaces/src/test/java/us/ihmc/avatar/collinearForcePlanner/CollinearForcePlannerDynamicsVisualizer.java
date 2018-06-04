@@ -283,9 +283,9 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.RUN);
+      prepareContactStatePlan(Motion.JUMP);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
-      //warmup();
+      // warmup();
       runPlanner();
       robotController.setTimeForStateChange(yoTime.getDoubleValue());
       for (int i = 0; i < contactStatePlan.size(); i++)
