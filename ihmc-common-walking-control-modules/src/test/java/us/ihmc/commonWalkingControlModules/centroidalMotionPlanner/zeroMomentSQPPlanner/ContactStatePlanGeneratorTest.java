@@ -23,7 +23,10 @@ import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.Vector2D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
+import us.ihmc.robotics.robotSide.RobotSide;
 
 public class ContactStatePlanGeneratorTest
 {
@@ -212,7 +215,46 @@ public class ContactStatePlanGeneratorTest
       contactStatePlanGenerationHelper.generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump,
                                                                           leftAnklePoseOffset, rightAnklePoseOffset, 0.1, 0.3, defaultSupportPolygonAnkleFrame);
    }
+   
+   @Test(timeout = 1000)
+   public void testWalkingPlanGenerationFromAlternatingSteps()
+   {
+      ContactStatePlanGenerator planGenerator = new ContactStatePlanGenerator(12, 1e-5);
+      List<FramePose2D> footPoseList = new ArrayList<>();
+      List<ContactState> contactStateList = new ArrayList<>();
+      int numberOfSteps = 3;
+      for(int i = 0; i < numberOfSteps + 2; i++)
+         footPoseList.add(new FramePose2D());
+      for(int i = 0; i < 2 * numberOfSteps + 5; i++)
+         contactStateList.add(new ContactState());
+      Vector2D stepSize = new Vector2D(0.1, 0.2);
+      FramePose2D initialLeftAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.15), 0.0);
+      FramePose2D initialRightAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -0.15), 0.0);
+      RobotSide startSide = RobotSide.LEFT;
+      boolean endInDoubleSupport = true;
+      ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
+      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide, endInDoubleSupport);
+      planGenerator.processFootstepPlanForWalking(footPoseList, contactStateList, defaultFootPolygon, defaultFootPolygon, startSide, true, endInDoubleSupport, 0.4, 0.2);
+      for (int i = 0; i < contactStateList.size(); i++)
+         PrintTools.debug(contactStateList.get(i).toString());
+   }
 
+   @Test(timeout = 1000)
+   public void testAlternatingFootstepGeneration()
+   {
+      ContactStatePlanGenerator planGenerator = new ContactStatePlanGenerator(12, 1e-5);
+      List<FramePose2D> footPoseList = new ArrayList<>();
+      int numberOfSteps = 3;
+      for(int i = 0; i < numberOfSteps + 2; i++)
+         footPoseList.add(new FramePose2D());
+      Vector2D stepSize = new Vector2D(0.1, 0.2);
+      FramePose2D initialLeftAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.15), 0.0);
+      FramePose2D initialRightAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -0.15), 0.0);
+      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, RobotSide.LEFT, true);
+      for(int i = 0; i < footPoseList.size(); i++)
+         PrintTools.debug(footPoseList.get(i).toString());
+   }
+   
    @Test(timeout = 200)
    public void testContactStateSupportPolygonSetting()
    {

@@ -3,14 +3,11 @@ package us.ihmc.avatar.collinearForcePlanner;
 import java.awt.Color;
 import java.util.List;
 
-import org.ejml.data.DenseMatrix64F;
-
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
-import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -321,6 +318,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private final FrameVector3D initialCoMVelocity = new FrameVector3D();
    private final FramePoint3D initialCoPPosition = new FramePoint3D();
 
+   public void submitFootstepPlan()
+   {
+      
+   }
+   
    public void submitContactStateList(List<ContactState> contactStatePlanForController)
    {
       motionPlanner.reset();
@@ -343,13 +345,4 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    {
       lastStateChange.set(controllerTime);
    }
-
-   private final JavaQuadProgSolver qpSolver = new JavaQuadProgSolver();
-   private final DenseMatrix64F solver_H = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_f = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_Aeq = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_beq = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_Ain = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_bin = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F qpSoln = new DenseMatrix64F(0, 1);
 }
