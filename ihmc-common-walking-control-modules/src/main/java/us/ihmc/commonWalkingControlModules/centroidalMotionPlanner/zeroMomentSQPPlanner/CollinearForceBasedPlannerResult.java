@@ -252,4 +252,9 @@ public class CollinearForceBasedPlannerResult
    {
       return yoScalar.getDoubleValue();
    }
+
+   public int getCurrentSegmentIndex()
+   {
+      return yoCurrentSegmentIndex.getIntegerValue();
+   }
 }

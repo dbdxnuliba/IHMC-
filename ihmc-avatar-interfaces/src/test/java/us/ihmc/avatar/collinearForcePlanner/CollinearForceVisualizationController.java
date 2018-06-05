@@ -10,13 +10,13 @@ import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQP
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.BagOfBalls;
@@ -51,7 +51,9 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
 
    private final CollinearForceBasedCoMMotionPlanner motionPlanner;
    private final CollinearForceBasedPlannerResult sqpOutput;
+   private final CentroidalRobotControllerCore controllerCore;
    private CentroidalStateReadOnly state;
+   private final FramePoint3D estimatedCoM = new FramePoint3D();
    //private final YoFramePoint desiredCoM;
    //private final YoFrameVector desiredCoMAcceleration;
    private YoFramePoint desiredCoP;
@@ -98,6 +100,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
          footOnGround.set(side, new YoBoolean(side.getCamelCaseName() + "FootOnGround", registry));
 
       motionPlanner = new CollinearForceBasedCoMMotionPlanner(registry);
+      controllerCore = createControllerCore(graphicsListRegistry);
       sqpOutput = motionPlanner.getSQPSolution();
       plannedCoM = new YoFramePoint("PlannedCoM", worldFrame, registry);
       plannedCoP = new YoFramePoint("PlannedCoP", worldFrame, registry);
@@ -107,6 +110,18 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       updateGraphics = graphicsListRegistry != null;
       if (updateGraphics)
          createVisualization(graphicsListRegistry);
+   }
+
+   private CentroidalRobotControllerCore createControllerCore(YoGraphicsListRegistry graphicsListRegistry)
+   {
+      CentroidalRobotControllerCore controllerCore = new CentroidalRobotControllerCore(defaultSupportPolygons, registry, graphicsListRegistry);
+      controllerCore.setRobotMass(mass);
+      controllerCore.setGravity(gravity);
+      controllerCore.setCoefficientOfFriction(1.0);
+      controllerCore.setComputeFootPolygonFromFootPose(false);
+      controllerCore.setAngularMomentumWeights(new FrameVector3D(worldFrame, 0.1, 0.1, 0.1));
+      controllerCore.setLinearMomentumWeights(new FrameVector3D(worldFrame, 1.0, 1.0, 1.0));
+      return controllerCore;
    }
 
    public void setControllerTime(YoDouble controllerTime)
@@ -217,19 +232,70 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       desiredCoP.set(tempPoint.getX(), tempPoint.getY(), 0.0);
    }
 
+   private final FrameVector3D desiredAngularMomentumRateOfChange = new FrameVector3D(worldFrame, 0.0, 0.0, 0.0);
+   private final FrameVector3D desiredLinearMomentumRateOfChange = new FrameVector3D();
+   private final boolean useControllerCoreOutput = true;
+
    @Override
    public void doControl()
    {
       double timeInState = time.getDoubleValue() - lastStateChange.getDoubleValue();
       sqpOutput.compute(timeInState);
-
+      state.getPosition(estimatedCoM);
+      runControllerCore(estimatedCoM, achievedLinearMomentumRateOfChange, achivedAngularMomentumRateOfChange);
       plannedCoP.set(sqpOutput.getDesiredCoPPosition());
       plannedCoM.set(sqpOutput.getDesiredCoMPosition());
-      desiredCoP.set(plannedCoP);
-      desiredGroundReactionForce.set(sqpOutput.getDesiredGroundReactionForce());
+
+      if (useControllerCoreOutput)
+      {
+         CentroidalModelTools.computeGroundReactionForce(achievedLinearMomentumRateOfChange, gravity, mass.getDoubleValue(), computedGroundReactionForce);
+         CentroidalModelTools.computeCenterOfPressureForFlatGround(estimatedCoM, 0.0, computedGroundReactionForce, achivedAngularMomentumRateOfChange,
+                                                                   computedCenterOfPressure);
+         desiredCoP.set(computedCenterOfPressure);
+         desiredGroundReactionForce.set(computedGroundReactionForce);
+      }
+      else
+      {
+         desiredCoP.set(plannedCoP);
+         desiredGroundReactionForce.set(sqpOutput.getDesiredGroundReactionForce());
+      }
+
       updateYoVariables();
       if (updateGraphics)
          updateVisualization();
+   }
+
+   private final FrameVector3D achievedLinearMomentumRateOfChange = new FrameVector3D();
+   private final FrameVector3D achivedAngularMomentumRateOfChange = new FrameVector3D();
+   private final FrameVector3D computedGroundReactionForce = new FrameVector3D();
+   private final FramePoint3D computedCenterOfPressure = new FramePoint3D();
+   private final FrameVector3D previousAngularMomentumRateOfChange = new FrameVector3D();
+   private final FrameVector3D previousLinearMomentumRateOfChange = new FrameVector3D();
+   private void runControllerCore(FramePoint3DReadOnly centerOfMass, FrameVector3D linearMomentumRateOfChange, FrameVector3D angularMomentumRateOfChange)
+   {
+      int segmentIndex = sqpOutput.getCurrentSegmentIndex();
+      ContactState currentContactState = motionPlanner.getSegmentList().get(segmentIndex).getContactState();
+      controllerCore.reset();
+      controllerCore.setCenterOfMassLocation(centerOfMass);
+      currentContactState.getSupportPolygon(worldFrame, tempPolygon);
+      controllerCore.setSupportPolygon(tempPolygon);
+      desiredLinearMomentumRateOfChange.setIncludingFrame(sqpOutput.getDynamicsCoMAcceleration());
+      desiredLinearMomentumRateOfChange.scale(mass.getDoubleValue());
+      controllerCore.setDesiredLinearMomentumRateOfChange(desiredLinearMomentumRateOfChange);
+      controllerCore.setDesiredAngularMomentumRateOfChange(desiredAngularMomentumRateOfChange);
+      controllerCore.compute();
+      controllerCore.getAchievedLinearMomentumRateOfChange(linearMomentumRateOfChange);
+      controllerCore.getAchievedAngularMomentumRateOfChange(angularMomentumRateOfChange);
+      if(linearMomentumRateOfChange.containsNaN())
+         linearMomentumRateOfChange.setIncludingFrame(previousLinearMomentumRateOfChange);
+      else
+         previousLinearMomentumRateOfChange.setIncludingFrame(linearMomentumRateOfChange);
+      if(angularMomentumRateOfChange.containsNaN())
+         angularMomentumRateOfChange.setIncludingFrame(previousAngularMomentumRateOfChange);
+      else
+         previousAngularMomentumRateOfChange.setIncludingFrame(angularMomentumRateOfChange);
+      //controllerCore.setFeetLocations(solePoses.get(RobotSide.LEFT).getPosition(), solePoses.get(RobotSide.RIGHT).getPosition());
+      //controllerCore.updateFootContactState(footOnGround.get(RobotSide.LEFT).getBooleanValue(), footOnGround.get(RobotSide.RIGHT).getBooleanValue());
    }
 
    @Override

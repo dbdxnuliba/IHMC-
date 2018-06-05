@@ -265,6 +265,7 @@ public class ContactStatePlanGenerator
                                  defaultPrecision);
       setSupportPolygon(firstGroundState, initialPelvisPose, tempPolygon);
       firstGroundState.setDuration(groundDuration);
+      firstGroundState.setFootInContact(true, true);
       for (int i = 0; i < numberOfJumps; i++)
       {
          ContactState flightState = contactStates.get(2 * i + 1);
@@ -272,7 +273,7 @@ public class ContactStatePlanGenerator
          tempPolygon.clear();
          flightState.setSupportPolygon(tempPolygon);
          flightState.setDuration(flightDuration);
-
+         flightState.setFootInContact(false, false);
          addPose(tempPose, tempPose, pelvisPoseChangePerJump);
 
          ContactState groundState = contactStates.get(2 * i + 2);
@@ -280,6 +281,7 @@ public class ContactStatePlanGenerator
          firstGroundState.getSupportPolygon(tempPolygon);
          groundState.setSupportPolygon(tempPolygon);
          groundState.setDuration(groundDuration);
+         groundState.setFootInContact(true, true);
       }
    }
 
@@ -299,6 +301,7 @@ public class ContactStatePlanGenerator
       changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
                                  defaultPrecision);
       setSupportPolygon(initialDoubleSupportState, tempPose, tempPolygon);
+      initialDoubleSupportState.setFootInContact(true, true);
       RobotSide stepSide = firstStepSide;
       double halfStepX = stepSize.getX() / 2.0;
       double halfStepY = stepSize.getY() / 2.0;
@@ -310,11 +313,13 @@ public class ContactStatePlanGenerator
          {
             setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+            singleSupportState.setFootInContact(false, true);
          }
          else
          {
             setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
             tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+            singleSupportState.setFootInContact(true, false);
          }
          ContactState transferState = contactStates.get(2 * i + 2);
          transferState.setDuration(transferDuration);
@@ -322,6 +327,7 @@ public class ContactStatePlanGenerator
          changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
                                     defaultPrecision);
          setSupportPolygon(transferState, tempPose, tempPolygon);
+         transferState.setFootInContact(true, true);
          stepSide = stepSide.getOppositeSide();
          if (stepSide == RobotSide.LEFT)
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
@@ -335,12 +341,14 @@ public class ContactStatePlanGenerator
          setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
          if (!useLastStepToEndWalk)
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
+         singleSupportState.setFootInContact(false, true);
       }
       else
       {
          setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
          if (!useLastStepToEndWalk)
             tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
+         singleSupportState.setFootInContact(true, false);
       }
       ContactState finalDoubleSupportState = contactStates.get(2 * numberOfSteps);
       finalDoubleSupportState.setDuration(finalDoubleSupportDuration);
@@ -348,6 +356,7 @@ public class ContactStatePlanGenerator
       changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
                                  defaultPrecision);
       setSupportPolygon(finalDoubleSupportState, tempPose, tempPolygon);
+      finalDoubleSupportState.setFootInContact(true, true);
    }
 
    public void generateContactStatePlanForRunning(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,
@@ -367,7 +376,8 @@ public class ContactStatePlanGenerator
       changePoseAndMergePolygons(tempPolygon, tempPose, tempPoseForLeftFoot, leftFootSupportPolygon, tempPoseForRightFoot, rightFootSupportPolygon,
                                  defaultPrecision);
       setSupportPolygon(initialDoubleSupportState, tempPose, tempPolygon);
-      RobotSide stepSide = firstStepSide;
+      initialDoubleSupportState.setFootInContact(true, true);
+      RobotSide footInAirSide = firstStepSide;
       double halfStepX = stepSize.getX() / 2.0;
       double halfStepY = stepSize.getY() / 2.0;
 
@@ -378,7 +388,7 @@ public class ContactStatePlanGenerator
 
          ContactState flightState = contactStates.get(2 * i + 2);
          flightState.setDuration(flightDuration);
-         if (stepSide == RobotSide.LEFT)
+         if (footInAirSide == RobotSide.LEFT)
          {
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
             setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
@@ -386,6 +396,7 @@ public class ContactStatePlanGenerator
             tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);
             computeAveragePose(tempPose, tempPoseForLeftFoot, tempPoseForRightFoot);
             setSupportPolygon(flightState, tempPose, tempPolygon);
+            singleSupportState.setFootInContact(false, true);
          }
          else
          {
@@ -395,20 +406,30 @@ public class ContactStatePlanGenerator
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
             computeAveragePose(tempPose, tempPoseForLeftFoot, tempPoseForRightFoot);
             setSupportPolygon(flightState, tempPose, tempPolygon);
+            singleSupportState.setFootInContact(true, false);
          }
-         stepSide = stepSide.getOppositeSide();
+         flightState.setFootInContact(false, false);
+         footInAirSide = footInAirSide.getOppositeSide();
       }
       ContactState singleSupportState = contactStates.get(2 * numberOfSteps - 1);
       singleSupportState.setDuration(flightDuration);
-      if (stepSide == RobotSide.LEFT)
+      if (footInAirSide == RobotSide.LEFT)
+      {
          setSupportPolygon(singleSupportState, tempPoseForRightFoot, rightFootSupportPolygon);
+         singleSupportState.setFootInContact(false, true);
+      }
       else
+      {
          setSupportPolygon(singleSupportState, tempPoseForLeftFoot, leftFootSupportPolygon);
+         singleSupportState.setFootInContact(true, false);
+      }
+      
       ContactState finalDoubleSupportState = contactStates.get(2 * numberOfSteps);
       finalDoubleSupportState.setDuration(finalDoubleSupportDuration);
+      finalDoubleSupportState.setFootInContact(true, true);
       if (!useLastStepToEndWalk)
       {
-         if (stepSide == RobotSide.LEFT)
+         if (footInAirSide == RobotSide.LEFT)
             tempPoseForLeftFoot.appendTranslation(halfStepX, halfStepY);
          else
             tempPoseForRightFoot.appendTranslation(halfStepX, halfStepY);

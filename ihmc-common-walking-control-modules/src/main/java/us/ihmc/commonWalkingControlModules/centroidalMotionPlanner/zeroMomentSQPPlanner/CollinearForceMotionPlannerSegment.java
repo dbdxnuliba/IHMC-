@@ -1,6 +1,10 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.robotics.robotSide.RobotSide;
 
 public class CollinearForceMotionPlannerSegment
 {

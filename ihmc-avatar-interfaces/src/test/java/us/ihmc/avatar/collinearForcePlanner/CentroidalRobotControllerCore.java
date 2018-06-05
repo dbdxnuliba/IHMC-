@@ -3,33 +3,26 @@ package us.ihmc.avatar.collinearForcePlanner;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import us.ihmc.commons.PrintTools;
+import afu.org.checkerframework.checker.units.qual.m;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryIOTools;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.robotics.linearAlgebra.MatrixTools;
+import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFramePoint2d;
@@ -61,6 +54,8 @@ public class CentroidalRobotControllerCore
    private final YoFramePoint currentCenterOfMass;
    private final YoFrameVector linearMomentumWeights;
    private final YoFrameVector angularMomentumWeights;
+   private YoDouble mass;
+   private YoFrameVector gravity;
    private final YoFrameVector groundReactionWeights;
    private final YoFrameVector desiredLinearMomentumRateOfChange;
    private final YoFrameVector desiredAngularMomentumRateOfChange;
@@ -71,6 +66,7 @@ public class CentroidalRobotControllerCore
    private final YoDouble coefficientOfFriction;
    private final YoInteger numberOfSupportPolygonVertices;
    private final JavaQuadProgSolver qpSolver;
+   private final YoBoolean failureFlag;
 
    // Solver control variables
    private final YoBoolean enableGroundReactionLimits;
@@ -82,12 +78,11 @@ public class CentroidalRobotControllerCore
    private final DenseMatrix64F solver_bin = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F solver_Aeq = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F solver_beq = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_lb = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F solver_ub = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F qpSolution = new DenseMatrix64F(0, 1);
 
    private final List<YoFrameVector> forceVectors = new ArrayList<>();
    private final boolean updateGraphics;
+   private boolean computeSupportPolygonFromFootPoses = false;
 
    public CentroidalRobotControllerCore(SideDependentList<ConvexPolygon2D> defaultFootSupportPolygons, YoVariableRegistry parentRegistry,
                                         YoGraphicsListRegistry graphicsListRegistry)
@@ -95,7 +90,7 @@ public class CentroidalRobotControllerCore
       String namePrefix = "ControllerCore";
       achievedLinearMomentumRateOfChange = new YoFrameVector(namePrefix + "AchievedLinearMomentumRateOfChange", worldFrame, registry);
       achievedAngularMomentumRateOfChange = new YoFrameVector(namePrefix + "AchievedAngularMomentumRateOfChange", worldFrame, registry);
-
+      failureFlag = new YoBoolean(namePrefix + "FailureFlag", registry);
       currentCenterOfMass = new YoFramePoint(namePrefix + "CenterOfMass", worldFrame, registry);
       desiredLinearMomentumRateOfChange = new YoFrameVector(namePrefix + "DesiredLinearMomentumRateOfChange", worldFrame, registry);
       desiredAngularMomentumRateOfChange = new YoFrameVector(namePrefix + "DesiredAngularMomentumRateOfChange", worldFrame, registry);
@@ -128,8 +123,8 @@ public class CentroidalRobotControllerCore
          for (int i = 0; i < maxNumberOfVertices; i++)
          {
             YoFramePoint2d vertex = supportPolygonVertices.get(i);
-            YoFrameVector forceVector = new YoFrameVector(namePrefix, worldFrame, registry);
-            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceVector", vertex.getYoX(), vertex.getYoY(), groundHeightCoordinate,
+            YoFrameVector forceVector = new YoFrameVector(namePrefix + "ForceVector" + i, worldFrame, registry);
+            YoGraphicVector forceGraphic = new YoGraphicVector(namePrefix + "ForceGraphic", vertex.getYoX(), vertex.getYoY(), groundHeightCoordinate,
                                                                forceVector.getYoX(), forceVector.getYoY(), forceVector.getYoZ(), 0.01, forceApperance, true);
             forceVectors.add(forceVector);
             graphicsList.add(forceGraphic);
@@ -144,11 +139,22 @@ public class CentroidalRobotControllerCore
    public void reset()
    {
       qpSolver.clear();
+      clearMatrices();
    }
+   
+   private void clearMatrices()
+   {
+      solver_H.reshape(0, numberOfDecisionVariables);
+      solver_f.reshape(0, numberOfDecisionVariables);
+   }
+
+   private int numberOfDecisionVariables = 6;
+   private int numberOfForceDecisionVariables = 0;
 
    public void compute()
    {
-      processInputs();
+      numberOfForceDecisionVariables = processInputs() + 6;
+      numberOfDecisionVariables = numberOfForceDecisionVariables + 6;
       setupSolverMatrices();
       submitMatricesAndRunOptimization();
       putOptimizationResultsIntoYoVariables();
@@ -252,9 +258,16 @@ public class CentroidalRobotControllerCore
 
    private final ConvexPolygon2D supportPolygonForComputation = new ConvexPolygon2D();
 
-   private void processInputs()
+   public void setSupportPolygon(FrameConvexPolygon2d supportPolygonToSet)
    {
-      updateSupportPolygon();
+      supportPolygon.setFrameConvexPolygon2d(supportPolygonToSet);
+   }
+
+   private int processInputs()
+   {
+      if (computeSupportPolygonFromFootPoses)
+         updateSupportPolygon();
+      return numberOfSupportPolygonVertices.getIntegerValue() * numberOfFrictionConeVectors;
    }
 
    private void updateSupportPolygon()
@@ -283,58 +296,46 @@ public class CentroidalRobotControllerCore
       generateObjective();
    }
 
-   private final DenseMatrix64F linearMomentumJacobian = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F linearMomentumObjective = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F linearWeights = new DenseMatrix64F(0, 1);
 
    // The order of the decision variables (coordinates of the force vector 
    // in terms of the basis vectors ordered corresponding to the support polygon vertices)
    private void generateObjective()
    {
-      int numberOfDecisionVariables = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
       solver_H.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
       solver_f.reshape(numberOfDecisionVariables, 1);
       solver_H.zero();
       solver_f.zero();
       generateLinearMomentumRateOfChangeObjective();
       generateAngularMomentumRateOfChangeObjective();
-      generateForceMinimizationObjective();
+      generateRegularization();
    }
 
    private final DenseMatrix64F tempJacobian = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempObjective = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F tempWeights = new DenseMatrix64F(0, 1);
 
-   private void generateForceMinimizationObjective()
+   private void generateRegularization()
    {
-      int numberOfForceVectors = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
-      tempJacobian.reshape(numberOfForceVectors, numberOfForceVectors);
-      tempObjective.reshape(numberOfForceVectors, 1);
+      tempJacobian.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
+      tempObjective.reshape(numberOfDecisionVariables, 1);
       CommonOps.setIdentity(tempJacobian);
       tempObjective.zero();
-      tempWeights.reshape(numberOfForceVectors, numberOfForceVectors);
+      tempWeights.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
       CommonOps.setIdentity(tempWeights);
-      CommonOps.scale(0.001, tempWeights);
+      CommonOps.scale(1e-10, tempWeights);
       addObjective(tempJacobian, tempObjective, tempWeights);
    }
 
    private void generateLinearMomentumRateOfChangeObjective()
    {
-      linearMomentumJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
-      for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
-      {
-         for (int j = 0; j < numberOfFrictionConeVectors; j++)
-         {
-            for (int k = 0; k < 3; k++)
-            {
-               linearMomentumJacobian.set(k, i * numberOfFrictionConeVectors + j, frictionConeBasisVectors.get(j).getElement(k));
-            }
-         }
-      }
-
-      linearMomentumObjective.reshape(3, 1);
-      desiredLinearMomentumRateOfChange.get(0, linearMomentumObjective);
-      addObjective(linearMomentumJacobian, linearMomentumObjective, linearWeights);
+      tempJacobian.reshape(3, numberOfDecisionVariables);
+      tempObjective.reshape(3, 1);
+      tempJacobian.zero();
+      for (int i = 0; i < 3; i++)
+         tempJacobian.set(i, i, 1.0);
+      desiredLinearMomentumRateOfChange.get(0, tempObjective);
+      addObjective(tempJacobian, tempObjective, linearWeights);
    }
 
    private final Point3D tempX = new Point3D();
@@ -342,28 +343,17 @@ public class CentroidalRobotControllerCore
    private final Vector3D tempR = new Vector3D();
    private final Vector3D tempTau = new Vector3D();
 
-   private final DenseMatrix64F angularMomentumJacobian = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F angularMomentumObjective = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F angularWeights = new DenseMatrix64F(0, 1);
 
    private final void generateAngularMomentumRateOfChangeObjective()
    {
-      tempX.set(currentCenterOfMass);
-      angularMomentumJacobian.reshape(3, numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue());
-      for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
-      {
-         tempV.set(supportPolygon.getFrameVertex(i));
-         tempR.sub(tempV, tempX);
-         for (int j = 0; j < numberOfFrictionConeVectors; j++)
-         {
-            tempTau.cross(tempR, frictionConeBasisVectors.get(j));
-            for (int k = 0; k < 3; k++)
-               angularMomentumJacobian.set(k, i * numberOfFrictionConeVectors + j, tempTau.getElement(k));
-         }
-      }
-      angularMomentumObjective.reshape(3, 1);
-      desiredAngularMomentumRateOfChange.get(0, angularMomentumObjective);
-      addObjective(angularMomentumJacobian, angularMomentumObjective, angularWeights);
+      tempJacobian.reshape(3, numberOfDecisionVariables);
+      tempObjective.reshape(3, 1);
+      tempJacobian.zero();
+      for (int i = 0; i < 3; i++)
+         tempJacobian.set(i, i + 3, 1.0);
+      desiredAngularMomentumRateOfChange.get(0, tempObjective);
+      addObjective(tempJacobian, tempObjective, angularWeights);
    }
 
    private final DenseMatrix64F tempH = new DenseMatrix64F(0, 1);
@@ -373,7 +363,6 @@ public class CentroidalRobotControllerCore
    private void addObjective(DenseMatrix64F jacobian, DenseMatrix64F objective, DenseMatrix64F weight)
    {
       // (qT JT - cT)W (Jq - c) = qT JT W J q - qT JT W c - cT W Jq + cT W c 
-      int numberOfDecisionVariables = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
       tempH.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
       tempf.reshape(numberOfDecisionVariables, 1);
       tempJtW.reshape(jacobian.numCols, jacobian.numRows);
@@ -385,37 +374,118 @@ public class CentroidalRobotControllerCore
       CommonOps.addEquals(solver_f, tempf);
    }
 
+   private void addEqualityConstraint(DenseMatrix64F jacobian, DenseMatrix64F objective)
+   {
+      int size = jacobian.getNumRows();
+      int rowIndex = solver_Aeq.numRows;
+      solver_Aeq.reshape(rowIndex + size, numberOfDecisionVariables, true);
+      solver_beq.reshape(rowIndex + size, 1, true);
+      CommonOps.insert(jacobian, solver_Aeq, rowIndex, 0);
+      CommonOps.insert(objective, solver_beq, rowIndex, 0);
+   }
+
+   private void addGreaterThanEqualToConstraint(DenseMatrix64F jacobian, DenseMatrix64F objective)
+   {
+      int size = jacobian.numRows;
+      int rowIndex = solver_Ain.numRows;
+      solver_Ain.reshape(rowIndex + size, numberOfDecisionVariables);
+      solver_bin.reshape(rowIndex + size, 1);
+      CommonOps.scale(-1.0, jacobian);
+      CommonOps.scale(-1.0, objective);
+      CommonOps.insert(jacobian, solver_Ain, rowIndex, 0);
+      CommonOps.insert(objective, solver_bin, rowIndex, 0);
+   }
+
+   private void addLessThanEqualToConstraint(DenseMatrix64F jacobian, DenseMatrix64F objective)
+   {
+      int size = jacobian.numRows;
+      int rowIndex = solver_Ain.numRows;
+      solver_Ain.reshape(rowIndex + size, numberOfDecisionVariables);
+      solver_bin.reshape(rowIndex + size, 1);
+      CommonOps.insert(jacobian, solver_Ain, rowIndex, 0);
+      CommonOps.insert(objective, solver_bin, rowIndex, 0);
+   }
+
    private void generateConstraints()
    {
       // generate non negativity bounds 
-      int numberOfDecisionVariables = numberOfFrictionConeVectors * numberOfSupportPolygonVertices.getIntegerValue();
-      solver_Ain.reshape(numberOfDecisionVariables, numberOfDecisionVariables);
-      CommonOps.setIdentity(solver_Ain);
-      CommonOps.scale(-1.0, solver_Ain);
-      solver_bin.reshape(numberOfDecisionVariables, 1);
-      solver_bin.zero();
+      solver_Ain.reshape(0, numberOfDecisionVariables);
+      solver_bin.reshape(0, 1);
+      solver_Aeq.reshape(0, numberOfDecisionVariables);
+      solver_beq.reshape(0, 1);
+      generateUnidirectionalGroundReactionForceContraints();
+      generateDynamicsConstraint();
+   }
+
+   private void generateDynamicsConstraint()
+   {
+      tempJacobian.reshape(6, numberOfDecisionVariables);
+      tempObjective.reshape(6, 1);
+      tempJacobian.zero();
+      tempObjective.zero();
+      for (int k = 0; k < 3; k++)
+      {
+         tempJacobian.set(k, k, -1.0);
+         tempObjective.set(k, 0, -mass.getDoubleValue() * gravity.getElement(k));
+         tempJacobian.set(k + 3, k + 3, -1.0);
+         // No torque contribution from gravity
+      }
+
+      tempX.set(currentCenterOfMass);
+      for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
+      {
+         tempV.set(supportPolygon.getFrameVertex(i));
+         tempR.sub(tempV, tempX);
+         for (int j = 0; j < numberOfFrictionConeVectors; j++)
+         {
+            tempTau.cross(tempR, frictionConeBasisVectors.get(j));
+            for (int k = 0; k < 3; k++)
+            {
+               int colIndex = 6 + i * numberOfFrictionConeVectors + j;
+               tempJacobian.set(k, colIndex, frictionConeBasisVectors.get(j).getElement(k));
+               tempJacobian.set(k + 3, colIndex, tempTau.getElement(k));
+            }
+         }
+      }
+      addEqualityConstraint(tempJacobian, tempObjective);
+   }
+
+   private void generateUnidirectionalGroundReactionForceContraints()
+   {
+      tempJacobian.reshape(numberOfForceDecisionVariables, numberOfDecisionVariables);
+      tempJacobian.zero();
+      for (int i = 0; i < numberOfForceDecisionVariables; i++)
+         tempJacobian.set(i, i + 6, 1.0);
+      tempObjective.reshape(numberOfForceDecisionVariables, 1);
+      tempObjective.zero();
+      addGreaterThanEqualToConstraint(tempJacobian, tempObjective);
    }
 
    private void submitMatricesAndRunOptimization()
    {
       qpSolver.setQuadraticCostFunction(solver_H, solver_f, 0.0);
-      // qpSolver.setLinearEqualityConstraints(solver_Aeq, solver_beq);
+      qpSolver.setLinearEqualityConstraints(solver_Aeq, solver_beq);
       qpSolver.setLinearInequalityConstraints(solver_Ain, solver_bin);
-      //qpSolver.setUpperBounds(solver_ub);
-      //qpSolver.setLowerBounds(solver_lb);
       qpSolver.solve(qpSolution);
+      failureFlag.set(containsNaNs(qpSolution));
    }
 
-   private final DenseMatrix64F tempMatrix = new DenseMatrix64F(0, 1);
-
+   private boolean containsNaNs(DenseMatrix64F matrix)
+   {
+      for(int i = 0; i < matrix.numRows; i++)
+         for(int j = 0; j < matrix.numCols; j++)
+            if(!Double.isFinite(matrix.get(i, j)))
+               return true;
+      return false;
+   }
+   
    private void putOptimizationResultsIntoYoVariables()
    {
-      tempMatrix.reshape(linearMomentumJacobian.numRows, qpSolution.numCols);
-      CommonOps.mult(linearMomentumJacobian, qpSolution, tempMatrix);
-      achievedLinearMomentumRateOfChange.set(tempMatrix);
-      tempMatrix.reshape(angularMomentumJacobian.numRows, qpSolution.numCols);
-      CommonOps.mult(angularMomentumJacobian, qpSolution, tempMatrix);
-      achievedAngularMomentumRateOfChange.set(tempMatrix);
+      for (int i = 0; i < 3; i++)
+      {
+         achievedLinearMomentumRateOfChange.setElement(i, qpSolution.get(i, 0));
+         achievedAngularMomentumRateOfChange.setElement(i, qpSolution.get(i + 3, 0));
+      }
       updateGraphics();
    }
 
@@ -425,19 +495,37 @@ public class CentroidalRobotControllerCore
    {
       if (updateGraphics)
       {
-         for (int i = 0; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
+         int i = 0;
+         for (; i < numberOfSupportPolygonVertices.getIntegerValue(); i++)
          {
             computedForceAtSupportPolygonVertex.setToZero();
             for (int j = 0; j < numberOfFrictionConeVectors; j++)
-               computedForceAtSupportPolygonVertex.scaleAdd(qpSolution.get(i * numberOfFrictionConeVectors + j, 0), frictionConeBasisVectors.get(j),
+               computedForceAtSupportPolygonVertex.scaleAdd(qpSolution.get(6 + i * numberOfFrictionConeVectors + j, 0), frictionConeBasisVectors.get(j),
                                                             computedForceAtSupportPolygonVertex);
             forceVectors.get(i).set(computedForceAtSupportPolygonVertex);
          }
+         for(; i < forceVectors.size(); i++)
+            forceVectors.get(i).setToNaN();
       }
    }
 
    public List<? extends Vector3DReadOnly> getFrictionCone()
    {
       return frictionConeBasisVectors;
+   }
+
+   public void setRobotMass(YoDouble mass)
+   {
+      this.mass = mass;
+   }
+
+   public void setGravity(YoFrameVector gravity)
+   {
+      this.gravity = gravity;
+   }
+
+   public void setComputeFootPolygonFromFootPose(boolean value)
+   {
+      computeSupportPolygonFromFootPoses = value;
    }
 }

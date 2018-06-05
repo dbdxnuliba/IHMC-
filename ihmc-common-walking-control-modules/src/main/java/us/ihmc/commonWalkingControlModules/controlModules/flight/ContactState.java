@@ -1,5 +1,8 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -11,6 +14,7 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.ReferenceFrameHolder;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
+import us.ihmc.robotics.robotSide.RobotSide;
 
 /**
  * Stores the contact state of a robot in 2.5D representation
@@ -31,6 +35,10 @@ public class ContactState implements ReferenceFrameHolder
     * The support polygon during the this contact state
     */
    private final ConvexPolygon2D supportPolygon;
+   /**
+    * The state of each of the robot feet
+    */
+   private Map<RobotSide, Boolean> contactMap = new HashMap<>();
 
    public ContactState()
    {
@@ -105,6 +113,22 @@ public class ContactState implements ReferenceFrameHolder
    public double getDuration()
    {
       return duration;
+   }
+
+   public void setFootInContact(boolean isLeftFootInContact, boolean isRightFootInContact)
+   {
+      contactMap.put(RobotSide.LEFT, isLeftFootInContact);
+      contactMap.put(RobotSide.RIGHT, isRightFootInContact);
+   }
+
+   public void setFootInContact(RobotSide side, boolean isInContact)
+   {
+      contactMap.put(side, isInContact);
+   }
+
+   public boolean isFootInContact(RobotSide side)
+   {
+      return contactMap.get(side);
    }
 
    public void setPose(FramePose3DReadOnly poseToSet)

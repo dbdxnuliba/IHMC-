@@ -359,6 +359,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
          {
             Trajectory3D copTrajectory = copTrajectories.get(i);
             contactState.getSupportPolygon(worldFrame, tempFramePolygon);
+            //polygonScaler.scaleConvexPolygon(tempFramePolygon.getConvexPolygon2d(), 0.00, tempPolygonForScaling);
             List<Double> nodeTimes = generateNodeTimesForConstraints(segment.getSegmentDuration(),
                                                                      numberOfSupportPolygonConstraintsPerSegment.getIntegerValue(), true, true);
             Trajectory xAxisCoPTrajectory = copTrajectory.getTrajectoryX();

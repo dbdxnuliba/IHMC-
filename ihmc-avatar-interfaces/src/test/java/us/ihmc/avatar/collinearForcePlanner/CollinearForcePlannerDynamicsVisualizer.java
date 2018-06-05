@@ -315,7 +315,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    private void runPlanner()
    {
       robotController.submitContactStateList(contactStatePlan);
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 2; i++)
       {
          robotController.runIteration();
          scs.tickAndUpdate(i * dt.getDoubleValue());
