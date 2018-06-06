@@ -25,7 +25,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
  * @author Apoorv S
  *
  */
-public class CollinearForceBasedPlannerResult
+public class CollinearForceBasedPlannerResult implements CentroidalMotionPlan
 {
    private static final int numberOfCoefficientsForComputedAccelerationTrajectory = Math.max(CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients,
                                                                                              CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients)
@@ -102,7 +102,7 @@ public class CollinearForceBasedPlannerResult
       yoCoMVelocity = new YoFrameVector(namePrefix + "CoMVelocity", referenceFrame, registry);
       yoCoMDynamicsAcceleration = new YoFrameVector(namePrefix + "CoMDynamicsAcceleration", referenceFrame, registry);
       yoCoMDesiredAcceleration = new YoFrameVector(namePrefix + "CoMDesiredAcceleration", referenceFrame, registry);
-      yoCoMAccelerationDifference = new YoFrameVector(namePrefix +"CoMAccelerationDifference", referenceFrame, registry);
+      yoCoMAccelerationDifference = new YoFrameVector(namePrefix + "CoMAccelerationDifference", referenceFrame, registry);
       yoGroundReactionForce = new YoFrameVector(namePrefix + "GroundReactionForce", referenceFrame, registry);
       yoScalar = new YoDouble(namePrefix + "Scalar", registry);
       reset();
@@ -145,7 +145,7 @@ public class CollinearForceBasedPlannerResult
       comAcceleration.setIncludingFrame(groundReactionForce);
       comAcceleration.add(gravity);
       groundReactionForce.scale(mass.getDoubleValue());
-      
+
       yoGroundReactionForce.set(groundReactionForce);
       yoCoMPosition.set(comPosition);
       yoCoMVelocity.set(comVelocity);
@@ -164,6 +164,36 @@ public class CollinearForceBasedPlannerResult
       return startTime;
    }
 
+   @Override
+   public FramePoint3DReadOnly getPlannedCoMPosition()
+   {
+      return getDesiredCoMPosition();
+   }
+
+   @Override
+   public FrameVector3DReadOnly getPlannedCoMVelocity()
+   {
+      return getDesiredCoMVelocity();
+   }
+
+   @Override
+   public FramePoint3DReadOnly getPlannedCoPPosition()
+   {
+      return getDesiredCoPPosition();
+   }
+
+   @Override
+   public FrameVector3DReadOnly getPlannedCoMAcceleration()
+   {
+      return getDynamicsCoMAcceleration();
+   }
+   
+   @Override
+   public FrameVector3DReadOnly getPlannedGroundReactionForce()
+   {
+      return getDesiredGroundReactionForce();
+   }
+   
    public FramePoint3DReadOnly getDesiredCoMPosition()
    {
       return yoCoMPosition;

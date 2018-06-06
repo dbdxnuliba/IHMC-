@@ -8,6 +8,7 @@ import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFramePoint;
@@ -31,9 +32,10 @@ import us.ihmc.yoVariables.variable.YoInteger;
  * @author Apoorv S
  *
  */
-public class CollinearForceBasedCoMMotionPlanner
+public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlanGenerator
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private static final int defaultQPIterationsToRun = 1;
    public static final int numberOfScalarTrajectoryCoefficients = 4;
    public static final int numberOfCoMTrajectoryCoefficients = 6;
    public static final int numberOfCoPTrajectoryCoefficients = 6;
@@ -161,7 +163,8 @@ public class CollinearForceBasedCoMMotionPlanner
       finalCoPPosition.setToNaN();
    }
 
-   public void setInitialState(FramePoint3D initialCoMLocation, FrameVector3D initialCoMVelocity, FramePoint3D initialCoPLocation)
+   @Override
+   public void setInitialState(FramePoint3DReadOnly initialCoMLocation, FrameVector3DReadOnly initialCoMVelocity, FramePoint3DReadOnly initialCoPLocation)
    {
       hasInitialStateBeenSet.set(true);
       tempPoint.setIncludingFrame(initialCoMLocation);
@@ -177,7 +180,8 @@ public class CollinearForceBasedCoMMotionPlanner
       this.initialCoMVelocity.set(tempVector);
    }
 
-   public void setFinalState(FramePoint3D finalCoMLocation, FrameVector3D finalCoMVelocity, FrameVector3D finalCoPLocation)
+   @Override
+   public void setFinalState(FramePoint3DReadOnly finalCoMLocation, FrameVector3DReadOnly finalCoMVelocity, FramePoint3DReadOnly finalCoPLocation)
    {
       hasFinalStateBeenSet.set(true);
       tempPoint.setIncludingFrame(finalCoMLocation);
@@ -203,11 +207,18 @@ public class CollinearForceBasedCoMMotionPlanner
       reset();
    }
 
+   @Override
+   public void submitContactStateList(List<ContactState> contactStates)
+   {
+      contactStateList.clear();
+      for (int i = 0; i < contactStates.size(); i++)
+         appendContactStateToList(contactStates.get(i));
+   }
+   
    public void appendContactStateToList(ContactState contactStateToAppend)
    {
       if (isNodeValid(contactStateToAppend))
       {
-         //PrintTools.debug(contactStateToAppend.toString());
          numberOfContactStates.increment();
          contactStateList.add().set(contactStateToAppend);
       }
@@ -246,6 +257,24 @@ public class CollinearForceBasedCoMMotionPlanner
       return true;
    }
 
+   @Override
+   public void compute()
+   {
+      runIterations(defaultQPIterationsToRun);
+   }
+
+   @Override
+   public void update()
+   {
+      throw new RuntimeException("Not implemented");
+   }
+
+   @Override
+   public void prepareTransitionToNextContactState()
+   {
+      throw new RuntimeException("Not implemented");
+   }
+   
    public void runIterations(int numberOfSQPIterationsToRun)
    {
       if (isFirstQPRun())
@@ -342,6 +371,12 @@ public class CollinearForceBasedCoMMotionPlanner
       return sqpSolution.scalarProfile;
    }
 
+   @Override
+   public CentroidalMotionPlan getMotionPlan()
+   {
+      return getSQPSolution();
+   }
+   
    public CollinearForceBasedPlannerResult getSQPSolution()
    {
       return sqpSolution;

@@ -1,4 +1,4 @@
-package us.ihmc.avatar.collinearForcePlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
 import us.ihmc.commons.Epsilons;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
