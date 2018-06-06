@@ -3,7 +3,7 @@ package us.ihmc.avatar.collinearForcePlanner;
 import java.awt.Color;
 import java.util.List;
 
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CentroidalModelTools;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalModelTools;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;

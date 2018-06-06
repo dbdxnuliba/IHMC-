@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
 
 import us.ihmc.commons.Epsilons;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;

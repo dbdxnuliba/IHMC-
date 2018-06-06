@@ -2,6 +2,8 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlan;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlanGenerator;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;

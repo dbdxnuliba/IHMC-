@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
 
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlan;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
