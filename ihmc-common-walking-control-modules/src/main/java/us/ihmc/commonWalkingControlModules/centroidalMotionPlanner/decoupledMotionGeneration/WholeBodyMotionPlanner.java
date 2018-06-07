@@ -18,6 +18,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
  * @author Apoorv S
  *
  */
+@Deprecated
 public class WholeBodyMotionPlanner
 {
    public static final int numberOfForceCoefficients = ControlModuleHelper.forceCoefficients;
@@ -105,169 +106,171 @@ public class WholeBodyMotionPlanner
       this.angularVelocityWeight = new FrameVector3D(planningFrame, defaultAngularVelocityWeight, defaultAngularVelocityWeight, defaultAngularVelocityWeight);
    }
 
+   @Deprecated
    public void processContactStatesAndGenerateMotionNodesForPlanning(List<ContactState> contactStateList)
    {
-      if (contactStateList.size() < 1)
-         return;
-      double nodeTime = 0.0;
-      motionNode.reset();
-      motionNode.setTime(nodeTime);
-      {
-         ContactState contactState = contactStateList.get(0);
-         motionNode.setPositionConstraint(initialPosition);
-         motionNode.setLinearVelocityConstraint(initialLinearVelocity);
-         motionNode.setForceConstraint(initialGroundReactionForce);
-         motionNode.setZeroForceRateConstraint();
-         motionNode.setOrientationConstraint(initialOrientationVector);
-         motionNode.setAngularVelocityConstraint(initialAngularVelocity);
-         motionNode.setTorqueConstraint(initialTorque);
-         motionNode.setZeroTorqueRateConstraint();
-         motionPlanner.submitNode(motionNode);
-      }
-      for (int i = 0; i < contactStateList.size() - 1; i++)
-      {
-         ContactState contactState = contactStateList.get(i);
-         boolean isStateSupported = contactState.isSupported();
-         boolean isNextStateSupported = contactStateList.get(i + 1).isSupported();
-         contactState.getSupportPolygon(tempPolygon);
-         tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
-         positionUpperBound.setIncludingFrame(tempPosition);
-         positionUpperBound.add(positionUpperBoundDelta);
-         positionLowerBound.setIncludingFrame(tempPosition);
-         positionLowerBound.add(positionLowerBoundDelta);
-
-         contactState.getOrientation(tempOrientation);
-         tempOrientationVector.setIncludingFrame(tempOrientation.getReferenceFrame(), tempOrientation.getRoll(), tempOrientation.getPitch(),
-                                                 tempOrientation.getYaw());
-         orientationUpperBound.setIncludingFrame(tempOrientationVector);
-         orientationUpperBound.add(orientationUpperBoundDelta);
-         orientationLowerBound.setIncludingFrame(tempOrientationVector);
-         orientationLowerBound.add(orientationLowerBoundDelta);
-
-         double contactStateDuration = contactState.getDuration();
-         int numberOfNodesInState = (int) Math.ceil(contactStateDuration / plannerDT);
-         for (int j = 0; j < numberOfNodesInState - 1; j++)
-         {
-            nodeTime += plannerDT;
-            motionNode.reset();
-            motionNode.setTime(nodeTime);
-            if(isStateSupported)
-            {
-               motionNode.setForceObjective(nominalForce);
-               motionNode.setForceRateObjective(nominalForceRate);
-               motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
-               motionNode.setTorqueObjective(nominalTorque);
-               motionNode.setTorqueRateObjective(nominalTorqueRate);
-               motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
-            }
-            else
-            {
-               motionNode.setZeroForceConstraint();
-               motionNode.setZeroForceRateConstraint();
-               motionNode.setZeroTorqueConstraint();
-               motionNode.setZeroTorqueRateConstraint();
-            }
-            motionPlanner.submitNode(motionNode);
-         }
-         double finalNodeDuration = contactStateDuration - (numberOfNodesInState - 1) * plannerDT;
-         nodeTime += finalNodeDuration;
-         motionNode.reset();
-         motionNode.setTime(nodeTime);
-         if (!isStateSupported || !isNextStateSupported)
-         {
-            motionNode.setZeroForceConstraint();
-            motionNode.setZeroForceRateConstraint();
-            if(!isNextStateSupported)
-            {
-               positionJumpUpperBound.setIncludingFrame(tempPosition);
-               positionJumpUpperBound.add(positionJumpUpperBoundDelta);
-               motionNode.setPositionInequalities(positionJumpUpperBound, positionLowerBound);
-            }
-            motionNode.setZeroTorqueConstraint();
-            motionNode.setZeroTorqueRateConstraint();
-         }
-         else
-         {
-            motionNode.setForceObjective(nominalForce);
-            motionNode.setForceRateObjective(nominalForceRate);
-            motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
-            motionNode.setTorqueObjective(nominalTorque);
-            motionNode.setTorqueRateObjective(nominalTorqueRate);
-            motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
-         }
-         motionPlanner.submitNode(motionNode);
-      }
-      {
-         ContactState contactState = contactStateList.get(contactStateList.size() - 1);
-         boolean isStateSupported = contactState.isSupported();
-         double contactStateDuration = contactState.getDuration();
-         contactState.getSupportPolygon(tempPolygon);
-         tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
-         positionUpperBound.setIncludingFrame(tempPosition);
-         positionUpperBound.add(positionUpperBoundDelta);
-         positionLowerBound.setIncludingFrame(tempPosition);
-         positionLowerBound.add(positionLowerBoundDelta);
-
-         contactState.getOrientation(tempOrientation);
-         finalOrientationVector.setIncludingFrame(tempOrientation.getReferenceFrame(), tempOrientation.getRoll(), tempOrientation.getPitch(),
-                                                 tempOrientation.getYaw());
-         orientationUpperBound.setIncludingFrame(finalOrientationVector);
-         orientationUpperBound.add(orientationUpperBoundDelta);
-         orientationLowerBound.setIncludingFrame(finalOrientationVector);
-         orientationLowerBound.add(orientationLowerBoundDelta);
-
-         int numberOfNodesInState = (int) Math.ceil(contactStateDuration / plannerDT);
-         for (int j = 0; j < numberOfNodesInState - 1; j++)
-         {
-            nodeTime += plannerDT;
-            motionNode.reset();
-            motionNode.setTime(nodeTime);
-            if(isStateSupported)
-            {
-               motionNode.setForceObjective(nominalForce);
-               motionNode.setForceRateObjective(nominalForceRate);
-               motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
-               motionNode.setTorqueObjective(nominalTorque);
-               motionNode.setTorqueRateObjective(nominalTorqueRate);
-               motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
-            }
-            else
-            {
-               motionNode.setZeroForceConstraint();
-               motionNode.setZeroForceRateConstraint();
-               motionNode.setZeroTorqueConstraint();
-               motionNode.setZeroTorqueRateConstraint();
-            }
-            motionPlanner.submitNode(motionNode);
-         }
-         double finalNodeDuration = contactStateDuration - (numberOfNodesInState - 1) * plannerDT;
-         nodeTime += finalNodeDuration;
-         motionNode.reset();
-         motionNode.setTime(nodeTime);
-         if (isStateSupported)
-         {
-            motionNode.setZeroForceConstraint();
-            motionNode.setZeroForceRateConstraint();
-            motionNode.setPositionObjective(finalPosition, positionWeight);
-            motionNode.setLinearVelocityObjective(finalLinearVelocity, linearVelocityWeight);
-            motionNode.setZeroTorqueConstraint();
-            motionNode.setZeroTorqueRateConstraint();
-            motionNode.setOrientationObjective(finalOrientationVector, orientationWeight);
-            motionNode.setAngularVelocityObjective(finalAngularVelocity, angularVelocityWeight);
-         }
-         else
-         {
-            motionNode.setForceConstraint(nominalForce);
-            motionNode.setForceRateConstraint(nominalForceRate);
-            motionNode.setPositionConstraint(finalPosition); // , positionWeight, positionUpperBound, positionLowerBound);
-            motionNode.setLinearVelocityConstraint(finalLinearVelocity); //, linearVelocityWeight);
-            motionNode.setTorqueConstraint(nominalTorque);
-            motionNode.setTorqueRateConstraint(nominalTorqueRate);
-            motionNode.setOrientationObjective(finalOrientationVector, orientationWeight, orientationUpperBound, orientationLowerBound);
-            motionNode.setAngularVelocityObjective(finalAngularVelocity, angularVelocityWeight);
-         }
-         motionPlanner.submitNode(motionNode);
-      }
+      throw new RuntimeException("Broken method");
+//      if (contactStateList.size() < 1)
+//         return;
+//      double nodeTime = 0.0;
+//      motionNode.reset();
+//      motionNode.setTime(nodeTime);
+//      {
+//         ContactState contactState = contactStateList.get(0);
+//         motionNode.setPositionConstraint(initialPosition);
+//         motionNode.setLinearVelocityConstraint(initialLinearVelocity);
+//         motionNode.setForceConstraint(initialGroundReactionForce);
+//         motionNode.setZeroForceRateConstraint();
+//         motionNode.setOrientationConstraint(initialOrientationVector);
+//         motionNode.setAngularVelocityConstraint(initialAngularVelocity);
+//         motionNode.setTorqueConstraint(initialTorque);
+//         motionNode.setZeroTorqueRateConstraint();
+//         motionPlanner.submitNode(motionNode);
+//      }
+//      for (int i = 0; i < contactStateList.size() - 1; i++)
+//      {
+//         ContactState contactState = contactStateList.get(i);
+//         boolean isStateSupported = contactState.isSupported();
+//         boolean isNextStateSupported = contactStateList.get(i + 1).isSupported();
+//         contactState.getSupportPolygon(tempPolygon);
+//         tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
+//         positionUpperBound.setIncludingFrame(tempPosition);
+//         positionUpperBound.add(positionUpperBoundDelta);
+//         positionLowerBound.setIncludingFrame(tempPosition);
+//         positionLowerBound.add(positionLowerBoundDelta);
+//
+//         contactState.getOrientation(tempOrientation);
+//         tempOrientationVector.setIncludingFrame(tempOrientation.getReferenceFrame(), tempOrientation.getRoll(), tempOrientation.getPitch(),
+//                                                 tempOrientation.getYaw());
+//         orientationUpperBound.setIncludingFrame(tempOrientationVector);
+//         orientationUpperBound.add(orientationUpperBoundDelta);
+//         orientationLowerBound.setIncludingFrame(tempOrientationVector);
+//         orientationLowerBound.add(orientationLowerBoundDelta);
+//
+//         double contactStateDuration = contactState.getDuration();
+//         int numberOfNodesInState = (int) Math.ceil(contactStateDuration / plannerDT);
+//         for (int j = 0; j < numberOfNodesInState - 1; j++)
+//         {
+//            nodeTime += plannerDT;
+//            motionNode.reset();
+//            motionNode.setTime(nodeTime);
+//            if(isStateSupported)
+//            {
+//               motionNode.setForceObjective(nominalForce);
+//               motionNode.setForceRateObjective(nominalForceRate);
+//               motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
+//               motionNode.setTorqueObjective(nominalTorque);
+//               motionNode.setTorqueRateObjective(nominalTorqueRate);
+//               motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
+//            }
+//            else
+//            {
+//               motionNode.setZeroForceConstraint();
+//               motionNode.setZeroForceRateConstraint();
+//               motionNode.setZeroTorqueConstraint();
+//               motionNode.setZeroTorqueRateConstraint();
+//            }
+//            motionPlanner.submitNode(motionNode);
+//         }
+//         double finalNodeDuration = contactStateDuration - (numberOfNodesInState - 1) * plannerDT;
+//         nodeTime += finalNodeDuration;
+//         motionNode.reset();
+//         motionNode.setTime(nodeTime);
+//         if (!isStateSupported || !isNextStateSupported)
+//         {
+//            motionNode.setZeroForceConstraint();
+//            motionNode.setZeroForceRateConstraint();
+//            if(!isNextStateSupported)
+//            {
+//               positionJumpUpperBound.setIncludingFrame(tempPosition);
+//               positionJumpUpperBound.add(positionJumpUpperBoundDelta);
+//               motionNode.setPositionInequalities(positionJumpUpperBound, positionLowerBound);
+//            }
+//            motionNode.setZeroTorqueConstraint();
+//            motionNode.setZeroTorqueRateConstraint();
+//         }
+//         else
+//         {
+//            motionNode.setForceObjective(nominalForce);
+//            motionNode.setForceRateObjective(nominalForceRate);
+//            motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
+//            motionNode.setTorqueObjective(nominalTorque);
+//            motionNode.setTorqueRateObjective(nominalTorqueRate);
+//            motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
+//         }
+//         motionPlanner.submitNode(motionNode);
+//      }
+//      {
+//         ContactState contactState = contactStateList.get(contactStateList.size() - 1);
+//         boolean isStateSupported = contactState.isSupported();
+//         double contactStateDuration = contactState.getDuration();
+//         contactState.getSupportPolygon(tempPolygon);
+//         tempPosition.setIncludingFrame(contactState.getReferenceFrame(), tempPolygon.getCentroid(), 0.0);
+//         positionUpperBound.setIncludingFrame(tempPosition);
+//         positionUpperBound.add(positionUpperBoundDelta);
+//         positionLowerBound.setIncludingFrame(tempPosition);
+//         positionLowerBound.add(positionLowerBoundDelta);
+//
+//         contactState.getOrientation(tempOrientation);
+//         finalOrientationVector.setIncludingFrame(tempOrientation.getReferenceFrame(), tempOrientation.getRoll(), tempOrientation.getPitch(),
+//                                                 tempOrientation.getYaw());
+//         orientationUpperBound.setIncludingFrame(finalOrientationVector);
+//         orientationUpperBound.add(orientationUpperBoundDelta);
+//         orientationLowerBound.setIncludingFrame(finalOrientationVector);
+//         orientationLowerBound.add(orientationLowerBoundDelta);
+//
+//         int numberOfNodesInState = (int) Math.ceil(contactStateDuration / plannerDT);
+//         for (int j = 0; j < numberOfNodesInState - 1; j++)
+//         {
+//            nodeTime += plannerDT;
+//            motionNode.reset();
+//            motionNode.setTime(nodeTime);
+//            if(isStateSupported)
+//            {
+//               motionNode.setForceObjective(nominalForce);
+//               motionNode.setForceRateObjective(nominalForceRate);
+//               motionNode.setPositionInequalities(positionUpperBound, positionLowerBound);
+//               motionNode.setTorqueObjective(nominalTorque);
+//               motionNode.setTorqueRateObjective(nominalTorqueRate);
+//               motionNode.setOrientationInequalities(orientationUpperBound, orientationLowerBound);
+//            }
+//            else
+//            {
+//               motionNode.setZeroForceConstraint();
+//               motionNode.setZeroForceRateConstraint();
+//               motionNode.setZeroTorqueConstraint();
+//               motionNode.setZeroTorqueRateConstraint();
+//            }
+//            motionPlanner.submitNode(motionNode);
+//         }
+//         double finalNodeDuration = contactStateDuration - (numberOfNodesInState - 1) * plannerDT;
+//         nodeTime += finalNodeDuration;
+//         motionNode.reset();
+//         motionNode.setTime(nodeTime);
+//         if (isStateSupported)
+//         {
+//            motionNode.setZeroForceConstraint();
+//            motionNode.setZeroForceRateConstraint();
+//            motionNode.setPositionObjective(finalPosition, positionWeight);
+//            motionNode.setLinearVelocityObjective(finalLinearVelocity, linearVelocityWeight);
+//            motionNode.setZeroTorqueConstraint();
+//            motionNode.setZeroTorqueRateConstraint();
+//            motionNode.setOrientationObjective(finalOrientationVector, orientationWeight);
+//            motionNode.setAngularVelocityObjective(finalAngularVelocity, angularVelocityWeight);
+//         }
+//         else
+//         {
+//            motionNode.setForceConstraint(nominalForce);
+//            motionNode.setForceRateConstraint(nominalForceRate);
+//            motionNode.setPositionConstraint(finalPosition); // , positionWeight, positionUpperBound, positionLowerBound);
+//            motionNode.setLinearVelocityConstraint(finalLinearVelocity); //, linearVelocityWeight);
+//            motionNode.setTorqueConstraint(nominalTorque);
+//            motionNode.setTorqueRateConstraint(nominalTorqueRate);
+//            motionNode.setOrientationObjective(finalOrientationVector, orientationWeight, orientationUpperBound, orientationLowerBound);
+//            motionNode.setAngularVelocityObjective(finalAngularVelocity, angularVelocityWeight);
+//         }
+//         motionPlanner.submitNode(motionNode);
+//      }
    }
 
    public void computeMotionPlan()

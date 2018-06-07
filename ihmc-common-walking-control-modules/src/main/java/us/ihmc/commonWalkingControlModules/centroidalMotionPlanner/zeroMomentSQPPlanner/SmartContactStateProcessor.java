@@ -3,9 +3,17 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 import java.util.ArrayList;
 import java.util.List;
 
-import afu.org.checkerframework.checker.units.qual.s;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
+import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoInteger;
 
@@ -20,15 +28,22 @@ public class SmartContactStateProcessor
    private final List<Double> nodeTimesForContactState = new ArrayList<>();
    private final List<Double> segmentTimesForContactState = new ArrayList<>();
    private final YoInteger numberOfSegmentsPerSupportChange;
+   private final double defaultPrecision = 1e-5;
+   private final ReferenceFrame planningFrame;
 
-   public SmartContactStateProcessor(String namePrefix, YoVariableRegistry registry)
+   private final ArrayList<Point2D> tempVertices = new ArrayList<>();
+   
+   public SmartContactStateProcessor(ReferenceFrame planningFrame, String namePrefix, YoVariableRegistry registry)
    {
+      this.planningFrame = planningFrame;
       numberOfSegmentsPerSupportChange = new YoInteger(namePrefix + "NumberOfSegmentsPerSupportChange", registry);
    }
 
-   public void initialize(int numberOfSegmentsPerSupportChange)
+   public void initialize(int numberOfSegmentsPerSupportChange, int maxNumberOfSupportPolygonVertices)
    {
       this.numberOfSegmentsPerSupportChange.set(numberOfSegmentsPerSupportChange);
+      for (int i = 0; i < maxNumberOfSupportPolygonVertices; i++)
+         tempVertices.add(new Point2D());
    }
 
    public void processContactStates(List<ContactState> contactStatesToProcess, RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentListToPopulate)
@@ -43,7 +58,8 @@ public class SmartContactStateProcessor
       {
          CollinearForceMotionPlannerSegment segment = segmentListToPopulate.add();
          segment.setSegmentDuration(firstContactState.getDuration());
-         segment.setContactState(firstContactState);
+         SideDependentList<ConvexPolygon2D> footPolygons = firstContactState.footSupportPolygons;
+         combinePolygons(segment.supportPolygon, footPolygons.get(RobotSide.LEFT), footPolygons.get(RobotSide.RIGHT));
          return;
       }
       // Process the first state
@@ -72,12 +88,12 @@ public class SmartContactStateProcessor
    }
 
    private void createSegments(RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentListToPopulate, List<Double> segmentDurations,
-                               ContactState associatedContactState)
+                               ConvexPolygon2D associatedSupportPolygon)
    {
       for (int i = 0; i < segmentDurations.size(); i++)
       {
          CollinearForceMotionPlannerSegment segmentToAdd = segmentListToPopulate.add();
-         segmentToAdd.setContactState(associatedContactState);
+         segmentToAdd.setSupportPolygon(associatedSupportPolygon);
          segmentToAdd.setSegmentDuration(segmentDurations.get(i));
       }
    }
@@ -176,4 +192,92 @@ public class SmartContactStateProcessor
       for (int i = n; i > 0; i--)
          listToPopulate.add((Math.cos((2.0 * i - 1.0) / (4.0 * n) * Math.PI) * (xF - x0) + (x0)));
    }
+
+   private static void roundToPrecision(ArrayList<Point2D> vertexList, double precision)
+   {
+      for (int i = 0; i < vertexList.size(); i++)
+      {
+         Point2D vertexToRound = vertexList.get(i);
+         double newX = MathTools.roundToPrecision(vertexToRound.getX(), precision);
+         double newY = MathTools.roundToPrecision(vertexToRound.getY(), precision);
+         vertexToRound.set(newX, newY);
+      }
+   }
+
+   public void combinePolygons(ConvexPolygon2D polygonToSet, FramePose3DReadOnly pose1, ConvexPolygon2D polygon1, FramePose3DReadOnly pose2, ConvexPolygon2D polygon2)
+   {
+      int numberOfVertices = polygon1.getNumberOfVertices() + polygon2.getNumberOfVertices();
+      if (numberOfVertices > tempVertices.size())
+         throw new RuntimeException("Insufficient temporary variables for computation");
+      for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
+      {
+         Point2D vertex = tempVertices.get(i);
+         vertex.set(polygon2.getVertex(i));
+         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(pose1, planningFrame, vertex);
+      }
+      for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
+      {
+         Point2D vertex = tempVertices.get(i);
+         vertex.set(polygon2.getVertex(i));
+         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(pose2, planningFrame, vertex);
+      }
+      generateMinimalVertexSupportPolygon(polygonToSet, tempVertices, numberOfVertices, defaultPrecision);
+   }
+
+   public static void generateMinimalVertexSupportPolygon(ConvexPolygon2D polygonToSet, ArrayList<Point2D> vertexList, int numberOfVertices, double precision)
+   {
+      roundToPrecision(vertexList, precision);
+      if (numberOfVertices == 0)
+      {
+         polygonToSet.clear();
+         polygonToSet.update();
+         return;
+      }
+      // Generate the minimal vertex polygon. New gift wrapping algorithm
+      // Get the max X max Y element. 
+      int candidateVertexIndex = 0;
+      for (int i = 1; i < numberOfVertices; i++)
+      {
+         if (vertexList.get(i).getX() > vertexList.get(candidateVertexIndex).getX())
+            candidateVertexIndex = i;
+         else if (vertexList.get(i).getX() == vertexList.get(candidateVertexIndex).getX()
+               && vertexList.get(i).getY() > vertexList.get(candidateVertexIndex).getY())
+            candidateVertexIndex = i;
+      }
+      // Place the top right vertex at the beginning of list
+      Point2D topRightVertex = vertexList.get(candidateVertexIndex);
+      Point2D firstVertex = vertexList.get(0);
+      vertexList.set(0, topRightVertex);
+      vertexList.set(candidateVertexIndex, firstVertex);
+      // Start the marching
+      for (int i = 1; i < numberOfVertices; i++)
+      {
+         Point2D lastComputedPoint = vertexList.get(i - 1);
+         Point2D candidatePoint = vertexList.get(i);
+         // Find the next one 
+         for (int j = i + 1; j < numberOfVertices; j++)
+         {
+            Point2D pointUnderConsideration = vertexList.get(j);
+            double det = (pointUnderConsideration.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
+                  - (pointUnderConsideration.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
+            boolean swap = det > 0.0 || (det == 0.0 && lastComputedPoint.distance(pointUnderConsideration) > lastComputedPoint.distance(candidatePoint));
+            if (swap)
+            {
+               vertexList.set(j, candidatePoint);
+               vertexList.set(i, pointUnderConsideration);
+               candidatePoint = pointUnderConsideration;
+            }
+         }
+         double det2 = (topRightVertex.getY() - lastComputedPoint.getY()) * (candidatePoint.getX() - lastComputedPoint.getX())
+               - (topRightVertex.getX() - lastComputedPoint.getX()) * (candidatePoint.getY() - lastComputedPoint.getY());
+         boolean terminate = det2 > 0.0 || (det2 == 0.0 && lastComputedPoint.distance(candidatePoint) < lastComputedPoint.distance(topRightVertex));
+         if (terminate)
+         {
+            numberOfVertices = i;
+            break;
+         }
+      }
+      polygonToSet.setAndUpdate(vertexList, numberOfVertices);
+   }
+
 }

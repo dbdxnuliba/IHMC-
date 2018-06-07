@@ -1,24 +1,21 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 
 public class CollinearForceMotionPlannerSegment
 {
-   private double duration;
-   private ContactState segmentContactState;
+   public double duration;
+   public final ConvexPolygon2D supportPolygon = new ConvexPolygon2D();
 
-   public void setContactState(ContactState contactStateToSave)
+   public void setSupportPolygon(ConvexPolygon2D supportPolygonToSet)
    {
-      this.segmentContactState = contactStateToSave;
+      this.supportPolygon.set(supportPolygonToSet);
    }
 
-   public ContactState getContactState()
+   public void getSupportPolygon(ConvexPolygon2D convexPolygonToSet)
    {
-      return segmentContactState;
+      convexPolygonToSet.set(supportPolygon);
    }
 
    public void setSegmentDuration(double segmentDuration)
@@ -26,6 +23,16 @@ public class CollinearForceMotionPlannerSegment
       this.duration = segmentDuration;
    }
 
+   public boolean isSupported()
+   {
+      return supportPolygon.getNumberOfVertices() > 0;
+   }
+
+   public void getSupportPolygonCentroid(Point2DBasics centroidToPack)
+   {
+      supportPolygon.getCentroid(centroidToPack);
+   }
+   
    public double getSegmentDuration()
    {
       return duration;
@@ -33,6 +40,6 @@ public class CollinearForceMotionPlannerSegment
 
    public String toString()
    {
-      return "Duration: " + duration + ", SupportState: " + segmentContactState.toString();
+      return "Duration: " + duration + ", SupportPolygon: " + supportPolygon.toString();
    }
 }

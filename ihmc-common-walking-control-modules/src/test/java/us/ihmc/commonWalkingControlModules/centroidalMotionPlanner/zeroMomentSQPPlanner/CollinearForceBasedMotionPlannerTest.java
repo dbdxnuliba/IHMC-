@@ -17,6 +17,7 @@ import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class CollinearForceBasedMotionPlannerTest
@@ -39,26 +40,27 @@ public class CollinearForceBasedMotionPlannerTest
    {
       ContactState tempContactState = new ContactState();
       ConvexPolygon2D tempSupportPolygon = new ConvexPolygon2D();
-      FramePose3D tempPose = new FramePose3D(worldFrame);
-
+      FramePose3D rightFootPose = new FramePose3D(worldFrame);
+      FramePose3D leftFootPose = new FramePose3D(worldFrame);
+      
+      generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setPose(tempPose);
-      generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
-      tempContactState.setSupportPolygon(tempSupportPolygon);
+      tempContactState.setFootInContact(true, true);
+      tempContactState.setFootPoses(leftFootPose, rightFootPose);
+      tempContactState.setSupportPolygons(tempSupportPolygon, tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.2);
-      tempContactState.setPose(tempPose);
-      generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
+      tempContactState.setFootInContact(false, false);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setPose(tempPose);
-      generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
-      tempContactState.setSupportPolygon(tempSupportPolygon);
+      tempContactState.setFootPose(RobotSide.LEFT, leftFootPose);
+      tempContactState.setFootInContact(true, false);
+      tempContactState.setSupportPolygon(RobotSide.LEFT, tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       List<ContactState> contactStateList = motionPlanner.getContactStateList();
@@ -72,26 +74,27 @@ public class CollinearForceBasedMotionPlannerTest
    {
       ContactState tempContactState = new ContactState();
       ConvexPolygon2D tempSupportPolygon = new ConvexPolygon2D();
-      FramePose3D tempPose = new FramePose3D(worldFrame);
+      FramePose3D rightFootPose = new FramePose3D(worldFrame);
+      FramePose3D leftFootPose = new FramePose3D(worldFrame);
 
-      tempContactState.reset();
-      tempContactState.setDuration(0.40);
-      tempContactState.setPose(tempPose);
       generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
-      tempContactState.setSupportPolygon(tempSupportPolygon);
+      tempContactState.reset();
+      tempContactState.setDuration(0.4);
+      tempContactState.setFootInContact(true, true);
+      tempContactState.setFootPoses(leftFootPose, rightFootPose);
+      tempContactState.setSupportPolygons(tempSupportPolygon, tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
-      tempContactState.setDuration(0.1);
-      tempContactState.setPose(tempPose);
-      generateSupportPolygon(tempSupportPolygon, 0.0, 0.0, 0.1, 0.04);
+      tempContactState.setDuration(0.2);
+      tempContactState.setFootInContact(false, false);
       motionPlanner.appendContactStateToList(tempContactState);
 
       tempContactState.reset();
       tempContactState.setDuration(0.4);
-      tempContactState.setPose(tempPose);
-      generateSupportPolygon(tempSupportPolygon, 0.1, 0.0, 0.1, 0.04);
-      tempContactState.setSupportPolygon(tempSupportPolygon);
+      tempContactState.setFootPose(RobotSide.LEFT, leftFootPose);
+      tempContactState.setFootInContact(true, false);
+      tempContactState.setSupportPolygon(RobotSide.LEFT, tempSupportPolygon);
       motionPlanner.appendContactStateToList(tempContactState);
 
       motionPlanner.runIterations(0);

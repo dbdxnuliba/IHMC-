@@ -18,7 +18,7 @@ public interface CentroidalMotionPlanGenerator
 
    void prepareTransitionToNextContactState();
    
-   CentroidalMotionPlan getMotionPlan();
+   CentroidalMotionPlan getMotionPlanReference();
 
    void setInitialState(FramePoint3DReadOnly comPosition, FrameVector3DReadOnly comVelocity, FramePoint3DReadOnly copPosition);
 

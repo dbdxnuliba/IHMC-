@@ -199,7 +199,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
          {
             tempPolygon.setIncludingFrame(solePose.getReferenceFrame(), defaultSupportPolygons.get(side));
             solePose.getFramePose(tempPose);
-            TransformHelperTools.transformFromPoseToReferenceFrame(tempPose, tempPolygon.getGeometryObject());
+            TransformHelperTools.transformFromPoseToReferenceFrameByProjection(tempPose, tempPolygon.getGeometryObject());
             tempPolygon.changeFrame(worldFrame);
             feetPolygonsInWorldFrame.get(side).setFrameConvexPolygon2d(tempPolygon);
          }

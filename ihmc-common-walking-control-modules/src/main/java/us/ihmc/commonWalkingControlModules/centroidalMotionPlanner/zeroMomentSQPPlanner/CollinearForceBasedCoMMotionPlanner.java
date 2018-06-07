@@ -12,11 +12,13 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -57,6 +59,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    private final YoDouble consolidatedConvergenceThreshold;
    private final YoDouble individualAxisConvergenceThreshold;
    
+   private final YoDouble nominalHeight;
    private final YoDouble dynamicsViolation;
    private final YoDouble[] axisDynamicsViolation = new YoDouble[Axis.values.length];
    
@@ -76,6 +79,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    private final CollinearForceBasedPlannerSeedSolutionGenerator initialSolutionGenerator;
    private final SmartContactStateProcessor contactStateProcessor;
    private final FramePoint3D tempPoint = new FramePoint3D();
+   private final Point2D tempPoint2D = new Point2D();
    private final FrameVector3D tempVector = new FrameVector3D();
 
    public CollinearForceBasedCoMMotionPlanner(YoVariableRegistry parentRegistry)
@@ -90,6 +94,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
       finalCoPPosition = new YoFramePoint(namePrefix + "FinalCoPLocation", worldFrame, registry);
       finalCoMVelocity = new YoFrameVector(namePrefix + "FinalCoMVelocity", worldFrame, registry);
 
+      nominalHeight = new YoDouble(namePrefix + "NominalHeight", registry);
       dynamicsViolation = new YoDouble(namePrefix + "CummulativeDynamicsViolation", registry);
       for(Axis axis : Axis.values)
          axisDynamicsViolation[axis.ordinal()] = new YoDouble(namePrefix + axis.toString() + "DynamicsViolation", registry);
@@ -130,7 +135,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
       sqpSolution.initialize(gravity, parameters.getRobotMass());
       initialSolutionGenerator.initialize(sqpSolution, gravity, parameters);
       optimizationControlModule.initialize(parameters, gravity);
-      contactStateProcessor.initialize(parameters.getNumberOfSegmentsPerContactStateChange());
+      contactStateProcessor.initialize(parameters.getNumberOfSegmentsPerContactStateChange(), 15);
    }
 
    public void reset()
@@ -252,10 +257,11 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    {
       if (contactStateToCheck.getDuration() <= 0.0f)
          return false;
-      if (contactStateToCheck.getReferenceFrame() == null)
-         return false;
-      if (contactStateToCheck.isSupported() && contactStateToCheck.getNumberOfSupportPolygonVertices() <= 0)
-         return false;
+      for(RobotSide side : RobotSide.values)
+      {
+         if(contactStateToCheck.isFootInContact(side) && contactStateToCheck.getNumberOfSupportPolygonVertices(side) == 0)
+            return false;
+      }
       return true;
    }
 
@@ -311,9 +317,8 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
          optimizationControlModule.setDesiredInitialState(initialCoMPosition, initialCoPPosition, initialCoMVelocity);
       else
       {
-         segmentList.get(0).getContactState().getSupportPolygonCentroid(tempPoint);
-         tempPoint.changeFrame(worldFrame);
-         tempPoint.setZ(0.435);
+         segmentList.get(0).getSupportPolygonCentroid(tempPoint2D);
+         tempPoint.setIncludingFrame(worldFrame, tempPoint2D, nominalHeight.getDoubleValue());
          tempVector.setToZero(worldFrame);
          optimizationControlModule.setDesiredInitialState(tempPoint, tempPoint, tempVector);
       }
@@ -321,9 +326,9 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
          optimizationControlModule.setDesiredFinalState(finalCoMPosition, finalCoPPosition, finalCoMVelocity);
       else
       {
-         segmentList.getLast().getContactState().getSupportPolygonCentroid(tempPoint);
-         tempPoint.changeFrame(worldFrame);
-         tempPoint.setZ(0.435);
+         segmentList.getLast().getSupportPolygonCentroid(tempPoint2D);
+         tempPoint.setIncludingFrame(worldFrame, tempPoint2D, nominalHeight.getDoubleValue());
+         tempVector.setToZero(worldFrame);
          tempVector.setToZero(worldFrame);
          optimizationControlModule.setDesiredFinalState(tempPoint, tempPoint, tempVector);
       }
@@ -374,7 +379,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    }
 
    @Override
-   public CentroidalMotionPlan getMotionPlan()
+   public CentroidalMotionPlan getMotionPlanReference()
    {
       return getSQPSolution();
    }
