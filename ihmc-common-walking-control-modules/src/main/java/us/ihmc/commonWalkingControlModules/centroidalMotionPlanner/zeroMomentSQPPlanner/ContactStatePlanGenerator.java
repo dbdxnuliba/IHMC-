@@ -182,8 +182,8 @@ public class ContactStatePlanGenerator
 
    public static void processFootstepPlanForRunning(List<FramePose2D> footstepPoses, List<ContactState> contactStateList,
                                                     ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSupportSide,
-                                                    double singleSupportDuration, double doubleSupportDuration, double flightDuration,
-                                                    boolean startInDoubleSupport, boolean startInSingleSupport, boolean endInSingleSupport, boolean endInDoubleSupport)
+                                                    double flightDuration, double singleSupportDuration, double doubleSupportDuration,
+                                                    boolean startInDoubleSupport, boolean startInSingleSupport, boolean endInDoubleSupport, boolean endInSingleSupport)
    {
       if(startInDoubleSupport && startInSingleSupport)
          throw new RuntimeException("Incompatible arguments. Please specify the state correctly");
@@ -218,7 +218,8 @@ public class ContactStatePlanGenerator
          ContactState initialFlightState = contactStateList.get(contactStateIndex++);
          setContactStateForNoSupport(initialFlightState, flightDuration);
       }
-      for (; poseIndex < footstepPoses.size(); poseIndex++)
+      int loopCount = endInDoubleSupport || endInSingleSupport ? footstepPoses.size() - 1: footstepPoses.size();
+      for (; poseIndex < loopCount; poseIndex++)
       {
          pose2 = footstepPoses.get(poseIndex);
          ContactState singleSupportState = contactStateList.get(contactStateIndex++);
@@ -315,7 +316,7 @@ public class ContactStatePlanGenerator
                                                   Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration,
                                                   ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon)
    {
-
+      
    }
 
    public void generateContactStatePlanForWalking(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,

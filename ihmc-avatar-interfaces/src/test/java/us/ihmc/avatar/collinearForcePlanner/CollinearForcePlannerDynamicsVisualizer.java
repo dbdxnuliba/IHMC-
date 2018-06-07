@@ -9,6 +9,7 @@ import org.ejml.data.DenseMatrix64F;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.ContactStatePlanGenerator;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -149,8 +150,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private ContactStatePlanGenerator createContactStatePlanner()
    {
-      int numberOfVertices = feetSupportPolygon.get(RobotSide.LEFT).getNumberOfVertices() + feetSupportPolygon.get(RobotSide.RIGHT).getNumberOfVertices();
-      return new ContactStatePlanGenerator(numberOfVertices, 1e-5);
+      return new ContactStatePlanGenerator();
    }
 
    private SimulationConstructionSet createAndSetupSCS(Robot robot, PlaybackListener contactStatePlaybackListener)
@@ -321,18 +321,34 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       for (i = 0; i < numberOfContactStatesToViz; i++)
       {
          framePointList.clear();
+         double centroidX = 0.0;
+         double centroidY = 0.0;
          ContactState contactState = contactStatesToVisualize.get(i);
-         contactState.getSupportPolygon(worldFrame, tempPolygon);
-         // Setting some Z here to improve the visualization 
-         for (int j = 0; j < tempPolygon.getNumberOfVertices(); j++)
-            framePointList.add().set(tempPolygon.getVertex(j), 0.0001);
-         contactStateViz.get(i).set(framePointList);
-         if (tempPolygon.getNumberOfVertices() > 0)
+         int numberOfVertices = 0;
+         for(RobotSide side: RobotSide.values)
          {
-            tempPose.setIncludingFrame(contactState.getPose());
+            tempPose.setIncludingFrame(contactState.getPose(side));
+            ConvexPolygon2D supportPolygon = contactState.footSupportPolygons.get(side);
             tempPose.changeFrame(worldFrame);
-            contactState.getSupportPolygonCentroid(tempPoint);
-            tempPose.setPosition(tempPoint.getX(), tempPoint.getY(), tempPoint.getZ() + 0.001);
+            numberOfVertices += supportPolygon.getNumberOfVertices();
+            for(int j = 0; j < supportPolygon.getNumberOfVertices(); j++)
+            {
+               FramePoint3D vertex = framePointList.add();
+               vertex.set(supportPolygon.getVertex(j));
+               TransformHelperTools.transformFromPoseToReferenceFrame(tempPose, vertex);
+               vertex.addZ(0.0001);
+               centroidX += vertex.getX();
+               centroidY += vertex.getY();
+            }
+         }
+         // Setting some Z here to improve the visualization 
+         contactStateViz.get(i).set(framePointList);
+         if (numberOfVertices > 0)
+         {
+            centroidX /= numberOfVertices;
+            centroidY /= numberOfVertices;
+            tempPose.setToZero(worldFrame);
+            tempPose.setPosition(centroidX, centroidY, 0.001);
             contactStateLabels.get(i).set(tempPose);
          }
          else

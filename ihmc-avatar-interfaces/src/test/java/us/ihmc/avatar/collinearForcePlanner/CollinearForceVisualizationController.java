@@ -6,6 +6,7 @@ import java.util.List;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalModelTools;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedPlannerResult;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceMotionPlannerSegment;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
@@ -272,10 +273,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private void runControllerCore(FramePoint3DReadOnly centerOfMass, FrameVector3D linearMomentumRateOfChange, FrameVector3D angularMomentumRateOfChange)
    {
       int segmentIndex = sqpOutput.getCurrentSegmentIndex();
-      ContactState currentContactState = motionPlanner.getSegmentList().get(segmentIndex).getContactState();
+      CollinearForceMotionPlannerSegment segment = motionPlanner.getSegmentList().get(segmentIndex); 
       controllerCore.reset();
       controllerCore.setCenterOfMassLocation(centerOfMass);
-      currentContactState.getSupportPolygon(worldFrame, tempPolygon);
+      tempPolygon.setToZero(worldFrame);
+      segment.getSupportPolygon(tempPolygon.getGeometryObject());
       controllerCore.setSupportPolygon(tempPolygon);
       desiredLinearMomentumRateOfChange.setIncludingFrame(sqpOutput.getDynamicsCoMAcceleration());
       desiredLinearMomentumRateOfChange.scale(mass.getDoubleValue());

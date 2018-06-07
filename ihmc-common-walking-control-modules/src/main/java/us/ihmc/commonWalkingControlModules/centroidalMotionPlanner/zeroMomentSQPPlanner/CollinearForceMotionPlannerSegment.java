@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 
 public class CollinearForceMotionPlannerSegment
 {
@@ -31,6 +32,11 @@ public class CollinearForceMotionPlannerSegment
    public void getSupportPolygonCentroid(Point2DBasics centroidToPack)
    {
       supportPolygon.getCentroid(centroidToPack);
+   }
+
+   public void getSupportPolygonCentroid(Point3DBasics centroidToPack)
+   {
+      centroidToPack.set(supportPolygon.getCentroid(), 0.0);
    }
    
    public double getSegmentDuration()

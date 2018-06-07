@@ -116,7 +116,7 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
       sqpSolution = new CollinearForceBasedPlannerResult(registry);
       optimizationControlModule = new CollinearForceBasedPlannerOptimizationControlModule(sqpSolution, numberOfPlanningSegments, registry);
       initialSolutionGenerator = new CollinearForceBasedPlannerSeedSolutionGenerator(registry); // TODO set this up
-      contactStateProcessor = new SmartContactStateProcessor(namePrefix, registry);
+      contactStateProcessor = new SmartContactStateProcessor(worldFrame, namePrefix, registry);
       contactStateList = new RecyclingArrayList<>(100, ContactState.class);
       segmentList = new RecyclingArrayList<>(100, CollinearForceMotionPlannerSegment.class);
       parentRegistry.addChild(registry);

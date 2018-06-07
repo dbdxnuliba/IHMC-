@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
+import java.util.List;
 import java.util.Map;
 
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -11,6 +12,7 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -78,6 +80,11 @@ public class ContactState
    public void setSupportPolygon(RobotSide side, ConvexPolygon2D supportPolygonToSet)
    {
       footSupportPolygons.get(side).setAndUpdate(supportPolygonToSet);
+   }
+
+   public void setSupportPolygon(RobotSide side, List<Point2D> supportPolygonVerticesInAnkleFrame)
+   {
+      footSupportPolygons.get(side).setAndUpdate(supportPolygonVerticesInAnkleFrame, supportPolygonVerticesInAnkleFrame.size());
    }
 
    /**
@@ -177,6 +184,11 @@ public class ContactState
       footPoses.get(side).setPosition(positionToSet);
    }
 
+   public void setPositionWithZeroHeight(RobotSide side, Point2D positionToSet)
+   {
+      footPoses.get(side).setPosition(positionToSet);
+   }
+
    public void getOrientation(RobotSide side, FrameQuaternion orientationToPack)
    {
       orientationToPack.setIncludingFrame(footPoses.get(side).getOrientation());
@@ -212,7 +224,7 @@ public class ContactState
 
    public String toString()
    {
-      String toString = "isSupported: " + isSupported() + ",\nDuration: " + duration;
+      String toString = "isSupported: " + isSupported() + ",\nDuration: " + duration + "\n";
       for (RobotSide side : RobotSide.values)
          toString += side.getCamelCaseNameForMiddleOfExpression() + ": Pose: " + footPoses.get(side).toString() + ", Support Polygon: "
                + footSupportPolygons.get(side).toString() + "\n";

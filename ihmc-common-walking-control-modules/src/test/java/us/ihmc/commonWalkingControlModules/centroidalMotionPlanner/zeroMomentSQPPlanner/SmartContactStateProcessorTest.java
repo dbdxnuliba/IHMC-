@@ -165,7 +165,7 @@ public class SmartContactStateProcessorTest
    public void testContactStateProcessing()
    {
       YoVariableRegistry registry = new YoVariableRegistry("TestRegistry");
-      SmartContactStateProcessor contactStateProcessor = new SmartContactStateProcessor("Test", registry);
+      SmartContactStateProcessor contactStateProcessor = new SmartContactStateProcessor(ReferenceFrame.getWorldFrame(), "Test", registry);
       contactStateProcessor.initialize(2, 12);
       List<ContactState> contactStateList = new ArrayList<>();
       ConvexPolygon2D supportPolygon = generateDefaultFootSupportPolygon();

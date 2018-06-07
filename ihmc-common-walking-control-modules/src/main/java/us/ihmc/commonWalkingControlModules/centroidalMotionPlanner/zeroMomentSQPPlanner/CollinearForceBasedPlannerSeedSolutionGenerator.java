@@ -98,11 +98,10 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
       for (int i = 0; i < segmentList.size(); i++)
       {
          CollinearForceMotionPlannerSegment segment = segmentList.get(i);
-         ContactState contactState = segment.getContactState();
          Trajectory3D comTrajectory = comTrajectories.add();
          Trajectory3D copTrajectory = copTrajectories.add();
          Trajectory scalarTrajectory = scalarProfile.add();
-         contactState.getSupportPolygonCentroid(tempFramePoint);
+         segment.getSupportPolygonCentroid(tempPoint);
          if(tempFramePoint.containsNaN())
             tempFramePoint.setToZero(worldFrame);
          tempFramePoint.changeFrame(worldFrame);
@@ -111,7 +110,7 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
          setConstant(comTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
          tempFramePoint.sub(0.0, 0.0, comNominalOffsetFromSupportPolygonCentroid.getZ());
          setConstant(copTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients, segment.getSegmentDuration(), tempFramePoint);
-         if (contactState.isSupported())
+         if (segment.isSupported())
             setConstant(scalarTrajectory, CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients, segment.getSegmentDuration(),
                         (0.0 - gravity.getZ()) / (comNominalOffsetFromSupportPolygonCentroid.getZ()));
          else

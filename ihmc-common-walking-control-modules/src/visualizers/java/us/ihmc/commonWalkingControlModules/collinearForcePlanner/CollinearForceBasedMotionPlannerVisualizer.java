@@ -197,6 +197,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
 
    private void generateContactStateFromFootstepPlan()
    {
+      
       contactStates.clear();
       for (int i = 0; i < footstepLocations.size(); i++)
       {
@@ -206,7 +207,10 @@ public class CollinearForceBasedMotionPlannerVisualizer
          Point2D rightFootPos = footstepLocations.get(i).get(RobotSide.RIGHT);
          generateMinimalVertexSupportPolygon(tempPolygon, leftFootPos, rightFootPos);
          PrintTools.debug(leftFootPos.toString() + " " + rightFootPos.toString() + " " + tempPolygon.getCentroid().toString());
-         contactState.setSupportPolygon(tempPolygon);
+         contactState.setSupportPolygon(RobotSide.LEFT, defaultFootPolygonPointsInAnkleFrame);
+         contactState.setSupportPolygon(RobotSide.RIGHT, defaultFootPolygonPointsInAnkleFrame);
+         contactState.setPositionWithZeroHeight(RobotSide.LEFT, leftFootPos);
+         contactState.setPositionWithZeroHeight(RobotSide.RIGHT, rightFootPos);
          if (leftFootPos.containsNaN() && rightFootPos.containsNaN())
          {
             contactState.setDuration(0.15);

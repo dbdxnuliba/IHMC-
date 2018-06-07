@@ -50,26 +50,26 @@ public class JumpMessageHandler
       case STANDING:
          break;
       case LAUNCH:
-         ContactState launchState = new ContactState(worldFrame);
-         launchState.setDuration(0.4);
-         launchState.setOrientation(currentOrientation);
-         createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
-         launchState.setSupportPolygon(tempPolygon);
-         contactStateList.add(launchState);
+//         ContactState launchState = new ContactState(worldFrame);
+//         launchState.setDuration(0.4);
+//         launchState.setOrientation(currentOrientation);
+//         createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
+//         launchState.setSupportPolygon(tempPolygon);
+//         contactStateList.add(launchState);
       case FLIGHT:
-         ContactState flightState = new ContactState(worldFrame);
-         flightState.setDuration(0.15);
-         flightState.setOrientation(currentOrientation);
-         tempPolygon.clear();
-         flightState.setSupportPolygon(tempPolygon);
-         contactStateList.add(flightState);
+//         ContactState flightState = new ContactState(worldFrame);
+//         flightState.setDuration(0.15);
+//         flightState.setOrientation(currentOrientation);
+//         tempPolygon.clear();
+//         flightState.setSupportPolygon(tempPolygon);
+//         contactStateList.add(flightState);
       case LANDING:
-         ContactState landingState = new ContactState(worldFrame);
-         landingState.setDuration(0.4);
-         createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
-         landingState.setOrientation(finalOrientation);
-         landingState.setSupportPolygon(tempPolygon);
-         contactStateList.add(landingState);
+//         ContactState landingState = new ContactState(worldFrame);
+//         landingState.setDuration(0.4);
+//         createRectangle(currentPosition.getX(), currentPosition.getY(), 0.01, 0.01, tempPolygon);
+//         landingState.setOrientation(finalOrientation);
+//         landingState.setSupportPolygon(tempPolygon);
+//         contactStateList.add(landingState);
          break;
       default:
          throw new RuntimeException("Unhandled jump state");

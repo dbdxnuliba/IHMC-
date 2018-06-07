@@ -30,9 +30,11 @@ public class SmartContactStateProcessor
    private final YoInteger numberOfSegmentsPerSupportChange;
    private final double defaultPrecision = 1e-5;
    private final ReferenceFrame planningFrame;
+   private final FramePose3D tempPose = new FramePose3D();
+   private final ConvexPolygon2D tempSupportPolygon = new ConvexPolygon2D();
 
    private final ArrayList<Point2D> tempVertices = new ArrayList<>();
-   
+
    public SmartContactStateProcessor(ReferenceFrame planningFrame, String namePrefix, YoVariableRegistry registry)
    {
       this.planningFrame = planningFrame;
@@ -58,8 +60,7 @@ public class SmartContactStateProcessor
       {
          CollinearForceMotionPlannerSegment segment = segmentListToPopulate.add();
          segment.setSegmentDuration(firstContactState.getDuration());
-         SideDependentList<ConvexPolygon2D> footPolygons = firstContactState.footSupportPolygons;
-         combinePolygons(segment.supportPolygon, footPolygons.get(RobotSide.LEFT), footPolygons.get(RobotSide.RIGHT));
+         getSupportPolygon(segment.supportPolygon, firstContactState);
          return;
       }
       // Process the first state
@@ -67,7 +68,8 @@ public class SmartContactStateProcessor
       ContactState nextState = contactStatesToProcess.get(1);
       boolean isNextStateSupported = nextState.isSupported();
       getSegmentDurations(firstContactState.getDuration(), isStateSupported, isStateSupported, isNextStateSupported, segmentTimesForContactState);
-      createSegments(segmentListToPopulate, segmentTimesForContactState, firstContactState);
+      getSupportPolygon(tempSupportPolygon, firstContactState);
+      createSegments(segmentListToPopulate, segmentTimesForContactState, tempSupportPolygon);
       boolean isPreviousStateSupported;
       ContactState state;
       for (int i = 1; i < numberOfContactStates - 1; i++)
@@ -78,13 +80,15 @@ public class SmartContactStateProcessor
          nextState = contactStatesToProcess.get(i + 1);
          isNextStateSupported = nextState.isSupported();
          getSegmentDurations(state.getDuration(), isStateSupported, isPreviousStateSupported, isNextStateSupported, segmentTimesForContactState);
-         createSegments(segmentListToPopulate, segmentTimesForContactState, state);
+         getSupportPolygon(tempSupportPolygon, state);
+         createSegments(segmentListToPopulate, segmentTimesForContactState, tempSupportPolygon);
       }
       state = nextState;
       isPreviousStateSupported = isStateSupported;
       isStateSupported = isNextStateSupported;
       getSegmentDurations(state.getDuration(), isStateSupported, isPreviousStateSupported, isStateSupported, segmentTimesForContactState);
-      createSegments(segmentListToPopulate, segmentTimesForContactState, state);
+      getSupportPolygon(tempSupportPolygon, state);
+      createSegments(segmentListToPopulate, segmentTimesForContactState, tempSupportPolygon);
    }
 
    private void createSegments(RecyclingArrayList<CollinearForceMotionPlannerSegment> segmentListToPopulate, List<Double> segmentDurations,
@@ -96,6 +100,31 @@ public class SmartContactStateProcessor
          segmentToAdd.setSupportPolygon(associatedSupportPolygon);
          segmentToAdd.setSegmentDuration(segmentDurations.get(i));
       }
+   }
+
+   private void getSupportPolygon(ConvexPolygon2D supportPolygonToSet, ContactState contactState)
+   {
+      SideDependentList<Boolean> footInContact = contactState.footInContact;
+      SideDependentList<ConvexPolygon2D> footSupportPolygons = contactState.footSupportPolygons;
+      SideDependentList<FramePose3D> footPoses = contactState.footPoses;
+      int numberOfVertices = 0;
+      for(RobotSide side : RobotSide.values)
+      {
+         if(footInContact.get(side))
+         {
+            ConvexPolygon2D supportPolygon = footSupportPolygons.get(side);
+            numberOfVertices += supportPolygon.getNumberOfVertices();
+            tempPose.setIncludingFrame(footPoses.get(side));
+            tempPose.changeFrame(planningFrame);
+            for (int i = 0; i < supportPolygon.getNumberOfVertices(); i++)
+            {
+               Point2D vertex = tempVertices.get(i);
+               vertex.set(supportPolygon.getVertex(i));
+               TransformHelperTools.transformFromPoseToReferenceFrameByProjection(tempPose, vertex);
+            }
+         }
+      }
+      generateMinimalVertexSupportPolygon(supportPolygonToSet, tempVertices, numberOfVertices, defaultPrecision);
    }
 
    private void getSegmentDurations(double contactStateDuration, boolean isStateSupported, boolean isPreviousStateSupported, boolean isNextStateSupported,
@@ -204,22 +233,27 @@ public class SmartContactStateProcessor
       }
    }
 
-   public void combinePolygons(ConvexPolygon2D polygonToSet, FramePose3DReadOnly pose1, ConvexPolygon2D polygon1, FramePose3DReadOnly pose2, ConvexPolygon2D polygon2)
+   public void combinePolygons(ConvexPolygon2D polygonToSet, FramePose3DReadOnly pose1, ConvexPolygon2D polygon1, FramePose3DReadOnly pose2,
+                               ConvexPolygon2D polygon2)
    {
       int numberOfVertices = polygon1.getNumberOfVertices() + polygon2.getNumberOfVertices();
       if (numberOfVertices > tempVertices.size())
          throw new RuntimeException("Insufficient temporary variables for computation");
+      tempPose.setIncludingFrame(pose1);
+      tempPose.changeFrame(planningFrame);
       for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
       {
          Point2D vertex = tempVertices.get(i);
          vertex.set(polygon2.getVertex(i));
-         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(pose1, planningFrame, vertex);
+         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(tempPose, vertex);
       }
+      tempPose.setIncludingFrame(pose2);
+      tempPose.changeFrame(planningFrame);
       for (int i = 0; i < polygon1.getNumberOfVertices(); i++)
       {
          Point2D vertex = tempVertices.get(i);
          vertex.set(polygon2.getVertex(i));
-         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(pose2, planningFrame, vertex);
+         TransformHelperTools.transformFromPoseToReferenceFrameByProjection(tempPose, vertex);
       }
       generateMinimalVertexSupportPolygon(polygonToSet, tempVertices, numberOfVertices, defaultPrecision);
    }
