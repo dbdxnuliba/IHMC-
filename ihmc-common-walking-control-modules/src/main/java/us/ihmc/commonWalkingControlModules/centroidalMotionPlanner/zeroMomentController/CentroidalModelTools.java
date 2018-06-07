@@ -22,7 +22,7 @@ public class CentroidalModelTools
       double Fx = groundReactionForce.getX();
       double Fy = groundReactionForce.getY();
       double Fz = groundReactionForce.getZ();
-      if(Math.abs(Fz)< Epsilons.ONE_HUNDRED_THOUSANDTH)
+      if (Math.abs(Fz) < Epsilons.ONE_HUNDRED_THOUSANDTH)
       {
          centerOfPressureToSet.setIncludingFrame(centerOfMass);
          centerOfPressureToSet.subZ(groundHeight);
@@ -42,6 +42,15 @@ public class CentroidalModelTools
       double copX = x + rx - scalar * Fx;
       double copY = y + ry - scalar * Fy;
       centerOfPressureToSet.setIncludingFrame(centerOfMass.getReferenceFrame(), copX, copY, groundHeight);
+   }
+
+   public static void computeGroundReactionForceFromAcceleration(FrameVector3D groundReactionForceToSet, FrameVector3DReadOnly linearAcceleration,
+                                                 FrameVector3DReadOnly gravity, double mass)
+   {
+      linearAcceleration.checkReferenceFrameMatch(gravity);
+      groundReactionForceToSet.setIncludingFrame(linearAcceleration);
+      groundReactionForceToSet.sub(gravity);
+      groundReactionForceToSet.scale(mass);
    }
 
    public static void computeGroundReactionForce(FrameVector3DReadOnly linearMomentumRateOfChange, FrameVector3DReadOnly gravity, double mass,

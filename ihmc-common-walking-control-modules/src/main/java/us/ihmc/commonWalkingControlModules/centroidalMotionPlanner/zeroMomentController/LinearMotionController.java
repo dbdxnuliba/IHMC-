@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
@@ -75,5 +76,10 @@ public class LinearMotionController
       
       feedbackLinearAcceleration.add(proportionalFeedback, derivativeFeedback);
       linearAccelerationCommand.add(feedbackLinearAcceleration, feedforwardLinearAcceleration);
+   }
+
+   public FrameVector3DReadOnly getLinearAccelerationCommand()
+   {
+      return linearAccelerationCommand;
    }
 }

@@ -9,7 +9,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
  * @author Apoorv S
  *
  */
-public class CollinearForcePlannerParameters
+public class CollinearForcePlannerParameters implements MotionPlannerParameters
 {
    public int getMaxSQPIterations()
    {
