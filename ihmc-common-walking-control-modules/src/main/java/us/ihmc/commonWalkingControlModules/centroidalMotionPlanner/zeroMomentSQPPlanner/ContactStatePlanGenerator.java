@@ -191,7 +191,7 @@ public class ContactStatePlanGenerator
       int contactStateIndex = 0;
       ConvexPolygon2D polygon1, polygon2;
       FramePose2D pose1, pose2;
-      if(firstSupportSide == RobotSide.RIGHT)
+      if(firstSupportSide == RobotSide.LEFT)
       {
          polygon1 = leftFootSupportPolygon;
          polygon2 = rightFootSupportPolygon;
@@ -218,7 +218,7 @@ public class ContactStatePlanGenerator
          ContactState initialFlightState = contactStateList.get(contactStateIndex++);
          setContactStateForNoSupport(initialFlightState, flightDuration);
       }
-      int loopCount = endInDoubleSupport || endInSingleSupport ? footstepPoses.size() - 1: footstepPoses.size();
+      int loopCount = endInDoubleSupport ? footstepPoses.size() - 2: endInSingleSupport ? footstepPoses.size() - 1: footstepPoses.size();
       for (; poseIndex < loopCount; poseIndex++)
       {
          pose2 = footstepPoses.get(poseIndex);
@@ -234,7 +234,7 @@ public class ContactStatePlanGenerator
       }
       if(endInSingleSupport || endInDoubleSupport)
       {
-         pose2 = footstepPoses.get(poseIndex);
+         pose2 = footstepPoses.get(poseIndex++);
          ContactState lastSingleSupportState = contactStateList.get(contactStateIndex++);
          setContactStateForSingleSupport(lastSingleSupportState, singleSupportDuration, supportSide, pose1, polygon1);
       }
@@ -242,7 +242,7 @@ public class ContactStatePlanGenerator
       {
          pose2 = footstepPoses.get(poseIndex);
          ContactState lastDoubleSupportState = contactStateList.get(contactStateIndex);
-         setContactStateForDoubleSupport(lastDoubleSupportState, doubleSupportDuration, supportSide.getOppositeSide(), pose1, polygon1, pose2, polygon2);
+         setContactStateForDoubleSupport(lastDoubleSupportState, doubleSupportDuration, supportSide, pose1, polygon1, pose2, polygon2);
       }
    }
 

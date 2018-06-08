@@ -25,6 +25,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
+import us.ihmc.modelFileLoaders.SdfLoader.xmlDescription.Collision.Surface.Contact;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFrameConvexPolygon2d;
 import us.ihmc.robotics.math.frames.YoFramePoint;
@@ -320,6 +321,9 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    private final FramePoint3D initialCoMPosition = new FramePoint3D();
    private final FrameVector3D initialCoMVelocity = new FrameVector3D();
    private final FramePoint3D initialCoPPosition = new FramePoint3D();
+   private final FramePoint3D finalCoMPosition = new FramePoint3D();
+   private final FrameVector3D finalCoMVelocity = new FrameVector3D();
+   private final FramePoint3D finalCoPPosition = new FramePoint3D();
 
    public void submitFootstepPlan()
    {
@@ -337,6 +341,13 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       state.getLinearVelocity(initialCoMVelocity);
       initialCoPPosition.setIncludingFrame(desiredCoP);
       motionPlanner.setInitialState(initialCoMPosition, initialCoMVelocity, initialCoPPosition);
+      ContactState lastContactState = contactStatePlanForController.get(contactStatePlanForController.size() - 1);
+      finalCoMPosition.setIncludingFrame(lastContactState.getPose(RobotSide.LEFT).getPosition());
+      finalCoMPosition.changeFrame(worldFrame);
+      finalCoMPosition.addZ(0.435);
+      finalCoMVelocity.setToZero(worldFrame);
+      finalCoPPosition.setIncludingFrame(lastContactState.getPose(RobotSide.LEFT).getPosition());
+      motionPlanner.setFinalState(finalCoMPosition, finalCoMVelocity, finalCoPPosition);
    }
 
    public void runIteration()
