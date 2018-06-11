@@ -131,8 +131,8 @@ public class ContactStatePlanGeneratorTest
       Pose2D rightAnklePoseOffset = new Pose2D(0.0, -0.1, 0.0);
       Pose2D leftAnklePoseOffset = new Pose2D(0.0, 0.1, 0.0);
       ContactStatePlanGenerator contactStatePlanGenerationHelper = new ContactStatePlanGenerator();
-      contactStatePlanGenerationHelper.generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump,
-                                                                          leftAnklePoseOffset, rightAnklePoseOffset, 0.1, 0.3, defaultSupportPolygonAnkleFrame);
+      //contactStatePlanGenerationHelper.generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump,
+      //                                                                    leftAnklePoseOffset, rightAnklePoseOffset, 0.1, 0.3, defaultSupportPolygonAnkleFrame);
    }
 
    @Test(timeout = 1000)
@@ -146,15 +146,20 @@ public class ContactStatePlanGeneratorTest
          footPoseList.add(new FramePose2D());
       for (int i = 0; i < 2 * numberOfSteps + 5; i++)
          contactStateList.add(new ContactState());
-      Vector2D stepSize = new Vector2D(0.1, 0.2);
+      Vector2D stepSize = new Vector2D(0.1, 0.0);
       FramePose2D initialLeftAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.15), 0.0);
       FramePose2D initialRightAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -0.15), 0.0);
       RobotSide startSide = RobotSide.LEFT;
       boolean endInDoubleSupport = true;
-      ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
-      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide,
+      ConvexPolygon2D leftFootPolygon = generateDefaultFootSupportPolygon();
+      ConvexPolygon2D rightFootPolygon = generateDefaultFootSupportPolygon();
+      rightFootPolygon.addVertex(0.1, 0.2);
+      rightFootPolygon.update();
+      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide.getOppositeSide(),
                                                      endInDoubleSupport);
-      ContactStatePlanGenerator.processFootstepPlanForWalking(footPoseList, contactStateList, defaultFootPolygon, defaultFootPolygon, startSide, true, endInDoubleSupport,
+      for(int i = 0; i < footPoseList.size(); i++)
+         PrintTools.debug("Pose " + i + ": " + footPoseList.get(i).toString());
+      ContactStatePlanGenerator.processFootstepPlanForWalking(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, true, endInDoubleSupport,
                                                   0.4, 0.2);
       for (int i = 0; i < contactStateList.size(); i++)
          PrintTools.debug(contactStateList.get(i).toString());
@@ -166,12 +171,12 @@ public class ContactStatePlanGeneratorTest
       ContactStatePlanGenerator planGenerator = new ContactStatePlanGenerator();
       List<FramePose2D> footPoseList = new ArrayList<>();
       List<ContactState> contactStateList = new ArrayList<>();
-      int numberOfSteps = 2;
+      int numberOfSteps = 3;
       for (int i = 0; i < numberOfSteps + 2; i++)
          footPoseList.add(new FramePose2D());
-      for (int i = 0; i < 2 * numberOfSteps + 3; i++)
+      for (int i = 0; i < 2 * numberOfSteps + 5; i++)
          contactStateList.add(new ContactState());
-      Vector2D stepSize = new Vector2D(0.1, 0.2);
+      Vector2D stepSize = new Vector2D(0.1, 0.0);
       FramePose2D initialLeftAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, 0.15), 0.0);
       FramePose2D initialRightAnklePose = new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -0.15), 0.0);
       RobotSide startSide = RobotSide.LEFT;
@@ -180,8 +185,10 @@ public class ContactStatePlanGeneratorTest
       rightFootPolygon.addVertex(0.1, 0.2);
       rightFootPolygon.update();
       planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide,
-                                                     true);
-      ContactStatePlanGenerator.processFootstepPlanForRunning(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, 0.2, 0.4, 0.4, false, true, true, false);
+                                                     false);
+      for(int i = 0; i < footPoseList.size(); i++)
+         PrintTools.debug("Pose " + i + ": " + footPoseList.get(i).toString());
+      ContactStatePlanGenerator.processFootstepPlanForRunning(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, 0.2, 0.4, 0.4, false, true, false, true);
       for (int i = 0; i < contactStateList.size(); i++)
          PrintTools.debug(contactStateList.get(i).toString());
    }

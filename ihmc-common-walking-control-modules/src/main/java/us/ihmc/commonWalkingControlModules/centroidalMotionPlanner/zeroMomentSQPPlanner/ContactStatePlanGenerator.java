@@ -1,7 +1,11 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.awt.Robot;
 import java.util.List;
 
+import com.jme3.renderer.Camera.FrustumIntersect;
+
+import javassist.tools.framedump;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.Pose2DReadOnly;
@@ -9,6 +13,7 @@ import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Vector2DReadOnly;
+import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
@@ -120,22 +125,24 @@ public class ContactStatePlanGenerator
    /**
     * Generates a contact state plan for a walking gait from the specified footstep poses. No checks are performed on the pose locations
     * @param footstepSolePoses the list of sole poses. In case {@code startInDoubleSupport} flag is true then the 
-    * current poses are considered ordered as swing foot initial pose followed by support foot initial pose
+    * current poses are considered ordered as initial swing foot pose followed by initial support foot pose
     * @param contactStateList the list to which the generated contact states will be appended
     * @param leftFootSupportPolygon defined in the sole frame 
     * @param rightFootSupportPolygon defined in the sole frame
-    * @param firstSwingSide the first pose is considered to be for this side. 
+    * @param firstSupportSide the first pose is considered to be for this side. 
     * @param startInDoubleSupport indicates whether the first contact state is a double / single support state
+    * 
+    * @return number of contact states planned
     */
-   public static void processFootstepPlanForWalking(List<FramePose2D> footstepSolePoses, List<ContactState> contactStateList,
-                                                    ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSwingSide,
+   public static int processFootstepPlanForWalking(List<FramePose2D> footstepSolePoses, List<ContactState> contactStateList,
+                                                    ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSupportSide,
                                                     boolean startInDoubleSupport, boolean endInDoubleSupport, double singleSupportDuration,
                                                     double doubleSupportDuration)
    {
       int poseIndex = 0;
       int contactStateIndex = 0;
       ConvexPolygon2D polygon1, polygon2;
-      if (firstSwingSide == RobotSide.LEFT)
+      if (firstSupportSide == RobotSide.RIGHT)
       {
          polygon1 = leftFootSupportPolygon;
          polygon2 = rightFootSupportPolygon;
@@ -146,7 +153,7 @@ public class ContactStatePlanGenerator
          polygon2 = leftFootSupportPolygon;
       }
       FramePose2D pose1 = footstepSolePoses.get(poseIndex++);
-      RobotSide supportSide = firstSwingSide.getOppositeSide();
+      RobotSide supportSide = firstSupportSide;
       if (!startInDoubleSupport)
       {
          ContactState contactState = contactStateList.get(contactStateIndex++);
@@ -158,7 +165,7 @@ public class ContactStatePlanGenerator
          supportSide = supportSide.getOppositeSide();
       }
       FramePose2D pose2 = null;
-      int loopCount = endInDoubleSupport ? footstepSolePoses.size() - 1: footstepSolePoses.size();
+      int loopCount = endInDoubleSupport ? footstepSolePoses.size() - 1 : footstepSolePoses.size();
       for (; poseIndex < loopCount; poseIndex++)
       {
          pose2 = footstepSolePoses.get(poseIndex);
@@ -178,20 +185,40 @@ public class ContactStatePlanGenerator
          ContactState doubleSupportState = contactStateList.get(contactStateIndex++);
          setContactStateForDoubleSupport(doubleSupportState, doubleSupportDuration, supportSide, pose2, polygon2, pose1, polygon1);
       }
+      return contactStateIndex;
    }
 
-   public static void processFootstepPlanForRunning(List<FramePose2D> footstepPoses, List<ContactState> contactStateList,
+   /**
+    * Generates a contact state plan for running motions
+    * @param footstepPoses the list of foot poses to be converted to a contact state plan. In case the {@code startInDoubleSupport} flag is true this list should 
+    * start with the initial pose of the first swing foot. Otherwise, should start with the pose of the first support foot
+    * @param contactStateList the list of contact states to be populated
+    * @param leftFootSupportPolygon the default support polygon of the left foot
+    * @param rightFootSupportPolygon the default support polygon of the right foot
+    * @param firstSupportSide the first support side for the running gait
+    * @param flightDuration the duration of a flight phase
+    * @param singleSupportDuration the duration of a singleSupportPhase
+    * @param doubleSupportDuration the duration of a doubleSupportPhase. Not used in case no double support is to be planned
+    * @param startInDoubleSupport 
+    * @param startInSingleSupport
+    * @param endInDoubleSupport
+    * @param endInSingleSupport
+    * 
+    * @return number of contact states planned
+    */
+   public static int processFootstepPlanForRunning(List<FramePose2D> footstepPoses, List<ContactState> contactStateList,
                                                     ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSupportSide,
                                                     double flightDuration, double singleSupportDuration, double doubleSupportDuration,
-                                                    boolean startInDoubleSupport, boolean startInSingleSupport, boolean endInDoubleSupport, boolean endInSingleSupport)
+                                                    boolean startInDoubleSupport, boolean startInSingleSupport, boolean endInDoubleSupport,
+                                                    boolean endInSingleSupport)
    {
-      if(startInDoubleSupport && startInSingleSupport)
+      if ((startInDoubleSupport && startInSingleSupport) || (endInDoubleSupport && endInSingleSupport))
          throw new RuntimeException("Incompatible arguments. Please specify the state correctly");
       int poseIndex = 0;
       int contactStateIndex = 0;
       ConvexPolygon2D polygon1, polygon2;
       FramePose2D pose1, pose2;
-      if(firstSupportSide == RobotSide.LEFT)
+      if (firstSupportSide == RobotSide.LEFT)
       {
          polygon1 = leftFootSupportPolygon;
          polygon2 = rightFootSupportPolygon;
@@ -203,22 +230,19 @@ public class ContactStatePlanGenerator
       }
       RobotSide supportSide = firstSupportSide;
       pose1 = footstepPoses.get(poseIndex++);
-      if(startInDoubleSupport)
+      if (startInDoubleSupport)
       {
-         pose2 = footstepPoses.get(poseIndex);
+         pose2 = footstepPoses.get(poseIndex++);
          ContactState initialDoubleSupportState = contactStateList.get(contactStateIndex++);
-         setContactStateForDoubleSupport(initialDoubleSupportState, doubleSupportDuration, supportSide, pose2, polygon2, pose1, polygon1);
+         setContactStateForDoubleSupport(initialDoubleSupportState, doubleSupportDuration, supportSide.getOppositeSide(), pose1, polygon2, pose2, polygon1);
          pose1 = pose2;
-         ConvexPolygon2D polyRef = polygon1;
-         polygon1 = polygon2;
-         polygon2 = polyRef;
       }
-      else if(!startInSingleSupport)
+      else if (!startInSingleSupport)
       {
          ContactState initialFlightState = contactStateList.get(contactStateIndex++);
          setContactStateForNoSupport(initialFlightState, flightDuration);
       }
-      int loopCount = endInDoubleSupport ? footstepPoses.size() - 2: endInSingleSupport ? footstepPoses.size() - 1: footstepPoses.size();
+      int loopCount = endInDoubleSupport ? footstepPoses.size() - 1 : footstepPoses.size();
       for (; poseIndex < loopCount; poseIndex++)
       {
          pose2 = footstepPoses.get(poseIndex);
@@ -232,18 +256,25 @@ public class ContactStatePlanGenerator
          polygon2 = polyRef;
          supportSide = supportSide.getOppositeSide();
       }
-      if(endInSingleSupport || endInDoubleSupport)
+      if (endInSingleSupport || endInDoubleSupport)
       {
-         pose2 = footstepPoses.get(poseIndex++);
          ContactState lastSingleSupportState = contactStateList.get(contactStateIndex++);
          setContactStateForSingleSupport(lastSingleSupportState, singleSupportDuration, supportSide, pose1, polygon1);
       }
-      if(endInDoubleSupport)
+      else
+      {
+         ContactState singleSupportState = contactStateList.get(contactStateIndex++);
+         setContactStateForSingleSupport(singleSupportState, singleSupportDuration, supportSide, pose1, polygon1);
+         ContactState flightState = contactStateList.get(contactStateIndex++);
+         setContactStateForNoSupport(flightState, flightDuration);
+      }
+      if (endInDoubleSupport)
       {
          pose2 = footstepPoses.get(poseIndex);
-         ContactState lastDoubleSupportState = contactStateList.get(contactStateIndex);
+         ContactState lastDoubleSupportState = contactStateList.get(contactStateIndex++);
          setContactStateForDoubleSupport(lastDoubleSupportState, doubleSupportDuration, supportSide, pose1, polygon1, pose2, polygon2);
       }
+      return contactStateIndex;
    }
 
    /**
@@ -289,49 +320,62 @@ public class ContactStatePlanGenerator
       framePosesToSet.get(poseIndex++).setIncludingFrame(tempPoseForLeftFoot);
    }
 
-   /**
-    * Generates a contact state plan that move the robot by the value specified in {@code pelvisPoseChangePerJump}. The feet are held at a constant 
-    * pose offset from the pelvis pose. 
-    * @param contactStates the list of contact states to be populated. Should be of size (2 * {@code numberOfJumps} + 1) 
-    * @param numberOfJumps the number of jumps to be planned
-    * @param initialPelvisPose initial pose of the pelvis. The reference frame of this pose is used as the reference frame in which the plan is generated
-    * @param pelvisPoseChangePerJump the change in the pelvis pose after every jump
-    * @param leftAnklePoseOffset the offset of the left ankle frame
-    * @param rightAnklePoseOffset the offset of the right ankle frame
-    * @param flightDuration the duration of the flight phase
-    * @param groundDuration the duration of the double support phase
-    * @param footSupportPolygon the support polygon in ankle frames for both feet
-    */
-   public void generateContactStatePlanForJumping(List<ContactState> contactStates, int numberOfJumps, FramePose2DReadOnly initialPelvisPose,
-                                                  Pose2DReadOnly pelvisPoseChangePerJump, Pose2DReadOnly leftAnklePoseOffset,
-                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration,
-                                                  ConvexPolygon2D footSupportPolygon)
+   public int generateContactStatePlanForJumping(List<ContactState> contactStatesToSet, FramePose2DReadOnly initialLeftAnklePose,
+                                                  FramePose2DReadOnly initialRightAnklePose, Vector2DReadOnly stepSize, int numberOfJumps,
+                                                  ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, double supportDuration,
+                                                  double flightDuration)
    {
-      generateContactStatePlanForJumping(contactStates, numberOfJumps, initialPelvisPose, pelvisPoseChangePerJump, leftAnklePoseOffset, rightAnklePoseOffset,
-                                         flightDuration, groundDuration, footSupportPolygon, footSupportPolygon);
+      int contactStateIndex = 0;
+      tempPoseForLeftFoot.setIncludingFrame(initialLeftAnklePose);
+      tempPoseForRightFoot.setIncludingFrame(initialRightAnklePose);
+      for (int i = 0; i < numberOfJumps; i++)
+      {
+         ContactState groundState = contactStatesToSet.get(contactStateIndex++);
+         setContactStateForDoubleSupport(groundState, supportDuration, tempPoseForLeftFoot, tempPoseForRightFoot, leftFootSupportPolygon,
+                                         rightFootSupportPolygon);
+         ContactState flightState = contactStatesToSet.get(contactStateIndex++);
+         setContactStateForNoSupport(flightState, flightDuration);
+         tempPoseForLeftFoot.appendTranslation(stepSize.getX(), stepSize.getY());
+         tempPoseForRightFoot.appendTranslation(stepSize.getX(), stepSize.getY());
+      }
+      ContactState groundState = contactStatesToSet.get(contactStateIndex++);
+      setContactStateForDoubleSupport(groundState, supportDuration, tempPoseForLeftFoot, tempPoseForRightFoot, leftFootSupportPolygon, rightFootSupportPolygon);
+      return contactStateIndex;
    }
 
-   public void generateContactStatePlanForJumping(List<ContactState> contactStates, int numberOfJumps, FramePose2DReadOnly initialPelvisPose,
-                                                  Pose2DReadOnly pelvisPoseChangePerJump, Pose2DReadOnly leftAnklePoseOffset,
-                                                  Pose2DReadOnly rightAnklePoseOffset, double flightDuration, double groundDuration,
-                                                  ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon)
+   private final RecyclingArrayList<FramePose2D> tempFramePoses = new RecyclingArrayList<>(FramePose2D.class);
+
+   public int generateContactStatePlanForWalking(List<ContactState> contactStatesToSet, FramePose2DReadOnly initialLeftAnklePose,
+                                                  FramePose2DReadOnly initialRightAnklePose, Vector2DReadOnly stepSize, int numberOfSteps,
+                                                  ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSupportSide,
+                                                  boolean startInDoubleSupport, boolean endInDoubleSupport, double singleSupportDuration,
+                                                  double doubleSupportDuration)
    {
-      
+      populateTempPoses(numberOfSteps + 2);
+      generateAlternatingFootstepPoses(tempFramePoses, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps,
+                                       startInDoubleSupport ? firstSupportSide.getOppositeSide() : firstSupportSide, endInDoubleSupport);
+      return processFootstepPlanForWalking(tempFramePoses, contactStatesToSet, leftFootSupportPolygon, rightFootSupportPolygon, firstSupportSide, startInDoubleSupport,
+                                    endInDoubleSupport, singleSupportDuration, doubleSupportDuration);
    }
 
-   public void generateContactStatePlanForWalking(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,
-                                                  FramePose2DReadOnly initialRightAnklePose, Point2DReadOnly stepSize, RobotSide firstStepSide,
-                                                  double singleSupportDuration, double transferDuration, double initialDoubleSupportDuration,
-                                                  double finalDoubleSupportDuration, boolean useLastStepToEndWalk, ConvexPolygon2D leftFootSupportPolygon,
-                                                  ConvexPolygon2D rightFootSupportPolygon)
+   public int generateContactStatePlanForRunning(List<ContactState> contactStatesToSet, FramePose2DReadOnly initialLeftAnklePose,
+                                                  FramePose2DReadOnly initialRightAnklePose, Vector2DReadOnly stepSize, int numberOfSteps,
+                                                  ConvexPolygon2D leftFootSupportPolygon, ConvexPolygon2D rightFootSupportPolygon, RobotSide firstSupportSide,
+                                                  boolean startInDoubleSupport, boolean startInSingleSupport, boolean endInDoubleSupport,
+                                                  boolean endInSingleSupport, double flightDuration, double singleSupportDuration, double doubleSupportDuration)
    {
+      populateTempPoses(numberOfSteps + 2);
+      generateAlternatingFootstepPoses(tempFramePoses, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps,
+                                       startInDoubleSupport ? firstSupportSide.getOppositeSide() : firstSupportSide, endInDoubleSupport);
+      return processFootstepPlanForRunning(tempFramePoses, contactStatesToSet, leftFootSupportPolygon, rightFootSupportPolygon, firstSupportSide, flightDuration,
+                                    singleSupportDuration, doubleSupportDuration, startInDoubleSupport, startInSingleSupport, endInDoubleSupport,
+                                    endInSingleSupport);
    }
 
-   public void generateContactStatePlanForRunning(List<ContactState> contactStates, int numberOfSteps, FramePose2DReadOnly initialLeftAnklePose,
-                                                  FramePose2DReadOnly initialRightAnklePose, Point2DReadOnly stepSize, RobotSide firstStepSide,
-                                                  double flightDuration, double singleSupportDuration, double initialDoubleSupportDuration,
-                                                  double finalDoubleSupportDuration, boolean useLastStepToEndWalk, ConvexPolygon2D leftFootSupportPolygon,
-                                                  ConvexPolygon2D rightFootSupportPolygon)
+   private void populateTempPoses(int numberOfPoses)
    {
+      tempFramePoses.clear();
+      for (int i = 0; i < numberOfPoses; i++)
+         tempFramePoses.add().setToNaN();
    }
 }
