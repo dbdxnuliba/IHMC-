@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import controller_msgs.msg.dds.*;
 import us.ihmc.commons.Conversions;
 import us.ihmc.communication.packetCommunicator.PacketCommunicator;
+import us.ihmc.communication.packets.Packet;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerEnum;
@@ -15,8 +16,8 @@ import us.ihmc.quadrupedRobotics.estimator.referenceFrames.QuadrupedReferenceFra
 import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedRobotics.planning.bodyPath.QuadrupedBodyPathMultiplexer;
-import us.ihmc.quadrupedRobotics.planning.chooser.footstepChooser.PlanarGroundQuadrupedStepSnapper;
-import us.ihmc.quadrupedRobotics.planning.chooser.footstepChooser.QuadrupedStepSnapper;
+import us.ihmc.quadrupedRobotics.planning.chooser.footstepChooser.PlanarGroundPointFootSnapper;
+import us.ihmc.quadrupedRobotics.planning.chooser.footstepChooser.PointFootSnapper;
 import us.ihmc.quadrupedRobotics.planning.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.providers.YoQuadrupedXGaitSettings;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -64,17 +65,22 @@ public class QuadrupedTeleopManager
       this.packetCommunicator = packetCommunicator;
       this.referenceFrames = referenceFrames;
       this.xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, null, registry);
-      this.bodyPathMultiplexer = new QuadrupedBodyPathMultiplexer(referenceFrames, timestamp, defaultXGaitSettings, packetCommunicator, graphicsListRegistry, registry);
+      this.bodyPathMultiplexer = new QuadrupedBodyPathMultiplexer(referenceFrames, timestamp, xGaitSettings, packetCommunicator, graphicsListRegistry, registry);
       this.stepStream = new QuadrupedXGaitStepStream(xGaitSettings, timestamp, bodyPathMultiplexer, registry);
 
       desiredCoMHeight.set(initialCoMHeight);
-      stepStream.setStepSnapper(new PlanarGroundQuadrupedStepSnapper(referenceFrames, packetCommunicator));
+      stepStream.setStepSnapper(new PlanarGroundPointFootSnapper(referenceFrames, packetCommunicator));
 
       packetCommunicator.attachListener(QuadrupedControllerStateChangeMessage.class, controllerStateChangeMessage::set);
       packetCommunicator.attachListener(QuadrupedSteppingStateChangeMessage.class, steppingStateChangeMessage::set);
       packetCommunicator.attachListener(RobotConfigurationData.class, packet -> timestampNanos.set(packet.timestamp_));
 
       parentRegistry.addChild(registry);
+   }
+
+   public void sendMessage(Packet<?> packet)
+   {
+      packetCommunicator.send(packet);
    }
 
    public void update()
@@ -115,14 +121,14 @@ public class QuadrupedTeleopManager
    public void requestSteppingState()
    {
       QuadrupedRequestedControllerStateMessage controllerMessage = new QuadrupedRequestedControllerStateMessage();
-      controllerMessage.setQuadrupedControllerName(QuadrupedControllerRequestedEvent.REQUEST_STEPPING.toByte());
+      controllerMessage.setQuadrupedControllerRequestedEvent(QuadrupedControllerRequestedEvent.REQUEST_STEPPING.toByte());
       packetCommunicator.send(controllerMessage);
    }
 
    public void requestStopWalking()
    {
       QuadrupedRequestedSteppingStateMessage steppingMessage = new QuadrupedRequestedSteppingStateMessage();
-      steppingMessage.setQuadrupedSteppingState(QuadrupedSteppingRequestedEvent.REQUEST_STAND.toByte());
+      steppingMessage.setQuadrupedSteppingRequestedEvent(QuadrupedSteppingRequestedEvent.REQUEST_STAND.toByte());
       packetCommunicator.send(steppingMessage);
    }
 
@@ -136,8 +142,8 @@ public class QuadrupedTeleopManager
       QuadrupedControllerStateChangeMessage controllerStateChangeMessage = this.controllerStateChangeMessage.get();
       QuadrupedSteppingStateChangeMessage steppingStateChangeMessage = this.steppingStateChangeMessage.get();
 
-      return (controllerStateChangeMessage != null && controllerStateChangeMessage.getEndControllerName() == QuadrupedControllerEnum.STEPPING.toByte()) &&
-            (steppingStateChangeMessage != null && steppingStateChangeMessage.getEndSteppingControllerName() == QuadrupedSteppingStateEnum.STEP.toByte());
+      return (controllerStateChangeMessage != null && controllerStateChangeMessage.getEndQuadrupedControllerEnum() == QuadrupedControllerEnum.STEPPING.toByte()) &&
+            (steppingStateChangeMessage != null && steppingStateChangeMessage.getEndQuadrupedSteppingStateEnum() == QuadrupedSteppingStateEnum.STEP.toByte());
    }
 
    public boolean isWalking()
@@ -202,7 +208,7 @@ public class QuadrupedTeleopManager
       }
    }
 
-   public void setStepSnapper(QuadrupedStepSnapper stepSnapper)
+   public void setStepSnapper(PointFootSnapper stepSnapper)
    {
       stepStream.setStepSnapper(stepSnapper);
    }
