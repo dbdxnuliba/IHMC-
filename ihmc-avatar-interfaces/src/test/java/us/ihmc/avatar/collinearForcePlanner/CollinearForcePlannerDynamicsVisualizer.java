@@ -279,7 +279,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.JUMP);
+      prepareContactStatePlan(Motion.WALK);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
       // warmup();
       runPlanner();
@@ -318,6 +318,8 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       }
    }
 
+   private final FrameConvexPolygon2d tempFramePolygon = new FrameConvexPolygon2d();
+
    private void updateContactStateVisualization(List<ContactState> contactStatesToVisualize)
    {
       int i = 0;
@@ -345,8 +347,13 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
                centroidY += vertex.getY();
             }
          }
+         tempFramePolygon.setAndUpdate(framePointList);
+         framePointList.clear();
+         for (int j = 0; j < tempFramePolygon.getNumberOfVertices(); j++)
+            framePointList.add().setIncludingFrame(tempFramePolygon.getReferenceFrame(), tempFramePolygon.getVertex(j), 0.0001);
          // Setting some Z here to improve the visualization 
          contactStateViz.get(i).set(framePointList);
+         contactStateViz.get(i).update();
          if (numberOfVertices > 0)
          {
             centroidX /= numberOfVertices;

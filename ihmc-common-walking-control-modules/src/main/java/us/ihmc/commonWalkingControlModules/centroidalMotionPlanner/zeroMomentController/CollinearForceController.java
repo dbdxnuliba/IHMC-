@@ -47,7 +47,6 @@ public class CollinearForceController
    private final YoEnum<SupportStateEnum> plannedState;
    private final YoEnum<SupportStateEnum> controlState;
    private final YoDouble nominalHeight;
-   private final BipedSupportPolygons bipedSupportPolygons;
    private final ContactState terminalStateForPlanner = new ContactState();
 
    private final YoFramePoint finalCoMPositionForPlanner;
@@ -65,8 +64,7 @@ public class CollinearForceController
    private final FrameVector3D tempFrameVector = new FrameVector3D();
    private final FramePoint3D tempFramePoint = new FramePoint3D();
 
-   public CollinearForceController(YoDouble yoTime, CentroidalStateReadOnly centroidalState, BipedSupportPolygons bipedSupportPolygons,
-                                   YoVariableRegistry parentRegistry)
+   public CollinearForceController(YoDouble yoTime, CentroidalStateReadOnly centroidalState, YoVariableRegistry parentRegistry)
    {
       String namePrefix = "CollinearController";
       linearController = new LinearMotionController(registry);
@@ -87,7 +85,6 @@ public class CollinearForceController
       gravity = new YoFrameVector(namePrefix + "Gravity", worldFrame, registry);
       mass = new YoDouble(namePrefix + "Mass", registry);
       // Control parameters
-      this.bipedSupportPolygons = bipedSupportPolygons;
       this.estimatedCoMState = centroidalState;
 
       desiredLinearMomentumRateOfChangeCommand = new YoFrameVector(namePrefix + "LinearMomentumRateOfChangeCommand", worldFrame, registry);
@@ -181,9 +178,11 @@ public class CollinearForceController
    private void updateDesireds()
    {
       motionPlan.compute(timeInState.getDoubleValue());
-      plannedState.set(motionPlan.getPlannedGroundReactionForce().getZ() <= 1e-10 ? SupportStateEnum.NOT_SUPPORTED: SupportStateEnum.SUPPORTED);
+      plannedState.set(motionPlan.getPlannedGroundReactionForce().getZ() <= 1e-10 ? SupportStateEnum.NOT_SUPPORTED : SupportStateEnum.SUPPORTED);
+
       linearController.setPlannedCoM(motionPlan.getPlannedCoMPosition(), motionPlan.getPlannedCoMVelocity());
       linearController.setFeedforwardLinearAcceleration(motionPlan.getPlannedCoMAcceleration());
+      linearController.doControl();
    }
 
    private void updateEstimates()
@@ -225,7 +224,7 @@ public class CollinearForceController
       double z = 0.0;
       for (RobotSide side : RobotSide.values)
       {
-         if(!lastStateForPlanner.footInContact.get(side))
+         if (!lastStateForPlanner.footInContact.get(side))
             continue;
          ConvexPolygon2D footPolygon = lastStateForPlanner.footSupportPolygons.get(side);
          tempPoint2D.set(footPolygon.getCentroid());
