@@ -49,12 +49,13 @@ public class FootTrajectoryGenerator
    }
 
    public void initialize(double nominalFirstSegmentPercentageDuration, double nominalLastSegmentPercentageDuration, FrameVector3DReadOnly defaultFinalVelocity,
-                          FrameVector3DReadOnly defaultFinalAcceleration)
+                          FrameVector3DReadOnly defaultFinalAcceleration, double nominalHeightAboveGround)
    {
       this.nominalFirstSegmentPercentage.set(nominalFirstSegmentPercentageDuration);
       this.nominalLastSegmentPercentage.set(nominalLastSegmentPercentageDuration);
       this.defaultFinalVelocity.set(defaultFinalVelocity);
       this.defaultFinalAcceleration.set(defaultFinalAcceleration);
+      this.intermediatePointHeightAboveGround.set(nominalHeightAboveGround);
    }
 
    public void updateTrajectory(double time)

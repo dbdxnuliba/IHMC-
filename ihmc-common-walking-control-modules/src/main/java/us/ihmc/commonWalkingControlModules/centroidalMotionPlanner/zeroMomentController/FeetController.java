@@ -43,7 +43,7 @@ public class FeetController
       {
          FootTrajectoryGenerator trajectoryGenerator = feetTrajectoryGenerator.get(side);
          trajectoryGenerator.initialize(parameters.getNominalFirstSegmentPercentageDuraion(), parameters.getNominalLastSegmentPercentageDuration(),
-                                        parameters.getDefaultFinalVelocity(), parameters.getDefaultFinalAcceleration());
+                                        parameters.getDefaultFinalVelocity(), parameters.getDefaultFinalAcceleration(), parameters.getNominalHeightAboveGround());
       }
    }
 
@@ -61,7 +61,6 @@ public class FeetController
          if (footTrajectoryGenerator.isDone())
             updateFootTrajectory(time, side, footTrajectoryGenerator);
          desiredPoses.get(side).setPosition(footTrajectoryGenerator.getPosition());
-
       }
    }
 
@@ -82,6 +81,29 @@ public class FeetController
 
    private double getFinalFootLocation(RobotSide side, FramePoint3D finalPositionToSet)
    {
-      return 0.0;
+      if (plannedContactStateList.size() == 0)
+         throw new RuntimeException("No contact states provided for trajectory generation");
+      // handle the special case
+      if (plannedContactStateList.size() == 1)
+      {
+         ContactState firstContactState = plannedContactStateList.get(0);
+         if (!firstContactState.isFootInContact(side))
+            throw new RuntimeException("Cannot locate final " + side.getCamelCaseNameForStartOfExpression() + " foot location from contact state plan");
+         firstContactState.getPosition(side, finalPositionToSet);
+         return firstContactState.getDuration();
+      }
+      double duration = plannedContactStateList.get(0).getDuration();
+      // Ignoring the current contact state
+      for (int contactStateIndex = 1; contactStateIndex < plannedContactStateList.size(); contactStateIndex++)
+      {
+         ContactState state = plannedContactStateList.get(contactStateIndex);
+         if (state.isFootInContact(side))
+         {
+            state.getPosition(side, finalPositionToSet);
+            return duration;
+         }
+         duration += state.getDuration();
+      }
+      throw new RuntimeException("Cannot locate final " + side.getCamelCaseNameForStartOfExpression() + " foot location from contact state plan");
    }
 }

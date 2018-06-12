@@ -6,7 +6,7 @@ import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 
 public class FootTrajectoryParameters
 {
-   private final FrameVector3D defaultFinalVelocity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.1);
+   private final FrameVector3D defaultFinalVelocity = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, -0.1);
    private final FrameVector3D defaultFinalAcceleration = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
 
    public double getNominalFirstSegmentPercentageDuraion()
@@ -27,5 +27,10 @@ public class FootTrajectoryParameters
    public FrameVector3DReadOnly getDefaultFinalAcceleration()
    {
       return defaultFinalAcceleration;
+   }
+
+   public double getNominalHeightAboveGround()
+   {
+      return 0.1;
    }
 }

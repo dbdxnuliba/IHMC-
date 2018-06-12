@@ -125,7 +125,7 @@ public class FootTrajectory
       lastSegment.getFrameVelocity(tempFinalVelocity);
       lastSegment.getFrameAcceleration(tempFinalAcceleration);
 
-      segments.get(1).setQuintic(t2, tF, initialVelocity, tempInitialVelocity, tempInitialAcceleration, intermediatePosition2, tempFinalVelocity,
+      segments.get(1).setQuintic(t1, t2, initialVelocity, tempInitialVelocity, tempInitialAcceleration, intermediatePosition2, tempFinalVelocity,
                                  tempFinalAcceleration);
    }
 
