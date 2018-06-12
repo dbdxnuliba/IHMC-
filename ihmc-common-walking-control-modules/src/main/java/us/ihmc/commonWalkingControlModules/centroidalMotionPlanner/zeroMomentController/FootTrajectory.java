@@ -6,11 +6,13 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
@@ -67,6 +69,17 @@ public class FootTrajectory
       segments.add(new FrameTrajectory3D(4, worldFrame));
       segments.add(new FrameTrajectory3D(6, worldFrame));
       segments.add(new FrameTrajectory3D(4, worldFrame));
+      reset();
+   }
+
+   public void reset()
+   {
+      t0.set(Double.NaN);
+      t1.set(Double.NaN);
+      t2.set(Double.NaN);
+      tF.set(Double.NaN);
+      for (int i = 0; i < segments.size(); i++)
+         segments.get(i).reset();
    }
 
    public void setDefaultTouchdownDesireds(FrameVector3DReadOnly touchdownVelocity, FrameVector3DReadOnly touchdownAcceleration)
@@ -178,5 +191,15 @@ public class FootTrajectory
    public FramePoint3DReadOnly getPosition()
    {
       return segments.get(currentSegmentIndex.getIntegerValue()).getFramePosition();
+   }
+
+   public FrameTuple3DReadOnly getVelocity()
+   {
+      return segments.get(currentSegmentIndex.getIntegerValue()).getFrameVelocity();
+   }
+
+   public FrameTuple3DReadOnly getAcceleration()
+   {
+      return segments.get(currentSegmentIndex.getIntegerValue()).getFrameAcceleration();
    }
 }

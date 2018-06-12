@@ -11,12 +11,12 @@ public class FootTrajectoryParameters
 
    public double getNominalFirstSegmentPercentageDuraion()
    {
-      return 0.15;
+      return 0.4;
    }
 
    public double getNominalLastSegmentPercentageDuration()
    {
-      return 0.15;
+      return 0.4;
    }
 
    public FrameVector3DReadOnly getDefaultFinalVelocity()

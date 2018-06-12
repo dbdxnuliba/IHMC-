@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
 
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
@@ -9,6 +10,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
 public class FootTrajectoryGenerator
@@ -19,6 +21,7 @@ public class FootTrajectoryGenerator
    private final YoDouble trajectoryTime;
    private final FootTrajectory trajectory;
 
+   private final YoBoolean isPlanAvailable;
    private final YoDouble nominalFirstSegmentPercentage;
    private final YoDouble nominalLastSegmentPercentage;
    private final YoFrameVector defaultFinalVelocity;
@@ -34,6 +37,10 @@ public class FootTrajectoryGenerator
    private final FrameVector3D finalVelocity = new FrameVector3D();
    private final FrameVector3D finalAcceleration = new FrameVector3D();
 
+   private final FramePoint3D computedPosition = new FramePoint3D();
+   private final FrameVector3D computedVelocity = new FrameVector3D();
+   private final FrameVector3D computedAcceleration = new FrameVector3D();
+
    public FootTrajectoryGenerator(RobotSide side, YoVariableRegistry registry, YoGraphicsListRegistry graphicsListRegistry)
    {
       String namePrefix = side.getCamelCaseNameForStartOfExpression() + "Foot";
@@ -46,6 +53,16 @@ public class FootTrajectoryGenerator
       intermediatePointHeightAboveGround = new YoDouble(namePrefix + "NominalHeightAboveGround", registry);
       defaultFinalVelocity = new YoFrameVector(namePrefix + "DefaultFinalVelocity", worldFrame, registry);
       defaultFinalAcceleration = new YoFrameVector(namePrefix + "DefaultFinalAcceleration", worldFrame, registry);
+      isPlanAvailable = new YoBoolean(namePrefix + "IsPlanAvailable", registry);
+      reset();
+   }
+
+   public void reset()
+   {
+      isPlanAvailable.set(false);
+      trajectoryStartTime.setToNaN();
+      trajectoryTime.setToNaN();
+      duration = Double.NaN;
    }
 
    public void initialize(double nominalFirstSegmentPercentageDuration, double nominalLastSegmentPercentageDuration, FrameVector3DReadOnly defaultFinalVelocity,
@@ -68,28 +85,37 @@ public class FootTrajectoryGenerator
       trajectory.setIntermediateLocations(t1, intermediatePosition1, t2, intermediatePosition2);
       trajectory.setFinalConditions(duration, finalPosition, finalVelocity, finalAcceleration);
       trajectory.initialize();
+      isPlanAvailable.set(true);
    }
 
    public void compute(double time, FramePoint3D desiredPositionToSet, FrameVector3D desiredVelocityToSet, FrameVector3D desiredAccelerationToSet)
    {
       compute(time);
-      trajectory.getDesireds(desiredPositionToSet, desiredVelocityToSet, desiredAccelerationToSet);
-      if(isDone())
-      {
-         desiredVelocityToSet.setToZero();
-         desiredAccelerationToSet.setToZero();
-      }
+      desiredPositionToSet.setIncludingFrame(computedPosition);
+      desiredVelocityToSet.setIncludingFrame(computedVelocity);
+      desiredAccelerationToSet.setIncludingFrame(computedAcceleration);
    }
 
    public void compute(double time)
    {
+      if(!isPlanAvailable())
+         throw new RuntimeException("Cannot compute trajectory without planning one first");
       trajectoryTime.set(time - trajectoryStartTime.getDoubleValue());
       trajectory.compute(trajectoryTime.getDoubleValue());
+      trajectory.getDesireds(computedPosition, computedVelocity, computedAcceleration);
+      if (isDone())
+      {
+         computedVelocity.setToZero();
+         computedAcceleration.setToZero();
+      }
    }
 
    public boolean isDone()
    {
-      return trajectoryTime.getDoubleValue() >= trajectory.getFinalTime();
+      if (isPlanAvailable.getBooleanValue())
+         return trajectoryTime.getDoubleValue() >= trajectory.getFinalTime();
+      else
+         return true;
    }
 
    public void setInitialConditions(FramePoint3DReadOnly initialPosition, FrameVector3DReadOnly initialVelocity, FrameVector3DReadOnly initialAcceleration)
@@ -124,7 +150,7 @@ public class FootTrajectoryGenerator
    {
       this.duration = duration;
    }
-   
+
    private void computeIntermediatePositionHeuristics(FramePoint3DReadOnly initialPosition, FramePoint3DReadOnly finalPosition)
    {
       intermediatePosition1.setAndScale(1.0 - nominalFirstSegmentPercentage.getDoubleValue(), initialPosition);
@@ -137,6 +163,21 @@ public class FootTrajectoryGenerator
 
    public FramePoint3DReadOnly getPosition()
    {
-      return trajectory.getPosition();
+      return computedPosition;
+   }
+
+   public FrameVector3DReadOnly getVelocity()
+   {
+      return computedVelocity;
+   }
+
+   public FrameVector3DReadOnly getAcceleration()
+   {
+      return computedAcceleration;
+   }
+
+   public boolean isPlanAvailable()
+   {
+      return isPlanAvailable.getBooleanValue();
    }
 }
