@@ -46,7 +46,6 @@ public class FootController
    public void requestFreeMotion()
    {
       requestedState.set(FootControlMode.FREE_MOTION);
-      
       computeRhoRampingProfileForLiftOff();
    }
 
@@ -66,7 +65,7 @@ public class FootController
    {
       if (currentState.getEnumValue() != requestedState.getEnumValue())
       {
-
+         // handle transitions 
       }
    }
 

@@ -50,7 +50,7 @@ import us.ihmc.robotics.stateMachines.conditionBasedStateMachine.GenericStateMac
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoEnum;
 
-public class JumpHighLevelHumanoidController
+public class JumpHighLevelHumanoidController implements HighLevelHumanoidControllerInterface
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final GenericStateMachine<JumpStateEnum, AbstractJumpState> stateMachine;

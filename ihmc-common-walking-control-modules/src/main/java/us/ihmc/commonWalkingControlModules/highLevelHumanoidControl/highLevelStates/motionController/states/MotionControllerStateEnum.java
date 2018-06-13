@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
+package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states;
 
 import us.ihmc.robotics.robotSide.RobotSide;
 

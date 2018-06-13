@@ -27,11 +27,12 @@ import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 
 public class JumpControllerState extends HighLevelControllerState
 {
+   private static final boolean useGenericMotionController = true;
    private static final HighLevelControllerName controllerState = HighLevelControllerName.JUMPING;
    private static final String namePrefix = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, controllerState.toString());
    
    private final WholeBodyControllerCore controllerCore;
-   private final JumpHighLevelHumanoidController jumpController;
+   private final HighLevelHumanoidControllerInterface motionController;
 
    private final ExecutionTimer controllerCoreTimer = new ExecutionTimer(namePrefix + "ControllerCoreTimer", registry);
 
@@ -70,7 +71,10 @@ public class JumpControllerState extends HighLevelControllerState
 
       controllerCoreToolbox.setJointPrivilegedConfigurationParameters(jumpingControlParameters.getJointPrivilegedConfigurationParameters());
 
-      jumpController = new JumpHighLevelHumanoidController(commandInputManager, statusOutputManager, controllerCoreToolbox, controllerToolbox, jumpingControlParameters,
+      if(useGenericMotionController)
+         motionController = new HighLevelHumanoidMotionController(commandInputManager, statusOutputManager, controllerToolbox, null, registry);
+      else
+         motionController = new JumpHighLevelHumanoidController(commandInputManager, statusOutputManager, controllerCoreToolbox, controllerToolbox, jumpingControlParameters,
                                                            jumpingControlManagerFactory, registry);
 
       JointDesiredOutputList lowLevelControllerOutput = new JointDesiredOutputList(controlledOneDofJoints);
@@ -88,8 +92,8 @@ public class JumpControllerState extends HighLevelControllerState
    @Override
    public void doAction()
    {
-      jumpController.doAction();
-      ControllerCoreCommand controllerCoreCommand = jumpController.getControllerCoreCommand();
+      motionController.doAction();
+      ControllerCoreCommand controllerCoreCommand = motionController.getControllerCoreCommand();
       
       JointDesiredOutputList stateSpecificJointSettings = getStateSpecificJointSettings();
       JointAccelerationIntegrationCommand accelerationIntegrationCommand = getAccelerationIntegrationCommand();
@@ -105,7 +109,7 @@ public class JumpControllerState extends HighLevelControllerState
    public void initialize()
    {
       controllerCore.initialize();
-      jumpController.initialize();
+      motionController.initialize();
    }
  
    @Override
