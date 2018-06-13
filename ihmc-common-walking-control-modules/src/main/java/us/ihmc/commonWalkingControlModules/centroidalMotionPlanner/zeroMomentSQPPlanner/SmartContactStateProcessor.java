@@ -6,6 +6,7 @@ import java.util.List;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelperTools;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -108,6 +109,7 @@ public class SmartContactStateProcessor
       SideDependentList<ConvexPolygon2D> footSupportPolygons = contactState.footSupportPolygons;
       SideDependentList<FramePose3D> footPoses = contactState.footPoses;
       int numberOfVertices = 0;
+      int listIndex = 0;
       for(RobotSide side : RobotSide.values)
       {
          if(footInContact.get(side))
@@ -118,7 +120,7 @@ public class SmartContactStateProcessor
             tempPose.changeFrame(planningFrame);
             for (int i = 0; i < supportPolygon.getNumberOfVertices(); i++)
             {
-               Point2D vertex = tempVertices.get(i);
+               Point2D vertex = tempVertices.get(listIndex++);
                vertex.set(supportPolygon.getVertex(i));
                TransformHelperTools.transformFromPoseToReferenceFrameByProjection(tempPose, vertex);
             }

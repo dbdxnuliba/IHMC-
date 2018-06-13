@@ -342,11 +342,11 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       initialCoPPosition.setIncludingFrame(desiredCoP);
       motionPlanner.setInitialState(initialCoMPosition, initialCoMVelocity, initialCoPPosition);
       ContactState lastContactState = contactStatePlanForController.get(contactStatePlanForController.size() - 1);
-      finalCoMPosition.setIncludingFrame(lastContactState.getPose(RobotSide.LEFT).getPosition());
+      finalCoMPosition.setIncludingFrame(lastContactState.getPose(RobotSide.RIGHT).getPosition());
       finalCoMPosition.changeFrame(worldFrame);
       finalCoMPosition.addZ(0.435);
       finalCoMVelocity.setToZero(worldFrame);
-      finalCoPPosition.setIncludingFrame(lastContactState.getPose(RobotSide.LEFT).getPosition());
+      finalCoPPosition.setIncludingFrame(lastContactState.getPose(RobotSide.RIGHT).getPosition());
       motionPlanner.setFinalState(finalCoMPosition, finalCoMVelocity, finalCoPPosition);
    }
 
@@ -358,5 +358,10 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
    public void setTimeForStateChange(double controllerTime)
    {
       lastStateChange.set(controllerTime);
+   }
+
+   public boolean hasPlannerFailed()
+   {
+      return motionPlanner.hasPlannerFailed();
    }
 }

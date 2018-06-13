@@ -135,7 +135,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
          @Override
          public DenseMatrix64F getInertia()
          {
-            double Ixx = 0.1, Ixy = 0.0, Ixz = 0.0, Iyy = 0.1, Iyz = 0.0, Izz = 0.1;
+            double Ixx = 10.0, Ixy = 0.0, Ixz = 0.0, Iyy = 10.0, Iyz = 0.0, Izz = 0.1;
             DenseMatrix64F inertiaTensor = new DenseMatrix64F(3, 3, true, Ixx, Ixy, Ixz, Ixy, Iyy, Iyz, Ixz, Iyz, Izz);
             return inertiaTensor;
          }
@@ -311,9 +311,12 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    private void runPlanner()
    {
       robotController.submitContactStateList(contactStatePlan);
-      for (int i = 0; i < 2; i++)
+      for (int i = 0; i < 4; i++)
       {
+         PrintTools.debug("Running Planner Iteration: " + i);
          robotController.runIteration();
+         if(robotController.hasPlannerFailed())
+            throw new RuntimeException("Planner has failed");
          scs.tickAndUpdate(i * dt.getDoubleValue());
       }
    }
@@ -413,9 +416,14 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       FramePose2D leftSolePose = new FramePose2D(tempPose);
       solePose.get(RobotSide.RIGHT).getFramePose(tempPose);
       FramePose2D rightSolePose = new FramePose2D(tempPose);
-      contactStatePlanner.generateContactStatePlanForWalking(contactStatePlan, leftSolePose, rightSolePose, stepSize, numberOfSteps,
+      int numberOfPlannedStates = contactStatePlanner.generateContactStatePlanForWalking(contactStatePlan, leftSolePose, rightSolePose, stepSize, numberOfSteps,
                                                              feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT), RobotSide.LEFT,
-                                                             true, true, 0.4, 0.2);
+                                                             true, true, 0.4, 1.0);
+//      PrintTools.debug("Contact state plan: ");
+//      for (int i = 0; i < numberOfPlannedStates; i++)
+//         PrintTools.debug("State: " + i + ": " + contactStatePlan.get(i).toString());
+      for (int i = contactStatePlan.size() - 1; i > 2; i--)
+         contactStatePlan.remove(i);
    }
 
    private void createContactStates(int numberOfContactStates)
