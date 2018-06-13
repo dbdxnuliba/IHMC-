@@ -234,7 +234,7 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
 
    private final FrameVector3D desiredAngularMomentumRateOfChange = new FrameVector3D(worldFrame, 0.0, 0.0, 0.0);
    private final FrameVector3D desiredLinearMomentumRateOfChange = new FrameVector3D();
-   private final boolean useControllerCoreOutput = true;
+   private final boolean useControllerCoreOutput = false;
 
    @Override
    public void doControl()
@@ -242,7 +242,8 @@ public class CollinearForceVisualizationController extends CentroidalRobotContro
       double timeInState = time.getDoubleValue() - lastStateChange.getDoubleValue();
       sqpOutput.compute(timeInState);
       state.getPosition(estimatedCoM);
-      runControllerCore(estimatedCoM, achievedLinearMomentumRateOfChange, achivedAngularMomentumRateOfChange);
+      if(useControllerCoreOutput)
+         runControllerCore(estimatedCoM, achievedLinearMomentumRateOfChange, achivedAngularMomentumRateOfChange);
       plannedCoP.set(sqpOutput.getDesiredCoPPosition());
       plannedCoM.set(sqpOutput.getDesiredCoMPosition());
 
