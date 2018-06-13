@@ -15,7 +15,7 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 
 
 /**
- * This class defines (ansd implements) some basic parameter methods that apply to a range of 
+ * This class defines (and implements) some basic parameter methods that apply to a range of 
  * lower body locomotion controllers.
  *
  */

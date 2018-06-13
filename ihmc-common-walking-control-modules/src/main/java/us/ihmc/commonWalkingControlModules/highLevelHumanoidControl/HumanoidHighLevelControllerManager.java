@@ -12,7 +12,9 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.Co
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControllerStateFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.JumpControlManagerFactory;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.MotionControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.HighLevelControllerState;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.HighLevelHumanoidMotionController;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.WalkingControllerState;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
@@ -61,6 +63,7 @@ public class HumanoidHighLevelControllerManager implements RobotController
    private final StatusMessageOutputManager statusMessageOutputManager;
    private final HighLevelControlManagerFactory managerFactory;
    private final JumpControlManagerFactory jumpControlManagerFactory;
+   private final MotionControlManagerFactory motionControlManagerFactory;
 
    private final HighLevelControllerFactoryHelper controllerFactoryHelper;
 
@@ -78,6 +81,7 @@ public class HumanoidHighLevelControllerManager implements RobotController
                                              EnumMap<HighLevelControllerName, HighLevelControllerStateFactory> controllerStateFactories,
                                              ArrayList<ControllerStateTransitionFactory<HighLevelControllerName>> controllerTransitionFactories,
                                              HighLevelControlManagerFactory managerFactory, JumpControlManagerFactory jumpControlManagerFactory,
+                                             MotionControlManagerFactory motionControlManagerFactory,
                                              HighLevelHumanoidControllerToolbox controllerToolbox,
                                              CenterOfPressureDataHolder centerOfPressureDataHolderForEstimator,
                                              ForceSensorDataHolderReadOnly forceSensorDataHolder, JointDesiredOutputList lowLevelControllerOutput)
@@ -89,6 +93,7 @@ public class HumanoidHighLevelControllerManager implements RobotController
       this.initialControllerState = initialControllerState;
       this.managerFactory = managerFactory;
       this.jumpControlManagerFactory = jumpControlManagerFactory;
+      this.motionControlManagerFactory = motionControlManagerFactory;
       this.centerOfPressureDataHolderForEstimator = centerOfPressureDataHolderForEstimator;
       this.lowLevelControllerOutput = lowLevelControllerOutput;
 
@@ -105,7 +110,7 @@ public class HumanoidHighLevelControllerManager implements RobotController
       controllerFactoryHelper.setRequestedHighLevelControllerState(requestedHighLevelControllerState);
       controllerFactoryHelper.setForceSensorDataHolder(forceSensorDataHolder);
 
-      stateMachine = setUpStateMachine(controllerStateFactories, controllerTransitionFactories, managerFactory, jumpControlManagerFactory,
+      stateMachine = setUpStateMachine(controllerStateFactories, controllerTransitionFactories, managerFactory, jumpControlManagerFactory, motionControlManagerFactory, 
                                        controllerToolbox.getYoTime(), registry);
       isListeningToHighLevelStateMessage.set(true);
       for (HighLevelControllerState highLevelControllerState : highLevelControllerStates.values())
@@ -181,11 +186,13 @@ public class HumanoidHighLevelControllerManager implements RobotController
                                                                                                     ArrayList<ControllerStateTransitionFactory<HighLevelControllerName>> controllerTransitionFactories,
                                                                                                     HighLevelControlManagerFactory managerFactory,
                                                                                                     JumpControlManagerFactory jumpControlManagerFactory,
+                                                                                                    MotionControlManagerFactory motionControlManagerFactory,                                                                                                    
                                                                                                     YoDouble yoTime, YoVariableRegistry registry)
    {
       controllerFactoryHelper.setControllerFactories(controllerStateFactories);
       controllerFactoryHelper.setHighLevelControlManagerFactory(managerFactory);
       controllerFactoryHelper.setJumpControlManagerFactory(jumpControlManagerFactory);
+      controllerFactoryHelper.setMotionControlManagerFactory(motionControlManagerFactory);
       GenericStateMachine<HighLevelControllerName, HighLevelControllerState> highLevelStateMachine = new GenericStateMachine<>("highLevelControllerName",
                                                                                                                                "switchTimeName",
                                                                                                                                HighLevelControllerName.class,

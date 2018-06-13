@@ -9,7 +9,7 @@ import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParam
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControllerStateFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.JumpControlManagerFactory;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.JumpControllerStateFactory;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.MotionControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
@@ -25,6 +25,7 @@ public class HighLevelControllerFactoryHelper
    private HighLevelHumanoidControllerToolbox controllerToolbox;
    private HighLevelControlManagerFactory managerFactory;
    private JumpControlManagerFactory jumpControlManagerFactory;
+   private MotionControlManagerFactory motionControlManagerFactory;
    private HighLevelControllerParameters highLevelControllerParameters;
    private WalkingControllerParameters walkingControllerParameters;
    private JumpControllerParameters jumpControllerParameters;
@@ -73,6 +74,11 @@ public class HighLevelControllerFactoryHelper
       this.jumpControlManagerFactory = jumpControlManagerFactory;
    }
 
+   public void setMotionControlManagerFactory(MotionControlManagerFactory motionControlManagerFactory)
+   {
+      this.motionControlManagerFactory = motionControlManagerFactory;
+   }
+
    public void setCommandInputManager(CommandInputManager commandInputManager)
    {
       this.commandInputManager = commandInputManager;
@@ -111,6 +117,11 @@ public class HighLevelControllerFactoryHelper
    public JumpControlManagerFactory getJumpControlManagerFactory()
    {
       return jumpControlManagerFactory;
+   }
+   
+   public MotionControlManagerFactory getMotionControlManagerFactory()
+   {
+      return motionControlManagerFactory;
    }
    
    public HighLevelControllerParameters getHighLevelControllerParameters()

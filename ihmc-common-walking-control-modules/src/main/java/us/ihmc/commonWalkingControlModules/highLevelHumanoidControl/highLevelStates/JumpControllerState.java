@@ -9,6 +9,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCor
 import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.JointAccelerationIntegrationCommand;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.JumpControlManagerFactory;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.MotionControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.ControllerCoreOptimizationSettings;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
@@ -30,7 +31,7 @@ public class JumpControllerState extends HighLevelControllerState
    private static final boolean useGenericMotionController = true;
    private static final HighLevelControllerName controllerState = HighLevelControllerName.JUMPING;
    private static final String namePrefix = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, controllerState.toString());
-   
+
    private final WholeBodyControllerCore controllerCore;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private final HighLevelHumanoidControllerInterface motionController;
@@ -43,7 +44,7 @@ public class JumpControllerState extends HighLevelControllerState
 
    public JumpControllerState(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager, HighLevelControllerParameters parameters,
                               HighLevelHumanoidControllerToolbox controllerToolbox, JumpControlManagerFactory jumpingControlManagerFactory,
-                              JumpControllerParameters jumpingControlParameters)
+                              MotionControlManagerFactory motionControlManagerFactory, JumpControllerParameters jumpingControlParameters)
    {
       super(controllerState, parameters, controllerToolbox);
       this.controllerToolbox = controllerToolbox;
@@ -54,8 +55,8 @@ public class JumpControllerState extends HighLevelControllerState
       OneDoFJoint[] controlledOneDofJoints = ScrewTools.filterJoints(jointsToOptimizeFor, OneDoFJoint.class);
       ControllerCoreOptimizationSettings controllerCoreOptimizationSettings = jumpingControlParameters.getMomentumOptimizationSettings();
 
-      WholeBodyControlCoreToolbox controllerCoreToolbox = new WholeBodyControlCoreToolbox(namePrefix, controllerToolbox.getControlDT(), controllerToolbox.getGravityZ(),
-                                                                                          rootJoint, jointsToOptimizeFor,
+      WholeBodyControlCoreToolbox controllerCoreToolbox = new WholeBodyControlCoreToolbox(namePrefix, controllerToolbox.getControlDT(),
+                                                                                          controllerToolbox.getGravityZ(), rootJoint, jointsToOptimizeFor,
                                                                                           controllerToolbox.getCenterOfMassFrame(),
                                                                                           controllerCoreOptimizationSettings,
                                                                                           controllerToolbox.getYoGraphicsListRegistry(), registry);
@@ -72,11 +73,12 @@ public class JumpControllerState extends HighLevelControllerState
 
       controllerCoreToolbox.setJointPrivilegedConfigurationParameters(jumpingControlParameters.getJointPrivilegedConfigurationParameters());
 
-      if(useGenericMotionController)
-         motionController = new HighLevelHumanoidMotionController(commandInputManager, statusOutputManager, controllerToolbox, null, registry);
+      if (useGenericMotionController)
+         motionController = new HighLevelHumanoidMotionController(commandInputManager, statusOutputManager, controllerToolbox, jumpingControlParameters,
+                                                                  motionControlManagerFactory, registry);
       else
-         motionController = new JumpHighLevelHumanoidController(commandInputManager, statusOutputManager, controllerCoreToolbox, controllerToolbox, jumpingControlParameters,
-                                                           jumpingControlManagerFactory, registry);
+         motionController = new JumpHighLevelHumanoidController(commandInputManager, statusOutputManager, controllerCoreToolbox, controllerToolbox,
+                                                                jumpingControlParameters, jumpingControlManagerFactory, registry);
 
       JointDesiredOutputList lowLevelControllerOutput = new JointDesiredOutputList(controlledOneDofJoints);
       controllerCore = new WholeBodyControllerCore(controllerCoreToolbox, jumpingControlManagerFactory.createFeedbackControlTemplate(),
@@ -96,7 +98,7 @@ public class JumpControllerState extends HighLevelControllerState
       controllerToolbox.update();
       motionController.doAction();
       ControllerCoreCommand controllerCoreCommand = motionController.getControllerCoreCommand();
-      
+
       JointDesiredOutputList stateSpecificJointSettings = getStateSpecificJointSettings();
       JointAccelerationIntegrationCommand accelerationIntegrationCommand = getAccelerationIntegrationCommand();
       controllerCoreCommand.addInverseDynamicsCommand(accelerationIntegrationCommand);
@@ -107,13 +109,13 @@ public class JumpControllerState extends HighLevelControllerState
       controllerCore.compute();
       controllerCoreTimer.stopMeasurement();
    }
-   
+
    public void initialize()
    {
       controllerCore.initialize();
       motionController.initialize();
    }
- 
+
    @Override
    public void doTransitionIntoAction()
    {

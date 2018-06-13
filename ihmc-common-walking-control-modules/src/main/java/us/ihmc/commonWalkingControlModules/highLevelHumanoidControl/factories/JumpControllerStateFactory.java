@@ -20,6 +20,7 @@ public class JumpControllerStateFactory implements HighLevelControllerStateFacto
                                                        controllerFactoryHelper.getHighLevelControllerParameters(),
                                                        controllerFactoryHelper.getHighLevelHumanoidControllerToolbox(),
                                                        controllerFactoryHelper.getJumpControlManagerFactory(),
+                                                       controllerFactoryHelper.getMotionControlManagerFactory(),
                                                        controllerFactoryHelper.getJumpControllerParameters());
       }
       return jumpControllerState;

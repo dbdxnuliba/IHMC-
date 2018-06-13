@@ -1,9 +1,14 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import com.jme3.math.Plane.Side;
+
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootController;
+import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
@@ -12,18 +17,21 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCore
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.PlaneContactStateCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand.PrivilegedConfigurationOption;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.MotionControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.DoubleSupportMotionState;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerParamaters;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerState;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerStateEnum;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.partNames.ArmJointName;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.stateMachines.conditionBasedStateMachine.GenericStateMachine;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
@@ -31,24 +39,29 @@ public class HighLevelHumanoidMotionController implements HighLevelHumanoidContr
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
-   private final MotionControllerParamaters controllerParamaters;
+   private final JumpControllerParameters controllerParamaters;
 
    // Control modules and such
    private final GenericStateMachine<MotionControllerStateEnum, MotionControllerState> stateMachine;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private final FullHumanoidRobotModel fullRobotModel;
    private final PrivilegedConfigurationCommand privilegedConfigurationCommand = new PrivilegedConfigurationCommand();
+   private final RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandPool = new RecyclingArrayList<>(PlaneContactStateCommand.class);
+
    private final List<ControlManagerInterface> controlManagerList = new ArrayList<>();
    private final List<RigidBodyControlManager> rigidBodyManagers = new ArrayList<>();
-   private final RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandPool = new RecyclingArrayList<>(PlaneContactStateCommand.class);
+   private final SideDependentList<FootController> feetController = new SideDependentList<>();
+   private final SideDependentList<RigidBodyControlManager> handManagers = new SideDependentList<>();
+   private RigidBodyControlManager headManager;
+   private RigidBodyControlManager chestManager;
 
    // IO objects
    private final ControllerCoreCommand controllerCoreCommand = new ControllerCoreCommand(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
    private ControllerCoreOutputReadOnly controllerCoreOutput;
 
    public HighLevelHumanoidMotionController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
-                                            HighLevelHumanoidControllerToolbox controllerToolbox, MotionControllerParamaters motionControllerParameters,
-                                            YoVariableRegistry parentRegistry)
+                                            HighLevelHumanoidControllerToolbox controllerToolbox, JumpControllerParameters motionControllerParameters,
+                                            MotionControlManagerFactory motionControlManagerFactory, YoVariableRegistry parentRegistry)
    {
       controllerParamaters = motionControllerParameters;
       String name = "motionController";
@@ -56,7 +69,46 @@ public class HighLevelHumanoidMotionController implements HighLevelHumanoidContr
       fullRobotModel = controllerToolbox.getFullRobotModel();
       stateMachine = new GenericStateMachine<>(name + "State", name + "SwitchTime", MotionControllerStateEnum.class, controllerToolbox.getYoTime(), registry);
       setupStateMachine();
+      createRigidBodyControlManagers(controllerToolbox, motionControlManagerFactory);
       parentRegistry.addChild(registry);
+   }
+
+   private void createRigidBodyControlManagers(HighLevelHumanoidControllerToolbox controllerToolbox, MotionControlManagerFactory motionControlManagerFactory)
+   {
+      Collection<ReferenceFrame> trajectoryFrames = controllerToolbox.getTrajectoryFrames();
+      RigidBody pelvis = fullRobotModel.getPelvis();
+      if(pelvis == null)
+         throw new RuntimeException("Humanoid robot must have a pelvis rigid body");
+      ReferenceFrame pelvisFrame = pelvis.getBodyFixedFrame();
+      
+      // Create chest manager
+      RigidBody chest = fullRobotModel.getChest();
+      if(chest == null)
+         throw new RuntimeException("Humanoid robot must have a chest rigid body");
+      ReferenceFrame chestFrame = chest.getBodyFixedFrame();
+      chestManager = motionControlManagerFactory.getOrCreateRigidBodyManager(chest, pelvis, chestFrame, pelvisFrame, trajectoryFrames);
+      rigidBodyManagers.add(chestManager);
+
+      // Create head manager
+      RigidBody head = fullRobotModel.getHead();
+      if(head != null)
+      {
+         ReferenceFrame headFrame = head.getBodyFixedFrame();
+         headManager = motionControlManagerFactory.getOrCreateRigidBodyManager(head, chest, headFrame, chestFrame, trajectoryFrames);
+      }
+
+      // Create hand managers
+      for (RobotSide side : RobotSide.values)
+      {
+         RigidBody hand = fullRobotModel.getHand(side);
+         if(hand != null)
+         {
+            ReferenceFrame handFrame = hand.getBodyFixedFrame();
+            RigidBodyControlManager handManager = motionControlManagerFactory.getOrCreateRigidBodyManager(hand, chest, handFrame, chestFrame, trajectoryFrames);
+            handManagers.put(side, handManager);
+            rigidBodyManagers.add(handManager);
+         }
+      }
    }
 
    private void setupStateMachine()

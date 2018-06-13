@@ -65,8 +65,7 @@ public class HighLevelHumanoidControllerFactory implements CloseableAndDisposabl
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final CloseableAndDisposableRegistry closeableAndDisposableRegistry = new CloseableAndDisposableRegistry();
-   
-   
+
    private final ArrayList<HighLevelControllerStateFactory> controllerStateFactories = new ArrayList<>();
    private final EnumMap<HighLevelControllerName, HighLevelControllerStateFactory> controllerFactoriesMap = new EnumMap<>(HighLevelControllerName.class);
 
@@ -88,6 +87,7 @@ public class HighLevelHumanoidControllerFactory implements CloseableAndDisposabl
    private final ICPWithTimeFreezingPlannerParameters icpPlannerParameters;
    private final JumpControllerParameters jumpControllerParameters;
    private final JumpControlManagerFactory jumpControlManagerFactory;
+   private final MotionControlManagerFactory motionControlManagerFactory;
 
    private final ArrayList<Updatable> updatables = new ArrayList<>();
    private final ArrayList<ControllerStateChangedListener> controllerStateChangedListenersToAttach = new ArrayList<>();
@@ -142,6 +142,7 @@ public class HighLevelHumanoidControllerFactory implements CloseableAndDisposabl
       managerFactory.setWalkingControllerParameters(walkingControllerParameters);
 
       jumpControlManagerFactory = new JumpControlManagerFactory(jumpControllerParameters, registry);
+      motionControlManagerFactory = new MotionControlManagerFactory(jumpControllerParameters, registry);
    }
 
    private ComponentBasedFootstepDataMessageGenerator footstepGenerator;
@@ -394,17 +395,20 @@ public class HighLevelHumanoidControllerFactory implements CloseableAndDisposabl
 
       managerFactory.setHighLevelHumanoidControllerToolbox(controllerToolbox);
       jumpControlManagerFactory.setHighLevelHumanoidControllerToolbox(controllerToolbox);
-      
+      motionControlManagerFactory.setHighLevelHumanoidControllerToolbox(controllerToolbox);
+
       ReferenceFrameHashCodeResolver referenceFrameHashCodeResolver = controllerToolbox.getReferenceFrameHashCodeResolver();
       FrameMessageCommandConverter commandConversionHelper = new FrameMessageCommandConverter(referenceFrameHashCodeResolver);
       commandInputManager.registerConversionHelper(commandConversionHelper);
 
       humanoidHighLevelControllerManager = new HumanoidHighLevelControllerManager(commandInputManager, statusMessageOutputManager, initialControllerState,
                                                                                   highLevelControllerParameters, walkingControllerParameters,
-                                                                                  icpPlannerParameters, jumpControllerParameters, requestedHighLevelControllerState,
-                                                                                  controllerFactoriesMap, stateTransitionFactories, managerFactory, jumpControlManagerFactory,
-                                                                                  controllerToolbox, centerOfPressureDataHolderForEstimator,
-                                                                                  forceSensorDataHolder, lowLevelControllerOutput);
+                                                                                  icpPlannerParameters, jumpControllerParameters,
+                                                                                  requestedHighLevelControllerState, controllerFactoriesMap,
+                                                                                  stateTransitionFactories, managerFactory, jumpControlManagerFactory,
+                                                                                  motionControlManagerFactory, controllerToolbox,
+                                                                                  centerOfPressureDataHolderForEstimator, forceSensorDataHolder,
+                                                                                  lowLevelControllerOutput);
       humanoidHighLevelControllerManager.addYoVariableRegistry(registry);
       humanoidHighLevelControllerManager.setListenToHighLevelStatePackets(isListeningToHighLevelStatePackets);
       return humanoidHighLevelControllerManager;
@@ -535,7 +539,8 @@ public class HighLevelHumanoidControllerFactory implements CloseableAndDisposabl
    {
       ControllerNetworkSubscriber controllerNetworkSubscriber = new ControllerNetworkSubscriber(commandInputManager, statusMessageOutputManager, scheduler,
                                                                                                 packetCommunicator);
-      controllerNetworkSubscriber.registerSubcriberWithMessageUnpacker(WholeBodyTrajectoryMessage.class, 9, MessageUnpackingTools.createWholeBodyTrajectoryMessageUnpacker());
+      controllerNetworkSubscriber.registerSubcriberWithMessageUnpacker(WholeBodyTrajectoryMessage.class, 9,
+                                                                       MessageUnpackingTools.createWholeBodyTrajectoryMessageUnpacker());
       closeableAndDisposableRegistry.registerCloseableAndDisposable(controllerNetworkSubscriber);
    }
 
