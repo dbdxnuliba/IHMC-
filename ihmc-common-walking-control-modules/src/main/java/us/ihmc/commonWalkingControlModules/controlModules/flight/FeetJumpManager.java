@@ -26,7 +26,7 @@ import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
-public class FeetJumpManager implements JumpControlManagerInterface
+public class FeetJumpManager implements ControlManagerInterface
 {
    private final InverseDynamicsCommandList inverseDynamicsCommandList;
    private final FeedbackControlCommandList feedbackControlCommandList;

@@ -17,7 +17,7 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.Twist;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
-public class PelvisControlManager implements JumpControlManagerInterface
+public class PelvisControlManager implements ControlManagerInterface
 {
    private final ReferenceFrame controlFrame;
    private final RigidBody pelvis;

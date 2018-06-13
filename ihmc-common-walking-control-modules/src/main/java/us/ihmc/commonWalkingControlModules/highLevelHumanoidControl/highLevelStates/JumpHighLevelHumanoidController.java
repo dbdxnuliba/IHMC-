@@ -12,7 +12,7 @@ import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMoti
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.CentroidalMomentumManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.FeetJumpManager;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpControlManagerInterface;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpMessageHandler;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
@@ -82,7 +82,7 @@ public class JumpHighLevelHumanoidController implements HighLevelHumanoidControl
    private final SideDependentList<FootSwitchInterface> footSwitches;
 
    private final YoEnum<JumpStateEnum> stateEnum;
-   private final List<JumpControlManagerInterface> controlManagerList = new ArrayList<>();
+   private final List<ControlManagerInterface> controlManagerList = new ArrayList<>();
 
    public JumpHighLevelHumanoidController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                           WholeBodyControlCoreToolbox controlCoreToolbox, HighLevelHumanoidControllerToolbox controllerToolbox,
@@ -213,7 +213,6 @@ public class JumpHighLevelHumanoidController implements HighLevelHumanoidControl
 
    public void doAction()
    {
-      controllerToolbox.update();
       stateMachine.checkTransitionConditions();
       stateMachine.doAction();
       submitControllerCommands();
@@ -226,7 +225,7 @@ public class JumpHighLevelHumanoidController implements HighLevelHumanoidControl
 
       for (int i = 0; i < controlManagerList.size(); i++)
       {
-         JumpControlManagerInterface controlManager = controlManagerList.get(i);
+         ControlManagerInterface controlManager = controlManagerList.get(i);
          controllerCoreCommand.addInverseDynamicsCommand(controlManager.getInverseDynamicsCommand());
          controllerCoreCommand.addFeedbackControlCommand(controlManager.getFeedbackControlCommand());
       }

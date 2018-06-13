@@ -13,7 +13,7 @@ import us.ihmc.commonWalkingControlModules.configurations.ParameterTools;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.CentroidalMomentumManager;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.FeetJumpManager;
-import us.ihmc.commonWalkingControlModules.controlModules.flight.JumpControlManagerInterface;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
@@ -50,7 +50,7 @@ public class JumpControlManagerFactory extends AbstractHighLevelControllerParame
    private CentroidalMomentumManager momentumManager;
    private PelvisControlManager pelvisControlManager;
 
-   private final List<JumpControlManagerInterface> controlManagers = new ArrayList<>();
+   private final List<ControlManagerInterface> controlManagers = new ArrayList<>();
    private final Map<String, RigidBodyControlManager> rigidBodyManagerMapByBodyName = new HashMap<>();
    private final Map<String, PID3DGainsReadOnly> taskspaceOrientationGainMap = new HashMap<>();
    private final Map<String, PID3DGainsReadOnly> taskspacePositionGainMap = new HashMap<>();
@@ -237,7 +237,7 @@ public class JumpControlManagerFactory extends AbstractHighLevelControllerParame
          if (bodyManager != null)
             templateFeedbackCommandList.addCommand(bodyManager.createFeedbackControlTemplate());
       }
-      for (JumpControlManagerInterface controlManager : controlManagers)
+      for (ControlManagerInterface controlManager : controlManagers)
       {
          FeedbackControlCommand<?> feedbackControlCommand = controlManager.createFeedbackControlTemplate();
          if (feedbackControlCommand != null)

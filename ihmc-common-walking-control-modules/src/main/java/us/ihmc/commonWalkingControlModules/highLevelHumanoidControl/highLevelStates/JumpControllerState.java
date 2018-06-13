@@ -32,6 +32,7 @@ public class JumpControllerState extends HighLevelControllerState
    private static final String namePrefix = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, controllerState.toString());
    
    private final WholeBodyControllerCore controllerCore;
+   private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private final HighLevelHumanoidControllerInterface motionController;
 
    private final ExecutionTimer controllerCoreTimer = new ExecutionTimer(namePrefix + "ControllerCoreTimer", registry);
@@ -45,7 +46,7 @@ public class JumpControllerState extends HighLevelControllerState
                               JumpControllerParameters jumpingControlParameters)
    {
       super(controllerState, parameters, controllerToolbox);
-
+      this.controllerToolbox = controllerToolbox;
       FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
       FloatingInverseDynamicsJoint rootJoint = fullRobotModel.getRootJoint();
 
@@ -92,6 +93,7 @@ public class JumpControllerState extends HighLevelControllerState
    @Override
    public void doAction()
    {
+      controllerToolbox.update();
       motionController.doAction();
       ControllerCoreCommand controllerCoreCommand = motionController.getControllerCoreCommand();
       
