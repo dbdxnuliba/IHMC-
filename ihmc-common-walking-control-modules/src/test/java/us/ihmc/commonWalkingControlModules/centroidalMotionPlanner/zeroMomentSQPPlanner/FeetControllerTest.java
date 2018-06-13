@@ -53,7 +53,7 @@ public class FeetControllerTest
       movingRightSoleFrame.update();
       SideDependentList<MovingReferenceFrame> soleFrames = new SideDependentList<>(movingLeftSoleFrame, movingRightSoleFrame);
       YoVariableRegistry registry = new YoVariableRegistry("TestRegistry");
-      FeetControlModule controller = new FeetControlModule(soleFrames, registry, null);
+      FeetControlModule controller = new FeetControlModule(soleFrames, null, registry, null);
       controller.initialize(new FootTrajectoryParameters());
       ContactStatePlanGenerator contactStatePlanner = new ContactStatePlanGenerator();
       int numberOfSteps = 2;

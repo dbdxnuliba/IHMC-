@@ -8,10 +8,4 @@ public abstract class MotionControllerState extends FinishableState<MotionContro
    {
       super(stateEnum);
    }
-
-   @Override
-   public void doTransitionIntoAction()
-   {
-      
-   }
 }

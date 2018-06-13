@@ -62,7 +62,7 @@ public class MotionControlManagerFactory
                                         momentumRegistry);
       ParameterTools.extract3DWeightMap("LinearWeight", momentumOptimizationSettings.getTaskspaceLinearWeights(), taskspaceLinearWeightMap, momentumRegistry);
 
-      parentRegistry.addChild(momentumRegistry);
+      registry.addChild(momentumRegistry);
       parentRegistry.addChild(registry);
    }
 

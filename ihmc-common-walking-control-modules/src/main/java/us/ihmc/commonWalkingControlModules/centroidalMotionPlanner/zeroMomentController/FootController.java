@@ -3,6 +3,7 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 import java.util.ArrayList;
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -26,7 +27,7 @@ public class FootController
    private final List<Point2DReadOnly> currentContactPoints = new ArrayList<>();
    private final List<Point2DReadOnly> desiredContactPoints = new ArrayList<>();
 
-   public FootController(ReferenceFrame soleFrame, FootSupportPolygon supportPolygon, RobotSide side, YoVariableRegistry parentRegistry)
+   public FootController(YoPlaneContactState footContactState, ReferenceFrame soleFrame, FootSupportPolygon supportPolygon, RobotSide side, YoVariableRegistry parentRegistry)
    {
       String footName = side.getCamelCaseNameForStartOfExpression() + "Foot";
       registry = new YoVariableRegistry(side.getCamelCaseNameForMiddleOfExpression() + "FootController");
@@ -65,7 +66,7 @@ public class FootController
    {
       if (currentState.getEnumValue() != requestedState.getEnumValue())
       {
-         // handle transitions 
+         
       }
    }
 

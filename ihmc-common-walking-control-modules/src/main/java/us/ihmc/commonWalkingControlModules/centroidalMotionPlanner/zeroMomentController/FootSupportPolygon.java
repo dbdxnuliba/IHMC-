@@ -3,8 +3,11 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 import java.util.ArrayList;
 import java.util.List;
 
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
+import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 
 public class FootSupportPolygon
 {
@@ -12,9 +15,16 @@ public class FootSupportPolygon
    private final List<Boolean> isToeVertex = new ArrayList<>();
    private final List<Boolean> isHeelVertex = new ArrayList<>();
 
-   public void addVertex(Point2D vertex, boolean isToeVertex, boolean isHeelVertex)
+   public void addVertex(Point2DReadOnly vertex, boolean isToeVertex, boolean isHeelVertex)
    {
       verticesInSoleFrame.add(new Point2D(vertex));
+      this.isToeVertex.add(isToeVertex);
+      this.isHeelVertex.add(isHeelVertex);
+   }
+
+   public void addVertex(double x, double y, boolean isToeVertex, boolean isHeelVertex)
+   {
+      verticesInSoleFrame.add(new Point2D(x, y));
       this.isToeVertex.add(isToeVertex);
       this.isHeelVertex.add(isHeelVertex);
    }
@@ -49,5 +59,28 @@ public class FootSupportPolygon
          if (isHeelVertex.get(i))
             heelVertices.add(verticesInSoleFrame.get(i));
       }
+   }
+
+   public static FootSupportPolygon createSupportPolygonFromContactableFoot(ContactableFoot contactableFoot)
+   {
+      FootSupportPolygon supportPolygonToSet = new FootSupportPolygon();
+      List<FramePoint2D> contactPoints = contactableFoot.getContactPoints2d();
+      double maxX = contactPoints.get(0).getX();
+      double minX = maxX;
+      for (int i = 1; i < contactPoints.size(); i++)
+      {
+         double polygonVertexX = contactPoints.get(i).getX();
+         if(polygonVertexX > maxX)
+            maxX = polygonVertexX;
+         if(polygonVertexX < minX)
+            minX = polygonVertexX;
+      }
+
+      for (int i = 0; i < contactPoints.size(); i++)
+      {
+         FramePoint2D vertex = contactPoints.get(i);
+         supportPolygonToSet.addVertex(vertex, vertex.getX() == maxX, vertex.getX() == minX);
+      }
+      return supportPolygonToSet;
    }
 }

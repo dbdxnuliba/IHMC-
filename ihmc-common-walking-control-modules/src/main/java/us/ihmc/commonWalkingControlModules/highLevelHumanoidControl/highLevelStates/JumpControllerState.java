@@ -72,18 +72,22 @@ public class JumpControllerState extends HighLevelControllerState
       }
 
       controllerCoreToolbox.setJointPrivilegedConfigurationParameters(jumpingControlParameters.getJointPrivilegedConfigurationParameters());
+      JointDesiredOutputList lowLevelControllerOutput = new JointDesiredOutputList(controlledOneDofJoints);
 
       if (useGenericMotionController)
-         motionController = new HighLevelHumanoidMotionController(commandInputManager, statusOutputManager, controllerToolbox, jumpingControlParameters,
-                                                                  motionControlManagerFactory, registry);
+      {
+         motionController = new HumanoidMotionController(commandInputManager, statusOutputManager, controllerToolbox, jumpingControlParameters,
+                                                         motionControlManagerFactory, registry);
+         controllerCore = new WholeBodyControllerCore(controllerCoreToolbox, motionControlManagerFactory.createFeedbackControlTemplate(),
+                                                      lowLevelControllerOutput, registry);
+      }
       else
+      {
          motionController = new JumpHighLevelHumanoidController(commandInputManager, statusOutputManager, controllerCoreToolbox, controllerToolbox,
                                                                 jumpingControlParameters, jumpingControlManagerFactory, registry);
-
-      JointDesiredOutputList lowLevelControllerOutput = new JointDesiredOutputList(controlledOneDofJoints);
-      controllerCore = new WholeBodyControllerCore(controllerCoreToolbox, jumpingControlManagerFactory.createFeedbackControlTemplate(),
-                                                   lowLevelControllerOutput, registry);
-
+         controllerCore = new WholeBodyControllerCore(controllerCoreToolbox, jumpingControlManagerFactory.createFeedbackControlTemplate(),
+                                                      lowLevelControllerOutput, registry);
+      }
    }
 
    @Override

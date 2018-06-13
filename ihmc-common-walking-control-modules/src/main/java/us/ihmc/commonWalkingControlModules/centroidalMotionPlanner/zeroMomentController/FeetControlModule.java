@@ -23,7 +23,7 @@ public class FeetControlModule
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final SideDependentList<FootTrajectoryGenerator> feetTrajectoryGenerator = new SideDependentList<>();
-   private final SideDependentList<FootController> feetControllers = new SideDependentList<>();
+   private final SideDependentList<FootController> feetControllers;
    private final SideDependentList<MovingReferenceFrame> soleFrames;
    private final SideDependentList<YoFramePose> desiredPoses = new SideDependentList<>();
    private final SideDependentList<YoFrameVector> desiredFootVelocities = new SideDependentList<>();
@@ -35,15 +35,16 @@ public class FeetControlModule
    private final FrameVector3D tempVelocity = new FrameVector3D();
    private final FrameVector3D tempAcceleration = new FrameVector3D();
 
-   public FeetControlModule(SideDependentList<MovingReferenceFrame> soleFrames, YoVariableRegistry registry, YoGraphicsListRegistry graphicsListRegistry)
+   public FeetControlModule(SideDependentList<MovingReferenceFrame> soleFrames, SideDependentList<FootController> feetControllers, YoVariableRegistry registry,
+                            YoGraphicsListRegistry graphicsListRegistry)
    {
       String namePrefix = "FeetController";
       this.soleFrames = soleFrames;
+      this.feetControllers = feetControllers;
       for (RobotSide side : RobotSide.values)
       {
          String footPrefix = namePrefix + "Desired" + side.getCamelCaseNameForMiddleOfExpression() + "Foot";
          currentFootState.put(side, new CurrentRigidBodyStateProvider(soleFrames.get(side)));
-         feetControllers.put(side, new FootController(soleFrames.get(side), null, side, registry));
          feetTrajectoryGenerator.put(side, new FootTrajectoryGenerator(side, registry, graphicsListRegistry));
          YoFramePose desiredFootPose = new YoFramePose(footPrefix + "Pose", worldFrame, registry);
          desiredPoses.put(side, desiredFootPose);
