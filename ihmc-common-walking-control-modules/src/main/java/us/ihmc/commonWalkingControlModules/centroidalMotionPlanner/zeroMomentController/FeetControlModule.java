@@ -43,7 +43,7 @@ public class FeetControlModule
       {
          String footPrefix = namePrefix + "Desired" + side.getCamelCaseNameForMiddleOfExpression() + "Foot";
          currentFootState.put(side, new CurrentRigidBodyStateProvider(soleFrames.get(side)));
-         feetControllers.put(side, new FootController());
+         feetControllers.put(side, new FootController(soleFrames.get(side), null, side, registry));
          feetTrajectoryGenerator.put(side, new FootTrajectoryGenerator(side, registry, graphicsListRegistry));
          YoFramePose desiredFootPose = new YoFramePose(footPrefix + "Pose", worldFrame, registry);
          desiredPoses.put(side, desiredFootPose);
