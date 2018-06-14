@@ -3,7 +3,6 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 import java.util.ArrayList;
 import java.util.List;
 
-import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForceBasedCoMMotionPlanner;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.MotionPlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
@@ -16,12 +15,12 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class CollinearForceController
 {
@@ -49,15 +48,15 @@ public class CollinearForceController
    private final YoDouble nominalHeight;
    private final ContactState terminalStateForPlanner = new ContactState();
 
-   private final YoFramePoint finalCoMPositionForPlanner;
-   private final YoFrameVector finalCoMVelocityForPlanner;
-   private final YoFramePoint finalCoPPositionForPlanner;
+   private final YoFramePoint3D finalCoMPositionForPlanner;
+   private final YoFrameVector3D finalCoMVelocityForPlanner;
+   private final YoFramePoint3D finalCoPPositionForPlanner;
 
-   private final YoFrameVector desiredLinearMomentumRateOfChangeCommand;
+   private final YoFrameVector3D desiredLinearMomentumRateOfChangeCommand;
    private final CentroidalStateReadOnly estimatedCoMState;
-   private final YoFramePoint computedCoP;
-   private final YoFrameVector computedGroundReactionForce;
-   private final YoFrameVector gravity;
+   private final YoFramePoint3D computedCoP;
+   private final YoFrameVector3D computedGroundReactionForce;
+   private final YoFrameVector3D gravity;
    private final YoDouble mass;
    private ExternalTransitionTrigger externalTransitionTrigger = null;
    // Temp variables 
@@ -82,17 +81,17 @@ public class CollinearForceController
       controlState = new YoEnum<>(namePrefix + "SupportStateForControl", registry, SupportStateEnum.class);
 
       nominalHeight = new YoDouble(namePrefix + "NominalCoMHeight", registry);
-      gravity = new YoFrameVector(namePrefix + "Gravity", worldFrame, registry);
+      gravity = new YoFrameVector3D(namePrefix + "Gravity", worldFrame, registry);
       mass = new YoDouble(namePrefix + "Mass", registry);
       // Control parameters
       this.estimatedCoMState = centroidalState;
 
-      desiredLinearMomentumRateOfChangeCommand = new YoFrameVector(namePrefix + "LinearMomentumRateOfChangeCommand", worldFrame, registry);
-      computedCoP = new YoFramePoint(namePrefix + "ComputedCenterOfPressure", worldFrame, registry);
-      computedGroundReactionForce = new YoFrameVector(namePrefix + "ComputedGroundReactionForce", worldFrame, registry);
-      finalCoMPositionForPlanner = new YoFramePoint(namePrefix + "FinalCoMPositionForPlanner", worldFrame, registry);
-      finalCoMVelocityForPlanner = new YoFrameVector(namePrefix + "FinalCoMVelocityForPlanner", worldFrame, registry);
-      finalCoPPositionForPlanner = new YoFramePoint(namePrefix + "FinalCoPPositionForPlanner", worldFrame, registry);
+      desiredLinearMomentumRateOfChangeCommand = new YoFrameVector3D(namePrefix + "LinearMomentumRateOfChangeCommand", worldFrame, registry);
+      computedCoP = new YoFramePoint3D(namePrefix + "ComputedCenterOfPressure", worldFrame, registry);
+      computedGroundReactionForce = new YoFrameVector3D(namePrefix + "ComputedGroundReactionForce", worldFrame, registry);
+      finalCoMPositionForPlanner = new YoFramePoint3D(namePrefix + "FinalCoMPositionForPlanner", worldFrame, registry);
+      finalCoMVelocityForPlanner = new YoFrameVector3D(namePrefix + "FinalCoMVelocityForPlanner", worldFrame, registry);
+      finalCoPPositionForPlanner = new YoFramePoint3D(namePrefix + "FinalCoPPositionForPlanner", worldFrame, registry);
       parentRegistry.addChild(registry);
    }
 

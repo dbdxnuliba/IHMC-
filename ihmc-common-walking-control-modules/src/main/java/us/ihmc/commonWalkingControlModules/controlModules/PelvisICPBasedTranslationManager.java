@@ -5,7 +5,9 @@ import static us.ihmc.communication.packets.Packet.INVALID_MESSAGE_ID;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.PrintTools;
+import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.Packet;
+import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
@@ -14,12 +16,8 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SE3TrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
-import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
-import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.lists.RecyclingArrayDeque;
-import us.ihmc.robotics.math.frames.YoFramePoint2d;
-import us.ihmc.robotics.math.frames.YoFrameVector2d;
 import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsPositionTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -29,6 +27,8 @@ import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint2D;
+import us.ihmc.yoVariables.variable.YoFrameVector2D;
 import us.ihmc.yoVariables.variable.YoLong;
 import us.ihmc.yoVariables.variable.YoVariable;
 
@@ -41,22 +41,23 @@ public class PelvisICPBasedTranslationManager
    private final YoDouble supportPolygonSafeMargin = new YoDouble("supportPolygonSafeMargin", registry);
    private final YoDouble frozenOffsetDecayAlpha = new YoDouble("frozenOffsetDecayAlpha", registry);
 
-   private final YoFramePoint2d desiredPelvisPosition = new YoFramePoint2d("desiredPelvis", worldFrame, registry);
+   private final YoFramePoint2D desiredPelvisPosition = new YoFramePoint2D("desiredPelvis", worldFrame, registry);
+   private final YoFramePoint2D currentPelvisPosition = new YoFramePoint2D("currentPelvis", worldFrame, registry);
 
    private final YoDouble initialPelvisPositionTime = new YoDouble("initialPelvisPositionTime", registry);
 
    private final MultipleWaypointsPositionTrajectoryGenerator positionTrajectoryGenerator;
 
-   private final YoFrameVector2d pelvisPositionError = new YoFrameVector2d("pelvisPositionError", worldFrame, registry);
+   private final YoFrameVector2D pelvisPositionError = new YoFrameVector2D("pelvisPositionError", worldFrame, registry);
    private final YoDouble proportionalGain = new YoDouble("pelvisPositionProportionalGain", registry);
-   private final YoFrameVector2d proportionalTerm = new YoFrameVector2d("pelvisPositionProportionalTerm", worldFrame, registry);
+   private final YoFrameVector2D proportionalTerm = new YoFrameVector2D("pelvisPositionProportionalTerm", worldFrame, registry);
 
-   private final YoFrameVector2d pelvisPositionCumulatedError = new YoFrameVector2d("pelvisPositionCumulatedError", worldFrame, registry);
+   private final YoFrameVector2D pelvisPositionCumulatedError = new YoFrameVector2D("pelvisPositionCumulatedError", worldFrame, registry);
    private final YoDouble integralGain = new YoDouble("pelvisPositionIntegralGain", registry);
-   private final YoFrameVector2d integralTerm = new YoFrameVector2d("pelvisPositionIntegralTerm", worldFrame, registry);
+   private final YoFrameVector2D integralTerm = new YoFrameVector2D("pelvisPositionIntegralTerm", worldFrame, registry);
    private final YoDouble maximumIntegralError = new YoDouble("maximumPelvisPositionIntegralError", registry);
 
-   private final YoFrameVector2d desiredICPOffset = new YoFrameVector2d("desiredICPOffset", worldFrame, registry);
+   private final YoFrameVector2D desiredICPOffset = new YoFrameVector2D("desiredICPOffset", worldFrame, registry);
 
    private final YoBoolean isEnabled = new YoBoolean("isPelvisTranslationManagerEnabled", registry);
    private final YoBoolean isRunning = new YoBoolean("isPelvisTranslationManagerRunning", registry);
@@ -75,7 +76,7 @@ public class PelvisICPBasedTranslationManager
    private final SideDependentList<MovingReferenceFrame> ankleZUpFrames;
 
    private final BipedSupportPolygons bipedSupportPolygons;
-   private FrameConvexPolygon2d supportPolygon;
+   private FrameConvexPolygon2D supportPolygon;
 
    private final FramePoint3D tempPosition = new FramePoint3D();
    private final FrameVector3D tempVelocity = new FrameVector3D();
@@ -94,7 +95,7 @@ public class PelvisICPBasedTranslationManager
    {
       supportPolygonSafeMargin.set(pelvisTranslationICPSupportPolygonSafeMargin);
       frozenOffsetDecayAlpha.set(0.998);
-      
+
       yoTime = controllerToolbox.getYoTime();
       controlDT = controllerToolbox.getControlDT();
       pelvisZUpFrame = controllerToolbox.getPelvisZUpFrame();
@@ -134,6 +135,10 @@ public class PelvisICPBasedTranslationManager
 
    public void compute(RobotSide supportLeg, FramePoint2D actualICP)
    {
+      tempPosition2d.setToZero(pelvisZUpFrame);
+      tempPosition2d.changeFrame(worldFrame);
+      currentPelvisPosition.set(tempPosition2d);
+
       if (isFrozen.getBooleanValue())
       {
          icpOffsetForFreezing.scale(frozenOffsetDecayAlpha.getDoubleValue());
@@ -224,15 +229,16 @@ public class PelvisICPBasedTranslationManager
       if (!linearSelectionMatrix.isXSelected() && !linearSelectionMatrix.isYSelected())
          return; // The user does not want to control the x and y of the pelvis, do nothing.
 
-      switch (se3Trajectory.getExecutionMode())
+      if (se3Trajectory.getExecutionMode() == ExecutionMode.OVERRIDE)
       {
-      case OVERRIDE:
          isReadyToHandleQueuedCommands.set(true);
          clearCommandQueue(se3Trajectory.getCommandId());
          initialPelvisPositionTime.set(yoTime.getDoubleValue());
          initializeTrajectoryGenerator(command, 0.0);
          return;
-      case QUEUE:
+      }
+      else if (se3Trajectory.getExecutionMode() == ExecutionMode.QUEUE)
+      {
          boolean success = queuePelvisTrajectoryCommand(command);
          if (!success)
          {
@@ -241,9 +247,10 @@ public class PelvisICPBasedTranslationManager
             holdCurrentPosition();
          }
          return;
-      default:
+      }
+      else
+      {
          PrintTools.warn(this, "Unknown " + ExecutionMode.class.getSimpleName() + " value: " + se3Trajectory.getExecutionMode() + ". Command ignored.");
-         break;
       }
    }
 
@@ -384,7 +391,7 @@ public class PelvisICPBasedTranslationManager
    }
 
    private final ConvexPolygonScaler convexPolygonShrinker = new ConvexPolygonScaler();
-   private final FrameConvexPolygon2d safeSupportPolygonToConstrainICPOffset = new FrameConvexPolygon2d();
+   private final FrameConvexPolygon2D safeSupportPolygonToConstrainICPOffset = new FrameConvexPolygon2D();
 
    private final FramePoint2D originalICPToModify = new FramePoint2D();
 
@@ -420,7 +427,7 @@ public class PelvisICPBasedTranslationManager
 
       if (isFrozen.getBooleanValue())
       {
-         desiredICPOffset.setAndMatchFrame(icpOffsetForFreezing);
+         desiredICPOffset.setMatchingFrame(icpOffsetForFreezing);
          desiredICPToModify.changeFrame(icpOffsetForFreezing.getReferenceFrame());
          desiredCoPToModify.changeFrame(icpOffsetForFreezing.getReferenceFrame());
          desiredICPToModify.add(icpOffsetForFreezing);

@@ -12,9 +12,11 @@ import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQP
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.BagOfBalls;
@@ -25,9 +27,6 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFramePose;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.time.ExecutionTimer;
@@ -38,6 +37,10 @@ import us.ihmc.simulationconstructionset.gui.tools.SimulationOverheadPlotterFact
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFramePose3D;
+import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class CollinearForceBasedMotionPlannerVisualizer
 {
@@ -61,11 +64,11 @@ public class CollinearForceBasedMotionPlannerVisualizer
    private final YoDouble yoTime;
    private final YoGraphicsListRegistry graphicsListRegistry;
 
-   private final List<SideDependentList<YoFramePose>> contactPoses = new ArrayList<>();
-   private final SideDependentList<YoFramePose> currentFootPose = new SideDependentList<>();
-   private final YoFramePoint comPosition;
-   private final YoFramePoint copPosition;
-   private final YoFrameVector groundForce;
+   private final List<SideDependentList<YoFramePoseUsingYawPitchRoll>> contactPoses = new ArrayList<>();
+   private final SideDependentList<YoFramePoseUsingYawPitchRoll> currentFootPose = new SideDependentList<>();
+   private final YoFramePoint3D comPosition;
+   private final YoFramePoint3D copPosition;
+   private final YoFrameVector3D groundForce;
    private final BagOfBalls comTrack;
    private final BagOfBalls copTrack;
    private final YoGraphicVector groundReactionForce;
@@ -120,7 +123,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
       {
          Graphics3DObject footViz = new Graphics3DObject();
          footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, footAppearance.get(side));
-         YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose", worldFrame, registry);
+         YoFramePoseUsingYawPitchRoll footPose = new YoFramePoseUsingYawPitchRoll(side.getCamelCaseName() + "FootPose", worldFrame, registry);
          currentFootPose.put(side, footPose);
          YoGraphicShape yoGraphic = new YoGraphicShape(side.getCamelCaseName() + "FootViz", footViz, footPose, 1.0);
          footVizList.add(yoGraphic);
@@ -129,22 +132,22 @@ public class CollinearForceBasedMotionPlannerVisualizer
       YoGraphicsList contactStateVizList = new YoGraphicsList("ContactStateViz");
       for (int i = 0; i < maxNumberOfContactStatesToVisualize; i++)
       {
-         SideDependentList<YoFramePose> contactPose = new SideDependentList<>();
+         SideDependentList<YoFramePoseUsingYawPitchRoll> contactPose = new SideDependentList<>();
          contactPoses.add(contactPose);
          for (RobotSide side : RobotSide.values)
          {
             Graphics3DObject footViz = new Graphics3DObject();
             footViz.addExtrudedPolygon(defaultFootPolygonPointsInAnkleFrame, 0.001, getContactStateAppearance(i));
-            YoFramePose footPose = new YoFramePose(side.getCamelCaseName() + "FootPose" + i, worldFrame, registry);
+            YoFramePoseUsingYawPitchRoll footPose = new YoFramePoseUsingYawPitchRoll(side.getCamelCaseName() + "FootPose" + i, worldFrame, registry);
             contactPose.put(side, footPose);
             YoGraphicShape yoGraphic = new YoGraphicShape("ContactState" + i + side.getCamelCaseName() + "SupportPolygon", footViz, footPose, 1.0);
             contactStateVizList.add(yoGraphic);
          }
       }
       graphicsListRegistry.registerYoGraphicsList(contactStateVizList);
-      comPosition = new YoFramePoint(namePrefix + "CoMPosition", worldFrame, registry);
-      copPosition = new YoFramePoint(namePrefix + "CoPPosition", worldFrame, registry);
-      groundForce = new YoFrameVector(namePrefix + "GroundForce", worldFrame, registry);
+      comPosition = new YoFramePoint3D(namePrefix + "CoMPosition", worldFrame, registry);
+      copPosition = new YoFramePoint3D(namePrefix + "CoPPosition", worldFrame, registry);
+      groundForce = new YoFrameVector3D(namePrefix + "GroundForce", worldFrame, registry);
       comTrack = new BagOfBalls(1000, 0.001, namePrefix + "CoMTrack", comTrackAppearance, registry, graphicsListRegistry);
       copTrack = new BagOfBalls(1000, 0.001, namePrefix + "CoPTrack", copTrackAppearance, registry, graphicsListRegistry);
       groundReactionForce = new YoGraphicVector(namePrefix + "GroundReactionForce", copPosition, groundForce, new YoAppearanceRGBColor(Color.RED, 0.5));
@@ -240,6 +243,24 @@ public class CollinearForceBasedMotionPlannerVisualizer
          vertexList.add(new Point2D());
    }
 
+   private List<Point2D> supplierSpoofReferenceList;
+   private int supplierSpoofNumberOfVertices = 0;
+   private final Vertex2DSupplier supplierSpoof = new Vertex2DSupplier()
+   {
+      
+      @Override
+      public Point2DReadOnly getVertex(int index)
+      {
+         return supplierSpoofReferenceList.get(index);
+      }
+      
+      @Override
+      public int getNumberOfVertices()
+      {
+         return supplierSpoofNumberOfVertices;
+      }
+   };
+   
    private final ConvexPolygonScaler polygonScaler = new ConvexPolygonScaler();
    private final ConvexPolygon2D tempPolygonForScaling = new ConvexPolygon2D();
    private void generateMinimalVertexSupportPolygon(ConvexPolygon2D supportPolygonToSet, Point2D leftFootLocation, Point2D rightFootLocation)
@@ -309,7 +330,9 @@ public class CollinearForceBasedMotionPlannerVisualizer
       }
       // Submit the computed vertices to the polygon. Polygon will recompute but that cant be avoided right now
       tempPolygonForScaling.clear();
-      tempPolygonForScaling.addVertices(vertexList, numberOfVertices);
+      supplierSpoofReferenceList = vertexList;
+      supplierSpoofNumberOfVertices = numberOfVertices;
+      tempPolygonForScaling.addVertices(supplierSpoof);
       tempPolygonForScaling.update();
       polygonScaler.scaleConvexPolygon(tempPolygonForScaling, 0.005, supportPolygonToSet);
    }

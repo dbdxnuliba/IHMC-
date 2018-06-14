@@ -1,19 +1,18 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
-import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
 
 /**
  * Generates a seed solution for the SQP solver. The solution generated may not be dynamically feasible 
@@ -34,14 +33,14 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
 
    private CollinearForceBasedPlannerResult sqpSolution;
    private FrameVector3DReadOnly gravity;
-   private final YoFramePoint comNominalOffsetFromSupportPolygonCentroid;
+   private final YoFramePoint3D comNominalOffsetFromSupportPolygonCentroid;
    private final Point3D tempPoint = new Point3D();
    private final FramePoint3D tempFramePoint = new FramePoint3D();
 
    public CollinearForceBasedPlannerSeedSolutionGenerator(YoVariableRegistry registry)
    {
       String namePrefix = getClass().getSimpleName();
-      comNominalOffsetFromSupportPolygonCentroid = new YoFramePoint(namePrefix + "NominalCoMOffsetFromSupportPolygonCentroid", worldFrame, registry);
+      comNominalOffsetFromSupportPolygonCentroid = new YoFramePoint3D(namePrefix + "NominalCoMOffsetFromSupportPolygonCentroid", worldFrame, registry);
    }
 
    /**
@@ -75,14 +74,14 @@ public class CollinearForceBasedPlannerSeedSolutionGenerator
       this.segmentList = segmentList;
    }
 
-   public void setInitialState(YoFramePoint initialCoMPosition, YoFramePoint initialCoPPosition, YoFrameVector initialCoMVelocity)
+   public void setInitialState(FramePoint3DReadOnly initialCoMPosition, FramePoint3DReadOnly initialCoPPosition, FrameVector3DReadOnly initialCoMVelocity)
    {
       this.initialCoMPosition.setIncludingFrame(initialCoMPosition);
       this.initialCoPPosition.setIncludingFrame(initialCoPPosition);
       this.initialCoMVelocity.setIncludingFrame(initialCoMVelocity);
    }
 
-   public void setFinalState(YoFramePoint finalCoMPosition, YoFramePoint finalCoPPosition, YoFrameVector finalCoMVelocity)
+   public void setFinalState(FramePoint3DReadOnly finalCoMPosition, FramePoint3DReadOnly finalCoPPosition, FrameVector3DReadOnly finalCoMVelocity)
    {
       this.finalCoMPosition.setIncludingFrame(finalCoMPosition);
       this.finalCoPPosition.setIncludingFrame(finalCoPPosition);

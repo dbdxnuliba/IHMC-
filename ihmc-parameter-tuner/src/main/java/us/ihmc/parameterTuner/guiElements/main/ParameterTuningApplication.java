@@ -6,6 +6,7 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import us.ihmc.parameterTuner.guiElements.GuiParameter;
@@ -18,6 +19,8 @@ public abstract class ParameterTuningApplication extends Application
    @Override
    public void start(Stage primaryStage) throws Exception
    {
+      primaryStage.getIcons().add(new Image(ParameterTuningApplication.class.getResourceAsStream("/icon.png")));
+
       ParameterGuiInterface guiInterface = createInputManager();
 
       FXMLLoader mainLoader = new FXMLLoader();
@@ -37,6 +40,12 @@ public abstract class ParameterTuningApplication extends Application
             {
                List<GuiRegistry> fullRegistries = guiInterface.getRegistriesCopy();
                controller.setRegistries(fullRegistries);
+            }
+
+            // Check if the user changed the root registries.
+            if (controller.areRootRegistriesChanged())
+            {
+               guiInterface.changeRootRegistries(controller.pollRootRegistryNames());
             }
 
             // If parameters were changed in the GUI forward copies to the interface.
@@ -59,6 +68,7 @@ public abstract class ParameterTuningApplication extends Application
       primaryStage.setOnCloseRequest(event -> {
          animationTimer.stop();
          guiInterface.shutdown();
+         controller.close();
       });
 
       primaryStage.setTitle(getClass().getSimpleName());

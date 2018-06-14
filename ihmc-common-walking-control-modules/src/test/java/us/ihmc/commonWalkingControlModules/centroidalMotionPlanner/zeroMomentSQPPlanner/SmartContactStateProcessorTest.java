@@ -13,6 +13,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -43,7 +44,7 @@ public class SmartContactStateProcessorTest
 
    private ConvexPolygon2D generateDefaultFootSupportPolygon()
    {
-      return new ConvexPolygon2D(generateDefaultFootSupportPolygonVertexList());
+      return new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(generateDefaultFootSupportPolygonVertexList()));
    }
 
    @Test(timeout = 200)

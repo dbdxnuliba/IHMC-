@@ -34,9 +34,8 @@ import us.ihmc.robotics.partNames.ArmJointName;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
 import us.ihmc.robotics.screwTheory.RigidBody;
-import us.ihmc.robotics.stateMachines.conditionBasedStateMachine.GenericStateMachine;
+import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.GenericStateMachine;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoEnum;
 
@@ -125,7 +124,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          ContactableFoot contactableFoot = controllerToolbox.getContactableFeet().get(side);
          ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
          FootSupportPolygon footSupportPolygon = FootSupportPolygon.createSupportPolygonFromContactableFoot(contactableFoot);
-         FootController footController = new FootController(contactState, soleFrame, footSupportPolygon, side, registry);
+         FootController footController = new FootController(null, contactState, soleFrame, footSupportPolygon, side, registry);
          feetControllers.put(side, footController);
       }
    }

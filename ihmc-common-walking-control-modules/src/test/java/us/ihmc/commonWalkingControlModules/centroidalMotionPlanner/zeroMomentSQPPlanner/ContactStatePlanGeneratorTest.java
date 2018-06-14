@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,16 +15,13 @@ import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.Pose2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
-import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.Vector2D;
-import us.ihmc.euclid.tuple3D.Vector3D;
-import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 public class ContactStatePlanGeneratorTest
@@ -52,7 +48,7 @@ public class ContactStatePlanGeneratorTest
 
    private ConvexPolygon2D generateSimpleFootSupportPolygon()
    {
-      return new ConvexPolygon2D(generateSimpleFootSupportPolygonVertexList());
+      return new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(generateSimpleFootSupportPolygonVertexList()));
    }
 
    @Test(timeout = 200)
@@ -61,9 +57,10 @@ public class ContactStatePlanGeneratorTest
       double epsilon = Epsilons.ONE_BILLIONTH;
       ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
       ContactState contactStateToTest = new ContactState();
-      ContactStatePlanGenerator.setContactStatesFromPoses(contactStateToTest, 0.1, new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, width), 0.0),
-                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -width), 0.0), defaultFootPolygon,
-                                          defaultFootPolygon);
+      ContactStatePlanGenerator.setContactStatesFromPoses(contactStateToTest, 0.1,
+                                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, width), 0.0),
+                                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -width), 0.0), defaultFootPolygon,
+                                                          defaultFootPolygon);
       assertTrue(contactStateToTest.isSupported());
       ConvexPolygon2D polygonToTest = new ConvexPolygon2D();
       contactStateToTest.getSupportPolygon(RobotSide.LEFT, polygonToTest);
@@ -91,9 +88,10 @@ public class ContactStatePlanGeneratorTest
       ConvexPolygon2D defaultFootPolygon = generateDefaultFootSupportPolygon();
       ContactStatePlanGenerator generator = new ContactStatePlanGenerator();
       ContactState contactStateToTest = new ContactState();
-      ContactStatePlanGenerator.setContactStatesFromPoses(contactStateToTest, 0.1, new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, width), 0.0),
-                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -width), 0.0), defaultFootPolygon,
-                                          defaultFootPolygon);
+      ContactStatePlanGenerator.setContactStatesFromPoses(contactStateToTest, 0.1,
+                                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, width), 0.0),
+                                                          new FramePose2D(ReferenceFrame.getWorldFrame(), new Point2D(0.0, -width), 0.0), defaultFootPolygon,
+                                                          defaultFootPolygon);
       assertTrue(contactStateToTest.isSupported());
       ConvexPolygon2D polygonToTest = new ConvexPolygon2D();
       contactStateToTest.getSupportPolygon(RobotSide.LEFT, polygonToTest);
@@ -115,7 +113,7 @@ public class ContactStatePlanGeneratorTest
 
    private ConvexPolygon2D generateDefaultFootSupportPolygon()
    {
-      return new ConvexPolygon2D(generateDefaultFootSupportPolygonVertexList());
+      return new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(generateDefaultFootSupportPolygonVertexList()));
    }
 
    @Test(timeout = 200)
@@ -155,12 +153,12 @@ public class ContactStatePlanGeneratorTest
       ConvexPolygon2D rightFootPolygon = generateDefaultFootSupportPolygon();
       rightFootPolygon.addVertex(0.1, 0.2);
       rightFootPolygon.update();
-      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide.getOppositeSide(),
-                                                     endInDoubleSupport);
-      for(int i = 0; i < footPoseList.size(); i++)
+      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps,
+                                                     startSide.getOppositeSide(), endInDoubleSupport);
+      for (int i = 0; i < footPoseList.size(); i++)
          PrintTools.debug("Pose " + i + ": " + footPoseList.get(i).toString());
-      ContactStatePlanGenerator.processFootstepPlanForWalking(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, true, endInDoubleSupport,
-                                                  0.4, 0.2);
+      ContactStatePlanGenerator.processFootstepPlanForWalking(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, true,
+                                                              endInDoubleSupport, 0.4, 0.2);
       for (int i = 0; i < contactStateList.size(); i++)
          PrintTools.debug(contactStateList.get(i).toString());
    }
@@ -184,15 +182,15 @@ public class ContactStatePlanGeneratorTest
       ConvexPolygon2D rightFootPolygon = generateDefaultFootSupportPolygon();
       rightFootPolygon.addVertex(0.1, 0.2);
       rightFootPolygon.update();
-      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide,
-                                                     false);
-      for(int i = 0; i < footPoseList.size(); i++)
+      planGenerator.generateAlternatingFootstepPoses(footPoseList, initialLeftAnklePose, initialRightAnklePose, stepSize, numberOfSteps, startSide, false);
+      for (int i = 0; i < footPoseList.size(); i++)
          PrintTools.debug("Pose " + i + ": " + footPoseList.get(i).toString());
-      ContactStatePlanGenerator.processFootstepPlanForRunning(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, 0.2, 0.4, 0.4, false, true, false, true);
+      ContactStatePlanGenerator.processFootstepPlanForRunning(footPoseList, contactStateList, leftFootPolygon, rightFootPolygon, startSide, 0.2, 0.4, 0.4,
+                                                              false, true, false, true);
       for (int i = 0; i < contactStateList.size(); i++)
          PrintTools.debug(contactStateList.get(i).toString());
    }
-   
+
    @Test(timeout = 1000)
    public void testAlternatingFootstepGeneration()
    {

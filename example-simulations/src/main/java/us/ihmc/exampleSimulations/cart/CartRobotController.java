@@ -1,8 +1,8 @@
 package us.ihmc.exampleSimulations.cart;
 
-import us.ihmc.robotics.robotController.RobotController;
 import us.ihmc.simulationconstructionset.PinJoint;
 import us.ihmc.simulationconstructionset.Robot;
+import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class CartRobotController implements RobotController
@@ -13,7 +13,7 @@ public class CartRobotController implements RobotController
 
    public CartRobotController(Robot robot)
    {
-      frontWheelJoint = (PinJoint) robot.getJoint("frontwheel");
+      frontWheelJoint = (PinJoint) robot.getJoint("frontWheel");
    }
 
    @Override

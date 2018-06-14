@@ -2,45 +2,44 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
-import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class LinearMotionController
 {
    private final static ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private final YoFrameVector linearMomentumProportionalGains;
-   private final YoFrameVector linearMomentumDerivativeGains;
+   private final YoFrameVector3D linearMomentumProportionalGains;
+   private final YoFrameVector3D linearMomentumDerivativeGains;
 
-   private final YoFramePoint estimatedCoM;
-   private final YoFramePoint desiredCoM;
-   private final YoFrameVector estimatedCoMVelocity;
-   private final YoFrameVector desiredCoMVelocity;
-   private final YoFrameVector feedforwardLinearAcceleration;
-   private final YoFrameVector proportionalFeedback;
-   private final YoFrameVector derivativeFeedback;
-   private final YoFrameVector feedbackLinearAcceleration;
-   private final YoFrameVector linearAccelerationCommand;
+   private final YoFramePoint3D estimatedCoM;
+   private final YoFramePoint3D desiredCoM;
+   private final YoFrameVector3D estimatedCoMVelocity;
+   private final YoFrameVector3D desiredCoMVelocity;
+   private final YoFrameVector3D feedforwardLinearAcceleration;
+   private final YoFrameVector3D proportionalFeedback;
+   private final YoFrameVector3D derivativeFeedback;
+   private final YoFrameVector3D feedbackLinearAcceleration;
+   private final YoFrameVector3D linearAccelerationCommand;
 
    public LinearMotionController(YoVariableRegistry registry)
    {
       String namePrefix = "CenterOfMassController";
-      linearMomentumProportionalGains = new YoFrameVector(namePrefix + "LinearProportionalGain", worldFrame, registry);
-      linearMomentumDerivativeGains = new YoFrameVector(namePrefix + "LinearDerivativeGain", worldFrame, registry);
+      linearMomentumProportionalGains = new YoFrameVector3D(namePrefix + "LinearProportionalGain", worldFrame, registry);
+      linearMomentumDerivativeGains = new YoFrameVector3D(namePrefix + "LinearDerivativeGain", worldFrame, registry);
 
-      desiredCoM = new YoFramePoint(namePrefix + "DesiredPosition", worldFrame, registry);
-      desiredCoMVelocity = new YoFrameVector(namePrefix + "DesiredLinearVelocity", worldFrame, registry);
-      estimatedCoM = new YoFramePoint(namePrefix + "EstimatedPosition", worldFrame, registry);
-      estimatedCoMVelocity = new YoFrameVector(namePrefix + "EstimatedLinearVelocity", worldFrame, registry);
-      feedforwardLinearAcceleration = new YoFrameVector(namePrefix + "FeedforwardAcceleration", worldFrame, registry);
-      feedbackLinearAcceleration = new YoFrameVector(namePrefix + "FeedbackAcceleration", worldFrame, registry);
-      linearAccelerationCommand = new YoFrameVector(namePrefix + "LinearAccelerationCommand", worldFrame, registry);
+      desiredCoM = new YoFramePoint3D(namePrefix + "DesiredPosition", worldFrame, registry);
+      desiredCoMVelocity = new YoFrameVector3D(namePrefix + "DesiredLinearVelocity", worldFrame, registry);
+      estimatedCoM = new YoFramePoint3D(namePrefix + "EstimatedPosition", worldFrame, registry);
+      estimatedCoMVelocity = new YoFrameVector3D(namePrefix + "EstimatedLinearVelocity", worldFrame, registry);
+      feedforwardLinearAcceleration = new YoFrameVector3D(namePrefix + "FeedforwardAcceleration", worldFrame, registry);
+      feedbackLinearAcceleration = new YoFrameVector3D(namePrefix + "FeedbackAcceleration", worldFrame, registry);
+      linearAccelerationCommand = new YoFrameVector3D(namePrefix + "LinearAccelerationCommand", worldFrame, registry);
 
-      proportionalFeedback = new YoFrameVector(namePrefix + "ProportionalFeedback", worldFrame, registry);
-      derivativeFeedback = new YoFrameVector(namePrefix + "DerivativeFeedback", worldFrame, registry);
+      proportionalFeedback = new YoFrameVector3D(namePrefix + "ProportionalFeedback", worldFrame, registry);
+      derivativeFeedback = new YoFrameVector3D(namePrefix + "DerivativeFeedback", worldFrame, registry);
    }
 
    public void setLinearMomentumFeedbackGains(FrameVector3DReadOnly linearProportionalGain, FrameVector3DReadOnly linearDerivativeGain)

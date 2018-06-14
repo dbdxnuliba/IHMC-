@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.desiredFootStep.TransferToAndNextFootstepsData;
+import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.Packet;
@@ -25,10 +26,8 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisHeight
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
-import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.geometry.StringStretcher2d;
 import us.ihmc.robotics.lists.RecyclingArrayDeque;
-import us.ihmc.robotics.math.frames.YoFramePoint;
 import us.ihmc.robotics.math.trajectories.providers.YoVariableDoubleProvider;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsTrajectoryGenerator;
@@ -38,6 +37,7 @@ import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoLong;
 import us.ihmc.yoVariables.variable.YoVariable;
 
@@ -85,12 +85,12 @@ public class LookAheadCoMHeightTrajectoryGenerator
    private final SideDependentList<YoDouble> previousZFinals = new SideDependentList<YoDouble>(previousZFinalLeft, previousZFinalRight);
 
    private final YoDouble desiredCoMHeight = new YoDouble("desiredCoMHeight", registry);
-   private final YoFramePoint desiredCoMPosition = new YoFramePoint("desiredCoMPosition", ReferenceFrame.getWorldFrame(), registry);
+   private final YoFramePoint3D desiredCoMPosition = new YoFramePoint3D("desiredCoMPosition", ReferenceFrame.getWorldFrame(), registry);
 
    private final LineSegment2D projectionSegment = new LineSegment2D();
 
-   private final YoFramePoint contactFrameZeroPosition = new YoFramePoint("contactFrameZeroPosition", worldFrame, registry);
-   private final YoFramePoint contactFrameOnePosition = new YoFramePoint("contactFrameOnePosition", worldFrame, registry);
+   private final YoFramePoint3D contactFrameZeroPosition = new YoFramePoint3D("contactFrameZeroPosition", worldFrame, registry);
+   private final YoFramePoint3D contactFrameOnePosition = new YoFramePoint3D("contactFrameOnePosition", worldFrame, registry);
 
    private final YoGraphicPosition pointS0Viz, pointSFViz, pointD0Viz, pointDFViz, pointSNextViz;
    private final YoGraphicPosition pointS0MinViz, pointSFMinViz, pointD0MinViz, pointDFMinViz, pointSNextMinViz;
@@ -830,15 +830,16 @@ public class LookAheadCoMHeightTrajectoryGenerator
 
    public void handlePelvisHeightTrajectoryCommand(PelvisHeightTrajectoryCommand command)
    {
-      switch (command.getEuclideanTrajectory().getExecutionMode())
+      if (command.getEuclideanTrajectory().getExecutionMode() == ExecutionMode.OVERRIDE)
       {
-      case OVERRIDE:
          isReadyToHandleQueuedCommands.set(true);
          clearCommandQueue(command.getEuclideanTrajectory().getCommandId());
          offsetHeightAboveGroundChangedTime.set(yoTime.getDoubleValue());
          initializeOffsetTrajectoryGenerator(command, 0.0);
          return;
-      case QUEUE:
+      }
+      else if (command.getEuclideanTrajectory().getExecutionMode() == ExecutionMode.QUEUE)
+      {
          boolean success = queuePelvisHeightTrajectoryCommand(command);
          if (!success)
          {
@@ -849,7 +850,9 @@ public class LookAheadCoMHeightTrajectoryGenerator
             offsetHeightTrajectoryGenerator.initialize();
          }
          return;
-      default:
+      }
+      else
+      {
          PrintTools.warn(this, "Unknown " + ExecutionMode.class.getSimpleName() + " value: " + command.getEuclideanTrajectory().getExecutionMode() + ". Command ignored.");
          return;
       }

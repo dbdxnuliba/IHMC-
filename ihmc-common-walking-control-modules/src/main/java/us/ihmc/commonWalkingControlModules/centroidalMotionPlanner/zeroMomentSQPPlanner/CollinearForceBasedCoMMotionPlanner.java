@@ -5,7 +5,6 @@ import java.util.List;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlan;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlanGenerator;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -14,14 +13,14 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
@@ -44,12 +43,12 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    public static final int numberOfCoMTrajectoryCoefficients = 6;
    public static final int numberOfCoPTrajectoryCoefficients = 6;
 
-   private final YoFramePoint initialCoMPosition;
-   private final YoFramePoint initialCoPPosition;
-   private final YoFrameVector initialCoMVelocity;
-   private final YoFramePoint finalCoMPosition;
-   private final YoFramePoint finalCoPPosition;
-   private final YoFrameVector finalCoMVelocity;
+   private final YoFramePoint3D initialCoMPosition;
+   private final YoFramePoint3D initialCoPPosition;
+   private final YoFrameVector3D initialCoMVelocity;
+   private final YoFramePoint3D finalCoMPosition;
+   private final YoFramePoint3D finalCoPPosition;
+   private final YoFrameVector3D finalCoMVelocity;
 
    private final YoVariableRegistry registry;
    private final YoDouble nominalPlannerSegmentTime;
@@ -86,12 +85,12 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
       String namePrefix = getClass().getSimpleName();
       registry = new YoVariableRegistry(namePrefix);
 
-      initialCoMPosition = new YoFramePoint(namePrefix + "InitialCoMLocation", worldFrame, registry);
-      initialCoPPosition = new YoFramePoint(namePrefix + "InitialCoPLocation", worldFrame, registry);
-      initialCoMVelocity = new YoFrameVector(namePrefix + "InitialCoMVelocity", worldFrame, registry);
-      finalCoMPosition = new YoFramePoint(namePrefix + "FinalCoMLocation", worldFrame, registry);
-      finalCoPPosition = new YoFramePoint(namePrefix + "FinalCoPLocation", worldFrame, registry);
-      finalCoMVelocity = new YoFrameVector(namePrefix + "FinalCoMVelocity", worldFrame, registry);
+      initialCoMPosition = new YoFramePoint3D(namePrefix + "InitialCoMLocation", worldFrame, registry);
+      initialCoPPosition = new YoFramePoint3D(namePrefix + "InitialCoPLocation", worldFrame, registry);
+      initialCoMVelocity = new YoFrameVector3D(namePrefix + "InitialCoMVelocity", worldFrame, registry);
+      finalCoMPosition = new YoFramePoint3D(namePrefix + "FinalCoMLocation", worldFrame, registry);
+      finalCoPPosition = new YoFramePoint3D(namePrefix + "FinalCoPLocation", worldFrame, registry);
+      finalCoMVelocity = new YoFrameVector3D(namePrefix + "FinalCoMVelocity", worldFrame, registry);
 
       dynamicsViolation = new YoDouble(namePrefix + "CummulativeDynamicsViolation", registry);
       for (Axis axis : Axis.values)

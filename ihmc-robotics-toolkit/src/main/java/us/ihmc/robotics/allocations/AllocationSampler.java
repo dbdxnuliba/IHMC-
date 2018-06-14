@@ -20,9 +20,12 @@ public class AllocationSampler implements Sampler
 
    private final Queue<Throwable> allocations = new ConcurrentLinkedQueue<>();
 
+   private boolean stopped = false;
+
    public AllocationSampler()
    {
       addClassToIgnore(AllocationRecorder.class.getName());
+      addClassToIgnore(ClassLoader.class.getName());
    }
 
    public void addBlacklistMethod(String methodName)
@@ -56,9 +59,19 @@ public class AllocationSampler implements Sampler
       return ret;
    }
 
+   public void stop()
+   {
+      stopped = true;
+   }
+
    @Override
    public void sampleAllocation(int count, String desc, Object newObj, long size)
    {
+      if (stopped)
+      {
+         return;
+      }
+
       StackTraceElement[] stackTrace = getCleanedStackTace();
 
       if (!checkIfOfInterest(stackTrace))
@@ -72,6 +85,11 @@ public class AllocationSampler implements Sampler
 
       // Skip static member initializations.
       if (stackTrace[0].getMethodName().contains("<clinit>"))
+      {
+         return;
+      }
+      // Skip things inside constructors.
+      if (stackTrace[0].getMethodName().contains("<init>"))
       {
          return;
       }

@@ -30,6 +30,7 @@ public class ParameterSavingNode extends HBox
 
    private File activeFile;
    private List<GuiRegistry> registries;
+   private List<String> rootRegistryNames;
 
    private final List<ParameterFileSavedListener> listeners = new ArrayList<>();
 
@@ -66,14 +67,14 @@ public class ParameterSavingNode extends HBox
       }
    }
 
-   public File getActiveFile()
-   {
-      return activeFile;
-   }
-
    public void setRegistries(List<GuiRegistry> registries)
    {
       this.registries = registries;
+   }
+
+   public void setRootRegistries(List<String> rootRegistryNames)
+   {
+      this.rootRegistryNames = rootRegistryNames;
    }
 
    private void setupNode(boolean showFile, boolean enableSave)
@@ -123,26 +124,20 @@ public class ParameterSavingNode extends HBox
 
    private void handleSave(ActionEvent event) throws IOException
    {
-      // if overwriting a file pop up summary dialog
-      boolean isModified = modified.isSelected();
-      boolean isMerge = merge.isSelected();
-      if (activeFile.exists() && !ParameterSavingTools.confirmSave(isModified, isMerge, activeFile.getName()))
-      {
-         return;
-      }
+      List<GuiRegistry> rootRegistries = ParameterSavingTools.findRootRegistries(registries, rootRegistryNames);
 
       List<GuiRegistry> registriesAfterModified;
-      if (isModified)
+      if (modified.isSelected())
       {
-         registriesAfterModified = ParameterSavingTools.filterModified(registries);
+         registriesAfterModified = ParameterSavingTools.filterModified(rootRegistries);
       }
       else
       {
-         registriesAfterModified = registries;
+         registriesAfterModified = rootRegistries;
       }
 
       List<GuiRegistry> registriesAfterMerge;
-      if (isMerge && activeFile.exists())
+      if (merge.isSelected() && activeFile.exists())
       {
          List<Registry> xmlRegistries = ParameterTuningTools.getParameters(activeFile);
          List<GuiRegistry> existingRegistry = ParameterTuningTools.buildGuiRegistryFromXML(xmlRegistries);
@@ -183,7 +178,7 @@ public class ParameterSavingNode extends HBox
     *
     * @return the most-recently-used file.
     */
-   private File getDefaultFilePath()
+   public File getDefaultFilePath()
    {
       Preferences prefs = Preferences.userNodeForPackage(ParameterSavingNode.class);
       String filePath = prefs.get("filePath", null);

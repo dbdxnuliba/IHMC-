@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -70,14 +71,21 @@ public class TransformHelperTools
    public static void transformFromPoseToReferenceFrameByProjection(FramePose3DReadOnly poseToTransformFrom, ConvexPolygon2D polygonToTransform)
    {
       poseToTransformFrom.get(transform);
-      polygonToTransform.applyTransformAndProjectToXYPlane(transform);
+      polygonToTransform.applyTransform(transform, false);
+   }
+
+   public static void transformFromPoseToReferenceFrameByProjection(FramePose3DReadOnly poseToTransformFrom, FrameConvexPolygon2D polygonToTransform)
+   {
+      polygonToTransform.checkReferenceFrameMatch(polygonToTransform);
+      poseToTransformFrom.get(transform);
+      polygonToTransform.applyTransform(transform, false);
    }
 
    public static void transformFromReferenceFrameToPoseByProjection(FramePose3DReadOnly poseToTransformTo, ConvexPolygon2D polygonToTransform)
    {
       poseToTransformTo.get(transform);
       transform.invert();
-      polygonToTransform.applyTransformAndProjectToXYPlane(transform);
+      polygonToTransform.applyTransform(transform, false);
    }
 
    public static void transformFromPoseToReferenceFrame(FramePose3DReadOnly poseToTranformFrom, FramePoint3D framePointToTranform)

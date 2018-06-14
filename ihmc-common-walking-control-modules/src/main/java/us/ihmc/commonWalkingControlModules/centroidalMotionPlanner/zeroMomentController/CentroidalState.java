@@ -7,29 +7,29 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameQuaternion;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameQuaternion;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class CentroidalState implements CentroidalStateReadOnly
 {
-   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-   private final YoFramePoint position;
-   private final YoFrameVector linearVelocity;
-   private final YoFrameVector linearAcceleration;
+   private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private final YoFramePoint3D position;
+   private final YoFrameVector3D linearVelocity;
+   private final YoFrameVector3D linearAcceleration;
    private final YoFrameQuaternion orientation;
-   private final YoFrameVector angularVelocity;
-   private final YoFrameVector angularAcceleration;
+   private final YoFrameVector3D angularVelocity;
+   private final YoFrameVector3D angularAcceleration;
 
    public CentroidalState(String namePrefix, YoVariableRegistry registry)
    {
-      position = new YoFramePoint(namePrefix + "Position", worldFrame, registry);
-      linearVelocity = new YoFrameVector(namePrefix + "LinearVelocity", worldFrame, registry);
-      linearAcceleration = new YoFrameVector(namePrefix + "LinearAcceleration", worldFrame, registry);
+      position = new YoFramePoint3D(namePrefix + "Position", worldFrame, registry);
+      linearVelocity = new YoFrameVector3D(namePrefix + "LinearVelocity", worldFrame, registry);
+      linearAcceleration = new YoFrameVector3D(namePrefix + "LinearAcceleration", worldFrame, registry);
       orientation = new YoFrameQuaternion(namePrefix + "Orientation", worldFrame, registry);
-      angularVelocity = new YoFrameVector(namePrefix + "AngularVelocity", worldFrame, registry);
-      angularAcceleration = new YoFrameVector(namePrefix + "AngularAccleration", worldFrame, registry);
+      angularVelocity = new YoFrameVector3D(namePrefix + "AngularVelocity", worldFrame, registry);
+      angularAcceleration = new YoFrameVector3D(namePrefix + "AngularAccleration", worldFrame, registry);
    }
 
    public void set(CentroidalState other)

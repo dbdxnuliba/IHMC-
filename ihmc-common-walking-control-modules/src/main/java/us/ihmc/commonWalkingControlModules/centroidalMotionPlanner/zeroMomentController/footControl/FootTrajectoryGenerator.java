@@ -6,11 +6,11 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class FootTrajectoryGenerator
 {
@@ -23,8 +23,8 @@ public class FootTrajectoryGenerator
    private final YoBoolean isPlanAvailable;
    private final YoDouble nominalFirstSegmentPercentage;
    private final YoDouble nominalLastSegmentPercentage;
-   private final YoFrameVector defaultFinalVelocity;
-   private final YoFrameVector defaultFinalAcceleration;
+   private final YoFrameVector3D defaultFinalVelocity;
+   private final YoFrameVector3D defaultFinalAcceleration;
    private final YoDouble intermediatePointHeightAboveGround;
    private double duration;
    private final FramePoint3D initialPosition = new FramePoint3D();
@@ -50,8 +50,8 @@ public class FootTrajectoryGenerator
       nominalFirstSegmentPercentage = new YoDouble(namePrefix + "NominalFirstSegmentPercentrage", registry);
       nominalLastSegmentPercentage = new YoDouble(namePrefix + "NominalLastSegmentPercentage", registry);
       intermediatePointHeightAboveGround = new YoDouble(namePrefix + "NominalHeightAboveGround", registry);
-      defaultFinalVelocity = new YoFrameVector(namePrefix + "DefaultFinalVelocity", worldFrame, registry);
-      defaultFinalAcceleration = new YoFrameVector(namePrefix + "DefaultFinalAcceleration", worldFrame, registry);
+      defaultFinalVelocity = new YoFrameVector3D(namePrefix + "DefaultFinalVelocity", worldFrame, registry);
+      defaultFinalAcceleration = new YoFrameVector3D(namePrefix + "DefaultFinalAcceleration", worldFrame, registry);
       isPlanAvailable = new YoBoolean(namePrefix + "IsPlanAvailable", registry);
       reset();
    }

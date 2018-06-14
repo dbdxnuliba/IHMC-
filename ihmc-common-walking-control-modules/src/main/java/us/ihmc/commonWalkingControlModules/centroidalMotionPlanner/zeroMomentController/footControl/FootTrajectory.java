@@ -8,12 +8,11 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
@@ -27,17 +26,17 @@ public class FootTrajectory
    private final YoDouble t1;
    private final YoDouble t2;
    private final YoDouble tF;
-   private final YoFrameVector defaultTouchdownVelocity;
-   private final YoFrameVector defaultTouchdownAcceleration;
+   private final YoFrameVector3D defaultTouchdownVelocity;
+   private final YoFrameVector3D defaultTouchdownAcceleration;
 
-   private final YoFramePoint initialPosition;
-   private final YoFrameVector initialVelocity;
-   private final YoFrameVector initialAcceleration;
-   private final YoFramePoint intermediatePosition1;
-   private final YoFramePoint intermediatePosition2;
-   private final YoFramePoint finalPosition;
-   private final YoFrameVector finalVelocity;
-   private final YoFrameVector finalAcceleration;
+   private final YoFramePoint3D initialPosition;
+   private final YoFrameVector3D initialVelocity;
+   private final YoFrameVector3D initialAcceleration;
+   private final YoFramePoint3D intermediatePosition1;
+   private final YoFramePoint3D intermediatePosition2;
+   private final YoFramePoint3D finalPosition;
+   private final YoFrameVector3D finalVelocity;
+   private final YoFrameVector3D finalAcceleration;
    private final YoInteger currentSegmentIndex;
 
    private final ArrayList<FrameTrajectory3D> segments = new ArrayList<>();
@@ -54,17 +53,17 @@ public class FootTrajectory
       this.t1 = new YoDouble(namePrefix + "IntermediateTime1", registry);
       this.t2 = new YoDouble(namePrefix + "IntermediateTime2", registry);
       this.tF = new YoDouble(namePrefix + "FinalTime", registry);
-      this.initialPosition = new YoFramePoint(namePrefix + "InitialPosition", worldFrame, registry);
-      this.initialVelocity = new YoFrameVector(namePrefix + "IntialVelocity", worldFrame, registry);
-      this.initialAcceleration = new YoFrameVector(namePrefix + "InitialAcceleration", worldFrame, registry);
-      this.intermediatePosition1 = new YoFramePoint(namePrefix + "IntermediatePoint1", worldFrame, registry);
-      this.intermediatePosition2 = new YoFramePoint(namePrefix + "IntermediatePoint2", worldFrame, registry);
-      this.finalPosition = new YoFramePoint(namePrefix + "FinalPosition", worldFrame, registry);
-      this.finalVelocity = new YoFrameVector(namePrefix + "FinalVelocity", worldFrame, registry);
-      this.finalAcceleration = new YoFrameVector(namePrefix + "FinalAcceleration", worldFrame, registry);
+      this.initialPosition = new YoFramePoint3D(namePrefix + "InitialPosition", worldFrame, registry);
+      this.initialVelocity = new YoFrameVector3D(namePrefix + "IntialVelocity", worldFrame, registry);
+      this.initialAcceleration = new YoFrameVector3D(namePrefix + "InitialAcceleration", worldFrame, registry);
+      this.intermediatePosition1 = new YoFramePoint3D(namePrefix + "IntermediatePoint1", worldFrame, registry);
+      this.intermediatePosition2 = new YoFramePoint3D(namePrefix + "IntermediatePoint2", worldFrame, registry);
+      this.finalPosition = new YoFramePoint3D(namePrefix + "FinalPosition", worldFrame, registry);
+      this.finalVelocity = new YoFrameVector3D(namePrefix + "FinalVelocity", worldFrame, registry);
+      this.finalAcceleration = new YoFrameVector3D(namePrefix + "FinalAcceleration", worldFrame, registry);
 
-      this.defaultTouchdownVelocity = new YoFrameVector(namePrefix + "DefaultTouchdownVelocity", worldFrame, registry);
-      this.defaultTouchdownAcceleration = new YoFrameVector(namePrefix + "DefaultTouchdownAcceleration", worldFrame, registry);
+      this.defaultTouchdownVelocity = new YoFrameVector3D(namePrefix + "DefaultTouchdownVelocity", worldFrame, registry);
+      this.defaultTouchdownAcceleration = new YoFrameVector3D(namePrefix + "DefaultTouchdownAcceleration", worldFrame, registry);
 
       segments.add(new FrameTrajectory3D(4, worldFrame));
       segments.add(new FrameTrajectory3D(6, worldFrame));

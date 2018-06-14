@@ -44,7 +44,7 @@ public class GroundPlaneEstimatorTest
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.4)
+   @ContinuousIntegrationTest(estimatedDuration = 0.3)
    @Test(timeout = 30000)
    public void testPointsWithSamePitchAndDifferentPositionGetSameAnswer()
    {
@@ -75,7 +75,7 @@ public class GroundPlaneEstimatorTest
       assertTrue(normalA.epsilonEquals(normalB, 1e-7));
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.4)
+   @ContinuousIntegrationTest(estimatedDuration = 0.3)
    @Test(timeout = 30000)
    public void testPointsWithSamePitchAndDifferentPositionGetSameAnswer2()
    {
@@ -113,7 +113,7 @@ public class GroundPlaneEstimatorTest
       assertEquals(actualPitch, computedPitch, epsilon);
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.4, categoriesOverride = IntegrationCategory.IN_DEVELOPMENT)
+   @ContinuousIntegrationTest(estimatedDuration = 0.4, categoriesOverride = IntegrationCategory.EXCLUDE)
    @Test(timeout = 30000)
    public void testGetPitchWithFeetOnPlane()
    {

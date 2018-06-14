@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -23,7 +25,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.parameterTuner.ParameterTuningTools;
 import us.ihmc.parameterTuner.guiElements.GuiParameter;
 import us.ihmc.parameterTuner.guiElements.GuiParameterStatus;
@@ -56,6 +57,9 @@ public class GuiController
    private TuningTabManager tuningTabManager;
 
    private final ParameterTree tree = new ParameterTree();
+
+   private final List<GuiRegistry> allRegistries = new ArrayList<>();
+   private final BooleanProperty rootRegistriesChanged = new SimpleBooleanProperty();
 
    public void initialize()
    {
@@ -115,7 +119,10 @@ public class GuiController
          @Override
          public void handle(DragEvent event)
          {
-            addSelectedParametersToTuner();
+            if (event.getGestureSource() == tree)
+            {
+               addSelectedParametersToTuner();
+            }
          }
       });
 
@@ -160,13 +167,34 @@ public class GuiController
       changeCollector = new ChangeCollector();
       parameterMap.clear();
       List<GuiParameter> allParameters = new ArrayList<>();
-      registries.stream().forEach(registry -> allParameters.addAll(registry.getAllParameters()));
-      allParameters.stream().forEach(parameter -> {
+      registries.forEach(registry -> allParameters.addAll(registry.getAllParameters()));
+      allParameters.forEach(parameter -> {
          parameter.addChangedListener(changeCollector);
          parameter.addStatusUpdater();
          parameter.saveStateForReset();
          parameterMap.put(parameter.getUniqueName(), parameter);
       });
+
+      allRegistries.clear();
+      registries.stream().forEach(registry -> {
+         allRegistries.add(registry);
+         allRegistries.addAll(registry.getAllRegistries());
+      });
+      allRegistries.forEach(registry -> registry.isRoot().addListener((observable, oldValue, newValue) -> rootRegistriesChanged.set(true)));
+      rootRegistriesChanged.set(true);
+   }
+
+   public boolean areRootRegistriesChanged()
+   {
+      return rootRegistriesChanged.getValue();
+   }
+
+   public List<String> pollRootRegistryNames()
+   {
+      rootRegistriesChanged.set(false);
+      List<String> rootRegistries = new ArrayList<>();
+      allRegistries.stream().filter(registry -> registry.isRoot().get()).forEach(registry -> rootRegistries.add(registry.getUniqueName()));
+      return rootRegistries;
    }
 
    public List<GuiParameter> pollChangedParameters()
@@ -188,20 +216,23 @@ public class GuiController
 
       changeCollector.stopRecording();
       externallyChangesParameters.stream().forEach(externalParameter -> {
-         GuiParameter localParameter = parameterMap.get(externalParameter.getUniqueName());
-         if (localParameter == null)
+         String uniqueName = externalParameter.getUniqueName();
+         GuiParameter localParameter = parameterMap.get(uniqueName);
+         if (changeCollector.isPending(uniqueName))
          {
-            PrintTools.warn("Did not find " + externalParameter.getName() + " skipping...");
+            changeCollector.parameterWasUpdated(uniqueName, externalParameter.getCurrentValue());
          }
-         else
+         else if (!localParameter.getCurrentValue().equals(externalParameter.getCurrentValue()))
          {
-            if (!localParameter.getCurrentValue().equals(externalParameter.getCurrentValue()))
-            {
-               localParameter.setValueAndStatus(externalParameter);
-               localParameter.saveStateForReset();
-            }
+            localParameter.setValueAndStatus(externalParameter);
+            localParameter.saveStateForReset();
          }
       });
       changeCollector.startRecording();
+   }
+
+   public void close()
+   {
+      tuningTabManager.close();
    }
 }

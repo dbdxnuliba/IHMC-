@@ -1,9 +1,10 @@
 package us.ihmc.commonWalkingControlModules.controlModules.flight;
 
 import java.util.List;
-import java.util.Map;
 
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
+import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -13,7 +14,7 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePose2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
 import us.ihmc.euclid.tuple2D.Point2D;
-import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
@@ -79,23 +80,41 @@ public class ContactState
     */
    public void setSupportPolygon(RobotSide side, ConvexPolygon2D supportPolygonToSet)
    {
-      footSupportPolygons.get(side).setAndUpdate(supportPolygonToSet);
+      footSupportPolygons.get(side).set(supportPolygonToSet);
    }
+
+   private List<Point2D> supplierSpoofReference;
+   private final Vertex2DSupplier supplierSpoof = new Vertex2DSupplier()
+   {
+
+      @Override
+      public Point2DReadOnly getVertex(int index)
+      {
+         return supplierSpoofReference.get(index);
+      }
+
+      @Override
+      public int getNumberOfVertices()
+      {
+         return supplierSpoofReference.size();
+      }
+   };
 
    public void setSupportPolygon(RobotSide side, List<Point2D> supportPolygonVerticesInAnkleFrame)
    {
-      footSupportPolygons.get(side).setAndUpdate(supportPolygonVerticesInAnkleFrame, supportPolygonVerticesInAnkleFrame.size());
+      supplierSpoofReference = supportPolygonVerticesInAnkleFrame;
+      footSupportPolygons.get(side).set(supplierSpoof);
    }
 
    /**
     * Sets the support polygon specified. The polygon is transformed to {@link #getPose(RobotSide)}
     * @param supportPolygonToSet support polygon to set. Will be stored wrt to the specified pose
     */
-   public void setSupportPolygon(RobotSide side, FrameConvexPolygon2d supportPolygonToSet)
+   public void setSupportPolygon(RobotSide side, FrameConvexPolygon2D supportPolygonToSet)
    {
       ConvexPolygon2D footPolygon = footSupportPolygons.get(side);
       FramePose3D footPose = footPoses.get(side);
-      footPolygon.set(supportPolygonToSet.getGeometryObject());
+      footPolygon.set(supportPolygonToSet);
       TransformHelperTools.transformFromReferenceFrameToReferenceFrame(supportPolygonToSet.getReferenceFrame(), footPose.getReferenceFrame(), footPolygon);
       TransformHelperTools.transformFromReferenceFrameToPoseByProjection(footPose, footPolygon);
    }
@@ -110,11 +129,11 @@ public class ContactState
     * @param referenceFrame
     * @param supportPolygonToSet
     */
-   public void getSupportPolygon(RobotSide side, ReferenceFrame referenceFrame, FrameConvexPolygon2d supportPolygonToSet)
+   public void getSupportPolygon(RobotSide side, ReferenceFrame referenceFrame, FrameConvexPolygon2D supportPolygonToSet)
    {
       FramePose3D footPose = footPoses.get(side);
       supportPolygonToSet.setIncludingFrame(footPose.getReferenceFrame(), footSupportPolygons.get(side));
-      TransformHelperTools.transformFromPoseToReferenceFrameByProjection(footPose, supportPolygonToSet.getGeometryObject());
+      TransformHelperTools.transformFromPoseToReferenceFrameByProjection(footPose, supportPolygonToSet);
       supportPolygonToSet.changeFrame(referenceFrame);
    }
 
@@ -158,7 +177,7 @@ public class ContactState
       footPoses.get(RobotSide.LEFT).setIncludingFrame(leftFootPose);
       footPoses.get(RobotSide.RIGHT).setIncludingFrame(rightFootPose);
    }
-   
+
    public void setFootPose(RobotSide side, FramePose3DReadOnly poseToSet)
    {
       footPoses.get(side).setIncludingFrame(poseToSet);

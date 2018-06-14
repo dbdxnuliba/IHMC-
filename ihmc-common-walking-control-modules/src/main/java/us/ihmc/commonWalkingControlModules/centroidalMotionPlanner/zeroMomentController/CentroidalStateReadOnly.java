@@ -9,45 +9,45 @@ import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 
 public interface CentroidalStateReadOnly
 {
-   default void getPosition(FramePoint3D positionToSet)
+   public FramePoint3DReadOnly getPosition();
+
+   default public void getPosition(FramePoint3D positionToSet)
    {
       positionToSet.setIncludingFrame(getPosition());
    }
 
-   FramePoint3DReadOnly getPosition();
+   public FrameVector3DReadOnly getLinearVelocity();
 
-   default void getLinearVelocity(FrameVector3D linearVelocityToSet)
+   default public void getLinearVelocity(FrameVector3D linearVelocityToSet)
    {
       linearVelocityToSet.setIncludingFrame(getLinearVelocity());
    }
 
-   FrameVector3DReadOnly getLinearVelocity();
+   public FrameVector3DReadOnly getLinearAcceleration();
 
-   default void getLinearAcceleration(FrameVector3D linearAccelerationToSet)
+   default public void getLinearAcceleration(FrameVector3D linearAccelerationToSet)
    {
       linearAccelerationToSet.setIncludingFrame(getLinearAcceleration());
    }
 
-   FrameVector3DReadOnly getLinearAcceleration();
+   public FrameQuaternionReadOnly getOrientation();
 
-   default void getOrientation(FrameQuaternion orientationToSet)
+   default public void getOrientation(FrameQuaternion orientationToSet)
    {
       orientationToSet.setIncludingFrame(getOrientation());
    }
 
-   FrameQuaternionReadOnly getOrientation();
+   public FrameVector3DReadOnly getAngularVelocity();
 
-   default void getAngularVelocity(FrameVector3D angularVelocityToSet)
+   default public void getAngularVelocity(FrameVector3D angularVelocityToSet)
    {
       angularVelocityToSet.setIncludingFrame(getAngularVelocity());
    }
 
-   FrameVector3DReadOnly getAngularVelocity();
+   public FrameVector3DReadOnly getAngularAcceleration();
 
-   default void getAngularAcceleration(FrameVector3D angularAccelerationToSet)
+   default public void getAngularAcceleration(FrameVector3D angularAccelerationToSet)
    {
       angularAccelerationToSet.setIncludingFrame(getAngularAcceleration());
    }
-
-   FrameVector3DReadOnly getAngularAcceleration();
 }

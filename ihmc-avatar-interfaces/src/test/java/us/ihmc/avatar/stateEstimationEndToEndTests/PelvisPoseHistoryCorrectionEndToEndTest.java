@@ -10,6 +10,9 @@ import java.util.Random;
 import org.junit.After;
 import org.junit.Before;
 
+import controller_msgs.msg.dds.LocalizationPacket;
+import controller_msgs.msg.dds.PelvisPoseErrorPacket;
+import controller_msgs.msg.dds.StampedPosePacket;
 import us.ihmc.avatar.DRCFlatGroundWalkingTrack;
 import us.ihmc.avatar.DRCObstacleCourseStartingLocation;
 import us.ihmc.avatar.MultiRobotTestInterface;
@@ -27,33 +30,29 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.humanoidRobotics.communication.packets.StampedPosePacket;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
-import us.ihmc.humanoidRobotics.communication.packets.sensing.LocalizationPacket;
-import us.ihmc.humanoidRobotics.communication.packets.sensing.PelvisPoseErrorPacket;
 import us.ihmc.humanoidRobotics.communication.subscribers.PelvisPoseCorrectionCommunicatorInterface;
 import us.ihmc.jMonkeyEngineToolkit.GroundProfile3D;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.commons.MathTools;
-import us.ihmc.robotics.controllers.ControllerFailureException;
 import us.ihmc.robotics.geometry.TransformTools;
 import us.ihmc.robotics.kinematics.TimeStampedTransform3D;
-import us.ihmc.robotics.math.frames.YoFramePose;
 import us.ihmc.robotics.partNames.ArmJointName;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.partNames.SpineJointName;
 import us.ihmc.robotics.random.RandomGeometry;
-import us.ihmc.robotics.robotController.RobotController;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
+import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 import us.ihmc.simulationToolkit.controllers.OscillateFeetPerturber;
 import us.ihmc.simulationconstructionset.FloatingJoint;
 import us.ihmc.simulationconstructionset.FloatingRootJointRobot;
-import us.ihmc.simulationconstructionset.HumanoidFloatingRootJointRobot;
 import us.ihmc.simulationconstructionset.OneDegreeOfFreedomJoint;
 import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
+import us.ihmc.simulationconstructionset.util.ControllerFailureException;
+import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.simulationconstructionset.util.ground.FlatGroundProfile;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
@@ -65,6 +64,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.variable.YoLong;
 
 public abstract class PelvisPoseHistoryCorrectionEndToEndTest implements MultiRobotTestInterface
@@ -599,7 +599,7 @@ public abstract class PelvisPoseHistoryCorrectionEndToEndTest implements MultiRo
    private boolean testTranslationAndRotationInterpolationToRandomTargets(final Robot robot, YoVariableRegistry registry, int numTargets)
          throws SimulationExceededMaximumTimeException
    {
-      YoFramePose target = new YoFramePose("target_", ReferenceFrame.getWorldFrame(), registry);
+      YoFramePoseUsingYawPitchRoll target = new YoFramePoseUsingYawPitchRoll("target_", ReferenceFrame.getWorldFrame(), registry);
       RigidBodyTransform[] targets = createRandomCorrectionTargets(numTargets);
       boolean success = true;
 
@@ -671,7 +671,7 @@ public abstract class PelvisPoseHistoryCorrectionEndToEndTest implements MultiRo
    private boolean testTranslationInterpolationToRandomTargets(final Robot robot, YoVariableRegistry registry, int numTargets)
          throws SimulationExceededMaximumTimeException
    {
-      YoFramePose target = new YoFramePose("target_", ReferenceFrame.getWorldFrame(), registry);
+      YoFramePoseUsingYawPitchRoll target = new YoFramePoseUsingYawPitchRoll("target_", ReferenceFrame.getWorldFrame(), registry);
       RigidBodyTransform[] targets = createRandomCorrectionTargets(numTargets);
       boolean success = true;
 
@@ -860,7 +860,7 @@ public abstract class PelvisPoseHistoryCorrectionEndToEndTest implements MultiRo
       externalPelvisPosePublisher = new ExternalPelvisPoseCreator();
       AvatarSimulation avatarSimulation = drcFlatGroundWalkingTrack.getAvatarSimulation();
       avatarSimulation.setExternalPelvisCorrectorSubscriber(externalPelvisPosePublisher);
-      YoBoolean walk = (YoBoolean) simulationConstructionSet.getVariable("walk");
+      YoBoolean walk = (YoBoolean) simulationConstructionSet.getVariable("walkCSG");
       walk.set(true);
       return drcFlatGroundWalkingTrack;
    }

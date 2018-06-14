@@ -9,13 +9,13 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.lists.GenericTypeBuilder;
 import us.ihmc.robotics.lists.RecyclingArrayList;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
@@ -47,13 +47,13 @@ public class CollinearForceBasedPlannerResult implements CentroidalMotionPlan
    private final FrameVector3D comAcceleration = new FrameVector3D();
    private final FrameVector3D groundReactionForce = new FrameVector3D();
    private FrameVector3DReadOnly gravity;
-   private final YoFramePoint yoCoMPosition;
-   private final YoFramePoint yoCoPPosition;
-   private final YoFrameVector yoCoMVelocity;
-   private final YoFrameVector yoCoMAccelerationDifference;
-   private final YoFrameVector yoCoMDynamicsAcceleration;
-   private final YoFrameVector yoCoMDesiredAcceleration;
-   private final YoFrameVector yoGroundReactionForce;
+   private final YoFramePoint3D yoCoMPosition;
+   private final YoFramePoint3D yoCoPPosition;
+   private final YoFrameVector3D yoCoMVelocity;
+   private final YoFrameVector3D yoCoMAccelerationDifference;
+   private final YoFrameVector3D yoCoMDynamicsAcceleration;
+   private final YoFrameVector3D yoCoMDesiredAcceleration;
+   private final YoFrameVector3D yoGroundReactionForce;
    private final YoInteger yoCurrentSegmentIndex;
    private final YoDouble yoScalar;
    private final YoDouble mass;
@@ -98,13 +98,13 @@ public class CollinearForceBasedPlannerResult implements CentroidalMotionPlan
       mass = new YoDouble("Mass", registry);
       String namePrefix = "SQPOutput";
       yoCurrentSegmentIndex = new YoInteger(namePrefix + "SegmentIndex", registry);
-      yoCoMPosition = new YoFramePoint(namePrefix + "CoMPosition", referenceFrame, registry);
-      yoCoPPosition = new YoFramePoint(namePrefix + "CoPPosition", referenceFrame, registry);
-      yoCoMVelocity = new YoFrameVector(namePrefix + "CoMVelocity", referenceFrame, registry);
-      yoCoMDynamicsAcceleration = new YoFrameVector(namePrefix + "CoMDynamicsAcceleration", referenceFrame, registry);
-      yoCoMDesiredAcceleration = new YoFrameVector(namePrefix + "CoMDesiredAcceleration", referenceFrame, registry);
-      yoCoMAccelerationDifference = new YoFrameVector(namePrefix + "CoMAccelerationDifference", referenceFrame, registry);
-      yoGroundReactionForce = new YoFrameVector(namePrefix + "GroundReactionForce", referenceFrame, registry);
+      yoCoMPosition = new YoFramePoint3D(namePrefix + "CoMPosition", referenceFrame, registry);
+      yoCoPPosition = new YoFramePoint3D(namePrefix + "CoPPosition", referenceFrame, registry);
+      yoCoMVelocity = new YoFrameVector3D(namePrefix + "CoMVelocity", referenceFrame, registry);
+      yoCoMDynamicsAcceleration = new YoFrameVector3D(namePrefix + "CoMDynamicsAcceleration", referenceFrame, registry);
+      yoCoMDesiredAcceleration = new YoFrameVector3D(namePrefix + "CoMDesiredAcceleration", referenceFrame, registry);
+      yoCoMAccelerationDifference = new YoFrameVector3D(namePrefix + "CoMAccelerationDifference", referenceFrame, registry);
+      yoGroundReactionForce = new YoFrameVector3D(namePrefix + "GroundReactionForce", referenceFrame, registry);
       yoScalar = new YoDouble(namePrefix + "Scalar", registry);
       reset();
    }

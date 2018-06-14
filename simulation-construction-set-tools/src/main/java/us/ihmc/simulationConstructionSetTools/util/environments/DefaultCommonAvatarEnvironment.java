@@ -8,6 +8,7 @@ import java.util.Random;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.Box3D;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -21,15 +22,15 @@ import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceMaterial;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceTexture;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.FloatingFiducialBoxRobot;
+import us.ihmc.simulationConstructionSetTools.util.ground.CombinedTerrainObject3D;
+import us.ihmc.simulationConstructionSetTools.util.ground.RotatableConvexPolygonTerrainObject;
+import us.ihmc.simulationConstructionSetTools.util.ground.TrussWithSimpleCollisions;
 import us.ihmc.simulationconstructionset.ExternalForcePoint;
 import us.ihmc.simulationconstructionset.Robot;
-import us.ihmc.simulationconstructionset.util.ground.CombinedTerrainObject3D;
 import us.ihmc.simulationconstructionset.util.ground.CylinderTerrainObject;
 import us.ihmc.simulationconstructionset.util.ground.RotatableBoxTerrainObject;
 import us.ihmc.simulationconstructionset.util.ground.RotatableCinderBlockTerrainObject;
-import us.ihmc.simulationconstructionset.util.ground.RotatableConvexPolygonTerrainObject;
 import us.ihmc.simulationconstructionset.util.ground.TerrainObject3D;
-import us.ihmc.simulationconstructionset.util.ground.TrussWithSimpleCollisions;
 
 @SuppressWarnings("unused")
 public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentInterface
@@ -1457,7 +1458,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
          vertexPoints.add(point2d);
       }
 
-      ConvexPolygon2D convexPolygon = new ConvexPolygon2D(vertexPoints);
+      ConvexPolygon2D convexPolygon = new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(vertexPoints));
       RotatableConvexPolygonTerrainObject rock = new RotatableConvexPolygonTerrainObject(normal, convexPolygon, centroidHeight, rockAppearance);
       combinedTerrainObject.addTerrainObject(rock);
    }

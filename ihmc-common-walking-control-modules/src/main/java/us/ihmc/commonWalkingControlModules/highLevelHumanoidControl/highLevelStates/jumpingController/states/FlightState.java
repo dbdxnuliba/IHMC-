@@ -57,7 +57,8 @@ public class FlightState extends AbstractJumpState
    {
       wholeBodyMomentumManager.computeMomentumRateOfChangeForFreeFall();
       pelvisManager.maintainDesiredOrientationOnly();
-      feetManager.compute();
+      // this is hacked here and will not work if there are real time based trajectories to be tracked
+      feetManager.compute(0.0);
       for (RobotSide side : RobotSide.values)
          handManagers.get(side).compute();
       chestManager.compute();

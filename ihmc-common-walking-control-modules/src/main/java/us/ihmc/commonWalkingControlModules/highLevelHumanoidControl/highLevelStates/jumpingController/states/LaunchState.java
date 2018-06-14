@@ -63,7 +63,8 @@ public class LaunchState extends AbstractJumpState
       double timeInCurrentState = getTimeInCurrentState();
       centroidalMomentumManager.computeMomentumRateOfChangeFromForceProfile(timeInCurrentState);
       pelvisControlManager.maintainDesiredOrientationOnly(pelvisAngularWeights);
-      feetManager.compute();
+      // this is hacked here and will not work if there are real time based trajectories to be tracked
+      feetManager.compute(0.0);
       headManager.compute();
       chestManager.compute();
       for (RobotSide robotSide : RobotSide.values)

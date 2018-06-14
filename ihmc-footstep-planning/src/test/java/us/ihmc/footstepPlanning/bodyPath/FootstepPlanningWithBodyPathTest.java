@@ -52,6 +52,7 @@ public class FootstepPlanningWithBodyPathTest
    @Rule
    public TestName name = new TestName();
 
+   @ContinuousIntegrationTest(estimatedDuration = 7.0)
    @Test(timeout = 30000)
    public void testWaypointPathOnFlat()
    {
@@ -84,7 +85,7 @@ public class FootstepPlanningWithBodyPathTest
    }
 
    @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.1, categoriesOverride = {IntegrationCategory.IN_DEVELOPMENT})
+   @ContinuousIntegrationTest(estimatedDuration = 0.1, categoriesOverride = {IntegrationCategory.EXCLUDE})
    public void testMaze()
    {
       WaypointDefinedBodyPathPlan bodyPath = new WaypointDefinedBodyPathPlan();

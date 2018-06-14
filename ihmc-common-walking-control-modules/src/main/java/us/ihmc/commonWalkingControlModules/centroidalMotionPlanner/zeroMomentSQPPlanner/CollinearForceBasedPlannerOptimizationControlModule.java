@@ -6,25 +6,22 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.convexOptimization.quadraticProgram.ActiveSetQPSolver;
 import us.ihmc.convexOptimization.quadraticProgram.JavaQuadProgSolver;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
-import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
-import us.ihmc.robotics.math.frames.YoFramePoint;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.tools.exceptions.NoConvergenceException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
@@ -152,7 +149,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       totalIterations.set(0);
    }
 
-   public void setDesiredInitialState(YoFramePoint initialCoMLocation, YoFramePoint initialCoPLocation, YoFrameVector initialCoMVelocity)
+   public void setDesiredInitialState(YoFramePoint3D initialCoMLocation, YoFramePoint3D initialCoPLocation, YoFrameVector3D initialCoMVelocity)
    {
       this.desiredInitialCoMPosition.setIncludingFrame(initialCoMLocation);
       this.desiredInitialCoMVelocity.setIncludingFrame(initialCoMVelocity);
@@ -166,7 +163,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       this.desiredInitialCoPPosition.setIncludingFrame(initialCoPLocation);
    }
 
-   public void setDesiredFinalState(YoFramePoint finalCoMLocation, YoFramePoint finalCoPLocation, YoFrameVector finalCoMVelocity)
+   public void setDesiredFinalState(YoFramePoint3D finalCoMLocation, YoFramePoint3D finalCoPLocation, YoFrameVector3D finalCoMVelocity)
    {
       this.desiredFinalCoMPosition.setIncludingFrame(finalCoMLocation);
       this.desiredFinalCoMVelocity.setIncludingFrame(finalCoMVelocity);

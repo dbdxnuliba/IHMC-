@@ -8,10 +8,12 @@ import us.ihmc.commonWalkingControlModules.controlModules.flight.TransformHelper
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -35,7 +37,7 @@ public class SmartContactStateProcessor
    private final ConvexPolygon2D tempSupportPolygon = new ConvexPolygon2D();
 
    private final ArrayList<Point2D> tempVertices = new ArrayList<>();
-
+   
    public SmartContactStateProcessor(ReferenceFrame planningFrame, String namePrefix, YoVariableRegistry registry)
    {
       this.planningFrame = planningFrame;
@@ -260,6 +262,24 @@ public class SmartContactStateProcessor
       generateMinimalVertexSupportPolygon(polygonToSet, tempVertices, numberOfVertices, defaultPrecision);
    }
 
+   private static List<Point2D> supplierSpoofReference;
+   private static int supplierSpoofNumberOfVertices = 0;
+   private static final Vertex2DSupplier supplierSpoof = new Vertex2DSupplier()
+   {
+      
+      @Override
+      public Point2DReadOnly getVertex(int index)
+      {
+         return supplierSpoofReference.get(index);
+      }
+      
+      @Override
+      public int getNumberOfVertices()
+      {
+         return supplierSpoofNumberOfVertices;
+      }
+   };
+
    public static void generateMinimalVertexSupportPolygon(ConvexPolygon2D polygonToSet, ArrayList<Point2D> vertexList, int numberOfVertices, double precision)
    {
       roundToPrecision(vertexList, precision);
@@ -313,7 +333,8 @@ public class SmartContactStateProcessor
             break;
          }
       }
-      polygonToSet.setAndUpdate(vertexList, numberOfVertices);
+      supplierSpoofReference = vertexList;
+      supplierSpoofNumberOfVertices = numberOfVertices;
+      polygonToSet.set(supplierSpoof);
    }
-
 }

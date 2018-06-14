@@ -10,14 +10,13 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.robotics.math.frames.YoFramePose;
-import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
 import us.ihmc.robotics.trajectories.providers.CurrentRigidBodyStateProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoFramePose3D;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class FeetControlModule
 {
@@ -25,9 +24,9 @@ public class FeetControlModule
    private final SideDependentList<FootTrajectoryGenerator> feetTrajectoryGenerator = new SideDependentList<>();
    private final SideDependentList<FootController> feetControllers;
    private final SideDependentList<MovingReferenceFrame> soleFrames;
-   private final SideDependentList<YoFramePose> desiredPoses = new SideDependentList<>();
-   private final SideDependentList<YoFrameVector> desiredFootVelocities = new SideDependentList<>();
-   private final SideDependentList<YoFrameVector> desiredFootAccelerations = new SideDependentList<>();
+   private final SideDependentList<YoFramePose3D> desiredPoses = new SideDependentList<>();
+   private final SideDependentList<YoFrameVector3D> desiredFootVelocities = new SideDependentList<>();
+   private final SideDependentList<YoFrameVector3D> desiredFootAccelerations = new SideDependentList<>();
    private final SideDependentList<CurrentRigidBodyStateProvider> currentFootState = new SideDependentList<>();
    private List<ContactState> plannedContactStateList;
 
@@ -46,11 +45,11 @@ public class FeetControlModule
          String footPrefix = namePrefix + "Desired" + side.getCamelCaseNameForMiddleOfExpression() + "Foot";
          currentFootState.put(side, new CurrentRigidBodyStateProvider(soleFrames.get(side)));
          feetTrajectoryGenerator.put(side, new FootTrajectoryGenerator(side, registry, graphicsListRegistry));
-         YoFramePose desiredFootPose = new YoFramePose(footPrefix + "Pose", worldFrame, registry);
+         YoFramePose3D desiredFootPose = new YoFramePose3D(footPrefix + "Pose", worldFrame, registry);
          desiredPoses.put(side, desiredFootPose);
-         YoFrameVector desiredFootVelocity = new YoFrameVector(footPrefix + "Velocities", worldFrame, registry);
+         YoFrameVector3D desiredFootVelocity = new YoFrameVector3D(footPrefix + "Velocities", worldFrame, registry);
          desiredFootVelocities.put(side, desiredFootVelocity);
-         YoFrameVector desiredFootAcceleration = new YoFrameVector(footPrefix + "Acceleration", worldFrame, registry);
+         YoFrameVector3D desiredFootAcceleration = new YoFrameVector3D(footPrefix + "Acceleration", worldFrame, registry);
          desiredFootAccelerations.put(side, desiredFootAcceleration);
       }
    }

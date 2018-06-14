@@ -1,7 +1,13 @@
 package us.ihmc.avatar;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import controller_msgs.msg.dds.RequestWristForceSensorCalibrationPacket;
+import controller_msgs.msg.dds.StateEstimatorModePacket;
 import us.ihmc.commonWalkingControlModules.controlModules.ForceSensorToJointTorqueProjector;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ContactableBodiesFactory;
+import us.ihmc.commons.Conversions;
 import us.ihmc.communication.packets.ControllerCrashLocation;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -9,9 +15,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.humanoidRobotics.communication.packets.sensing.RequestWristForceSensorCalibrationPacket;
 import us.ihmc.humanoidRobotics.communication.packets.sensing.StateEstimatorMode;
-import us.ihmc.humanoidRobotics.communication.packets.sensing.StateEstimatorModePacket;
 import us.ihmc.humanoidRobotics.communication.streamingData.HumanoidGlobalDataProducer;
 import us.ihmc.humanoidRobotics.communication.subscribers.PelvisPoseCorrectionCommunicatorInterface;
 import us.ihmc.humanoidRobotics.communication.subscribers.RequestWristForceSensorCalibrationSubscriber;
@@ -21,11 +25,16 @@ import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
 import us.ihmc.robotDataLogger.RobotVisualizer;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotController.ModularRobotController;
-import us.ihmc.robotics.robotController.RobotController;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
-import us.ihmc.robotics.sensors.*;
+import us.ihmc.robotics.sensors.CenterOfMassDataHolder;
+import us.ihmc.robotics.sensors.ContactSensorHolder;
+import us.ihmc.robotics.sensors.ForceSensorData;
+import us.ihmc.robotics.sensors.ForceSensorDataHolder;
+import us.ihmc.robotics.sensors.ForceSensorDataHolderReadOnly;
+import us.ihmc.robotics.sensors.ForceSensorDefinition;
+import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.sensorProcessing.communication.producers.DRCPoseCommunicator;
 import us.ihmc.sensorProcessing.model.RobotMotionStatusHolder;
@@ -42,6 +51,7 @@ import us.ihmc.sensorProcessing.simulatedSensors.SensorReaderFactory;
 import us.ihmc.sensorProcessing.stateEstimation.IMUSensorReadOnly;
 import us.ihmc.sensorProcessing.stateEstimation.StateEstimatorParameters;
 import us.ihmc.simulationConstructionSetTools.robotController.MultiThreadedRobotControlElement;
+import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.stateEstimation.humanoid.kinematicsBasedStateEstimation.DRCKinematicsBasedStateEstimator;
 import us.ihmc.stateEstimation.humanoid.kinematicsBasedStateEstimation.ForceSensorCalibrationModule;
 import us.ihmc.stateEstimation.humanoid.kinematicsBasedStateEstimation.KinematicsBasedStateEstimatorFactory;
@@ -52,10 +62,8 @@ import us.ihmc.wholeBodyController.concurrent.ThreadDataSynchronizerInterface;
 import us.ihmc.wholeBodyController.parameters.ParameterLoaderHelper;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoLong;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DRCEstimatorThread implements MultiThreadedRobotControlElement
 {
@@ -83,7 +91,8 @@ public class DRCEstimatorThread implements MultiThreadedRobotControlElement
    private final YoLong startClockTime = new YoLong("startTime", estimatorRegistry);
    private final ExecutionTimer estimatorTimer = new ExecutionTimer("estimatorTimer", 10.0, estimatorRegistry);
 
-   private final YoLong actualEstimatorDT = new YoLong("actualEstimatorDT", estimatorRegistry);
+   private long lastReadSystemTime = 0L;
+   private final YoDouble actualEstimatorDT = new YoDouble("actualEstimatorDTInMillis", estimatorRegistry);
 
    private final SensorOutputMapReadOnly sensorOutputMapReadOnly;
    private final SensorRawOutputMapReadOnly sensorRawOutputMapReadOnly;
@@ -259,7 +268,10 @@ public class DRCEstimatorThread implements MultiThreadedRobotControlElement
    {
       try
       {
-         actualEstimatorDT.set(currentClockTime - startClockTime.getLongValue());
+         long nanoTime = System.nanoTime();
+         actualEstimatorDT.set(Conversions.nanosecondsToMilliseconds((double) (nanoTime - lastReadSystemTime)));
+         lastReadSystemTime = nanoTime;
+
          startClockTime.set(currentClockTime);
 
          controllerDataValid.set(threadDataSynchronizer.receiveControllerDataForEstimator());
