@@ -48,6 +48,15 @@ public class ExploringConfigurationSpace
       lowerLimit = value;
    }
 
+   public void setConfiguration(double... values)
+   {
+      if (values.length != configuration.size())
+         throw new IllegalArgumentException("The number of configuration values is different with " + this.getClass());
+      else
+         for (int i = 0; i < values.length; i++)
+            configuration.replace(i, values[i]);
+   }
+
    private void updateRandomConfiguration()
    {
       for (int i = 0; i < configuration.size(); i++)
