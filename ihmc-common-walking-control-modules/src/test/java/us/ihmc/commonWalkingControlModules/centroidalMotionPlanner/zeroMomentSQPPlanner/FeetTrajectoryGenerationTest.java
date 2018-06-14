@@ -2,7 +2,7 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQ
 
 import org.junit.Test;
 
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootTrajectoryGenerator;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootTrajectoryGenerator;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;

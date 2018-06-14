@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl;
 
 import java.util.ArrayList;
 

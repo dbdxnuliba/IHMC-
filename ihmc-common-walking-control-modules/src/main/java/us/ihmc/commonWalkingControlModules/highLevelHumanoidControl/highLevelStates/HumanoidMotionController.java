@@ -5,14 +5,16 @@ import java.util.Collection;
 import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootController;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootSupportPolygon;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootSupportPolygon;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreOutputReadOnly;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.MomentumRateCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.PlaneContactStateCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand.PrivilegedConfigurationOption;
@@ -23,6 +25,7 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSta
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -169,7 +172,22 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
             controllerCoreCommand.addFeedbackControlCommand(manager.getFeedbackControlCommand());
          }
       }
+      controllerCoreCommand.addInverseDynamicsCommand(createZeroAccelerationMomentumCommand());
    }
+
+   // Temp momentum method for debugging
+   private final MomentumRateCommand momentumRateCommand = new MomentumRateCommand();
+   private final FrameVector3D zeroVector = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
+   private InverseDynamicsCommand<?> createZeroAccelerationMomentumCommand()
+   {
+      momentumRateCommand.setLinearMomentumRate(zeroVector);
+      momentumRateCommand.setAngularMomentumRate(zeroVector);
+      momentumRateCommand.setAngularWeights(controllerParamaters.getMomentumOptimizationSettings().getAngularMomentumWeight());
+      momentumRateCommand.setLinearWeights(controllerParamaters.getMomentumOptimizationSettings().getLinearMomentumWeight());
+      momentumRateCommand.setSelectionMatrixToIdentity();
+      return momentumRateCommand;
+   }
+   // Ends here
 
    private void initializeManagers()
    {

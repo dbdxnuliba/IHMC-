@@ -7,8 +7,8 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FeetControlModule;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootTrajectoryParameters;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FeetControlModule;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootTrajectoryParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;

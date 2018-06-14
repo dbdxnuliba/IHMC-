@@ -1,6 +1,6 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states;
 
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.FootController;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -32,13 +32,13 @@ public class DoubleSupportMotionState extends MotionControllerState
    @Override
    public boolean isDone()
    {
-      return true;
+      return false;
    }
 
    @Override
    public void doAction()
    {
-      if(requestedState.getEnumValue() != null)
+      if (requestedState.getEnumValue() != null)
       {
          
       }
@@ -52,6 +52,7 @@ public class DoubleSupportMotionState extends MotionControllerState
       for (RobotSide side : RobotSide.values)
       {
          handManagers.get(side).compute();
+         feetControllers.get(side).doControl();
       }
    }
 

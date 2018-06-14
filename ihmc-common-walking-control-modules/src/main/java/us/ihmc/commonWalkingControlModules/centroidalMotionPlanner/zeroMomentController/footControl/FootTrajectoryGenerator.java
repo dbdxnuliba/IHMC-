@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController;
+package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl;
 
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
