@@ -47,7 +47,7 @@ public enum ConfigurationSpaceName
       case YAW:
          return -0.3 * Math.PI;
       case SE3:
-         return -1.0;
+         return 0.0;
       default:
          throw new RuntimeException("Unexpected value: " + this);
       }
