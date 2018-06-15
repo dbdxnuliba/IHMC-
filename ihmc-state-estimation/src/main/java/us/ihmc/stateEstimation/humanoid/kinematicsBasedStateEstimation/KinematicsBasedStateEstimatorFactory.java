@@ -4,9 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ContactableBodiesFactory;
-import us.ihmc.commonWalkingControlModules.sensors.footSwitch.KinematicsBasedFootSwitch;
-import us.ihmc.commonWalkingControlModules.sensors.footSwitch.WrenchAndContactSensorFusedFootSwitch;
-import us.ihmc.commonWalkingControlModules.sensors.footSwitch.WrenchBasedFootSwitch;
+import us.ihmc.euclid.referenceFrame.FramePoint2D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
@@ -18,12 +17,11 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.TotalMassCalculator;
+import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.robotics.sensors.CenterOfMassDataHolder;
-import us.ihmc.robotics.sensors.ContactSensor;
 import us.ihmc.robotics.sensors.ContactSensorHolder;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.robotics.sensors.ForceSensorDataHolder;
-import us.ihmc.robotics.sensors.ForceSensorDataReadOnly;
 import us.ihmc.sensorProcessing.model.RobotMotionStatusHolder;
 import us.ihmc.sensorProcessing.parameters.DRCRobotSensorInformation;
 import us.ihmc.sensorProcessing.sensorProcessors.SensorOutputMapReadOnly;
@@ -31,8 +29,6 @@ import us.ihmc.sensorProcessing.stateEstimation.StateEstimatorParameters;
 import us.ihmc.sensorProcessing.stateEstimation.evaluation.FullInverseDynamicsStructure;
 import us.ihmc.tools.factories.FactoryTools;
 import us.ihmc.tools.factories.RequiredFactoryField;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 /**
@@ -148,53 +144,73 @@ public class KinematicsBasedStateEstimatorFactory
       DRCRobotSensorInformation sensorInformation = sensorInformationField.get();
       ForceSensorDataHolder estimatorForceSensorDataHolderToUpdate = estimatorForceSensorDataHolderToUpdateField.get();
       StateEstimatorParameters stateEstimatorParameters = stateEstimatorParametersField.get();
-      ContactSensorHolder contactSensorHolder = contactSensorHolderField.get();
-
-      DoubleProvider contactThresholdForce = new DoubleParameter("ContactThresholdForce", stateEstimatorRegistry, stateEstimatorParameters.getContactThresholdForce());
-      DoubleProvider copThresholdFraction = new DoubleParameter("CoPThresholdFraction", stateEstimatorRegistry, stateEstimatorParameters.getFootSwitchCoPThresholdFraction());
-      DoubleProvider contactThresholdHeight = new DoubleParameter("ContactThresholdHeight", stateEstimatorRegistry, stateEstimatorParameters.getContactThresholdHeight());
 
       for (RobotSide robotSide : RobotSide.values)
       {
-         String footForceSensorName = sensorInformation.getFeetForceSensorNames().get(robotSide);
-         String footContactSensorName = sensorInformation.getFeetContactSensorNames().get(robotSide);
-         ForceSensorDataReadOnly footForceSensorForEstimator = estimatorForceSensorDataHolderToUpdate.getByName(footForceSensorName);
-         String namePrefix = bipedFeet.get(robotSide).getName() + "StateEstimator";
-
-         RigidBody foot = bipedFeet.get(robotSide).getRigidBody();
-         bipedFeetMap.put(foot, bipedFeet.get(robotSide));
-
-         switch (stateEstimatorParameters.getFootSwitchType())
+         ContactableFoot contactableFoot = bipedFeet.get(robotSide);
+         RigidBody foot = contactableFoot.getRigidBody();
+         bipedFeetMap.put(foot, contactableFoot);
+         ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
+         footSwitchMap.put(foot, new FootSwitchInterface()
          {
-         case KinematicBased:
+            @Override
+            public void updateCoP()
+            {
+            }
 
-            KinematicsBasedFootSwitch footSwitch = new KinematicsBasedFootSwitch(namePrefix, bipedFeet, contactThresholdHeight, totalRobotWeight, robotSide,
-                                                                                 stateEstimatorRegistry);
-            footSwitchMap.put(foot, footSwitch);
-            break;
-         case WrenchBased:
-            WrenchBasedFootSwitch wrenchBasedFootSwitchForEstimator = new WrenchBasedFootSwitch(namePrefix, footForceSensorForEstimator, totalRobotWeight,
-                                                                                                bipedFeet.get(robotSide), contactThresholdForce, null,
-                                                                                                copThresholdFraction, null, stateEstimatorRegistry);
-            footSwitchMap.put(foot, wrenchBasedFootSwitchForEstimator);
-            break;
+            @Override
+            public void trustFootSwitch(boolean trustFootSwitch)
+            {
+            }
 
-         case WrenchAndContactSensorFused:
-            ContactSensor footContactSensor = contactSensorHolder.getByName(footContactSensorName);
-            WrenchAndContactSensorFusedFootSwitch wrenchAndContactSensorBasedFootswitch = new WrenchAndContactSensorFusedFootSwitch(namePrefix,
-                                                                                                                                    footForceSensorForEstimator,
-                                                                                                                                    footContactSensor,
-                                                                                                                                    totalRobotWeight,
-                                                                                                                                    bipedFeet.get(robotSide),
-                                                                                                                                    contactThresholdForce, null,
-                                                                                                                                    copThresholdFraction, null,
-                                                                                                                                    stateEstimatorRegistry);
-            footSwitchMap.put(foot, wrenchAndContactSensorBasedFootswitch);
-            break;
-         default:
-            throw new Error("unknown foot switch type");
-         }
+            @Override
+            public void setFootContactState(boolean hasFootHitGround)
+            {
+            }
 
+            @Override
+            public void reset()
+            {
+            }
+
+            @Override
+            public boolean hasFootHitGround()
+            {
+               return robotSide == RobotSide.RIGHT;
+            }
+
+            @Override
+            public ReferenceFrame getMeasurementFrame()
+            {
+               return soleFrame;
+            }
+
+            @Override
+            public boolean getForceMagnitudePastThreshhold()
+            {
+               return hasFootHitGround();
+            }
+
+            @Override
+            public double computeFootLoadPercentage()
+            {
+               return hasFootHitGround() ? 1.0 : 0.0;
+            }
+
+            @Override
+            public void computeAndPackFootWrench(Wrench footWrenchToPack)
+            {
+               footWrenchToPack.setToZero();
+               if (hasFootHitGround())
+                  footWrenchToPack.setLinearPartZ(totalRobotWeight);
+            }
+
+            @Override
+            public void computeAndPackCoP(FramePoint2D copToPack)
+            {
+               copToPack.setToZero(soleFrame);
+            }
+         });
       }
 
       String[] imuSensorsToUseInStateEstimator = sensorInformation.getIMUSensorsToUseInStateEstimator();
