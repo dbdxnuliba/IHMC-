@@ -35,8 +35,10 @@ import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.RigidBody;
-import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.GenericStateMachine;
+import us.ihmc.robotics.stateMachine.core.StateMachine;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
 public class HumanoidMotionController implements HighLevelHumanoidControllerInterface
@@ -46,7 +48,8 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
    private final JumpControllerParameters controllerParamaters;
 
    // Control modules and such
-   private final GenericStateMachine<MotionControllerStateEnum, MotionControllerState> stateMachine;
+   private final StateMachine<MotionControllerStateEnum, MotionControllerState> stateMachine;
+   private final YoDouble yoTime;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private final FullHumanoidRobotModel fullRobotModel;
    private final PrivilegedConfigurationCommand privilegedConfigurationCommand = new PrivilegedConfigurationCommand();
@@ -71,11 +74,11 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
       controllerParamaters = motionControllerParameters;
       String name = "motionController";
       this.controllerToolbox = controllerToolbox;
+      this.yoTime = controllerToolbox.getYoTime();
       fullRobotModel = controllerToolbox.getFullRobotModel();
-      stateMachine = new GenericStateMachine<>(name + "State", name + "SwitchTime", MotionControllerStateEnum.class, controllerToolbox.getYoTime(), registry);
       createRigidBodyControlManagers(controllerToolbox, motionControlManagerFactory);
       requestedState = new YoEnum<>(name + "NextState", registry, MotionControllerStateEnum.class);
-      setupStateMachine();
+      stateMachine = setupStateMachine();
       parentRegistry.addChild(registry);
    }
 
@@ -124,16 +127,19 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          ContactableFoot contactableFoot = controllerToolbox.getContactableFeet().get(side);
          ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
          FootSupportPolygon footSupportPolygon = FootSupportPolygon.createSupportPolygonFromContactableFoot(contactableFoot);
-         FootController footController = new FootController(null, contactState, soleFrame, footSupportPolygon, side, registry);
+         FootController footController = new FootController(controllerToolbox.getYoTime(), contactState, soleFrame, footSupportPolygon, side, registry);
          feetControllers.put(side, footController);
       }
    }
 
-   private void setupStateMachine()
+   private StateMachine<MotionControllerStateEnum, MotionControllerState> setupStateMachine()
    {
+      StateMachineFactory<MotionControllerStateEnum, MotionControllerState> factory = new StateMachineFactory<>(MotionControllerStateEnum.class);
+      factory.setNamePrefix("jumpController").setRegistry(registry).buildYoClock(yoTime);
       DoubleSupportMotionState doubleSupportState = new DoubleSupportMotionState(requestedState, chestManager, headManager, handManagers, feetControllers,
                                                                                  registry);
-      stateMachine.addState(doubleSupportState);
+      factory.addState(MotionControllerStateEnum.DOUBLE_SUPPORT, doubleSupportState);
+      return factory.build(MotionControllerStateEnum.DOUBLE_SUPPORT);
    }
 
    public void setControllerCoreOutput(ControllerCoreOutputReadOnly controllerCoreOutput)
@@ -190,13 +196,15 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
 
    private void initializeManagers()
    {
-
+      for(int i = 0; i < rigidBodyManagers.size(); i++)
+         rigidBodyManagers.get(i).initialize();
+      for(int i = 0; i < controlManagerList.size(); i++)
+         controlManagerList.get(i).initialize();
    }
 
    @Override
    public void initialize()
    {
-      stateMachine.setCurrentState(MotionControllerStateEnum.DOUBLE_SUPPORT);
       controllerCoreCommand.requestReinitialization();
       controllerToolbox.initialize();
       initializePriviledgedConfiguration();
@@ -223,8 +231,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
    @Override
    public void doAction()
    {
-      stateMachine.checkTransitionConditions();
-      stateMachine.doAction();
+      stateMachine.doActionAndTransition();
       submitControllerCommands();
    }
 

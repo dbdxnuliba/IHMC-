@@ -1,11 +1,8 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states;
 
-import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.FinishableState;
+import us.ihmc.robotics.stateMachine.core.State;
 
-public abstract class MotionControllerState extends FinishableState<MotionControllerStateEnum>
+public abstract class MotionControllerState implements State
 {
-   public MotionControllerState(MotionControllerStateEnum stateEnum)
-   {
-      super(stateEnum);
-   }
+   
 }

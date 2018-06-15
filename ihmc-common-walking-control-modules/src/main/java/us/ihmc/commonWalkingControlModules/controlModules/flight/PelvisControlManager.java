@@ -52,6 +52,11 @@ public class PelvisControlManager implements ControlManagerInterface
       
       spatialFeedbackControlCommand.setSelectionMatrixToIdentity();
    }
+   
+   public void initialize()
+   {
+      
+   }
 
    public void setGains(PID3DGainsReadOnly linearGains, PID3DGainsReadOnly angularGains)
    {

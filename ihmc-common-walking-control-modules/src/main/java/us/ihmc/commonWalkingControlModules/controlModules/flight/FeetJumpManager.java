@@ -75,6 +75,11 @@ public class FeetJumpManager implements ControlManagerInterface
                                                    inverseDynamicsLinearWeight);
    }
 
+   public void initialize()
+   {
+      
+   }
+   
    public void compute(double timeInState)
    {
       for (RobotSide robotSide : RobotSide.values)

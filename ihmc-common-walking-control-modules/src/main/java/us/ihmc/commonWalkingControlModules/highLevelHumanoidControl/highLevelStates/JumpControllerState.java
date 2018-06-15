@@ -25,6 +25,7 @@ import us.ihmc.robotics.screwTheory.ScrewTools;
 import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
+import us.ihmc.yoVariables.variable.YoDouble;
 
 public class JumpControllerState extends HighLevelControllerState
 {
@@ -47,6 +48,7 @@ public class JumpControllerState extends HighLevelControllerState
                               MotionControlManagerFactory motionControlManagerFactory, JumpControllerParameters jumpingControlParameters)
    {
       super(controllerState, parameters, controllerToolbox);
+      createFakeStuffToGetSimRunning();
       this.controllerToolbox = controllerToolbox;
       FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
       FloatingInverseDynamicsJoint rootJoint = fullRobotModel.getRootJoint();
@@ -86,6 +88,12 @@ public class JumpControllerState extends HighLevelControllerState
          controllerCore = new WholeBodyControllerCore(controllerCoreToolbox, jumpingControlManagerFactory.createFeedbackControlTemplate(),
                                                       lowLevelControllerOutput, registry);
       }
+   }
+
+   private void createFakeStuffToGetSimRunning()
+   {  
+      YoDouble desiresICPx = new YoDouble("desiredICPX", registry);
+      YoDouble desiresICPY = new YoDouble("desiredICPY", registry);
    }
 
    @Override

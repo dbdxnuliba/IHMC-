@@ -6,7 +6,9 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackContro
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.FinishableState;
+import us.ihmc.robotics.stateMachine.core.State;
+import us.ihmc.robotics.stateMachine.core.StateMachine;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.GenericStateMachine;
 import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.StateTransitionCondition;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -19,7 +21,7 @@ public class FootController implements ControlManagerInterface
    private final YoVariableRegistry registry;
    private final FootSupportPolygon supportPolygon;
    private final ReferenceFrame soleFrame;
-   private final GenericStateMachine<FootControlMode, FootControlState> stateMachine;
+   private final StateMachine<FootControlMode, FootControlState> stateMachine;
    private final YoEnum<FootControlMode> requestedState;
    private final YoPlaneContactState footContactState;
    private final String footName;
@@ -34,15 +36,19 @@ public class FootController implements ControlManagerInterface
       this.supportPolygon = supportPolygon;
       this.soleFrame = soleFrame;
       this.footContactState = footContactState;
-      stateMachine = new GenericStateMachine<>(footName + "ControlState", footName + "SwitchTime", FootControlMode.class, yoTime, registry);
-      requestedState = new YoEnum<>(footName + "RequestedState", registry, FootControlMode.class);
-      setupStateMachine();
+      requestedState = new YoEnum<>(footName + "RequestedState", registry, FootControlMode.class, true);
+      stateMachine = setupStateMachine(yoTime);
       parentRegistry.addChild(registry);
    }
 
-   public void intialize(double minRhoWeight, double maxRhoWeight, double nominalRho)
+   public void initialize()
    {
-      contactState.initialize(minRhoWeight, maxRhoWeight, nominalRho);
+      stateMachine.resetToInitialState();
+   }
+   
+   public void setParameters(double minRhoWeight, double maxRhoWeight, double nominalRho)
+   {
+      contactState.setParameters(minRhoWeight, maxRhoWeight, nominalRho);
    }
 
    public void requestTransitionToFreeMotion()
@@ -52,6 +58,7 @@ public class FootController implements ControlManagerInterface
 
    public void requestTransitionToFreeMotion(double rampingDuration)
    {
+
    }
 
    public void requestTransitionToContact(boolean loadToe, boolean loadHeel)
@@ -65,36 +72,23 @@ public class FootController implements ControlManagerInterface
       contactState.requestToeLoading(loadToe);
    }
 
-   private void setupStateMachine()
+   private StateMachine<FootControlMode, FootControlState> setupStateMachine(YoDouble yoTime)
    {
+      StateMachineFactory<FootControlMode, FootControlState> factory = new StateMachineFactory<>(FootControlMode.class);
+      factory.setNamePrefix(footName + "Controller").setRegistry(registry).buildYoClock(yoTime);
       freeMotionState = new FreeMotionControlState(registry);
-      freeMotionState.addStateTransition(FootControlMode.CONTACT, new StateTransitionCondition()
-      {
-         @Override
-         public boolean checkCondition()
-         {
-            return requestedState.getEnumValue() == FootControlMode.CONTACT;
-         }
-      });
-      stateMachine.addState(freeMotionState);
+      factory.addState(FootControlMode.FREE_MOTION, freeMotionState);
       contactState = new ContactControlState(footName, footContactState, supportPolygon, registry);
-      contactState.addStateTransition(FootControlMode.FREE_MOTION, new StateTransitionCondition()
-      {
-         @Override
-         public boolean checkCondition()
-         {
-            boolean hasFreeMotionBeenRequested = requestedState.getEnumValue() == FootControlMode.FREE_MOTION;
-            boolean isContactStateDone = contactState.isDone();
-            return hasFreeMotionBeenRequested && isContactStateDone;
-         }
-      });
-      stateMachine.addState(contactState);
+      factory.addState(FootControlMode.CONTACT, contactState);
+
+      factory.addRequestedTransition(FootControlMode.FREE_MOTION, FootControlMode.CONTACT, requestedState, false);
+      factory.addRequestedTransition(FootControlMode.CONTACT, FootControlMode.FREE_MOTION, requestedState, true);
+      return factory.build(FootControlMode.CONTACT);
    }
 
    public void doControl()
    {
-      stateMachine.checkTransitionConditions();
-      stateMachine.doAction();
+      stateMachine.doActionAndTransition();
    }
 
    @Override
@@ -123,12 +117,11 @@ public class FootController implements ControlManagerInterface
       FREE_MOTION, CONTACT
    }
 
-   private abstract class FootControlState extends FinishableState<FootControlMode>
+   private abstract class FootControlState implements State
    {
 
       public FootControlState(FootControlMode stateEnum)
       {
-         super(stateEnum);
       }
    }
 
@@ -142,28 +135,28 @@ public class FootController implements ControlManagerInterface
       }
 
       @Override
-      public boolean isDone()
+      public boolean isDone(double timeInState)
       {
          // TODO Auto-generated method stub
          return false;
       }
 
       @Override
-      public void doAction()
+      public void doAction(double timeInState)
       {
          // TODO Auto-generated method stub
 
       }
 
       @Override
-      public void doTransitionIntoAction()
+      public void onEntry()
       {
          // TODO Auto-generated method stub
 
       }
 
       @Override
-      public void doTransitionOutOfAction()
+      public void onExit()
       {
          // TODO Auto-generated method stub
 
@@ -203,7 +196,7 @@ public class FootController implements ControlManagerInterface
          minRhoWeight = new YoDouble(namePrefix + "MinRhoWeight", registry);
       }
 
-      public void initialize(double minRhoWeight, double maxRhoWeight, double nominalRhoWeight)
+      public void setParameters(double minRhoWeight, double maxRhoWeight, double nominalRhoWeight)
       {
          this.nominalRhoWeight.set(nominalRhoWeight);
          this.maxRhoWeight.set(maxRhoWeight);
@@ -238,7 +231,7 @@ public class FootController implements ControlManagerInterface
       }
 
       @Override
-      public boolean isDone()
+      public boolean isDone(double timeInState)
       {
          boolean isHeelInRequestedState = requestToeLoading.getBooleanValue() == isToeLoaded.getBooleanValue();
          boolean isToeInRequestedState = requestHeelLoading.getBooleanValue() == isHeelLoaded.getBooleanValue();
@@ -246,28 +239,28 @@ public class FootController implements ControlManagerInterface
       }
 
       @Override
-      public void doAction()
+      public void doAction(double timeInState)
       {
          boolean hasToeStateTransitioned = requestToeLoading.getBooleanValue() != isToeLoaded.getBooleanValue();
          boolean hasHeelStateTransitioned = requestHeelLoading.getBooleanValue() != isHeelLoaded.getBooleanValue();
-         if(useRamping.getBooleanValue())
+         if (useRamping.getBooleanValue())
          {
-            
+
          }
          else
          {
-            
+
          }
       }
 
       @Override
-      public void doTransitionIntoAction()
+      public void onEntry()
       {
 
       }
 
       @Override
-      public void doTransitionOutOfAction()
+      public void onExit()
       {
 
       }

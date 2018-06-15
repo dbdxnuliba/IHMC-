@@ -8,4 +8,5 @@ public interface ControlManagerInterface
    InverseDynamicsCommand<?> getInverseDynamicsCommand();
    FeedbackControlCommand<?> getFeedbackControlCommand();
    FeedbackControlCommand<?> createFeedbackControlTemplate();
+   void initialize();
 }

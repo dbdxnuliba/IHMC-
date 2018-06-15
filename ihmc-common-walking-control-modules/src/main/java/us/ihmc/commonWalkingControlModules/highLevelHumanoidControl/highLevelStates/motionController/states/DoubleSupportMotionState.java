@@ -21,7 +21,6 @@ public class DoubleSupportMotionState extends MotionControllerState
                                    SideDependentList<RigidBodyControlManager> handManagers, SideDependentList<FootController> feetControllers,
                                    YoVariableRegistry registry)
    {
-      super(stateEnum);
       this.handManagers = handManagers;
       this.headManager = headManager;
       this.chestManger = chestManager;
@@ -29,14 +28,13 @@ public class DoubleSupportMotionState extends MotionControllerState
       this.requestedState = requestedState;
    }
 
-   @Override
    public boolean isDone()
    {
       return false;
    }
 
    @Override
-   public void doAction()
+   public void doAction(double timeInState)
    {
       if (requestedState.getEnumValue() != null)
       {
@@ -57,19 +55,20 @@ public class DoubleSupportMotionState extends MotionControllerState
    }
 
    @Override
-   public void doTransitionOutOfAction()
+   public void onExit()
    {
       
    }
 
    @Override
-   public void doTransitionIntoAction()
+   public void onEntry()
    {
       headManager.holdInJointspace();
       chestManger.holdInJointspace();
       for (RobotSide side : RobotSide.values)
       {
-         handManagers.get(side).holdInTaskspace();
+         RigidBodyControlManager handManager = handManagers.get(side);
+         handManager.holdInTaskspace();
       }
    }
 }
