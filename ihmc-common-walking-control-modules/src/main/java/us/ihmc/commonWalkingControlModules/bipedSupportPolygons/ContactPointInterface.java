@@ -6,9 +6,10 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.ReferenceFrameHolder;
 import us.ihmc.euclid.tuple2D.interfaces.Tuple2DBasics;
 
-public interface ContactPointInterface
+public interface ContactPointInterface extends ReferenceFrameHolder
 {
    public abstract boolean isInContact();
 

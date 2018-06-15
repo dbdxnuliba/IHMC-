@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.ContactPointLabelHolder;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.PlaneContactStateCommand;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
@@ -31,6 +32,7 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
    private final FrameVector3D contactNormalFrameVector;
    private final int totalNumberOfContactPoints;
    private final List<YoContactPoint> contactPoints;
+   private final ContactPointLabelHolder contactPointLabels;
    private final HashMap<YoContactPoint, YoDouble> rhoWeights = new HashMap<>();
    private final HashMap<YoContactPoint, YoDouble> maxContactPointNormalForces = new HashMap<>();
    private final FrameConvexPolygon2D contactPointsPolygon = new FrameConvexPolygon2D();
@@ -39,13 +41,13 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
    private final YoBoolean hasContactStateChanged;
 
    public YoPlaneContactState(String namePrefix, RigidBody rigidBody, ReferenceFrame planeFrame, List<FramePoint2D> contactFramePoints,
-         double coefficientOfFriction, YoVariableRegistry parentRegistry)
+                              double coefficientOfFriction, YoVariableRegistry parentRegistry)
    {
       this(namePrefix, rigidBody, planeFrame, contactFramePoints, coefficientOfFriction, Double.NaN, parentRegistry);
    }
 
    public YoPlaneContactState(String namePrefix, RigidBody rigidBody, ReferenceFrame planeFrame, List<FramePoint2D> contactFramePoints,
-         double coefficientOfFriction, double defaultRhoWeight, YoVariableRegistry parentRegistry)
+                              double coefficientOfFriction, double defaultRhoWeight, YoVariableRegistry parentRegistry)
    {
       this.registry = new YoVariableRegistry(namePrefix + getClass().getSimpleName());
       this.inContact = new YoBoolean(namePrefix + "InContact", registry);
@@ -74,6 +76,7 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
          rhoWeight.set(defaultRhoWeight);
          rhoWeights.put(contactPoint, rhoWeight);
       }
+      contactPointLabels = ContactPointLabelHolder.createLabelsFromContactPointList(contactPoints);
       inContact.set(true);
 
       totalNumberOfContactPoints = contactPoints.size();
@@ -122,7 +125,8 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
    public void updateFromPlaneContactStateCommand(PlaneContactStateCommand planeContactStateCommand)
    {
       if (planeContactStateCommand.getContactingRigidBody() != rigidBody)
-         throw new RuntimeException("The rigid body in the command does not match this rigid body: command.rigidBody = " + planeContactStateCommand.getContactingRigidBody() + ", contactState.rigidBody = " + rigidBody);
+         throw new RuntimeException("The rigid body in the command does not match this rigid body: command.rigidBody = "
+               + planeContactStateCommand.getContactingRigidBody() + ", contactState.rigidBody = " + rigidBody);
 
       coefficientOfFriction.set(planeContactStateCommand.getCoefficientOfFriction());
       planeContactStateCommand.getContactNormal(contactNormalFrameVector);
@@ -185,6 +189,21 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
    public List<YoContactPoint> getContactPoints()
    {
       return contactPoints;
+   }
+
+   public ContactPointLabelHolder getContactPointLabels()
+   {
+      return contactPointLabels;
+   }
+
+   public boolean isHeelContactPoint(int index)
+   {
+      return contactPointLabels.isHeelVertex(index);
+   }
+
+   public boolean isToeContactPoint(int index)
+   {
+      return contactPointLabels.isToeVertex(index);
    }
 
    public void setContactPoints(List<Point2D> contactPointLocations)
@@ -252,7 +271,6 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
             ret.add(framePoint);
          }
       }
-
       return ret;
    }
 
@@ -530,8 +548,6 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
    {
       return rigidBody;
    }
-
-
 
    @Override
    public String toString()

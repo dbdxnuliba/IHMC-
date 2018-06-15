@@ -6,7 +6,7 @@ import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootSupportPolygon;
+import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.ContactPointLabelHolder;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
@@ -126,8 +126,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          YoPlaneContactState contactState = controllerToolbox.getFootContactState(side);
          ContactableFoot contactableFoot = controllerToolbox.getContactableFeet().get(side);
          ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
-         FootSupportPolygon footSupportPolygon = FootSupportPolygon.createSupportPolygonFromContactableFoot(contactableFoot);
-         FootController footController = new FootController(controllerToolbox.getYoTime(), contactState, soleFrame, footSupportPolygon, side, registry);
+         FootController footController = new FootController(controllerToolbox.getYoTime(), contactState, soleFrame, side, registry);
          feetControllers.put(side, footController);
       }
    }

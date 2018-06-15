@@ -38,4 +38,14 @@ public class RhoRampingProfile
       this.rhoF.set(rhoFinal);
       rhoTrajectory.setLinear(t0, tF, rhoInitial, rhoFinal);
    }
+
+   public double getInitialTime()
+   {
+      return t0.getDoubleValue();
+   }
+
+   public double getFinalTime()
+   {
+      return tF.getDoubleValue();
+   }
 }
