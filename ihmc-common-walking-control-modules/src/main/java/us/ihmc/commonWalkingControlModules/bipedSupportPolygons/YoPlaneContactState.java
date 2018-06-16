@@ -180,6 +180,11 @@ public class YoPlaneContactState implements PlaneContactState, ModifiableContact
       maxContactPointNormalForces.get(contactPoint).set(maxNormalForce);
    }
 
+   public double getMaxContactPointNormalForce(YoContactPoint contactPoint)
+   {
+      return maxContactPointNormalForces.get(contactPoint).getDoubleValue();
+   }
+   
    public void setRhoWeight(YoContactPoint contactPoint, double rhoWeight)
    {
       rhoWeights.get(contactPoint).set(rhoWeight);

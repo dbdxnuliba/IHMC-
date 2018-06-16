@@ -274,7 +274,7 @@ public class CollinearForceBasedPlannerOptimizationControlModule
       generateCoPSmoothnessConstraints();
       generateScalarSmoothnessConstraints();
       generateCoPLocationConstraintsFromContactStates();
-      //generateCoMLocationConstraintsFromContactStates();
+      generateCoMLocationConstraintsFromContactStates();
       generateScalarConstraintsFromContactStates();
       generateInitialFinalCoMLocationConstraintsFromDesireds();
       generateInitialFinalCoPLocationConstraintsFromDesireds();

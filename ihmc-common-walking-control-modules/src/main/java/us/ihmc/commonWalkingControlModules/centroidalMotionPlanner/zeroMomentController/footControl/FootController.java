@@ -9,6 +9,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackContro
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.State;
@@ -191,16 +192,16 @@ public class FootController implements ControlManagerInterface
          isToeTransitioning = new YoBoolean(namePrefix + "IsToeTransitioning", registry);
          toeRhoProvider = new RhoRampingProfile(namePrefix + "Toe", registry);
          currentToeRhoWeight = new YoDouble(namePrefix + "CurrentToeRhoWeight", registry);
-         desiredToeRhoWeight = new YoDouble(namePrefix + "CurrentToeRhoWeight", registry);
-         plannedFinalToeRhoWeight = new YoDouble(namePrefix + "CurrentToeRhoWeight", registry);
+         desiredToeRhoWeight = new YoDouble(namePrefix + "DesiredToeRhoWeight", registry);
+         plannedFinalToeRhoWeight = new YoDouble(namePrefix + "PlannedFinalToeRhoWeight", registry);
 
          isHeelLoaded = new YoBoolean(namePrefix + "IsHeelLoaded", registry);
          isHeelLoadingRequested = new YoBoolean(namePrefix + "IsHeelLoadingRequested", registry);
          isHeelTransitioning = new YoBoolean(namePrefix + "IsHeelTransitioning", registry);
          heelRhoProvider = new RhoRampingProfile(namePrefix + "Heel", registry);
          currentHeelRhoWeight = new YoDouble(namePrefix + "CurrentHeelRhoWeight", registry);
-         desiredHeelRhoWeight = new YoDouble(namePrefix + "CurrentToeRhoWeight", registry);
-         plannedFinalHeelRhoWeight = new YoDouble(namePrefix + "CurrentToeRhoWeight", registry);
+         desiredHeelRhoWeight = new YoDouble(namePrefix + "DesiredHeelRhoWeight", registry);
+         plannedFinalHeelRhoWeight = new YoDouble(namePrefix + "PlannedFinalHeelRhoWeight", registry);
 
          useRamping = new YoBoolean(footName + "UseRamping", registry);
          rampingDuration = new YoDouble(namePrefix + "RampingDuration", registry);
@@ -237,7 +238,7 @@ public class FootController implements ControlManagerInterface
          if (shouldToeBeLoaded)
             desiredToeRhoWeight.set(nominalRhoWeight.getDoubleValue());
          else
-            desiredToeRhoWeight.set(maxRhoWeight.getDoubleValue());
+            desiredToeRhoWeight.set(0.0);
       }
 
       public void requestHeelLoading(boolean shouldHeelBeLoaded)
@@ -246,7 +247,7 @@ public class FootController implements ControlManagerInterface
          if (shouldHeelBeLoaded)
             desiredHeelRhoWeight.set(nominalRhoWeight.getDoubleValue());
          else
-            desiredHeelRhoWeight.set(maxRhoWeight.getDoubleValue());
+            desiredHeelRhoWeight.set(0.0);
       }
 
       @Override
@@ -260,21 +261,33 @@ public class FootController implements ControlManagerInterface
       @Override
       public void doAction(double timeInState)
       {
-         // Create plans if desireds and planned finals don't match
-         if (MathTools.epsilonCompare(plannedFinalHeelRhoWeight.getDoubleValue(), desiredHeelRhoWeight.getDoubleValue(), Epsilons.ONE_BILLIONTH))
-            createHeelRhoRampPlan(timeInState);
-         if (MathTools.epsilonCompare(plannedFinalToeRhoWeight.getDoubleValue(), desiredToeRhoWeight.getDoubleValue(), Epsilons.ONE_BILLIONTH))
-            createToeRhoRampPlan(timeInState);
+         if (useRamping.getBooleanValue())
+         {
+            // Create plans if desireds and planned finals don't match
+            if (!MathTools.epsilonCompare(plannedFinalHeelRhoWeight.getDoubleValue(), desiredHeelRhoWeight.getDoubleValue(), Epsilons.ONE_BILLIONTH))
+               createHeelRhoRampPlan(timeInState);
+            if (!MathTools.epsilonCompare(plannedFinalToeRhoWeight.getDoubleValue(), desiredToeRhoWeight.getDoubleValue(), Epsilons.ONE_BILLIONTH))
+               createToeRhoRampPlan(timeInState);
 
-         // Compute rhos for states 
-         if (isToeTransitioning.getBooleanValue())
-            computeToeRhoWeight(timeInState);
-         if (isHeelTransitioning.getBooleanValue())
-            computeHeelRhoWeight(timeInState);
+            // Compute rhos for states 
+            if (isToeTransitioning.getBooleanValue())
+               computeToeRhoWeight(timeInState);
+            if (isHeelTransitioning.getBooleanValue())
+               computeHeelRhoWeight(timeInState);
+         }
+         else
+         {
+            plannedFinalHeelRhoWeight.set(desiredHeelRhoWeight.getDoubleValue());
+            currentHeelRhoWeight.set(desiredHeelRhoWeight.getDoubleValue());
+            plannedFinalToeRhoWeight.set(desiredToeRhoWeight.getDoubleValue());
+            currentToeRhoWeight.set(desiredToeRhoWeight.getDoubleValue());
+         }
 
+         isHeelLoaded.set(isHeelTransitioning.getBooleanValue() || isHeelLoadingRequested.getBooleanValue());
+         isToeLoaded.set(isToeTransitioning.getBooleanValue() || isToeLoadingRequested.getBooleanValue());
          // Decide which contact points to enable
-         boolean heelIsUnderActiveControl = false;
-         boolean toeIsUnderActiveControl = false;
+         boolean heelIsUnderActiveControl = isHeelLoaded.getBooleanValue();
+         boolean toeIsUnderActiveControl = isToeLoaded.getBooleanValue();
          setContactPlaneStateToComputedValues(heelIsUnderActiveControl, toeIsUnderActiveControl);
       }
 
@@ -292,20 +305,12 @@ public class FootController implements ControlManagerInterface
             if (isHeelVertex)
             {
                contactState.setContactPointInContact(i, heelIsUnderActiveControl);
-               if (heelIsUnderActiveControl)
-               {
-                  contactState.setMaxContactPointNormalForce(contactPoint, currentHeelRhoWeight.getDoubleValue());
-                  //contactState.setRhoWeight(contactPoint, rhoWeight);
-               }
+               contactState.setMaxContactPointNormalForce(contactPoint, currentHeelRhoWeight.getDoubleValue());
             }
             else if (isToeVertex)
             {
                contactState.setContactPointInContact(i, toeIsUnderActiveControl);
-               if (toeIsUnderActiveControl)
-               {
-                  contactState.setMaxContactPointNormalForce(contactPoint, currentToeRhoWeight.getDoubleValue());
-                  //contactState.setRhoWeight(contactPoint, rhoWeight);
-               }
+               contactState.setMaxContactPointNormalForce(contactPoint, currentToeRhoWeight.getDoubleValue());
             }
             else
             {
@@ -319,6 +324,8 @@ public class FootController implements ControlManagerInterface
                   contactState.setMaxContactPointNormalForce(contactPoint, maxValue);
                   //contactState.setRhoWeight(contactPoint, rhoWeight);
                }
+               else
+                  contactState.setMaxContactPointNormalForce(contactPoint, 0.0);
             }
 
          }

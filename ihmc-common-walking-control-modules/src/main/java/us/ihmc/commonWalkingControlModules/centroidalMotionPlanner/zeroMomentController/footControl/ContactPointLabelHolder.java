@@ -3,7 +3,12 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentCo
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hamcrest.core.IsInstanceOf;
+
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.ContactPointInterface;
+import us.ihmc.commons.Epsilons;
+import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
@@ -31,6 +36,7 @@ public class ContactPointLabelHolder
    public void setVertexLabels(int index, boolean isHeelVertex, boolean isToeVertex)
    {
       isHeelVertexList.set(index, isHeelVertex);
+      isToeVertexList.set(index, isToeVertex);
    }
 
    public boolean isHeelVertex(int index)
@@ -93,7 +99,8 @@ public class ContactPointLabelHolder
       for (int i = 0; i < contactPoints.size(); i++)
       {
          FramePoint3DReadOnly vertex = contactPoints.get(i).getPosition();
-         contactPointLabelHolder.setVertexLabels(i, vertex.getX() == contactPointLabelHolder.toeX, vertex.getX() == contactPointLabelHolder.heelX);
+         contactPointLabelHolder.setVertexLabels(i, MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.toeX, Epsilons.ONE_BILLIONTH),
+                                                 MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.heelX, Epsilons.ONE_BILLIONTH));
       }
       return contactPointLabelHolder;
 
@@ -124,7 +131,8 @@ public class ContactPointLabelHolder
       for (int i = 0; i < contactPoints.size(); i++)
       {
          FramePoint2DReadOnly vertex = contactPoints.get(i);
-         contactPointLabelHolder.setVertexLabels(i, vertex.getX() == contactPointLabelHolder.toeX, vertex.getX() == contactPointLabelHolder.heelX);
+         contactPointLabelHolder.setVertexLabels(i, MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.toeX, Epsilons.ONE_BILLIONTH),
+                                                 MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.heelX, Epsilons.ONE_BILLIONTH));
       }
       return contactPointLabelHolder;
 
