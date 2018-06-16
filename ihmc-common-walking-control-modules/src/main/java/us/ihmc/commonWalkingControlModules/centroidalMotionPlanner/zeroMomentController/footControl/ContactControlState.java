@@ -10,6 +10,11 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
+import us.ihmc.robotics.screwTheory.RigidBody;
+import us.ihmc.robotics.weightMatrices.SolverWeightLevels;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -43,7 +48,15 @@ public class ContactControlState extends FootControlState
    private final SpatialAccelerationCommand spatialAccelerationCommand = new SpatialAccelerationCommand();
    private final SpatialFeedbackControlCommand spatialFeedbackControlCommand = new SpatialFeedbackControlCommand();
 
-   public ContactControlState(String namePrefix, YoPlaneContactState contactState, YoVariableRegistry registry)
+   private final RigidBody rootBody;
+   private final RigidBody pelvis;
+   private final RigidBody foot;
+   private final FramePoint3D controlPoint;
+   private final ReferenceFrame controlFrame;
+   private final ContactableFoot contactableFoot;
+
+   public ContactControlState(String namePrefix, YoPlaneContactState contactState, ContactableFoot contactableFoot, RigidBody rootBody, RigidBody pelvis,
+                              YoVariableRegistry registry)
    {
       isToeLoaded = new YoBoolean(namePrefix + "IsToeLoaded", registry);
       isToeLoadingRequested = new YoBoolean(namePrefix + "IsToeLoadingRequested", registry);
@@ -69,6 +82,26 @@ public class ContactControlState extends FootControlState
       minRhoWeight = new YoDouble(namePrefix + "MinRhoWeight", registry);
 
       this.contactState = contactState;
+      this.contactableFoot = contactableFoot;
+      this.controlFrame = contactableFoot.getSoleFrame();
+      this.foot = contactableFoot.getRigidBody();
+      this.rootBody = rootBody;
+      this.pelvis = pelvis;
+      this.controlPoint = new FramePoint3D(controlFrame);
+      setupSpatialAccelerationCommand();
+      setupFeedbackControlCommand();
+   }
+
+   private void setupSpatialAccelerationCommand()
+   {
+      spatialAccelerationCommand.setWeight(SolverWeightLevels.FOOT_SUPPORT_WEIGHT);
+      spatialAccelerationCommand.set(rootBody, contactableFoot.getRigidBody());
+      spatialAccelerationCommand.setPrimaryBase(pelvis);
+   }
+
+   private void setupFeedbackControlCommand()
+   {
+
    }
 
    public void setParameters(double minRhoWeight, double maxRhoWeight, double nominalRhoWeight)
@@ -147,19 +180,23 @@ public class ContactControlState extends FootControlState
       boolean heelIsUnderActiveControl = isHeelLoaded.getBooleanValue();
       boolean toeIsUnderActiveControl = isToeLoaded.getBooleanValue();
       setContactPlaneStateToComputedValues(heelIsUnderActiveControl, toeIsUnderActiveControl);
+      updateControlPoint();
       computeInverseDynamicsCommand();
       computeSpatialFeedbackCommand();
    }
 
+   private void updateControlPoint()
+   {
+
+   }
+
    private void computeSpatialFeedbackCommand()
    {
-      // TODO Auto-generated method stub
 
    }
 
    private void computeInverseDynamicsCommand()
    {
-      // TODO Auto-generated method stub
 
    }
 

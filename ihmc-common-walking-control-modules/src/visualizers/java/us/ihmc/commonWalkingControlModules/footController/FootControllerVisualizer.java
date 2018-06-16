@@ -18,6 +18,8 @@ import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPolygon;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
+import us.ihmc.humanoidRobotics.footstep.FootSpoof;
 import us.ihmc.robotics.dataStructures.Vertex2DSupplierList;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -89,14 +91,14 @@ public class FootControllerVisualizer
 
    private void setupController()
    {
-      RigidBody footSpoof = new RigidBody("FootSpoof", ReferenceFrame.getWorldFrame());
+      FootSpoof footSpoof = new FootSpoof("VisFoot", 0.0,0.0, 0.05, defaultFootPolygonPointsInAnkleFrame, coefficientOfFriction);
       List<FramePoint2D> framePointList = new ArrayList<>();
       for (int i = 0; i < defaultFootPolygon.getNumberOfVertices(); i++)
-         framePointList.add(new FramePoint2D(footSpoof.getBodyFixedFrame(), defaultFootPolygon.getVertex(i)));
-      contactState = new YoPlaneContactState("FootSpoof", footSpoof, footSpoof.getBodyFixedFrame(), framePointList, coefficientOfFriction, registry);
+         framePointList.add(new FramePoint2D(footSpoof.getSoleFrame(), defaultFootPolygon.getVertex(i)));
+      contactState = new YoPlaneContactState("FootSpoof", footSpoof.getRigidBody(), footSpoof.getSoleFrame(), framePointList, coefficientOfFriction, registry);
       for (int i = 0; i < defaultFootPolygon.getNumberOfVertices(); i++)
          maxRho.add(new YoDouble("Vertex" + i + "MaxRho", registry));
-      controller = new FootController(yoTime, contactState, footSpoof.getBodyFixedFrame(), RobotSide.LEFT, registry);
+      controller = new FootController("VizFoot", yoTime, contactState, null, null, null, registry);
       controller.setParameters(0.0, 0.1, 0.1);
    }
 

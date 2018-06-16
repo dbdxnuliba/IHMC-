@@ -6,7 +6,6 @@ import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
-import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.ContactPointLabelHolder;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
@@ -125,8 +124,8 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
       {
          YoPlaneContactState contactState = controllerToolbox.getFootContactState(side);
          ContactableFoot contactableFoot = controllerToolbox.getContactableFeet().get(side);
-         ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
-         FootController footController = new FootController(controllerToolbox.getYoTime(), contactState, soleFrame, side, registry);
+         FootController footController = new FootController(side.getCamelCaseNameForStartOfExpression() + "Foot", controllerToolbox.getYoTime(), contactState,
+                                                            contactableFoot, fullRobotModel.getRootBody(), pelvis, registry);
          feetControllers.put(side, footController);
       }
    }
@@ -182,6 +181,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
    // Temp momentum method for debugging
    private final MomentumRateCommand momentumRateCommand = new MomentumRateCommand();
    private final FrameVector3D zeroVector = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
+
    private InverseDynamicsCommand<?> createZeroAccelerationMomentumCommand()
    {
       momentumRateCommand.setLinearMomentumRate(zeroVector);
@@ -195,9 +195,9 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
 
    private void initializeManagers()
    {
-      for(int i = 0; i < rigidBodyManagers.size(); i++)
+      for (int i = 0; i < rigidBodyManagers.size(); i++)
          rigidBodyManagers.get(i).initialize();
-      for(int i = 0; i < controlManagerList.size(); i++)
+      for (int i = 0; i < controlManagerList.size(); i++)
          controlManagerList.get(i).initialize();
    }
 
