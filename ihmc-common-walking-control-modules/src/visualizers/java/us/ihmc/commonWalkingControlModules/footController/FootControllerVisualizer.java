@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
