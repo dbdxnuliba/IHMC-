@@ -17,7 +17,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajec
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SE3TrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
-import us.ihmc.robotics.lists.RecyclingArrayDeque;
+import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsPositionTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -89,7 +89,7 @@ public class PelvisICPBasedTranslationManager
 
    private final YoBoolean isReadyToHandleQueuedCommands;
    private final YoLong numberOfQueuedCommands;
-   private final RecyclingArrayDeque<PelvisTrajectoryCommand> commandQueue = new RecyclingArrayDeque<>(PelvisTrajectoryCommand.class);
+   private final RecyclingArrayDeque<PelvisTrajectoryCommand> commandQueue = new RecyclingArrayDeque<>(PelvisTrajectoryCommand.class, PelvisTrajectoryCommand::set);
 
    public PelvisICPBasedTranslationManager(HighLevelHumanoidControllerToolbox controllerToolbox, double pelvisTranslationICPSupportPolygonSafeMargin, BipedSupportPolygons bipedSupportPolygons, YoVariableRegistry parentRegistry)
    {
