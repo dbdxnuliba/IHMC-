@@ -68,7 +68,7 @@ public class DoubleSupportMotionState extends MotionControllerState
       for (RobotSide side : RobotSide.values)
       {
          RigidBodyControlManager handManager = handManagers.get(side);
-         handManager.holdInTaskspace();
+         handManager.holdInJointspace();
          FootController footController = feetControllers.get(side);
          footController.requestTransitionToContact(true, true);
       }

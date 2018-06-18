@@ -31,7 +31,7 @@ public class FootController implements ControlManagerInterface
                          RigidBody pelvis, YoVariableRegistry parentRegistry)
    {
       this.namePrefix = namePrefix;
-      registry = new YoVariableRegistry(namePrefix + "FootController");
+      registry = new YoVariableRegistry(namePrefix + "Controller");
       this.soleFrame = contactableFoot.getSoleFrame();
       this.footContactState = footContactState;
       this.pelvis = pelvis;
@@ -70,16 +70,16 @@ public class FootController implements ControlManagerInterface
    {
       requestedFootState.set(FootControlMode.CONTACT);
       contactState.disableRamping();
-      contactState.requestHeelLoading(loadHeel);
       contactState.requestToeLoading(loadToe);
+      contactState.requestHeelLoading(loadHeel);
    }
 
    public void requestTransitionToContact(double rampingDuration, boolean loadToe, boolean loadHeel)
    {
       requestedFootState.set(FootControlMode.CONTACT);
       contactState.enableRamping(rampingDuration);
-      contactState.requestHeelLoading(loadHeel);
       contactState.requestToeLoading(loadToe);
+      contactState.requestHeelLoading(loadHeel);
    }
 
    private StateMachine<FootControlMode, FootControlState> setupStateMachine(YoDouble yoTime)

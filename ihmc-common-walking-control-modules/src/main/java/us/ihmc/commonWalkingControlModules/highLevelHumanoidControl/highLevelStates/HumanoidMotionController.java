@@ -8,6 +8,7 @@ import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactSt
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.footControl.FootController;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommand;
@@ -22,8 +23,11 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSta
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerState;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerStateEnum;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
@@ -60,7 +64,8 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
    private final SideDependentList<RigidBodyControlManager> handManagers = new SideDependentList<>();
    private RigidBodyControlManager headManager;
    private RigidBodyControlManager chestManager;
-
+   private final PelvisControlManager pelvisManager;
+   
    private final YoEnum<MotionControllerStateEnum> requestedState;
    // IO objects
    private final ControllerCoreCommand controllerCoreCommand = new ControllerCoreCommand(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
@@ -76,6 +81,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
       this.yoTime = controllerToolbox.getYoTime();
       fullRobotModel = controllerToolbox.getFullRobotModel();
       createControlManagers(controllerToolbox, motionControlManagerFactory);
+      pelvisManager = motionControlManagerFactory.getOrCreatePelvisControlManager();
       requestedState = new YoEnum<>(name + "NextState", registry, MotionControllerStateEnum.class);
       stateMachine = setupStateMachine();
       parentRegistry.addChild(registry);
@@ -125,8 +131,9 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          YoPlaneContactState contactState = controllerToolbox.getFootContactState(side);
          ContactableFoot contactableFoot = controllerToolbox.getContactableFeet().get(side);
          FootController footController = new FootController(side.getCamelCaseNameForStartOfExpression() + "Foot", controllerToolbox.getYoTime(), contactState,
-                                                            contactableFoot, fullRobotModel.getRootBody(), pelvis, registry);
+                                                            contactableFoot, fullRobotModel.getElevator(), pelvis, registry);
          feetControllers.put(side, footController);
+         controlManagerList.add(footController);
       }
    }
 
@@ -147,6 +154,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
 
    private void submitControllerCommands()
    {
+      controllerCoreCommand.clear();
       planeContactStateCommandPool.clear();
       controllerCoreCommand.addInverseDynamicsCommand(privilegedConfigurationCommand);
 
@@ -175,7 +183,8 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
             controllerCoreCommand.addFeedbackControlCommand(manager.getFeedbackControlCommand());
          }
       }
-      controllerCoreCommand.addInverseDynamicsCommand(createZeroAccelerationMomentumCommand());
+      controllerCoreCommand.addFeedbackControlCommand(pelvisManager.getFeedbackControlCommand());
+      //controllerCoreCommand.addInverseDynamicsCommand(createZeroAccelerationMomentumCommand());
    }
 
    // Temp momentum method for debugging
@@ -206,6 +215,8 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          rigidBodyManagers.get(i).initialize();
       for (int i = 0; i < controlManagerList.size(); i++)
          controlManagerList.get(i).initialize();
+      for(RobotSide side : RobotSide.values)
+         feetControllers.get(side).setParameters(0.0, 1e3, 1e3);
    }
 
    @Override
@@ -234,10 +245,26 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
       }
    }
 
+   boolean firstCall = true;
+   boolean disablingLeftToe = true;
    @Override
    public void doAction()
    {
+      if(firstCall)
+      {
+         firstCall = false;
+         pelvisManager.setDesiredPelvisPosition(new FramePoint3D(ReferenceFrame.getWorldFrame(), -0.04, 0.0, 0.3818));
+         pelvisManager.setDesiredPelvisOrientation(new FrameQuaternion(ReferenceFrame.getWorldFrame()));
+      }
+      
+      if (yoTime.getDoubleValue() > 1.0 && disablingLeftToe)
+      {
+         disablingLeftToe = false;
+         feetControllers.get(RobotSide.LEFT).requestTransitionToContact(0.1, false, true);
+      }
+      
       stateMachine.doActionAndTransition();
+      pelvisManager.maintainDesiredPositionAndOrientation();
       submitControllerCommands();
    }
 

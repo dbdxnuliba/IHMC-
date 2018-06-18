@@ -11,11 +11,12 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
-import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.screwTheory.RigidBody;
@@ -54,10 +55,10 @@ public class ContactControlState extends FootControlState
    private final SpatialAccelerationCommand spatialAccelerationCommand = new SpatialAccelerationCommand();
    private final SpatialFeedbackControlCommand spatialFeedbackControlCommand = new SpatialFeedbackControlCommand();
 
-   private final FrameVector3D linearSpatialAccelerationWeight = new FrameVector3D();
-   private final FrameVector3D angularSpatialAccelerationWeight = new FrameVector3D();
-   private final FrameVector3D linearFeedbackControlWeight = new FrameVector3D();
-   private final FrameVector3D angularFeedbackControlWeight = new FrameVector3D();
+   private final Vector3D defaultLinearSpatialAccelerationWeight = new Vector3D(50.0, 50.0, 50.0);
+   private final Vector3D defaultAngularSpatialAccelerationWeight = new Vector3D(1.0, 1.0, 1.0);
+   private final Vector3D defaultLinearFeedbackControlWeight = new Vector3D();
+   private final Vector3D defaultAngularFeedbackControlWeight = new Vector3D();
 
    private final RigidBody rootBody;
    private final RigidBody pelvis;
@@ -122,25 +123,25 @@ public class ContactControlState extends FootControlState
       int numberOfHeelPoints = 0;
       heelControlPoint.setToZero(soleFrame);
       toeControlPoint.setToZero(soleFrame);
+      footControlPoint.setToZero(soleFrame);
       for (int i = 0; i < contactState.getTotalNumberOfContactPoints(); i++)
       {
          YoContactPoint contactPoint = contactState.getContactPoints().get(i);
+         tempPoint.setIncludingFrame(contactPoint.getPosition());
+         tempPoint.changeFrame(soleFrame);
          if (contactState.isHeelContactPoint(i))
          {
-            tempPoint.setIncludingFrame(contactPoint.getPosition());
-            tempPoint.changeFrame(soleFrame);
             heelPoints.add(tempPoint);
             heelControlPoint.add(tempPoint);
             numberOfHeelPoints++;
          }
          if (contactState.isToeContactPoint(i))
          {
-            tempPoint.setIncludingFrame(contactPoint.getPosition());
-            tempPoint.changeFrame(soleFrame);
             toePoints.add(tempPoint);
             toeControlPoint.add(tempPoint);
             numberOfToePoints++;
          }
+         footControlPoint.add(tempPoint);
       }
       if (numberOfHeelPoints == 0)
          throw new RuntimeException("Contact state does not have any heel contacts");
@@ -148,8 +149,8 @@ public class ContactControlState extends FootControlState
          throw new RuntimeException("Contact state does not have any toe contacts");
       heelControlPoint.scale(1.0 / numberOfHeelPoints);
       toeControlPoint.scale(1.0 / numberOfToePoints);
-      footControlPoint.setToZero(soleFrame);
-      footControlPoint.interpolate(heelControlPoint, toeControlPoint, 0.5);
+      footControlPoint.scale(1.0 / contactState.getTotalNumberOfContactPoints());
+      //footControlPoint.interpolate(heelControlPoint, toeControlPoint, 0.5);
    }
 
    private void setupSpatialAccelerationCommand()
@@ -157,8 +158,6 @@ public class ContactControlState extends FootControlState
       spatialAccelerationCommand.setWeight(SolverWeightLevels.FOOT_SUPPORT_WEIGHT);
       spatialAccelerationCommand.set(rootBody, foot);
       spatialAccelerationCommand.setPrimaryBase(pelvis);
-      spatialAccelerationCommand.setLinearWeights(linearSpatialAccelerationWeight);
-      spatialAccelerationCommand.setAngularWeights(angularSpatialAccelerationWeight);
    }
 
    private void setupFeedbackControlCommand()
@@ -244,7 +243,7 @@ public class ContactControlState extends FootControlState
       setContactPlaneStateToComputedValues(heelIsUnderActiveControl, toeIsUnderActiveControl);
       updateControlPose();
       computeInverseDynamicsCommand();
-      //computeSpatialFeedbackCommand();
+      computeSpatialFeedbackCommand();
    }
 
    private void updateControlPose()
@@ -257,6 +256,7 @@ public class ContactControlState extends FootControlState
          controlPoint.set(toeControlPoint);
       else
          controlPoint.setToNaN();
+      controlOrientation.setToZero(soleFrame);
    }
 
    private void computeSpatialFeedbackCommand()
@@ -271,6 +271,8 @@ public class ContactControlState extends FootControlState
       controlFrame.setPoseAndUpdate(controlPoint, controlOrientation);
       desiredSpatialAcceleration.setToZero(foot.getBodyFixedFrame(), rootBody.getBodyFixedFrame(), controlFrame);
       spatialAccelerationCommand.setSpatialAcceleration(controlFrame, desiredSpatialAcceleration);
+      spatialAccelerationCommand.setLinearWeights(defaultLinearSpatialAccelerationWeight);
+      spatialAccelerationCommand.setAngularWeights(defaultAngularSpatialAccelerationWeight);
    }
 
    private void setContactPlaneStateToComputedValues(boolean heelIsUnderActiveControl, boolean toeIsUnderActiveControl)

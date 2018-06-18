@@ -10,6 +10,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.commonWalkingControlModules.configurations.JumpControllerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ParameterTools;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ControlManagerInterface;
+import us.ihmc.commonWalkingControlModules.controlModules.flight.PelvisControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
@@ -47,6 +48,8 @@ public class MotionControlManagerFactory
    private final Map<String, DoubleProvider> jointspaceWeightMap = new HashMap<>();
    private final Map<String, PIDGainsReadOnly> jointGainMap = new HashMap<>();
    private final Map<String, DoubleProvider> userModeWeightMap = new HashMap<>();
+
+   private PelvisControlManager pelvisControlManager;
 
    public MotionControlManagerFactory(JumpControllerParameters jumpControllerParameters, YoVariableRegistry parentRegistry)
    {
@@ -104,7 +107,7 @@ public class MotionControlManagerFactory
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
       RigidBodyControlMode defaultControlMode = jumpControllerParameters.getDefaultControlModesForRigidBodies().get(bodyName);
 
-      RigidBodyControlManager manager = new RigidBodyControlManager(bodyToControl, baseBody, baseBody, homeConfiguration, homePose, trajectoryFrames,
+      RigidBodyControlManager manager = new RigidBodyControlManager(bodyToControl, baseBody, elevator, homeConfiguration, homePose, trajectoryFrames,
                                                                     controlFrame, baseFrame, contactableBody, defaultControlMode, yoTime, graphicsListRegistry,
                                                                     registry);
       manager.setGains(jointGainMap, taskspaceOrientationGains, taskspacePositionGains);
@@ -160,11 +163,29 @@ public class MotionControlManagerFactory
             templateFeedbackCommandList.addCommand(feedbackControlCommand);
          }
       }
+      if (pelvisControlManager != null)
+         templateFeedbackCommandList.addCommand(pelvisControlManager.createFeedbackControlTemplate());
       return templateFeedbackCommandList;
    }
 
    public void setHighLevelHumanoidControllerToolbox(HighLevelHumanoidControllerToolbox controllerToolbox)
    {
       this.controllerToolbox = controllerToolbox;
+   }
+
+   public PelvisControlManager getOrCreatePelvisControlManager()
+   {
+      if (pelvisControlManager != null)
+         return pelvisControlManager;
+      pelvisControlManager = new PelvisControlManager(controllerToolbox, registry);
+      String bodyName = controllerToolbox.getFullRobotModel().getPelvis().getName();
+      PID3DGainsReadOnly positionGains = taskspacePositionGainMap.get(bodyName);
+      PID3DGainsReadOnly orientationGains = taskspaceOrientationGainMap.get(bodyName);
+      Vector3DReadOnly positionWeights = taskspaceLinearWeightMap.get(bodyName);
+      Vector3DReadOnly orientationWeights = taskspaceAngularWeightMap.get(bodyName);
+
+      pelvisControlManager.setGains(positionGains, orientationGains);
+      pelvisControlManager.setWeights(positionWeights, orientationWeights);
+      return pelvisControlManager;
    }
 }

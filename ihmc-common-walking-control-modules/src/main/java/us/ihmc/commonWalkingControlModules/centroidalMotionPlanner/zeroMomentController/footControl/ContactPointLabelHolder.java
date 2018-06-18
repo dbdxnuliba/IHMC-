@@ -96,8 +96,8 @@ public class ContactPointLabelHolder
       for (int i = 0; i < contactPoints.size(); i++)
       {
          FramePoint3DReadOnly vertex = contactPoints.get(i).getPosition();
-         contactPointLabelHolder.setVertexLabels(i, MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.toeX, Epsilons.ONE_BILLIONTH),
-                                                 MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.heelX, Epsilons.ONE_BILLIONTH));
+         contactPointLabelHolder.setVertexLabels(i, MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.heelX, Epsilons.ONE_BILLIONTH),
+                                                 MathTools.epsilonCompare(vertex.getX(), contactPointLabelHolder.toeX, Epsilons.ONE_BILLIONTH));
       }
       return contactPointLabelHolder;
 

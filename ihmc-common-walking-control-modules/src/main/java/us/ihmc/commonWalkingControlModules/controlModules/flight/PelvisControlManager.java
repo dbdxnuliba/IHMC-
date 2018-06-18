@@ -120,6 +120,14 @@ public class PelvisControlManager implements ControlManagerInterface
       tempTwist.getLinearPart(velocityToSet);
    }
 
+   public void setDesiredsToCurrent()
+   {
+      desiredPelvisPosition.setToZero(pelvis.getBodyFixedFrame());
+      desiredPelvisOrientation.setToZero(pelvis.getBodyFixedFrame());
+      desiredPelvisPosition.changeFrame(ReferenceFrame.getWorldFrame());
+      desiredPelvisOrientation.changeFrame(ReferenceFrame.getWorldFrame());
+   }
+   
    public void getCurrentPelvisPosition(ReferenceFrame referenceFrame, FramePoint3D positonToSet)
    {
       positonToSet.setToZero(pelvis.getBodyFixedFrame());
