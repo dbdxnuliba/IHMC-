@@ -75,13 +75,13 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
       this.controllerToolbox = controllerToolbox;
       this.yoTime = controllerToolbox.getYoTime();
       fullRobotModel = controllerToolbox.getFullRobotModel();
-      createRigidBodyControlManagers(controllerToolbox, motionControlManagerFactory);
+      createControlManagers(controllerToolbox, motionControlManagerFactory);
       requestedState = new YoEnum<>(name + "NextState", registry, MotionControllerStateEnum.class);
       stateMachine = setupStateMachine();
       parentRegistry.addChild(registry);
    }
 
-   private void createRigidBodyControlManagers(HighLevelHumanoidControllerToolbox controllerToolbox, MotionControlManagerFactory motionControlManagerFactory)
+   private void createControlManagers(HighLevelHumanoidControllerToolbox controllerToolbox, MotionControlManagerFactory motionControlManagerFactory)
    {
       Collection<ReferenceFrame> trajectoryFrames = controllerToolbox.getTrajectoryFrames();
       RigidBody pelvis = fullRobotModel.getPelvis();
@@ -180,16 +180,23 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
 
    // Temp momentum method for debugging
    private final MomentumRateCommand momentumRateCommand = new MomentumRateCommand();
-   private final FrameVector3D zeroVector = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
+   private final FrameVector3D desiredLinearMomentumRateOfChange = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
+   private final FrameVector3D desiredAngularMomentumRateOfChange = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 0.0);
 
    private InverseDynamicsCommand<?> createZeroAccelerationMomentumCommand()
    {
-      momentumRateCommand.setLinearMomentumRate(zeroVector);
-      momentumRateCommand.setAngularMomentumRate(zeroVector);
+      computeFeedback();
+      momentumRateCommand.setLinearMomentumRate(desiredLinearMomentumRateOfChange);
+      momentumRateCommand.setAngularMomentumRate(desiredAngularMomentumRateOfChange);
       momentumRateCommand.setAngularWeights(controllerParamaters.getMomentumOptimizationSettings().getAngularMomentumWeight());
       momentumRateCommand.setLinearWeights(controllerParamaters.getMomentumOptimizationSettings().getLinearMomentumWeight());
       momentumRateCommand.setSelectionMatrixToIdentity();
       return momentumRateCommand;
+   }
+
+   private void computeFeedback()
+   {
+      //TODO
    }
    // Ends here
 

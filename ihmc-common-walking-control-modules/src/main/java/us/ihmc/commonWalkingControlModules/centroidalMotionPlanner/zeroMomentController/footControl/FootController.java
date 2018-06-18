@@ -6,7 +6,6 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackContro
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
-import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
@@ -23,12 +22,12 @@ public class FootController implements ControlManagerInterface
    private final YoPlaneContactState footContactState;
    private final String namePrefix;
    private final ContactableFoot contactableFoot;
-   private final RigidBody root;
+   private final RigidBody elevator;
    private final RigidBody pelvis;
    private ContactControlState contactState;
    private FreeMotionControlState freeMotionState;
 
-   public FootController(String namePrefix, YoDouble yoTime, YoPlaneContactState footContactState, ContactableFoot contactableFoot, RigidBody root,
+   public FootController(String namePrefix, YoDouble yoTime, YoPlaneContactState footContactState, ContactableFoot contactableFoot, RigidBody elevator,
                          RigidBody pelvis, YoVariableRegistry parentRegistry)
    {
       this.namePrefix = namePrefix;
@@ -36,7 +35,7 @@ public class FootController implements ControlManagerInterface
       this.soleFrame = contactableFoot.getSoleFrame();
       this.footContactState = footContactState;
       this.pelvis = pelvis;
-      this.root = root;
+      this.elevator = elevator;
       this.contactableFoot = contactableFoot;
       requestedFootState = new YoEnum<>(namePrefix + "RequestedState", registry, FootControlMode.class, true);
       stateMachine = setupStateMachine(yoTime);
@@ -45,7 +44,11 @@ public class FootController implements ControlManagerInterface
 
    public void initialize()
    {
+      requestedFootState.set(FootControlMode.CONTACT);
       stateMachine.resetToInitialState();
+      contactState.requestHeelLoading(true);
+      contactState.requestToeLoading(true);
+      contactState.disableRamping();
    }
 
    public void setParameters(double minRhoWeight, double maxRhoWeight, double nominalRho)
@@ -85,7 +88,7 @@ public class FootController implements ControlManagerInterface
       factory.setNamePrefix(namePrefix + "Controller").setRegistry(registry).buildYoClock(yoTime);
       freeMotionState = new FreeMotionControlState(registry);
       factory.addState(FootControlMode.FREE_MOTION, freeMotionState);
-      contactState = new ContactControlState(namePrefix, footContactState, contactableFoot, root, pelvis, registry);
+      contactState = new ContactControlState(namePrefix, footContactState, contactableFoot, elevator, pelvis, registry);
       factory.addState(FootControlMode.CONTACT, contactState);
 
       factory.addRequestedTransition(FootControlMode.FREE_MOTION, FootControlMode.CONTACT, requestedFootState, false);
