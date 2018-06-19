@@ -11,15 +11,16 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.MathTools;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.screwTheory.RigidBody;
+import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.robotics.screwTheory.SpatialAccelerationVector;
 import us.ihmc.robotics.weightMatrices.SolverWeightLevels;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -57,8 +58,8 @@ public class ContactControlState extends FootControlState
 
    private final Vector3D defaultLinearSpatialAccelerationWeight = new Vector3D(50.0, 50.0, 50.0);
    private final Vector3D defaultAngularSpatialAccelerationWeight = new Vector3D(1.0, 1.0, 1.0);
-   private final Vector3D defaultLinearFeedbackControlWeight = new Vector3D();
-   private final Vector3D defaultAngularFeedbackControlWeight = new Vector3D();
+   private final Vector3D defaultLinearFeedbackControlWeight = new Vector3D(50.0, 50.0, 50.0);
+   private final Vector3D defaultAngularFeedbackControlWeight = new Vector3D(1.0, 1.0, 1.0);
 
    private final RigidBody rootBody;
    private final RigidBody pelvis;
@@ -74,6 +75,14 @@ public class ContactControlState extends FootControlState
    private final FramePoint3D toeControlPoint = new FramePoint3D();
    private final FramePoint3D heelControlPoint = new FramePoint3D();
    private final FramePoint3D footControlPoint = new FramePoint3D();
+   private final FrameVector3D heelControlVector = new FrameVector3D();
+   private final FrameVector3D toeControlVector = new FrameVector3D();
+
+   private final SelectionMatrix6D spatialAccelerationSelectionMatrix = new SelectionMatrix6D();
+   private final SelectionMatrix6D feedbackCommandSelectionMatrix = new SelectionMatrix6D();
+
+   private final YoBoolean isDampingActive;
+   private final YoBoolean isFeedbackControlActive;
 
    public ContactControlState(String namePrefix, YoPlaneContactState contactState, ContactableFoot contactableFoot, RigidBody rootBody, RigidBody pelvis,
                               YoVariableRegistry registry)
@@ -110,6 +119,9 @@ public class ContactControlState extends FootControlState
       this.foot = contactableFoot.getRigidBody();
       this.rootBody = rootBody;
       this.pelvis = pelvis;
+
+      isDampingActive = new YoBoolean(namePrefix + "IsDampingActive", registry);
+      isFeedbackControlActive = new YoBoolean(namePrefix + "IsFeedbackControlActive", registry);
 
       setupControlPoints(contactState);
       setupSpatialAccelerationCommand();
@@ -150,7 +162,21 @@ public class ContactControlState extends FootControlState
       heelControlPoint.scale(1.0 / numberOfHeelPoints);
       toeControlPoint.scale(1.0 / numberOfToePoints);
       footControlPoint.scale(1.0 / contactState.getTotalNumberOfContactPoints());
-      //footControlPoint.interpolate(heelControlPoint, toeControlPoint, 0.5);
+      if (numberOfHeelPoints == 1)
+         heelControlVector.setToNaN();
+      else
+      {
+         heelControlVector.sub(heelPoints.get(0), heelPoints.get(1));
+         heelControlVector.normalize();
+      }
+
+      if (numberOfToePoints == 1)
+         toeControlVector.setToNaN();
+      else
+      {
+         toeControlVector.sub(toePoints.get(0), toePoints.get(1));
+         toeControlVector.normalize();
+      }
    }
 
    private void setupSpatialAccelerationCommand()
@@ -162,7 +188,10 @@ public class ContactControlState extends FootControlState
 
    private void setupFeedbackControlCommand()
    {
-
+      spatialFeedbackControlCommand.set(rootBody, foot);
+      spatialAccelerationCommand.setPrimaryBase(pelvis);
+      spatialFeedbackControlCommand.setLinearWeightsForSolver(defaultLinearFeedbackControlWeight);
+      spatialFeedbackControlCommand.setAngularWeightsForSolver(defaultAngularFeedbackControlWeight);
    }
 
    public void setParameters(double minRhoWeight, double maxRhoWeight, double nominalRhoWeight)
@@ -205,9 +234,9 @@ public class ContactControlState extends FootControlState
    @Override
    public boolean isDone(double timeInState)
    {
-      boolean isHeelInRequestedState = false;
-      boolean isToeInRequestedState = false;
-      return isHeelInRequestedState && isToeInRequestedState;
+      boolean isHeelFree = !isHeelLoaded.getBooleanValue();
+      boolean isToeFree = !isToeLoaded.getBooleanValue();
+      return isHeelFree && isToeFree;
    }
 
    @Override
@@ -237,42 +266,76 @@ public class ContactControlState extends FootControlState
 
       isHeelLoaded.set(isHeelTransitioning.getBooleanValue() || isHeelLoadingRequested.getBooleanValue());
       isToeLoaded.set(isToeTransitioning.getBooleanValue() || isToeLoadingRequested.getBooleanValue());
+
       // Decide which contact points to enable
       boolean heelIsUnderActiveControl = isHeelLoaded.getBooleanValue();
       boolean toeIsUnderActiveControl = isToeLoaded.getBooleanValue();
       setContactPlaneStateToComputedValues(heelIsUnderActiveControl, toeIsUnderActiveControl);
-      updateControlPose();
-      computeInverseDynamicsCommand();
-      computeSpatialFeedbackCommand();
+      updateControlPoseAndUpdateSelectionMatrix();
+      computeControllerCoreCommand();
    }
 
-   private void updateControlPose()
+   private void updateControlPoseAndUpdateSelectionMatrix()
    {
+      spatialAccelerationSelectionMatrix.setSelectionFrame(controlFrame);
+      feedbackCommandSelectionMatrix.setSelectionFrame(controlFrame);
       if (isHeelLoaded.getBooleanValue() && isToeLoaded.getBooleanValue())
+      {
+         isDampingActive.set(true);
+         isFeedbackControlActive.set(false);
+         spatialAccelerationSelectionMatrix.resetSelection();
+         feedbackCommandSelectionMatrix.clearSelection();
+
          controlPoint.set(footControlPoint);
-      else if (isHeelLoaded.getBooleanValue())
-         controlPoint.set(heelControlPoint);
-      else if (isToeLoaded.getBooleanValue())
-         controlPoint.set(toeControlPoint);
+         controlOrientation.setToZero(soleFrame);
+      }
+      else if (isHeelLoaded.getBooleanValue() || isToeLoaded.getBooleanValue())
+      {
+         isDampingActive.set(true);
+         isFeedbackControlActive.set(true);
+         List<FramePoint3DReadOnly> contactPoints = isHeelLoaded.getBooleanValue() ? heelPoints : toePoints;
+         FramePoint3DReadOnly desiredControlPoint = isHeelLoaded.getBooleanValue() ? heelControlPoint : toeControlPoint;
+         if (contactPoints.size() > 1)
+         {
+            spatialAccelerationSelectionMatrix.resetLinearSelection();
+            spatialAccelerationSelectionMatrix.selectAngularX(true);
+            spatialAccelerationSelectionMatrix.selectAngularZ(true);
+            feedbackCommandSelectionMatrix.clearSelection();
+            feedbackCommandSelectionMatrix.selectAngularY(true);
+            double yaw = 0.0;
+            controlPoint.set(desiredControlPoint);
+            controlOrientation.setYawPitchRollIncludingFrame(soleFrame, yaw, 0.0, 0.0);
+         }
+         else
+         {
+            spatialAccelerationSelectionMatrix.setToLinearSelectionOnly();
+            feedbackCommandSelectionMatrix.setToAngularSelectionOnly();
+            controlPoint.set(desiredControlPoint);
+            controlOrientation.setToZero(soleFrame);
+         }
+      }
       else
-         controlPoint.setToNaN();
-      controlOrientation.setToZero(soleFrame);
-   }
-
-   private void computeSpatialFeedbackCommand()
-   {
-
+      {
+         isDampingActive.set(false);
+         isFeedbackControlActive.set(true);
+         spatialAccelerationSelectionMatrix.clearSelection();
+         feedbackCommandSelectionMatrix.resetSelection();
+         // This doesn't matter since all the control is through the feedback command
+         controlPoint.set(footControlPoint);
+         controlOrientation.setToZero(soleFrame);
+      }
    }
 
    private final SpatialAccelerationVector desiredSpatialAcceleration = new SpatialAccelerationVector();
 
-   private void computeInverseDynamicsCommand()
+   private void computeControllerCoreCommand()
    {
+      // Set spatial feedback command
+      // Set spatial acceleration command
       controlFrame.setPoseAndUpdate(controlPoint, controlOrientation);
       desiredSpatialAcceleration.setToZero(foot.getBodyFixedFrame(), rootBody.getBodyFixedFrame(), controlFrame);
       spatialAccelerationCommand.setSpatialAcceleration(controlFrame, desiredSpatialAcceleration);
-      spatialAccelerationCommand.setLinearWeights(defaultLinearSpatialAccelerationWeight);
-      spatialAccelerationCommand.setAngularWeights(defaultAngularSpatialAccelerationWeight);
+      spatialAccelerationCommand.setSelectionMatrix(spatialAccelerationSelectionMatrix);
    }
 
    private void setContactPlaneStateToComputedValues(boolean heelIsUnderActiveControl, boolean toeIsUnderActiveControl)
@@ -365,13 +428,13 @@ public class ContactControlState extends FootControlState
    @Override
    public InverseDynamicsCommand<?> getInverseDynamicsCommand()
    {
-      return spatialAccelerationCommand;
+      return isDampingActive.getBooleanValue() ? spatialAccelerationCommand : null;
    }
 
    @Override
    public FeedbackControlCommand<?> getFeedbackControlCommand()
    {
-      return null; //spatialFeedbackControlCommand;
+      return isFeedbackControlActive.getBooleanValue() ? spatialFeedbackControlCommand : null;
    }
 
    @Override

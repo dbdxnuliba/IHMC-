@@ -10,6 +10,7 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
@@ -26,7 +27,7 @@ public class FootController implements ControlManagerInterface
    private final RigidBody pelvis;
    private ContactControlState contactState;
    private FreeMotionControlState freeMotionState;
-
+   
    public FootController(String namePrefix, YoDouble yoTime, YoPlaneContactState footContactState, ContactableFoot contactableFoot, RigidBody elevator,
                          RigidBody pelvis, YoVariableRegistry parentRegistry)
    {
@@ -58,12 +59,18 @@ public class FootController implements ControlManagerInterface
 
    public void requestTransitionToFreeMotion()
    {
-
+      requestedFootState.set(FootControlMode.FREE_MOTION);
+      contactState.disableRamping();
+      contactState.requestToeLoading(false);
+      contactState.requestHeelLoading(false);
    }
 
    public void requestTransitionToFreeMotion(double rampingDuration)
    {
-
+      requestedFootState.set(FootControlMode.FREE_MOTION);
+      contactState.enableRamping(rampingDuration);
+      contactState.requestToeLoading(false);
+      contactState.requestHeelLoading(false);
    }
 
    public void requestTransitionToContact(boolean loadToe, boolean loadHeel)

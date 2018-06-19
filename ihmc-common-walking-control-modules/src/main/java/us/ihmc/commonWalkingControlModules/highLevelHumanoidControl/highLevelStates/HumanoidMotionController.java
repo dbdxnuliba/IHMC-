@@ -23,7 +23,6 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSta
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerState;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.motionController.states.MotionControllerStateEnum;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -65,7 +64,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
    private RigidBodyControlManager headManager;
    private RigidBodyControlManager chestManager;
    private final PelvisControlManager pelvisManager;
-   
+
    private final YoEnum<MotionControllerStateEnum> requestedState;
    // IO objects
    private final ControllerCoreCommand controllerCoreCommand = new ControllerCoreCommand(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
@@ -215,7 +214,7 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
          rigidBodyManagers.get(i).initialize();
       for (int i = 0; i < controlManagerList.size(); i++)
          controlManagerList.get(i).initialize();
-      for(RobotSide side : RobotSide.values)
+      for (RobotSide side : RobotSide.values)
          feetControllers.get(side).setParameters(0.0, 1e3, 1e3);
    }
 
@@ -247,22 +246,24 @@ public class HumanoidMotionController implements HighLevelHumanoidControllerInte
 
    boolean firstCall = true;
    boolean disablingLeftToe = true;
+
    @Override
    public void doAction()
    {
-      if(firstCall)
+      if (firstCall)
       {
          firstCall = false;
          pelvisManager.setDesiredPelvisPosition(new FramePoint3D(ReferenceFrame.getWorldFrame(), -0.04, 0.0, 0.3818));
          pelvisManager.setDesiredPelvisOrientation(new FrameQuaternion(ReferenceFrame.getWorldFrame()));
       }
-      
+
       if (yoTime.getDoubleValue() > 1.0 && disablingLeftToe)
       {
          disablingLeftToe = false;
-         feetControllers.get(RobotSide.LEFT).requestTransitionToContact(0.1, false, true);
+         feetControllers.get(RobotSide.LEFT).requestTransitionToContact(true, true);
+         feetControllers.get(RobotSide.RIGHT).requestTransitionToContact(false, true);
       }
-      
+
       stateMachine.doActionAndTransition();
       pelvisManager.maintainDesiredPositionAndOrientation();
       submitControllerCommands();
