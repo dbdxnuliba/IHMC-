@@ -40,8 +40,8 @@ public class CollinearForceBasedCoMMotionPlanner implements CentroidalMotionPlan
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final int defaultQPIterationsToRun = 1;
    public static final int numberOfScalarTrajectoryCoefficients = 4;
-   public static final int numberOfCoMTrajectoryCoefficients = 6;
-   public static final int numberOfCoPTrajectoryCoefficients = 6;
+   public static final int numberOfCoMTrajectoryCoefficients = 8;
+   public static final int numberOfCoPTrajectoryCoefficients = 8;
 
    private final YoFramePoint3D initialCoMPosition;
    private final YoFramePoint3D initialCoPPosition;

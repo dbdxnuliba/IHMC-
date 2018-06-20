@@ -36,7 +36,7 @@ public class SmartContactStateProcessor
    private final ConvexPolygon2D tempSupportPolygon = new ConvexPolygon2D();
 
    private final ArrayList<Point2D> tempVertices = new ArrayList<>();
-   
+
    public SmartContactStateProcessor(ReferenceFrame planningFrame, String namePrefix, YoVariableRegistry registry)
    {
       this.planningFrame = planningFrame;
@@ -111,9 +111,9 @@ public class SmartContactStateProcessor
       SideDependentList<FramePose3D> footPoses = contactState.footPoses;
       int numberOfVertices = 0;
       int listIndex = 0;
-      for(RobotSide side : RobotSide.values)
+      for (RobotSide side : RobotSide.values)
       {
-         if(footInContact.get(side))
+         if (footInContact.get(side))
          {
             ConvexPolygon2D supportPolygon = footSupportPolygons.get(side);
             numberOfVertices += supportPolygon.getNumberOfVertices();
@@ -134,8 +134,7 @@ public class SmartContactStateProcessor
                                     List<Double> segmentDurationsToPopulate)
    {
       if (isStateSupported)
-         getSegmentDurations(contactStateDuration, isPreviousStateSupported != isStateSupported, isNextStateSupported != isStateSupported,
-                             segmentDurationsToPopulate);
+         getSegmentDurations(contactStateDuration, true, true, segmentDurationsToPopulate);
       else
          getSegmentDurations(contactStateDuration, false, false, segmentDurationsToPopulate);
    }
@@ -265,13 +264,13 @@ public class SmartContactStateProcessor
    private static int supplierSpoofNumberOfVertices = 0;
    private static final Vertex2DSupplier supplierSpoof = new Vertex2DSupplier()
    {
-      
+
       @Override
       public Point2DReadOnly getVertex(int index)
       {
          return supplierSpoofReference.get(index);
       }
-      
+
       @Override
       public int getNumberOfVertices()
       {

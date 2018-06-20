@@ -63,12 +63,12 @@ public class CollinearForcePlannerParameters implements MotionPlannerParameters
 
    public int getNumberOfCollocationConstraintsPerSegment()
    {
-      return 4;
+      return 5;
    }
 
    public int getNumberOfCoMPositionConstraintsPerSegment()
    {
-      return 2;
+      return 4;
    }
 
    public int getNumberOfSupportPolygonConstraintsPerSegment()
@@ -78,7 +78,7 @@ public class CollinearForcePlannerParameters implements MotionPlannerParameters
 
    public int getNumberOfScalarConstraintsPerSegment()
    {
-      return 4;
+      return 3;
    }
 
    public double getRobotMass()
@@ -88,6 +88,6 @@ public class CollinearForcePlannerParameters implements MotionPlannerParameters
 
    public int getNumberOfSegmentsPerContactStateChange()
    {
-      return 3;
+      return 2;
    }
 }

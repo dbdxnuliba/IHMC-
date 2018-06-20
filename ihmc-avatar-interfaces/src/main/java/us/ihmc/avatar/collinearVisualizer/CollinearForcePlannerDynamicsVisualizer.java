@@ -294,7 +294,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
    public void run()
    {
       BlockingSimulationRunner simulationRunner = new BlockingSimulationRunner(scs, 100000);
-      prepareContactStatePlan(Motion.WALK);
+      prepareContactStatePlan(Motion.JUMP);
       List<ContactState> contactStatePlanForController = new ArrayList<>();
       // warmup();
       runPlanner();
@@ -439,7 +439,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       FramePose2D rightSolePose = new FramePose2D(tempPose);
       contactStatePlanner.generateContactStatePlanForRunning(contactStatePlan, leftSolePose, rightSolePose, stepSize, numberOfSteps,
                                                              feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT), RobotSide.LEFT,
-                                                             true, false, true, false, 0.2, 0.4, 0.4);
+                                                             true, false, true, false, 0.2, 0.6, 0.6);
    }
 
    private final FramePoint3D tempPointForPoseSetting = new FramePoint3D();
@@ -458,7 +458,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       FramePose2D rightSolePose = new FramePose2D(tempPose);
       int numberOfPlannedStates = contactStatePlanner.generateContactStatePlanForWalking(contactStatePlan, leftSolePose, rightSolePose, stepSize, numberOfSteps,
                                                              feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT), RobotSide.LEFT,
-                                                             true, true, 0.4, 1.0);
+                                                             true, true, 0.4, 0.8);
 //      PrintTools.debug("Contact state plan: ");
 //      for (int i = 0; i < numberOfPlannedStates; i++)
 //         PrintTools.debug("State: " + i + ": " + contactStatePlan.get(i).toString());
@@ -475,7 +475,7 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
 
    private void prepareJumpingContactStatePlan()
    {
-      int numberOfJumps = 1;
+      int numberOfJumps = 2;
       createContactStates(numberOfJumps * 2 + 1);
       Vector2D stepSize = new Vector2D(0.4, 0.0);
 
@@ -486,6 +486,6 @@ public abstract class CollinearForcePlannerDynamicsVisualizer
       FramePose2D rightFootPose = new FramePose2D();
       rightFootPose.setIncludingFrame(yoRightPose.getReferenceFrame(), yoRightPose.getX(), yoRightPose.getY(), yoRightPose.getYaw());
       contactStatePlanner.generateContactStatePlanForJumping(contactStatePlan, leftFootPose, rightFootPose, stepSize, numberOfJumps,
-                                                             feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT), 0.15, 0.5);
+                                                             feetSupportPolygon.get(RobotSide.LEFT), feetSupportPolygon.get(RobotSide.RIGHT), 0.5, 0.1);
    }
 }
