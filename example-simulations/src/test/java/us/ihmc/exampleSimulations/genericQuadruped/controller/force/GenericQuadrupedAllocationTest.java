@@ -1,5 +1,6 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionCommon_D64;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionBase_D64;
@@ -25,8 +26,8 @@ import us.ihmc.quadrupedRobotics.controller.QuadrupedControlMode;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerManager;
 import us.ihmc.quadrupedRobotics.input.managers.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
-import us.ihmc.robotics.allocations.AllocationTest;
-import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.commons.allocations.AllocationTest;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.testing.YoVariableTestGoal;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.dataBuffer.MirroredYoVariableRegistry;
@@ -158,6 +159,7 @@ public class GenericQuadrupedAllocationTest implements AllocationTest
       methodsToIgnore.add(RecyclingArrayList.class.getName() + ".ensureCapacity");
       methodsToIgnore.add(LUDecompositionBase_D64.class.getName() + ".decomposeCommonInit");
       methodsToIgnore.add(CholeskyDecompositionCommon_D64.class.getName() + ".decompose");
+      methodsToIgnore.add(TDoubleArrayList.class.getName() + ".ensureCapacity");
 
       // Ignore the following methods as they are related to printouts.
       methodsToIgnore.add(Throwable.class.getName() + ".printStackTrace");

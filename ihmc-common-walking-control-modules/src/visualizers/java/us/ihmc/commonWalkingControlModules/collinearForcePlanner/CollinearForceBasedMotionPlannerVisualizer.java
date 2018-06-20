@@ -3,6 +3,7 @@ package us.ihmc.commonWalkingControlModules.collinearForcePlanner;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,6 +12,7 @@ import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQP
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner.CollinearForcePlannerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.flight.ContactState;
 import us.ihmc.commons.PrintTools;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -25,8 +27,6 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
-import us.ihmc.robotics.lists.GenericTypeBuilder;
-import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.time.ExecutionTimer;
@@ -38,7 +38,6 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
-import us.ihmc.yoVariables.variable.YoFramePose3D;
 import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
@@ -87,7 +86,7 @@ public class CollinearForceBasedMotionPlannerVisualizer
                                                                                 new Point2D(-ankleToHeelX, ankleToHeelY), new Point2D(ankleToMidX, ankleToMidY))
                                                                             .collect(Collectors.toList());
 
-   private final RecyclingArrayList<SideDependentList<Point2D>> footstepLocations = new RecyclingArrayList<>(new SideDependentListBuilder());
+   private final RecyclingArrayList<SideDependentList<Point2D>> footstepLocations = new RecyclingArrayList<>(10, new SideDependentListBuilder());
    private final ConvexPolygon2D tempPolygon = new ConvexPolygon2D();
    private final double defaultSupportDurationForJumping = 0.6;
    private final double defaultFlightDurationForJumping = 0.1;
@@ -509,10 +508,10 @@ public class CollinearForceBasedMotionPlannerVisualizer
          motionPlanner.appendContactStateToList(contactStatesForPlanner.get(i));
    }
 
-   private class SideDependentListBuilder extends GenericTypeBuilder<SideDependentList<Point2D>>
+   private class SideDependentListBuilder implements Supplier<SideDependentList<Point2D>>
    {
       @Override
-      public SideDependentList<Point2D> newInstance()
+      public SideDependentList<Point2D> get()
       {
          SideDependentList<Point2D> list = new SideDependentList<Point2D>();
          for (RobotSide side : RobotSide.values)

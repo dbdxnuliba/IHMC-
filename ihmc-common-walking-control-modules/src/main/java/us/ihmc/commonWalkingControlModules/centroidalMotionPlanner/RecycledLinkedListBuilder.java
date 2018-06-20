@@ -5,9 +5,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.function.Supplier;
 
-import us.ihmc.commons.PrintTools;
-import us.ihmc.robotics.lists.GenericTypeBuilder;
+import us.ihmc.commons.lists.SupplierBuilder;
 
 /**
  * Helps in creating link lists that can be recycled
@@ -48,14 +48,14 @@ public class RecycledLinkedListBuilder<T> implements List<T>
 
    private RecycledLinkedListEntry<T> firstEntry;
    private RecycledLinkedListEntry<T> lastEntry;
-   private final GenericTypeBuilder<T> builder;
+   private final Supplier<T> builder;
    private int size;
    private int freeEntrySize;
    private RecycledLinkedListEntry<T>[] freeEntries;
 
    private static final int DEFAULT_INITIAL_CAPACITY = 1;
 
-   public RecycledLinkedListBuilder(GenericTypeBuilder<T> builder)
+   public RecycledLinkedListBuilder(Supplier<T> builder)
    {
       this(DEFAULT_INITIAL_CAPACITY, builder);
    }
@@ -67,10 +67,10 @@ public class RecycledLinkedListBuilder<T> implements List<T>
 
    public RecycledLinkedListBuilder(int initialCapacity, Class<T> clazz)
    {
-      this(initialCapacity, GenericTypeBuilder.createBuilderWithEmptyConstructor(clazz));
+      this(initialCapacity, SupplierBuilder.createFromEmptyConstructor(clazz));
    }
 
-   public RecycledLinkedListBuilder(int initialCapacity, GenericTypeBuilder<T> builder)
+   public RecycledLinkedListBuilder(int initialCapacity, Supplier<T> builder)
    {
       firstEntry = null;
       lastEntry = null;
@@ -224,7 +224,7 @@ public class RecycledLinkedListBuilder<T> implements List<T>
    {
       for (int i = 0; i < freeEntries.length; i++)
          if (freeEntries[i] == null)
-            freeEntries[i] = new RecycledLinkedListEntry<T>(builder.newInstance());
+            freeEntries[i] = new RecycledLinkedListEntry<T>(builder.get());
       freeEntrySize = freeEntries.length;
    }
 

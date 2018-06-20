@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.decoupledMotionGeneration;
 
-import us.ihmc.robotics.lists.GenericTypeBuilder;
+import java.util.function.Supplier;
+
 import us.ihmc.robotics.math.trajectories.Trajectory;
 
 public class CentroidalMotionPlannerTools
@@ -11,12 +12,12 @@ public class CentroidalMotionPlannerTools
       
    }
    
-   public static GenericTypeBuilder<Trajectory> getTrajectoryBuilder(int maxNumberOfCoefficients)
+   public static Supplier<Trajectory> getTrajectoryBuilder(int maxNumberOfCoefficients)
    {
-      return new GenericTypeBuilder<Trajectory>()
+      return new Supplier<Trajectory>()
       {
          @Override
-         public Trajectory newInstance()
+         public Trajectory get()
          {
             return new Trajectory(maxNumberOfCoefficients);
          }

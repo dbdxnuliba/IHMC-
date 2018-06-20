@@ -1,14 +1,16 @@
 package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentSQPPlanner;
 
+import java.util.function.Supplier;
+
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.zeroMomentController.CentroidalMotionPlan;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.robotics.lists.GenericTypeBuilder;
-import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.euclid.referenceFrame.tools.EuclidFrameAPITestTools.GenericTypeBuilder;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
@@ -66,30 +68,28 @@ public class CollinearForceBasedPlannerResult implements CentroidalMotionPlan
 
    public CollinearForceBasedPlannerResult(YoVariableRegistry registry)
    {
-      comTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new GenericTypeBuilder<Trajectory3D>()
+      comTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new Supplier<Trajectory3D>()
       {
 
          @Override
-         public Trajectory3D newInstance()
+         public Trajectory3D get()
          {
             return new Trajectory3D(CollinearForceBasedCoMMotionPlanner.numberOfCoMTrajectoryCoefficients);
          }
 
       });
-      copTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new GenericTypeBuilder<Trajectory3D>()
+      copTrajectories = new RecyclingArrayList<>(defaultNumberOfSegments, new Supplier<Trajectory3D>()
       {
-
          @Override
-         public Trajectory3D newInstance()
+         public Trajectory3D get()
          {
             return new Trajectory3D(CollinearForceBasedCoMMotionPlanner.numberOfCoPTrajectoryCoefficients);
          }
       });
-      scalarProfile = new RecyclingArrayList<>(defaultNumberOfSegments, new GenericTypeBuilder<Trajectory>()
+      scalarProfile = new RecyclingArrayList<>(defaultNumberOfSegments, new Supplier<Trajectory>()
       {
-
          @Override
-         public Trajectory newInstance()
+         public Trajectory get()
          {
             return new Trajectory(CollinearForceBasedCoMMotionPlanner.numberOfScalarTrajectoryCoefficients);
          }

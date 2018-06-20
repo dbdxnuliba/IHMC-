@@ -3,12 +3,11 @@ package us.ihmc.commonWalkingControlModules.centroidalMotionPlanner;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Array;
+import java.util.function.Supplier;
 
 import org.junit.Test;
 
 import us.ihmc.commonWalkingControlModules.centroidalMotionPlanner.RecycledLinkedListBuilder.RecycledLinkedListEntry;
-import us.ihmc.commons.PrintTools;
-import us.ihmc.robotics.lists.GenericTypeBuilder;
 
 public class RecycledLinkedListBuilderTest
 {
@@ -133,12 +132,12 @@ public class RecycledLinkedListBuilderTest
       }
    }
 
-   private GenericTypeBuilder<DummyClass> createBuilderForDummyClass()
+   private Supplier<DummyClass> createBuilderForDummyClass()
    {
-      return new GenericTypeBuilder<DummyClass>()
+      return new Supplier<DummyClass>()
       {
          @Override
-         public DummyClass newInstance()
+         public DummyClass get()
          {
             return new DummyClass();
          }

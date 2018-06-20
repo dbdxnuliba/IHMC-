@@ -151,7 +151,7 @@ public class AtlasJumpTest
    {
       HighLevelStateMessage jumpControllerMessage = new HighLevelStateMessage();
       jumpControllerMessage.highLevelControllerName = HighLevelStateMessage.JUMPING;
-      simulationTestHelper.send(jumpControllerMessage);
+      simulationTestHelper.publishToController(jumpControllerMessage);
       try
       {
          simulationTestHelper.simulateAndBlock(2.0);
