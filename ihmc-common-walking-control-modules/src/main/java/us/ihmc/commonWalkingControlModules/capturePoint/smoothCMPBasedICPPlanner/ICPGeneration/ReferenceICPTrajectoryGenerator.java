@@ -86,8 +86,13 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
       this.isInitialTransfer = isInitialTransfer;
       this.debug = debug;
 
-      areICPDynamicsSatisfied = new YoBoolean(namePrefix + "AreICPDynamicsSatisfied", registry);
-      areICPDynamicsSatisfied.set(false);
+      if (debug)
+      {
+         areICPDynamicsSatisfied = new YoBoolean(namePrefix + "AreICPDynamicsSatisfied", registry);
+         areICPDynamicsSatisfied.set(false);
+      }
+      else
+         areICPDynamicsSatisfied = null;
 
       continuouslyAdjustForICPContinuity = new YoBoolean(namePrefix + "ContinuouslyAdjustForICPContinuity", registry);
       continuouslyAdjustForICPContinuity.set(CONTINUOUSLY_ADJUST_FOR_ICP_DISCONTINUITY);

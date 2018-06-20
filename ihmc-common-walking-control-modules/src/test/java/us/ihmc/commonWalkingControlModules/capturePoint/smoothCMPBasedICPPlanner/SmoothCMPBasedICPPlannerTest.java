@@ -58,6 +58,7 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 @ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class SmoothCMPBasedICPPlannerTest
@@ -68,8 +69,8 @@ public class SmoothCMPBasedICPPlannerTest
    private final static double spatialEpsilonForPlanningConsistency = 0.010; // m 
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private static final boolean visualize = false;
-   private static final boolean keepSCSUp = false;
+   private static final boolean visualize = true;
+   private static final boolean keepSCSUp = true;
    private static final boolean testAssertions = !keepSCSUp && true;
 
    // Simulation parameters
@@ -169,6 +170,13 @@ public class SmoothCMPBasedICPPlannerTest
    private Color cmpPointsColor = Color.YELLOW;
    private Color copPointsColor = Color.ORANGE;
 
+   private YoFrameVector3D yoCoMVelocityFromDynamics;
+   private YoFrameVector3D yoCoMVelocityFromPlanner;
+   private YoFrameVector3D yoICPVelocityFromDynamics;
+   private YoFrameVector3D yoICPVelocityFromPlanner;
+   private YoBoolean areICPDynamicsSatisfied;
+   private YoBoolean areCoMDynamicsSatisfied;
+
    @Before
    public void setupTest()
    {
@@ -182,6 +190,15 @@ public class SmoothCMPBasedICPPlannerTest
       this.soleZUpFrames = new SideDependentList<>();
       this.contactStates = new SideDependentList<>();
       this.updatables = new ArrayList<>();
+      if (keepSCSUp)
+      {
+         this.areCoMDynamicsSatisfied = new YoBoolean("AreCoMDynamicsSatisfied", registry);
+         this.areICPDynamicsSatisfied = new YoBoolean("AreICPDynamicsSatisfied", registry);
+         this.yoCoMVelocityFromDynamics = new YoFrameVector3D("CoMVelocityFromDynamics", worldFrame, registry);
+         this.yoCoMVelocityFromPlanner = new YoFrameVector3D("CoMVelocityFromPlanner", worldFrame, registry);
+         this.yoICPVelocityFromDynamics = new YoFrameVector3D("ICPVelocityFromDynamics", worldFrame, registry);
+         this.yoICPVelocityFromPlanner = new YoFrameVector3D("ICPVelocityFromPlanner", worldFrame, registry);
+      }
 
       for (RobotSide side : RobotSide.values())
       {
@@ -354,7 +371,7 @@ public class SmoothCMPBasedICPPlannerTest
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 1.8)
-   @Test(timeout = 30000)
+   @Test //(timeout = 30000)
    public void testForDiscontinuitiesWithAngularMomentum()
    {
       boolean isAMOn = true;
@@ -396,8 +413,8 @@ public class SmoothCMPBasedICPPlannerTest
             return numberOfFootstepsToConsider;
          }
       };
-      this.planner = new SmoothCMPBasedICPPlanner(robotMass, bipedSupportPolygons, feet, plannerParameters.getNumberOfFootstepsToConsider(),
-                                                  registry, graphicsListRegistry, gravity);
+      this.planner = new SmoothCMPBasedICPPlanner(robotMass, bipedSupportPolygons, feet, plannerParameters.getNumberOfFootstepsToConsider(), registry,
+                                                  graphicsListRegistry, gravity);
       this.planner.initializeParameters(plannerParameters);
       this.planner.setFinalTransferDuration(defaultFinalTransferTime);
       this.planner.setOmega0(omega);
@@ -813,8 +830,9 @@ public class SmoothCMPBasedICPPlannerTest
             updateVisualization(currentStepCount);
          if (checkForPlanningConsistency)
             testForPlanningConsistency(inDoubleSupport.getBooleanValue(), currentStepCount);
-         simulateTicks(checkForDiscontinuities, checkIfDyanmicsAreSatisfied, (inDoubleSupport.getBooleanValue()
-               ? timingList.get(currentStepCount).getTransferTime() : timingList.get(currentStepCount).getSwingTime()));
+         simulateTicks(checkForDiscontinuities, checkIfDyanmicsAreSatisfied,
+                       (inDoubleSupport.getBooleanValue() ? timingList.get(currentStepCount).getTransferTime()
+                             : timingList.get(currentStepCount).getSwingTime()));
          currentStepCount = updateStateMachine(currentStepCount);
       }
 
@@ -876,6 +894,7 @@ public class SmoothCMPBasedICPPlannerTest
    private void simulateOneTick(boolean checkForDiscontinuities, boolean checkIfDyanmicsAreSatisfied)
    {
       getAllVariablesFromPlanner();
+      updateYoVariables();
       updateUpdatables(yoTime.getDoubleValue());
       if (checkForDiscontinuities)
          testForDiscontinuities();
@@ -883,6 +902,16 @@ public class SmoothCMPBasedICPPlannerTest
          testIfDynamicsAreSatisified();
       if (visualize)
          updateVisualizePerTick();
+   }
+
+   private void updateYoVariables()
+   {
+      yoCoMVelocityFromPlanner.set(comVelocity);
+      yoICPVelocityFromPlanner.set(icpVelocity);
+      areCoMDynamicsSatisfied.set(checkCoMDynamics(comPosition, comVelocity, icpPosition));
+      yoCoMVelocityFromDynamics.set(comVelocityFromDynamics);
+      areICPDynamicsSatisfied.set(checkICPDynamics(icpPosition, icpVelocity, cmpPosition));
+      yoICPVelocityFromDynamics.set(icpVelocityFromDynamics);
    }
 
    private void getAllVariablesFromPlanner()
@@ -925,7 +954,7 @@ public class SmoothCMPBasedICPPlannerTest
 
    private void testIfDynamicsAreSatisified()
    {
-      assertTrueLocal("CoM dynamics not satisfied, t: " + yoTime.getDoubleValue() + " COM Position: " + comPosition.toString() + " ICP Velocity: "
+      assertTrueLocal("CoM dynamics not satisfied, t: " + yoTime.getDoubleValue() + " COM Position: " + comPosition.toString() + " CoM Velocity: "
             + comVelocity.toString() + " ICP Position: " + icpPosition.toString(), checkCoMDynamics(comPosition, comVelocity, icpPosition));
       assertTrueLocal("ICP dynamics not satisfied, t: " + yoTime.getDoubleValue() + " ICP Position: " + icpPosition.toString() + " ICP Velocity: "
             + icpVelocity.toString() + " CMP Position: " + cmpPosition.toString(), checkICPDynamics(icpPosition, icpVelocity, cmpPosition));

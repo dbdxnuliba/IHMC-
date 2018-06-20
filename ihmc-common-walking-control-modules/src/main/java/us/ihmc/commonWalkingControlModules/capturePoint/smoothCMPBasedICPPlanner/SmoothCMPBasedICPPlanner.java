@@ -138,8 +138,13 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
 
       angularMomentumGenerator = new FootstepAngularMomentumPredictor(namePrefix, omega0, debug, registry);
 
-      areCoMDynamicsSatisfied = new YoBoolean("areCoMDynamicsSatisfied", registry);
-      areCoMDynamicsSatisfied.set(false);
+      if (debug)
+      {
+         areCoMDynamicsSatisfied = new YoBoolean("areCoMDynamicsSatisfied", registry);
+         areCoMDynamicsSatisfied.set(false);
+      }
+      else
+         areCoMDynamicsSatisfied = null;
 
       parentRegistry.addChild(registry);
 
