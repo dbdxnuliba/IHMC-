@@ -799,13 +799,13 @@ public class Trajectory
       for (; row < maximumNumberOfCoefficients; row++)
          coefficients[row] = Double.NaN;
    }
-   
+
    private void setCoefficientsCopy()
    {
       for (int row = 0; row < numberOfCoefficients; row++)
          coefficientsCopy[row] = coefficients[row];
    }
-   
+
    public void reshape(int numberOfCoefficientsRequired)
    {
       if (numberOfCoefficientsRequired > maximumNumberOfCoefficients)
