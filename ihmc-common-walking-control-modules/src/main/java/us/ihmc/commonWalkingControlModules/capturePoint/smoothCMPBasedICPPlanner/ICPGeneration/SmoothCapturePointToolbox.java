@@ -507,12 +507,19 @@ public class SmoothCapturePointToolbox
    public void calculateGeneralizedAlphaPrimeOnCMPSegment3D(double omega0, double time, DenseMatrix64F generalizedAlphaPrimeToPack, int alphaDerivativeOrder,
                                                             FrameTrajectory3D cmpPolynomial3D)
    {
+      int numberOfCMPTrajectoryCoefficients = cmpPolynomial3D.getNumberOfCoefficients();
+      calculateOmegaInversePowers(omega0, omegaInversePowers, numberOfCMPTrajectoryCoefficients);
+      calculateTimePowers(currentTimeDerivativePowers, time, numberOfCMPTrajectoryCoefficients);
+      calculateGeneralizedAlphaPrimeMatrix(alphaPrime, numberOfCMPTrajectoryCoefficients, currentTimeDerivativePowers, omegaInversePowers,
+                                           alphaDerivativeOrder);
+      int columnIndex = 0;
+      int rowIndex = 0;
       for (Axis dir : Axis.values)
       {
-         Trajectory cmpPolynomial = cmpPolynomial3D.getTrajectory(dir);
-         calculateGeneralizedAlphaPrimeMatrix(omega0, time, alphaPrime, alphaDerivativeOrder, cmpPolynomial);
-         MatrixTools.setMatrixBlock(generalizedAlphaPrimeToPack, dir.ordinal(), dir.ordinal() * alphaPrime.numCols, alphaPrime, 0, 0, alphaPrime.numRows,
-                                    alphaPrime.numCols, 1.0);
+         int columnsOfAlphaMatrixToCopy = cmpPolynomial3D.getTrajectory(dir).getNumberOfCoefficients();
+         MatrixTools.setMatrixBlock(generalizedAlphaPrimeToPack, rowIndex, columnIndex, alphaPrime, 0, 0, alphaPrime.numRows, columnsOfAlphaMatrixToCopy, 1.0);
+         rowIndex += alphaPrime.getNumRows();
+         columnIndex += columnsOfAlphaMatrixToCopy;
       }
    }
 
@@ -583,15 +590,23 @@ public class SmoothCapturePointToolbox
       return Math.pow(omega0, gammaDerivativeOrder) * Math.exp(omega0 * (time - timeSegmentTotal));
    }
 
-   public static double calculateGeneralizedMatricesPrimeOnCMPSegment1D(double omega0, double time, int derivativeOrder, Trajectory cmpPolynomial,
-                                                                        DenseMatrix64F generalizedAlphaPrime, DenseMatrix64F generalizedBetaPrime,
-                                                                        DenseMatrix64F generalizedAlphaBetaPrime)
+   public double calculateGeneralizedMatricesPrimeOnCMPSegment1D(double omega0, double time, int derivativeOrder, Trajectory cmpPolynomial,
+                                                                 DenseMatrix64F generalizedAlphaPrime, DenseMatrix64F generalizedBetaPrime,
+                                                                 DenseMatrix64F generalizedAlphaBetaPrime)
    {
-      calculateGeneralizedAlphaPrimeMatrix(omega0, time, generalizedAlphaPrime, derivativeOrder, cmpPolynomial);
-      calculateGeneralizedBetaPrimeOnCMPSegment1D(omega0, time, generalizedBetaPrime, derivativeOrder, cmpPolynomial);
-      double generalizedGammaPrime = calculateGeneralizedGammaPrimeOnCMPSegment1D(omega0, time, derivativeOrder, cmpPolynomial);
+      int numberOfCoefficients = cmpPolynomial.getNumberOfCoefficients();
+      int numberOfOmegaPowers = Math.max(derivativeOrder + 1, numberOfCoefficients);
+      double finalTime = cmpPolynomial.getFinalTime();
+      calculateOmegaInversePowers(omega0, omegaInversePowers, numberOfOmegaPowers);
+      calculateTimePowers(currentTimeDerivativePowers, time, numberOfCoefficients);
+      calculateTimePowers(finalTimeDerivativePowers, finalTime, numberOfCoefficients);
+      extractPolynomialCoefficients(cmpPolynomial, polynomialCoefficientVector);
+      double gammaPrime = calculateGammaPrimeMatrix(omega0, time, finalTime);
+      calculateGeneralizedAlphaPrimeMatrix(generalizedAlphaPrime, numberOfCoefficients, currentTimeDerivativePowers, omegaInversePowers, derivativeOrder);
+      calculateGeneralizedBetaPrimeMatrix(generalizedBetaPrime, numberOfCoefficients, finalTimeDerivativePowers, omegaInversePowers, gammaPrime,
+                                          derivativeOrder);
+      double generalizedGammaPrime = calculateGeneralizedGammaPrimeMatrix(omegaInversePowers, gammaPrime, derivativeOrder);
       CommonOps.subtract(generalizedAlphaPrime, generalizedBetaPrime, generalizedAlphaBetaPrime);
-
       return generalizedGammaPrime;
    }
 }

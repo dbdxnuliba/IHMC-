@@ -640,7 +640,8 @@ public class SmoothCapturePointToolboxTest
       traj.setDirectlyFast(0, 1.0);
       DenseMatrix64F fromOldCalc = new DenseMatrix64F(0, 1);
       DenseMatrix64F fromNewCalc = new DenseMatrix64F(0, 1);
-      int icpDerivative = 2;
+      DenseMatrix64F fromNewCalc2 = new DenseMatrix64F(0, 1);
+      int icpDerivative = 0;
       SmoothCapturePointToolbox.calculateGeneralizedAlphaPrimeMatrix(omega0, traj.getInitialTime(), fromOldCalc, icpDerivative, traj);
       DenseMatrix64F timeDerivativeCoefficients = SmoothCapturePointToolbox.generateDerivativeCoefficientMatrix(10);
       DenseMatrix64F timeDerivativePowers = new DenseMatrix64F(0, 1);
@@ -648,8 +649,10 @@ public class SmoothCapturePointToolboxTest
       DenseMatrix64F omegaPowers = new DenseMatrix64F(0, 1);
       SmoothCapturePointToolbox.calculateOmegaInversePowers(omega0, omegaPowers, 10);
       SmoothCapturePointToolbox.calculateGeneralizedAlphaPrimeMatrix(fromNewCalc, 10, timeDerivativePowers, omegaPowers, icpDerivative);
+      SmoothCapturePointToolbox.calculateGeneralizedAlphaPrimeMatrix(fromNewCalc2, 9, timeDerivativePowers, omegaPowers, icpDerivative);
       PrintTools.debug("From Old: " + fromOldCalc.toString());
       PrintTools.debug("From New: " + fromNewCalc.toString());
+      PrintTools.debug("From New: " + fromNewCalc2.toString());
    }
 
    @Test(timeout = 3000)
