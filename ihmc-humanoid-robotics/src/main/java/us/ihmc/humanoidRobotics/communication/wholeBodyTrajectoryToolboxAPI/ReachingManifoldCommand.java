@@ -6,7 +6,6 @@ import java.util.Map;
 
 import controller_msgs.msg.dds.ReachingManifoldMessage;
 import gnu.trove.list.array.TDoubleArrayList;
-import us.ihmc.commons.MathTools;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -118,77 +117,6 @@ public class ReachingManifoldCommand
    public boolean isCommandValid()
    {
       return false;
-   }
-
-   public Pose3D computeClosestPoseOnManifold(Pose3D pose)
-   {
-      double positionWeight = 1.0;
-      double orientationWeight = 0.0;
-      double closestDistance = Double.MAX_VALUE;
-      double distanceOld = closestDistance;
-
-      double alpha = -7.0;
-      double perturb = 0.01;
-
-      int maximumNumberOfIteration = 100;
-
-      TDoubleArrayList closestConfigurationSpace = new TDoubleArrayList();
-
-      // initial : medium values
-      for (int i = 0; i < getDimensionOfManifold(); i++)
-      {
-         closestConfigurationSpace.add((getUpperLimit(i) + getLowerLimit(i)) / 2);
-      }
-
-      // start iteration
-      for (int i = 0; i < maximumNumberOfIteration; i++)
-      {
-         // get pose
-         Pose3D closestPoseControl = computePoseOnManifold(closestConfigurationSpace);
-
-         // closest distance 
-         closestDistance = WholeBodyTrajectoryToolboxMessageTools.computePoseDistance(pose, closestPoseControl, positionWeight, orientationWeight);
-
-         // gradient decent
-         TDoubleArrayList gradientDecent = new TDoubleArrayList();
-         for (int j = 0; j < getDimensionOfManifold(); j++)
-         {
-            TDoubleArrayList perturbedConfigurationSpace = new TDoubleArrayList(closestConfigurationSpace);
-            perturbedConfigurationSpace.set(j, perturbedConfigurationSpace.get(j) + perturb);
-
-            perturbedConfigurationSpace.set(j, MathTools.clamp(perturbedConfigurationSpace.get(j), getLowerLimit(j), getUpperLimit(j)));
-
-            Pose3D perturbedPoseControl = computePoseOnManifold(perturbedConfigurationSpace);
-            double perturbedDistance = WholeBodyTrajectoryToolboxMessageTools.computePoseDistance(pose, perturbedPoseControl, positionWeight,
-                                                                                                  orientationWeight);
-            gradientDecent.add((perturbedDistance - closestDistance) / perturb);
-         }
-
-         // step alpha
-         TDoubleArrayList currentConfigurationSpace = new TDoubleArrayList();
-         for (int j = 0; j < getDimensionOfManifold(); j++)
-         {
-            currentConfigurationSpace.add(closestConfigurationSpace.get(j) + alpha * gradientDecent.get(j));
-
-            currentConfigurationSpace.set(j, MathTools.clamp(currentConfigurationSpace.get(j), getLowerLimit(j), getUpperLimit(j)));
-         }
-
-         Pose3D currentPoseControl = computePoseOnManifold(currentConfigurationSpace);
-
-         double currentDistance = WholeBodyTrajectoryToolboxMessageTools.computePoseDistance(pose, currentPoseControl, positionWeight, orientationWeight);
-
-         if (currentDistance < closestDistance)
-         {
-            closestDistance = currentDistance;
-            closestConfigurationSpace = new TDoubleArrayList(currentConfigurationSpace);
-         }
-         else
-         {
-            return computePoseOnManifold(closestConfigurationSpace);
-         }
-      }
-
-      return computePoseOnManifold(closestConfigurationSpace);
    }
 
    public RigidBody getRigidBody()
