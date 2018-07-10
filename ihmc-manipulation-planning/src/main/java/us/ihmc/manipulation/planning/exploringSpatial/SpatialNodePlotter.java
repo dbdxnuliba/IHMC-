@@ -19,6 +19,8 @@ import us.ihmc.plotting.Plotter;
 
 public class SpatialNodePlotter
 {
+   private boolean saving = false;
+   
    private ExploringDefinition spatialDefinition;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
@@ -202,7 +204,9 @@ public class SpatialNodePlotter
 
    public void saveNodes()
    {
-      PrintTools.info("bbbbbbbbbbbbbbbbbb");
+      if(!saving)
+         return;
+      
       PrintTools.info("" + validNodes.size());
       PrintTools.info("" + inValidNodes.size());
       PrintTools.info("" + path.size());
