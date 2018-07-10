@@ -9,15 +9,13 @@ buildscript {
    }
    dependencies {
       classpath "us.ihmc:ihmc-build:0.13.7"
-      classpath "us.ihmc:ros2-msg-to-pubsub-generator:0.7.6-alpha"
-//      classpath "us.ihmc:ihmc-pub-sub-generator:0.7.1"
-      classpath "org.ajoberstar:grgit:2.1.0"
+      classpath "us.ihmc:ros2-msg-to-pubsub-generator:0.9.0"
+//      classpath "us.ihmc:ihmc-pub-sub-generator:0.8.3"
       classpath "com.bmuschko:gradle-docker-plugin:3.2.5"
    }
 }
 
 apply plugin: "us.ihmc.ihmc-build"
-apply plugin: "org.ajoberstar.grgit"
 apply plugin: "com.bmuschko.docker-remote-api"
 
 ihmc {
@@ -39,24 +37,26 @@ testSuites {
 mainDependencies {
    compile group: 'us.ihmc', name: 'euclid-core', version: '0.5.1'
    compile group: 'us.ihmc', name: 'euclid', version: '0.8.2'
-   compile group: 'us.ihmc', name: 'ihmc-pub-sub', version: '0.7.2'
-   compile group: 'us.ihmc', name: 'ros2-common-interfaces', version: '0.7.6-alpha'
-   compile group: 'us.ihmc', name: 'ihmc-commons', version: '0.19.1'
+   compile group: 'us.ihmc', name: 'ihmc-pub-sub', version: '0.8.3'
+   compile group: 'us.ihmc', name: 'ros2-common-interfaces', version: '0.9.0'
+   compile group: 'us.ihmc', name: 'ihmc-commons', version: '0.20.1'
 }
 
 testDependencies {
-   compile group: 'us.ihmc', name: 'ihmc-ros2-library', version: '0.7.5-alpha'
+   compile group: 'us.ihmc', name: 'ihmc-ros2-library', version: '0.9.0'
 }
 
 generatorDependencies {
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.19.1"
-   compile group: "us.ihmc", name: "ros2-msg-to-pubsub-generator", version: "0.7.5-alpha"
+   compile group: "us.ihmc", name: "ihmc-commons", version: "0.20.1"
+   compile group: "us.ihmc", name: "ros2-msg-to-pubsub-generator", version: "0.9.0"
 }
 
 task buildImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
    inputDir = file("src/generator/docker")
    tag = "ihmc/ros1-bridge-build"
 }
+
+def generator = new us.ihmc.ros2.rosidl.RosInterfaceGenerator();
 
 task generateMessages {
    doFirst {
@@ -75,10 +75,9 @@ task generateMessages {
 
       if (!foundDependency)
       {
-         throw new GradleException("Could not find ros2-common-interfaces in configurations.compile!")
+         throw new org.gradle.api.GradleException("Could not find ros2-common-interfaces in configurations.compile!")
       }
 
-      def generator = new us.ihmc.ros2.rosidl.RosInterfaceGenerator();
 
       generator.addPackageRoot(file("build/tmp/generateMessages/ros2-common-interfaces/rcl_interfaces").toPath());
       generator.addPackageRoot(file("build/tmp/generateMessages/ros2-common-interfaces/common_interfaces").toPath());

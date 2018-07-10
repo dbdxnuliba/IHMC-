@@ -1294,15 +1294,7 @@ public class HumanoidMessageTools
    public static VideoPacket createVideoPacket(VideoSource videoSource, long timeStamp, byte[] data, Point3DReadOnly position, QuaternionReadOnly orientation,
                                                IntrinsicParameters intrinsicParameters)
    {
-      return createVideoPacket(videoSource, timeStamp, data, position, orientation, intrinsicParameters, null);
-   }
-
-   public static VideoPacket createVideoPacket(VideoSource videoSource, long timeStamp, byte[] data, Point3DReadOnly position, QuaternionReadOnly orientation,
-                                               IntrinsicParameters intrinsicParameters, PacketDestination packetDestination)
-   {
       VideoPacket message = new VideoPacket();
-      if (packetDestination != null)
-         message.setDestination(packetDestination.ordinal());
       message.setVideoSource(videoSource.toByte());
       message.setTimestamp(timeStamp);
       message.getData().add(data);

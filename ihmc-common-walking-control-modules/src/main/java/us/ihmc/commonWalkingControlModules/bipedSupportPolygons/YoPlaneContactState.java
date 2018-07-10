@@ -13,7 +13,7 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.robotics.lists.FrameTuple2dArrayList;
-import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -23,7 +23,7 @@ import us.ihmc.yoVariables.variable.YoFramePoint2D;
 public class YoPlaneContactState implements PlaneContactState, ModifiableContactState
 {
    private static final double THRESHOLD = 1e-7;
-   private final YoVariableRegistry registry;
+   protected final YoVariableRegistry registry;
    private final RigidBody rigidBody;
    private final ReferenceFrame planeFrame;
    private final YoBoolean inContact;

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxOutputStatus;
@@ -638,5 +639,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    FullHumanoidRobotModel getSolverFullRobotModel()
    {
       return humanoidKinematicsSolver.getDesiredFullRobotModel();
+   }
+
+   public void updateCapturabilityBasedStatus(CapturabilityBasedStatus takeNextData)
+   {
+      // TODO Auto-generated method stub
+      
    }
 }

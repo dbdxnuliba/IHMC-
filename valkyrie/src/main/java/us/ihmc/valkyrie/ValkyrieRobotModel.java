@@ -3,6 +3,7 @@ package us.ihmc.valkyrie;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +25,6 @@ import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParam
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.footstepPlanning.PlanarRegionFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.graphSearch.FootstepPlannerParameters;
-import us.ihmc.humanoidRobotics.communication.streamingData.HumanoidGlobalDataProducer;
 import us.ihmc.humanoidRobotics.footstep.footstepGenerator.QuadTreeFootstepPlanningParameters;
 import us.ihmc.ihmcPerception.depthData.CollisionBoxProvider;
 import us.ihmc.modelFileLoaders.SdfLoader.DRCRobotSDFLoader;
@@ -36,7 +36,9 @@ import us.ihmc.modelFileLoaders.SdfLoader.SDFDescriptionMutator;
 import us.ihmc.modelFileLoaders.SdfLoader.SDFForceSensor;
 import us.ihmc.modelFileLoaders.SdfLoader.SDFJointHolder;
 import us.ihmc.modelFileLoaders.SdfLoader.SDFLinkHolder;
+import us.ihmc.modelFileLoaders.SdfLoader.xmlDescription.SDFGeometry;
 import us.ihmc.modelFileLoaders.SdfLoader.xmlDescription.SDFSensor;
+import us.ihmc.modelFileLoaders.SdfLoader.xmlDescription.SDFVisual;
 import us.ihmc.multicastLogDataProtocol.modelLoaders.LogModelProvider;
 import us.ihmc.multicastLogDataProtocol.modelLoaders.SDFLogModelProvider;
 import us.ihmc.robotDataLogger.logger.LogSettings;
@@ -45,6 +47,7 @@ import us.ihmc.robotModels.FullHumanoidRobotModelFromDescription;
 import us.ihmc.robotics.robotDescription.RobotDescription;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.sensorProcessing.stateEstimation.StateEstimatorParameters;
 import us.ihmc.simulationConstructionSetTools.robotController.MultiThreadedRobotControlElement;
 import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
@@ -91,6 +94,7 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    private final ValkyrieCollisionMeshDefinitionDataHolder collisionMeshDefinitionDataHolder;
 
    private boolean useShapeCollision = false;
+   private final boolean useOBJGraphics;
 
    private final String[] resourceDirectories;
    {
@@ -119,15 +123,22 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    {
       this(target, headless, model, null, false);
    }
-   
+
    public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints)
    {
       this(target, headless, model, simulationContactPoints, false);
    }
 
-   public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints, boolean useShapeCollision)
+   public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints,
+                             boolean useShapeCollision)
+   {
+      this(target, headless, model, simulationContactPoints, useShapeCollision, true);
+   }
+
+   public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints, boolean useShapeCollision, boolean useOBJGraphics)
    {
       this.target = target;
+      this.useOBJGraphics = useOBJGraphics;
       jointMap = new ValkyrieJointMap();
       contactPointParameters = new ValkyrieContactPointParameters(jointMap, simulationContactPoints);
       sensorInformation = new ValkyrieSensorInformation(target);
@@ -226,7 +237,7 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    {
       return useShapeCollision;
    }
-   
+
    @Override
    public RobotDescription getRobotDescription()
    {
@@ -405,13 +416,14 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    @Override
    public DRCSensorSuiteManager getSensorSuiteManager()
    {
-      return new ValkyrieSensorSuiteManager(this, getCollisionBoxProvider(), getPPSTimestampOffsetProvider(), sensorInformation, jointMap, target);
+      return new ValkyrieSensorSuiteManager(getSimpleRobotName(), this, getCollisionBoxProvider(), getPPSTimestampOffsetProvider(), sensorInformation, jointMap,
+                                            target);
    }
 
    @Override
    public MultiThreadedRobotControlElement createSimulatedHandController(FloatingRootJointRobot simulatedRobot,
                                                                          ThreadDataSynchronizerInterface threadDataSynchronizer,
-                                                                         HumanoidGlobalDataProducer globalDataProducer,
+                                                                         RealtimeRos2Node realtimeRos2Node,
                                                                          CloseableAndDisposableRegistry closeableAndDisposableRegistry)
    {
       return null;
@@ -481,6 +493,31 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    {
       if (this.jointMap.getModelName().equals(model.getName()))
       {
+         if (useOBJGraphics)
+         {
+            List<SDFVisual> visuals = linkHolder.getVisuals();
+            if (visuals != null)
+            {
+               for (SDFVisual sdfVisual : visuals)
+               {
+                  SDFGeometry geometry = sdfVisual.getGeometry();
+                  if (geometry == null)
+                     continue;
+
+                  SDFGeometry.Mesh mesh = geometry.getMesh();
+                  if (mesh == null)
+                     continue;
+
+                  String meshUri = mesh.getUri();
+                  if (meshUri.contains("meshes"))
+                  {
+                     String replacedURI = meshUri.replace(".dae", ".obj");
+                     mesh.setUri(replacedURI);
+                  }
+               }
+            }
+         }
+
          switch (linkHolder.getName())
          {
          case "hokuyo_link":

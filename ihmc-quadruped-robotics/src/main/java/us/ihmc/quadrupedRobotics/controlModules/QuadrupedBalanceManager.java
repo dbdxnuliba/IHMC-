@@ -2,8 +2,9 @@ package us.ihmc.quadrupedRobotics.controlModules;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.virtualModelControl.VirtualModelControlCommand;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -22,11 +23,9 @@ import us.ihmc.quadrupedRobotics.planning.QuadrupedStep;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.planning.YoQuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.planning.trajectory.DCMPlanner;
-import us.ihmc.robotics.lists.GenericTypeBuilder;
-import us.ihmc.robotics.lists.RecyclingArrayList;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.*;
 
@@ -58,6 +57,7 @@ public class QuadrupedBalanceManager
 
    private final YoFramePoint3D yoDesiredDCMPosition = new YoFramePoint3D("desiredDCMPosition", worldFrame, registry);
    private final YoFrameVector3D yoDesiredDCMVelocity = new YoFrameVector3D("desiredDCMVelocity", worldFrame, registry);
+   private final YoFramePoint3D yoTransitionFinalDCM = new YoFramePoint3D("desiredDCMPositionAtEndOfTransition", worldFrame, registry);
    private final YoFramePoint3D yoFinalDesiredDCM = new YoFramePoint3D("finalDesiredDCMPosition", worldFrame, registry);
    private final YoFramePoint3D yoVrpPositionSetpoint = new YoFramePoint3D("vrpPositionSetpoint", ReferenceFrame.getWorldFrame(), registry);
    private final YoFramePoint3D yoDesiredCMP = new YoFramePoint3D("desiredCMP", ReferenceFrame.getWorldFrame(), registry);
@@ -70,6 +70,8 @@ public class QuadrupedBalanceManager
    private final QuadrupedControllerToolbox controllerToolbox;
 
    private final RecyclingArrayList<QuadrupedStep> adjustedActiveSteps;
+
+   private final List<QuadrupedTimedStep> activeSteps = new ArrayList<>();
 
    // footstep graphics
    private static final int maxNumberOfFootstepGraphicsPerQuadrant = 4;
@@ -105,14 +107,7 @@ public class QuadrupedBalanceManager
       momentumRateOfChangeModule = new QuadrupedMomentumRateOfChangeModule(controllerToolbox, registry);
       stepAdjustmentController = new QuadrupedStepAdjustmentController(controllerToolbox, registry);
 
-      adjustedActiveSteps = new RecyclingArrayList<>(10, new GenericTypeBuilder<QuadrupedStep>()
-      {
-         @Override
-         public QuadrupedStep newInstance()
-         {
-            return new QuadrupedStep();
-         }
-      });
+      adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
       adjustedActiveSteps.clear();
 
       if (yoGraphicsListRegistry != null)
@@ -134,15 +129,19 @@ public class QuadrupedBalanceManager
                                                                    YoGraphicPosition.GraphicType.BALL_WITH_ROTATED_CROSS);
       YoGraphicPosition yoCmpPositionSetpointViz = new YoGraphicPosition("Desired CMP", yoDesiredCMP, 0.012, YoAppearance.Purple(), BALL_WITH_CROSS);
       YoGraphicPosition achievedCMPViz = new YoGraphicPosition("Achieved CMP", yoAchievedCMP, 0.005, DarkRed(), YoGraphicPosition.GraphicType.BALL_WITH_CROSS);
+      YoGraphicPosition spedUpDcmViz = new YoGraphicPosition("Sped Up Desired DCM", yoDesiredDCMPosition, 0.01, PaleGoldenRod(),
+                                                              YoGraphicPosition.GraphicType.BALL_WITH_ROTATED_CROSS);
 
       graphicsList.add(desiredDCMViz);
       graphicsList.add(finalDesiredDCMViz);
       graphicsList.add(yoCmpPositionSetpointViz);
+      graphicsList.add(spedUpDcmViz);
 
       artifactList.add(desiredDCMViz.createArtifact());
       artifactList.add(finalDesiredDCMViz.createArtifact());
       artifactList.add(yoCmpPositionSetpointViz.createArtifact());
       artifactList.add(achievedCMPViz.createArtifact());
+      artifactList.add(spedUpDcmViz.createArtifact());
 
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
@@ -206,6 +205,26 @@ public class QuadrupedBalanceManager
          dcmPlanner.addStepToSequence(steps.get(i));
 
       updateFootstepGraphics(steps);
+
+      updateActiveSteps(steps);
+      centerOfMassHeightManager.setActiveSteps(activeSteps);
+   }
+
+   private void updateActiveSteps(List<? extends  QuadrupedTimedStep> steps)
+   {
+      activeSteps.clear();
+
+      for (int i = 0; i < steps.size(); i++)
+      {
+         double currentTime = robotTimestamp.getDoubleValue();
+         double startTime = steps.get(i).getTimeInterval().getStartTime();
+         double endTime = steps.get(i).getTimeInterval().getEndTime();
+
+         if (MathTools.intervalContains(currentTime, startTime, endTime))
+         {
+            activeSteps.add(steps.get(i));
+         }
+      }
    }
 
    private void initialize()
@@ -252,7 +271,8 @@ public class QuadrupedBalanceManager
       dcmPlanner.setCoMHeight(linearInvertedPendulumModel.getComHeight());
 
       dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-      dcmPlanner.getFinalDesiredDCM(yoFinalDesiredDCM);
+      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+      dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
 
       if (debug)
          runDebugChecks();
@@ -280,6 +300,81 @@ public class QuadrupedBalanceManager
 
       adjustActiveFootstepGraphics(activeSteps);
       return adjustedActiveSteps;
+   }
+
+   public boolean stepHasBeenAdjusted()
+   {
+      return stepAdjustmentController.stepHasBeenAdjusted();
+   }
+
+   public double estimateSwingSpeedUpTimeUnderDisturbance()
+   {
+      if (activeSteps.isEmpty())
+         return 0.0;
+
+      controllerToolbox.getDCMPositionEstimate(dcmPositionEstimate);
+      double deltaTimeToBeAccounted = estimateDeltaTimeBetweenDesiredICPAndActualICP(dcmPositionEstimate);
+
+      if (Double.isNaN(deltaTimeToBeAccounted))
+         return 0.0;
+
+      return deltaTimeToBeAccounted;
+   }
+
+   private final FramePoint2D desiredICP2d = new FramePoint2D();
+   private final FramePoint2D finalICP2d = new FramePoint2D();
+   private final FrameLine2D desiredICPToFinalICPLine = new FrameLine2D();
+   private final FrameLineSegment2D desiredICPToFinalICPLineSegment = new FrameLineSegment2D();
+   private final FramePoint2D actualICP2d = new FramePoint2D();
+
+   /** FIXME This is a hack 6/26/2018 Robert Griffin **/
+   private final FramePoint2D dcmError2d = new FramePoint2D();
+   private final FrameLine2D adjustedICPDynamicsLine = new FrameLine2D();
+   private final FramePoint2D perfectCMP = new FramePoint2D();
+
+   private double estimateDeltaTimeBetweenDesiredICPAndActualICP(FramePoint3DReadOnly actualCapturePointPosition)
+   {
+      desiredICP2d.setIncludingFrame(yoDesiredDCMPosition);
+      finalICP2d.setIncludingFrame(yoFinalDesiredDCM);
+      actualICP2d.setIncludingFrame(actualCapturePointPosition);
+      dcmPlanner.getPerfectCMPPosition(perfectCMP);
+      perfectCMP.changeFrame(worldFrame);
+
+      /**
+       * FIXME This is a hack 6/26/2018 Robert Griffin
+       * The ICP plan is not being updated with the step adjustment. We approximate the step adjustment here by offsetting the final ICP and then projecting
+       * the desired ICP onto these dynamics. Without this, the foot will not be set down more quickly for lateral errors
+       */
+      dcmError2d.sub(actualICP2d, desiredICP2d);
+
+      double estimatedDesiredExponential = perfectCMP.distance(finalICP2d) / perfectCMP.distance(desiredICP2d);
+      finalICP2d.scaleAdd(estimatedDesiredExponential, dcmError2d, finalICP2d);
+      adjustedICPDynamicsLine.set(actualICP2d, finalICP2d);
+      adjustedICPDynamicsLine.orthogonalProjection(desiredICP2d); // projects the desired icp onto this dynamics line
+
+      if (desiredICP2d.distance(finalICP2d) < 1.0e-10)
+      {
+         return Double.NaN;
+      }
+
+      desiredICPToFinalICPLineSegment.set(desiredICP2d, finalICP2d);
+      double percentAlongLineSegmentICP = desiredICPToFinalICPLineSegment.percentageAlongLineSegment(actualICP2d);
+      if (percentAlongLineSegmentICP < 0.0)
+      {
+         desiredICPToFinalICPLine.set(desiredICP2d, finalICP2d);
+         desiredICPToFinalICPLine.orthogonalProjection(actualICP2d);
+      }
+
+
+      double actualDistanceDueToDisturbance = perfectCMP.distance(actualICP2d);
+      double expectedDistanceAccordingToPlan = perfectCMP.distance(desiredICP2d);
+
+      double distanceRatio = actualDistanceDueToDisturbance / expectedDistanceAccordingToPlan;
+
+      if (distanceRatio < 1.0e-3)
+         return 0.0;
+      else
+         return Math.log(distanceRatio) / linearInvertedPendulumModel.getNaturalFrequency();
    }
 
    public void computeAchievedCMP(FrameVector3DReadOnly achievedLinearMomentumRate)
