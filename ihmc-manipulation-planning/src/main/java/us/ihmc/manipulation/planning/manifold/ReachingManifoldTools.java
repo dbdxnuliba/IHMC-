@@ -3,6 +3,7 @@ package us.ihmc.manipulation.planning.manifold;
 import javax.vecmath.MismatchedSizeException;
 
 import controller_msgs.msg.dds.ReachingManifoldMessage;
+import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.geometry.Box3D;
 import us.ihmc.euclid.geometry.Cylinder3D;
 import us.ihmc.euclid.geometry.Pose3D;
@@ -98,37 +99,43 @@ public class ReachingManifoldTools
       return graphics;
    }
 
-   public static void packRigidBodyTransformOnManifold(ReachingManifoldMessage reachingManifoldMessage, double[] configurations,
+   public static void packRigidBodyTransformOnManifold(ReachingManifoldMessage reachingManifoldMessage, TDoubleArrayList configurations,
                                                        RigidBodyTransform rigidBodyTransformToPack)
    {
       Byte manifoldConfigurationSpaceNames = reachingManifoldMessage.getManifoldConfigurationSpaceNames();
-      if (manifoldConfigurationSpaceNames.size() != configurations.length)
+      if (manifoldConfigurationSpaceNames.size() != configurations.size())
          throw new MismatchedSizeException("configuration space size and name size are not matched.");
 
       rigidBodyTransformToPack.setIdentity();
       rigidBodyTransformToPack.appendTranslation(reachingManifoldMessage.getManifoldOriginPosition());
       rigidBodyTransformToPack.setRotation(reachingManifoldMessage.getManifoldOriginOrientation());
 
-      for (int i = 0; i < configurations.length; i++)
+      for (int i = 0; i < configurations.size(); i++)
          rigidBodyTransformToPack.multiply(ConfigurationSpaceName.fromByte(manifoldConfigurationSpaceNames.get(i))
-                                                                 .getLocalRigidBodyTransform(configurations[i]));
+                                                                 .getLocalRigidBodyTransform(configurations.get(i)));
 
    }
 
    public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldMessage reachingManifoldMessage, RigidBodyTransform rigidBodyTransform,
                                                               RigidBodyTransform rigidBodyTransformToPack)
    {
-      double[] upperLimits = reachingManifoldMessage.getManifoldUpperLimits().toArray();
-      double[] lowerLimits = reachingManifoldMessage.getManifoldLowerLimits().toArray();
+      double[] manifoldUpperLimits = reachingManifoldMessage.getManifoldUpperLimits().toArray();
+      double[] manifoldLowerLimits = reachingManifoldMessage.getManifoldLowerLimits().toArray();
 
-      double[] initialInput = new double[upperLimits.length];
-      for (int i = 0; i < upperLimits.length; i++)
-         initialInput[i] = (upperLimits[i] + lowerLimits[i]) / 2;
+      TDoubleArrayList initialInput = new TDoubleArrayList();
+      TDoubleArrayList upperLimits = new TDoubleArrayList();
+      TDoubleArrayList lowerLimits = new TDoubleArrayList();
+      for (int i = 0; i < manifoldLowerLimits.length; i++)
+      {
+         initialInput.add((manifoldUpperLimits[i] + manifoldLowerLimits[i]) / 2);
+         upperLimits.add(manifoldUpperLimits[i]);
+         lowerLimits.add(manifoldLowerLimits[i]);
+      }
 
       SingleQueryFunction function = new SingleQueryFunction()
       {
          @Override
-         public double getQuery(double... values)
+         public double getQuery(TDoubleArrayList values)
          {
             RigidBodyTransform closestTransform = new RigidBodyTransform();
             packRigidBodyTransformOnManifold(reachingManifoldMessage, values, closestTransform);
@@ -151,7 +158,7 @@ public class ReachingManifoldTools
       solver.setInputUpperLimit(upperLimits);
 
       solver.run();
-      double[] optimalSolution = solver.getOptimalInput();
+      TDoubleArrayList optimalSolution = solver.getOptimalInput();
 
       rigidBodyTransformToPack.setIdentity();
       rigidBodyTransformToPack.appendTranslation(reachingManifoldMessage.getManifoldOriginPosition());
@@ -159,7 +166,7 @@ public class ReachingManifoldTools
 
       for (int i = 0; i < reachingManifoldMessage.getManifoldConfigurationSpaceNames().size(); i++)
          rigidBodyTransformToPack.multiply(ConfigurationSpaceName.fromByte(reachingManifoldMessage.getManifoldConfigurationSpaceNames().get(i))
-                                                                 .getLocalRigidBodyTransform(optimalSolution[i]));
+                                                                 .getLocalRigidBodyTransform(optimalSolution.get(i)));
    }
 
    public static ReachingManifoldMessage createSphereManifoldMessage(RigidBody hand, Sphere3D sphere3D)
@@ -202,7 +209,7 @@ public class ReachingManifoldTools
    {
       ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.X};
       double[] lowerLimits = new double[] {-Math.PI / 2, -height / 2, -radius};
-      double[] upperLimits = new double[] {Math.PI / 2, height / 2   , radius};
+      double[] upperLimits = new double[] {Math.PI / 2, height / 2, radius};
 
       ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
 

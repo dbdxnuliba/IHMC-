@@ -1,5 +1,6 @@
 package us.ihmc.manipulation.planning.gradientDescent;
 
+import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.MathTools;
 
 public class GradientDescentModule
@@ -7,35 +8,35 @@ public class GradientDescentModule
    // internal
    private SingleQueryFunction function;
    private final int dimension;
-   private final double[] initialInput;
+   private final TDoubleArrayList initialInput;
 
    // result
    private boolean solved;
-   private double[] optimalInput;
+   private TDoubleArrayList optimalInput;
    private double optimalQuery;
 
    // params
-   private double[] inputUpperLimit;
-   private double[] inputLowerLimit;
+   private TDoubleArrayList inputUpperLimit;
+   private TDoubleArrayList inputLowerLimit;
    private double deltaThreshold = 10E-10;
    private int maximumIterations = 1000;
    private double alpha = -1;
    private double perturb = 0.001;
 
-   public GradientDescentModule(SingleQueryFunction function, double... initialInput)
+   public GradientDescentModule(SingleQueryFunction function, TDoubleArrayList initial)
    {
       this.function = function;
-      this.dimension = initialInput.length;
-      this.initialInput = new double[dimension];
-      this.optimalInput = new double[dimension];
-      this.inputUpperLimit = new double[dimension];
-      this.inputLowerLimit = new double[dimension];
+      this.dimension = initial.size();
+      this.initialInput = new TDoubleArrayList();
+      this.optimalInput = new TDoubleArrayList();
+      this.inputUpperLimit = new TDoubleArrayList();
+      this.inputLowerLimit = new TDoubleArrayList();
       for (int i = 0; i < dimension; i++)
       {
-         this.initialInput[i] = initialInput[i];
-         this.optimalInput[i] = 0.0;
-         this.inputUpperLimit[i] = Double.MAX_VALUE;
-         this.inputLowerLimit[i] = Double.MIN_VALUE;
+         this.initialInput.add(initial.get(i));
+         this.optimalInput.add(0.0);
+         this.inputUpperLimit.add(Double.MAX_VALUE);
+         this.inputLowerLimit.add(Double.MIN_VALUE);
       }
    }
 
@@ -49,16 +50,18 @@ public class GradientDescentModule
       maximumIterations = value;
    }
 
-   public void setInputUpperLimit(double... limit)
+   public void setInputUpperLimit(TDoubleArrayList limit)
    {
+      inputUpperLimit.clear();
       for (int i = 0; i < dimension; i++)
-         inputUpperLimit[i] = limit[i];
+         inputUpperLimit.add(limit.get(i));
    }
 
-   public void setInputLowerLimit(double... limit)
+   public void setInputLowerLimit(TDoubleArrayList limit)
    {
+      inputLowerLimit.clear();
       for (int i = 0; i < dimension; i++)
-         inputLowerLimit[i] = limit[i];
+         inputLowerLimit.add(limit.get(i));
    }
 
    public int run()
@@ -67,9 +70,9 @@ public class GradientDescentModule
       optimalQuery = Double.MAX_VALUE;
 
       int iteration = 0;
-      double[] pastInput = new double[dimension];
+      TDoubleArrayList pastInput = new TDoubleArrayList();
       for (int i = 0; i < dimension; i++)
-         pastInput[i] = initialInput[i];
+         pastInput.add(initialInput.get(i));
       for (int i = 0; i < maximumIterations; i++)
       {
          iteration++;
@@ -77,32 +80,33 @@ public class GradientDescentModule
 
          double tempSignForPerturb = 1.0;
 
-         double[] gradient = new double[dimension];
+         TDoubleArrayList gradient = new TDoubleArrayList();
          for (int j = 0; j < dimension; j++)
          {
-            double[] perturbedInput = new double[dimension];
+            TDoubleArrayList perturbedInput = new TDoubleArrayList();
             for (int k = 0; k < dimension; k++)
-               perturbedInput[k] = pastInput[k];
+               perturbedInput.add(pastInput.get(k));
 
-            if (perturbedInput[j] == inputUpperLimit[j])
+            if (perturbedInput.get(j) == inputUpperLimit.get(j))
                tempSignForPerturb = -1.0;
 
-            if (perturbedInput[j] == inputUpperLimit[j])
+            if (perturbedInput.get(j) == inputUpperLimit.get(j))
                ;//System.out.println("current input is meeting with upper limit");
 
-            double tempInput = perturbedInput[j] + perturb * tempSignForPerturb;
+            double tempInput = perturbedInput.get(j) + perturb * tempSignForPerturb;
 
-            perturbedInput[j] = MathTools.clamp(tempInput, inputLowerLimit[j], inputUpperLimit[j]);
+            perturbedInput.replace(j, MathTools.clamp(tempInput, inputLowerLimit.get(j), inputUpperLimit.get(j)));
 
             double perturbedQuery = function.getQuery(perturbedInput);
 
-            gradient[j] = (perturbedQuery - pastQuery) / (perturb * tempSignForPerturb);
+            gradient.add((perturbedQuery - pastQuery) / (perturb * tempSignForPerturb));
          }
 
+         optimalInput.clear();
          for (int j = 0; j < dimension; j++)
          {
-            double input = pastInput[j] + gradient[j] * alpha;
-            optimalInput[j] = MathTools.clamp(input, inputLowerLimit[j], inputUpperLimit[j]);
+            double input = pastInput.get(j) + gradient.get(j) * alpha;
+            optimalInput.add(MathTools.clamp(input, inputLowerLimit.get(j), inputUpperLimit.get(j)));
          }
 
          optimalQuery = function.getQuery(optimalInput);
@@ -110,8 +114,9 @@ public class GradientDescentModule
          if (optimalQuery > pastQuery)
          {
             reduceStepSize();
+            optimalInput.clear();
             for (int j = 0; j < dimension; j++)
-               optimalInput[j] = pastInput[j];
+               optimalInput.add(pastInput.get(j));
          }
 
          double delta = Math.abs((pastQuery - optimalQuery) / optimalQuery);
@@ -121,8 +126,9 @@ public class GradientDescentModule
          if (delta < deltaThreshold)
             break;
 
+         pastInput.clear();
          for (int j = 0; j < dimension; j++)
-            pastInput[j] = optimalInput[j];
+            pastInput.add(optimalInput.get(j));
       }
 
       return iteration;
@@ -133,7 +139,7 @@ public class GradientDescentModule
       return solved;
    }
 
-   public double[] getOptimalInput()
+   public TDoubleArrayList getOptimalInput()
    {
       return optimalInput;
    }
