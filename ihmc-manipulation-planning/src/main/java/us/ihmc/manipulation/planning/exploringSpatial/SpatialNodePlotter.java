@@ -20,7 +20,7 @@ import us.ihmc.plotting.Plotter;
 public class SpatialNodePlotter
 {
    private boolean saving = false;
-   
+
    private ExploringDefinition spatialDefinition;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
@@ -32,7 +32,7 @@ public class SpatialNodePlotter
    public SpatialNodePlotter(ExploringDefinition spatialDefinition, boolean enabled)
    {
       this.spatialDefinition = spatialDefinition;
-      SpatialData randomSpatialData = spatialDefinition.getRandomSpatialData();
+      SpatialData randomSpatialData = spatialDefinition.createRandomSpatialData();
 
       List<String> plotterNames = new ArrayList<String>();
       for (int i = 0; i < randomSpatialData.getNumberOfExploringRigidBodies(); i++)
@@ -204,15 +204,15 @@ public class SpatialNodePlotter
 
    public void saveNodes()
    {
-      if(!saving)
+      if (!saving)
          return;
-      
+
       PrintTools.info("" + validNodes.size());
       PrintTools.info("" + inValidNodes.size());
       PrintTools.info("" + path.size());
       PrintTools.info("" + shortcutpath.size());
-      
-      for(int i=0;i<validNodes.get(0).getSpatialData().getNumberOfExploringRigidBodies();i++)
+
+      for (int i = 0; i < validNodes.get(0).getSpatialData().getNumberOfExploringRigidBodies(); i++)
       {
          PrintTools.info("" + validNodes.get(0).getSpatialData().getRigidBodyName(i));
       }
@@ -237,9 +237,9 @@ public class SpatialNodePlotter
             {
                nodedata = nodedata + "\t" + configurationsList.get(j);
             }
-            
+
             String parentnodedata = "";
-            if(validNodes.get(i).getParent() != null)
+            if (validNodes.get(i).getParent() != null)
             {
                SpatialNode parentnode = validNodes.get(i).getParent();
 
@@ -257,7 +257,7 @@ public class SpatialNodePlotter
 
             content = content + nodedata;
          }
-         
+
          for (int i = 0; i < inValidNodes.size(); i++)
          {
             SpatialNode node = inValidNodes.get(i);
@@ -274,7 +274,7 @@ public class SpatialNodePlotter
 
             content = content + nodedata;
          }
-         
+
          for (int i = 0; i < path.size(); i++)
          {
             SpatialNode node = path.get(i);
@@ -291,7 +291,7 @@ public class SpatialNodePlotter
 
             content = content + nodedata;
          }
-         
+
          for (int i = 0; i < shortcutpath.size(); i++)
          {
             SpatialNode node = shortcutpath.get(i);
@@ -304,9 +304,9 @@ public class SpatialNodePlotter
             {
                nodedata = nodedata + "\t" + configurationsList.get(j);
             }
-            
+
             String parentnodedata = "";
-            if(shortcutpath.get(i).getParent() != null)
+            if (shortcutpath.get(i).getParent() != null)
             {
                SpatialNode parentnode = shortcutpath.get(i).getParent();
 
@@ -324,7 +324,6 @@ public class SpatialNodePlotter
 
             content = content + nodedata;
          }
-
 
          fw = new FileWriter(FILENAME);
          bw = new BufferedWriter(fw);

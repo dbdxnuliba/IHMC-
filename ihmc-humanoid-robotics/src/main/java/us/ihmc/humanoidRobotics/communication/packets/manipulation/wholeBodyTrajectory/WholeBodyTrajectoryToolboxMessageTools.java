@@ -1,5 +1,7 @@
 package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory;
 
+import java.util.Random;
+
 import controller_msgs.msg.dds.WaypointBasedTrajectoryMessage;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.Pose3D;
@@ -10,6 +12,8 @@ import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 
 public class WholeBodyTrajectoryToolboxMessageTools
 {
+   public static final Random random = new Random(1);
+   
    public static interface FunctionTrajectory
    {
       public Pose3D compute(double time);

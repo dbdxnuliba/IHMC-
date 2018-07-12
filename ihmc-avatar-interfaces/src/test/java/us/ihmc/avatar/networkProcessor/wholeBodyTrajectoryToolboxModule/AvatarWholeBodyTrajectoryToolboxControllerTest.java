@@ -35,17 +35,12 @@ import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematic
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxCommandConverter;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
-import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxCommandConverter;
-import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxController;
-import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxHelper;
-import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxModule;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.MessageUnpackingTools;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.communication.packets.PacketDestination;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -136,7 +131,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
       DRCRobotModel robotModel = getRobotModel();
 
-      FullHumanoidRobotModel desiredFullRobotModel = robotModel.createFullRobotModel();
+      //FullHumanoidRobotModel desiredFullRobotModel = robotModel.createFullRobotModel();
+      FullHumanoidRobotModel desiredFullRobotModel = createFullRobotModelAtInitialConfiguration();
       commandInputManager = new CommandInputManager(WholeBodyTrajectoryToolboxModule.supportedCommands());
       commandConversionHelper = new WholeBodyTrajectoryToolboxCommandConverter(desiredFullRobotModel);
       commandInputManager.registerConversionHelper(commandConversionHelper);
@@ -160,7 +156,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       DRCRobotModel ghostRobotModel = getGhostRobotModel();
       RobotDescription robotDescription = ghostRobotModel.getRobotDescription();
       robotDescription.setName("Ghost");
-      if(GHOSTINGREEN)
+      if (GHOSTINGREEN)
          KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), ghostApperance);
       ghost = ghostRobotModel.createHumanoidFloatingRootJointRobot(false);
       ghost.setDynamic(false);
@@ -653,8 +649,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       return new Pose3D(point, constantOrientation);
    }
 
-   protected static Graphics3DObject createFunctionTrajectoryVisualization(FunctionTrajectory trajectoryToVisualize, double t0, double tf, double timeResolution,
-                                                                         double radius, AppearanceDefinition appearance)
+   protected static Graphics3DObject createFunctionTrajectoryVisualization(FunctionTrajectory trajectoryToVisualize, double t0, double tf,
+                                                                           double timeResolution, double radius, AppearanceDefinition appearance)
    {
       int numberOfWaypoints = (int) Math.round((tf - t0) / timeResolution) + 1;
       double dT = (tf - t0) / (numberOfWaypoints - 1);
@@ -674,7 +670,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
    }
 
    protected static Graphics3DObject createTrajectoryMessageVisualization(WaypointBasedTrajectoryMessage trajectoryMessage, double radius,
-                                                                        AppearanceDefinition appearance)
+                                                                          AppearanceDefinition appearance)
    {
       double t0 = trajectoryMessage.getWaypointTimes().get(0);
       double tf = trajectoryMessage.getWaypointTimes().get(trajectoryMessage.getWaypoints().size() - 1);
@@ -683,7 +679,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       return createFunctionTrajectoryVisualization(trajectoryToVisualize, t0, tf, timeResolution, radius, appearance);
    }
 
-   protected static Graphics3DObject createTrajectoryMessageVisualization(ReachingManifoldMessage reachingMessage, double radius, AppearanceDefinition appearance)
+   protected static Graphics3DObject createTrajectoryMessageVisualization(ReachingManifoldMessage reachingMessage, double radius,
+                                                                          AppearanceDefinition appearance)
    {
       int configurationValueResolution = 20;
       int numberOfPoints = (int) Math.pow(configurationValueResolution, reachingMessage.getManifoldConfigurationSpaceNames().size());
@@ -813,6 +810,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
    protected FullHumanoidRobotModel createFullRobotModelAtInitialConfiguration()
    {
       DRCRobotModel robotModel = getRobotModel();
+
       FullHumanoidRobotModel initialFullRobotModel = robotModel.createFullRobotModel();
       HumanoidFloatingRootJointRobot robot = robotModel.createHumanoidFloatingRootJointRobot(false);
       robotModel.getDefaultRobotInitialSetup(0.0, 0.0).initializeRobot(robot, robotModel.getJointMap());

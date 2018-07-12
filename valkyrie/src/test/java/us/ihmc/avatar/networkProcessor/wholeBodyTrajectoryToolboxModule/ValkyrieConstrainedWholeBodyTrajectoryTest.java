@@ -131,6 +131,10 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
       
+      // To hold another side hand.
+      RigidBody anotherHand = fullRobotModel.getHand(robotSide.getOppositeSide());
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(anotherHand));
+      
       // run test
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
@@ -187,10 +191,6 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
       
-      RigidBody pelvis = fullRobotModel.getPelvis();
-      ConfigurationSpaceName[] pelvisExploringSpaces = {ConfigurationSpaceName.Z};
-      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(pelvis, pelvisExploringSpaces));
-
       // run test      
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);

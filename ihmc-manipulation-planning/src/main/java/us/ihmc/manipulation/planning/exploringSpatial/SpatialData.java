@@ -33,7 +33,7 @@ public class SpatialData
       exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
    }
 
-   public void addSpatial(String exploringRigidBodyName, List<ExploringConfigurationSpace> exploringConfigurations, RigidBodyTransform transform)
+   public void addSpatial(String exploringRigidBodyName, RigidBodyTransform transform)
    {
       this.exploringRigidBodyNames.add(exploringRigidBodyName);
       this.rigidBodySpatials.add(new RigidBodyTransform(transform));

@@ -45,14 +45,21 @@ public abstract class ExploringDefinition
          allExploringRigidBodies.add(exploringRigidBody);
       }
    }
-   
-   public SpatialData getRandomSpatialData()
+
+   public SpatialData createDefaultSpatialData()
+   {
+      SpatialData spatialData = new SpatialData();
+      for (int i = 0; i < allExploringRigidBodies.size(); i++)
+         allExploringRigidBodies.get(i).appendDefaultSpatialData(spatialData);
+
+      return spatialData;
+   }
+
+   public SpatialData createRandomSpatialData()
    {
       SpatialData randomSpatialData = new SpatialData();
       for (int i = 0; i < allExploringRigidBodies.size(); i++)
-      {
          allExploringRigidBodies.get(i).appendRandomSpatialData(randomSpatialData);
-      }
 
       return randomSpatialData;
    }
@@ -61,7 +68,7 @@ public abstract class ExploringDefinition
    {
       List<KinematicsToolboxRigidBodyMessage> messages = new ArrayList<>();
       double timeInTrajectory = node.getTime();
-      
+
       for (int i = 0; i < allExploringRigidBodies.size(); i++)
       {
          RigidBody rigidBody = allExploringRigidBodies.get(i).getRigidBody();
@@ -74,8 +81,8 @@ public abstract class ExploringDefinition
 
       return messages;
    }
-   
+
    public abstract double getExploringProgress(SpatialNode node);
-   
+
    public abstract double getTrajectoryTime();
 }

@@ -1,7 +1,5 @@
 package us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory;
 
-import java.util.Random;
-
 import gnu.trove.list.TByteList;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -11,10 +9,8 @@ public enum ConfigurationSpaceName
 {
    X, Y, Z, ROLL, PITCH, YAW, SE3;
 
-   public static final Random random = new Random(1);
-
    public static final ConfigurationSpaceName[] values = values();
-   
+
    public double getDefaultExplorationUpperLimit()
    {
       switch (this)
@@ -22,7 +18,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return 1.0;
+         return 0.3;
       case ROLL:
       case PITCH:
       case YAW:
@@ -33,7 +29,7 @@ public enum ConfigurationSpaceName
          throw new RuntimeException("Unexpected value: " + this);
       }
    }
-   
+
    public double getDefaultExplorationLowerLimit()
    {
       switch (this)
@@ -41,7 +37,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return 0.8;
+         return -0.3;
       case ROLL:
       case PITCH:
       case YAW:
@@ -52,7 +48,6 @@ public enum ConfigurationSpaceName
          throw new RuntimeException("Unexpected value: " + this);
       }
    }
-   
 
    public double getDefaultExplorationAmplitude()
    {

@@ -3,6 +3,7 @@ package us.ihmc.manipulation.planning.exploringSpatial;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 
 public class ExploringConfigurationSpace
 {
@@ -33,7 +34,6 @@ public class ExploringConfigurationSpace
          this.configuration.add(0.0);
       }
 
-      // TODO : default set is required.
       this.lowerLimit = lowerLimit;
       this.upperLimit = upperLimit;
    }
@@ -61,7 +61,7 @@ public class ExploringConfigurationSpace
    {
       for (int i = 0; i < configuration.size(); i++)
       {
-         double randomConfiguration = ConfigurationSpaceName.random.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
+         double randomConfiguration = WholeBodyTrajectoryToolboxMessageTools.random.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
          configuration.replace(i, randomConfiguration);
       }
    }

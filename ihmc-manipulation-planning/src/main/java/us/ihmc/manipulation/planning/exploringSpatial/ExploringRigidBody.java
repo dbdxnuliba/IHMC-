@@ -125,6 +125,11 @@ public class ExploringRigidBody
    {
       return exploringConfigurationSpaces;
    }
+   
+   public void appendDefaultSpatialData(SpatialData spatialData)
+   {
+      spatialData.addSpatial(rigidBody.getName(), new RigidBodyTransform());
+   }
 
    public void appendRandomSpatialData(SpatialData spatialData)
    {
@@ -133,7 +138,7 @@ public class ExploringRigidBody
       for (int i = 0; i < exploringConfigurationSpaces.size(); i++)
          exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(transform);
 
-      spatialData.addSpatial(rigidBody.getName(), exploringConfigurationSpaces, transform);
+      spatialData.addSpatial(rigidBody.getName(), transform);
    }
 
    private void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)

@@ -58,6 +58,58 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
    {
       return ghostRobotModel;
    }
+   
+   /**
+    *  TODO : Implement {@link ExploringDefinitionToReachingManifold}.
+    */
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testReachingFollowingLinearTrajectory() throws Exception, UnreasonableAccelerationException
+   {
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+
+      WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
+      configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
+      configuration.setMaximumExpansionSize(2300);
+
+      RigidBody hand = fullRobotModel.getHand(RobotSide.RIGHT);
+      List<ReachingManifoldMessage> reachingManifolds = new ArrayList<>();
+
+      ReachingManifoldMessage reachingManifold = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      reachingManifold.getManifoldOriginPosition().set(new Point3D(0.7, -0.2, 1.0));
+      reachingManifold.getManifoldOriginOrientation().set(new Quaternion());
+
+      ConfigurationSpaceName[] manifoldSpaces = {YAW, PITCH, ConfigurationSpaceName.X};
+      double[] lowerLimits = new double[] {-Math.PI * 0.5, -Math.PI * 0.5, -0.1};
+      double[] upperLimits = new double[] {Math.PI * 0.5, Math.PI * 0.5, 0.0};
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifold);
+      reachingManifolds.add(reachingManifold);
+
+      List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+
+      // test for position only.
+      ConfigurationSpaceName[] explorationSpaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SE3};
+      double[] explorationUpperLimits = {0.2, 0.2, 0.2};
+      double[] explorationLowerLimits = {-0.2, -0.2, -0.2};
+
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, explorationSpaces, explorationUpperLimits,
+                                                                                                      explorationLowerLimits));
+
+      RigidBody chest = fullRobotModel.getChest();
+      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
+      
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, null, reachingManifolds,
+                                                                                                               rigidBodyConfigurations);
+
+      // run toolbox
+      runReachingTest(message, maxNumberOfIterations);
+
+      PrintTools.info("END");
+   }
+   
    /**
     *  TODO : Implement {@link ExploringDefinitionToReachingManifold}.
     */
@@ -93,13 +145,17 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
        * Implement BIT, RABIT for adaptive random regions.
        */
       // test for position only.
-      ConfigurationSpaceName[] explorationSpaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z,};
+      ConfigurationSpaceName[] explorationSpaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SE3};
       double[] explorationUpperLimits = {0.15, 0.05, 0.2};
       double[] explorationLowerLimits = {-0.0, -0.5, -0.2};
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, explorationSpaces, explorationUpperLimits,
                                                                                                       explorationLowerLimits));
 
+      RigidBody chest = fullRobotModel.getChest();
+      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
+      
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, null, reachingManifolds,
                                                                                                                rigidBodyConfigurations);
