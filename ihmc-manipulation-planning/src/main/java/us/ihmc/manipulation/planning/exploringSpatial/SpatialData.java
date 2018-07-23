@@ -133,25 +133,17 @@ public class SpatialData
       return distance;
    }
 
-   //   // TODO : to find closest point on manifold for given spatial.
-   //   public Pose3D getTestFrame(List<ReachingManifoldCommand> manifolds)
-   //   {
-   //      for (int j = 0; j < manifolds.size(); j++)
-   //      {
-   //         for (int i = 0; i < rigidBodySpatials.size(); i++)
-   //         {
-   //            if (getRigidBodyName(i).equals(manifolds.get(j).getRigidBody().getName()))
-   //            {
-   //               ReachingManifoldCommand manifold = manifolds.get(j);
-   //               RigidBodyTransform currentSpatial = rigidBodySpatials.get(i);
-   //
-   //               return manifold.computeClosestPoseOnManifold(currentSpatial);
-   //            }
-   //         }
-   //      }
-   //      return null;
-   //   }
-
+   public void replaceSpatialData(String rigidBodyName, RigidBodyTransform transform)
+   {
+      for(int i=0;i<exploringRigidBodyNames.size();i++)
+      {
+         if(getRigidBodyName(i) == rigidBodyName)
+         {
+            rigidBodySpatials.set(i, new RigidBodyTransform(transform));
+         }
+      }
+   }
+   
    public String getRigidBodyName(int i)
    {
       return exploringRigidBodyNames.get(i);

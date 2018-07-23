@@ -10,25 +10,33 @@ import java.util.Set;
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
-public abstract class ExploringDefinition
+public class ExploringDefinition
 {
-   private List<ExploringRigidBody> allExploringRigidBodies = new ArrayList<>();
+   protected List<ExploringRigidBody> allExploringRigidBodies = new ArrayList<>();
+   protected List<ReachingManifoldCommand> goalManifolds = new ArrayList<>();
+
+   public double progressSaturationThreshold;
 
    public ExploringDefinition(List<WaypointBasedTrajectoryCommand> endEffectorTrajectories,
-                              List<RigidBodyExplorationConfigurationCommand> explorationConfigurations)
+                              List<RigidBodyExplorationConfigurationCommand> explorationConfigurations, List<ReachingManifoldCommand> manifolds)
    {
       Map<RigidBody, WaypointBasedTrajectoryCommand> rigidBodyToTrajectoryMap = new HashMap<>();
       Map<RigidBody, RigidBodyExplorationConfigurationCommand> rigidBodyToExploringMap = new HashMap<>();
+      Map<RigidBody, ReachingManifoldCommand> rigidBodyToManifoldMap = new HashMap<>();
 
       for (int i = 0; i < endEffectorTrajectories.size(); i++)
          rigidBodyToTrajectoryMap.put(endEffectorTrajectories.get(i).getEndEffector(), endEffectorTrajectories.get(i));
 
       for (int i = 0; i < explorationConfigurations.size(); i++)
          rigidBodyToExploringMap.put(explorationConfigurations.get(i).getRigidBody(), explorationConfigurations.get(i));
+
+      for (int i = 0; i < manifolds.size(); i++)
+         rigidBodyToManifoldMap.put(manifolds.get(i).getRigidBody(), manifolds.get(i));
 
       Set<RigidBody> rigidBodySet = new HashSet<>();
       rigidBodySet.addAll(rigidBodyToTrajectoryMap.keySet());
@@ -38,12 +46,15 @@ public abstract class ExploringDefinition
 
       for (int i = 0; i < allRigidBodies.size(); i++)
       {
-         PrintTools.info("" + allRigidBodies.get(i).getName());
+         PrintTools.info("exploring rigid body is " + allRigidBodies.get(i).getName());
 
          ExploringRigidBody exploringRigidBody = new ExploringRigidBody(allRigidBodies.get(i), rigidBodyToTrajectoryMap.get(allRigidBodies.get(i)),
                                                                         rigidBodyToExploringMap.get(allRigidBodies.get(i)));
          allExploringRigidBodies.add(exploringRigidBody);
       }
+
+      if (manifolds != null)
+         goalManifolds.addAll(manifolds);
    }
 
    public SpatialData createDefaultSpatialData()
@@ -81,8 +92,4 @@ public abstract class ExploringDefinition
 
       return messages;
    }
-
-   public abstract double getExploringProgress(SpatialNode node);
-
-   public abstract double getTrajectoryTime();
 }

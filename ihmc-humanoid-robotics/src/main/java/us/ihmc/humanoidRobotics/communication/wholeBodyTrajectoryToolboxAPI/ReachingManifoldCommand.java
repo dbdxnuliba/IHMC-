@@ -27,6 +27,7 @@ public class ReachingManifoldCommand
 
    private List<ConfigurationSpaceName> manifoldConfigurationSpaces = new ArrayList<>();
    private TDoubleArrayList manifoldLowerLimits = new TDoubleArrayList();
+
    private TDoubleArrayList manifoldUpperLimits = new TDoubleArrayList();
 
    public ReachingManifoldCommand()
@@ -142,6 +143,26 @@ public class ReachingManifoldCommand
    public double getLowerLimit(int i)
    {
       return manifoldLowerLimits.get(i);
+   }
+
+   public TDoubleArrayList getManifoldLowerLimits()
+   {
+      return manifoldLowerLimits;
+   }
+
+   public TDoubleArrayList getManifoldUpperLimits()
+   {
+      return manifoldUpperLimits;
+   }
+
+   public Point3D getManifoldOriginPosition()
+   {
+      return manifoldOriginPosition;
+   }
+
+   public Quaternion getManifoldOriginOrientation()
+   {
+      return manifoldOriginOrientation;
    }
 
    public Pose3D computePoseOnManifold(TDoubleArrayList configurationSpace)

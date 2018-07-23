@@ -21,6 +21,8 @@ import us.ihmc.graphicsDescription.SegmentedLine3DMeshDataGenerator;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
+import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.idl.IDLSequence.Byte;
 import us.ihmc.manipulation.planning.gradientDescent.GradientDescentModule;
 import us.ihmc.manipulation.planning.gradientDescent.SingleQueryFunction;
@@ -169,6 +171,72 @@ public class ReachingManifoldTools
                                                                  .getLocalRigidBodyTransform(optimalSolution.get(i)));
    }
 
+   public static void packRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, TDoubleArrayList configurations,
+                                                       RigidBodyTransform rigidBodyTransformToPack)
+   {
+      int dimensionOfManifold = reachingManifoldCommand.getDimensionOfManifold();
+      if (dimensionOfManifold != configurations.size())
+         throw new MismatchedSizeException("configuration space size and name size are not matched.");
+
+      rigidBodyTransformToPack.setIdentity();
+      rigidBodyTransformToPack.appendTranslation(reachingManifoldCommand.getManifoldOriginPosition());
+      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
+
+      for (int i = 0; i < configurations.size(); i++)
+         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(configurations.get(i)));
+
+   }
+
+   public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, RigidBodyTransform rigidBodyTransform,
+                                                              RigidBodyTransform rigidBodyTransformToPack)
+   {
+      packClosestRigidBodyTransformOnManifold(reachingManifoldCommand, rigidBodyTransform, rigidBodyTransformToPack, 1.0, 1.0);
+   }
+   
+   public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, RigidBodyTransform rigidBodyTransform,
+                                                              RigidBodyTransform rigidBodyTransformToPack, double positionWeight, double orientationWeight)
+   {
+      double[] manifoldUpperLimits = reachingManifoldCommand.getManifoldUpperLimits().toArray();
+      double[] manifoldLowerLimits = reachingManifoldCommand.getManifoldLowerLimits().toArray();
+
+      TDoubleArrayList initialInput = new TDoubleArrayList();
+      TDoubleArrayList upperLimits = new TDoubleArrayList();
+      TDoubleArrayList lowerLimits = new TDoubleArrayList();
+      for (int i = 0; i < manifoldLowerLimits.length; i++)
+      {
+         initialInput.add((manifoldUpperLimits[i] + manifoldLowerLimits[i]) / 2);
+         upperLimits.add(manifoldUpperLimits[i]);
+         lowerLimits.add(manifoldLowerLimits[i]);
+      }
+
+      SingleQueryFunction function = new SingleQueryFunction()
+      {
+         @Override
+         public double getQuery(TDoubleArrayList values)
+         {
+            RigidBodyTransform closestTransform = new RigidBodyTransform();
+            packRigidBodyTransformOnManifold(reachingManifoldCommand, values, closestTransform);
+
+            return getDistance(rigidBodyTransform, closestTransform, positionWeight, orientationWeight);
+         }
+      };
+      GradientDescentModule solver = new GradientDescentModule(function, initialInput);
+
+      solver.setMaximumIterations(200);
+      solver.setInputLowerLimit(lowerLimits);
+      solver.setInputUpperLimit(upperLimits);
+
+      solver.run();
+      TDoubleArrayList optimalSolution = solver.getOptimalInput();
+
+      rigidBodyTransformToPack.setIdentity();
+      rigidBodyTransformToPack.appendTranslation(reachingManifoldCommand.getManifoldOriginPosition());
+      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
+
+      for (int i = 0; i < reachingManifoldCommand.getDimensionOfManifold(); i++)
+         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(optimalSolution.get(i)));
+   }
+
    public static ReachingManifoldMessage createSphereManifoldMessage(RigidBody hand, Sphere3D sphere3D)
    {
       return createSphereManifoldMessage(hand, sphere3D.getPosition(), sphere3D.getRadius());
@@ -252,4 +320,53 @@ public class ReachingManifoldTools
       return reachingManifoldMessage;
    }
 
+   public static ReachingManifoldMessage createGoalManifoldMessage(RigidBody hand, FunctionTrajectory handFunction, double trajectoryTime,
+                                                                   ConfigurationSpaceName[] manifoldSpaces)
+   {
+      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      reachingManifoldMessage.getManifoldOriginPosition().set(handFunction.compute(trajectoryTime).getPosition());
+      reachingManifoldMessage.getManifoldOriginOrientation().set(handFunction.compute(trajectoryTime).getOrientation());
+
+      double[] lowerLimits = new double[manifoldSpaces.length];
+      double[] upperLimits = new double[manifoldSpaces.length];
+      for (int i = 0; i < lowerLimits.length; i++)
+      {
+         lowerLimits[i] = manifoldSpaces[i].getDefaultExplorationLowerLimit();
+         upperLimits[i] = manifoldSpaces[i].getDefaultExplorationUpperLimit();
+      }
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
+
+      return reachingManifoldMessage;
+   }
+
+   public static ReachingManifoldMessage createGoalManifoldMessage(RigidBody hand, FunctionTrajectory handFunction, double trajectoryTime,
+                                                                   ConfigurationSpaceName[] manifoldSpaces, double[] upperLimits, double[] lowerLimits)
+   {
+      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      reachingManifoldMessage.getManifoldOriginPosition().set(handFunction.compute(trajectoryTime).getPosition());
+      reachingManifoldMessage.getManifoldOriginOrientation().set(handFunction.compute(trajectoryTime).getOrientation());
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
+
+      return reachingManifoldMessage;
+   }
+   
+   public static double getDistance(RigidBodyTransform from, RigidBodyTransform to, double positionWeight, double orientationWeight)
+   {
+      Point3D pointFrom = new Point3D(from.getTranslationVector());
+      Quaternion orientationFrom = new Quaternion(from.getRotationMatrix());
+
+      Point3D pointTo = new Point3D(to.getTranslationVector());
+      Quaternion orientationTo = new Quaternion(to.getRotationMatrix());
+
+      double positionDistance = positionWeight * pointFrom.distance(pointTo);
+      double orientationDistance = orientationWeight * orientationFrom.distance(orientationTo);
+
+      double distance = positionDistance + orientationDistance;
+
+      return distance;
+   }
 }

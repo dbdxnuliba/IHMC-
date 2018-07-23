@@ -6,14 +6,13 @@ import controller_msgs.msg.dds.WaypointBasedTrajectoryMessage;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 
 public class WholeBodyTrajectoryToolboxMessageTools
 {
    public static final Random random = new Random(1);
-   
+
    public static interface FunctionTrajectory
    {
       public Pose3D compute(double time);
@@ -93,18 +92,5 @@ public class WholeBodyTrajectoryToolboxMessageTools
       for (int i = 0; i < configurationSpaceNames.length; i++)
          lowerLimit[i] = configurationSpaceNames[i].getDefaultExplorationLowerLimit();
       return lowerLimit;
-   }
-
-   public static double computePoseDistance(Pose3D poseOne, Pose3D poseTwo, double positionWeight, double orientationWeight)
-   {
-      double distance = 0.0;
-
-      double positionDistance = poseOne.getPositionDistance(poseTwo);
-      double orientationDistance = poseOne.getOrientationDistance(poseTwo);
-      orientationDistance = AngleTools.trimAngleMinusPiToPi(orientationDistance);
-      orientationDistance = Math.abs(orientationDistance);
-      distance = positionWeight * positionDistance + orientationWeight * orientationDistance;
-
-      return distance;
    }
 }

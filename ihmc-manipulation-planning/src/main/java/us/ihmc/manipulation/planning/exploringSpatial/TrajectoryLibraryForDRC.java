@@ -6,6 +6,7 @@ import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple4D.Quaternion;
 
 public class TrajectoryLibraryForDRC
 {
@@ -137,5 +138,27 @@ public class TrajectoryLibraryForDRC
       handControl.appendTranslation(0, -radius, 0);
 
       return new Pose3D(handControl);
+   }
+   
+   /**
+    * trajectory for current transform to goal transform
+    */
+   public static Pose3D computeLinearTrajectory(double time, double trajectoryTime, RigidBodyTransform from, RigidBodyTransform to)
+   {
+      double progress = time / trajectoryTime;
+      
+      Point3D fromPoint = new Point3D(from.getTranslationVector());
+      Point3D toPoint = new Point3D(to.getTranslationVector());
+      
+      Quaternion fromOrienation = new Quaternion(from.getRotationMatrix());
+      Quaternion toOrienation = new Quaternion(to.getRotationMatrix());
+      
+      Point3D point = new Point3D();
+      Quaternion orientation = new Quaternion();
+      
+      point.interpolate(fromPoint, toPoint, progress);
+      orientation.interpolate(fromOrienation, toOrienation, progress);
+      
+      return new Pose3D(point, orientation);
    }
 }

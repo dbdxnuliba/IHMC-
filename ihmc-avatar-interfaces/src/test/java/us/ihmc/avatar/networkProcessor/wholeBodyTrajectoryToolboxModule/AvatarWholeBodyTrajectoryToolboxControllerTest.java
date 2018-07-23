@@ -59,6 +59,8 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputCon
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
+import us.ihmc.idl.IDLSequence.Object;
+import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotDescription.RobotDescription;
@@ -88,6 +90,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
    private static final AppearanceDefinition ghostApperance = YoAppearance.DarkGreen();
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
    protected static final boolean visualize = simulationTestingParameters.getCreateGUI();
+   protected static final boolean visualizeManifold = true;
    static
    {
       simulationTestingParameters.setKeepSCSUp(true);
@@ -431,6 +434,18 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
             if (visualize)
                scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
+         }
+      }
+      
+      List<ReachingManifoldMessage> reachingManifolds = message.getReachingManifolds();
+      if(reachingManifolds != null)
+      {
+         for (int i = 0; i < reachingManifolds.size(); i++)
+         {
+            ReachingManifoldMessage reachingManifoldMessage = reachingManifolds.get(i);
+
+            if (visualizeManifold)
+               scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifoldMessage, 0.005, 20));
          }
       }
 

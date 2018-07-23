@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import controller_msgs.msg.dds.ReachingManifoldMessage;
 import controller_msgs.msg.dds.RigidBodyExplorationConfigurationMessage;
 import controller_msgs.msg.dds.WaypointBasedTrajectoryMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxConfigurationMessage;
@@ -23,6 +24,7 @@ import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTraj
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
 import us.ihmc.manipulation.planning.exploringSpatial.TrajectoryLibraryForDRC;
+import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
@@ -74,7 +76,7 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
    @Test(timeout = 120000)
    public void testDoorMotion() throws Exception, UnreasonableAccelerationException
    {
-      // trajectory parameter
+   // trajectory parameter
       double trajectoryTime = 5.0;
 
       double openingAngle = 30.0 / 180.0 * Math.PI;
@@ -99,10 +101,12 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
       configuration.setMaximumExpansionSize(500);
 
-      // trajectory message
+      // toolbox messages
       List<WaypointBasedTrajectoryMessage> handTrajectories = new ArrayList<>();
       List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+      List<ReachingManifoldMessage> reachingManifolds = new ArrayList<>();
 
+      // trajectory.
       double timeResolution = trajectoryTime / 100.0;
 
       RobotSide robotSide = RobotSide.RIGHT;
@@ -123,21 +127,25 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
 
       handTrajectories.add(trajectory);
 
+      // exploration configuration
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
-
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
-      
+
       RigidBody chest = fullRobotModel.getChest();
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
-      
-      // To hold another side hand.
+
       RigidBody anotherHand = fullRobotModel.getHand(robotSide.getOppositeSide());
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(anotherHand));
       
+      // manifold
+      ReachingManifoldMessage reachingManifold = ReachingManifoldTools.createGoalManifoldMessage(hand, handFunction, trajectoryTime, spaces);
+      reachingManifolds.add(reachingManifold);
+      
       // run test
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, reachingManifolds,
+                                                                                                               rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
    
@@ -160,10 +168,12 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
       configuration.setMaximumExpansionSize(1000);
 
-      // trajectory message
+      // toolbox messages
       List<WaypointBasedTrajectoryMessage> handTrajectories = new ArrayList<>();
       List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+      List<ReachingManifoldMessage> reachingManifolds = new ArrayList<>();
 
+      // trajectory
       double timeResolution = trajectoryTime / 100.0;
 
       RobotSide robotSide = RobotSide.RIGHT;
@@ -183,6 +193,7 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
 
       handTrajectories.add(trajectory);
 
+      // exploration configuration
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
@@ -191,12 +202,82 @@ public class ValkyrieConstrainedWholeBodyTrajectoryTest extends AvatarWholeBodyT
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
       
+      // manifold
+      ReachingManifoldMessage reachingManifold = ReachingManifoldTools.createGoalManifoldMessage(hand, handFunction, trajectoryTime, spaces);
+      reachingManifolds.add(reachingManifold);
+      
       // run test      
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null, rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
 
-   // TODO : Drill motion should be refined.
-   
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testDrillMotion() throws Exception, UnreasonableAccelerationException
+   {
+      // trajectory parameter
+      double trajectoryTime = 15.0;
+
+      boolean cuttingDirectionCW = true;
+      double cuttingRadius = 0.3;
+      Vector3D wallNormalVector = new Vector3D(-1.0, 0.0, 0.0);
+      Point3D cuttingCenterPosition = new Point3D(0.5, -0.2, 1.2);
+
+      // wbt toolbox configuration message
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+      WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
+      configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
+      configuration.setMaximumExpansionSize(1000);
+
+      // trajectory message
+      List<WaypointBasedTrajectoryMessage> trajectories = new ArrayList<>();
+      List<RigidBodyExplorationConfigurationMessage> rigidBodyConfigurations = new ArrayList<>();
+
+      double timeResolution = trajectoryTime / 100.0;
+
+      RobotSide robotSide = RobotSide.RIGHT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      Vector3D translationToGraspingFrame = new Vector3D(-0.0, 0.05, 0.1);
+
+      FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeCuttingWallTrajectory(time, trajectoryTime, cuttingRadius, cuttingDirectionCW,
+                                                                                                     cuttingCenterPosition, wallNormalVector);
+
+      SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
+      selectionMatrix.resetSelection();
+      //selectionMatrix.selectAngularZ(false);
+      WaypointBasedTrajectoryMessage trajectoryHand = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
+                                                                                                                     handFunction, selectionMatrix);
+      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
+      //controlFramePose.appendTranslation(translationToGraspingFrame);
+
+      trajectoryHand.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      trajectoryHand.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+
+      trajectories.add(trajectoryHand);
+
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW};
+      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
+
+      // keep sight on trajectory.
+      RigidBody head = fullRobotModel.getHead();
+      SelectionMatrix6D selectionMatrixHead = new SelectionMatrix6D();
+      selectionMatrixHead.clearSelection();
+      selectionMatrixHead.selectLinearY(true);
+      selectionMatrixHead.selectLinearZ(true);
+
+      WaypointBasedTrajectoryMessage trajectoryHead = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(head, 0.0, trajectoryTime, timeResolution,
+                                                                                                                     handFunction, selectionMatrixHead);
+
+      trajectoryHead.getControlFramePositionInEndEffector().set(new Point3D(0.5, 0.0, 0.0));
+      trajectoryHead.setWeight(0.01);
+      //trajectories.add(trajectoryHead);
+
+      // run test      
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, trajectories, null,
+                                                                                                               rigidBodyConfigurations);
+      runTrajectoryTest(message, maxNumberOfIterations);
+   }   
 }

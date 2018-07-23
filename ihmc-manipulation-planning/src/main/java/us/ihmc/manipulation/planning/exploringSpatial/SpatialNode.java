@@ -31,9 +31,9 @@ public class SpatialNode
       time = other.time;
       spatialData = new SpatialData(other.spatialData);
 
-      // TODO : ?????
       if (other.parent != null)
          parent = new SpatialNode(other.parent);
+         //parent = other.parent;
       else
          parent = null;
 

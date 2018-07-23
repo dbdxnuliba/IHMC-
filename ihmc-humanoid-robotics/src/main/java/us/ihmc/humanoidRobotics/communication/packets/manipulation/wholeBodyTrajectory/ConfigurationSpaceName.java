@@ -18,7 +18,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return 0.3;
+         return 0.5;
       case ROLL:
       case PITCH:
       case YAW:
@@ -37,7 +37,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return -0.3;
+         return -0.5;
       case ROLL:
       case PITCH:
       case YAW:
@@ -111,7 +111,7 @@ public enum ConfigurationSpaceName
          //         ret.appendPitchRotation(theta2);
          //         ret.appendYawRotation(theta3);
 
-         //         uniform quat
+         //         // uniform quat
          Quaternion quat = new Quaternion();
 
          double s = configuration[0];

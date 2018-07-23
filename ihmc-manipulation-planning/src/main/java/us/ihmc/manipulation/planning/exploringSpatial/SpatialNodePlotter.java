@@ -21,7 +21,7 @@ public class SpatialNodePlotter
 {
    private boolean saving = false;
 
-   private ExploringDefinition spatialDefinition;
+   private ExploringDefinitionForGeneral spatialDefinition;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
 
@@ -29,7 +29,7 @@ public class SpatialNodePlotter
 
    private boolean isFrameEnabled;
 
-   public SpatialNodePlotter(ExploringDefinition spatialDefinition, boolean enabled)
+   public SpatialNodePlotter(ExploringDefinitionForGeneral spatialDefinition, boolean enabled)
    {
       this.spatialDefinition = spatialDefinition;
       SpatialData randomSpatialData = spatialDefinition.createRandomSpatialData();
@@ -70,7 +70,6 @@ public class SpatialNodePlotter
    {
       for (int i = 0; i < plotters.size(); i++)
       {
-         // TODO : close panels.
          if (isFrameEnabled)
             plotters.get(i).getJFrame().dispose();
       }
@@ -89,7 +88,8 @@ public class SpatialNodePlotter
     */
    public void update(SpatialNode node, int type)
    {
-      double progress = spatialDefinition.getExploringProgress(node);
+      //double progress = spatialDefinition.getExploringProgress(node);
+      double timeProgress = node.getTime() / spatialDefinition.getTrajectoryTime();
 
       TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
 
@@ -147,17 +147,18 @@ public class SpatialNodePlotter
          if (node.getParent() != null && node.isValid())
          {
             SpatialNode parentNode = node.getParent();
-            double parentProgress = spatialDefinition.getExploringProgress(parentNode);
+            //double parentProgress = spatialDefinition.getExploringProgress(parentNode);
+            double parentTimeProgress = parentNode.getTime() / spatialDefinition.getTrajectoryTime();
             double parentConfigurationData = getConfigurationsOfNode(parentNode).get(configurationIndex);
 
-            LineArtifact lineArtifact = new LineArtifact(prefix + "_line", new Point2D(parentProgress, parentConfigurationData),
-                                                         new Point2D(progress, configurationData));
+            LineArtifact lineArtifact = new LineArtifact(prefix + "_line", new Point2D(parentTimeProgress, parentConfigurationData),
+                                                         new Point2D(timeProgress, configurationData));
 
             lineArtifact.setColor(color);
             plotters.get(configurationIndex).addArtifact(lineArtifact);
          }
 
-         CircleArtifact nodeArtifact = new CircleArtifact(prefix + "_node", progress, configurationData, diameter, true);
+         CircleArtifact nodeArtifact = new CircleArtifact(prefix + "_node", timeProgress, configurationData, diameter, true);
          nodeArtifact.setColor(color);
 
          plotters.get(configurationIndex).addArtifact(nodeArtifact);
