@@ -21,10 +21,8 @@ import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.matrix.interfaces.RotationMatrixReadOnly;
 import us.ihmc.euclid.rotationConversion.AxisAngleConversion;
 import us.ihmc.euclid.rotationConversion.RotationMatrixConversion;
-import us.ihmc.euclid.rotationConversion.RotationVectorConversion;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.Graphics3DObject;
@@ -36,6 +34,7 @@ import us.ihmc.manipulation.planning.exploringSpatial.TrajectoryLibraryForDRC;
 import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.simulationconstructionset.UnreasonableAccelerationException;
@@ -70,10 +69,6 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       toPack.setX(ratio * (to.getX() - from.getX()) + from.getX());
       toPack.setY(ratio * (to.getY() - from.getY()) + from.getY());
       toPack.setZ(ratio * (to.getZ() - from.getZ()) + from.getZ());
-
-      System.out.println(from.getX() + " " + from.getY() + " " + from.getZ());
-      System.out.println(to.getX() + " " + to.getY() + " " + to.getZ());
-      System.out.println(toPack.getX() + " " + toPack.getY() + " " + toPack.getZ());
    }
 
    private void packExtrapolatedOrienation(RotationMatrixReadOnly from, RotationMatrixReadOnly to, double ratio, RotationMatrix toPack)
@@ -87,23 +82,15 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       AxisAngle delFromToAxisAngle = new AxisAngle();
       AxisAngleConversion.convertQuaternionToAxisAngle(delFromTo, delFromToAxisAngle);
 
-      PrintTools.info("");
-      System.out.println(delFromToAxisAngle.getAngle() + " " + delFromToAxisAngle.getX() + " " + delFromToAxisAngle.getY() + " " + delFromToAxisAngle.getZ());
-
       AxisAngle delFromExtraAxisAngle = new AxisAngle(delFromToAxisAngle);
       double extrapolatedAngle = ratio * delFromToAxisAngle.getAngle();
       delFromExtraAxisAngle.setAngle(extrapolatedAngle);
 
       AxisAngle toPackAxisAngle = new AxisAngle(from);
-//      System.out.println(toPackAxisAngle.getAngle() + " " + toPackAxisAngle.getX() + " " + toPackAxisAngle.getY() + " " + toPackAxisAngle.getZ());
-//      AxisAngle toAxisAngle = new AxisAngle(to);
-//      System.out.println(toAxisAngle.getAngle() + " " + toAxisAngle.getX() + " " + toAxisAngle.getY() + " " + toAxisAngle.getZ());
       toPackAxisAngle.multiply(delFromExtraAxisAngle);
-//      System.out.println(toPackAxisAngle.getAngle() + " " + toPackAxisAngle.getX() + " " + toPackAxisAngle.getY() + " " + toPackAxisAngle.getZ());
 
       AxisAngle temp = new AxisAngle(from);
       temp.multiply(delFromToAxisAngle);
-//      System.out.println(temp.getAngle() + " " + temp.getX() + " " + temp.getY() + " " + temp.getZ());
 
       RotationMatrixConversion.convertAxisAngleToMatrix(toPackAxisAngle, toPack);
    }
@@ -123,14 +110,14 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
-   public void testReachingExtrapolatedLinearTrajectory() throws Exception, UnreasonableAccelerationException
+   public void testReachingExtrapolatedLinearTrajectoryLeft() throws Exception, UnreasonableAccelerationException
    {
       // input
       double extrapolateRatio = 1.5;
       double trajectoryTimeBeforeExtrapolated = 5.0;
 
       double trajectoryTime = trajectoryTimeBeforeExtrapolated * extrapolateRatio;
-      Point3D sphereCenter = new Point3D(0.7, -0.2, 0.6);
+      Point3D sphereCenter = new Point3D(0.7, 0.2, 0.6);
 
       // wbt toolbox configuration message
       FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
@@ -145,9 +132,10 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       double timeResolution = trajectoryTime / 100.0;
 
-      RobotSide robotSide = RobotSide.RIGHT;
+      RobotSide robotSide = RobotSide.LEFT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
-      RigidBodyTransform handTransform = fullRobotModel.getHandControlFrame(RobotSide.RIGHT).getTransformToWorldFrame();
+      MovingReferenceFrame handControlFrame = fullRobotModel.getHandControlFrame(robotSide);
+      RigidBodyTransform handTransform = handControlFrame.getTransformToWorldFrame();
 
       RigidBodyTransform closestPointOnManifold = new RigidBodyTransform();
       RigidBodyTransform endTransformOnTrajectory = new RigidBodyTransform();
@@ -156,7 +144,7 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(reachingManifold, handTransform, closestPointOnManifold);
       System.out.println(closestPointOnManifold);
       packExtrapolatedTransform(handTransform, closestPointOnManifold, extrapolateRatio, endTransformOnTrajectory);
-      
+
       Graphics3DObject graphics = new Graphics3DObject();
       graphics.transform(closestPointOnManifold);
       graphics.addCoordinateSystem(0.1);
@@ -170,24 +158,17 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                  handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
-      trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
-      trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      RigidBodyTransform handControlFrameTransformToBodyFixedFrame = new RigidBodyTransform();
+      handControlFrame.getTransformToDesiredFrame(handControlFrameTransformToBodyFixedFrame, hand.getBodyFixedFrame());
+      trajectory.getControlFramePositionInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getTranslationVector());
+      trajectory.getControlFrameOrientationInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getRotationMatrix());
 
       handTrajectories.add(trajectory);
 
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SE3};
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
-
-      RigidBody chest = fullRobotModel.getChest();
-      ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
-      //rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
-      
-      // To hold another side hand.
-      RigidBody anotherHand = fullRobotModel.getHand(robotSide.getOppositeSide());
-      //rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(anotherHand));
 
       // run test
       int maxNumberOfIterations = 10000;
@@ -237,7 +218,7 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       RobotSide robotSide = RobotSide.RIGHT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
-
+      MovingReferenceFrame handControlFrame = fullRobotModel.getHandControlFrame(robotSide);
       FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeOpeningDoorTrajectory(time, trajectoryTime, openingRadius, openingAngle,
                                                                                                      openingDirectionCW, knobPose, twistTime, twistRadius,
                                                                                                      twistAngle, twistDirectionCW);
@@ -246,10 +227,11 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                  handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
 
-      trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
-      trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      RigidBodyTransform handControlFrameTransformToBodyFixedFrame = new RigidBodyTransform();
+      handControlFrame.getTransformToDesiredFrame(handControlFrameTransformToBodyFixedFrame, hand.getBodyFixedFrame());
+      trajectory.getControlFramePositionInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getTranslationVector());
+      trajectory.getControlFrameOrientationInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getRotationMatrix());
 
       handTrajectories.add(trajectory);
 
@@ -263,15 +245,15 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       RigidBody anotherHand = fullRobotModel.getHand(robotSide.getOppositeSide());
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(anotherHand));
-      
+
       // manifold
       ReachingManifoldMessage reachingManifold = ReachingManifoldTools.createGoalManifoldMessage(hand, handFunction, trajectoryTime, spaces);
       reachingManifolds.add(reachingManifold);
-      
+
       // run test
       int maxNumberOfIterations = 10000;
-      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, reachingManifolds,
-                                                                                                               rigidBodyConfigurations);
+      WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories,
+                                                                                                               reachingManifolds, rigidBodyConfigurations);
       runTrajectoryTest(message, maxNumberOfIterations);
    }
 }

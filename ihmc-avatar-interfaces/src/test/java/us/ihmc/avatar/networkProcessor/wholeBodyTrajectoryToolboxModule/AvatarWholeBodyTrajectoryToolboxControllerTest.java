@@ -42,6 +42,8 @@ import us.ihmc.communication.controllerAPI.MessageUnpackingTools;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -52,6 +54,7 @@ import us.ihmc.graphicsDescription.MeshDataHolder;
 import us.ihmc.graphicsDescription.SegmentedLine3DMeshDataGenerator;
 import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFactory;
@@ -59,7 +62,6 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputCon
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
-import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
@@ -80,6 +82,7 @@ import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements MultiRobotTestInterface
@@ -114,6 +117,10 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
    private WholeBodyTrajectoryToolboxCommandConverter commandConversionHelper;
    private KinematicsToolboxOutputConverter converter;
+
+   private SideDependentList<FramePose3D> endeffectorFramePose = new SideDependentList<>();
+   private SideDependentList<YoFramePoseUsingYawPitchRoll> yoEndeffectorPose = new SideDependentList<>();
+   private SideDependentList<YoGraphicCoordinateSystem> yoEndeffectorViz = new SideDependentList<>();
 
    /**
     * Returns a separate instance of the robot model that will be modified in this test to create a
@@ -168,6 +175,15 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
       if (visualize)
       {
+         for (RobotSide robotSide : RobotSide.values)
+         {
+            endeffectorFramePose.put(robotSide, new FramePose3D());
+            yoEndeffectorPose.put(robotSide,
+                                  new YoFramePoseUsingYawPitchRoll("" + robotSide + "yoEndeffectorPose", ReferenceFrame.getWorldFrame(), mainRegistry));
+            yoEndeffectorViz.put(robotSide, new YoGraphicCoordinateSystem("" + robotSide + "yoEndeffectorViz", yoEndeffectorPose.get(robotSide), 0.2));
+            yoGraphicsListRegistry.registerYoGraphic("" + robotSide + "EndeffectorViz", yoEndeffectorViz.get(robotSide));
+         }
+
          scs = new SimulationConstructionSet(new Robot[] {robot, ghost}, simulationTestingParameters);
          scs.addYoGraphicsListRegistry(yoGraphicsListRegistry, true);
          scs.setCameraFix(0.0, 0.0, 1.0);
@@ -190,6 +206,17 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
    private void snapGhostToFullRobotModel(FullHumanoidRobotModel fullHumanoidRobotModel)
    {
+      if (visualize)
+      {
+         for (RobotSide robotSide : RobotSide.values)
+         {
+            RigidBodyTransform transformToWorldFrame = fullHumanoidRobotModel.getHandControlFrame(robotSide).getTransformToWorldFrame();
+
+            endeffectorFramePose.get(robotSide).set(transformToWorldFrame);
+            yoEndeffectorPose.get(robotSide).set(endeffectorFramePose.get(robotSide));
+         }
+      }
+
       new JointAnglesWriter(ghost, fullHumanoidRobotModel).updateRobotConfigurationBasedOnFullRobotModel();
    }
 
@@ -276,9 +303,9 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
             rigidBodyConfigurations.add(rigidBodyConfiguration);
 
-            if (visualize)
-               scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01,
-                                                                               YoAppearance.AliceBlue()));
+//            if (visualize)
+//               scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01,
+//                                                                               YoAppearance.AliceBlue()));
          }
       }
 
@@ -338,8 +365,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
          rigidBodyConfigurations.add(rigidBodyConfiguration);
 
-         if (visualize)
-            scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01, YoAppearance.AliceBlue()));
+//         if (visualize)
+//            scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01, YoAppearance.AliceBlue()));
       }
 
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null,
@@ -432,13 +459,13 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             if (!selectionMatrix.isLinearXSelected() && !selectionMatrix.isLinearYSelected() && !selectionMatrix.isLinearZSelected())
                continue; // The position part is not dictated by trajectory, let's not visualize.
 
-            if (visualize)
-               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
+//            if (visualize)
+//               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
          }
       }
-      
+
       List<ReachingManifoldMessage> reachingManifolds = message.getReachingManifolds();
-      if(reachingManifolds != null)
+      if (reachingManifolds != null)
       {
          for (int i = 0; i < reachingManifolds.size(); i++)
          {
@@ -473,47 +500,10 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       }
    }
 
-   protected void runReachingTest(WholeBodyTrajectoryToolboxMessage message, int maxNumberOfIterations) throws UnreasonableAccelerationException
-   {
-      List<ReachingManifoldMessage> reachingManifolds = message.getReachingManifolds();
-      if (reachingManifolds != null)
-      {
-         for (int i = 0; i < reachingManifolds.size(); i++)
-         {
-            ReachingManifoldMessage manifold = reachingManifolds.get(i);
-            if (visualize)
-               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(manifold, 0.01, YoAppearance.AliceBlue()));
-         }
-      }
-
-      commandInputManager.submitMessage(message);
-
-      WholeBodyTrajectoryToolboxOutputStatus solution = runToolboxController(maxNumberOfIterations);
-
-      // TODO
-      // tracking
-
-      if (numberOfIterations.getIntegerValue() < maxNumberOfIterations - 1)
-         assertNotNull("The toolbox is done but did not report a solution.", solution);
-      else
-         fail("The toolbox has run for " + maxNumberOfIterations + " without converging nor aborting.");
-
-      if (solution.getPlanningResult() == 4)
-      {
-         if (visualize)
-            visualizeSolution(solution, 10.0 / 1000.0);
-
-         trackingTrajectoryWithOutput(message, solution);
-      }
-      else
-      {
-         fail("planning result " + solution.getPlanningResult());
-      }
-   }
-
    public void trackingTrajectoryWithOutput(WholeBodyTrajectoryToolboxMessage message, WholeBodyTrajectoryToolboxOutputStatus solution)
    {
       List<WaypointBasedTrajectoryMessage> wayPointBasedTrajectoryMessages = message.getEndEffectorTrajectories();
+      List<ReachingManifoldMessage> manifoldMessages = message.getReachingManifolds();
 
       // for every configurations in solution.
       int numberOfConfigurations = solution.getRobotConfigurations().size();
@@ -565,11 +555,18 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
                if (positionError > TRACKING_TRAJECTORY_POSITION_ERROR_THRESHOLD || orientationError > TRACKING_TRAJECTORY_ORIENTATION_ERROR_THRESHOLD)
                {
-                  PrintTools.info("rigid body of the solution is far from the given trajectory");
-                  fail("rigid body of the solution is far from the given trajectory");
+                  // TODO consider exploring. or manifold
+                  //                  PrintTools.info("rigid body of the solution is far from the given trajectory");
+                  //                  fail("rigid body of the solution is far from the given trajectory");
                }
-
             }
+         }
+
+         // TODO
+         // for all manifold
+         for (int i = 0; i < manifoldMessages.size(); i++)
+         {
+
          }
       }
    }

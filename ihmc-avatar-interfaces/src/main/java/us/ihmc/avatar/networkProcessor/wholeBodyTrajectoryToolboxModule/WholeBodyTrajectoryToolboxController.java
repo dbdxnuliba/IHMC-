@@ -18,9 +18,6 @@ import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.communication.packets.PacketDestination;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
@@ -28,7 +25,6 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Reac
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WholeBodyTrajectoryToolboxConfigurationCommand;
-import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinition;
 import us.ihmc.manipulation.planning.exploringSpatial.ExploringDefinitionForGeneral;
 import us.ihmc.manipulation.planning.exploringSpatial.ExploringProgressVisualizer;
 import us.ihmc.manipulation.planning.exploringSpatial.SpatialData;
@@ -37,14 +33,12 @@ import us.ihmc.manipulation.planning.exploringSpatial.SpatialNodePlotter;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 public class WholeBodyTrajectoryToolboxController extends ToolboxController
@@ -92,10 +86,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private SpatialNodePlotter nodePlotter;
 
-   private final SideDependentList<YoFramePoseUsingYawPitchRoll> endeffectorPose = new SideDependentList<>();
-
-   private final SideDependentList<YoGraphicCoordinateSystem> endeffectorFrame = new SideDependentList<>();
-
    private final CommandInputManager commandInputManager;
 
    private final List<SpatialNode> path = new ArrayList<>();
@@ -135,15 +125,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          treeStateVisualizer = null;
       }
 
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         endeffectorPose.put(robotSide, new YoFramePoseUsingYawPitchRoll("" + robotSide + "endeffectorPose", ReferenceFrame.getWorldFrame(), registry));
-
-         endeffectorFrame.put(robotSide, new YoGraphicCoordinateSystem("" + robotSide + "endeffectorPoseFrame", endeffectorPose.get(robotSide), 0.25));
-         endeffectorFrame.get(robotSide).setVisible(true);
-         yoGraphicsListRegistry.registerYoGraphic("" + robotSide + "endeffectorPoseViz", endeffectorFrame.get(robotSide));
-      }
-
       humanoidKinematicsSolver = new HumanoidKinematicsSolver(drcRobotModel, yoGraphicsListRegistry, registry);
 
       toolboxSolution = new WholeBodyTrajectoryToolboxOutputStatus();
@@ -163,12 +144,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    {
       StateMachineFactory<ToolboxStateName, WholeBodyTrajectoryToolboxState> factory = new StateMachineFactory<>(ToolboxStateName.class);
 
-      // basic
-      //      factory.addStateAndDoneTransition(ToolboxStateName.FIND_INITIAL_GUESS, initialGuessState, ToolboxStateName.EXPAND_TREE);
-      //      factory.addStateAndDoneTransition(ToolboxStateName.EXPAND_TREE, exploringState, ToolboxStateName.SHORTCUT_PATH);
-      //      factory.addState(ToolboxStateName.SHORTCUT_PATH, shorcutState);
-
-      // candidate 1
       factory.addState(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, defaultTrialState);
       factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.FIND_INITIAL_GUESS,
                             t -> defaultTrialState.hasFail() && defaultTrialState.isDone(t));
@@ -189,7 +164,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       updateVisualizerRobotConfiguration();
       updateVisualizers();
-      updateYoVariables();
 
       if (!stateMachine.isCurrentStateTerminal() && stateMachine.getCurrentState().isDone(0.0))
       {
@@ -426,19 +400,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    }
 
    /**
-    * YoVariables.
-    */
-   private void updateYoVariables()
-   {
-      for (RobotSide robotSide : RobotSide.values)
-      {
-//         endeffectorFrame.get(robotSide).setVisible(true);
-//         endeffectorFrame.get(robotSide).update();
-      }
-   }
-
-   //
-   /**
     * oneTime shortcut : try to make a shortcut from index to index+2
     */
    private boolean updateShortcutPath(List<SpatialNode> path, int index)
@@ -636,14 +597,13 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             inValidNodes.add(newNode);
             exploringProgress.set(0.0);
          }
-         
-         
+
       }
 
       @Override
       public void onEntry()
       {
-         PrintTools.info("onEntry "+getClass().getSimpleName());
+         PrintTools.info("onEntry " + getClass().getSimpleName());
          numberOfUpdate = 0;
          startTime = System.nanoTime();
       }
@@ -741,7 +701,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       void updateStateProgress()
       {
          stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(dummyDesiredNodeToMeasureProgress));
-         if(stateProgress > 0.995)
+         if (stateProgress > 0.995)
             stateProgress = 1.0;
       }
 
@@ -757,7 +717,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          else
          {
             double progress = currentIndexOfWayPoint / (double) numberOfWayPoints;
-            SpatialData spatialData = exploringDefinition.createDefaultSpatialData();   
+            SpatialData spatialData = exploringDefinition.createDefaultSpatialData();
             desiredNode = new SpatialNode(exploringDefinition.getTrajectoryTime() * progress, spatialData);
          }
 
@@ -838,12 +798,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       SpatialNode createDesiredNode()
       {
          SpatialNode desiredNode;
-         
-         if(progressIsSaturated())
+
+         if (progressIsSaturated())
             desiredNode = exploringDefinition.createSpatialNodeOnGoalManifold(dummyDesiredNodeToMeasureProgress, maxTimeInterval);
          else
             desiredNode = createRandomNode();
-         
+
          dummyDesiredNodeToMeasureProgress = desiredNode;
 
          return desiredNode;
@@ -853,11 +813,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       void updateStateProgress()
       {
          stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(dummyDesiredNodeToMeasureProgress));
-         
-         if(stateProgress > 0.995)
+
+         if (stateProgress > 0.995)
             stateProgress = 1.0;
       }
-      
+
       private SpatialNode createRandomNode()
       {
          // create random node.
@@ -894,7 +854,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          SpatialNode node = new SpatialNode(randomNode);
          node.interpolate(nearestNode, randomNode, alpha);
          node.setParent(nearestNode);
-         
+
          return node;
       }
 
