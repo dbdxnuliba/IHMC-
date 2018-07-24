@@ -25,7 +25,6 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
@@ -110,17 +109,52 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
-   public void testReachingExtrapolatedLinearTrajectoryLeft() throws Exception, UnreasonableAccelerationException
+   public void testReachingTrajectoryTowardSphere() throws Exception, UnreasonableAccelerationException
+   {
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+      RobotSide robotSide = RobotSide.LEFT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      Point3D sphereCenter = new Point3D(0.7, 0.2, 0.6);
+      ReachingManifoldMessage reachingManifoldMessage = ReachingManifoldTools.createSphereManifoldMessage(hand, sphereCenter, 0.1);
+
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessage);
+      runTrajectoryTest(message, maxNumberOfIterations);
+
+      PrintTools.info("END");
+   }
+   
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testReachingTrajectoryTowardCylinder() throws Exception, UnreasonableAccelerationException
+   {
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+      RobotSide robotSide = RobotSide.LEFT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      Point3D center = new Point3D(0.7, 0.2, 0.6);
+      RotationMatrix orientation = new RotationMatrix();
+      orientation.appendPitchRotation(Math.PI * 0.3);
+      ReachingManifoldMessage reachingManifoldMessage = ReachingManifoldTools.createCylinderManifoldMessage(hand, center, orientation, 0.1, 0.1);
+
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessage);
+      runTrajectoryTest(message, maxNumberOfIterations);
+
+      PrintTools.info("END");
+   }
+
+   private WholeBodyTrajectoryToolboxMessage createReachingWholeBodyTrajectoryToolboxMessage(FullHumanoidRobotModel fullRobotModel, RigidBody hand,
+                                                                                             RobotSide robotSide,
+                                                                                             ReachingManifoldMessage reachingManifoldMessage)
    {
       // input
       double extrapolateRatio = 1.5;
       double trajectoryTimeBeforeExtrapolated = 5.0;
-
       double trajectoryTime = trajectoryTimeBeforeExtrapolated * extrapolateRatio;
-      Point3D sphereCenter = new Point3D(0.7, 0.2, 0.6);
 
       // wbt toolbox configuration message
-      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
       WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
       configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
       configuration.setMaximumExpansionSize(500);
@@ -132,25 +166,16 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       double timeResolution = trajectoryTime / 100.0;
 
-      RobotSide robotSide = RobotSide.LEFT;
-      RigidBody hand = fullRobotModel.getHand(robotSide);
       MovingReferenceFrame handControlFrame = fullRobotModel.getHandControlFrame(robotSide);
       RigidBodyTransform handTransform = handControlFrame.getTransformToWorldFrame();
 
       RigidBodyTransform closestPointOnManifold = new RigidBodyTransform();
       RigidBodyTransform endTransformOnTrajectory = new RigidBodyTransform();
 
-      ReachingManifoldMessage reachingManifold = ReachingManifoldTools.createSphereManifoldMessage(hand, sphereCenter, 0.1);
-      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(reachingManifold, handTransform, closestPointOnManifold);
-      System.out.println(closestPointOnManifold);
+      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(reachingManifoldMessage, handTransform, closestPointOnManifold);
       packExtrapolatedTransform(handTransform, closestPointOnManifold, extrapolateRatio, endTransformOnTrajectory);
 
-      Graphics3DObject graphics = new Graphics3DObject();
-      graphics.transform(closestPointOnManifold);
-      graphics.addCoordinateSystem(0.1);
-      scs.addStaticLinkGraphics(graphics);
-
-      reachingManifolds.add(reachingManifold);
+      reachingManifolds.add(reachingManifoldMessage);
 
       FunctionTrajectory handFunction = time -> TrajectoryLibraryForDRC.computeLinearTrajectory(time, trajectoryTime, handTransform, endTransformOnTrajectory);
 
@@ -170,13 +195,10 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
 
-      // run test
-      int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories,
                                                                                                                reachingManifolds, rigidBodyConfigurations);
-      runTrajectoryTest(message, maxNumberOfIterations);
 
-      PrintTools.info("END");
+      return message;
    }
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)

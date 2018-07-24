@@ -236,12 +236,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          exploringDefinition = new ExploringDefinitionForGeneral(trajectoryCommands, rigidBodyCommands, manifoldCommands);
          initialGuessState.setMaximumNumberOfUpdate(desiredNumberOfInitialGuesses.getIntegerValue());
          exploringState.setMaximumNumberOfUpdate(maximumExpansionSize.getIntegerValue());
-
-         PrintTools.info("right control frame");
-         System.out.println(visualizedFullRobotModel.getHandControlFrame(RobotSide.RIGHT).getTransformToWorldFrame());
-
-         if (manifoldCommands != null)
-            initialGuessState.setMaximumNumberOfUpdate(0);
+// TODO
+//         if (manifoldCommands != null)
+//            initialGuessState.setMaximumNumberOfUpdate(0);
       }
       else
          return false;
@@ -552,6 +549,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    public void updateCapturabilityBasedStatus(CapturabilityBasedStatus takeNextData)
    {
+      
    }
 
    private ArrayList<SpatialNode> validNodes = new ArrayList<SpatialNode>();
@@ -651,8 +649,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       private int numberOfWayPoints;
       private int currentIndexOfWayPoint;
 
-      private SpatialNode dummyDesiredNodeToMeasureProgress;
-
       public DefaultTrialState(int maximumNumberOfUpdate)
       {
          super(maximumNumberOfUpdate);
@@ -677,7 +673,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          numberOfWayPoints = (int) (exploringDefinition.getTrajectoryTime() / maxTimeInterval);
          currentIndexOfWayPoint = 0;
          exploringDefinition.progressSaturationThreshold = 1 - maxTimeInterval / exploringDefinition.getTrajectoryTime();
-         PrintTools.info("thresholdToStopTrial " + exploringDefinition.progressSaturationThreshold);
       }
 
       @Override
@@ -700,7 +695,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       void updateStateProgress()
       {
-         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(dummyDesiredNodeToMeasureProgress));
+         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(validNodes.get(validNodes.size() - 1)));
          if (stateProgress > 0.995)
             stateProgress = 1.0;
       }
@@ -712,7 +707,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          if (progressIsSaturated())
          {
-            desiredNode = exploringDefinition.createSpatialNodeOnGoalManifold(dummyDesiredNodeToMeasureProgress, maxTimeInterval);
+            desiredNode = exploringDefinition.createSpatialNodeOnGoalManifold(validNodes.get(validNodes.size() - 1), maxTimeInterval);
          }
          else
          {
@@ -725,7 +720,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             desiredNode.setParent(validNodes.get(currentIndexOfWayPoint - 1));
 
          currentIndexOfWayPoint++;
-         dummyDesiredNodeToMeasureProgress = desiredNode;
          return desiredNode;
       }
    }
@@ -769,8 +763,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       private final static int maximumCountForWating = 100;
       private final static double timeCoefficient = 1.0;
 
-      private SpatialNode dummyDesiredNodeToMeasureProgress;
-
       public ExploringState(int maximumNumberOfUpdate)
       {
          super(maximumNumberOfUpdate);
@@ -800,11 +792,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          SpatialNode desiredNode;
 
          if (progressIsSaturated())
-            desiredNode = exploringDefinition.createSpatialNodeOnGoalManifold(dummyDesiredNodeToMeasureProgress, maxTimeInterval);
+            desiredNode = exploringDefinition.createSpatialNodeOnGoalManifold(validNodes.get(validNodes.size() - 1), maxTimeInterval);
          else
             desiredNode = createRandomNode();
-
-         dummyDesiredNodeToMeasureProgress = desiredNode;
 
          return desiredNode;
       }
@@ -812,7 +802,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       void updateStateProgress()
       {
-         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(dummyDesiredNodeToMeasureProgress));
+         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(validNodes.get(validNodes.size() - 1)));
 
          if (stateProgress > 0.995)
             stateProgress = 1.0;

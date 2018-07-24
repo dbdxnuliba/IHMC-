@@ -18,9 +18,7 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 public class ExploringDefinition
 {
    protected List<ExploringRigidBody> allExploringRigidBodies = new ArrayList<>();
-   protected List<ReachingManifoldCommand> goalManifolds = new ArrayList<>();
-
-   public double progressSaturationThreshold;
+   protected List<ReachingManifoldCommand> allReachingManifolds = new ArrayList<>();
 
    public ExploringDefinition(List<WaypointBasedTrajectoryCommand> endEffectorTrajectories,
                               List<RigidBodyExplorationConfigurationCommand> explorationConfigurations, List<ReachingManifoldCommand> manifolds)
@@ -54,7 +52,7 @@ public class ExploringDefinition
       }
 
       if (manifolds != null)
-         goalManifolds.addAll(manifolds);
+         allReachingManifolds.addAll(manifolds);
    }
 
    public SpatialData createDefaultSpatialData()

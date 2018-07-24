@@ -1,12 +1,11 @@
 package us.ihmc.manipulation.planning.exploringSpatial;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
@@ -17,17 +16,18 @@ public class ExploringDefinitionForGeneral extends ExploringDefinition
 {
    private double trajectoryTime = 0.0;
 
-   // TODO.
-   private final static int indexOfGoalManifold = 0;
-
    private double initialDistanceToGoalManifold = 0.0;
+   
+   private final static int indexOfGoalManifold = 0;
 
    private RigidBodyTransform closestTransformOnGoalManifold = new RigidBodyTransform();
 
    private final double positionWeight = 1.0;
-   private final double orientationWeight = 0.0;
+   private final double orientationWeight = 0.2;
 
    private final RigidBody exploringHand;
+
+   public double progressSaturationThreshold;
 
    public ExploringDefinitionForGeneral(List<WaypointBasedTrajectoryCommand> endEffectorTrajectories,
                                         List<RigidBodyExplorationConfigurationCommand> explorationConfigurations, List<ReachingManifoldCommand> manifolds)
@@ -41,7 +41,7 @@ public class ExploringDefinitionForGeneral extends ExploringDefinition
             trajectoryTime = trajectoryCommand.getLastWaypointTime();
       }
 
-      ReachingManifoldCommand reachingManifoldCommand = goalManifolds.get(indexOfGoalManifold);
+      ReachingManifoldCommand reachingManifoldCommand = allReachingManifolds.get(indexOfGoalManifold);
       exploringHand = reachingManifoldCommand.getRigidBody();
       RigidBodyTransform handTransform = getExploringRigidBodyTransformToWorld(new SpatialNode(createDefaultSpatialData()), exploringHand);
 
@@ -54,7 +54,7 @@ public class ExploringDefinitionForGeneral extends ExploringDefinition
       PrintTools.info("trajectoryTime is " + trajectoryTime);
       PrintTools.info("intial distance is " + initialDistanceToGoalManifold);
    }
-
+   
    public double getExploringProgress(SpatialNode node)
    {
       RigidBodyTransform handTransform = getExploringRigidBodyTransformToWorld(node, exploringHand);
@@ -62,39 +62,6 @@ public class ExploringDefinitionForGeneral extends ExploringDefinition
       updateClosestTransformOnGoalManifold(handTransform);
       double distance = getDistanceToGoalManifold(handTransform);
       return 1.0 - distance / initialDistanceToGoalManifold;
-   }
-
-   private double getDistanceToGoalManifold(RigidBodyTransform handTransform)
-   {
-      return ReachingManifoldTools.getDistance(handTransform, closestTransformOnGoalManifold, positionWeight, orientationWeight);
-   }
-
-   private void updateClosestTransformOnGoalManifold(RigidBodyTransform rigidBodyTransform)
-   {
-      ReachingManifoldCommand reachingManifoldCommand = goalManifolds.get(indexOfGoalManifold);
-      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(reachingManifoldCommand, rigidBodyTransform, closestTransformOnGoalManifold, positionWeight, orientationWeight);
-   }
-
-   public double getTrajectoryTime()
-   {
-      return trajectoryTime;
-   }
-
-   private RigidBodyTransform getExploringRigidBodyTransformToWorld(SpatialNode node, RigidBody rigidBody)
-   {
-      double timeInTrajectory = node.getTime();
-
-      RigidBodyTransform poseToAppend = node.getSpatialData(rigidBody);
-
-      ExploringRigidBody exploringRigidBody = null;
-      for (int i = 0; i < allExploringRigidBodies.size(); i++)
-         if (allExploringRigidBodies.get(i).getRigidBody() == rigidBody)
-            exploringRigidBody = allExploringRigidBodies.get(i);
-
-      if (exploringRigidBody != null)
-         return exploringRigidBody.getRigidBodyTransform(timeInTrajectory, poseToAppend);
-      else
-         return null;
    }
 
    public SpatialNode createSpatialNodeOnGoalManifold(SpatialNode saturatedNode, double timeDiff)
@@ -119,8 +86,40 @@ public class ExploringDefinitionForGeneral extends ExploringDefinition
       RigidBodyTransform extimatedHandTransform = getExploringRigidBodyTransformToWorld(node, exploringHand);
 
       updateClosestTransformOnGoalManifold(extimatedHandTransform);
-      double estimatedDistance = getDistanceToGoalManifold(extimatedHandTransform);
 
       return node;
+   }
+
+   public double getTrajectoryTime()
+   {
+      return trajectoryTime;
+   }
+
+   private double getDistanceToGoalManifold(RigidBodyTransform handTransform)
+   {
+      return ReachingManifoldTools.getDistance(handTransform, closestTransformOnGoalManifold, positionWeight, orientationWeight);
+   }
+
+   private void updateClosestTransformOnGoalManifold(RigidBodyTransform rigidBodyTransform)
+   {
+      ReachingManifoldCommand reachingManifoldCommand = allReachingManifolds.get(indexOfGoalManifold);
+      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(reachingManifoldCommand, rigidBodyTransform, closestTransformOnGoalManifold, positionWeight, orientationWeight);
+   }
+
+   private RigidBodyTransform getExploringRigidBodyTransformToWorld(SpatialNode node, RigidBody rigidBody)
+   {
+      double timeInTrajectory = node.getTime();
+
+      RigidBodyTransform poseToAppend = node.getSpatialData(rigidBody);
+
+      ExploringRigidBody exploringRigidBody = null;
+      for (int i = 0; i < allExploringRigidBodies.size(); i++)
+         if (allExploringRigidBodies.get(i).getRigidBody() == rigidBody)
+            exploringRigidBody = allExploringRigidBodies.get(i);
+
+      if (exploringRigidBody != null)
+         return exploringRigidBody.getRigidBodyTransform(timeInTrajectory, poseToAppend);
+      else
+         return null;
    }
 }
