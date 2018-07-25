@@ -6,13 +6,16 @@ import java.util.List;
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
+import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 
@@ -40,11 +43,19 @@ public class ExploringRigidBody
    private double weight;
    private static double DEFAULT_WEIGHT = 20.0;
 
+   private final List<ReachingManifoldCommand> manifolds = new ArrayList<>();
+
+   private final double initialDistanceToManifold;
+
+   private static final double positionWeight = 1.0;
+   private static final double orientationWeight = 0.1;
+
    /**
     * For exploring rigid body with constrained trajectory.
     * Exploring configuration space would be appended on the trajectory.
     */
-   public ExploringRigidBody(RigidBody rigidBody, WaypointBasedTrajectoryCommand trajectoryCommand, RigidBodyExplorationConfigurationCommand explorationCommand)
+   public ExploringRigidBody(RigidBody rigidBody, WaypointBasedTrajectoryCommand trajectoryCommand, RigidBodyExplorationConfigurationCommand explorationCommand,
+                             List<ReachingManifoldCommand> manifolds)
    {
       this.rigidBody = rigidBody;
 
@@ -94,6 +105,22 @@ public class ExploringRigidBody
 
          exploringConfigurationSpaces.add(exploringConfigurationSpace);
       }
+
+      // manifold commands.
+      if (manifolds == null)
+      {
+         initialDistanceToManifold = 0.0;
+      }
+      else
+      {
+         this.manifolds.addAll(manifolds);
+         Pose3D initialPose = appendPoseToTrajectory(0.0, new RigidBodyTransform());
+         RigidBodyTransform closestTransform = new RigidBodyTransform();
+         initialDistanceToManifold = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(this.manifolds, initialPose, closestTransform,
+                                                                                                   positionWeight, orientationWeight);
+         PrintTools.info("initialDistanceToManifold " + initialDistanceToManifold);
+         System.out.println(closestTransform);
+      }
    }
 
    public RigidBody getRigidBody()
@@ -104,6 +131,24 @@ public class ExploringRigidBody
    public List<ExploringConfigurationSpace> getExploringConfigurationSpaces()
    {
       return exploringConfigurationSpaces;
+   }
+
+   public double getExploringProgress(SpatialNode spatialNode)
+   {
+      if (manifolds.size() == 0)
+         return Double.MAX_VALUE;
+
+      double nodeTime = spatialNode.getTime();
+
+      RigidBodyTransform spatial = spatialNode.getSpatialData(rigidBody);
+      Pose3D poseToWorld = appendPoseToTrajectory(nodeTime, spatial);
+
+      RigidBodyTransform closestTransform = new RigidBodyTransform();
+
+      double distance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, poseToWorld, closestTransform, positionWeight,
+                                                                                      orientationWeight);
+
+      return 1 - distance / initialDistanceToManifold;
    }
 
    public void appendDefaultSpatialData(SpatialData spatialData)
@@ -119,6 +164,65 @@ public class ExploringRigidBody
          exploringConfigurationSpaces.get(i).getRandomLocalRigidBodyTransform().transform(transform);
 
       spatialData.addSpatial(rigidBody.getName(), transform);
+   }
+
+   public double appendFinalSpatialData(SpatialNode lastNode, double trajectoryTime, SpatialData spatialDataToAppend)
+   {
+      if (manifolds.size() == 0)
+      {
+         // TODO : need to be enhanced.
+         RigidBodyTransform spatialToAppendClosestTransformToManifolds = new RigidBodyTransform();
+         double nodeTime = lastNode.getTime();
+         double parentNodeTime = lastNode.getParent().getTime();
+         double extrapolateRatio = (trajectoryTime - parentNodeTime) / (nodeTime - parentNodeTime);
+
+         PrintTools.info("" + nodeTime + " " + parentNodeTime + " " + extrapolateRatio);
+
+         RigidBodyTransform from = lastNode.getParent().getSpatialData(rigidBody);
+         RigidBodyTransform to = lastNode.getSpatialData(rigidBody);
+
+         ReachingManifoldTools.packExtrapolatedTransform(from, to, extrapolateRatio, spatialToAppendClosestTransformToManifolds);
+         spatialDataToAppend.addSpatial(rigidBody.getName(), spatialToAppendClosestTransformToManifolds);
+         return 0.0;
+      }
+      else
+      {
+         RigidBodyTransform lastSpatial = lastNode.getSpatialData(rigidBody);
+         Pose3D lastPoseToWorld = appendPoseToTrajectory(lastNode.getTime(), lastSpatial);
+
+         RigidBodyTransform closestTransformToLastNode = new RigidBodyTransform();
+         double lastDistance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, lastPoseToWorld, closestTransformToLastNode,
+                                                                                             positionWeight, orientationWeight);
+
+         double expectedReachingTime = lastNode.getTime() * (initialDistanceToManifold) / (initialDistanceToManifold - lastDistance);
+         Pose3D expectedPose = getCurrentPose(expectedReachingTime);
+
+         RigidBodyTransform expectedHandTransform = new RigidBodyTransform(expectedPose.getOrientation(), expectedPose.getPosition());
+
+         RigidBodyTransform transformHandtoManifold = new RigidBodyTransform(closestTransformToLastNode);
+         transformHandtoManifold.preMultiplyInvertOther(expectedHandTransform);
+
+         spatialDataToAppend.addSpatial(rigidBody.getName(), transformHandtoManifold);
+
+         return expectedReachingTime;
+      }
+   }
+
+   public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, RigidBodyTransform poseToAppend)
+   {
+      Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
+
+      KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(rigidBody);
+      message.getDesiredPositionInWorld().set(desiredEndEffectorPose.getPosition());
+      message.getDesiredOrientationInWorld().set(desiredEndEffectorPose.getOrientation());
+      message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
+      message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      message.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getAngularPart()));
+      message.getLinearSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getLinearPart()));
+      message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
+      message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
+
+      return message;
    }
 
    private void setSelectionMatrix(SelectionMatrix6D selectionMatrix, ConfigurationSpaceName configurationSpaceName, boolean select)
@@ -211,31 +315,5 @@ public class ExploringRigidBody
       pose.appendTransform(transformToAppend);
 
       return pose;
-   }
-
-   public RigidBodyTransform getRigidBodyTransform(double timeInTrajectory, RigidBodyTransform poseToAppend)
-   {
-      Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
-
-      RigidBodyTransform transform = new RigidBodyTransform(desiredEndEffectorPose.getOrientation(), desiredEndEffectorPose.getPosition());
-
-      return transform;
-   }
-
-   public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, RigidBodyTransform poseToAppend)
-   {
-      Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
-
-      KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(rigidBody);
-      message.getDesiredPositionInWorld().set(desiredEndEffectorPose.getPosition());
-      message.getDesiredOrientationInWorld().set(desiredEndEffectorPose.getOrientation());
-      message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
-      message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
-      message.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getAngularPart()));
-      message.getLinearSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getLinearPart()));
-      message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
-      message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(weight));
-
-      return message;
    }
 }

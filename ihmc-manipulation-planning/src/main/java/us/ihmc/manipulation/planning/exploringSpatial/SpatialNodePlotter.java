@@ -21,7 +21,7 @@ public class SpatialNodePlotter
 {
    private boolean saving = false;
 
-   private ExploringDefinitionForGeneral spatialDefinition;
+   private ExploringDefinition spatialDefinition;
 
    private List<Plotter> plotters = new ArrayList<Plotter>();
 
@@ -29,7 +29,7 @@ public class SpatialNodePlotter
 
    private boolean isFrameEnabled;
 
-   public SpatialNodePlotter(ExploringDefinitionForGeneral spatialDefinition, boolean enabled)
+   public SpatialNodePlotter(ExploringDefinition spatialDefinition, boolean enabled)
    {
       this.spatialDefinition = spatialDefinition;
       SpatialData randomSpatialData = spatialDefinition.createRandomSpatialData();

@@ -20,7 +20,7 @@ public class GradientDescentModule
    private TDoubleArrayList inputLowerLimit;
    private double deltaThreshold = 10E-10;
    private int maximumIterations = 1000;
-   private double alpha = -1;
+   private double alpha = -10;
    private double perturb = 0.001;
 
    public GradientDescentModule(SingleQueryFunction function, TDoubleArrayList initial)
@@ -121,7 +121,7 @@ public class GradientDescentModule
 
          double delta = Math.abs((pastQuery - optimalQuery) / optimalQuery);
 
-         //System.out.println(i + " " + optimalQuery + " " + optimalInput[0] + " " + gradient[0] + " " + delta);
+         //System.out.println(i + " " + optimalQuery + " " + optimalInput.get(0) + " " + gradient.get(0) + " " + delta);
 
          if (delta < deltaThreshold)
             break;

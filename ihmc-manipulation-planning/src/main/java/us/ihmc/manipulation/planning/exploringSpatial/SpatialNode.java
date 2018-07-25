@@ -63,6 +63,26 @@ public class SpatialNode
    /**
     * Compute distance within maximum distance
     */
+   // TODO : replace with common method.
+//   public double computeDistanceWithinMaxDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other, double maxTimeInterval,
+//                                                  double maxPositionDistance, double maxOrientationDistance)
+//   {
+//      double timeDistance = timeWeight * getTimeGap(other);
+//      double positionDistance = positionWeight * getPositionDistance(other);
+//      double orientationDistance = orientationWeight * getOrientationDistance(other);
+//
+//      double greatestPositionDistance = spatialData.getMaximumPositionDistance(other.getSpatialData());
+//      double greatestOrientationDistance = spatialData.getMaximumOrientationDistance(other.getSpatialData());
+//
+//      if (greatestPositionDistance / getTimeGap(other) > maxPositionDistance / maxTimeInterval)
+//         return Double.MAX_VALUE;
+//      if (greatestOrientationDistance / getTimeGap(other) > maxOrientationDistance / maxTimeInterval)
+//         return Double.MAX_VALUE;
+//
+//      double distance = timeDistance + positionDistance + orientationDistance;
+//
+//      return distance;
+//   }
    public double computeDistanceWithinMaxDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other, double maxTimeInterval,
                                                   double maxPositionDistance, double maxOrientationDistance)
    {

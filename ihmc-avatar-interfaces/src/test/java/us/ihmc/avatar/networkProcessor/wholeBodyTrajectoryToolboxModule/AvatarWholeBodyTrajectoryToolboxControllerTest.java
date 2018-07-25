@@ -303,9 +303,9 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
             rigidBodyConfigurations.add(rigidBodyConfiguration);
 
-//            if (visualize)
-//               scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01,
-//                                                                               YoAppearance.AliceBlue()));
+            //            if (visualize)
+            //               scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01,
+            //                                                                               YoAppearance.AliceBlue()));
          }
       }
 
@@ -365,8 +365,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
          rigidBodyConfigurations.add(rigidBodyConfiguration);
 
-//         if (visualize)
-//            scs.addStaticLinkGraphics(createFunctionTrajectoryVisualization(handFunction, 0.0, trajectoryTime, timeResolution, 0.01, YoAppearance.AliceBlue()));
+         //         if (visualize)
+         //            scs.addStaticLinkGraphics(addStaticLinkGraphics(handFunction, 0.0, trajectoryTime, timeResolution, 0.01, YoAppearance.AliceBlue()));
       }
 
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories, null,
@@ -459,8 +459,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             if (!selectionMatrix.isLinearXSelected() && !selectionMatrix.isLinearYSelected() && !selectionMatrix.isLinearZSelected())
                continue; // The position part is not dictated by trajectory, let's not visualize.
 
-//            if (visualize)
-//               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
+            //            if (visualize)
+            //               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
          }
       }
 
@@ -472,7 +472,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             ReachingManifoldMessage reachingManifoldMessage = reachingManifolds.get(i);
 
             if (visualizeManifold)
-               scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifoldMessage, 0.005, 20));
+               scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifoldMessage, 0.005, 10));
          }
       }
 

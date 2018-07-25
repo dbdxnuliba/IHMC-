@@ -1,19 +1,26 @@
 package us.ihmc.manipulation.planning.manifold;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.vecmath.MismatchedSizeException;
 
 import controller_msgs.msg.dds.ReachingManifoldMessage;
 import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.Box3D;
 import us.ihmc.euclid.geometry.Cylinder3D;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.Sphere3D;
 import us.ihmc.euclid.geometry.Torus3D;
+import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.matrix.interfaces.RotationMatrixReadOnly;
-import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.euclid.rotationConversion.AxisAngleConversion;
+import us.ihmc.euclid.rotationConversion.RotationMatrixConversion;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.MeshDataHolder;
@@ -23,9 +30,9 @@ import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
-import us.ihmc.idl.IDLSequence.Byte;
 import us.ihmc.manipulation.planning.gradientDescent.GradientDescentModule;
 import us.ihmc.manipulation.planning.gradientDescent.SingleQueryFunction;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
 public class ReachingManifoldTools
@@ -101,140 +108,30 @@ public class ReachingManifoldTools
       return graphics;
    }
 
-   public static void packRigidBodyTransformOnManifold(ReachingManifoldMessage reachingManifoldMessage, TDoubleArrayList configurations,
-                                                       RigidBodyTransform rigidBodyTransformToPack)
+   public static double packClosestRigidBodyTransformOnManifold(List<ReachingManifoldCommand> manifolds, Pose3D pose,
+                                                                RigidBodyTransform rigidBodyTransformToPack, double positionWeight, double orientationWeight)
    {
-      Byte manifoldConfigurationSpaceNames = reachingManifoldMessage.getManifoldConfigurationSpaceNames();
-      if (manifoldConfigurationSpaceNames.size() != configurations.size())
-         throw new MismatchedSizeException("configuration space size and name size are not matched.");
-
-      rigidBodyTransformToPack.setIdentity();
-      rigidBodyTransformToPack.appendTranslation(reachingManifoldMessage.getManifoldOriginPosition());
-      rigidBodyTransformToPack.setRotation(reachingManifoldMessage.getManifoldOriginOrientation());
-
-      for (int i = 0; i < configurations.size(); i++)
-         rigidBodyTransformToPack.multiply(ConfigurationSpaceName.fromByte(manifoldConfigurationSpaceNames.get(i))
-                                                                 .getLocalRigidBodyTransform(configurations.get(i)));
-
+      return packClosestRigidBodyTransformOnManifold(manifolds, new RigidBodyTransform(pose.getOrientation(), pose.getPosition()), rigidBodyTransformToPack,
+                                                     positionWeight, orientationWeight);
    }
 
-   public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldMessage reachingManifoldMessage, RigidBodyTransform rigidBodyTransform,
-                                                              RigidBodyTransform rigidBodyTransformToPack)
+   public static double packClosestRigidBodyTransformOnManifold(List<ReachingManifoldCommand> manifolds, RigidBodyTransform rigidBodyTransform,
+                                                                RigidBodyTransform rigidBodyTransformToPack, double positionWeight, double orientationWeight)
    {
-      double[] manifoldUpperLimits = reachingManifoldMessage.getManifoldUpperLimits().toArray();
-      double[] manifoldLowerLimits = reachingManifoldMessage.getManifoldLowerLimits().toArray();
-
-      TDoubleArrayList initialInput = new TDoubleArrayList();
-      TDoubleArrayList upperLimits = new TDoubleArrayList();
-      TDoubleArrayList lowerLimits = new TDoubleArrayList();
-      for (int i = 0; i < manifoldLowerLimits.length; i++)
+      double distance = Double.MAX_VALUE;
+      int indexToPack = 0;
+      for (int i = 0; i < manifolds.size(); i++)
       {
-         initialInput.add((manifoldUpperLimits[i] + manifoldLowerLimits[i]) / 2);
-         upperLimits.add(manifoldUpperLimits[i]);
-         lowerLimits.add(manifoldLowerLimits[i]);
+         double d = packClosestRigidBodyTransformOnManifold(manifolds.get(i), rigidBodyTransform, rigidBodyTransformToPack, positionWeight, orientationWeight);
+         if (d < distance)
+         {
+            distance = d;
+            indexToPack = i;
+         }
       }
 
-      SingleQueryFunction function = new SingleQueryFunction()
-      {
-         @Override
-         public double getQuery(TDoubleArrayList values)
-         {
-            RigidBodyTransform closestTransform = new RigidBodyTransform();
-            packRigidBodyTransformOnManifold(reachingManifoldMessage, values, closestTransform);
-
-            double x = rigidBodyTransform.getTranslationX();
-            double y = rigidBodyTransform.getTranslationY();
-            double z = rigidBodyTransform.getTranslationZ();
-
-            double cx = closestTransform.getTranslationX();
-            double cy = closestTransform.getTranslationY();
-            double cz = closestTransform.getTranslationZ();
-
-            return Math.sqrt(EuclidCoreTools.normSquared(x - cx, y - cy, z - cz));
-         }
-      };
-      GradientDescentModule solver = new GradientDescentModule(function, initialInput);
-
-      solver.setMaximumIterations(200);
-      solver.setInputLowerLimit(lowerLimits);
-      solver.setInputUpperLimit(upperLimits);
-
-      solver.run();
-      TDoubleArrayList optimalSolution = solver.getOptimalInput();
-
-      rigidBodyTransformToPack.setIdentity();
-      rigidBodyTransformToPack.appendTranslation(reachingManifoldMessage.getManifoldOriginPosition());
-      rigidBodyTransformToPack.setRotation(reachingManifoldMessage.getManifoldOriginOrientation());
-
-      for (int i = 0; i < reachingManifoldMessage.getManifoldConfigurationSpaceNames().size(); i++)
-         rigidBodyTransformToPack.multiply(ConfigurationSpaceName.fromByte(reachingManifoldMessage.getManifoldConfigurationSpaceNames().get(i))
-                                                                 .getLocalRigidBodyTransform(optimalSolution.get(i)));
-   }
-
-   public static void packRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, TDoubleArrayList configurations,
-                                                       RigidBodyTransform rigidBodyTransformToPack)
-   {
-      int dimensionOfManifold = reachingManifoldCommand.getDimensionOfManifold();
-      if (dimensionOfManifold != configurations.size())
-         throw new MismatchedSizeException("configuration space size and name size are not matched.");
-
-      rigidBodyTransformToPack.setIdentity();
-      rigidBodyTransformToPack.appendTranslation(reachingManifoldCommand.getManifoldOriginPosition());
-      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
-
-      for (int i = 0; i < configurations.size(); i++)
-         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(configurations.get(i)));
-
-   }
-
-   public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, RigidBodyTransform rigidBodyTransform,
-                                                              RigidBodyTransform rigidBodyTransformToPack)
-   {
-      packClosestRigidBodyTransformOnManifold(reachingManifoldCommand, rigidBodyTransform, rigidBodyTransformToPack, 1.0, 1.0);
-   }
-   
-   public static void packClosestRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, RigidBodyTransform rigidBodyTransform,
-                                                              RigidBodyTransform rigidBodyTransformToPack, double positionWeight, double orientationWeight)
-   {
-      double[] manifoldUpperLimits = reachingManifoldCommand.getManifoldUpperLimits().toArray();
-      double[] manifoldLowerLimits = reachingManifoldCommand.getManifoldLowerLimits().toArray();
-
-      TDoubleArrayList initialInput = new TDoubleArrayList();
-      TDoubleArrayList upperLimits = new TDoubleArrayList();
-      TDoubleArrayList lowerLimits = new TDoubleArrayList();
-      for (int i = 0; i < manifoldLowerLimits.length; i++)
-      {
-         initialInput.add((manifoldUpperLimits[i] + manifoldLowerLimits[i]) / 2);
-         upperLimits.add(manifoldUpperLimits[i]);
-         lowerLimits.add(manifoldLowerLimits[i]);
-      }
-
-      SingleQueryFunction function = new SingleQueryFunction()
-      {
-         @Override
-         public double getQuery(TDoubleArrayList values)
-         {
-            RigidBodyTransform closestTransform = new RigidBodyTransform();
-            packRigidBodyTransformOnManifold(reachingManifoldCommand, values, closestTransform);
-
-            return getDistance(rigidBodyTransform, closestTransform, positionWeight, orientationWeight);
-         }
-      };
-      GradientDescentModule solver = new GradientDescentModule(function, initialInput);
-
-      solver.setMaximumIterations(200);
-      solver.setInputLowerLimit(lowerLimits);
-      solver.setInputUpperLimit(upperLimits);
-
-      solver.run();
-      TDoubleArrayList optimalSolution = solver.getOptimalInput();
-
-      rigidBodyTransformToPack.setIdentity();
-      rigidBodyTransformToPack.appendTranslation(reachingManifoldCommand.getManifoldOriginPosition());
-      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
-
-      for (int i = 0; i < reachingManifoldCommand.getDimensionOfManifold(); i++)
-         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(optimalSolution.get(i)));
+      return packClosestRigidBodyTransformOnManifold(manifolds.get(indexToPack), rigidBodyTransform, rigidBodyTransformToPack, positionWeight,
+                                                     orientationWeight);
    }
 
    public static ReachingManifoldMessage createSphereManifoldMessage(RigidBody hand, Sphere3D sphere3D)
@@ -276,8 +173,8 @@ public class ReachingManifoldTools
                                                                        RotationMatrixReadOnly rotationMatrixReadOnly, double radius, double height)
    {
       ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.X};
-      double[] lowerLimits = new double[] {-Math.PI / 2, -height / 2, -radius};
-      double[] upperLimits = new double[] {Math.PI / 2, height / 2, radius};
+      double[] lowerLimits = new double[] {-Math.PI, -height / 2, radius};
+      double[] upperLimits = new double[] {Math.PI, height / 2, radius};
 
       ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
 
@@ -353,8 +250,21 @@ public class ReachingManifoldTools
 
       return reachingManifoldMessage;
    }
-   
-   public static double getDistance(RigidBodyTransform from, RigidBodyTransform to, double positionWeight, double orientationWeight)
+
+   public static void packExtrapolatedTransform(RigidBodyTransform from, RigidBodyTransform to, double ratio, RigidBodyTransform toPack)
+   {
+      Point3D pointToPack = new Point3D();
+      RotationMatrix orientationToPack = new RotationMatrix();
+
+      packExtrapolatedPoint(from.getTranslationVector(), to.getTranslationVector(), ratio, pointToPack);
+      packExtrapolatedOrienation(from.getRotationMatrix(), to.getRotationMatrix(), ratio, orientationToPack);
+
+      toPack.setIdentity();
+      toPack.setTranslation(pointToPack);
+      toPack.setRotation(orientationToPack);
+   }
+
+   private static double getDistance(RigidBodyTransform from, RigidBodyTransform to, double positionWeight, double orientationWeight)
    {
       Point3D pointFrom = new Point3D(from.getTranslationVector());
       Quaternion orientationFrom = new Quaternion(from.getRotationMatrix());
@@ -368,5 +278,159 @@ public class ReachingManifoldTools
       double distance = positionDistance + orientationDistance;
 
       return distance;
+   }
+
+   private static void packExtrapolatedPoint(Vector3DReadOnly from, Vector3DReadOnly to, double ratio, Point3D toPack)
+   {
+      toPack.setX(ratio * (to.getX() - from.getX()) + from.getX());
+      toPack.setY(ratio * (to.getY() - from.getY()) + from.getY());
+      toPack.setZ(ratio * (to.getZ() - from.getZ()) + from.getZ());
+   }
+
+   private static void packExtrapolatedOrienation(RotationMatrixReadOnly from, RotationMatrixReadOnly to, double ratio, RotationMatrix toPack)
+   {
+      Quaternion invFrom = new Quaternion(from);
+      invFrom.inverse();
+
+      Quaternion delFromTo = new Quaternion();
+      delFromTo.multiply(invFrom, new Quaternion(to));
+
+      AxisAngle delFromToAxisAngle = new AxisAngle();
+      AxisAngleConversion.convertQuaternionToAxisAngle(delFromTo, delFromToAxisAngle);
+
+      AxisAngle delFromExtraAxisAngle = new AxisAngle(delFromToAxisAngle);
+      double extrapolatedAngle = ratio * delFromToAxisAngle.getAngle();
+      delFromExtraAxisAngle.setAngle(extrapolatedAngle);
+
+      AxisAngle toPackAxisAngle = new AxisAngle(from);
+      toPackAxisAngle.multiply(delFromExtraAxisAngle);
+
+      AxisAngle temp = new AxisAngle(from);
+      temp.multiply(delFromToAxisAngle);
+
+      RotationMatrixConversion.convertAxisAngleToMatrix(toPackAxisAngle, toPack);
+   }
+
+   private static double packClosestRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, RigidBodyTransform rigidBodyTransform,
+                                                                 RigidBodyTransform rigidBodyTransformToPack, double positionWeight, double orientationWeight)
+   {
+      double[] manifoldUpperLimits = reachingManifoldCommand.getManifoldUpperLimits().toArray();
+      double[] manifoldLowerLimits = reachingManifoldCommand.getManifoldLowerLimits().toArray();
+
+      TDoubleArrayList initialInput = new TDoubleArrayList();
+      TDoubleArrayList upperLimits = new TDoubleArrayList();
+      TDoubleArrayList lowerLimits = new TDoubleArrayList();
+      for (int i = 0; i < manifoldLowerLimits.length; i++)
+      {
+         initialInput.add((manifoldUpperLimits[i] + manifoldLowerLimits[i]) / 2);
+         upperLimits.add(manifoldUpperLimits[i]);
+         lowerLimits.add(manifoldLowerLimits[i]);
+      }
+
+      SingleQueryFunction function = new SingleQueryFunction()
+      {
+         @Override
+         public double getQuery(TDoubleArrayList values)
+         {
+            RigidBodyTransform closestTransform = new RigidBodyTransform();
+            packRigidBodyTransformOnManifold(reachingManifoldCommand, values, closestTransform);
+
+            return getDistance(rigidBodyTransform, closestTransform, positionWeight, orientationWeight);
+         }
+      };
+      GradientDescentModule solver = new GradientDescentModule(function, initialInput);
+
+      solver.setMaximumIterations(200);
+      solver.setInputLowerLimit(lowerLimits);
+      solver.setInputUpperLimit(upperLimits);
+
+      solver.run();
+      TDoubleArrayList optimalSolution = solver.getOptimalInput();
+
+      rigidBodyTransformToPack.setIdentity();
+      rigidBodyTransformToPack.appendTranslation(reachingManifoldCommand.getManifoldOriginPosition());
+      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
+
+      for (int i = 0; i < reachingManifoldCommand.getDimensionOfManifold(); i++)
+         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(optimalSolution.get(i)));
+
+      return solver.getOptimalQuery();
+   }
+
+   private static void packRigidBodyTransformOnManifold(ReachingManifoldCommand reachingManifoldCommand, TDoubleArrayList configurations,
+                                                        RigidBodyTransform rigidBodyTransformToPack)
+   {
+      int dimensionOfManifold = reachingManifoldCommand.getDimensionOfManifold();
+      if (dimensionOfManifold != configurations.size())
+         throw new MismatchedSizeException("configuration space size and name size are not matched.");
+
+      rigidBodyTransformToPack.setIdentity();
+      rigidBodyTransformToPack.setTranslation(reachingManifoldCommand.getManifoldOriginPosition());
+      rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
+
+      for (int i = 0; i < configurations.size(); i++)
+         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(configurations.get(i)));
+
+   }
+
+   public static List<ReachingManifoldMessage> createSphereManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Point3D manifoldOriginPosition,
+                                                                                       double radius)
+   {
+      List<ReachingManifoldMessage> messages = new ArrayList<>();
+      ReachingManifoldMessage message = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.Y};
+      double[] lowerLimits = new double[] {-Math.PI, -0.5 * Math.PI, robotSide.negateIfRightSide(radius)};
+      double[] upperLimits = new double[] {Math.PI, 0.5 * Math.PI, robotSide.negateIfRightSide(radius)};
+
+      message.getManifoldOriginPosition().set(manifoldOriginPosition);
+      //message.getManifoldOriginOrientation().set(new Quaternion());
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(spaces), lowerLimits, upperLimits, message);
+      messages.add(message);
+
+      return messages;
+   }
+
+   public static List<ReachingManifoldMessage> createCylinderManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Point3D manifoldOriginPosition,
+                                                                                         RotationMatrix manifoldOriginOrientation, double radius, double height)
+   {
+      List<ReachingManifoldMessage> messages = new ArrayList<>();
+      ReachingManifoldMessage sideMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage topMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage bottomMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      ConfigurationSpaceName[] sideSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.Y};
+      double[] sideLowerLimits = new double[] {-Math.PI, -height / 2, robotSide.negateIfRightSide(radius)};
+      double[] sideUpperLimits = new double[] {Math.PI, height / 2, robotSide.negateIfRightSide(radius)};
+
+      sideMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      sideMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideSpaces), sideLowerLimits, sideUpperLimits, sideMessage);
+
+      ConfigurationSpaceName[] topSpaces = {ConfigurationSpaceName.Z, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
+      double[] topLowerLimits = new double[] {height / 2 - 0.01, robotSide.negateIfRightSide(0.5 * Math.PI), -Math.PI, -radius * 0.5};
+      double[] topUpperLimits = new double[] {height / 2, robotSide.negateIfRightSide(0.5 * Math.PI), Math.PI, radius * 0.5};
+
+      topMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      topMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(topSpaces), topLowerLimits, topUpperLimits, topMessage);
+
+      ConfigurationSpaceName[] bottomSpaces = {ConfigurationSpaceName.Z, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
+      double[] bottomLowerLimits = new double[] {-height / 2, robotSide.negateIfRightSide(-0.5 * Math.PI), -Math.PI, -radius * 0.5};
+      double[] bottomUpperLimits = new double[] {-height / 2 + 0.01, robotSide.negateIfRightSide(-0.5 * Math.PI), Math.PI, radius * 0.5};
+
+      bottomMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      bottomMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(bottomSpaces), bottomLowerLimits, bottomUpperLimits, bottomMessage);
+
+      messages.add(sideMessage);
+      messages.add(topMessage);
+      messages.add(bottomMessage);
+
+      return messages;
    }
 }

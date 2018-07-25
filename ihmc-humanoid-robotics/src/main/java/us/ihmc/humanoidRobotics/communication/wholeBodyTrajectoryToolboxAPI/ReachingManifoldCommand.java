@@ -49,6 +49,27 @@ public class ReachingManifoldCommand
       this.manifoldUpperLimits.addAll(WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationUpperLimitArray(configurationSpaces));
    }
 
+   public ReachingManifoldCommand(RigidBody rigidBody, Point3D manifoldOriginPosition, Quaternion manifoldOriginOrientation,
+                                  ConfigurationSpaceName[] configurationSpaces, double[] lowerLimits, double[] upperLimits)
+   {
+      clear();
+      this.rigidBody = rigidBody;
+      this.rigidBodyNameBasedashCode = rigidBody.getNameBasedHashCode();
+      this.manifoldOriginPosition.set(manifoldOriginPosition);
+      this.manifoldOriginOrientation.set(manifoldOriginOrientation);
+      if ((configurationSpaces.length == lowerLimits.length) && (configurationSpaces.length == upperLimits.length))
+      {
+         for (int i = 0; i < configurationSpaces.length; i++)
+            this.manifoldConfigurationSpaces.add(configurationSpaces[i]);
+         for (int i = 0; i < lowerLimits.length; i++)
+            this.manifoldLowerLimits.add(lowerLimits[i]);
+         for (int i = 0; i < upperLimits.length; i++)
+            this.manifoldUpperLimits.add(upperLimits[i]);
+      }
+      else
+         throw new IllegalArgumentException("different length of spaces and limits.");
+   }
+
    @Override
    public void set(ReachingManifoldCommand other)
    {
