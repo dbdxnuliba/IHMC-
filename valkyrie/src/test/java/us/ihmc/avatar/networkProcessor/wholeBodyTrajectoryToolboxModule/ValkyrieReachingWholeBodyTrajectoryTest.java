@@ -86,10 +86,6 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
    {
       FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
 
-      OneDoFJoint[] oneDoFJoints = fullRobotModel.getOneDoFJoints();
-      for (int i = 0; i < oneDoFJoints.length; i++)
-         PrintTools.info("" + oneDoFJoints[i].getName() + " " + oneDoFJoints[i].getJointLimitUpper() + " " + oneDoFJoints[i].getJointLimitLower());
-
       RobotSide robotSide = RobotSide.LEFT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
 
@@ -105,11 +101,39 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       PrintTools.info("END");
    }
+   
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 120000)
+   public void testReachingTrajectoryTowardTorus() throws Exception, UnreasonableAccelerationException
+   {
+      FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
+
+      RobotSide robotSide = RobotSide.LEFT;
+      RigidBody hand = fullRobotModel.getHand(robotSide);
+
+      Point3D center = new Point3D(0.8, 0.0, 1.1);
+      RotationMatrix orientation = new RotationMatrix();
+      orientation.appendPitchRotation(-Math.PI * 0.25);
+      List<ReachingManifoldMessage> reachingManifoldMessages = ReachingManifoldTools.createTorusManifoldMessagesForValkyrie(robotSide, hand, center,
+                                                                                                                               orientation, 0.3, 0.025);
+
+      int maxNumberOfIterations = 10000;
+      WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
+      runTrajectoryTest(message, maxNumberOfIterations);
+
+      PrintTools.info("END");
+   }
 
    private WholeBodyTrajectoryToolboxMessage createReachingWholeBodyTrajectoryToolboxMessage(FullHumanoidRobotModel fullRobotModel, RigidBody hand,
                                                                                              RobotSide robotSide,
                                                                                              List<ReachingManifoldMessage> reachingManifoldMessages)
    {
+      if (VERBOSE)
+      {
+         OneDoFJoint[] oneDoFJoints = fullRobotModel.getOneDoFJoints();
+         for (int i = 0; i < oneDoFJoints.length; i++)
+            PrintTools.info("" + oneDoFJoints[i].getName() + " " + oneDoFJoints[i].getJointLimitUpper() + " " + oneDoFJoints[i].getJointLimitLower());
+      }
       // input
       double extrapolateRatio = 1.5;
       double trajectoryTimeBeforeExtrapolated = 5.0;
@@ -118,7 +142,7 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       // wbt toolbox configuration message
       WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
       configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
-      configuration.setMaximumExpansionSize(50);
+      configuration.setMaximumExpansionSize(1000);
 
       // trajectory message
       List<WaypointBasedTrajectoryMessage> handTrajectories = new ArrayList<>();
@@ -159,7 +183,6 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       handTrajectories.add(trajectory);
 
       ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SE3};
-
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
 
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories,
@@ -167,18 +190,20 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       Graphics3DObject tempGraphic = new Graphics3DObject();
       tempGraphic.transform(closestPointOnManifold);
-      PrintTools.info("" + closestPointOnManifold);
-      tempGraphic.addCoordinateSystem(0.2);
+      tempGraphic.addCoordinateSystem(0.1);
       scs.addStaticLinkGraphics(tempGraphic);
+      
+      PrintTools.info("default final transform");
+      System.out.println(closestPointOnManifold);
 
       Graphics3DObject tempGraphic2 = new Graphics3DObject();
       tempGraphic2.transform(handTransform);
-      tempGraphic2.addCoordinateSystem(0.2);
+      tempGraphic2.addCoordinateSystem(0.1);
       scs.addStaticLinkGraphics(tempGraphic2);
 
       Graphics3DObject tempGraphic3 = new Graphics3DObject();
       tempGraphic3.transform(endTransformOnTrajectory);
-      tempGraphic3.addCoordinateSystem(0.2);
+      tempGraphic3.addCoordinateSystem(0.1);
       scs.addStaticLinkGraphics(tempGraphic3);
 
       return message;

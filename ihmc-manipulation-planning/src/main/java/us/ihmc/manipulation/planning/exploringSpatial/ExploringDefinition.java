@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
@@ -53,8 +52,6 @@ public class ExploringDefinition
 
       for (int i = 0; i < allRigidBodies.size(); i++)
       {
-         PrintTools.info("exploring rigid body is " + allRigidBodies.get(i).getName());
-
          RigidBody rigidBody = allRigidBodies.get(i);
          ExploringRigidBody exploringRigidBody = new ExploringRigidBody(rigidBody, rigidBodyToTrajectoryMap.get(rigidBody),
                                                                         rigidBodyToExploringMap.get(rigidBody), rigidBodyToListOfManifoldMap.get(rigidBody));
@@ -117,6 +114,8 @@ public class ExploringDefinition
 
    public double getExploringProgress(SpatialNode node)
    {
+      if(!node.isValid())
+         return 0.0;
       double progress = Double.MAX_VALUE;
 
       for (int i = 0; i < allExploringRigidBodies.size(); i++)

@@ -472,7 +472,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             ReachingManifoldMessage reachingManifoldMessage = reachingManifolds.get(i);
 
             if (visualizeManifold)
-               scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifoldMessage, 0.005, 10));
+               scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifoldMessage, 0.01, 10));
          }
       }
 

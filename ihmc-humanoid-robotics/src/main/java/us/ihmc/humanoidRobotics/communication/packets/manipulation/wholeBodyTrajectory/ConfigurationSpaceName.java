@@ -18,7 +18,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return 0.5;
+         return 0.1;
       case ROLL:
       case PITCH:
       case YAW:
@@ -37,7 +37,7 @@ public enum ConfigurationSpaceName
       case X:
       case Y:
       case Z:
-         return -0.5;
+         return -0.1;
       case ROLL:
       case PITCH:
       case YAW:

@@ -61,17 +61,22 @@ public class ReachingManifoldTest
       RigidBody hand = new RigidBody("hand", new RigidBodyTransform(), worldFrame);
 
       // create manifold message
-      List<ReachingManifoldMessage> reachingManifolds = ReachingManifoldTools.createCylinderManifoldMessagesForValkyrie(RobotSide.LEFT, hand,
-                                                                                                                        manifoldOriginPosition,
-                                                                                                                        manifoldOriginOrientation, 0.2, 0.3);
+//      List<ReachingManifoldMessage> reachingManifolds = ReachingManifoldTools.createSphereManifoldMessagesForValkyrie(RobotSide.LEFT, hand,
+//                                                                                                                     manifoldOriginPosition,
+//                                                                                                                     0.1);
+//      List<ReachingManifoldMessage> reachingManifolds = ReachingManifoldTools.createCylinderManifoldMessagesForValkyrie(RobotSide.LEFT, hand,
+//                                                                                                                        manifoldOriginPosition,
+//                                                                                                                        manifoldOriginOrientation, 0.2, 0.3);
+      List<ReachingManifoldMessage> reachingManifolds = ReachingManifoldTools.createTorusManifoldMessagesForValkyrie(RobotSide.LEFT, hand,
+                                                                                                                     manifoldOriginPosition,
+                                                                                                                     manifoldOriginOrientation, 0.3, 0.025);
 
       // yographics 
       final YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      PrintTools.info("" + reachingManifolds.size());
       // graphics for manifold message
       for (int i = 0; i < reachingManifolds.size(); i++)
-         scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifolds.get(i), 0.005, 10));
+         scs.addStaticLinkGraphics(ReachingManifoldTools.createManifoldMessageStaticGraphic(reachingManifolds.get(i), 0.01, 10));
 
       List<ReachingManifoldCommand> manifolds = new ArrayList<>();
       for (int i = 0; i < reachingManifolds.size(); i++)
@@ -145,6 +150,7 @@ public class ReachingManifoldTest
          handTransform.setRotationYawPitchRoll(yoYawHand.getDoubleValue(), yoPitchHand.getDoubleValue(), yoRollHand.getDoubleValue());
 
          RigidBodyTransform closestTransform = new RigidBodyTransform();
+         PrintTools.info(""+t);
          ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, handTransform, closestTransform, 1.0, 0.1);
 
          yoPX.set(closestTransform.getTranslationX());

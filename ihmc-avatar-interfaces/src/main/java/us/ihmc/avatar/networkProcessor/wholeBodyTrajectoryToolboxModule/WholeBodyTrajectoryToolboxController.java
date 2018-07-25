@@ -237,7 +237,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          exploringState.setMaximumNumberOfUpdate(maximumExpansionSize.getIntegerValue());
          // TODO
          //         if (manifoldCommands != null)
-         //            initialGuessState.setMaximumNumberOfUpdate(0);
+         initialGuessState.setMaximumNumberOfUpdate(0);
       }
       else
          return false;
@@ -547,11 +547,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private static final double positionWeight = 1.0;
    private static final double orientationWeight = 1.0;
 
-   private static final double maxTimeInterval = 1 / 3.0; // 1/ 2.0 is original
+   private static final double maxTimeInterval = 1 / 2.0; // 1/ 2.0 is original
    private static final double maxPositionDistance = 0.05;
-   private static final double maxOrientationDistance = Math.toRadians(10.0);
-   
-   private static final double progressSaturationThreshold = 0.90;
+   private static final double maxOrientationDistance = Math.toRadians(3.0);
+
+   private static final double progressSaturationThreshold = 0.9;
 
    private abstract class WholeBodyTrajectoryToolboxState implements State
    {
@@ -591,7 +591,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       public void onEntry()
       {
-         PrintTools.info("onEntry " + getClass().getSimpleName() +" "+ maximumNumberOfUpdate);
+         PrintTools.info("onEntry " + getClass().getSimpleName() + " " + maximumNumberOfUpdate);
          numberOfUpdate = 0;
          startTime = System.nanoTime();
       }
@@ -694,7 +694,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          if (progressIsSaturated())
          {
-            PrintTools.info(""+numberOfUpdate +" "+stateProgress +" "+validNodes.size());
+            PrintTools.info("" + numberOfUpdate + " " + stateProgress + " " + validNodes.size());
             desiredNode = exploringDefinition.createFinalSpatialNode(validNodes.get(validNodes.size() - 1));
          }
          else
@@ -748,8 +748,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private class ExploringState extends WholeBodyTrajectoryToolboxState
    {
-      private final static int maximumCountForWating = 100;
-      private final static double timeCoefficient = 1.0;
+      private final static int maximumCountForWating = 500;
+      private final static double timeCoefficient = 0.5;
 
       public ExploringState(int maximumNumberOfUpdate)
       {
@@ -798,17 +798,18 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       private SpatialNode createRandomNode()
       {
-         // create random node.
-         SpatialData randomSpatialData = exploringDefinition.createRandomSpatialData();
-
-         double nextDouble = WholeBodyTrajectoryToolboxMessageTools.random.nextDouble();
-         double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * stateProgress);
-
-         SpatialNode randomNode = new SpatialNode(randomTime, randomSpatialData);
-         // find closest one.
+         SpatialData randomSpatialData = null;
+         SpatialNode randomNode = null;
          SpatialNode nearestNode = null;
+
          for (int i = 0; i < maximumCountForWating; i++)
          {
+            // create random node.
+            double nextDouble = WholeBodyTrajectoryToolboxMessageTools.random.nextDouble();
+            double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * stateProgress);
+            randomSpatialData = exploringDefinition.createRandomSpatialData();
+            
+            randomNode = new SpatialNode(randomTime, randomSpatialData);
             nearestNode = findNearestValidNodeToRandomNode(randomNode);
             if (nearestNode != null)
                break;

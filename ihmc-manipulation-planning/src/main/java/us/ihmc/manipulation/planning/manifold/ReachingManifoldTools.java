@@ -8,7 +8,6 @@ import javax.vecmath.MismatchedSizeException;
 import controller_msgs.msg.dds.ReachingManifoldMessage;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.axisAngle.AxisAngle;
-import us.ihmc.euclid.geometry.Box3D;
 import us.ihmc.euclid.geometry.Cylinder3D;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.Sphere3D;
@@ -134,87 +133,118 @@ public class ReachingManifoldTools
                                                      orientationWeight);
    }
 
-   public static ReachingManifoldMessage createSphereManifoldMessage(RigidBody hand, Sphere3D sphere3D)
+   public static List<ReachingManifoldMessage> createSphereManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Sphere3D sphere3D)
    {
-      return createSphereManifoldMessage(hand, sphere3D.getPosition(), sphere3D.getRadius());
+      return createSphereManifoldMessagesForValkyrie(robotSide, hand, sphere3D.getPosition(), sphere3D.getRadius());
    }
 
-   public static ReachingManifoldMessage createCylinderManifoldMessage(RigidBody hand, Cylinder3D cylinder3D)
+   public static List<ReachingManifoldMessage> createCylinderManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Cylinder3D cylinder3D)
    {
-      return createCylinderManifoldMessage(hand, cylinder3D.getPosition(), cylinder3D.getOrientation(), cylinder3D.getRadius(), cylinder3D.getHeight());
+      return createCylinderManifoldMessagesForValkyrie(robotSide, hand, cylinder3D.getPosition(), cylinder3D.getOrientation(), cylinder3D.getRadius(),
+                                                       cylinder3D.getHeight());
    }
 
-   public static ReachingManifoldMessage createBoxManifoldMessage(RigidBody hand, Box3D box3D)
+   public static List<ReachingManifoldMessage> createTorusManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Torus3D torus3D)
    {
-      return createBoxManifoldMessage(hand, box3D.getPosition(), box3D.getOrientation(), box3D.getLength(), box3D.getWidth(), box3D.getHeight());
+      return createTorusManifoldMessagesForValkyrie(robotSide, hand, torus3D.getPosition(), torus3D.getOrientation(), torus3D.getRadius(),
+                                                    torus3D.getTubeRadius());
    }
 
-   public static ReachingManifoldMessage createTorusManifoldMessage(RigidBody hand, Torus3D torus3D)
+   public static List<ReachingManifoldMessage> createSphereManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand,
+                                                                                       Tuple3DReadOnly manifoldOriginPosition, double radius)
    {
-      return createTorusManifoldMessage(hand, torus3D.getPosition(), torus3D.getOrientation(), torus3D.getRadius(), torus3D.getTubeRadius());
+      List<ReachingManifoldMessage> messages = new ArrayList<>();
+      ReachingManifoldMessage message = HumanoidMessageTools.createReachingManifoldMessage(hand);
+
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH};
+      double[] lowerLimits = new double[] {-Math.PI, -0.5 * Math.PI, robotSide.negateIfRightSide(radius), -Math.PI};
+      double[] upperLimits = new double[] {Math.PI, 0.5 * Math.PI, robotSide.negateIfRightSide(radius), Math.PI};
+
+      message.getManifoldOriginPosition().set(manifoldOriginPosition);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(spaces), lowerLimits, upperLimits, message);
+      messages.add(message);
+
+      return messages;
    }
 
-   public static ReachingManifoldMessage createSphereManifoldMessage(RigidBody hand, Tuple3DReadOnly tuple3dReadOnly, double radius)
+   public static List<ReachingManifoldMessage> createCylinderManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand,
+                                                                                         Tuple3DReadOnly manifoldOriginPosition,
+                                                                                         RotationMatrixReadOnly manifoldOriginOrientation, double radius,
+                                                                                         double height)
    {
-      ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
-      double[] lowerLimits = new double[] {-Math.PI, -Math.PI / 2, -radius};
-      double[] upperLimits = new double[] {Math.PI, Math.PI / 2, -radius};
+      double topAreaReductionRatio = 1.0;
+      double thicknessForViz = 0.01;
 
-      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      List<ReachingManifoldMessage> messages = new ArrayList<>();
+      ReachingManifoldMessage sideMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage topMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage bottomMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
 
-      reachingManifoldMessage.getManifoldOriginPosition().set(tuple3dReadOnly);
-      reachingManifoldMessage.getManifoldOriginOrientation().set(new Quaternion());
+      ConfigurationSpaceName[] sideSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.Y};
+      double[] sideLowerLimits = new double[] {-Math.PI, -height / 2, robotSide.negateIfRightSide(radius)};
+      double[] sideUpperLimits = new double[] {Math.PI, height / 2, robotSide.negateIfRightSide(radius)};
 
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
-      return reachingManifoldMessage;
+      sideMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      sideMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideSpaces), sideLowerLimits, sideUpperLimits, sideMessage);
+
+      ConfigurationSpaceName[] topSpaces = {ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
+      double[] topLowerLimits = new double[] {height / 2 - thicknessForViz, -Math.PI, -radius * topAreaReductionRatio};
+      double[] topUpperLimits = new double[] {height / 2, Math.PI, radius * topAreaReductionRatio};
+
+      topMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      RotationMatrix topOrientation = new RotationMatrix(manifoldOriginOrientation);
+      topOrientation.appendRollRotation(robotSide.negateIfRightSide(0.5 * Math.PI));
+      topMessage.getManifoldOriginOrientation().set(topOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(topSpaces), topLowerLimits, topUpperLimits, topMessage);
+
+      ConfigurationSpaceName[] bottomSpaces = {ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
+      double[] bottomLowerLimits = new double[] {height / 2 - thicknessForViz, -Math.PI, -radius * topAreaReductionRatio};
+      double[] bottomUpperLimits = new double[] {height / 2, Math.PI, radius * topAreaReductionRatio};
+
+      bottomMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      RotationMatrix bottomOrientation = new RotationMatrix(manifoldOriginOrientation);
+      bottomOrientation.appendRollRotation(robotSide.negateIfRightSide(-0.5 * Math.PI));
+      bottomMessage.getManifoldOriginOrientation().set(bottomOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(bottomSpaces), bottomLowerLimits, bottomUpperLimits, bottomMessage);
+
+      messages.add(sideMessage);
+      messages.add(topMessage);
+      messages.add(bottomMessage);
+
+      return messages;
    }
 
-   public static ReachingManifoldMessage createCylinderManifoldMessage(RigidBody hand, Tuple3DReadOnly tuple3dReadOnly,
-                                                                       RotationMatrixReadOnly rotationMatrixReadOnly, double radius, double height)
+   /**
+    * match z and y direction of Hand control frame with x and y direction of torus.
+    */
+   public static List<ReachingManifoldMessage> createTorusManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand,
+                                                                                      Tuple3DReadOnly manifoldOriginPosition,
+                                                                                      RotationMatrixReadOnly manifoldOriginOrientation, double radius,
+                                                                                      double thickness)
    {
-      ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.X};
-      double[] lowerLimits = new double[] {-Math.PI, -height / 2, radius};
-      double[] upperLimits = new double[] {Math.PI, height / 2, radius};
+      double thicknessForViz = 0.01;
 
-      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      List<ReachingManifoldMessage> messages = new ArrayList<>();
+      ReachingManifoldMessage message = HumanoidMessageTools.createReachingManifoldMessage(hand);
 
-      reachingManifoldMessage.getManifoldOriginPosition().set(tuple3dReadOnly);
-      reachingManifoldMessage.getManifoldOriginOrientation().set(rotationMatrixReadOnly);
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.ROLL, ConfigurationSpaceName.Y, ConfigurationSpaceName.YAW, ConfigurationSpaceName.Y};
+      double[] lowerLimits = new double[] {-Math.PI, radius, -Math.PI, thickness - thicknessForViz};
+      double[] upperLimits = new double[] {Math.PI, radius, Math.PI, thickness};
 
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
-      return reachingManifoldMessage;
-   }
+      message.getManifoldOriginPosition().set(manifoldOriginPosition);
+      RotationMatrix orientation = new RotationMatrix(manifoldOriginOrientation);
+      orientation.appendPitchRotation(0.5 * Math.PI);
+      message.getManifoldOriginOrientation().set(orientation);
 
-   public static ReachingManifoldMessage createBoxManifoldMessage(RigidBody hand, Tuple3DReadOnly tuple3dReadOnly,
-                                                                  RotationMatrixReadOnly rotationMatrixReadOnly, double length, double width, double height)
-   {
-      ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z};
-      double[] lowerLimits = new double[] {-length / 2, -width / 2, -height / 2};
-      double[] upperLimits = new double[] {length / 2, width / 2, height / 2};
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(spaces), lowerLimits, upperLimits, message);
+      messages.add(message);
 
-      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
-
-      reachingManifoldMessage.getManifoldOriginPosition().set(tuple3dReadOnly);
-      reachingManifoldMessage.getManifoldOriginOrientation().set(rotationMatrixReadOnly);
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
-      return reachingManifoldMessage;
-   }
-
-   public static ReachingManifoldMessage createTorusManifoldMessage(RigidBody hand, Tuple3DReadOnly tuple3dReadOnly,
-                                                                    RotationMatrixReadOnly rotationMatrixReadOnly, double radius, double thickness)
-   {
-      ConfigurationSpaceName[] manifoldSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.X, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
-      double[] lowerLimits = new double[] {-Math.PI, -radius, -Math.PI, -thickness};
-      double[] upperLimits = new double[] {Math.PI, -radius, Math.PI, -thickness};
-
-      ReachingManifoldMessage reachingManifoldMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
-
-      reachingManifoldMessage.getManifoldOriginPosition().set(tuple3dReadOnly);
-      reachingManifoldMessage.getManifoldOriginOrientation().set(rotationMatrixReadOnly);
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(manifoldSpaces), lowerLimits, upperLimits, reachingManifoldMessage);
-      return reachingManifoldMessage;
+      return messages;
    }
 
    public static ReachingManifoldMessage createGoalManifoldMessage(RigidBody hand, FunctionTrajectory handFunction, double trajectoryTime,
@@ -371,66 +401,5 @@ public class ReachingManifoldTools
       for (int i = 0; i < configurations.size(); i++)
          rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(configurations.get(i)));
 
-   }
-
-   public static List<ReachingManifoldMessage> createSphereManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Point3D manifoldOriginPosition,
-                                                                                       double radius)
-   {
-      List<ReachingManifoldMessage> messages = new ArrayList<>();
-      ReachingManifoldMessage message = HumanoidMessageTools.createReachingManifoldMessage(hand);
-
-      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.Y};
-      double[] lowerLimits = new double[] {-Math.PI, -0.5 * Math.PI, robotSide.negateIfRightSide(radius)};
-      double[] upperLimits = new double[] {Math.PI, 0.5 * Math.PI, robotSide.negateIfRightSide(radius)};
-
-      message.getManifoldOriginPosition().set(manifoldOriginPosition);
-      //message.getManifoldOriginOrientation().set(new Quaternion());
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(spaces), lowerLimits, upperLimits, message);
-      messages.add(message);
-
-      return messages;
-   }
-
-   public static List<ReachingManifoldMessage> createCylinderManifoldMessagesForValkyrie(RobotSide robotSide, RigidBody hand, Point3D manifoldOriginPosition,
-                                                                                         RotationMatrix manifoldOriginOrientation, double radius, double height)
-   {
-      List<ReachingManifoldMessage> messages = new ArrayList<>();
-      ReachingManifoldMessage sideMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
-      ReachingManifoldMessage topMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
-      ReachingManifoldMessage bottomMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
-
-      ConfigurationSpaceName[] sideSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.Y};
-      double[] sideLowerLimits = new double[] {-Math.PI, -height / 2, robotSide.negateIfRightSide(radius)};
-      double[] sideUpperLimits = new double[] {Math.PI, height / 2, robotSide.negateIfRightSide(radius)};
-
-      sideMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
-      sideMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideSpaces), sideLowerLimits, sideUpperLimits, sideMessage);
-
-      ConfigurationSpaceName[] topSpaces = {ConfigurationSpaceName.Z, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
-      double[] topLowerLimits = new double[] {height / 2 - 0.01, robotSide.negateIfRightSide(0.5 * Math.PI), -Math.PI, -radius * 0.5};
-      double[] topUpperLimits = new double[] {height / 2, robotSide.negateIfRightSide(0.5 * Math.PI), Math.PI, radius * 0.5};
-
-      topMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
-      topMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(topSpaces), topLowerLimits, topUpperLimits, topMessage);
-
-      ConfigurationSpaceName[] bottomSpaces = {ConfigurationSpaceName.Z, ConfigurationSpaceName.ROLL, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
-      double[] bottomLowerLimits = new double[] {-height / 2, robotSide.negateIfRightSide(-0.5 * Math.PI), -Math.PI, -radius * 0.5};
-      double[] bottomUpperLimits = new double[] {-height / 2 + 0.01, robotSide.negateIfRightSide(-0.5 * Math.PI), Math.PI, radius * 0.5};
-
-      bottomMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
-      bottomMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
-
-      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(bottomSpaces), bottomLowerLimits, bottomUpperLimits, bottomMessage);
-
-      messages.add(sideMessage);
-      messages.add(topMessage);
-      messages.add(bottomMessage);
-
-      return messages;
    }
 }

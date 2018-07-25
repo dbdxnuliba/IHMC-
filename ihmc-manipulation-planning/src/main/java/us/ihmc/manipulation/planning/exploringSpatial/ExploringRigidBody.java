@@ -118,8 +118,6 @@ public class ExploringRigidBody
          RigidBodyTransform closestTransform = new RigidBodyTransform();
          initialDistanceToManifold = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(this.manifolds, initialPose, closestTransform,
                                                                                                    positionWeight, orientationWeight);
-         PrintTools.info("initialDistanceToManifold " + initialDistanceToManifold);
-         System.out.println(closestTransform);
       }
    }
 
@@ -204,6 +202,9 @@ public class ExploringRigidBody
 
          spatialDataToAppend.addSpatial(rigidBody.getName(), transformHandtoManifold);
 
+         PrintTools.info("final transform");
+         System.out.println(closestTransformToLastNode);
+         
          return expectedReachingTime;
       }
    }
