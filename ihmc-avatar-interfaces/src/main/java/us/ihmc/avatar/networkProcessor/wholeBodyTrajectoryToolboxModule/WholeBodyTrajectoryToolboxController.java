@@ -143,12 +143,19 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    {
       StateMachineFactory<ToolboxStateName, WholeBodyTrajectoryToolboxState> factory = new StateMachineFactory<>(ToolboxStateName.class);
 
+//      factory.addState(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, defaultTrialState);
+//      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.FIND_INITIAL_GUESS,
+//                            t -> defaultTrialState.hasFail() && defaultTrialState.isDone(t));
+//      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.SHORTCUT_PATH,
+//                            t -> !defaultTrialState.hasFail() && defaultTrialState.isDone(t));
+//      factory.addStateAndDoneTransition(ToolboxStateName.FIND_INITIAL_GUESS, initialGuessState, ToolboxStateName.EXPAND_TREE);
+//      factory.addStateAndDoneTransition(ToolboxStateName.EXPAND_TREE, exploringState, ToolboxStateName.SHORTCUT_PATH);
+      
       factory.addState(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, defaultTrialState);
-      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.FIND_INITIAL_GUESS,
+      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.EXPAND_TREE,
                             t -> defaultTrialState.hasFail() && defaultTrialState.isDone(t));
       factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.SHORTCUT_PATH,
                             t -> !defaultTrialState.hasFail() && defaultTrialState.isDone(t));
-      factory.addStateAndDoneTransition(ToolboxStateName.FIND_INITIAL_GUESS, initialGuessState, ToolboxStateName.EXPAND_TREE);
       factory.addStateAndDoneTransition(ToolboxStateName.EXPAND_TREE, exploringState, ToolboxStateName.SHORTCUT_PATH);
       factory.addState(ToolboxStateName.SHORTCUT_PATH, shorcutState);
 
@@ -560,7 +567,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       public int numberOfUpdate;
       private int maximumNumberOfUpdate;
 
-      public double stateProgress = 0.0;
+      public double lastStepProgress = 0.0;
 
       public WholeBodyTrajectoryToolboxState(int maximumNumberOfUpdate)
       {
@@ -575,17 +582,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       public void updateNodeLists(SpatialNode newNode)
       {
          if (newNode.isValid())
-         {
             validNodes.add(newNode);
-            exploringProgress.set(exploringDefinition.getExploringProgress(newNode));
-            updateStateProgress();
-         }
          else
-         {
             inValidNodes.add(newNode);
-            exploringProgress.set(0.0);
-         }
-
       }
 
       @Override
@@ -607,6 +606,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          {
             submitDesiredNodeToToolbox(desiredNode);
             updateNodeLists(desiredNode);
+            exploringProgress.set(exploringDefinition.getExploringProgress(desiredNode));
+            updateProgress(desiredNode);
          }
       }
 
@@ -624,12 +625,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       public boolean isDone(double timeInState)
       {
-         return numberOfUpdate >= maximumNumberOfUpdate || stateProgress >= 0.995;
+         return numberOfUpdate >= maximumNumberOfUpdate || lastStepProgress >= 0.995;
       }
 
       abstract boolean hasFail();
 
-      abstract void updateStateProgress();
+      abstract void updateProgress(SpatialNode newNode);
 
       abstract SpatialNode createDesiredNode();
    }
@@ -672,7 +673,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       private boolean progressIsSaturated()
       {
-         return stateProgress >= progressSaturationThreshold;
+         return lastStepProgress >= progressSaturationThreshold;
       }
 
       @Override
@@ -682,9 +683,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       @Override
-      void updateStateProgress()
+      void updateProgress(SpatialNode newNode)
       {
-         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(validNodes.get(validNodes.size() - 1)));
+         lastStepProgress = exploringDefinition.getExploringProgress(newNode);
       }
 
       @Override
@@ -694,7 +695,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          if (progressIsSaturated())
          {
-            PrintTools.info("" + numberOfUpdate + " " + stateProgress + " " + validNodes.size());
+            PrintTools.info("" + numberOfUpdate + " " + lastStepProgress + " " + validNodes.size());
             desiredNode = exploringDefinition.createFinalSpatialNode(validNodes.get(validNodes.size() - 1));
          }
          else
@@ -740,16 +741,16 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       @Override
-      void updateStateProgress()
+      void updateProgress(SpatialNode newNode)
       {
-         stateProgress = validNodes.size() / (double) terminalConditionNumberOfValidNodes;
+         lastStepProgress = validNodes.size() / (double) terminalConditionNumberOfValidNodes;
       }
    }
 
    private class ExploringState extends WholeBodyTrajectoryToolboxState
    {
       private final static int maximumCountForWating = 500;
-      private final static double timeCoefficient = 0.5;
+      private final static double timeCoefficient = 1.0;
 
       public ExploringState(int maximumNumberOfUpdate)
       {
@@ -768,7 +769,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       boolean hasFail()
       {
-         if (stateProgress == 1.0)
+         if (lastStepProgress == 1.0)
             return false;
          else
             return true;
@@ -779,7 +780,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          SpatialNode desiredNode;
 
-         if (progressIsSaturated())
+         if (lastProgressIsSaturated())
             desiredNode = exploringDefinition.createFinalSpatialNode(validNodes.get(validNodes.size() - 1));
          else
             desiredNode = createRandomNode();
@@ -788,12 +789,12 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       @Override
-      void updateStateProgress()
+      void updateProgress(SpatialNode newNode)
       {
-         stateProgress = Math.max(stateProgress, exploringDefinition.getExploringProgress(validNodes.get(validNodes.size() - 1)));
+         lastStepProgress = exploringDefinition.getExploringProgress(newNode);
 
-         if (stateProgress > 0.995)
-            stateProgress = 1.0;
+         if (lastStepProgress > 0.995)
+            lastStepProgress = 1.0;
       }
 
       private SpatialNode createRandomNode()
@@ -806,7 +807,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          {
             // create random node.
             double nextDouble = WholeBodyTrajectoryToolboxMessageTools.random.nextDouble();
-            double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * stateProgress);
+            double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * lastStepProgress);
+            randomTime = Math.min(exploringDefinition.getTrajectoryTime(), randomTime);
             randomSpatialData = exploringDefinition.createRandomSpatialData();
             
             randomNode = new SpatialNode(randomTime, randomSpatialData);
@@ -835,9 +837,9 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          return node;
       }
 
-      private boolean progressIsSaturated()
+      private boolean lastProgressIsSaturated()
       {
-         return stateProgress >= progressSaturationThreshold;
+         return lastStepProgress >= progressSaturationThreshold;
       }
    }
 
@@ -865,7 +867,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          super.doAction(timeInState);
          pathDiff = updateShortcutPath(path);
-         updateStateProgress();
+         updateProgress(null);
       }
 
       @Override
@@ -881,11 +883,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
 
       @Override
-      void updateStateProgress()
+      void updateProgress(SpatialNode newNode)
       {
-         stateProgress = minimumAllowableShortcut / pathDiff;
-         if (stateProgress > 1.0)
-            stateProgress = 1.0;
+         lastStepProgress = minimumAllowableShortcut / pathDiff;
+         if (lastStepProgress > 1.0)
+            lastStepProgress = 1.0;
       }
    }
 }

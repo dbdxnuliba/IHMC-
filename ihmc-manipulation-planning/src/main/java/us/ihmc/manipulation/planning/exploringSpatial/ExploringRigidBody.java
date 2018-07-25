@@ -168,20 +168,22 @@ public class ExploringRigidBody
    {
       if (manifolds.size() == 0)
       {
-         // TODO : need to be enhanced.
          RigidBodyTransform spatialToAppendClosestTransformToManifolds = new RigidBodyTransform();
          double nodeTime = lastNode.getTime();
          double parentNodeTime = lastNode.getParent().getTime();
-         double extrapolateRatio = (trajectoryTime - parentNodeTime) / (nodeTime - parentNodeTime);
+         double extrapolateRatio = 2.0;
 
-         PrintTools.info("" + nodeTime + " " + parentNodeTime + " " + extrapolateRatio);
+         double expectedReachingTime = parentNodeTime + extrapolateRatio * (nodeTime - parentNodeTime);
 
          RigidBodyTransform from = lastNode.getParent().getSpatialData(rigidBody);
          RigidBodyTransform to = lastNode.getSpatialData(rigidBody);
 
          ReachingManifoldTools.packExtrapolatedTransform(from, to, extrapolateRatio, spatialToAppendClosestTransformToManifolds);
          spatialDataToAppend.addSpatial(rigidBody.getName(), spatialToAppendClosestTransformToManifolds);
-         return 0.0;
+         
+         PrintTools.info(""+expectedReachingTime);
+         
+         return expectedReachingTime;
       }
       else
       {
@@ -204,7 +206,7 @@ public class ExploringRigidBody
 
          PrintTools.info("final transform");
          System.out.println(closestTransformToLastNode);
-         
+
          return expectedReachingTime;
       }
    }

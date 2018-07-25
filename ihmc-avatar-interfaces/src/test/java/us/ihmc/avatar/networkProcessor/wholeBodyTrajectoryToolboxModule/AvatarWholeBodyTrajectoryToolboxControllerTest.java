@@ -459,8 +459,8 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             if (!selectionMatrix.isLinearXSelected() && !selectionMatrix.isLinearYSelected() && !selectionMatrix.isLinearZSelected())
                continue; // The position part is not dictated by trajectory, let's not visualize.
 
-            //            if (visualize)
-            //               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
+            if (visualize)
+               scs.addStaticLinkGraphics(createTrajectoryMessageVisualization(trajectoryMessage, 0.01, YoAppearance.AliceBlue()));
          }
       }
 

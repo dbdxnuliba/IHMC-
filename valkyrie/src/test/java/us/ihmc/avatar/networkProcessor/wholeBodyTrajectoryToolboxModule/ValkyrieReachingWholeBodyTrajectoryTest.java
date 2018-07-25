@@ -208,19 +208,18 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
 
       return message;
    }
-
+   
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 120000)
    public void testDoorMotion() throws Exception, UnreasonableAccelerationException
    {
       // trajectory parameter
-      double trajectoryTime = 5.0;
+      double trajectoryTime = 10.0;
 
-      double openingAngle = 30.0 / 180.0 * Math.PI;
+      double openingAngle = 10.0 / 180.0 * Math.PI;
       double openingRadius = 0.8;
       boolean openingDirectionCW = true; // in X-Y plane.
 
-      //Point3D knobPosition = new Point3D(0.6, -0.25, 1.0);
       Point3D knobPosition = new Point3D(0.45, -0.35, 1.0);
       Quaternion knobOrientation = new Quaternion();
       knobOrientation.appendYawRotation(-0.02 * Math.PI);
@@ -236,7 +235,7 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       FullHumanoidRobotModel fullRobotModel = createFullRobotModelAtInitialConfiguration();
       WholeBodyTrajectoryToolboxConfigurationMessage configuration = new WholeBodyTrajectoryToolboxConfigurationMessage();
       configuration.getInitialConfiguration().set(HumanoidMessageTools.createKinematicsToolboxOutputStatus(fullRobotModel));
-      configuration.setMaximumExpansionSize(500);
+      configuration.setMaximumExpansionSize(1000);
 
       // toolbox messages
       List<WaypointBasedTrajectoryMessage> handTrajectories = new ArrayList<>();
@@ -272,9 +271,6 @@ public class ValkyrieReachingWholeBodyTrajectoryTest extends AvatarWholeBodyTraj
       RigidBody chest = fullRobotModel.getChest();
       ConfigurationSpaceName[] chestExploringSpaces = {ConfigurationSpaceName.SE3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(chest, chestExploringSpaces));
-
-      RigidBody anotherHand = fullRobotModel.getHand(robotSide.getOppositeSide());
-      rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(anotherHand));
 
       // manifold
       ReachingManifoldMessage reachingManifold = ReachingManifoldTools.createGoalManifoldMessage(hand, handFunction, trajectoryTime, spaces);
