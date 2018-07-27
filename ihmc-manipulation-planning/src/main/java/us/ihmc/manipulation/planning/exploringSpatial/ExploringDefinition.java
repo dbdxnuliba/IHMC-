@@ -114,8 +114,9 @@ public class ExploringDefinition
 
    public double getExploringProgress(SpatialNode node)
    {
-      if(!node.isValid())
+      if (!node.isValid())
          return 0.0;
+
       double progress = Double.MAX_VALUE;
 
       for (int i = 0; i < allExploringRigidBodies.size(); i++)

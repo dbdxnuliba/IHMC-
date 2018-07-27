@@ -114,11 +114,27 @@ public class ExploringRigidBody
       else
       {
          this.manifolds.addAll(manifolds);
-         Pose3D initialPose = appendPoseToTrajectory(0.0, new RigidBodyTransform());
+         RigidBodyTransform initialTransform = appendSpatialToTrajectory(0.0, new RigidBodyTransform());
          RigidBodyTransform closestTransform = new RigidBodyTransform();
-         initialDistanceToManifold = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(this.manifolds, initialPose, closestTransform,
-                                                                                                   positionWeight, orientationWeight);
+         ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(this.manifolds, initialTransform, closestTransform, positionWeight, orientationWeight);
+
+         double newDistance = 0.0;
+         for (int i = 2; i < waypointTimes.size(); i++)
+         {
+            RigidBodyTransform waypointPrevious = appendSpatialToTrajectory(waypointTimes.get(i - 1), new RigidBodyTransform());
+            RigidBodyTransform waypoint = appendSpatialToTrajectory(waypointTimes.get(i), new RigidBodyTransform());
+
+            double distanceToWayPointsBlock = ReachingManifoldTools.getDistance(waypointPrevious, waypoint, closestTransform, positionWeight,
+                                                                                orientationWeight);
+
+            newDistance = newDistance + ReachingManifoldTools.getDistance(waypointPrevious, waypoint, positionWeight, orientationWeight);
+            if (distanceToWayPointsBlock < 0.001)
+               break;
+
+         }
+         initialDistanceToManifold = newDistance;
       }
+      PrintTools.info("" + initialDistanceToManifold);
    }
 
    public RigidBody getRigidBody()
@@ -138,12 +154,16 @@ public class ExploringRigidBody
 
       double nodeTime = spatialNode.getTime();
 
+      // TODO : heck..... idk how to get exploring progress for node which of time is close to 0.0 in case of the come back trajectory such as circle.
+      if (nodeTime < waypointTimes.get(waypointTimes.size() - 1) * 0.15)
+         return 0.0;
+
       RigidBodyTransform spatial = spatialNode.getSpatialData(rigidBody);
-      Pose3D poseToWorld = appendPoseToTrajectory(nodeTime, spatial);
+      RigidBodyTransform transformToWorld = appendSpatialToTrajectory(nodeTime, spatial);
 
       RigidBodyTransform closestTransform = new RigidBodyTransform();
 
-      double distance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, poseToWorld, closestTransform, positionWeight,
+      double distance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, transformToWorld, closestTransform, positionWeight,
                                                                                       orientationWeight);
 
       return 1 - distance / initialDistanceToManifold;
@@ -180,18 +200,16 @@ public class ExploringRigidBody
 
          ReachingManifoldTools.packExtrapolatedTransform(from, to, extrapolateRatio, spatialToAppendClosestTransformToManifolds);
          spatialDataToAppend.addSpatial(rigidBody.getName(), spatialToAppendClosestTransformToManifolds);
-         
-         PrintTools.info(""+expectedReachingTime);
-         
+
          return expectedReachingTime;
       }
       else
       {
          RigidBodyTransform lastSpatial = lastNode.getSpatialData(rigidBody);
-         Pose3D lastPoseToWorld = appendPoseToTrajectory(lastNode.getTime(), lastSpatial);
+         RigidBodyTransform lastTransformToWorld = appendSpatialToTrajectory(lastNode.getTime(), lastSpatial);
 
          RigidBodyTransform closestTransformToLastNode = new RigidBodyTransform();
-         double lastDistance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, lastPoseToWorld, closestTransformToLastNode,
+         double lastDistance = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, lastTransformToWorld, closestTransformToLastNode,
                                                                                              positionWeight, orientationWeight);
 
          double expectedReachingTime = lastNode.getTime() * (initialDistanceToManifold) / (initialDistanceToManifold - lastDistance);
@@ -213,11 +231,11 @@ public class ExploringRigidBody
 
    public KinematicsToolboxRigidBodyMessage createMessage(double timeInTrajectory, RigidBodyTransform poseToAppend)
    {
-      Pose3D desiredEndEffectorPose = appendPoseToTrajectory(timeInTrajectory, poseToAppend);
+      RigidBodyTransform desiredEndEffectorTransform = appendSpatialToTrajectory(timeInTrajectory, poseToAppend);
 
       KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(rigidBody);
-      message.getDesiredPositionInWorld().set(desiredEndEffectorPose.getPosition());
-      message.getDesiredOrientationInWorld().set(desiredEndEffectorPose.getOrientation());
+      message.getDesiredPositionInWorld().set(desiredEndEffectorTransform.getTranslationVector());
+      message.getDesiredOrientationInWorld().set(desiredEndEffectorTransform.getRotationMatrix());
       message.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
       message.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
       message.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(getSelectionMatrix().getAngularPart()));
@@ -311,12 +329,12 @@ public class ExploringRigidBody
       return currentPose;
    }
 
-   private Pose3D appendPoseToTrajectory(double timeInTrajectory, RigidBodyTransform transformToAppend)
+   private RigidBodyTransform appendSpatialToTrajectory(double timeInTrajectory, RigidBodyTransform transformToAppend)
    {
-      Pose3D pose = getCurrentPose(timeInTrajectory);
+      Pose3D trajectoryPose = getCurrentPose(timeInTrajectory);
+      RigidBodyTransform transform = new RigidBodyTransform(trajectoryPose.getOrientation(), trajectoryPose.getPosition());
+      transform.multiply(transformToAppend);
 
-      pose.appendTransform(transformToAppend);
-
-      return pose;
+      return transform;
    }
 }

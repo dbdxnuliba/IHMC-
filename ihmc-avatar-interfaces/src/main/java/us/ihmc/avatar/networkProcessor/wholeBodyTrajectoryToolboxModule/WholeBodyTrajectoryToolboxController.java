@@ -46,7 +46,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    private static final int DEFAULT_NUMBER_OF_ITERATIONS_FOR_SHORTCUT_OPTIMIZATION = 10;
    private static final int DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE = 1000;
    private static final int DEFAULT_NUMBER_OF_INITIAL_GUESSES_VALUE = 100;
-   private static final int TERMINAL_CONDITION_NUMBER_OF_VALID_INITIAL_GUESSES = 20;
    private static final int DEFAULT_NUMBER_OF_WAYPOINTS_TO_GOAL = 30;
 
    private final HumanoidKinematicsSolver humanoidKinematicsSolver;
@@ -99,8 +98,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    }
 
    private final WholeBodyTrajectoryToolboxState defaultTrialState;
-
-   private final WholeBodyTrajectoryToolboxState initialGuessState;
    private final WholeBodyTrajectoryToolboxState exploringState;
    private final WholeBodyTrajectoryToolboxState shorcutState;
 
@@ -133,7 +130,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
       defaultTrialState = new DefaultTrialState(DEFAULT_NUMBER_OF_WAYPOINTS_TO_GOAL);
 
-      initialGuessState = new InitialGuessState(DEFAULT_NUMBER_OF_INITIAL_GUESSES_VALUE, TERMINAL_CONDITION_NUMBER_OF_VALID_INITIAL_GUESSES);
       exploringState = new ExploringState(DEFAULT_MAXIMUM_EXPANSION_SIZE_VALUE);
       shorcutState = new ShorcutState(DEFAULT_NUMBER_OF_ITERATIONS_FOR_SHORTCUT_OPTIMIZATION);
       stateMachine = setupStateMachine();
@@ -143,14 +139,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    {
       StateMachineFactory<ToolboxStateName, WholeBodyTrajectoryToolboxState> factory = new StateMachineFactory<>(ToolboxStateName.class);
 
-//      factory.addState(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, defaultTrialState);
-//      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.FIND_INITIAL_GUESS,
-//                            t -> defaultTrialState.hasFail() && defaultTrialState.isDone(t));
-//      factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.SHORTCUT_PATH,
-//                            t -> !defaultTrialState.hasFail() && defaultTrialState.isDone(t));
-//      factory.addStateAndDoneTransition(ToolboxStateName.FIND_INITIAL_GUESS, initialGuessState, ToolboxStateName.EXPAND_TREE);
-//      factory.addStateAndDoneTransition(ToolboxStateName.EXPAND_TREE, exploringState, ToolboxStateName.SHORTCUT_PATH);
-      
       factory.addState(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, defaultTrialState);
       factory.addTransition(ToolboxStateName.DEFAULT_TRAJECTORY_TYRIAL, ToolboxStateName.EXPAND_TREE,
                             t -> defaultTrialState.hasFail() && defaultTrialState.isDone(t));
@@ -240,11 +228,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       if (trajectoryCommands != null)
       {
          exploringDefinition = new ExploringDefinition(trajectoryCommands, rigidBodyCommands, manifoldCommands);
-         initialGuessState.setMaximumNumberOfUpdate(desiredNumberOfInitialGuesses.getIntegerValue());
          exploringState.setMaximumNumberOfUpdate(maximumExpansionSize.getIntegerValue());
-         // TODO
-         //         if (manifoldCommands != null)
-         initialGuessState.setMaximumNumberOfUpdate(0);
       }
       else
          return false;
@@ -556,7 +540,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private static final double maxTimeInterval = 1 / 2.0; // 1/ 2.0 is original
    private static final double maxPositionDistance = 0.05;
-   private static final double maxOrientationDistance = Math.toRadians(3.0);
+   private static final double maxOrientationDistance = Math.toRadians(5.0);
 
    private static final double progressSaturationThreshold = 0.9;
 
@@ -713,40 +697,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       }
    }
 
-   private class InitialGuessState extends WholeBodyTrajectoryToolboxState
-   {
-      private int terminalConditionNumberOfValidNodes;
-
-      public InitialGuessState(int maximumNumberOfUpdate, int terminalConditionNumberOfValidNodes)
-      {
-         super(maximumNumberOfUpdate);
-         this.terminalConditionNumberOfValidNodes = terminalConditionNumberOfValidNodes;
-      }
-
-      @Override
-      boolean hasFail()
-      {
-         if (validNodes.size() < 1)
-            return true;
-         else
-            return false;
-      }
-
-      @Override
-      SpatialNode createDesiredNode()
-      {
-         SpatialData randomSpatialData = exploringDefinition.createRandomSpatialData();
-         SpatialNode desiredNode = new SpatialNode(randomSpatialData);
-         return desiredNode;
-      }
-
-      @Override
-      void updateProgress(SpatialNode newNode)
-      {
-         lastStepProgress = validNodes.size() / (double) terminalConditionNumberOfValidNodes;
-      }
-   }
-
    private class ExploringState extends WholeBodyTrajectoryToolboxState
    {
       private final static int maximumCountForWating = 500;
@@ -793,6 +743,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          lastStepProgress = exploringDefinition.getExploringProgress(newNode);
 
+         // allow round error for a method 'createFinalSpatialNode()' which is in ExploringDefinition.
          if (lastStepProgress > 0.995)
             lastStepProgress = 1.0;
       }
@@ -810,7 +761,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
             double randomTime = exploringDefinition.getTrajectoryTime() * nextDouble * (1.0 + timeCoefficient * lastStepProgress);
             randomTime = Math.min(exploringDefinition.getTrajectoryTime(), randomTime);
             randomSpatialData = exploringDefinition.createRandomSpatialData();
-            
+
             randomNode = new SpatialNode(randomTime, randomSpatialData);
             nearestNode = findNearestValidNodeToRandomNode(randomNode);
             if (nearestNode != null)

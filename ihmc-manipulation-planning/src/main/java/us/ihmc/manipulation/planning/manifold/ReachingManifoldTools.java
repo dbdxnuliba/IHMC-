@@ -46,7 +46,6 @@ public class ReachingManifoldTools
       SegmentedLine3DMeshDataGenerator segmentedLine3DMeshGenerator = new SegmentedLine3DMeshDataGenerator(numberOfPoints, resolutionForSingleSpace, radius);
 
       Point3D[] points = new Point3D[numberOfPoints];
-
       for (int i = 0; i < numberOfPoints; i++)
       {
          Pose3D pose = new Pose3D(originPose);
@@ -96,7 +95,8 @@ public class ReachingManifoldTools
          points[i] = new Point3D(pose.getPosition());
       }
 
-      segmentedLine3DMeshGenerator.compute(points);
+      if (points.length > 1)
+         segmentedLine3DMeshGenerator.compute(points);
 
       Graphics3DObject graphics = new Graphics3DObject();
       for (MeshDataHolder mesh : segmentedLine3DMeshGenerator.getMeshDataHolders())
@@ -294,7 +294,24 @@ public class ReachingManifoldTools
       toPack.setRotation(orientationToPack);
    }
 
-   private static double getDistance(RigidBodyTransform from, RigidBodyTransform to, double positionWeight, double orientationWeight)
+   public static double getDistance(RigidBodyTransform origin, RigidBodyTransform end, RigidBodyTransform to, double positionWeight, double orientationWeight)
+   {
+      int wayPointSize = 100;
+
+      double minimumDistance = Double.MAX_VALUE;
+      for (int i = 0; i < wayPointSize; i++)
+      {
+         double interpolatedRatio = i / (double) 100;
+         RigidBodyTransform interpolated = new RigidBodyTransform();
+
+         packExtrapolatedTransform(origin, end, interpolatedRatio, interpolated);
+         minimumDistance = Math.min(minimumDistance, getDistance(interpolated, to, positionWeight, orientationWeight));
+      }
+
+      return minimumDistance;
+   }
+
+   public static double getDistance(RigidBodyTransform from, RigidBodyTransform to, double positionWeight, double orientationWeight)
    {
       Point3D pointFrom = new Point3D(from.getTranslationVector());
       Quaternion orientationFrom = new Quaternion(from.getRotationMatrix());

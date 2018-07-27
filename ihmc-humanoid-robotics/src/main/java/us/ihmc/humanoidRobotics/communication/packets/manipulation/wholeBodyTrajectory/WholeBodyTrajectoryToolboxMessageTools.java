@@ -61,7 +61,6 @@ public class WholeBodyTrajectoryToolboxMessageTools
                                                                         FunctionTrajectory trajectoryToDiscretize, SelectionMatrix6D selectionMatrix)
    {
       int numberOfWaypoints = (int) Math.round((tf - t0) / timeResolution) + 1;
-      // Adjust the timeResolution using the numberOfWaypoints:
       timeResolution = (tf - t0) / (numberOfWaypoints - 1);
 
       double[] waypointTimes = new double[numberOfWaypoints];

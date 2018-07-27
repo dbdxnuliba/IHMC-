@@ -2077,9 +2077,12 @@ public class HumanoidMessageTools
       reachingManifoldMessage.getManifoldConfigurationSpaceNames().reset();
       reachingManifoldMessage.getManifoldLowerLimits().reset();
       reachingManifoldMessage.getManifoldUpperLimits().reset();
-      reachingManifoldMessage.getManifoldConfigurationSpaceNames().add(configurationSpaces);
-      reachingManifoldMessage.getManifoldLowerLimits().add(lowerLimits);
-      reachingManifoldMessage.getManifoldUpperLimits().add(upperLimits);
+      if (configurationSpaces.length > 0)
+      {
+         reachingManifoldMessage.getManifoldConfigurationSpaceNames().add(configurationSpaces);
+         reachingManifoldMessage.getManifoldLowerLimits().add(lowerLimits);
+         reachingManifoldMessage.getManifoldUpperLimits().add(upperLimits);
+      }
    }
 
    public static Pose3D unpackPose(WaypointBasedTrajectoryMessage waypointBasedTrajectoryMessage, double time)
