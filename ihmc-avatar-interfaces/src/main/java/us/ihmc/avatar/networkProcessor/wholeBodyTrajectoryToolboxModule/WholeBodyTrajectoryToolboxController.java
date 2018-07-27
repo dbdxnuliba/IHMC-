@@ -156,13 +156,16 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       currentNumberOfIterations.increment();
       stateMachine.doActionAndTransition();
 
-      updateVisualizerRobotConfiguration();
-      updateVisualizers();
+      if(stateMachine.getCurrentStateKey() != ToolboxStateName.SHORTCUT_PATH)
+      {
+         updateVisualizerRobotConfiguration();
+         updateVisualizers();   
+      }
 
       if (!stateMachine.isCurrentStateTerminal() && stateMachine.getCurrentState().isDone(0.0))
       {
          stateMachine.getCurrentState().onExit();
-         PrintTools.info("stateMachine done");
+         PrintTools.info("whole body trajectory is generated");
          terminateToolboxController();
       }
    }
@@ -193,7 +196,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    private void setOutputStatus(WholeBodyTrajectoryToolboxOutputStatus outputStatusToPack, List<SpatialNode> path)
    {
-      PrintTools.info("path size is " + path.size());
       outputStatusToPack.setPlanningResult(4);
       MessageTools.copyData(path.stream().map(SpatialNode::getConfiguration).toArray(size -> new KinematicsToolboxOutputStatus[size]),
                             outputStatusToPack.getRobotConfigurations());
@@ -574,7 +576,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       public void onEntry()
       {
-         PrintTools.info("onEntry " + getClass().getSimpleName() + " " + maximumNumberOfUpdate);
+         // PrintTools.info("onEntry " + getClass().getSimpleName() + " " + maximumNumberOfUpdate);
          numberOfUpdate = 0;
          startTime = System.nanoTime();
       }

@@ -1,16 +1,14 @@
 package us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.AvatarHumanoidKinematicsToolboxControllerTest.createCapturabilityBasedStatus;
-import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.AvatarHumanoidKinematicsToolboxControllerTest.extractRobotConfigurationData;
-import static us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName.PITCH;
-import static us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName.ROLL;
-import static us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName.YAW;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
@@ -19,7 +17,6 @@ import org.junit.After;
 import org.junit.Before;
 
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
-import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import controller_msgs.msg.dds.ReachingManifoldMessage;
 import controller_msgs.msg.dds.RigidBodyExplorationConfigurationMessage;
 import controller_msgs.msg.dds.SelectionMatrix3DMessage;
@@ -30,17 +27,13 @@ import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxOutputStatus;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.jointAnglesWriter.JointAnglesWriter;
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxCommandConverter;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.MessageUnpackingTools;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -55,7 +48,6 @@ import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicCoordinateSystem;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFactory;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
@@ -72,7 +64,6 @@ import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
-import us.ihmc.robotics.screwTheory.ScrewTools;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.sensorProcessing.simulatedSensors.DRCPerfectSensorReaderFactory;
 import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
@@ -98,7 +89,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
    static
    {
-      simulationTestingParameters.setKeepSCSUp(true);
+      simulationTestingParameters.setKeepSCSUp(false);
       simulationTestingParameters.setDataBufferSize(1 << 16);
    }
 
@@ -129,9 +120,6 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
     * ghost robot.
     */
    public abstract DRCRobotModel getGhostRobotModel();
-
-   private static final double TRACKING_TRAJECTORY_POSITION_ERROR_THRESHOLD = 0.05;
-   private static final double TRACKING_TRAJECTORY_ORIENTATION_ERROR_THRESHOLD = 0.05;
 
    @Before
    public void setup()
@@ -320,10 +308,9 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       runTest(message, 100000);
    }
 
-
    protected WholeBodyTrajectoryToolboxMessage createReachingWholeBodyTrajectoryToolboxMessage(FullHumanoidRobotModel fullRobotModel, RigidBody hand,
-                                                                                             RobotSide robotSide,
-                                                                                             List<ReachingManifoldMessage> reachingManifoldMessages)
+                                                                                               RobotSide robotSide,
+                                                                                               List<ReachingManifoldMessage> reachingManifoldMessages)
    {
       if (VERBOSE)
       {
@@ -405,7 +392,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
       return message;
    }
-   
+
    protected void runTest(WholeBodyTrajectoryToolboxMessage message, int maxNumberOfIterations) throws UnreasonableAccelerationException
    {
       List<WaypointBasedTrajectoryMessage> endEffectorTrajectories = message.getEndEffectorTrajectories();
@@ -474,150 +461,54 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
 
    private void trackingTrajectoryWithOutput(WholeBodyTrajectoryToolboxMessage message, WholeBodyTrajectoryToolboxOutputStatus solution)
    {
-      List<WaypointBasedTrajectoryMessage> wayPointBasedTrajectoryMessages = message.getEndEffectorTrajectories();
       List<ReachingManifoldMessage> manifoldMessages = message.getReachingManifolds();
 
-      // for every configurations in solution.
-      int numberOfConfigurations = solution.getRobotConfigurations().size();
-      for (int j = 0; j < numberOfConfigurations; j++)
+      // All rigid bodies that has manifold.
+      Map<String, List<ReachingManifoldCommand>> rigidBodyToListOfManifoldMap = new HashMap<>();
+
+      for (int i = 0; i < manifoldMessages.size(); i++)
       {
-         // get full robot model.
-         KinematicsToolboxOutputStatus configuration = solution.getRobotConfigurations().get(j);
-         converter.updateFullRobotModel(configuration);
-         FullHumanoidRobotModel outputFullRobotModel = converter.getFullRobotModel();
-
-         double configurationTime = solution.getTrajectoryTimes().get(j);
-
-         // for all way point based trajectory messages.
-         for (int i = 0; i < wayPointBasedTrajectoryMessages.size(); i++)
-         {
-            WaypointBasedTrajectoryMessage trajectory = wayPointBasedTrajectoryMessages.get(i);
-            RigidBodyExplorationConfigurationMessage explorationMessage = getRigidBodyExplorationConfigurationMessageHasSameHashCode(message.getExplorationConfigurations(),
-                                                                                                                                     trajectory);
-            RigidBody rigidBodyOftrajectory = commandConversionHelper.getRigidBody(trajectory.getEndEffectorNameBasedHashCode());
-
-            RigidBody rigidBodyOfOutputFullRobotModel = getRigidBodyHasSameName(outputFullRobotModel, rigidBodyOftrajectory);
-
-            if (rigidBodyOfOutputFullRobotModel == null)
-            {
-               if (VERBOSE)
-                  PrintTools.info("there is no rigid body");
-               fail("there is no rigid body");
-            }
-            else
-            {
-               RigidBodyTransform solutionRigidBodyTransform = rigidBodyOfOutputFullRobotModel.getBodyFixedFrame().getTransformToWorldFrame();
-               Pose3D solutionRigidBodyPose = new Pose3D(solutionRigidBodyTransform);
-
-               if (trajectory.getControlFramePositionInEndEffector() != null)
-                  solutionRigidBodyPose.appendTransform(new RigidBodyTransform(new Quaternion(), trajectory.getControlFramePositionInEndEffector()));
-               if (trajectory.getControlFrameOrientationInEndEffector() != null)
-                  solutionRigidBodyPose.appendTransform(new RigidBodyTransform(trajectory.getControlFrameOrientationInEndEffector(), new Point3D()));
-
-               Pose3D givenRigidBodyPose = HumanoidMessageTools.unpackPose(trajectory, configurationTime);
-
-               double positionError = WholeBodyTrajectoryToolboxHelper.computeTrajectoryPositionError(solutionRigidBodyPose, givenRigidBodyPose,
-                                                                                                      explorationMessage, trajectory);
-
-               double orientationError = WholeBodyTrajectoryToolboxHelper.computeTrajectoryOrientationError(solutionRigidBodyPose, givenRigidBodyPose,
-                                                                                                            explorationMessage, trajectory);
-
-               if (VERBOSE)
-                  PrintTools.info("" + positionError + " " + orientationError);
-
-               if (positionError > TRACKING_TRAJECTORY_POSITION_ERROR_THRESHOLD || orientationError > TRACKING_TRAJECTORY_ORIENTATION_ERROR_THRESHOLD)
-               {
-                  // TODO consider exploring. or manifold
-                  //                  PrintTools.info("rigid body of the solution is far from the given trajectory");
-                  //                  fail("rigid body of the solution is far from the given trajectory");
-               }
-            }
-         }
-
-         // TODO
-         // for all manifold
-         for (int i = 0; i < manifoldMessages.size(); i++)
-         {
-
-         }
+         RigidBody rigidBody = commandConversionHelper.getRigidBody(manifoldMessages.get(i).getEndEffectorNameBasedHashCode());
+         rigidBodyToListOfManifoldMap.put(rigidBody.toString(), new ArrayList<ReachingManifoldCommand>());
       }
-   }
 
-   private RigidBody getRigidBodyHasSameName(FullHumanoidRobotModel fullRobotModel, RigidBody givenRigidBody)
-   {
-      RigidBody rootBody = ScrewTools.getRootBody(fullRobotModel.getElevator());
-      RigidBody[] allRigidBodies = ScrewTools.computeSupportAndSubtreeSuccessors(rootBody);
-      for (RigidBody rigidBody : allRigidBodies)
-         if (givenRigidBody.getName().equals(rigidBody.getName()))
-            return rigidBody;
-      return null;
-   }
-
-   private RigidBodyExplorationConfigurationMessage getRigidBodyExplorationConfigurationMessageHasSameHashCode(List<RigidBodyExplorationConfigurationMessage> rigidBodyExplorationConfigurationMessages,
-                                                                                                               WaypointBasedTrajectoryMessage trajectory)
-   {
-      for (int i = 0; i < rigidBodyExplorationConfigurationMessages.size(); i++)
+      for (int i = 0; i < manifoldMessages.size(); i++)
       {
-         RigidBodyExplorationConfigurationMessage message = rigidBodyExplorationConfigurationMessages.get(i);
-         if (trajectory.getEndEffectorNameBasedHashCode() == message.getRigidBodyNameBasedHashCode())
-            return message;
+         RigidBody rigidBody = commandConversionHelper.getRigidBody(manifoldMessages.get(i).getEndEffectorNameBasedHashCode());
+         ReachingManifoldCommand command = new ReachingManifoldCommand();
+         command.setFromMessage(manifoldMessages.get(i));
+         rigidBodyToListOfManifoldMap.get(rigidBody.toString()).add(command);
       }
-      return null;
-   }
 
-   // TODO
-   // Is this for testing ahead put message on planner?
-   private SideDependentList<Pose3D> computePrivilegedHandPosesAtPositions(SideDependentList<Point3D> desiredPositions)
-   {
-      CommandInputManager commandInputManager = new CommandInputManager(KinematicsToolboxModule.supportedCommands());
-      StatusMessageOutputManager statusOutputManager = new StatusMessageOutputManager(KinematicsToolboxModule.supportedStatus());
-      FullHumanoidRobotModel desiredFullRobotModel = getRobotModel().createFullRobotModel();
-
-      commandInputManager.registerConversionHelper(new KinematicsToolboxCommandConverter(desiredFullRobotModel));
-      HumanoidKinematicsToolboxController whik = new HumanoidKinematicsToolboxController(commandInputManager, statusOutputManager, desiredFullRobotModel,
-                                                                                         new YoGraphicsListRegistry(), new YoVariableRegistry("dummy"));
-
-      FullHumanoidRobotModel fullRobotModelAtInitialConfiguration = createFullRobotModelWithArmsAtMidRange();
-      whik.updateRobotConfigurationData(extractRobotConfigurationData(fullRobotModelAtInitialConfiguration));
-      whik.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
+      // Construct robot model with final configuration of the solution.
+      KinematicsToolboxOutputStatus configuration = solution.getRobotConfigurations().getLast();
+      converter.updateFullRobotModel(configuration);
+      FullHumanoidRobotModel outputFullRobotModel = converter.getFullRobotModel();
 
       for (RobotSide robotSide : RobotSide.values)
       {
-         RigidBody hand = desiredFullRobotModel.getHand(robotSide);
-         KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(hand, desiredPositions.get(robotSide));
-         message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
-         message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
-         commandInputManager.submitMessage(message);
+         List<ReachingManifoldCommand> manifolds = rigidBodyToListOfManifoldMap.get(outputFullRobotModel.getHand(robotSide).toString());
+
+         if (manifolds == null)
+            continue;
+
+         RigidBodyTransform transformToWorldFrame = outputFullRobotModel.getHandControlFrame(robotSide).getTransformToWorldFrame();
+         RigidBodyTransform closest = new RigidBodyTransform();
+         double distanceToManifolds = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, transformToWorldFrame, closest, 1.0, 0.1);
+
+         System.out.println("transformToWorldFrame");
+
+         System.out.println(transformToWorldFrame);
+
+         System.out.println("closest");
+
+         System.out.println(closest);
+
+         PrintTools.info("distanceToManifolds " + distanceToManifolds);
+         assertFalse("control frame is far from the manifold", distanceToManifolds > 0.01);
       }
 
-      commandInputManager.submitMessage(KinematicsToolboxMessageFactory.holdRigidBodyCurrentOrientation(desiredFullRobotModel.getChest()));
-
-      int counter = 0;
-      int maxIterations = 500;
-
-      while (counter++ <= maxIterations)
-      {
-         whik.update();
-         System.out.println(whik.getSolution().getSolutionQuality());
-         snapGhostToFullRobotModel(desiredFullRobotModel);
-         scs.tickAndUpdate();
-      }
-
-      if (whik.getSolution().getSolutionQuality() > 0.005)
-      {
-         return null;
-      }
-
-      SideDependentList<Pose3D> handPoses = new SideDependentList<>();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         Pose3D handPose = new Pose3D();
-         handPoses.put(robotSide, handPose);
-         RigidBody hand = desiredFullRobotModel.getHand(robotSide);
-         RigidBodyTransform transformToWorldFrame = hand.getBodyFixedFrame().getTransformToWorldFrame();
-         handPose.set(transformToWorldFrame);
-      }
-      return handPoses;
+      assertTrue(true);
    }
 
    protected static Graphics3DObject createFunctionTrajectoryVisualization(FunctionTrajectory trajectoryToVisualize, double t0, double tf,
@@ -723,25 +614,6 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       drcPerfectSensorReaderFactory.getSensorReader().read();
 
       return initialFullRobotModel;
-   }
-
-   private FullHumanoidRobotModel createFullRobotModelWithArmsAtMidRange()
-   {
-      FullHumanoidRobotModel robot = createFullRobotModelAtInitialConfiguration();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         RigidBody chest = robot.getChest();
-         RigidBody hand = robot.getHand(robotSide);
-         Arrays.stream(ScrewTools.createOneDoFJointPath(chest, hand)).forEach(j -> setJointPositionToMidRange(j));
-      }
-      return robot;
-   }
-
-   private static void setJointPositionToMidRange(OneDoFJoint joint)
-   {
-      double jointLimitUpper = joint.getJointLimitUpper();
-      double jointLimitLower = joint.getJointLimitLower();
-      joint.setQ(0.5 * (jointLimitUpper + jointLimitLower));
    }
 
    private WholeBodyTrajectoryToolboxOutputStatus runToolboxController(int maxNumberOfIterations) throws UnreasonableAccelerationException

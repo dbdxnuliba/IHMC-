@@ -12,7 +12,6 @@ import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxConfigurationMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxMessage;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
 import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.Pose3D;
@@ -74,8 +73,6 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
       runTest(message, maxNumberOfIterations);
-
-      PrintTools.info("END");
    }
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
@@ -96,8 +93,6 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
       runTest(message, maxNumberOfIterations);
-
-      PrintTools.info("END");
    }
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
@@ -118,16 +113,6 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
       runTest(message, maxNumberOfIterations);
-
-      PrintTools.info("END");
-   }
-
-   @Override
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 120000)
-   public void testOneBigCircle() throws Exception, UnreasonableAccelerationException
-   {
-      super.testOneBigCircle();
    }
 
    @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 0.0)
@@ -308,10 +293,11 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       selectionMatrix.resetSelection();
       WaypointBasedTrajectoryMessage trajectory = WholeBodyTrajectoryToolboxMessageTools.createTrajectoryMessage(hand, 0.0, trajectoryTime, timeResolution,
                                                                                                                  handFunction, selectionMatrix);
-      Pose3D controlFramePose = new Pose3D(fullRobotModel.getHandControlFrame(robotSide).getTransformToParent());
-
-      trajectory.getControlFramePositionInEndEffector().set(controlFramePose.getPosition());
-      trajectory.getControlFrameOrientationInEndEffector().set(controlFramePose.getOrientation());
+      RigidBodyTransform handControlFrameTransformToBodyFixedFrame = new RigidBodyTransform();
+      MovingReferenceFrame handControlFrame = fullRobotModel.getHandControlFrame(robotSide);
+      handControlFrame.getTransformToDesiredFrame(handControlFrameTransformToBodyFixedFrame, hand.getBodyFixedFrame());
+      trajectory.getControlFramePositionInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getTranslationVector());
+      trajectory.getControlFrameOrientationInEndEffector().set(handControlFrameTransformToBodyFixedFrame.getRotationMatrix());
 
       handTrajectories.add(trajectory);
 
