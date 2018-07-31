@@ -141,34 +141,34 @@ public class TrajectoryLibraryForDRC
 
       return new Pose3D(handControl);
    }
-   
+
    /**
     * trajectory for current transform to goal transform
     */
    public static Pose3D computeLinearTrajectory(double time, double trajectoryTime, RigidBodyTransform from, RigidBodyTransform to)
    {
       double progress = time / trajectoryTime;
-      
+
       Point3D fromPoint = new Point3D(from.getTranslationVector());
       Point3D toPoint = new Point3D(to.getTranslationVector());
-      
+
       Quaternion fromOrienation = new Quaternion(from.getRotationMatrix());
       Quaternion toOrienation = new Quaternion(to.getRotationMatrix());
-      
+
       Point3D point = new Point3D();
       Quaternion orientation = new Quaternion();
-      
+
       point.interpolate(fromPoint, toPoint, progress);
       orientation.interpolate(fromOrienation, toOrienation, progress);
-      
+
       return new Pose3D(point, orientation);
    }
-   
+
    /**
     * 
     */
    public static Pose3D computeCircleTrajectory(double time, double trajectoryTime, double circleRadius, Point3DReadOnly circleCenter,
-                                                 Quaternion circleRotation, QuaternionReadOnly constantOrientation, boolean ccw, double phase)
+                                                Quaternion circleRotation, QuaternionReadOnly constantOrientation, boolean ccw, double phase)
    {
       double theta = (ccw ? -time : time) / trajectoryTime * 2.0 * Math.PI + phase;
       double z = circleRadius * Math.sin(theta);

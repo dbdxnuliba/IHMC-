@@ -10,9 +10,8 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotics.geometry.AngleTools;
 
 /**
- * this is data structure for plotting of the {@link SpatialNode}
- * @author Inho Lee.
- *
+ * This is to hold spatial of the rigid bodies.
+ * This is packed with time onto SpatialNode that can be depicted by SpatialNodePlotter.
  */
 public class SpatialData
 {
@@ -28,7 +27,7 @@ public class SpatialData
    public SpatialData(SpatialData other)
    {
       this();
-      for(int i=0;i<other.rigidBodySpatials.size();i++)
+      for (int i = 0; i < other.rigidBodySpatials.size(); i++)
          rigidBodySpatials.add(new RigidBodyTransform(other.rigidBodySpatials.get(i)));
       exploringRigidBodyNames.addAll(other.exploringRigidBodyNames);
    }
@@ -135,15 +134,15 @@ public class SpatialData
 
    public void replaceSpatialData(String rigidBodyName, RigidBodyTransform transform)
    {
-      for(int i=0;i<exploringRigidBodyNames.size();i++)
+      for (int i = 0; i < exploringRigidBodyNames.size(); i++)
       {
-         if(getRigidBodyName(i) == rigidBodyName)
+         if (getRigidBodyName(i) == rigidBodyName)
          {
             rigidBodySpatials.set(i, new RigidBodyTransform(transform));
          }
       }
    }
-   
+
    public String getRigidBodyName(int i)
    {
       return exploringRigidBodyNames.get(i);

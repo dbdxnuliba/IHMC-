@@ -5,6 +5,12 @@ import us.ihmc.euclid.tools.TupleTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
+/**
+ * SpatialNode includes SpatialData and time.
+ * This follows the characteristics of common node.
+ * So, this has parent node and its validity.
+ * In addition, this has joint configuration which is represented by KinematicsToolboxOutputStatus.
+ */
 public class SpatialNode
 {
    private double time;
@@ -33,7 +39,7 @@ public class SpatialNode
 
       if (other.parent != null)
          parent = new SpatialNode(other.parent);
-         //parent = other.parent;
+      //parent = other.parent;
       else
          parent = null;
 
@@ -60,29 +66,6 @@ public class SpatialNode
       return spatialData.getOrientationDistance(other.getSpatialData());
    }
 
-   /**
-    * Compute distance within maximum distance
-    */
-   // TODO : replace with common method.
-//   public double computeDistanceWithinMaxDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other, double maxTimeInterval,
-//                                                  double maxPositionDistance, double maxOrientationDistance)
-//   {
-//      double timeDistance = timeWeight * getTimeGap(other);
-//      double positionDistance = positionWeight * getPositionDistance(other);
-//      double orientationDistance = orientationWeight * getOrientationDistance(other);
-//
-//      double greatestPositionDistance = spatialData.getMaximumPositionDistance(other.getSpatialData());
-//      double greatestOrientationDistance = spatialData.getMaximumOrientationDistance(other.getSpatialData());
-//
-//      if (greatestPositionDistance / getTimeGap(other) > maxPositionDistance / maxTimeInterval)
-//         return Double.MAX_VALUE;
-//      if (greatestOrientationDistance / getTimeGap(other) > maxOrientationDistance / maxTimeInterval)
-//         return Double.MAX_VALUE;
-//
-//      double distance = timeDistance + positionDistance + orientationDistance;
-//
-//      return distance;
-//   }
    public double computeDistanceWithinMaxDistance(double timeWeight, double positionWeight, double orientationWeight, SpatialNode other, double maxTimeInterval,
                                                   double maxPositionDistance, double maxOrientationDistance)
    {

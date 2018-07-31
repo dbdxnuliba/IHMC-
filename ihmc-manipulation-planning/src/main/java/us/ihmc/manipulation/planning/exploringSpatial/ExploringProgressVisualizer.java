@@ -13,6 +13,9 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
+/**
+ * This is to visualize exploring progress of the WholeBodyTrajectoryToolbox.
+ */
 public class ExploringProgressVisualizer
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();

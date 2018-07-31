@@ -6,7 +6,6 @@ import java.util.List;
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.MathTools;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -20,9 +19,13 @@ import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 
 /**
- * If ExploringRigidBody has no exploring configuration, it will return the initial pose only.
- * If ExploringRigidBody has no trajectory, it will explore freely starting from initial pose.
- * If ExploringRigidBody has goal manifold, it will return waypointTimeOnManifold.
+ * This is a data structure used in WholeBodyTrajectoryToolboxController.
+ * ExploringRigidBody is constructed by commands such as trajectory, exploring space and manifold.
+ * ExploringRigidBody appends spatial data on SpatialData that is requested by ExploringDefinition to create newly desired SpatialNode.
+ * The created spatial data is append to spatial of the given time on the trajectory which is received when this is constructed by trajectory command.
+ * If it has no trajectory command, the spatial of the given time always would be identity.
+ * The spatial is used to create KinematicsToolboxRigidBodyMessage.
+ * Spatial = getCurrentPose(time) * SpatialData.
  */
 public class ExploringRigidBody
 {
@@ -134,7 +137,6 @@ public class ExploringRigidBody
          }
          initialDistanceToManifold = newDistance;
       }
-      PrintTools.info("" + initialDistanceToManifold);
    }
 
    public RigidBody getRigidBody()
@@ -221,9 +223,6 @@ public class ExploringRigidBody
          transformHandtoManifold.preMultiplyInvertOther(expectedHandTransform);
 
          spatialDataToAppend.addSpatial(rigidBody.getName(), transformHandtoManifold);
-
-         PrintTools.info("final transform");
-         System.out.println(closestTransformToLastNode);
 
          return expectedReachingTime;
       }

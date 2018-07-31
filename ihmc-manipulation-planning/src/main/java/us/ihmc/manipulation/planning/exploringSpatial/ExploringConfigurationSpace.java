@@ -5,6 +5,10 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 
+/**
+ * This is an exploring space of the ExploringRigidBody.
+ * Setters can be used to develop controller for dynamic random region.
+ */
 public class ExploringConfigurationSpace
 {
    private final ConfigurationSpaceName configurationSpaceName;

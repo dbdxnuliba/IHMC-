@@ -34,6 +34,13 @@ import us.ihmc.manipulation.planning.gradientDescent.SingleQueryFunction;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
+/**
+ * Essential tools for manifolds.
+ * Create list of ReachingManifoldMessages.
+ * Calculate closest point on list of manifolds.
+ * Calculate distance between list of manifolds and given RigidBodyTransform.
+ * Get static graphics for manifolds.
+ */
 public class ReachingManifoldTools
 {
    public static Graphics3DObject createManifoldMessageStaticGraphic(ReachingManifoldMessage reachingManifoldMessage, double radius,

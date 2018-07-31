@@ -3,6 +3,9 @@ package us.ihmc.manipulation.planning.gradientDescent;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.MathTools;
 
+/**
+ * The primary role of this solver is to calculate out closest manifold by searching configuration spaces of the manifold. 
+ */
 public class GradientDescentModule
 {
    // internal

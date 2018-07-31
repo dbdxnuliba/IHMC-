@@ -239,6 +239,10 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       }
    }
 
+   /**
+    * this tests trajectory that has no exploring space.
+    * this is for checking validity of trajectory only.
+    */
    public void testOneBigCircle() throws Exception, UnreasonableAccelerationException
    {
       // Trajectory parameters
@@ -308,6 +312,12 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       runTest(message, 100000);
    }
 
+   /**
+    * @param hand
+    * @param robotSide : rigid body that we want to make reached toward manifolds.
+    * @param reachingManifoldMessages : manifolds.
+    * @return
+    */
    protected WholeBodyTrajectoryToolboxMessage createReachingWholeBodyTrajectoryToolboxMessage(FullHumanoidRobotModel fullRobotModel, RigidBody hand,
                                                                                                RobotSide robotSide,
                                                                                                List<ReachingManifoldMessage> reachingManifoldMessages)
@@ -372,23 +382,27 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories,
                                                                                                                reachingManifolds, rigidBodyConfigurations);
 
-      Graphics3DObject tempGraphic = new Graphics3DObject();
-      tempGraphic.transform(closestPointOnManifold);
-      tempGraphic.addCoordinateSystem(0.1);
-      scs.addStaticLinkGraphics(tempGraphic);
+      // to check frames such as initial hand control frame, expected default goal frame and extrapolated goal frame.
+      if (VERBOSE)
+      {
+         Graphics3DObject tempGraphic = new Graphics3DObject();
+         tempGraphic.transform(closestPointOnManifold);
+         tempGraphic.addCoordinateSystem(0.1);
+         scs.addStaticLinkGraphics(tempGraphic);
 
-      Graphics3DObject tempGraphic2 = new Graphics3DObject();
-      tempGraphic2.transform(handTransform);
-      tempGraphic2.addCoordinateSystem(0.1);
-      scs.addStaticLinkGraphics(tempGraphic2);
+         Graphics3DObject tempGraphic2 = new Graphics3DObject();
+         tempGraphic2.transform(handTransform);
+         tempGraphic2.addCoordinateSystem(0.1);
+         scs.addStaticLinkGraphics(tempGraphic2);
 
-      Graphics3DObject tempGraphic3 = new Graphics3DObject();
-      tempGraphic3.transform(endTransformOnTrajectory);
-      tempGraphic3.addCoordinateSystem(0.1);
-      scs.addStaticLinkGraphics(tempGraphic3);
+         Graphics3DObject tempGraphic3 = new Graphics3DObject();
+         tempGraphic3.transform(endTransformOnTrajectory);
+         tempGraphic3.addCoordinateSystem(0.1);
+         scs.addStaticLinkGraphics(tempGraphic3);
 
-      PrintTools.info("default final transform");
-      System.out.println(closestPointOnManifold);
+         PrintTools.info("default final transform");
+         System.out.println(closestPointOnManifold);
+      }
 
       return message;
    }
@@ -408,7 +422,6 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
             tf = Math.max(t0, trajectoryMessage.getWaypointTimes().get(trajectoryMessage.getWaypoints().size() - 1));
 
             SelectionMatrix6D selectionMatrix = new SelectionMatrix6D();
-            // Visualize the position part if it is commanded
             selectionMatrix.resetSelection();
             SelectionMatrix3DMessage angularSelection = trajectoryMessage.getAngularSelectionMatrix();
             SelectionMatrix3DMessage linearSelection = trajectoryMessage.getLinearSelectionMatrix();
@@ -459,6 +472,9 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
       }
    }
 
+   /**
+    * this is to track result is fine depends on whether the final robot configuration reach to the goal manifolds.
+    */
    private void trackingTrajectoryWithOutput(WholeBodyTrajectoryToolboxMessage message, WholeBodyTrajectoryToolboxOutputStatus solution)
    {
       List<ReachingManifoldMessage> manifoldMessages = message.getReachingManifolds();
@@ -496,15 +512,15 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
          RigidBodyTransform closest = new RigidBodyTransform();
          double distanceToManifolds = ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, transformToWorldFrame, closest, 1.0, 0.1);
 
-         System.out.println("transformToWorldFrame");
+         if (VERBOSE)
+         {
+            System.out.println("transformToWorldFrame");
+            System.out.println(transformToWorldFrame);
+            System.out.println("closest");
+            System.out.println(closest);
 
-         System.out.println(transformToWorldFrame);
-
-         System.out.println("closest");
-
-         System.out.println(closest);
-
-         PrintTools.info("distanceToManifolds " + distanceToManifolds);
+            PrintTools.info("distanceToManifolds " + distanceToManifolds);
+         }
          assertFalse("control frame is far from the manifold", distanceToManifolds > 0.01);
       }
 

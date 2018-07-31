@@ -14,6 +14,12 @@ import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.Rigi
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
 import us.ihmc.robotics.screwTheory.RigidBody;
 
+/**
+ * This is to convert messages into data that would be used in WholeBodyTrajectoryToolboxController such as ExploringRigidBody.
+ * This creates spatial data or node for WholeBodyTrajectoryToolboxController.
+ * This creates KinematicsToolboxRigidBodyMessage to submit to HumanoidKinematicsSolver.
+ * This is able to measure exploring progress that compares distance between spatial data and manifolds with initial distance.
+ */
 public class ExploringDefinition
 {
    private double trajectoryTime = 0.0;

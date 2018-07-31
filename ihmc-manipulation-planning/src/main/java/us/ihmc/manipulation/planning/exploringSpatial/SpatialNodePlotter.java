@@ -17,6 +17,11 @@ import us.ihmc.graphicsDescription.plotting.artifact.CircleArtifact;
 import us.ihmc.graphicsDescription.plotting.artifact.LineArtifact;
 import us.ihmc.plotting.Plotter;
 
+/**
+ * This plotter plots spatial data of each exploring rigid body.
+ * SpatialNode is represented six dof configuration values onto y axis and time value onto x axis.
+ * The six dof configurations are x, y, z of cartesian position and rotation vector of the orientation. 
+ */
 public class SpatialNodePlotter
 {
    private boolean saving = false;
@@ -88,7 +93,6 @@ public class SpatialNodePlotter
     */
    public void update(SpatialNode node, int type)
    {
-      //double progress = spatialDefinition.getExploringProgress(node);
       double timeProgress = node.getTime() / spatialDefinition.getTrajectoryTime();
 
       TDoubleArrayList configurationsList = getConfigurationsOfNode(node);
@@ -96,7 +100,7 @@ public class SpatialNodePlotter
       Color color;
       double diameter = 0.01;
 
-      //TEMP
+      // to save
       SpatialNode saveNode = new SpatialNode(node);
       switch (type)
       {
@@ -147,7 +151,6 @@ public class SpatialNodePlotter
          if (node.getParent() != null && node.isValid())
          {
             SpatialNode parentNode = node.getParent();
-            //double parentProgress = spatialDefinition.getExploringProgress(parentNode);
             double parentTimeProgress = parentNode.getTime() / spatialDefinition.getTrajectoryTime();
             double parentConfigurationData = getConfigurationsOfNode(parentNode).get(configurationIndex);
 
@@ -197,7 +200,7 @@ public class SpatialNodePlotter
       return configurationsList;
    }
 
-   // TEMP
+   // to save
    private List<SpatialNode> validNodes = new ArrayList<SpatialNode>();
    private List<SpatialNode> inValidNodes = new ArrayList<SpatialNode>();
    private List<SpatialNode> path = new ArrayList<SpatialNode>();

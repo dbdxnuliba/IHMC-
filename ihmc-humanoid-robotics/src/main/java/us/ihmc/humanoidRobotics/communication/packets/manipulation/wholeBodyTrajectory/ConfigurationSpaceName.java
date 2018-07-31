@@ -9,6 +9,8 @@ public enum ConfigurationSpaceName
 {
    X, Y, Z, ROLL, PITCH, YAW, SE3;
 
+   private final boolean generateSE3ByQuaternion = true;
+
    public static final ConfigurationSpaceName[] values = values();
 
    public double getDefaultExplorationUpperLimit()
@@ -96,37 +98,40 @@ public enum ConfigurationSpaceName
          ret.appendYawRotation(configuration[0]);
          break;
       case SE3:
+         // uniform quat         
+         if (generateSE3ByQuaternion)
+         {
+            Quaternion quat = new Quaternion();
 
-         //         // uniform r p y
-         //         double theta1 = Math.PI * 2 * configuration[0];
-         //         double theta2 = Math.acos(1 - 2 * configuration[1]) + Math.PI * 0.5;
-         //         if(configuration[1] < 0.5)
-         //            if(theta2 < Math.PI)
-         //               theta2 = theta2 + Math.PI;
-         //            else
-         //               theta2 = theta2 - Math.PI;
-         //         double theta3 = Math.PI * 2 * configuration[2] - Math.PI;
-         //         
-         //         ret.appendRollRotation(theta1);
-         //         ret.appendPitchRotation(theta2);
-         //         ret.appendYawRotation(theta3);
+            double s = configuration[0];
+            double s1 = Math.sqrt(1 - s);
+            double s2 = Math.sqrt(s);
 
-         //         // uniform quat
-         Quaternion quat = new Quaternion();
+            double theta1 = Math.PI * 2 * configuration[1];
+            double theta2 = Math.PI * 2 * configuration[2];
 
-         double s = configuration[0];
-         double s1 = Math.sqrt(1 - s);
-         double s2 = Math.sqrt(s);
+            quat.set(Math.sin(theta1) * s1, Math.cos(theta1) * s1, Math.sin(theta2) * s2, Math.cos(theta2) * s2);
+            quat.norm();
 
-         double theta1 = Math.PI * 2 * configuration[1];
-         double theta2 = Math.PI * 2 * configuration[2];
+            RotationMatrix rotationMatrix = new RotationMatrix(quat);
+            ret.setRotation(rotationMatrix);
+         }
+         // uniform roll pitch yaw
+         else
+         {
+            double theta1 = Math.PI * 2 * configuration[0];
+            double theta2 = Math.acos(1 - 2 * configuration[1]) + Math.PI * 0.5;
+            if (configuration[1] < 0.5)
+               if (theta2 < Math.PI)
+                  theta2 = theta2 + Math.PI;
+               else
+                  theta2 = theta2 - Math.PI;
+            double theta3 = Math.PI * 2 * configuration[2] - Math.PI;
 
-         quat.set(Math.sin(theta1) * s1, Math.cos(theta1) * s1, Math.sin(theta2) * s2, Math.cos(theta2) * s2);
-         quat.norm();
-
-         RotationMatrix rotationMatrix = new RotationMatrix(quat);
-         ret.setRotation(rotationMatrix);
-
+            ret.appendRollRotation(theta1);
+            ret.appendPitchRotation(theta2);
+            ret.appendYawRotation(theta3);
+         }
          break;
       }
 

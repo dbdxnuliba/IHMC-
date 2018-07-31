@@ -13,7 +13,6 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsSolver;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
 import us.ihmc.commons.Conversions;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
@@ -94,7 +93,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
    public enum ToolboxStateName
    {
-      DEFAULT_TRAJECTORY_TYRIAL, FIND_INITIAL_GUESS, EXPAND_TREE, SHORTCUT_PATH, LINEAR_REACHING, RANDOM_REACHING
+      DEFAULT_TRAJECTORY_TYRIAL, EXPAND_TREE, SHORTCUT_PATH
    }
 
    private final WholeBodyTrajectoryToolboxState defaultTrialState;
@@ -156,16 +155,15 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       currentNumberOfIterations.increment();
       stateMachine.doActionAndTransition();
 
-      if(stateMachine.getCurrentStateKey() != ToolboxStateName.SHORTCUT_PATH)
+      if (stateMachine.getCurrentStateKey() != ToolboxStateName.SHORTCUT_PATH)
       {
          updateVisualizerRobotConfiguration();
-         updateVisualizers();   
+         updateVisualizers();
       }
 
       if (!stateMachine.isCurrentStateTerminal() && stateMachine.getCurrentState().isDone(0.0))
       {
          stateMachine.getCurrentState().onExit();
-         PrintTools.info("whole body trajectory is generated");
          terminateToolboxController();
       }
    }
@@ -174,7 +172,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
    {
       switch (toolboxStateName)
       {
-      case FIND_INITIAL_GUESS:
+      case DEFAULT_TRAJECTORY_TYRIAL:
          outputStatusToPack.setPlanningResult(1);
          break;
       case EXPAND_TREE:
@@ -182,12 +180,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          break;
       case SHORTCUT_PATH:
          outputStatusToPack.setPlanningResult(3);
-         break;
-      case LINEAR_REACHING:
-
-         break;
-      case RANDOM_REACHING:
-
          break;
       default:
          break;
@@ -277,7 +269,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          else
          {
             if (VERBOSE)
-               PrintTools.info("wrong type received");
+               System.out.println("wrong type received");
             return false;
          }
 
@@ -576,7 +568,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       @Override
       public void onEntry()
       {
-         // PrintTools.info("onEntry " + getClass().getSimpleName() + " " + maximumNumberOfUpdate);
          numberOfUpdate = 0;
          startTime = System.nanoTime();
       }
@@ -602,7 +593,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          long endTime = System.nanoTime();
          double computationTime = Conversions.nanosecondsToSeconds(endTime - startTime);
-         PrintTools.info(getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
+         if (VERBOSE)
+            System.out.println(getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
 
          if (hasFail())
             setFailureOnOutputStatus(toolboxSolution, stateMachine.getCurrentStateKey());
@@ -681,7 +673,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
 
          if (progressIsSaturated())
          {
-            PrintTools.info("" + numberOfUpdate + " " + lastStepProgress + " " + validNodes.size());
             desiredNode = exploringDefinition.createFinalSpatialNode(validNodes.get(validNodes.size() - 1));
          }
          else

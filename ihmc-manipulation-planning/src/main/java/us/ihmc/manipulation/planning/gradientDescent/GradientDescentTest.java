@@ -1,5 +1,7 @@
 package us.ihmc.manipulation.planning.gradientDescent;
 
+import static org.junit.Assert.assertTrue;
+
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class GradientDescentTest
@@ -8,6 +10,9 @@ public class GradientDescentTest
    {
       System.out.println("Hello Test");
 
+      double desiredQuery = 5.0;
+      double expectedOptimalInput = 10.0;
+
       TDoubleArrayList initial = new TDoubleArrayList();
       initial.add(35.0);
       SingleQueryFunction function = new SingleQueryFunction()
@@ -15,7 +20,8 @@ public class GradientDescentTest
          @Override
          public double getQuery(TDoubleArrayList values)
          {
-            return Math.pow((values.get(0) - 10) * 10, 2.0) + 5;
+            // power function.
+            return Math.pow((values.get(0) - expectedOptimalInput) * 10, 2.0) + desiredQuery;
          }
       };
       GradientDescentModule solver = new GradientDescentModule(function, initial);
@@ -30,6 +36,12 @@ public class GradientDescentTest
          System.out.println("solution is " + optimalSolution.get(i));
 
       System.out.println("optimal query is " + solver.getOptimalQuery());
+
+      double error = Math.abs(solver.getOptimalQuery() - desiredQuery);
+      double expectedInputError = Math.abs(optimalSolution.get(0) - expectedOptimalInput);
+      
+      assertTrue("query arrived on desired value", error < 10E-5);
+      assertTrue("input arrived on expected value", expectedInputError < 10E-5);
 
       System.out.println("Good Bye Test");
    }
