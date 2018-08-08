@@ -1,7 +1,12 @@
 package us.ihmc.exampleSimulations.simple3DWalker;
 
+
+import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 
+import us.ihmc.simulationconstructionset.ContactingExternalForcePoint;
+import us.ihmc.simulationconstructionset.ContactingExternalForcePointsVisualizer;
 import us.ihmc.simulationconstructionset.ExternalForcePoint;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.gui.SimulationOverheadPlotter;
@@ -9,8 +14,10 @@ import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulatio
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFramePoint3D;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 public class SimpleWalkerSimulation
 {
@@ -21,8 +28,8 @@ public class SimpleWalkerSimulation
    private boolean withTwan = true;
 
    private boolean withPush = true;
-   private double PUSH_FORCE_Y = 60;
-   private double PUSH_DURATION = 0.2;
+   private double PUSH_FORCE_X = 800;
+   private double PUSH_DURATION = 0.01;
 
    private boolean withHeightOnly = false;
    private boolean withVelocityChange = false;
@@ -66,6 +73,13 @@ public class SimpleWalkerSimulation
       simulationOverheadPlotter.setXVariableToTrack((YoDouble) robot.getVariable("q_x"));
       simulationOverheadPlotter.setYVariableToTrack((YoDouble) robot.getVariable("q_y"));
 
+      ContactingExternalForcePointsVisualizer contactingExternalForcePointsVisualizer = new ContactingExternalForcePointsVisualizer(6,yoGraphicsListRegistry,registry);
+      ContactingExternalForcePoint contactingExternalForcePoint = new ContactingExternalForcePoint("contactingExternalForce",robot.getRootJoints().get(0),registry);
+      contactingExternalForcePoint.setForce(PUSH_FORCE_X,0,0);
+      ArrayList<ContactingExternalForcePoint> contactingExternalForcePoints = new ArrayList<>();
+      contactingExternalForcePoints.add(contactingExternalForcePoint);
+      contactingExternalForcePointsVisualizer.addPoints(contactingExternalForcePoints);
+
 
       scs.attachPlaybackListener(simulationOverheadPlotter);
       JPanel simulationOverheadPlotterJPanel = simulationOverheadPlotter.getJPanel();
@@ -87,12 +101,16 @@ public class SimpleWalkerSimulation
       if (withPush)
       {
          walkerController.setDesiredBodyVelocityX(DESIRED_VELOCITY);
-         ExternalForcePoint externalForcePoint = new ExternalForcePoint("externalForce", robot);
-         externalForcePoint.setForce(PUSH_FORCE_Y, 0, 0);
-         blockingSimulationRunner.simulateAndBlockAndCatchExceptions(6.1);
-         robot.getRootJoints().get(0).addExternalForcePoint(externalForcePoint);
+        // ExternalForcePoint externalForcePoint = new ExternalForcePoint("externalForce", robot);
+         //externalForcePoint.setForce(PUSH_FORCE_X, 0, 0);
+         blockingSimulationRunner.simulateAndBlockAndCatchExceptions(6.55);
+         contactingExternalForcePointsVisualizer.update();
+         robot.getRootJoints().get(0).addExternalForcePoint(contactingExternalForcePoint);
+
+
          blockingSimulationRunner.simulateAndBlockAndCatchExceptions(PUSH_DURATION);
-         robot.getRootJoints().get(0).removeExternalForcePoint(externalForcePoint);
+         robot.getRootJoints().get(0).removeExternalForcePoint(contactingExternalForcePoint);
+         yoGraphicsListRegistry.getYoGraphicsLists().get(yoGraphicsListRegistry.getYoGraphicsLists().size()-1).setVisible(false);
          blockingSimulationRunner.simulateAndBlockAndCatchExceptions(20.0);
       }
 

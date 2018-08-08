@@ -43,6 +43,7 @@ public class SimpleWalkerController implements RobotController
    private SimpleWalkerRobot robot;
    private YoVariableRegistry registry = new YoVariableRegistry("Controller");
    private SideDependentList<PIDController> kneeControllers = new SideDependentList<PIDController>();
+   private SideDependentList<PIDController> kneeRateControllers = new SideDependentList<PIDController>();
    private SideDependentList<PIDController> kneeControllersSoft = new SideDependentList<PIDController>();
    private SideDependentList<PIDController> hipPitchControllers = new SideDependentList<PIDController>();
    private SideDependentList<PIDController> hipRollControllers = new SideDependentList<PIDController>();
@@ -125,6 +126,10 @@ public class SimpleWalkerController implements RobotController
    private final YoFramePoint3D currentRFoot;
    private final YoFramePoint2D currentRFoot2D;
 
+   private YoBoolean heightIsControlled = new YoBoolean("heightIsControlled",registry);
+   private YoDouble heightObjective = new YoDouble("heightObjectiv",registry);
+   private YoDouble heightRateObjective = new YoDouble("heightRateObjectiv",registry);
+
    private final SideDependentList<YoFramePoint2D> currentFeet2D = new SideDependentList<>();
 
    private final YoDouble omega;
@@ -184,6 +189,9 @@ public class SimpleWalkerController implements RobotController
    private YoInteger footStepCounter = new YoInteger("footStepCounter",registry);
    private SimpleWalkerICPPlanner icpPlanner;
    private final SimpleWalkerHeightStopMPC heightStopMPC;
+   double kp_m;
+   double kd_m;
+   double kdd_m;
 
 
    public SimpleWalkerController(SimpleWalkerRobot robot, double deltaT, boolean withInertiaControl, boolean withImpactControl, boolean withTwan, boolean withHeightOnly)
@@ -195,7 +203,7 @@ public class SimpleWalkerController implements RobotController
       this.withTwan = withTwan;
       this.withHeightOnly = withHeightOnly;
 
-      heightStopMPC = new SimpleWalkerHeightStopMPC(1.15,robot.nominalHeight,40,registry);
+      heightStopMPC = new SimpleWalkerHeightStopMPC(1.23,robot.nominalHeight,35,registry);
 
       centerOfMassPosition = new YoFramePoint3D("centerOfMass", ReferenceFrame.getWorldFrame(), registry);
       centerOfMassPosition2D = new YoFramePoint2D("centerOfMass2D", ReferenceFrame.getWorldFrame(), registry);
@@ -280,6 +288,11 @@ public class SimpleWalkerController implements RobotController
          pidController.setDerivativeGain(KNEE_DEFUALT_D_GAIN);
          kneeControllers.put(robotSide, pidController);
 
+         pidController = new PIDController(robotSide.getSideNameFirstLetter() + "_KneeRate", registry);
+         pidController.setProportionalGain(1000);
+         pidController.setDerivativeGain(11);
+         kneeRateControllers.put(robotSide, pidController);
+
          pidController = new PIDController(robotSide.getSideNameFirstLetter() + "_KneeSoft", registry);
          pidController.setProportionalGain(KNEE_SOFT_P_GAIN);
          pidController.setDerivativeGain(KNEE_SOFT_D_GAIN);
@@ -351,7 +364,7 @@ public class SimpleWalkerController implements RobotController
       stateMachine = initializeStateMachine();
 
       footStepCounter.set(0);
-      createEvenStepPlan(8, 0.3);
+      createEvenStepPlan(8, 0.5);
       YoDouble numberOfSteps = new YoDouble("totalNSteps",registry);
       numberOfSteps.set(footStepPlan.size());
       icpPlanner = new SimpleWalkerICPPlanner(footStepPlan, swingTime.getDoubleValue(), sqrt(9.81/robot.nominalHeight));
@@ -445,10 +458,17 @@ public class SimpleWalkerController implements RobotController
          double desiredKneeVelocity = trajectorySwingKnee.getVelocity();
          controlKneeToPosition(swingLeg.getEnumValue(), desiredKneePosition, desiredKneeVelocity);
 
-
-         desiredSwingLegHipPitchAngle.set(getDesiredHipPitchAngle(nextFootStepX.getDoubleValue()));
+         if(footStepCounter.getIntegerValue()>7)
+         {
+            desiredSwingLegHipPitchAngle.set(robot.getHipPitchPosition(supportLeg));
+         }
+         else
+         {
+            desiredSwingLegHipPitchAngle.set(getDesiredHipPitchAngle(nextFootStepX.getDoubleValue()));
+         }
          trajectorySwingHipPitch.setParams(startingHipPitchAngle.getDoubleValue(), 0.0, 0.0, desiredSwingLegHipPitchAngle.getDoubleValue(), 0.0, 0.0, 0.0,
                                            swingTimeForThisStep.getDoubleValue());
+
 
          desiredSwingLegHipRollAngle.set(getDesiredHipRollAngle());
          trajectorySwingHipRoll.setParams(startingHipRollAngle.getDoubleValue(), 0.0, 0.0, desiredSwingLegHipRollAngle.getDoubleValue(), 0.0, 0.0, 0.0,
@@ -496,17 +516,26 @@ public class SimpleWalkerController implements RobotController
             if(footStepCounter.getIntegerValue()>8)
             {
                tau = -200*robot.getAnklePitchPosition(supportLeg) - 60*robot.getAnklePitchVelocity(supportLeg);
+               desiredICP2D.set(nextFootStepX.getDoubleValue(),0);
+
+               double kp = 5;
+               double CoPd = currentFootStepX.getDoubleValue() + kp * (currentICP2D.getX() - desiredICP2D.getX());
+
+               CoPd= MathTools.clamp(CoPd,robot.getAnklePositionInWorldX(supportLeg)-0.135,robot.getAnklePositionInWorldX(supportLeg)+0.135);
+               desiredCoP2D.set(CoPd,0);
             }
+
             else
             {
+
                double ICPd = icpPlanner.getICPReference(footStepCounter.getIntegerValue(), timeInState);
                desiredICP2D.set(ICPd,0);
                double kp = 5;
                double CoPd = currentFootStepX.getDoubleValue() + kp * (currentICP2D.getX() - ICPd);
 
-               //CoPd= MathTools.clamp(CoPd,robot.getAnklePositionInWorldX(supportLeg)-0.15,robot.getAnklePositionInWorldX(supportLeg)+0.15);
+               CoPd= MathTools.clamp(CoPd,robot.getAnklePositionInWorldX(supportLeg)-0.135,robot.getAnklePositionInWorldX(supportLeg)+0.135);
                desiredCoP2D.set(CoPd,0);
-               tau = -45* (currentCOP2D.getX() - CoPd) + 9.81 * (robot.getBodyPositionX() - currentCOP.getX());
+               tau = 10*9.81*(CoPd-robot.getAnklePositionInWorldX(supportLeg));
             }
             robot.setAnklePitchTorque(supportLeg, tau);
 
@@ -559,14 +588,27 @@ public class SimpleWalkerController implements RobotController
          else if (withTwan)
          {
             legLength.set(robot.getLegLenght(supportLeg));
-            double CoPforMPC = MathTools.clamp(currentCOP2D.getX(),robot.getAnklePositionInWorldX(supportLeg)-0.14,robot.getAnklePositionInWorldX(supportLeg)+0.14);
-            x0Twan.set(centerOfMassPosition2D.getX()-CoPforMPC);
-            if ((x0Twan.getDoubleValue()<-0.03)&&(timeInState>0.02)&&((desiredICP2D.getX()-currentICP2D.getX())<-0.04))
+            //double CoPforMPC = MathTools.clamp(currentCOP2D.getX(),robot.getAnklePositionInWorldX(supportLeg)-0.14,robot.getAnklePositionInWorldX(supportLeg)+0.14);
+            x0Twan.set(centerOfMassPosition2D.getX()-desiredCoP2D.getX());//robot.getAnklePositionInWorldX(supportLeg));
+
+            if ((x0Twan.getDoubleValue()<-0.05)&&(timeInState>0.05)&&((desiredICP2D.getX()-currentICP2D.getX())<-0.03))
             {
-               heightStopMPC.computeInvOutLoop(x0Twan.getDoubleValue(),robot.getBodyVelocityY(),robot.getBodyHeight(),robot.getBodyHeightVelocity());
+               //robot.setAnklePitchTorque(supportLeg,0.0);
+               heightStopMPC.computeInvOutLoop(x0Twan.getDoubleValue(),robot.getBodyVelocityX(),robot.getBodyHeight(),-robot.getBodyHeightVelocity());
+
                double zdes = heightStopMPC.getDesiredHeight();
                double dzdes = heightStopMPC.getDesiredHeighRate();
-               controlKneeToBodyHeight(supportLeg,zdes,dzdes);
+               heightObjective.set(zdes);
+               heightRateObjective.set(dzdes);
+               heightIsControlled.set(true);
+
+               kp_m=10000;
+               kd_m=1000;
+               kdd_m=20;
+               double ddzdes = heightStopMPC.getDesiredHeightAcceleration();
+               controlKneeToBodyHeightRate(supportLeg,zdes,dzdes,ddzdes);
+
+               //robot.setKneeTorque(supportLeg,heightStopMPC.getU()*10*legLength.getDoubleValue());
             }
             else
             {
@@ -666,32 +708,7 @@ public class SimpleWalkerController implements RobotController
 
    private double getDesiredHipPitchAngle(double nextFootStepX)
    {
-      /*
-      double legLength = robot.upperLinkLength + desiredKneeStance.getDoubleValue();
-      pitchAngleForCapture.set(HipAngleCapturePointCalculator3D.getHipPitchAngle(robot.getBodyVelocityX(), legLength));
-      pitchAngleForCapture.set(-pitchAngleForCapture.getDoubleValue() * Math.signum(robot.getBodyVelocityX()));
 
-      //only use a fraction of it
-      //angleForCapture.set(0.8 *angleForCapture.getDoubleValue()
-      // );
-
-      //limit this angle
-      pitchAngleForCapture.set(MathTools.clamp(pitchAngleForCapture.getDoubleValue(), MAX_HIP_ANGLE));
-
-      //angle is opposite sign of desired velocity
-      double velocityError = (filteredDesiredVelocityX.getDoubleValue() - robot.getBodyVelocityX());
-      velocityErrorPitchAngle.set(velocityError * scaleForVelToAngle.getDoubleValue());
-      velocityErrorPitchAngle.set(MathTools.clamp(velocityErrorPitchAngle.getDoubleValue(), maxVelocityErrorAngle.getDoubleValue()));
-
-      feedForwardAngle.set(filteredDesiredVelocityX.getDoubleValue() * feedForwardGain.getDoubleValue());
-
-
-      double angle = pitchAngleForCapture.getDoubleValue()+ feedForwardAngle.getDoubleValue() + velocityErrorPitchAngle.getDoubleValue();
-
-      //angle = MathTools.clamp(angle, pitchAngleForCapture.getDoubleValue() - stepToStepHipAngleDelta.getDoubleValue(),
-       //                       pitchAngleForCapture.getDoubleValue() + stepToStepHipAngleDelta.getDoubleValue());
-
-      */
 
       double angle = -Math.tan((nextFootStepX-robot.getBodyPositionX())/robot.getBodyHeight());
       return angle;
@@ -842,6 +859,19 @@ public class SimpleWalkerController implements RobotController
       double currentHeightRate = robot.getBodyHeightVelocity();
 
       double controlEffort = kneeControllers.get(robotSide).compute(currentHeight, desiredHeight, currentHeightRate, desiredHeightRate, deltaT);
+      robot.setKneeTorque(robotSide, controlEffort);
+   }
+
+   private void controlKneeToBodyHeightRate(RobotSide robotSide,double desiredHeight, double desiredHeightRate, double desiredHeightAcceleration)
+   {
+      double currentHeight = robot.getBodyHeight();
+      double currentHeightRate = robot.getBodyHeightVelocity();
+      double currentHeightAcceleration = robot.getBodyHeightAcceleration();
+
+      double controlEffort = kp_m*(desiredHeight-currentHeight)+ kd_m*(desiredHeightRate-currentHeightRate)+kdd_m*(desiredHeightAcceleration-currentHeightAcceleration);
+
+      controlEffort= Math.max(0,controlEffort);
+
       robot.setKneeTorque(robotSide, controlEffort);
    }
 
