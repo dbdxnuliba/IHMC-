@@ -1,5 +1,0 @@
-package us.ihmc.commonWalkingControlModules.configurations;
-
-public abstract class ICPWithTimeFreezingPlannerParameters extends ICPPlannerParameters implements ICPTimeFreezerParameters
-{
-}

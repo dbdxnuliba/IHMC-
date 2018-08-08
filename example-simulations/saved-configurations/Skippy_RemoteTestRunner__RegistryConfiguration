@@ -1,5 +1,0 @@
-root*false*false
-root.Skippy*false*false
-root.Skippy.LinearGroundContactModel*false*false
-root.Skippy.SkippyICPBasedController*false*false
-root.Skippy.SkippyFallingChecker*false*false
