@@ -1,5 +1,4 @@
 # Top level directories to ignore
-/build
 /classes
 /bin
 /out
@@ -21,7 +20,6 @@
 **/classes
 **/bin
 **/out
-**/build
 **/.gradle
 **/.project
 **/.classpath
