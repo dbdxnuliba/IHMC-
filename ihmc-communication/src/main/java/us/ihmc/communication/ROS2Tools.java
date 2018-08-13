@@ -254,7 +254,7 @@ public class ROS2Tools
       try
       {
          TopicDataType<T> topicDataType = newMessageTopicDataTypeInstance(messageType);
-         return new IHMCROS2Publisher<T>(ros2Node.createPublisher(topicDataType, topicName, Ros2QosProfile.DEFAULT()));
+         return new IHMCROS2Publisher<T>(ros2Node.createPublisher(topicDataType, topicName, Ros2QosProfile.BEST_EFFORT()));
       }
       catch (IOException e)
       {

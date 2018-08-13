@@ -1,29 +1,30 @@
 package us.ihmc.robotEnvironmentAwareness.hardware;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import controller_msgs.msg.dds.LidarScanMessage;
 import geometry_msgs.Point;
 import scan_to_cloud.PointCloud2WithSource;
-import us.ihmc.communication.IHMCROS2Publisher;
+import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
-import us.ihmc.ros2.Ros2Node;
+import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.utilities.ros.RosMainNode;
 import us.ihmc.utilities.ros.subscriber.AbstractRosTopicSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointCloud;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public class MultisensePointCloud2WithSourceReceiver extends AbstractRosTopicSubscriber<PointCloud2WithSource>
 {
-   private final Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "lidarScanPublisherNode");
+   private final RealtimeRos2Node ros2Node = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.FAST_RTPS, "lidarScanPublisherNode");
 
-   private final IHMCROS2Publisher<LidarScanMessage> lidarScanPublisher;
+   private final IHMCRealtimeROS2Publisher<LidarScanMessage> lidarScanPublisher;
+   int n = 0;
 
    public MultisensePointCloud2WithSourceReceiver() throws URISyntaxException, IOException
    {
@@ -34,6 +35,11 @@ public class MultisensePointCloud2WithSourceReceiver extends AbstractRosTopicSub
       rosMainNode.execute();
 
       lidarScanPublisher = ROS2Tools.createPublisher(ros2Node, LidarScanMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+
+
+      ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, ROS2Tools.getDefaultTopicNameGenerator(), s-> System.out.println("Next message id: " + s.takeNextData().sequence_id_));
+
+      ros2Node.spin();
    }
 
    @Override
@@ -51,8 +57,13 @@ public class MultisensePointCloud2WithSourceReceiver extends AbstractRosTopicSub
       lidarScanMessage.getLidarPosition().set(lidarPosition);
       lidarScanMessage.getLidarOrientation().set(lidarQuaternion);
       MessageTools.packScan(lidarScanMessage, points);
+      lidarScanMessage.setSequenceId(n);
+      System.out.println("Publishing: " + n++ + " " + points.length + " T:[" + lidarPosition.getX() +","+
+              lidarPosition.getY() + "," + lidarPosition.getZ() + "] R:[" + orientation.getW() + ","+
+      orientation.getX()+","+orientation.getY()+","+orientation.getZ()+"]\n");
 
-      lidarScanPublisher.publish(lidarScanMessage);
+      System.out.println("Publish success: " + lidarScanPublisher.publish(lidarScanMessage));
+
    }
 
    public static void main(String[] args) throws URISyntaxException, IOException

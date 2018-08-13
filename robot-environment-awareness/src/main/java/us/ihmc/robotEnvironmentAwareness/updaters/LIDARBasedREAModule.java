@@ -87,6 +87,7 @@ public class LIDARBasedREAModule
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
    {
       LidarScanMessage message = subscriber.takeNextData();
+      System.out.println("MESSAGE: " + message.scan_);
       moduleStateReporter.registerLidarScanMessage(message);
       bufferUpdater.handleLidarScanMessage(message);
       mainUpdater.handleLidarScanMessage(message);
