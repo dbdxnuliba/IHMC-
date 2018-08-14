@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import org.ejml.simple.SimpleMatrix;
 
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -54,6 +53,7 @@ public class LinearAccelerationSensor extends Sensor
    private final DenseMatrix64F previousJacobianMatrixLinearPart = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F jacobianDotLinearPart = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F convectiveTermLinearization = new DenseMatrix64F(0, 0);
+   private final DenseMatrix64F crossProductLinearization = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F centrifugalTermLinearization = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F gravityTermLinearization = new DenseMatrix64F(0, 0);
    private final Matrix3D gravityPart = new Matrix3D();
@@ -93,6 +93,7 @@ public class LinearAccelerationSensor extends Sensor
       jacobianAngularPart.reshape(3, degreesOfFreedom);
       jacobianLinearPart.reshape(3, degreesOfFreedom);
       jacobianDotLinearPart.reshape(3, degreesOfFreedom);
+      crossProductLinearization.reshape(3, degreesOfFreedom);
    }
 
    @Override
@@ -193,7 +194,7 @@ public class LinearAccelerationSensor extends Sensor
 
       // w x v
       FilterTools.packQd(qd, oneDofJointNames, tempRobotState, robotState);
-      DenseMatrix64F crossProductLinearization = linearizeCrossProduct(jacobianAngularPart, jacobianLinearPart, qd);
+      linearizeCrossProduct(jacobianAngularPart, jacobianLinearPart, qd, crossProductLinearization);
       FilterTools.insertForVelocity(centrifugalTermLinearization, oneDofJointNames, crossProductLinearization, robotState);
 
       // R * g (used only with floating joints) (skip the joint angles - only correct the base orientation)
@@ -232,6 +233,16 @@ public class LinearAccelerationSensor extends Sensor
       this.measurement.setIncludingFrame(robotJacobian.getJacobianFrame(), measurement);
    }
 
+   private final Vector3D Aqd = new Vector3D();
+   private final Vector3D Lqd = new Vector3D();
+   private final Matrix3D Aqdx_matrix = new Matrix3D();
+   private final Matrix3D Lqdx_matrix = new Matrix3D();
+   private final DenseMatrix64F Aqdx = new DenseMatrix64F(3, 3);
+   private final DenseMatrix64F Lqdx = new DenseMatrix64F(3, 3);
+   private final DenseMatrix64F tempResult = new DenseMatrix64F(3, 1);
+   private final DenseMatrix64F AqdxL = new DenseMatrix64F(0, 0);
+   private final DenseMatrix64F LqdxA = new DenseMatrix64F(0, 0);
+
    /**
     * This linearizes the cross product {@code f(qd)=[A*qd]x[L*qd]} around {@code qd0}. This allows a first
     * order approximation of:
@@ -243,29 +254,23 @@ public class LinearAccelerationSensor extends Sensor
     * @param qd0 the point to linearize about
     * @return {@code J} is the Jacobian of the above cross product w.r.t. {@code qd}
     */
-   public static DenseMatrix64F linearizeCrossProduct(DenseMatrix64F A, DenseMatrix64F L, DenseMatrix64F qd0)
+   public void linearizeCrossProduct(DenseMatrix64F A, DenseMatrix64F L, DenseMatrix64F qd0, DenseMatrix64F matrixToPack)
    {
-      // TODO: make garbage free
-      Vector3D Aqd = new Vector3D();
-      Aqd.set(simple(A).mult(simple(qd0)).getMatrix());
-      Vector3D Lqd = new Vector3D();
-      Lqd.set(simple(L).mult(simple(qd0)).getMatrix());
+      CommonOps.mult(A, qd0, tempResult);
+      Aqd.set(tempResult);
+      CommonOps.mult(L, qd0, tempResult);
+      Lqd.set(tempResult);
 
-      Matrix3D Aqdx_matrix = new Matrix3D();
       Aqdx_matrix.setToTildeForm(Aqd);
-      Matrix3D Lqdx_matrix = new Matrix3D();
       Lqdx_matrix.setToTildeForm(Lqd);
 
-      DenseMatrix64F Aqdx = new DenseMatrix64F(3, 3);
       Aqdx_matrix.get(Aqdx);
-      DenseMatrix64F Lqdx = new DenseMatrix64F(3, 3);
       Lqdx_matrix.get(Lqdx);
 
-      return simple(Aqdx).mult(simple(L)).minus(simple(Lqdx).mult(simple(A))).getMatrix();
-   }
-
-   private static SimpleMatrix simple(DenseMatrix64F matrix)
-   {
-      return new SimpleMatrix(matrix);
+      AqdxL.reshape(3, A.getNumCols());
+      LqdxA.reshape(3, L.getNumCols());
+      CommonOps.mult(Aqdx, L, AqdxL);
+      CommonOps.mult(Lqdx, A, LqdxA);
+      CommonOps.subtract(AqdxL, LqdxA, matrixToPack);
    }
 }

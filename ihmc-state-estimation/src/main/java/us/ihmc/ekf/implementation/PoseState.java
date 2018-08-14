@@ -266,62 +266,53 @@ public class PoseState extends State
       twistToPack.setLinearPartZ(stateVector.get(linearVelocityStart + 2));
    }
 
-   public static void add(QuaternionBasics orientation, Vector3DReadOnly rotationVector)
-   {
-      // TODO: make garbage free!
-      Quaternion tempRotation = new Quaternion();
+   private final Matrix3D tildeForm = new Matrix3D();
+   private final Matrix3D term1 = new Matrix3D();
+   private final Matrix3D term2 = new Matrix3D();
+   private final RotationMatrix tempRotation1 = new RotationMatrix();
+   private final Vector3D tempLinearVelocity1 = new Vector3D();
+   private final Matrix3D matrix = new Matrix3D();
+   private final RotationMatrix rotationMatrix = new RotationMatrix();
+   private final Matrix3D result = new Matrix3D();
+   private final Vector3D tempLinearVelocity2 = new Vector3D();
+   private final Quaternion tempRotation2 = new Quaternion();
 
-      tempRotation.setRotationVector(rotationVector);
-      orientation.preMultiply(tempRotation);
+   private void add(QuaternionBasics orientation, Vector3DReadOnly rotationVector)
+   {
+      tempRotation2.setRotationVector(rotationVector);
+      orientation.preMultiply(tempRotation2);
    }
 
-   public static void packAngularVelocityTermForOrientation(DenseMatrix64F block, QuaternionReadOnly orientation, Vector3DReadOnly linearVelocity, double dt)
+   private void packAngularVelocityTermForOrientation(DenseMatrix64F block, QuaternionReadOnly orientation, Vector3DReadOnly linearVelocity, double dt)
    {
-      // TODO: make garbage free!
-      RotationMatrix rotationMatrix = new RotationMatrix();
-      Matrix3D result = new Matrix3D();
-      Vector3D tempLinearVelocity = new Vector3D();
-
       orientation.get(rotationMatrix);
-      tempLinearVelocity.set(linearVelocity);
-      tempLinearVelocity.scale(dt);
-      packJacobianOfExponentialMap(result, tempLinearVelocity);
+      tempLinearVelocity2.set(linearVelocity);
+      tempLinearVelocity2.scale(dt);
+      packJacobianOfExponentialMap(result, tempLinearVelocity2);
       result.preMultiply(rotationMatrix);
       result.scale(dt);
 
       result.get(block);
    }
 
-   public static void packOrientatonTermForPosition(DenseMatrix64F block, QuaternionReadOnly orientation, Vector3DReadOnly linearVelocity, double dt)
+   private void packOrientatonTermForPosition(DenseMatrix64F block, QuaternionReadOnly orientation, Vector3DReadOnly linearVelocity, double dt)
    {
-      // TODO: make garbage free!
-      Vector3D tempLinearVelocity = new Vector3D();
-      Matrix3D matrix = new Matrix3D();
-
-      tempLinearVelocity.set(linearVelocity);
-      orientation.transform(tempLinearVelocity);
-      matrix.setToTildeForm(tempLinearVelocity);
+      tempLinearVelocity1.set(linearVelocity);
+      orientation.transform(tempLinearVelocity1);
+      matrix.setToTildeForm(tempLinearVelocity1);
       matrix.get(block);
       CommonOps.scale(-dt, block);
    }
 
-   public static void packLinearVelocityTermForPosition(DenseMatrix64F block, QuaternionReadOnly orientation, double dt)
+   private void packLinearVelocityTermForPosition(DenseMatrix64F block, QuaternionReadOnly orientation, double dt)
    {
-      // TODO: make garbage free!
-      RotationMatrix tempRotation = new RotationMatrix();
-
-      orientation.get(tempRotation);
-      tempRotation.get(block);
+      orientation.get(tempRotation1);
+      tempRotation1.get(block);
       CommonOps.scale(dt, block);
    }
 
-   public static void packJacobianOfExponentialMap(Matrix3D jacobianToPack, Vector3DReadOnly rotationVector)
+   private void packJacobianOfExponentialMap(Matrix3D jacobianToPack, Vector3DReadOnly rotationVector)
    {
-      // TODO: make garbage free!
-      Matrix3D tildeForm = new Matrix3D();
-      Matrix3D term1 = new Matrix3D();
-      Matrix3D term2 = new Matrix3D();
-
       jacobianToPack.setIdentity();
       tildeForm.setToTildeForm(rotationVector);
 
