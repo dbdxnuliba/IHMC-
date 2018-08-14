@@ -25,6 +25,7 @@ import us.ihmc.robotics.screwTheory.SixDoFJoint;
 import us.ihmc.robotics.screwTheory.Twist;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFrameYawPitchRoll;
 
 public class ImuOrientationEstimator
 {
@@ -46,6 +47,7 @@ public class ImuOrientationEstimator
    private final SixDoFJoint imuJoint;
 
    private final YoDouble orientationEstimationTime = new YoDouble("OrientationEstimationTime", registry);
+   private final YoFrameYawPitchRoll yoOrientation = new YoFrameYawPitchRoll("EKFOrientation", ReferenceFrame.getWorldFrame(), registry);
 
    public ImuOrientationEstimator(double dt, YoVariableRegistry parentRegistry)
    {
@@ -79,6 +81,9 @@ public class ImuOrientationEstimator
       updateRobot();
 
       orientationEstimationTime.set(Conversions.nanosecondsToMilliseconds((double) (System.nanoTime() - startTime)));
+
+      poseState.getOrientation(orientation);
+      yoOrientation.set(orientation);
    }
 
    private void updateRobot()
@@ -92,7 +97,6 @@ public class ImuOrientationEstimator
 
    public FrameQuaternion getOrientation()
    {
-      poseState.getOrientation(orientation);
       return orientation;
    }
 
