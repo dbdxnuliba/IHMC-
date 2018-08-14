@@ -1,0 +1,19 @@
+<launch>
+
+  <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${node}]: ${message}"/>
+    
+  <node pkg="nodelet" type="nodelet" name="pcl_pre_processing" args="manager" output="screen" />
+
+  <arg name="tunning" default="false"/>
+
+  <node pkg="nodelet" type="nodelet" name="stadistical_outliner_removal" args="load pcl/StatisticalOutlierRemoval  pcl_pre_processing" output="screen">
+    <remap from="~input" to="/voxel_cloud" />
+    <remap from="~output" to="/stat_out/filtered" />
+    <rosparam>
+      # Dynamic paramerers
+      mean_k: 30                    # The number of points to use for mean distance estimation Range: 2 to 100 
+      stddev: 0.01                   # The standard deviation multiplier threshold. All points outside the mean +- sigma * std_mul will be considered outliers. Range: 0.0 to 5.0 
+      max_queue_size: 1             # Incomming messages queue.
+    </rosparam>
+  </node>
+</launch>
