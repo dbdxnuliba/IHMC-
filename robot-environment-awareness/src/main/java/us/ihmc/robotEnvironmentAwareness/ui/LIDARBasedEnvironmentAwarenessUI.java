@@ -10,6 +10,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import us.ihmc.communication.util.NetworkPorts;
+import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.messager.Messager;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
 import us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties;
@@ -77,7 +78,9 @@ public class LIDARBasedEnvironmentAwarenessUI
       initializeControllers(uiMessager);
 
       View3DFactory view3dFactory = View3DFactory.createSubscene();
-      view3dFactory.addCameraController(true);
+      FocusBasedCameraMouseEventHandler cameraController = view3dFactory.addCameraController(true);
+      cameraController.setMaxLatitude(Double.POSITIVE_INFINITY);
+      cameraController.setMinLatitude(Double.NEGATIVE_INFINITY);
       view3dFactory.addWorldCoordinateSystem(0.3);
       mainPane.setCenter(view3dFactory.getSubSceneWrappedInsidePane());
 
