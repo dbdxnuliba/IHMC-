@@ -28,6 +28,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajecto
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.robotics.controllers.pidGains.PIDSE3GainsReadOnly;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
@@ -539,5 +540,13 @@ public class FeetManager
    public void resetLoadConstraints(RobotSide sideToUnload)
    {
       footControlModules.get(sideToUnload).resetLoadConstraints();
+   }
+
+   public void getSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryListToPack)
+   {
+      for(RobotSide robotSide : RobotSide.values)
+      {
+         swingTrajectoryListToPack.put(robotSide, footControlModules.get(robotSide).getSwingTrajectory());
+      }
    }
 }

@@ -7,7 +7,9 @@ import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
@@ -531,6 +533,14 @@ public interface ICPPlannerInterface
     *         otherwise.
     */
    boolean isOnExitCMP();
+
+   /**
+    * Method to provide the planner with knowledge of swing trajectories. This can improve, for example,
+    * the angular momentum prediction of the swing leg.
+    *
+    * @param swingTrajectoryProviders swing trajectory which is updated externally
+    */
+   void setSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders);
 
    int getNumberOfFootstepsToConsider();
 

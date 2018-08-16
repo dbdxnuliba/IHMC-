@@ -49,6 +49,7 @@ import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.geometry.PlanarRegion;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.TotalMassCalculator;
@@ -860,5 +861,10 @@ public class BalanceManager
    public YoICPControlGains getIcpControllerGains()
    {
       return icpControlGains;
+   }
+
+   public void setSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders)
+   {
+      icpPlanner.setSwingTrajectoryProviders(swingTrajectoryProviders);
    }
 }

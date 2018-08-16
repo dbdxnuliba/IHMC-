@@ -896,4 +896,8 @@ public class SwingState extends AbstractFootControlState
       return spatialFeedbackControlCommand;
    }
 
+   public PoseTrajectoryGenerator getSwingTrajectory()
+   {
+      return blendedSwingTrajectory;
+   }
 }

@@ -29,6 +29,7 @@ import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotics.math.frames.YoFramePointInMultipleFrames;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -757,5 +758,12 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
    void ensureContinuityEnteringEachTransfer(boolean ensureContinuity)
    {
       this.adjustICPForEachDoubleSupport = ensureContinuity;
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void setSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders)
+   {
+      angularMomentumGenerator.setSwingTrajectoryProviders(swingTrajectoryProviders);
    }
 }

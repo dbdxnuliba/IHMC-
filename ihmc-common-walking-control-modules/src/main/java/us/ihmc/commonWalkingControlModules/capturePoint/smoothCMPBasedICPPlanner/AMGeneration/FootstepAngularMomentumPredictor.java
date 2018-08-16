@@ -14,8 +14,10 @@ import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
 import us.ihmc.robotics.math.trajectories.YoSegmentedFrameTrajectory3D;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -63,6 +65,7 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
 
    private final List<AngularMomentumTrajectory> swingAngularMomentumTrajectories;
    private final List<AngularMomentumTrajectory> transferAngularMomentumTrajectories;
+   private SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders;
 
    private final FrameVector3D desiredAngularMomentum = new FrameVector3D();
    private final FrameVector3D desiredTorque = new FrameVector3D();
@@ -706,5 +709,10 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
          segments.get(getNumberOfSegments()).set(trajToCopy);
          numberOfSegments.increment();
       }
+   }
+
+   public void setSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders)
+   {
+      this.swingTrajectoryProviders = swingTrajectoryProviders;
    }
 }

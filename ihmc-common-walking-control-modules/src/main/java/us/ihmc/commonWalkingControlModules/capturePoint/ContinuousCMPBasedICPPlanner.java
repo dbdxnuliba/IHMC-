@@ -27,6 +27,7 @@ import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotics.math.frames.YoFramePointInMultipleFrames;
+import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -917,5 +918,12 @@ public class ContinuousCMPBasedICPPlanner extends AbstractICPPlanner
    public void getDesiredCenterOfPressureVelocity(FrameVector2D desiredCenterOfPressureVelocityToPack)
    {
       desiredCenterOfPressureVelocityToPack.setToNaN();
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void setSwingTrajectoryProviders(SideDependentList<PoseTrajectoryGenerator> swingTrajectoryProviders)
+   {
+      // ignore swing trajectories
    }
 }
