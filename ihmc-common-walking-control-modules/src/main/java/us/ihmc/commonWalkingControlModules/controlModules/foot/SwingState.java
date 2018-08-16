@@ -384,8 +384,6 @@ public class SwingState extends AbstractFootControlState
       contactState.notifyContactStateHasChanged();
 
       spatialFeedbackControlCommand.resetSecondaryTaskJointWeightScale();
-
-      initializeTrajectory();
    }
 
    @Override
@@ -551,6 +549,7 @@ public class SwingState extends AbstractFootControlState
 
       adjustedFootstepPose.set(footstepPose);
       rateLimitedAdjustedPose.set(footstepPose);
+      initializeTrajectory();
    }
 
    /**
@@ -737,7 +736,6 @@ public class SwingState extends AbstractFootControlState
       swingTrajectoryOptimizer.setStanceFootPosition(stanceFootPosition);
       swingTrajectoryOptimizer.initialize();
    }
-
 
    private void computeCurrentWeights(Vector3DReadOnly nominalAngularWeight, Vector3DReadOnly nominalLinearWeight, Vector3DBasics currentAngularWeightToPack,
                                         Vector3DBasics currentLinearWeightToPack)

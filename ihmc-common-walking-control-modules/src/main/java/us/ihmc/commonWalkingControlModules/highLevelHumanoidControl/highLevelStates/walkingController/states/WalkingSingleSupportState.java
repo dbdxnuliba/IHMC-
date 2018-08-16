@@ -160,7 +160,8 @@ public class WalkingSingleSupportState extends SingleSupportState
             balanceManager.setFinalTransferTime(finalTransferTime);
             balanceManager.addFootstepToPlan(nextFootstep, footstepTiming);
             balanceManager.setICPPlanSupportSide(supportSide);
-            balanceManager.initializeICPPlanForSingleSupport(swingDuration, transferDuration, finalTransferTime);
+            balanceManager.adjustStepTimingForReachability(swingDuration, transferDuration);
+            balanceManager.initializeICPPlanForSingleSupport(finalTransferTime);
          }
       }
 
@@ -242,8 +243,7 @@ public class WalkingSingleSupportState extends SingleSupportState
          balanceManager.addFootstepToPlan(footsteps[i], footstepTimings[i]);
       }
 
-      balanceManager.setICPPlanSupportSide(supportSide);
-      balanceManager.initializeICPPlanForSingleSupport(footstepTiming.getSwingTime(), footstepTiming.getTransferTime(), finalTransferTime);
+      balanceManager.adjustStepTimingForReachability(footstepTiming.getSwingTime(), footstepTiming.getTransferTime());
 
       if (balanceManager.wasTimingAdjustedForReachability())
       {
@@ -275,6 +275,9 @@ public class WalkingSingleSupportState extends SingleSupportState
 
       double touchdownTime = footstepTiming.getTouchdownDuration();
       feetManager.requestSwing(swingSide, nextFootstep, swingTime, touchdownTime);
+
+      balanceManager.setICPPlanSupportSide(supportSide);
+      balanceManager.initializeICPPlanForSingleSupport(finalTransferTime);
 
       legConfigurationManager.startSwing(swingSide);
       legConfigurationManager.useHighWeight(swingSide.getOppositeSide());

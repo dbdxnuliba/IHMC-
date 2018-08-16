@@ -622,12 +622,8 @@ public class BalanceManager
       pushRecoveryControlModule.initializeParametersForDoubleSupportPushRecovery();
    }
 
-   public void initializeICPPlanForSingleSupport(double swingTime, double transferTime, double finalTransferTime)
+   public void adjustStepTimingForReachability(double swingTime, double transferTime)
    {
-      setFinalTransferTime(finalTransferTime);
-      icpPlanner.initializeForSingleSupport(yoTime.getDoubleValue());
-      linearMomentumRateOfChangeControlModule.initializeForSingleSupport();
-
       if (Double.isFinite(swingTime) && Double.isFinite(transferTime) && ENABLE_DYN_REACHABILITY)
       {
          dynamicReachabilityCalculator.setInSwing();
@@ -637,6 +633,13 @@ public class BalanceManager
          else
             dynamicReachabilityCalculator.checkReachabilityOfStep();
       }
+   }
+
+   public void initializeICPPlanForSingleSupport(double finalTransferTime)
+   {
+      setFinalTransferTime(finalTransferTime);
+      icpPlanner.initializeForSingleSupport(yoTime.getDoubleValue());
+      linearMomentumRateOfChangeControlModule.initializeForSingleSupport();
    }
 
    public void initializeICPPlanForStanding(double finalTransferTime)
