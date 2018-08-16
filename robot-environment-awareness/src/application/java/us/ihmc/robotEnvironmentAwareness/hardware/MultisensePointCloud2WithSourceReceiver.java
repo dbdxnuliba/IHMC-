@@ -5,6 +5,7 @@ import geometry_msgs.Point;
 import scan_to_cloud.PointCloud2WithSource;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.communication.configuration.NetworkParameters;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -29,8 +30,14 @@ public class MultisensePointCloud2WithSourceReceiver extends AbstractRosTopicSub
    public MultisensePointCloud2WithSourceReceiver() throws URISyntaxException, IOException
    {
       super(PointCloud2WithSource._TYPE);
-      URI masterURI = new URI("http://10.6.192.14:11311");
-      RosMainNode rosMainNode = new RosMainNode(masterURI, "LidarScanPublisher", true);
+      URI rosURI = NetworkParameters.getROSURI();
+      
+      if(rosURI == null)
+      {
+         rosURI = new URI("http://10.6.192.14:11311");
+      }
+      
+      RosMainNode rosMainNode = new RosMainNode(rosURI, "LidarScanPublisher", true);
       rosMainNode.attachSubscriber("/singleScanAsCloudWithSource", this);
       rosMainNode.execute();
 

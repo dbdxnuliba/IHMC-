@@ -51,7 +51,7 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
       DRCRobotLidarParameters multisenseLidarParameters = sensorInformation.getLidarParameters(ValkyrieSensorInformation.MULTISENSE_LIDAR_ID);
       String sensorName = multisenseLidarParameters.getSensorNameInSdf();
       String rcdTopicName = ControllerAPIDefinition.getPublisherTopicNameGenerator(robotName).generateTopicName(RobotConfigurationData.class);
-      lidarScanPublisher = new LidarScanPublisher(sensorName, fullRobotModelFactory, ros2Node, rcdTopicName);
+      lidarScanPublisher = new LidarScanPublisher(sensorName, fullRobotModelFactory, rcdTopicName);
       lidarScanPublisher.setPPSTimestampOffsetProvider(ppsTimestampOffsetProvider);
       lidarScanPublisher.setCollisionBoxProvider(collisionBoxProvider);
    }
@@ -95,7 +95,8 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
                                                                                     multisenseLidarParameters, multisenseStereoParameters,
                                                                                     shouldUseRosParameterSetters);
 
-      lidarScanPublisher.receiveLidarFromROS(multisenseLidarParameters.getRosTopic(), rosMainNode);
+//      lidarScanPublisher.receiveLidarFromROS(multisenseLidarParameters.getRosTopic(), rosMainNode);
+      lidarScanPublisher.receiveLidarFromROSAsPointCloud2WithSource(multisenseLidarParameters.getRosTopic(), rosMainNode);
       lidarScanPublisher.setScanFrameToWorldFrame();
       lidarScanPublisher.start();
 

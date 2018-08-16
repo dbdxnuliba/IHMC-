@@ -11,7 +11,7 @@
     <remap from="~output" to="/filter_chain/output"/>
     <rosparam>
       # Dynamic parameters
-      leaf_size: 0.008               # The size of a leaf (on x,y,z) used for downsampling. Range: 0.0 to 1.0
+      leaf_size: 0.5               # The size of a leaf (on x,y,z) used for downsampling. Range: 0.0 to 1.0
       filter_field_name: z          # The field name used for filtering; z axis points out from the camera, meaning is the depth dimension.
       filter_limit_min: 0.35        # The minimum allowed field value a point will be considered from Range: -1000.0 to 1000.0 
       filter_limit_max: 4.0         # The maximum allowed field value a point will be considered from Range: -1000.0 to 1000.0 
@@ -28,7 +28,7 @@
     <rosparam>
       # Dynamic paramerers
       mean_k: 40                   # The number of points to use for mean distance estimation Range: 2 to 100 
-      stddev: 0.05                  # The standard deviation multiplier threshold. All points outside the mean +- sigma * std_mul will be considered outliers. Range: 0.0 to 5.0 
+      stddev: 0.01                  # The standard deviation multiplier threshold. All points outside the mean +- sigma * std_mul will be considered outliers. Range: 0.0 to 5.0 
       max_queue_size: 1             # Incomming messages queue.
     </rosparam>
   </node>

@@ -41,11 +41,11 @@ RUN git clone https://github.com/RainerKuemmerle/g2o.git && cd g2o/ && \
 #	rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get -y install nano libsqlite3-dev libpcl-dev libopencv-dev git cmake libproj-dev libqt5svg5-dev
-RUN apt-get install -y python-rosinstall python-rosinstall-generator python-wstool build-essential
+RUN apt-get install -y python-rosinstall python-rosinstall-generator python-wstool build-essential vim
 
 # Set ROS master URI as localhost is not found in /etc/hosts
 ENV ROS_MASTER_URI "http://10.6.192.14:11311"
 
-WORKDIR /usr/src/sptam/ros-env/Kinetic3D
+WORKDIR /usr/src/sptam/ihmc-perception/Kinetic3D
 
 CMD /bin/bash

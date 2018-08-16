@@ -15,7 +15,6 @@ case "$1" in
     -v $CATKIN_WS_DIR:/usr/src/sptam \
     -v $HOME/.ssh:/home/$( id -u -n)/.ssh:ro \
     -v $SSH_AUTH_SOCK:/ssh-agent \
-    -u $( id -u ):$( id -g ) \
     --mount type=tmpfs,destination=/home/$( id -u -n) \
     -e "SSH_AUTH_SOCK=/ssh-agent" \
     -e DISPLAY=$DISPLAY \

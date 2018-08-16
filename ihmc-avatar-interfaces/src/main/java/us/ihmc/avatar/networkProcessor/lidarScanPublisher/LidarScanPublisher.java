@@ -18,6 +18,7 @@ import sensor_msgs.PointCloud2;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
+import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.net.ObjectCommunicator;
 import us.ihmc.communication.net.ObjectConsumer;
@@ -33,10 +34,12 @@ import us.ihmc.humanoidRobotics.kryo.PPSTimestampOffsetProvider;
 import us.ihmc.ihmcPerception.depthData.CollisionBoxProvider;
 import us.ihmc.ihmcPerception.depthData.CollisionShapeTester;
 import us.ihmc.ihmcPerception.depthData.RosPointCloudReceiver;
+import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
 import us.ihmc.robotics.lidar.LidarScan;
 import us.ihmc.robotics.lidar.LidarScanParameters;
+import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.sensorProcessing.communication.producers.RobotConfigurationDataBuffer;
 import us.ihmc.utilities.ros.RosMainNode;
@@ -66,11 +69,12 @@ public class LidarScanPublisher
    private CollisionShapeTester collisionBoxNode = null;
    private PPSTimestampOffsetProvider ppsTimestampOffsetProvider = null;
 
-   private final IHMCROS2Publisher<LidarScanMessage> lidarScanPublisher;
+   private final RealtimeRos2Node ros2Node;
+   private final IHMCRealtimeROS2Publisher<LidarScanMessage> lidarScanPublisher;
 
    private double shadowAngleThreshold = DEFAULT_SHADOW_ANGLE_THRESHOLD;
 
-   public LidarScanPublisher(String lidarName, FullHumanoidRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
+   public LidarScanPublisher(String lidarName, FullHumanoidRobotModelFactory modelFactory, String robotConfigurationDataTopicName)
    {
       robotName = modelFactory.getRobotDescription().getName();
       PrintTools.info(robotName);
@@ -80,6 +84,7 @@ public class LidarScanPublisher
       RigidBodyTransform transformToLidarBaseFrame = fullRobotModel.getLidarBaseToSensorTransform(lidarName);
       lidarSensorFrame = ReferenceFrame.constructFrameWithUnchangingTransformToParent("lidarSensorFrame", lidarBaseFrame, transformToLidarBaseFrame);
 
+      ros2Node = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.FAST_RTPS, "ihmc_lidar_scan_republisher");
       ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, robotConfigurationDataTopicName,
                                            s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
       lidarScanPublisher = ROS2Tools.createPublisher(ros2Node, LidarScanMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
@@ -88,6 +93,8 @@ public class LidarScanPublisher
    public void start()
    {
       executorService.scheduleAtFixedRate(createPublisherTask(), 0L, 1L, TimeUnit.MILLISECONDS);
+      
+      ros2Node.spin();
    }
 
    public void shutdown()
@@ -227,6 +234,7 @@ public class LidarScanPublisher
             if (scanData == null)
                return;
 
+            System.out.println("Number of scan points received: " + scanData.numberOfScanPoints);
             long robotTimestamp;
 
             if (ppsTimestampOffsetProvider == null)
@@ -290,6 +298,8 @@ public class LidarScanPublisher
             float[] scanPointBuffer = scanData.getScanBuffer(indicesToRemove);
 
             LidarScanMessage message = MessageTools.createLidarScanMessage(robotTimestamp, lidarPosition, lidarOrientation, scanPointBuffer);
+//            System.out.println("Publishing");
+//            System.out.println(message.toString());
             lidarScanPublisher.publish(message);
          }
       };
