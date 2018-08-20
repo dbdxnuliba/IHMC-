@@ -248,7 +248,8 @@ public class FootstepAngularMomentumPredictorTest
    @Test(timeout = 30000)
    public void testAngularMomentumInitialTransfer()
    {
-      setupInputs();
+      RobotSide initialSwingSide = RobotSide.LEFT;
+      setupInputs(initialSwingSide);
       isInitialTransfer.set(true);
       isStanding.set(true);
       isDoubleSupport.set(true);
@@ -333,7 +334,8 @@ public class FootstepAngularMomentumPredictorTest
    @Test(timeout = 30000)
    public void testAngularMomentumNormalTransfer()
    {
-      setupInputs();
+      RobotSide initialSwingSide = RobotSide.LEFT;
+      setupInputs(initialSwingSide);
       isInitialTransfer.set(false);
       isStanding.set(false);
       isDoubleSupport.set(true);
@@ -485,7 +487,8 @@ public class FootstepAngularMomentumPredictorTest
    @Test(timeout = 30000)
    public void testAngularMomentumSwing()
    {
-      setupInputs();
+      RobotSide initialSwingSide = RobotSide.LEFT;
+      setupInputs(initialSwingSide);
       isInitialTransfer.set(false);
       isStanding.set(false);
       isDoubleSupport.set(false);
@@ -511,7 +514,7 @@ public class FootstepAngularMomentumPredictorTest
       angularMomentumGenerator.addFootstepCoPsToPlan(copTrajectoryGenerator.getWaypoints(), comInitialPositionList, comFinalPositionList,
                                                      comInitialVelocityList, comFinalVelocityList, comInitialAccelerationList, comFinalAccelerationList,
                                                      copTrajectoryGenerator.getNumberOfFootstepsRegistered());
-      angularMomentumGenerator.computeReferenceAngularMomentumStartingFromSingleSupport();
+      angularMomentumGenerator.computeReferenceAngularMomentumStartingFromSingleSupport(initialSwingSide);
       angularMomentumGenerator.initializeForSingleSupport(0.0);
 
       int stepIndex = 0, comListCounter = 0;
@@ -526,10 +529,10 @@ public class FootstepAngularMomentumPredictorTest
                                        comFinalAccelerationList, copWaypointList, swingAngularMomentumTrajectories, transferAngularMomentumTrajectories);
    }
 
-   private void setupInputs()
+   private void setupInputs(RobotSide initialSide)
    {
       clear();
-      RobotSide side = RobotSide.LEFT;
+      RobotSide side = initialSide;
       for (int i = 0; i < testParameters.getNumberOfFootstepsToConsider(); i++)
       {
          // Update the current location based on walking direction
@@ -548,6 +551,7 @@ public class FootstepAngularMomentumPredictorTest
          side = side.getOppositeSide();
       }
 
+      numberOfUpcomingFootsteps.set(upcomingFootstepsData.size());
       numberOfFootstepsToConsider.set(upcomingFootstepsData.size());
    }
    

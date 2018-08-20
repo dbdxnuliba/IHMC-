@@ -17,6 +17,7 @@ import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
 import us.ihmc.robotics.math.trajectories.PoseTrajectoryGenerator;
 import us.ihmc.robotics.math.trajectories.TrajectoryMathTools;
 import us.ihmc.robotics.math.trajectories.YoSegmentedFrameTrajectory3D;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -90,7 +91,10 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
 
    private final FramePoint3D tempFramePoint1 = new FramePoint3D();
    private final FramePoint3D tempFramePoint2 = new FramePoint3D();
-   private final FrameVector3D tempFrameVector = new FrameVector3D();
+   private final FramePoint3D tempFramePoint3 = new FramePoint3D();
+   private final FramePoint3D tempFramePoint4 = new FramePoint3D();
+   private final FrameVector3D tempFrameVector1 = new FrameVector3D();
+   private final FrameVector3D tempFrameVector2 = new FrameVector3D();
 
    // DEBUGGING
    private final YoFramePoint3D comPosDebug;
@@ -382,16 +386,16 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
    @Override
    public void computeReferenceAngularMomentumStartingFromDoubleSupport(boolean atAStop)
    {
-      setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType.TRANSFER);
+      setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType.TRANSFER, null);
    }
 
    @Override
-   public void computeReferenceAngularMomentumStartingFromSingleSupport()
+   public void computeReferenceAngularMomentumStartingFromSingleSupport(RobotSide swingFootSide)
    {
-      setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType.SWING);
+      setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType.SWING, swingFootSide);
    }
 
-   private void setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType initialWalkingPhase)
+   private void setAngularMomentumTrajectoryForFootsteps(WalkingTrajectoryType initialWalkingPhase, RobotSide swingFootSide)
    {
       CoPPointsInFoot copPointsInFoot;
       double phaseTime = 0.0;
@@ -401,7 +405,7 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
       if(initialWalkingPhase == WalkingTrajectoryType.SWING)
       {
          copPointsInFoot = upcomingCoPsInFootsteps.get(footstepIndex + 1);
-         setFootTrajectoriesForPhase(footstepIndex, initialWalkingPhase);
+         setFootTrajectoriesForPhase(footstepIndex, initialWalkingPhase, swingFootSide);
          for(int j = CoPPlanningTools.getCoPPointIndex(copPointsInFoot.getCoPPointList(), entryCoPName) + 1; j < copPointsInFoot.getNumberOfCoPPoints(); j++, comIndex++)
          {
             setCoMTrajectory(phaseTime, phaseTime + copPointsInFoot.get(j).getTime(), comIndex);
@@ -424,7 +428,7 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
       // handle each of the upcoming footsteps
       WalkingTrajectoryType currentWalkingPhase = WalkingTrajectoryType.TRANSFER;
       int numberOfSteps = Math.min(numberOfRegisteredFootsteps.getIntegerValue(), numberOfFootstepsToConsider.getIntegerValue());
-      setFootTrajectoriesForPhase(footstepIndex, currentWalkingPhase);
+      setFootTrajectoriesForPhase(footstepIndex, currentWalkingPhase, null);
       for(int stepIndex = footstepIndex; stepIndex < numberOfSteps; stepIndex++)
       {
          copPointsInFoot = upcomingCoPsInFootsteps.get(stepIndex + 1);
@@ -460,21 +464,21 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
             if(copPointsInFoot.getCoPPointList().get(j) == entryCoPName)
             {
                currentWalkingPhase = WalkingTrajectoryType.SWING;
-               setFootTrajectoriesForPhase(stepIndex, currentWalkingPhase);
+               setFootTrajectoriesForPhase(stepIndex, currentWalkingPhase, null);
                phaseTime = 0.0;
             }
             else if(j >= copPointsInFoot.getNumberOfCoPPoints() - 1)
             {
                currentWalkingPhase = WalkingTrajectoryType.TRANSFER;
                phaseTime = 0.0;
-               setFootTrajectoriesForPhase(stepIndex + 1, currentWalkingPhase);
+               setFootTrajectoriesForPhase(stepIndex + 1, currentWalkingPhase, null);
             }
          }
       }
 
       // handle terminal transfer
       copPointsInFoot = upcomingCoPsInFootsteps.get(numberOfSteps + 1);
-      setFootTrajectoriesForPhase(numberOfSteps, currentWalkingPhase);
+      setFootTrajectoriesForPhase(numberOfSteps, currentWalkingPhase, null);
       for(int j = 0; j < copPointsInFoot.getNumberOfCoPPoints(); j++, comIndex++)
       {
          setCoMTrajectory(phaseTime, phaseTime + copPointsInFoot.get(j).getTime(), comIndex);
@@ -511,7 +515,7 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
       TrajectoryMathTools.getDerivative(segmentSupportFootVelocityTrajectory, segmentSupportFootPositionTrajectory);
    }
 
-   private void setFootTrajectoriesForPhase(int footstepIndex, WalkingTrajectoryType phase)
+   private void setFootTrajectoriesForPhase(int footstepIndex, WalkingTrajectoryType phase, RobotSide swingFootSide)
    {
       CoPPointsInFoot copPointsInFoot = upcomingCoPsInFootsteps.get(footstepIndex + 1);
       double phaseDuration = 0.0;
@@ -527,17 +531,43 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
             phaseDuration += copPointsInFoot.get(j).getTime();
          phaseDuration += copPointsInFoot.get(j).getTime();
       }
-      setSwingFootTrajectoryForPhase(footstepIndex, phase, phaseDuration);
+      setSwingFootTrajectoryForPhase(footstepIndex, phase, phaseDuration, swingFootSide);
       setSupportFootTrajectoryForPhase(footstepIndex, phase, phaseDuration);
    }
 
-   private void setSwingFootTrajectoryForPhase(int footstepIndex, WalkingTrajectoryType phase, double phaseDuration)
+   private void setSwingFootTrajectoryForPhase(int footstepIndex, WalkingTrajectoryType phase, double phaseDuration, RobotSide swingFootSide)
    {
       if(phase == WalkingTrajectoryType.SWING)
       {
-         upcomingCoPsInFootsteps.get(footstepIndex).getSupportFootLocation(tempFramePoint1);
-         upcomingCoPsInFootsteps.get(footstepIndex + 1).getSwingFootLocation(tempFramePoint2);
-         segmentSwingFootPositionTrajectory.setQuinticWithZeroTerminalAcceleration(0.0, phaseDuration, tempFramePoint1, zeroVector, tempFramePoint2, zeroVector);
+         if(footstepIndex == 0 && swingTrajectoryProviders != null && swingFootSide != null)
+         {
+            PoseTrajectoryGenerator footTrajectory = swingTrajectoryProviders.get(swingFootSide);
+
+            double t0 = 0.0;
+            double tFinal = phaseDuration;
+            double tIntermediate0 = tFinal * (1.0 / 3.0);
+            double tIntermediate1 = tFinal * (2.0 / 3.0);
+
+            footTrajectory.compute(t0);
+            footTrajectory.getPosition(tempFramePoint1);
+            footTrajectory.getVelocity(tempFrameVector1);
+            footTrajectory.compute(tIntermediate0);
+            footTrajectory.getPosition(tempFramePoint2);
+            footTrajectory.compute(tIntermediate1);
+            footTrajectory.getPosition(tempFramePoint3);
+            footTrajectory.compute(tFinal);
+            footTrajectory.getPosition(tempFramePoint4);
+            footTrajectory.getVelocity(tempFrameVector2);
+
+            segmentSwingFootPositionTrajectory
+                  .setQuinticTwoWaypoints(t0, tIntermediate0, tIntermediate1, tFinal, tempFramePoint1, tempFrameVector1, tempFramePoint2, tempFramePoint3, tempFramePoint4, tempFrameVector2);
+         }
+         else
+         {
+            upcomingCoPsInFootsteps.get(footstepIndex).getSupportFootLocation(tempFramePoint1);
+            upcomingCoPsInFootsteps.get(footstepIndex + 1).getSwingFootLocation(tempFramePoint2);
+            segmentSwingFootPositionTrajectory.setQuinticWithZeroTerminalAcceleration(0.0, phaseDuration, tempFramePoint1, zeroVector, tempFramePoint2, zeroVector);
+         }
       }
       else
       {
@@ -608,10 +638,10 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
          activeCoMTrajectory.getFramePosition(tempFramePoint1);
          pointToPack.set(tempFramePoint1);
          comPosDebug.set(tempFramePoint1);
-         activeCoMTrajectory.getFrameVelocity(tempFrameVector);
-         comVelDebug.set(tempFrameVector);
-         activeCoMTrajectory.getFrameAcceleration(tempFrameVector);
-         comAccDebug.set(tempFrameVector);
+         activeCoMTrajectory.getFrameVelocity(tempFrameVector1);
+         comVelDebug.set(tempFrameVector1);
+         activeCoMTrajectory.getFrameAcceleration(tempFrameVector1);
+         comAccDebug.set(tempFrameVector1);
       }
    }
 
@@ -622,10 +652,10 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
          activeCoMTrajectory.update(time - initialTime);
          activeCoMTrajectory.getFramePosition(tempFramePoint1);
          comPosDebug.set(tempFramePoint1);
-         activeCoMTrajectory.getFrameVelocity(tempFrameVector);
-         comVelDebug.set(tempFrameVector);
-         activeCoMTrajectory.getFrameAcceleration(tempFrameVector);
-         comAccDebug.set(tempFrameVector);
+         activeCoMTrajectory.getFrameVelocity(tempFrameVector1);
+         comVelDebug.set(tempFrameVector1);
+         activeCoMTrajectory.getFrameAcceleration(tempFrameVector1);
+         comAccDebug.set(tempFrameVector1);
       }
    }
 
@@ -637,18 +667,18 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
          activeSwingFootTrajectory.getFramePosition(tempFramePoint1);
          swingFootPosDebug.set(tempFramePoint1);
          pointToPack.set(tempFramePoint1);
-         activeSwingFootTrajectory.getFrameVelocity(tempFrameVector);
-         swingFootVelDebug.set(tempFrameVector);
-         activeSwingFootTrajectory.getFrameAcceleration(tempFrameVector);
-         swingFootAccDebug.set(tempFrameVector);
+         activeSwingFootTrajectory.getFrameVelocity(tempFrameVector1);
+         swingFootVelDebug.set(tempFrameVector1);
+         activeSwingFootTrajectory.getFrameAcceleration(tempFrameVector1);
+         swingFootAccDebug.set(tempFrameVector1);
 
          activeSupportFootTrajectory.update(time - initialTime);
          activeSupportFootTrajectory.getFramePosition(tempFramePoint1);
          supportFootPosDebug.set(tempFramePoint1);
-         activeSupportFootTrajectory.getFrameVelocity(tempFrameVector);
-         supportFootVelDebug.set(tempFrameVector);
-         activeSupportFootTrajectory.getFrameAcceleration(tempFrameVector);
-         supportFootAccDebug.set(tempFrameVector);
+         activeSupportFootTrajectory.getFrameVelocity(tempFrameVector1);
+         supportFootVelDebug.set(tempFrameVector1);
+         activeSupportFootTrajectory.getFrameAcceleration(tempFrameVector1);
+         supportFootAccDebug.set(tempFrameVector1);
       }
    }
 
@@ -659,18 +689,18 @@ public class FootstepAngularMomentumPredictor implements AngularMomentumTrajecto
          activeSwingFootTrajectory.update(time - initialTime);
          activeSwingFootTrajectory.getFramePosition(tempFramePoint1);
          swingFootPosDebug.set(tempFramePoint1);
-         activeSwingFootTrajectory.getFrameVelocity(tempFrameVector);
-         swingFootVelDebug.set(tempFrameVector);
-         activeSwingFootTrajectory.getFrameAcceleration(tempFrameVector);
-         swingFootAccDebug.set(tempFrameVector);
+         activeSwingFootTrajectory.getFrameVelocity(tempFrameVector1);
+         swingFootVelDebug.set(tempFrameVector1);
+         activeSwingFootTrajectory.getFrameAcceleration(tempFrameVector1);
+         swingFootAccDebug.set(tempFrameVector1);
 
          activeSupportFootTrajectory.update(time - initialTime);
          activeSupportFootTrajectory.getFramePosition(tempFramePoint1);
          supportFootPosDebug.set(tempFramePoint1);
-         activeSupportFootTrajectory.getFrameVelocity(tempFrameVector);
-         supportFootVelDebug.set(tempFrameVector);
-         activeSupportFootTrajectory.getFrameAcceleration(tempFrameVector);
-         supportFootAccDebug.set(tempFrameVector);
+         activeSupportFootTrajectory.getFrameVelocity(tempFrameVector1);
+         supportFootVelDebug.set(tempFrameVector1);
+         activeSupportFootTrajectory.getFrameAcceleration(tempFrameVector1);
+         supportFootAccDebug.set(tempFrameVector1);
       }
    }
 

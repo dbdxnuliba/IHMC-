@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.AMGeneration;
 
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
+import us.ihmc.robotics.robotSide.RobotSide;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface AngularMomentumTrajectoryGeneratorInterface
 
    void computeReferenceAngularMomentumStartingFromDoubleSupport(boolean atAStop);
 
-   void computeReferenceAngularMomentumStartingFromSingleSupport();
+   void computeReferenceAngularMomentumStartingFromSingleSupport(RobotSide swingFootSide);
 
    List<? extends AngularMomentumTrajectoryInterface> getTransferAngularMomentumTrajectories();
 
