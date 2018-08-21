@@ -1,8 +1,17 @@
 package us.ihmc.exampleSimulations.planarWalker;
 
+import org.ejml.alg.dense.linsol.LinearSolverSafe;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.data.Matrix;
+import org.ejml.factory.LinearSolverFactory;
+import org.ejml.interfaces.decomposition.DecompositionInterface;
+import org.ejml.interfaces.linsol.LinearSolver;
 import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.controllers.PIDController;
+import us.ihmc.robotics.linearAlgebra.MatrixExponentialCalculator;
+import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
+import us.ihmc.robotics.math.frames.YoMatrix;
 import us.ihmc.robotics.math.trajectories.YoMinimumJerkTrajectory;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -11,12 +20,17 @@ import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.*;
+
+import java.util.ArrayList;
+
+import static java.lang.Math.max;
+import static java.lang.Math.pow;
+import static jdk.nashorn.internal.objects.NativeMath.sqrt;
 
 public class PeterPlanarWalkerController implements RobotController
 {
+   private ArrayList<Double> footStepPlan;
    private final double MAX_HIP_ANGLE = 0.8;
    private double HIP_DEFUALT_P_GAIN = 100.0;
    private double HIP_DEFUALT_D_GAIN = 10.0;
@@ -66,10 +80,43 @@ public class PeterPlanarWalkerController implements RobotController
 
    private StateMachine<ControllerState, State> stateMachine;
 
-   public PeterPlanarWalkerController(PeterPlanarWalkerRobot robot, double deltaT)
+   double maxHeight;
+   double zf;
+   double dxf;
+   double g;
+   double x;
+   double dx;
+   double z;
+   double dz;
+   double u;
+
+   double c0;
+   double c1;
+   double c2;
+   double c3;
+
+   YoLong AlgTimems = new YoLong("AlgTimems", registry);
+   YoInteger AlgIters = new YoInteger("AlgIters", registry);
+
+   YoDouble zMaxPolynomial = new YoDouble("zMaxPolynomial", registry);
+
+   DenseMatrix64F A;
+   DenseMatrix64F b;
+   DenseMatrix64F c;
+   boolean useHeightControl;
+
+   YoMatrix YoA = new YoMatrix("YoA", 4,4, registry);
+   YoMatrix Yob= new YoMatrix("Yob", 4, 1, registry);
+   YoMatrix Yoc = new YoMatrix("Yoc", 4, 1, registry);
+
+   LinearSolver<DenseMatrix64F> linearSolver = LinearSolverFactory.linear(4);
+   LinearSolverSafe linearSolverSafe = new LinearSolverSafe(linearSolver);
+
+   public PeterPlanarWalkerController(PeterPlanarWalkerRobot robot, double deltaT, boolean useHeightControl)
    {
       this.robot = robot;
       this.deltaT = deltaT;
+      this.useHeightControl = useHeightControl;
 
       for (RobotSide robotSide : RobotSide.values)
       {
@@ -89,8 +136,8 @@ public class PeterPlanarWalkerController implements RobotController
       desiredHeight.set(robot.nominalHeight);
       desiredKneeStance.set(robot.lowerLinkLength / 2.0);
       swingTime.set(0.3);
-      scaleForVelToAngle.set(0.9);
-      feedForwardGain.set(0.05);
+      scaleForVelToAngle.set(0.05);
+      feedForwardGain.set(0.3);
       stepToStepHipAngleDelta.set(0.3);
       maxVelocityErrorAngle.set(0.3);
       alphaFilterVariable.set(0.9999);
@@ -175,27 +222,57 @@ public class PeterPlanarWalkerController implements RobotController
          double desiredKneeVelocity = trajectorySwingKnee.getVelocity();
          controlKneeToPosition(swingLeg.getEnumValue(), desiredKneePositon, desiredKneeVelocity);
 
-         desiredSwingLegHipAngle.set(getDesireHipAngle());
-         trajectorySwingHip.setParams(startingHipAngle.getDoubleValue(), 0.0, 0.0, desiredSwingLegHipAngle.getDoubleValue(), 0.0, 0.0, 0.0,
-                                      swingTimeForThisStep.getDoubleValue());
 
-         trajectorySwingHip.computeTrajectory(timeInState);
-         double desiredHipAngle = trajectorySwingHip.getPosition();
-         double currentHipAngle = robot.getHipPosition(swingLeg.getEnumValue());
-         double currentHipAngleRate = robot.getHipVelocity(swingLeg.getEnumValue());
-
-         PIDController pidController = hipControllers.get(swingLeg.getEnumValue());
-         double controlEffort = pidController.compute(currentHipAngle, desiredHipAngle, currentHipAngleRate, 0.0, deltaT);
-         robot.setHipTorque(swingLeg.getEnumValue(), controlEffort);
-
-         //Stance leg
-         controlHipToMaintainPitch(supportLeg);
-
-         //add swing leg torque to stand leg
-         addOppositeLegHipTorque(supportLeg);
 
          //controlKneeToMaintainBodyHeight(supportLeg);
-         controlKneeToPosition(supportLeg, desiredKneeStance.getDoubleValue(), 0.0);
+         if (desiredBodyVelocity.getDoubleValue() == 0.0 && robot.getHipPosition(supportLeg) < -0.03 && robot.getBodyVelocity() > 0 && useHeightControl)
+         {
+            heightForStopMPC(supportLeg);
+
+            desiredSwingLegHipAngle.set(robot.getHipPosition(supportLeg));
+            trajectorySwingHip.setParams(startingHipAngle.getDoubleValue(), 0.0, 0.0, desiredSwingLegHipAngle.getDoubleValue(), 0.0, 0.0, 0.0,
+                                         swingTimeForThisStep.getDoubleValue());
+
+            trajectorySwingHip.computeTrajectory(timeInState);
+            double desiredHipAngle = trajectorySwingHip.getPosition();
+            double desiredHipAnglerate = trajectorySwingHip.getVelocity();
+            double currentHipAngle = robot.getHipPosition(swingLeg.getEnumValue());
+            double currentHipAngleRate = robot.getHipVelocity(swingLeg.getEnumValue());
+
+            PIDController pidController = hipControllers.get(swingLeg.getEnumValue());
+            double controlEffort = pidController.compute(currentHipAngle, desiredHipAngle, currentHipAngleRate, desiredHipAnglerate, deltaT);
+            robot.setHipTorque(swingLeg.getEnumValue(), controlEffort);
+            controlHipToMaintainPitch(supportLeg);
+
+            //add swing leg torque to stand leg
+            addOppositeLegHipTorque(supportLeg);
+
+            //controlKneeToPosition(supportLeg, Math.sqrt(pow(x,2)+pow(c0 + c1 * x + c2 * pow(x, 2) + c3 * pow(x, 3),2)), 0.0);
+         }
+         else
+         {
+            desiredSwingLegHipAngle.set(getDesireHipAngle());
+            trajectorySwingHip.setParams(startingHipAngle.getDoubleValue(), 0.0, 0.0, desiredSwingLegHipAngle.getDoubleValue(), 0.0, 0.0, 0.0,
+                                         swingTimeForThisStep.getDoubleValue());
+
+            trajectorySwingHip.computeTrajectory(timeInState);
+            double desiredHipAngle = trajectorySwingHip.getPosition();
+            double desiredHipAnglerate = trajectorySwingHip.getVelocity();
+            double currentHipAngle = robot.getHipPosition(swingLeg.getEnumValue());
+            double currentHipAngleRate = robot.getHipVelocity(swingLeg.getEnumValue());
+
+            PIDController pidController = hipControllers.get(swingLeg.getEnumValue());
+            double controlEffort = pidController.compute(currentHipAngle, desiredHipAngle, currentHipAngleRate, desiredHipAnglerate, deltaT);
+            robot.setHipTorque(swingLeg.getEnumValue(), controlEffort);
+
+            //Stance leg
+            controlHipToMaintainPitch(supportLeg);
+
+            //add swing leg torque to stand leg
+            addOppositeLegHipTorque(supportLeg);
+
+            controlKneeToPosition(supportLeg, desiredKneeStance.getDoubleValue(), 0.0);
+         }
       }
 
       @Override
@@ -289,6 +366,74 @@ public class PeterPlanarWalkerController implements RobotController
       robot.setKneeTorque(robotSide, controlEffort);
    }
 
+   private void heightForStopMPC(RobotSide robotSide)
+   {
+
+         maxHeight = 1.15;
+         zf = 1.0;
+         dxf = 0.0;
+         g = 9.81;
+         x = robot.getHipPosition(robotSide) * Math.sin(robot.getKneePosition(robotSide) + 0.7);
+         dx = robot.getBodyVelocity();
+         z = robot.getBodyHeight();
+         dz = robot.getBodyHeightVelocity();
+
+         long startTime = System.currentTimeMillis();
+         int iter = 0;
+         for (int i = 1; i < 1000; i++)
+         {
+            double k = 0.5 * pow(dx * z - dz * x, 2) + g * pow(x, 2) * z - 0.5 * (pow(zf, 2)) * (pow(dxf, 2));
+            double[][] matrixData = new double[][] {{1, 0, 0, 0}, {1, x, pow(x, 2), pow(x, 3)}, {0, 1, 2 * x, 3 * pow(x, 2)},
+                  {(3 / 2) * g * pow(x, 2), g * pow(x, 3), (3 / 4) * g * pow(x, 4), (3 / 5) * g * pow(x, 5)}};
+            double[][] bData = new double[][] {{zf}, {z}, {dz / dx}, {k}};
+            A = new DenseMatrix64F(matrixData);
+            b = new DenseMatrix64F(bData);
+            c = new DenseMatrix64F(4, 1);
+            linearSolverSafe.setA(A);
+            linearSolverSafe.solve(b, c);
+            YoA.set(A);
+            Yob.set(b);
+            Yoc.set(c);
+            c0 = c.get(0, 0);
+            c1 = c.get(1, 0);
+            c2 = c.get(2, 0);
+            c3 = c.get(3, 0);
+            double xmax1 = (-2 * c2 + Math.sqrt(4 * pow(c2, 2) - 12 * c3 * c1)) / (6 * c3);
+            double xmax2 = (-2 * c2 - Math.sqrt(4 * pow(c2, 2) - 12 * c3 * c1)) / (6 * c3);
+            double xmax = Math.max(xmax1, xmax2);
+            zMaxPolynomial.set(c0 + c1 * xmax + c2 * pow(xmax, 2) + c3 * pow(xmax, 3));
+            u = (g + (2 * c2 + 6 * c3 * x) * Math.pow(dx, 2)) / (c0 - c2 * Math.pow(x, 2) - 2 * c3 * Math.pow(x, 3));
+            u = Math.max(0, u);
+            if (zMaxPolynomial.getDoubleValue() < maxHeight && u * (robot.getKneePosition(robotSide) + 0.7) < 40)
+            {
+               break;
+            }
+            dxf = dxf + 0.02; //+ (zMaxPolynomial.getDoubleValue()-maxHeight)*0.1 + 0.01;
+            iter++;
+         }
+
+         long endTime = System.currentTimeMillis();
+         AlgTimems.set(endTime-startTime);
+         AlgIters.set(iter);
+         robot.setKneeTorque(robotSide, 10 * u * (robot.getKneePosition(robotSide) + 0.7)); //
+   }
+
+   private void createEvenStepPlan(double nStepsNoCurrent, double stepLength)
+   {
+      footStepPlan.add(0.0);
+      double xPos = stepLength;
+      for(int i = 0; i<nStepsNoCurrent; i++)
+      {
+         footStepPlan.add(xPos);
+         xPos=xPos+stepLength;
+      }
+   }
+
+   public void setDesiredBodyVelocity(double dv)
+   {
+      desiredBodyVelocity.set(dv);
+   }
+
    @Override
    public YoVariableRegistry getYoVariableRegistry()
    {
@@ -328,5 +473,6 @@ public class PeterPlanarWalkerController implements RobotController
    {
       START, LEFT_SUPPORT, RIGHT_SUPPORT;
    }
+
 
 }

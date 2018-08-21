@@ -4,6 +4,7 @@ import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.robotics.robotDescription.LinkGraphicsDescription;
 import us.ihmc.robotics.robotDescription.Plane;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -15,6 +16,9 @@ import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.simulationconstructionset.SliderJoint;
 import us.ihmc.simulationconstructionset.util.LinearGroundContactModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PeterPlanarWalkerRobot extends Robot
 {
    private final double initalHipAngle = 0.0;
@@ -22,8 +26,9 @@ public class PeterPlanarWalkerRobot extends Robot
    private double GRAVITY = -9.81;
    private FloatingPlanarJoint bodyJoint;
    private SideDependentList<PinJoint> hipJoints = new SideDependentList<PinJoint>();
+   private SideDependentList<PinJoint> anklePitchJoints = new SideDependentList<PinJoint>();
    private SideDependentList<SliderJoint> kneeJoints = new SideDependentList<SliderJoint>();
-   private SideDependentList<GroundContactPoint> gCpoints = new SideDependentList<GroundContactPoint>();
+   private SideDependentList<List<GroundContactPoint>> gCpoints = new SideDependentList<>(new ArrayList<>(), new ArrayList<>());
 
    private double bodyMass = 10.0, lowerLinkMass = 0.5, upperLinkMass = 1.0;
    public final double lowerLinkLength = 0.8, upperLinkLength = 0.7;
@@ -33,6 +38,9 @@ public class PeterPlanarWalkerRobot extends Robot
    private double bodyLength = 0.3, bodyWidth = 0.1, bodyHeight = 0.1;
    private double hipOffsetY = bodyWidth / 2.0;
    private double maxLegExtension = lowerLinkLength;
+   private double footY = 0.25;
+   private double footX = 0.25;
+   private double footZMin = -0.04;
 
    public final double nominalHeight = upperLinkLength + lowerLinkLength / 2.0;
 
@@ -73,20 +81,44 @@ public class PeterPlanarWalkerRobot extends Robot
 
          /*************************************************************/
 
-         GroundContactPoint contactPoint = new GroundContactPoint(robotSide.getSideNameFirstLetter() + "Foot", new Vector3D(0.0, 0.0, 0.0), this);
-         gCpoints.set(robotSide, contactPoint);
-         kneeJoints.get(robotSide).addGroundContactPoint(contactPoint);
-         Graphics3DObject graphics = kneeJoints.get(robotSide).getLink().getLinkGraphics();
-         graphics.identity();
-         graphics.translate(0.0, 0.0, 0.0);
-         double radius = 1.5 * lowerLinkRadius;
-         graphics.addSphere(radius, YoAppearance.Orange());
+         PinJoint anklePitchJoint = new PinJoint(robotSide.getSideNameFirstLetter() + "AnklePitch", new Vector3D(0.0, 0.0, 0.0), this, Axis.Y);
+         anklePitchJoints.put(robotSide, anklePitchJoint);
+         anklePitchJoint.setDynamic(true);
+         anklePitchJoint.setLimitStops(-0.15*Math.PI, 0.15*Math.PI, 1e6, 1e3);
+         kneeJoint.addJoint(anklePitchJoint);
+         GroundContactPoint gcHeelL = new GroundContactPoint(robotSide.getSideNameFirstLetter() + "gcHeelL",
+                                          new Vector3D(0.5 * footX, -0.5 * footY, footZMin), this);
+
+
+         GroundContactPoint gcHeelR = new GroundContactPoint(robotSide.getSideNameFirstLetter() + "gcHeelR",
+                                          new Vector3D(-0.5 * footX, -0.5 * footY, footZMin), this);
+
+
+         GroundContactPoint gcToeL = new GroundContactPoint(robotSide.getSideNameFirstLetter() + "gcToeL",
+                                         new Vector3D(-0.5 * footX, 0.5 * footY, footZMin), this);
+
+
+         GroundContactPoint gcToeR = new GroundContactPoint(robotSide.getSideNameFirstLetter() + "gcToeR",
+                                         new Vector3D(0.5 * footX, 0.5 * footY, footZMin), this);
+         gCpoints.get(robotSide).add(gcHeelL);
+         gCpoints.get(robotSide).add(gcHeelR);
+         gCpoints.get(robotSide).add(gcToeL);
+         gCpoints.get(robotSide).add(gcToeR);
+
+         anklePitchJoint.addGroundContactPoint(gcHeelL);
+         anklePitchJoint.addGroundContactPoint(gcHeelR);
+         anklePitchJoint.addGroundContactPoint(gcToeL);
+         anklePitchJoint.addGroundContactPoint(gcToeR);
+
+         Link foot = foot(robotSide,gCpoints.get(robotSide));
+         anklePitchJoint.setLink(foot);
+
       }
 
-      double groundKxy = 1e4;
-      double groundBxy = 1e2;
-      double groundKz = 125.0;
-      double groundBz = 300.0;
+      double groundKxy = 1e6;
+      double groundBxy = 1e4;
+      double groundKz = 50.0;
+      double groundBz = 500.0;
       LinearGroundContactModel ground = new LinearGroundContactModel(this, groundKxy, groundBxy, groundKz, groundBz, this.getRobotsYoVariableRegistry());
 
       this.setGroundContactModel(ground);
@@ -171,6 +203,29 @@ public class PeterPlanarWalkerRobot extends Robot
       return ret;
    }
 
+   private Link foot(RobotSide robotSide, List<GroundContactPoint> groundContactPoints)
+   {
+      Link ret = new Link(robotSide.getSideNameFirstLetter() + "foot");
+
+      ret.setMass(0.05);
+      ret.setMomentOfInertia(0.04, 0.04, 0.02);
+      ret.setComOffset(0.0, 0.0, -0.0309);
+
+      LinkGraphicsDescription linkGraphics = new LinkGraphicsDescription();
+      //linkGraphics.translate(footX * (0.5 - footOffsetPercent), 0.0, footZMin);
+      linkGraphics.translate(0.0,0.0,footZMin);
+      linkGraphics.addCube(footX, footY, 0.04 - footZMin);
+
+      for (int i=0;i<groundContactPoints.size();i++)
+      {
+         linkGraphics.identity();
+         linkGraphics.translate(groundContactPoints.get(i).getOffsetCopy());
+         linkGraphics.addSphere(0.01,YoAppearance.Orange());
+      }
+      ret.setLinkGraphics(linkGraphics);
+      return ret;
+   }
+
    public double getKneePosition(RobotSide robotSide)
    {
       return kneeJoints.get(robotSide).getQYoVariable().getDoubleValue();
@@ -208,8 +263,14 @@ public class PeterPlanarWalkerRobot extends Robot
 
    public boolean isFootOnGround(RobotSide robotSide)
    {
-      return gCpoints.get(robotSide).isInContact();
+      for (int i = 0; i < gCpoints.get(robotSide).size(); i++)
+      {
+         if (gCpoints.get(robotSide).get(i).isInContact())
+            return true;
+      }
+      return false;
    }
+
 
    public double getBodyPitch()
    {
