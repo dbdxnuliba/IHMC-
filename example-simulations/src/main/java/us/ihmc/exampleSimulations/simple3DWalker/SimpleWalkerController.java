@@ -17,6 +17,8 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
+import us.ihmc.simulationconstructionset.ContactingExternalForcePoint;
+import us.ihmc.simulationconstructionset.ContactingExternalForcePointsVisualizer;
 import us.ihmc.simulationconstructionset.GroundContactPoint;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -161,6 +163,22 @@ public class SimpleWalkerController implements RobotController
    private YoGraphicPosition currentRFootGraphic;
    private Artifact currentRFootGraphicArtifact;
 
+
+   private YoGraphicVector pushForceGraphic;
+   private Artifact pushForceGraphicArtifact;
+   private YoDouble pushVectorX;
+   private YoDouble pushVectorY;
+   private YoDouble pushVectorZ;
+
+   private YoDouble pushOriginX;
+   private YoDouble pushOriginY;
+   private YoDouble pushOriginZ;
+
+   private YoBoolean duringPush;
+   private YoDouble pushForceX;
+
+   ContactingExternalForcePoint externalForcePoint;
+
    YoFrameConvexPolygon2D footPolygon;
    YoGraphicPolygon foot;
    Artifact footArtifact;
@@ -203,7 +221,7 @@ public class SimpleWalkerController implements RobotController
       this.withTwan = withTwan;
       this.withHeightOnly = withHeightOnly;
 
-      heightStopMPC = new SimpleWalkerHeightStopMPC(1.23,robot.nominalHeight,35,registry);
+      heightStopMPC = new SimpleWalkerHeightStopMPC(1.12,robot.nominalHeight,26,registry);
 
       centerOfMassPosition = new YoFramePoint3D("centerOfMass", ReferenceFrame.getWorldFrame(), registry);
       centerOfMassPosition2D = new YoFramePoint2D("centerOfMass2D", ReferenceFrame.getWorldFrame(), registry);
@@ -264,8 +282,39 @@ public class SimpleWalkerController implements RobotController
       currentRFootGraphicArtifact = currentRFootGraphic.createArtifact();
       yoGraphicsListRegistry.registerArtifact("RFootArtifact", currentRFootGraphicArtifact);
 
+      pushVectorX = new YoDouble("pushVectorX",registry);
+      pushVectorX.set(centerOfMassPosition.getX());
+      pushVectorY = new YoDouble("pushVectorY",registry);
+      pushVectorY.set(centerOfMassPosition.getY());
+      pushVectorZ = new YoDouble("pushVectorZ",registry);
+      pushVectorZ.set(centerOfMassPosition.getZ());
+
+      pushOriginX = new YoDouble("pushOriginX",registry);
+      pushOriginX.set(centerOfMassPosition.getX()-2);
+      pushOriginY = new YoDouble("pushOriginY",registry);
+      pushOriginY.set(centerOfMassPosition.getY());
+      pushOriginZ = new YoDouble("pushOriginZ",registry);
+      pushOriginZ.set(centerOfMassPosition.getY());
+
+      duringPush = new YoBoolean("duringPush",registry);
+      duringPush.set(false);
+      pushForceX = new YoDouble("pushForceMagnX",registry);
+      pushForceGraphic = new YoGraphicVector("pushForceGraphic",pushOriginX,pushOriginY,pushOriginZ,pushVectorX,pushVectorY,pushVectorZ,1,YoAppearance.DarkRed());
+
+
+      yoGraphicsListRegistry.registerYoGraphic("pushForceGraphicRegistry", pushForceGraphic);
+      pushForceGraphicArtifact = pushForceGraphic.createArtifact();
+      yoGraphicsListRegistry.registerArtifact("pushForceArtifact",pushForceGraphicArtifact);
+
+
+
+
       currentFeet2D.put(RobotSide.LEFT, currentLFoot2D);
       currentFeet2D.put(RobotSide.RIGHT, currentRFoot2D);
+
+      externalForcePoint = new ContactingExternalForcePoint("pushForcePoint", robot.getRootJoints().get(0),registry);
+
+
 
 
 
@@ -435,7 +484,6 @@ public class SimpleWalkerController implements RobotController
          //Swing Leg
 
 
-
          if ((timeInState > swingTimeForThisStep.getDoubleValue() / 2.0) && !initalizedKneeExtension.getBooleanValue())
          {
             double currentKneePosition = robot.getKneePosition(swingLeg.getEnumValue());
@@ -589,22 +637,22 @@ public class SimpleWalkerController implements RobotController
          {
             legLength.set(robot.getLegLenght(supportLeg));
             //double CoPforMPC = MathTools.clamp(currentCOP2D.getX(),robot.getAnklePositionInWorldX(supportLeg)-0.14,robot.getAnklePositionInWorldX(supportLeg)+0.14);
-            x0Twan.set(centerOfMassPosition2D.getX()-desiredCoP2D.getX());//robot.getAnklePositionInWorldX(supportLeg));
+            x0Twan.set(centerOfMassPosition2D.getX()-robot.getAnklePositionInWorldX(supportLeg));
 
             if ((x0Twan.getDoubleValue()<-0.05)&&(timeInState>0.05)&&((desiredICP2D.getX()-currentICP2D.getX())<-0.03))
             {
                //robot.setAnklePitchTorque(supportLeg,0.0);
                heightStopMPC.computeInvOutLoop(x0Twan.getDoubleValue(),robot.getBodyVelocityX(),robot.getBodyHeight(),-robot.getBodyHeightVelocity());
 
+
                double zdes = heightStopMPC.getDesiredHeight();
                double dzdes = heightStopMPC.getDesiredHeighRate();
                heightObjective.set(zdes);
                heightRateObjective.set(dzdes);
                heightIsControlled.set(true);
-
-               kp_m=10000;
-               kd_m=1000;
-               kdd_m=20;
+               kp_m=0;
+               kd_m=500;
+               kdd_m=30;
                double ddzdes = heightStopMPC.getDesiredHeightAcceleration();
                controlKneeToBodyHeightRate(supportLeg,zdes,dzdes,ddzdes);
 
@@ -646,10 +694,6 @@ public class SimpleWalkerController implements RobotController
             double rFootY = robot.getBodyPositionY() + robot.getHipRollPosition(supportLeg);
             currentRFoot2D.set(rFootX,rFootY);
          }
-
-
-
-
       }
 
       @Override
@@ -872,6 +916,8 @@ public class SimpleWalkerController implements RobotController
 
       controlEffort= Math.max(0,controlEffort);
 
+
+
       robot.setKneeTorque(robotSide, controlEffort);
    }
 
@@ -972,8 +1018,22 @@ public class SimpleWalkerController implements RobotController
       stateMachine.doActionAndTransition();
 
 
+      if (duringPush.getBooleanValue())
+      {
+         pushVectorX.set(pushForceX.getDoubleValue()/100);
+      }
+      else
+         {
+            pushVectorX.set(0);
+      }
+      pushVectorY.set(0.0);
+      pushVectorZ.set(0.0);
 
+      pushOriginX.set(centerOfMassPosition.getX());
+      pushOriginY.set(centerOfMassPosition.getY());
+      pushOriginZ.set(centerOfMassPosition.getZ());
 
+      externalForcePoint.setForce(pushForceX.getDoubleValue(),0,0);
 
    }
 
@@ -1028,8 +1088,37 @@ public class SimpleWalkerController implements RobotController
       return currentICPGraphicArtifact;
    }
 
+
    public Artifact getCurrentLFootGraphicArtifact() { return currentLFootGraphicArtifact;}
    public Artifact getCurrentRFootGraphicArtifact() { return currentRFootGraphicArtifact;}
+
+   public ContactingExternalForcePoint getExternalForcePoint()
+   {
+      return externalForcePoint;
+   }
+
+   public YoGraphicVector getPushForceGraphic()
+   {
+      return pushForceGraphic;
+   }
+
+   public Artifact getPushForceGraphicArtifact()
+   {
+      return pushForceGraphicArtifact;
+   }
+
+
+   public void setDuringPush(Boolean push)
+   {
+      duringPush.set(push);
+   }
+
+   public void setPushForceX(double pushMagX)
+   {
+      pushForceX.set(pushMagX);
+   }
+
+
 
    public Artifact getFootArtifact()
    {

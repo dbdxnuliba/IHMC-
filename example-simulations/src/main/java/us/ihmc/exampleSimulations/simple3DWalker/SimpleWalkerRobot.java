@@ -370,8 +370,8 @@ public class SimpleWalkerRobot extends Robot
    {
       Link ret = new Link(robotSide.getSideNameFirstLetter() + "foot");
 
-      ret.setMass(0.2);
-      ret.setMomentOfInertia(0.04, 0.04, 0.02);
+      ret.setMass(0.5);
+      ret.setMomentOfInertia(0.1, 0.1, 0.02);
       ret.setComOffset(0.0, 0.0, -0.0309);
 
 
