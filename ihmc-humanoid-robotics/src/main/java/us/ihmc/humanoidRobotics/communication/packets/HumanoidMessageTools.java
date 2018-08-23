@@ -477,7 +477,8 @@ public class HumanoidMessageTools
                                                                                                          ConfigurationSpaceName[] degreesOfFreedomToExplore)
    {
       return createRigidBodyExplorationConfigurationMessage(rigidBody, degreesOfFreedomToExplore,
-                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationAmplitudeArray(degreesOfFreedomToExplore));
+                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationUpperLimitArray(degreesOfFreedomToExplore),
+                                                            WholeBodyTrajectoryToolboxMessageTools.createDefaultExplorationLowerLimitArray(degreesOfFreedomToExplore));
    }
 
    public static RigidBodyExplorationConfigurationMessage createRigidBodyExplorationConfigurationMessage(RigidBody rigidBody,
