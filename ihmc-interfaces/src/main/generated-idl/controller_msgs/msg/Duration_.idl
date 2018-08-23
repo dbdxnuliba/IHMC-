@@ -1,0 +1,21 @@
+#ifndef __controller_msgs__msg__Duration__idl__
+#define __controller_msgs__msg__Duration__idl__
+
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::Duration_")
+      struct Duration
+      {
+        long sec;
+        unsigned long nanosec;
+      };
+    };
+  };
+};
+
+#endif

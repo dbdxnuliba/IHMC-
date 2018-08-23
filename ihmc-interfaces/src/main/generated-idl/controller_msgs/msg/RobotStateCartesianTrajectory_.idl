@@ -1,0 +1,32 @@
+#ifndef __controller_msgs__msg__RobotStateCartesianTrajectory__idl__
+#define __controller_msgs__msg__RobotStateCartesianTrajectory__idl__
+
+#include "controller_msgs/msg/./RobotStateCartesian_.idl"
+#include "std_msgs/msg/./Header_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * The state of a robot expressed in the cartesian frame
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::RobotStateCartesianTrajectory_")
+      struct RobotStateCartesianTrajectory
+      {
+        /**
+         * The header is used to specify the coordinate frame and the reference time for the trajectory durations
+         */
+        std_msgs::msg::dds::Header header;
+        /**
+         * A representation of a Cartesian trajectory
+         */
+        sequence<controller_msgs::msg::dds::RobotStateCartesian> points;
+      };
+    };
+  };
+};
+
+#endif

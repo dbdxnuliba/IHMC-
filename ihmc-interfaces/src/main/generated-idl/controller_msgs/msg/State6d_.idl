@@ -1,0 +1,37 @@
+#ifndef __controller_msgs__msg__State6d__idl__
+#define __controller_msgs__msg__State6d__idl__
+
+#include "geometry_msgs/msg/./Accel_.idl"
+#include "geometry_msgs/msg/./Pose_.idl"
+#include "geometry_msgs/msg/./Twist_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * The state of the 6D base of a system
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::State6d_")
+      struct State6d
+      {
+        /**
+         * The 6D linear and angular position, orientation maps base to world
+         */
+        geometry_msgs::msg::dds::Pose pose;
+        /**
+         * The 6D linear and angular velocity
+         */
+        geometry_msgs::msg::dds::Twist twist;
+        /**
+         * The 6D linear and angular acceleration
+         */
+        geometry_msgs::msg::dds::Accel accel;
+      };
+    };
+  };
+};
+
+#endif

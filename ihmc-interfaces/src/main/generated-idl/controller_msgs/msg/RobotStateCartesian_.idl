@@ -1,0 +1,46 @@
+#ifndef __controller_msgs__msg__RobotStateCartesian__idl__
+#define __controller_msgs__msg__RobotStateCartesian__idl__
+
+#include "controller_msgs/msg/./Duration_.idl"
+#include "controller_msgs/msg/./State6d_.idl"
+#include "controller_msgs/msg/./StateLin3d_.idl"
+#include "geometry_msgs/msg/./Vector3_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::RobotStateCartesian_")
+      struct RobotStateCartesian
+      {
+        /**
+         * The state of a robot expressed in the Cartesian frame
+         * global time along trajectory
+         */
+        controller_msgs::msg::dds::Duration time_from_start;
+        /**
+         * Position, velocity and acceleration of the base expressed in world frame
+         * The orientation quaternion maps base to world frame.
+         * base pos/vel/acc in world
+         */
+        controller_msgs::msg::dds::State6d base;
+        /**
+         * endeffector pos/vel/acc in world
+         */
+        sequence<controller_msgs::msg::dds::StateLin3d> ee_motion;
+        /**
+         * endeffector forces expressed in world
+         */
+        sequence<geometry_msgs::msg::dds::Vector3> ee_forces;
+        /**
+         * True if the foot is touching the environment
+         */
+        sequence<boolean> ee_contact;
+      };
+    };
+  };
+};
+
+#endif

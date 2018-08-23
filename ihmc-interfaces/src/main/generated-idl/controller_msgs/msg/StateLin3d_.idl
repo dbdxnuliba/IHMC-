@@ -1,0 +1,28 @@
+#ifndef __controller_msgs__msg__StateLin3d__idl__
+#define __controller_msgs__msg__StateLin3d__idl__
+
+#include "geometry_msgs/msg/./Point_.idl"
+#include "geometry_msgs/msg/./Vector3_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * This contains the 3D representation of a linear state, including:
+       * position, velocity, acceleration
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::StateLin3d_")
+      struct StateLin3d
+      {
+        geometry_msgs::msg::dds::Point pos;
+        geometry_msgs::msg::dds::Vector3 vel;
+        geometry_msgs::msg::dds::Vector3 acc;
+      };
+    };
+  };
+};
+
+#endif
