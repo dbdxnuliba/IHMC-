@@ -1,20 +1,33 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
 import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
+import controller_msgs.msg.dds.RobotStateCartesianTrajectory;
 import org.junit.Test;
+import us.ihmc.commons.PrintTools;
+import us.ihmc.communication.ROS2Tools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
+import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
+import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
+import us.ihmc.quadrupedRobotics.communication.subscribers.TowrConfigurationMessageSubscriber;
 import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTOWRTrajectoryTest;
 import us.ihmc.quadrupedRobotics.util.TimeInterval;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.ros2.NewMessageListener;
+import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTOWRTrajectoryConverter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static us.ihmc.robotics.robotSide.RobotSide.LEFT;
 
 public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 {
@@ -38,9 +51,62 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       return new Point3D(1.684, 0.077, 0.0);
    }
 
+   private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
+   
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
+      //QuadrupedTOWRTrajectoryConverter quadrupedTOWRTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
+      //try
+      //{
+      //   us.ihmc.euclid.tuple3D.Point3D base_pos = quadrupedTOWRTrajectoryConverter.listenToTowr();
+      //}
+      //catch (IOException e)
+      //{
+      //   e.printStackTrace();
+      //}
+      //catch (InterruptedException e)
+      //{
+      //   e.printStackTrace();
+      //}
+
+      String nodeName = "towr_planner";
+      RealtimeRos2Node realtimeRos2Node = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.INTRAPROCESS, nodeName);
+
+      RobotSide robotSide = LEFT;
+      String topicName = "towr_ros2";
+      TowrConfigurationMessageSubscriber robotStateCartesianTrajectoryNewMessageListener = new TowrConfigurationMessageSubscriber(robotSide);
+
+      ROS2Tools.createCallbackSubscription(realtimeRos2Node, RobotStateCartesianTrajectory.class, topicName, robotStateCartesianTrajectoryNewMessageListener);
+
+      //RobotStateCartesianTrajectory robotStateCartesianTrajectoryToListen = robotStateCartesianTrajectoryNewMessageListener.pollMessage();
+      //realtimeRos2Node.spin();
+      us.ihmc.euclid.tuple3D.Point3D initial_base_pos = new Point3D();
+      if (robotStateCartesianTrajectoryNewMessageListener.isNewTowrTrajectoryAvailable())
+      {
+         RobotStateCartesianTrajectory robotStateCartesianTrajectoryToListen = robotStateCartesianTrajectoryNewMessageListener.pollMessage();
+         initial_base_pos = robotStateCartesianTrajectoryNewMessageListener.pollMessage().getPoints().get(0).base_.getPose().getPosition();
+         PrintTools.info("initial pos:"+initial_base_pos);//ValkyrieFingerSetController controller = fingerSetControllers.get(robotSide);
+         //if (controller == null)
+         //   continue;
+
+         //switch (handDesiredConfiguration)
+         //{
+         //case OPEN:
+         //   controller.requestState(GraspState.OPEN);
+         //   break;
+         //
+         //case CLOSE:
+         //   controller.requestState(GraspState.CLOSE);
+         //   break;
+         //
+         //default:
+         //   break;
+         //}
+      }
+      //us.ihmc.euclid.tuple3D.Point3D initial_base_pos = robotStateCartesianTrajectoryNewMessageListener.pollMessage().getPoints().get(0).base_.getPose().getPosition();
+      PrintTools.info("initial base pos TOWR:"+initial_base_pos);
+
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
       steps.add(QuadrupedMessageTools
                       .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(-0.550, -0.100, -0.012), 0.1, new TimeInterval(0.200, 0.530)));
