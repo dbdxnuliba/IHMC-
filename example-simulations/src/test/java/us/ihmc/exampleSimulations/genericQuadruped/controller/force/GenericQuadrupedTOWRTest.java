@@ -1,7 +1,7 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
-import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
-import controller_msgs.msg.dds.RobotStateCartesianTrajectory;
+import controller_msgs.msg.dds.*;
+import org.ejml.data.DenseMatrix64F;
 import org.junit.Test;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.ROS2Tools;
@@ -20,6 +20,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.NewMessageListener;
 import us.ihmc.ros2.RealtimeRos2Node;
+import us.ihmc.ros2.Ros2Node;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTOWRTrajectoryConverter;
 
@@ -52,60 +53,40 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
    }
 
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
-   
+
+   public static void subscribeToTowrRobotStateCartesianTrajectory() throws IOException, InterruptedException
+   {
+      Ros2Node node = new Ros2Node(PubSubImplementation.FAST_RTPS, "Ros2ListenerExample");
+      node.createSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), subscriber -> {
+         RobotStateCartesianTrajectory robotStateCartesianTrajectory = new RobotStateCartesianTrajectory();
+         //int pointsNumber = robotStateCartesianTrajectory.getPoints().;
+         //PrintTools.info("number of points: "+pointsNumber);
+         if (subscriber.takeNextData(robotStateCartesianTrajectory, null)) {
+
+            Point3D base_pos = new Point3D();
+            base_pos = robotStateCartesianTrajectory.getPoints().get(0).base_.getPose().getPosition();
+            //for (RobotStateCartesian robotStateCartesian : robotStateCartesianTrajectory.getPoints()){
+            //   State6d base_pose = robotStateCartesian.getBase();
+            //System.out.println(base_pose);
+            //}
+         }
+      }, "towr_ros2");
+
+      //Thread.currentThread().join(); // keep thread alive to receive more messages
+
+   }
+
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
-      //QuadrupedTOWRTrajectoryConverter quadrupedTOWRTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
-      //try
-      //{
-      //   us.ihmc.euclid.tuple3D.Point3D base_pos = quadrupedTOWRTrajectoryConverter.listenToTowr();
-      //}
-      //catch (IOException e)
-      //{
-      //   e.printStackTrace();
-      //}
-      //catch (InterruptedException e)
-      //{
-      //   e.printStackTrace();
-      //}
-
-      String nodeName = "towr_planner";
-      RealtimeRos2Node realtimeRos2Node = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.INTRAPROCESS, nodeName);
-
-      RobotSide robotSide = LEFT;
-      String topicName = "towr_ros2";
-      TowrConfigurationMessageSubscriber robotStateCartesianTrajectoryNewMessageListener = new TowrConfigurationMessageSubscriber(robotSide);
-
-      ROS2Tools.createCallbackSubscription(realtimeRos2Node, RobotStateCartesianTrajectory.class, topicName, robotStateCartesianTrajectoryNewMessageListener);
-
-      //RobotStateCartesianTrajectory robotStateCartesianTrajectoryToListen = robotStateCartesianTrajectoryNewMessageListener.pollMessage();
-      //realtimeRos2Node.spin();
-      us.ihmc.euclid.tuple3D.Point3D initial_base_pos = new Point3D();
-      if (robotStateCartesianTrajectoryNewMessageListener.isNewTowrTrajectoryAvailable())
+      try
       {
-         RobotStateCartesianTrajectory robotStateCartesianTrajectoryToListen = robotStateCartesianTrajectoryNewMessageListener.pollMessage();
-         initial_base_pos = robotStateCartesianTrajectoryNewMessageListener.pollMessage().getPoints().get(0).base_.getPose().getPosition();
-         PrintTools.info("initial pos:"+initial_base_pos);//ValkyrieFingerSetController controller = fingerSetControllers.get(robotSide);
-         //if (controller == null)
-         //   continue;
-
-         //switch (handDesiredConfiguration)
-         //{
-         //case OPEN:
-         //   controller.requestState(GraspState.OPEN);
-         //   break;
-         //
-         //case CLOSE:
-         //   controller.requestState(GraspState.CLOSE);
-         //   break;
-         //
-         //default:
-         //   break;
-         //}
+         subscribeToTowrRobotStateCartesianTrajectory();
       }
-      //us.ihmc.euclid.tuple3D.Point3D initial_base_pos = robotStateCartesianTrajectoryNewMessageListener.pollMessage().getPoints().get(0).base_.getPose().getPosition();
-      PrintTools.info("initial base pos TOWR:"+initial_base_pos);
+      catch (Exception e)
+      {
+      }
+      //PrintTools.info("initial base pos TOWR:"+initial_base_pos);
 
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
       steps.add(QuadrupedMessageTools
