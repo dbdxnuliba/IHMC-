@@ -83,7 +83,7 @@ public abstract class HumanoidHandDesiredConfigurationBehaviorTest implements Mu
 
       boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
       assertTrue(success);
-      RobotSide robotSide = RobotSide.LEFT;
+      RobotSide robotSide = RobotSide.RIGHT;
       double trajectoryTime = 2.0;
 
       double fingerJointQInitial = getTotalFingerJointQ(robotSide);
@@ -113,7 +113,7 @@ public abstract class HumanoidHandDesiredConfigurationBehaviorTest implements Mu
       boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
       assertTrue(success);
 
-      RobotSide robotSide = RobotSide.LEFT;
+      RobotSide robotSide = RobotSide.RIGHT;
       double trajectoryTime = 0.3; // [0.3] Hand closes quickly!
       double stopTime = trajectoryTime / 2.0;
 
@@ -155,7 +155,7 @@ public abstract class HumanoidHandDesiredConfigurationBehaviorTest implements Mu
       boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
       assertTrue(success);
 
-      RobotSide robotSide = RobotSide.LEFT;
+      RobotSide robotSide = RobotSide.RIGHT;
       double trajectoryTime = 0.3; // [0.3] Hand closes quickly!
       double stopTime = trajectoryTime / 2.0;
 
