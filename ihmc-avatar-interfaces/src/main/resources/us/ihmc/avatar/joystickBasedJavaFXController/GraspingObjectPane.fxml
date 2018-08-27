@@ -7,4 +7,64 @@
 <?import javafx.scene.layout.AnchorPane?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.avatar.joystickBasedJavaFXController.GraspingObjectPaneController">
+   <children>
+      <TabPane fx:id="tapPaneShape" prefHeight="200.0" prefWidth="339.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <tabs>
+          <Tab text="Sphere">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <Slider fx:id="sliderSphereRadius" layoutX="80.0" layoutY="120.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.1" />
+                        <Label layoutX="20.0" layoutY="120.0" prefHeight="16.0" prefWidth="59.0" text="radius" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="140.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+          <Tab text="Cylinder">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <Slider fx:id="sliderCylinderHeight" layoutX="80.0" layoutY="70.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.15" />
+                        <Slider fx:id="sliderCylinderRadius" layoutX="80.0" layoutY="120.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.05" />
+                        <Label layoutX="20.0" layoutY="70.0" prefHeight="16.0" prefWidth="59.0" text="height" />
+                        <Label layoutX="20.0" layoutY="120.0" prefHeight="16.0" prefWidth="59.0" text="radius" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="140.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="90.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                     </children></AnchorPane>
+            </content>
+          </Tab>
+            <Tab text="Torus">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <Slider fx:id="sliderTorusTube" layoutX="80.0" layoutY="120.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.05" />
+                        <Slider fx:id="sliderTorusRadius" layoutX="80.0" layoutY="70.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.2" />
+                        <Label layoutX="20.0" layoutY="70.0" prefHeight="16.0" prefWidth="59.0" text="radius" />
+                        <Label layoutX="20.0" layoutY="120.0" prefHeight="16.0" prefWidth="59.0" text="tube" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="140.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="90.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                     </children></AnchorPane>
+               </content>
+            </Tab>
+            <Tab text="Box">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <Slider fx:id="sliderBoxLength" layoutX="80.0" layoutY="20.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.2" />
+                        <Slider fx:id="sliderBoxWidth" layoutX="80.0" layoutY="70.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.3" />
+                        <Slider fx:id="sliderBoxHeight" layoutX="80.0" layoutY="120.0" majorTickUnit="0.1" max="0.5" minorTickCount="9" prefHeight="40.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.1" />
+                        <Label layoutX="20.0" layoutY="20.0" prefHeight="16.0" prefWidth="59.0" text="length" />
+                        <Label layoutX="20.0" layoutY="70.0" prefHeight="16.0" prefWidth="59.0" text="width" />
+                        <Label layoutX="20.0" layoutY="120.0" prefHeight="16.0" prefWidth="59.0" text="height" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="140.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="40.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                        <Label alignment="CENTER" layoutX="280.0" layoutY="90.0" prefHeight="16.0" prefWidth="27.0" text="(m)" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+   </children>
 </AnchorPane>
