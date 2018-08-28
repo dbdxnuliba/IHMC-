@@ -11,6 +11,7 @@ import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.ConfigurationSpaceName;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.RigidBodyExplorationConfigurationCommand;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.WaypointBasedTrajectoryCommand;
@@ -50,8 +51,8 @@ public class ExploringRigidBody
 
    private final double initialDistanceToManifold;
 
-   private static final double positionWeight = 1.0;
-   private static final double orientationWeight = 0.1;
+   private static final double positionWeight = WholeBodyTrajectoryToolboxMessageTools.positionWeight;
+   private static final double orientationWeight = WholeBodyTrajectoryToolboxMessageTools.orientationWeight;
 
    /**
     * For exploring rigid body with constrained trajectory.

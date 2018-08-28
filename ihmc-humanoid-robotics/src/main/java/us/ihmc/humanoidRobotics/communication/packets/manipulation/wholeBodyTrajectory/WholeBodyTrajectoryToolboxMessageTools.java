@@ -12,6 +12,8 @@ import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 public class WholeBodyTrajectoryToolboxMessageTools
 {
    public static final Random random = new Random(1);
+   public static final double positionWeight = 1.0;
+   public static final double orientationWeight = 0.5;
 
    public static interface FunctionTrajectory
    {

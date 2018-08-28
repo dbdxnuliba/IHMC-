@@ -358,7 +358,7 @@ public abstract class AvatarWholeBodyTrajectoryToolboxControllerTest implements 
          manifold.setFromMessage(reachingManifoldMessages.get(i));
          manifolds.add(manifold);
       }
-      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, handTransform, closestPointOnManifold, 1.0, 0.1);
+      ReachingManifoldTools.packClosestRigidBodyTransformOnManifold(manifolds, handTransform, closestPointOnManifold, WholeBodyTrajectoryToolboxMessageTools.positionWeight, WholeBodyTrajectoryToolboxMessageTools.orientationWeight);
       ReachingManifoldTools.packExtrapolatedTransform(handTransform, closestPointOnManifold, extrapolateRatio, endTransformOnTrajectory);
       reachingManifolds.addAll(reachingManifoldMessages);
 
