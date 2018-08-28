@@ -1,28 +1,34 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
 import controller_msgs.msg.dds.*;
+import org.apache.commons.lang3.SystemUtils;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.data.DenseMatrixBool;
 import org.junit.Test;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
+import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
 import us.ihmc.quadrupedRobotics.communication.subscribers.TowrConfigurationMessageSubscriber;
 import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTOWRTrajectoryTest;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
 import us.ihmc.quadrupedRobotics.util.TimeInterval;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.NewMessageListener;
-import us.ihmc.ros2.RealtimeRos2Node;
-import us.ihmc.ros2.Ros2Node;
+import us.ihmc.ros2.*;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTOWRTrajectoryConverter;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates;
+import us.ihmc.util.PeriodicNonRealtimeThreadSchedulerFactory;
+import us.ihmc.util.PeriodicRealtimeThreadSchedulerFactory;
+import us.ihmc.util.PeriodicThreadSchedulerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +38,7 @@ import static us.ihmc.robotics.robotSide.RobotSide.LEFT;
 
 public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 {
+   static ArrayList<Point3D> basePositions;
    @Override
    public QuadrupedTestFactory createQuadrupedTestFactory()
    {
@@ -52,27 +59,90 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       return new Point3D(1.684, 0.077, 0.0);
    }
 
+
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
 
-   public static void subscribeToTowrRobotStateCartesianTrajectory() throws IOException, InterruptedException
+   public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
    {
-      Ros2Node node = new Ros2Node(PubSubImplementation.FAST_RTPS, "Ros2ListenerExample");
-      node.createSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), subscriber -> {
-         RobotStateCartesianTrajectory robotStateCartesianTrajectory = new RobotStateCartesianTrajectory();
-         //int pointsNumber = robotStateCartesianTrajectory.getPoints().;
-         //PrintTools.info("number of points: "+pointsNumber);
-         if (subscriber.takeNextData(robotStateCartesianTrajectory, null)) {
+      PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ? // realtime threads only work on linux
+            new PeriodicRealtimeThreadSchedulerFactory(20) :           // see https://github.com/ihmcrobotics/ihmc-realtime
+            new PeriodicNonRealtimeThreadSchedulerFactory();                   // to setup realtime threads
+      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "NonRealtimeRos2PublishSubscribeExample", "");
+      RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
 
-            Point3D base_pos = new Point3D();
-            base_pos = robotStateCartesianTrajectory.getPoints().get(0).base_.getPose().getPosition();
-            //for (RobotStateCartesian robotStateCartesian : robotStateCartesianTrajectory.getPoints()){
-            //   State6d base_pose = robotStateCartesian.getBase();
-            //System.out.println(base_pose);
-            //}
+      RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = node.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
+
+      System.out.println(111111);
+
+      RobotStateCartesianTrajectory message = new RobotStateCartesianTrajectory();
+      //for (int i = 0; i < 10; i++)
+      //{
+      //   message.setSec(i);
+      //   System.out.println(message.getSec()); // first message
+      //   publisher.publish(message);  // publish
+      //}
+
+      System.out.println(111111);
+
+      RobotStateCartesianTrajectory incomingMessage = new RobotStateCartesianTrajectory();
+      while (!subscription.poll(incomingMessage))
+      {
+         ; // just waiting for the first message
+      }
+      //System.out.println(incomingMessage); // first message
+      int i = 1;
+      //while (true)
+      //{
+      if (subscription.poll(incomingMessage))  // poll for new messages
+      {
+         //System.out.println(incomingMessage);
+         //i++;
+      }
+      else
+      {
+         // no available messages
+      }
+      //}
+      //System.out.println(incomingMessage); // first message
+
+      System.out.println(111111);
+      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
+      double val = incomingMessage.getPoints().get(0).base_.getPose().getPosition().getZ();
+      //towrCartesianStatesToFill.setPointsNumber(incomingMessage.getPoints().size());
+      int iter = 0;
+
+      int numberOfEndEffectors = 4;
+      DenseMatrixBool previousContactState = new DenseMatrixBool(1, numberOfEndEffectors);
+      DenseMatrix64F stepsNumber = new DenseMatrix64F(1,numberOfEndEffectors);
+      
+      for (RobotStateCartesian robotStateCartesianIter : incomingMessage.getPoints()){
+         System.out.println(iter); // first message
+         System.out.println(robotStateCartesianIter.getEeContact()); // first message
+         System.out.println(robotStateCartesianIter.getEeMotion()); // first message
+         towrCartesianStatesToFill.setBasePositions(iter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
+         towrCartesianStatesToFill.setBasePositions(iter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
+         towrCartesianStatesToFill.setBasePositions(iter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
+         iter ++;
+
+         for(LegIndex legIdx :LegIndex.values())
+         {
+         if((previousContactState.get(legIdx.ordinal())==false)&&(robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal())==true))
+         {
+            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 0, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getX());
+            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 1, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getY());
+            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 2, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getZ());
+            stepsNumber.set(0, legIdx.ordinal(), stepsNumber.get(0, legIdx.ordinal())+1);
          }
-      }, "towr_ros2");
+         previousContactState.set(0, legIdx.ordinal(), robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal()));
+         }
+      }
 
-      //Thread.currentThread().join(); // keep thread alive to receive more messages
+      //incomingMessage.getPoints().get(0).getEeMotion().size()
+      Object<StateLin3d> footPos = incomingMessage.getPoints().get(0).getEeMotion();
+      System.out.println(footPos);
+      //node.spin(); // start the realtime node thread
+
+      return towrCartesianStatesToFill;
 
    }
 
@@ -81,7 +151,13 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
    {
       try
       {
-         subscribeToTowrRobotStateCartesianTrajectory();
+         TowrCartesianStates towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
+         PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
+         PrintTools.info("Base trajectory: "+towrCartesianStates.getBasePositions());
+         PrintTools.info("FL foot trajectory: "+towrCartesianStates.getFrontLeftFootPosition());
+         PrintTools.info("FR foot trajectory: "+towrCartesianStates.getFrontRightFootPosition());
+         PrintTools.info("HL foot trajectory: "+towrCartesianStates.getHindLeftFootPosition());
+         PrintTools.info("HR foot trajectory: "+towrCartesianStates.getHindRightFootPosition());
       }
       catch (Exception e)
       {
