@@ -258,6 +258,8 @@ public class ReachingManifoldTools
 
       List<ReachingManifoldMessage> messages = new ArrayList<>();
       ReachingManifoldMessage sideMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage sidePositiveReverseMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
+      ReachingManifoldMessage sideNegativeReverseMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
       ReachingManifoldMessage topMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
       ReachingManifoldMessage bottomMessage = HumanoidMessageTools.createReachingManifoldMessage(hand);
 
@@ -269,6 +271,24 @@ public class ReachingManifoldTools
       sideMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
 
       HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideSpaces), sideLowerLimits, sideUpperLimits, sideMessage);
+      
+      ConfigurationSpaceName[] sidePositiveReverseSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH};
+      double[] sidePositiveReverseLowerLimits = new double[] {-Math.PI, 0.0, robotSide.negateIfRightSide(radius), Math.PI};
+      double[] sidePositiveReverseUpperLimits = new double[] {Math.PI, height, robotSide.negateIfRightSide(radius), Math.PI};
+
+      sidePositiveReverseMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      sidePositiveReverseMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sidePositiveReverseSpaces), sidePositiveReverseLowerLimits, sidePositiveReverseUpperLimits, sidePositiveReverseMessage);
+      
+      ConfigurationSpaceName[] sideNegativeReverseSpaces = {ConfigurationSpaceName.YAW, ConfigurationSpaceName.Z, ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH};
+      double[] sideNegativeReverseLowerLimits = new double[] {-Math.PI, 0.0, robotSide.negateIfRightSide(radius), -Math.PI};
+      double[] sideNegativeReverseUpperLimits = new double[] {Math.PI, height, robotSide.negateIfRightSide(radius), -Math.PI};
+
+      sideNegativeReverseMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
+      sideNegativeReverseMessage.getManifoldOriginOrientation().set(manifoldOriginOrientation);
+
+      HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideNegativeReverseSpaces), sideNegativeReverseLowerLimits, sideNegativeReverseUpperLimits, sideNegativeReverseMessage);
 
       ConfigurationSpaceName[] topSpaces = {ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
       double[] topLowerLimits = new double[] {height - thicknessForViz, -Math.PI, -radius * topAreaReductionRatio};
@@ -293,8 +313,10 @@ public class ReachingManifoldTools
       HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(bottomSpaces), bottomLowerLimits, bottomUpperLimits, bottomMessage);
 
       messages.add(sideMessage);
-      messages.add(topMessage);
-      messages.add(bottomMessage);
+      messages.add(sidePositiveReverseMessage);
+      messages.add(sideNegativeReverseMessage);
+//      messages.add(topMessage);
+//      messages.add(bottomMessage);
 
       return messages;
    }
