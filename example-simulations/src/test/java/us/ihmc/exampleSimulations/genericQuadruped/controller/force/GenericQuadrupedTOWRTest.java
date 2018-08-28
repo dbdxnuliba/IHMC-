@@ -111,35 +111,54 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       //towrCartesianStatesToFill.setPointsNumber(incomingMessage.getPoints().size());
       int iter = 0;
 
+      int currentStep = 0;
       int numberOfEndEffectors = 4;
       DenseMatrixBool previousContactState = new DenseMatrixBool(1, numberOfEndEffectors);
-      DenseMatrix64F stepsNumber = new DenseMatrix64F(1,numberOfEndEffectors);
-      
-      for (RobotStateCartesian robotStateCartesianIter : incomingMessage.getPoints()){
-         System.out.println(iter); // first message
-         System.out.println(robotStateCartesianIter.getEeContact()); // first message
-         System.out.println(robotStateCartesianIter.getEeMotion()); // first message
-         towrCartesianStatesToFill.setBasePositions(iter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
-         towrCartesianStatesToFill.setBasePositions(iter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
-         towrCartesianStatesToFill.setBasePositions(iter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
-         iter ++;
+      DenseMatrix64F stepsNumberCounter = new DenseMatrix64F(1,numberOfEndEffectors);
 
+      for (RobotStateCartesian robotStateCartesianIter : incomingMessage.getPoints()){
+         //System.out.println(iter); // first message
+         //System.out.println(robotStateCartesianIter.getEeContact()); // first message
+         //System.out.println(robotStateCartesianIter.getEeMotion()); // first message
+         towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(iter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
+         towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(iter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
+         towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(iter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
+         iter ++;
          for(LegIndex legIdx :LegIndex.values())
          {
-         if((previousContactState.get(legIdx.ordinal())==false)&&(robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal())==true))
+            PrintTools.info("leg index"+ legIdx);
+            if((previousContactState.get(legIdx.ordinal())==true)&&(robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal())==false)){
+               currentStep = (int)stepsNumberCounter.get(0, legIdx.ordinal());
+               towrCartesianStatesToFill.setTakeOff(currentStep, legIdx, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
+            }
+
+            if((previousContactState.get(legIdx.ordinal())==false)&&(robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal())==true))
          {
-            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 0, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getX());
-            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 1, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getY());
-            towrCartesianStatesToFill.setTargetFoothold(legIdx, (int)stepsNumber.get(0, legIdx.ordinal()), 2, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getZ());
-            stepsNumber.set(0, legIdx.ordinal(), stepsNumber.get(0, legIdx.ordinal())+1);
+
+            currentStep = (int)stepsNumberCounter.get(0, legIdx.ordinal());
+            //PrintTools.info("leg ordinal: "+legIdx.ordinal());
+            towrCartesianStatesToFill.setTargetFootholdWorldFrame(legIdx, currentStep, 0, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getX());
+            towrCartesianStatesToFill.setTargetFootholdWorldFrame(legIdx, currentStep, 1, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getY());
+            towrCartesianStatesToFill.setTargetFootholdWorldFrame(legIdx, currentStep, 2, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getZ());
+
+            towrCartesianStatesToFill.setTargetFootholdBaseFrame(legIdx, currentStep, 0, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getX() - robotStateCartesianIter.getBase().getPose().getPosition().getX());
+            towrCartesianStatesToFill.setTargetFootholdBaseFrame(legIdx, currentStep, 1, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getY() - robotStateCartesianIter.getBase().getPose().getPosition().getY());
+            towrCartesianStatesToFill.setTargetFootholdBaseFrame(legIdx, currentStep, 2, robotStateCartesianIter.getEeMotion().get(legIdx.ordinal()).getPos().getZ());
+
+            stepsNumberCounter.set(0, legIdx.ordinal(), stepsNumberCounter.get(0, legIdx.ordinal())+1);
+
+            towrCartesianStatesToFill.setTouchDown(currentStep, legIdx, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
          }
+
+
          previousContactState.set(0, legIdx.ordinal(), robotStateCartesianIter.getEeContact().getBoolean(legIdx.ordinal()));
          }
       }
+      towrCartesianStatesToFill.setStepsNumber(stepsNumberCounter);
 
       //incomingMessage.getPoints().get(0).getEeMotion().size()
       Object<StateLin3d> footPos = incomingMessage.getPoints().get(0).getEeMotion();
-      System.out.println(footPos);
+      //System.out.println(footPos);
       //node.spin(); // start the realtime node thread
 
       return towrCartesianStatesToFill;
@@ -149,15 +168,26 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
+      TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
       try
       {
-         TowrCartesianStates towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
+         towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
          PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
-         PrintTools.info("Base trajectory: "+towrCartesianStates.getBasePositions());
-         PrintTools.info("FL foot trajectory: "+towrCartesianStates.getFrontLeftFootPosition());
-         PrintTools.info("FR foot trajectory: "+towrCartesianStates.getFrontRightFootPosition());
-         PrintTools.info("HL foot trajectory: "+towrCartesianStates.getHindLeftFootPosition());
-         PrintTools.info("HR foot trajectory: "+towrCartesianStates.getHindRightFootPosition());
+         PrintTools.info("Base trajectory: "+towrCartesianStates.getBaseLinearTrajectoryWorldFrame());
+         PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
+         PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
+         PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
+         PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
+
+         PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getFrontLeftFootPositionBaseFrame());
+         PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getFrontRightFootPositionBaseFrame());
+         PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getHindLeftFootPositionBaseFrame());
+         PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getHindRightFootPositionBaseFrame());
+
+         PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
+
+         PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
+         PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
       }
       catch (Exception e)
       {
@@ -165,44 +195,97 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       //PrintTools.info("initial base pos TOWR:"+initial_base_pos);
 
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(-0.550, -0.100, -0.012), 0.1, new TimeInterval(0.200, 0.530)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.550, 0.100, -0.012), 0.1, new TimeInterval(0.200, 0.530)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(-0.547, 0.100, -0.012), 0.1, new TimeInterval(0.630, 0.960)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(0.553, -0.100, -0.012), 0.1, new TimeInterval(0.630, 0.960)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(-0.544, -0.101, -0.012), 0.1, new TimeInterval(1.060, 1.390)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.556, 0.099, -0.012), 0.1, new TimeInterval(1.060, 1.390)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(-0.541, 0.096, -0.012), 0.1, new TimeInterval(1.490, 1.820)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(0.559, -0.104, -0.012), 0.1, new TimeInterval(1.490, 1.820)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.890, 0.096, -0.000), 0.1, new TimeInterval(2.710, 3.040)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(0.005, -0.104, -0.000), 0.1, new TimeInterval(2.925, 3.255)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(1.311, -0.100, -0.000), 0.1, new TimeInterval(3.140, 3.470)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(0.380, 0.109, -0.000), 0.1, new TimeInterval(3.355, 3.685)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(1.486, 0.118, -0.000), 0.1, new TimeInterval(3.570, 3.900)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(0.595, -0.073, -0.000), 0.1, new TimeInterval(3.785, 4.115)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(1.912, -0.066, -0.000), 0.1, new TimeInterval(4.000, 4.330)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(1.023, 0.149, -0.000), 0.1, new TimeInterval(4.215, 4.545)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(2.284, 0.137, -0.000), 0.1, new TimeInterval(4.430, 4.760)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(1.404, -0.083, -0.000), 0.1, new TimeInterval(4.645, 4.975)));
-      steps.add(QuadrupedMessageTools
-                      .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(2.708, -0.080, -0.000), 0.1, new TimeInterval(4.860, 5.190)));
+      int stepsTot = 3;
+      //for (LegIndex legIdx : LegIndex.values()){
+         int legIdx = 0;
+         DenseMatrix64F stepsTotal = towrCartesianStates.getStepsNumber();
+         for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
+            double targetPositionX = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 0);
+            double targetPositionY = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 1);
+            double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
+            double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
+            steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
+         }
+
+      legIdx = 1;
+      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
+         double targetPositionX = towrCartesianStates.getFrontRightFootPositionBaseFrame().get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getFrontRightFootPositionBaseFrame().get(stepCounter, 1);
+         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
+         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
+         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
+      }
+
+      legIdx = 2;
+      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
+         double targetPositionX = towrCartesianStates.getHindLeftFootPositionBaseFrame().get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getHindLeftFootPositionBaseFrame().get(stepCounter, 1);
+         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
+         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
+         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
+      }
+
+      legIdx = 3;
+      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
+         double targetPositionX = towrCartesianStates.getHindRightFootPositionBaseFrame().get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getHindRightFootPositionBaseFrame().get(stepCounter, 1);
+         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
+         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
+         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
+      }
+      //legIdx = 3;
+      //for(int stepCounter = 0; stepCounter< 1; stepCounter++){
+      //   int d = 1;
+      //   double targetPositionX = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 0);
+      //   double targetPositionY = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 1);
+      //   double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
+      //   double takeOff = towrCartesianStates.getTakeOff().get(stepCounter, legIdx);
+      //   steps.add(QuadrupedMessageTools
+      //                   .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
+      //
+      //}
+
+
+      //}
+
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(-0.550, -0.100, -0.012), 0.1, new TimeInterval(0.200, 0.530)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.550, 0.100, -0.012), 0.1, new TimeInterval(0.200, 0.530)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(-0.547, 0.100, -0.012), 0.1, new TimeInterval(0.630, 0.960)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(0.553, -0.100, -0.012), 0.1, new TimeInterval(0.630, 0.960)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(-0.544, -0.101, -0.012), 0.1, new TimeInterval(1.060, 1.390)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.556, 0.099, -0.012), 0.1, new TimeInterval(1.060, 1.390)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(-0.541, 0.096, -0.012), 0.1, new TimeInterval(1.490, 1.820)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(0.559, -0.104, -0.012), 0.1, new TimeInterval(1.490, 1.820)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(0.890, 0.096, -0.000), 0.1, new TimeInterval(2.710, 3.040)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(0.005, -0.104, -0.000), 0.1, new TimeInterval(2.925, 3.255)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(1.311, -0.100, -0.000), 0.1, new TimeInterval(3.140, 3.470)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(0.380, 0.109, -0.000), 0.1, new TimeInterval(3.355, 3.685)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(1.486, 0.118, -0.000), 0.1, new TimeInterval(3.570, 3.900)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(0.595, -0.073, -0.000), 0.1, new TimeInterval(3.785, 4.115)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(1.912, -0.066, -0.000), 0.1, new TimeInterval(4.000, 4.330)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(1.023, 0.149, -0.000), 0.1, new TimeInterval(4.215, 4.545)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(2.284, 0.137, -0.000), 0.1, new TimeInterval(4.430, 4.760)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(1.404, -0.083, -0.000), 0.1, new TimeInterval(4.645, 4.975)));
+      //steps.add(QuadrupedMessageTools
+      //                .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(2.708, -0.080, -0.000), 0.1, new TimeInterval(4.860, 5.190)));
       return steps;
    }
 }

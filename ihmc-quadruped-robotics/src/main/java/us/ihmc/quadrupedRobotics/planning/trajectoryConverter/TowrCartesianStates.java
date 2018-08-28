@@ -29,11 +29,23 @@ public class TowrCartesianStates
 
    //DenseMatrix64F basePositions;
    int pointsNumber;
-   DenseMatrix64F basePositions = new DenseMatrix64F(200, 3);
-   DenseMatrix64F frontLeftFootPosition = new DenseMatrix64F(10, 3);
-   DenseMatrix64F frontRightFootPosition = new DenseMatrix64F(10, 3);
-   DenseMatrix64F hindLeftFootPosition = new DenseMatrix64F(10, 3);
-   DenseMatrix64F hindRightFootPosition = new DenseMatrix64F(10, 3);
+   int numberOfEndEffectors = 4;
+   DenseMatrix64F baseLinearTrajectoryWorldFrame = new DenseMatrix64F(200, 3);
+
+   DenseMatrix64F frontLeftFootPositionWorldFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F frontRightFootPositionWorldFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F hindLeftFootPositionWorldFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F hindRightFootPositionWorldFrame = new DenseMatrix64F(10, 3);
+
+   DenseMatrix64F frontLeftFootPositionBaseFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F frontRightFootPositionBaseFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F hindLeftFootPositionBaseFrame = new DenseMatrix64F(10, 3);
+   DenseMatrix64F hindRightFootPositionBaseFrame = new DenseMatrix64F(10, 3);
+
+   DenseMatrix64F numberOfSteps = new DenseMatrix64F(1,10);
+
+   DenseMatrix64F touchDownInstants = new DenseMatrix64F(10, numberOfEndEffectors);
+   DenseMatrix64F takeOffInstants = new DenseMatrix64F(10, numberOfEndEffectors);
 
    public void setPointsNumber(int pointsNum){
       this.pointsNumber = pointsNum;
@@ -47,52 +59,124 @@ public class TowrCartesianStates
       return points;
    }
 
-   public void setBasePositions(int row, int col, double value){
-      this.basePositions.set(row, col, value);
+   public void setStepsNumber(DenseMatrix64F stepsCounter){
+      this.numberOfSteps = stepsCounter;
    }
 
-   public DenseMatrix64F getBasePositions(){
-      return this.basePositions;
+   public void setStepsNumber(int stepsNum, LegIndex legIndex){
+      this.numberOfSteps.set(0, legIndex.ordinal());
    }
 
-   public void setTargetFoothold(LegIndex legIndex, int row, int col, double footholdValue){
+   public DenseMatrix64F getStepsNumber(){return this.numberOfSteps;}
+
+   public int getStepsNumber(LegIndex legIndex){
+      return (int)this.numberOfSteps.get(0, legIndex.ordinal());
+   }
+
+   public void setTouchDown(int stepNumer, LegIndex legIndex, double timeInstant){
+      this.touchDownInstants.set(stepNumer, legIndex.ordinal(), timeInstant);
+   }
+
+   public DenseMatrix64F getTouchDown(){
+      return this.touchDownInstants;
+   }
+
+   public void setTakeOff(int stepNumer, LegIndex legIndex, double timeInstant){
+      this.takeOffInstants.set(stepNumer, legIndex.ordinal(), timeInstant);
+   }
+
+   public DenseMatrix64F getTakeOff(){
+      return this.takeOffInstants;
+   }
+
+   public void setBaseLinearTrajectoryWorldFrame(int row, int col, double value){
+      this.baseLinearTrajectoryWorldFrame.set(row, col, value);
+   }
+
+   public DenseMatrix64F getBaseLinearTrajectoryWorldFrame(){
+      return this.baseLinearTrajectoryWorldFrame;
+   }
+
+   public void setTargetFootholdWorldFrame(LegIndex legIndex, int row, int col, double footholdValue){
+      PrintTools.info("leg: "+legIndex);
    switch (legIndex){
-   case FL: this.setFrontLeftFootPosition(row, col, footholdValue);
-   case FR: this.setFrontRightFootPosition(row, col, footholdValue);
-   case HL: this.setHindLeftFootPosition(row, col, footholdValue);
-   case HR: this.setHindRightFootPosition(row,col, footholdValue);
+   case FL: this.setFrontLeftFootPositionWorldFrame(row, col, footholdValue);
+            break;
+   case FR: this.setFrontRightFootPositionWorldFrame(row, col, footholdValue);
+            break;
+   case HL: this.setHindLeftFootPositionWorldFrame(row, col, footholdValue);
+            break;
+   case HR: this.setHindRightFootPositionWorldFrame(row,col, footholdValue);
+            break;
    }
    }
 
-   public void setFrontLeftFootPosition(int row, int col, double value){
-      this.frontLeftFootPosition.set(row, col, value);
+   private void setFrontLeftFootPositionWorldFrame(int row, int col, double value){
+      this.frontLeftFootPositionWorldFrame.set(row, col, value);
    }
 
-   public DenseMatrix64F getFrontLeftFootPosition(){
-      return this.frontLeftFootPosition;
+   private void setFrontRightFootPositionWorldFrame(int row, int col, double value){
+      this.frontRightFootPositionWorldFrame.set(row, col, value);
    }
 
-   public void setFrontRightFootPosition(int row, int col, double value){
-      this.frontRightFootPosition.set(row, col, value);
+   private void setHindLeftFootPositionWorldFrame(int row, int col, double value){
+      this.hindLeftFootPositionWorldFrame.set(row, col, value);
    }
 
-   public DenseMatrix64F getFrontRightFootPosition(){
-      return this.frontRightFootPosition;
+   private void setHindRightFootPositionWorldFrame(int row, int col, double value){
+      this.hindRightFootPositionWorldFrame.set(row, col, value);
    }
 
-   public void setHindLeftFootPosition(int row, int col, double value){
-      this.hindLeftFootPosition.set(row, col, value);
+   public DenseMatrix64F getFrontLeftFootPositionWorldFrame(){ return this.frontLeftFootPositionWorldFrame; }
+
+   public DenseMatrix64F getFrontRightFootPositionWorldFrame(){return this.frontRightFootPositionWorldFrame;}
+
+   public DenseMatrix64F getHindLeftFootPositionWorldFrame(){
+      return this.hindLeftFootPositionWorldFrame;
    }
 
-   public DenseMatrix64F getHindLeftFootPosition(){
-      return this.hindLeftFootPosition;
+   public DenseMatrix64F getHindRightFootPositionWorldFrame(){
+      return this.hindRightFootPositionWorldFrame;
    }
 
-   public void setHindRightFootPosition(int row, int col, double value){
-      this.hindRightFootPosition.set(row, col, value);
+   public void setTargetFootholdBaseFrame(LegIndex legIndex, int row, int col, double footholdValue){
+      switch (legIndex){
+      case FL: this.setFrontLeftFootPositionBaseFrame(row, col, footholdValue);
+               break;
+      case FR: this.setFrontRightFootPositionBaseFrame(row, col, footholdValue);
+               break;
+      case HL: this.setHindLeftFootPositionBaseFrame(row, col, footholdValue);
+               break;
+      case HR: this.setHindRightFootPositionBaseFrame(row,col, footholdValue);
+               break;
+      }
    }
 
-   public DenseMatrix64F getHindRightFootPosition(){
-      return this.hindRightFootPosition;
+   private void setFrontLeftFootPositionBaseFrame(int row, int col, double value){
+      this.frontLeftFootPositionBaseFrame.set(row, col, value);
+   }
+
+   private void setFrontRightFootPositionBaseFrame(int row, int col, double value){
+      this.frontRightFootPositionBaseFrame.set(row, col, value);
+   }
+
+   private void setHindLeftFootPositionBaseFrame(int row, int col, double value){
+      this.hindLeftFootPositionBaseFrame.set(row, col, value);
+   }
+
+   private void setHindRightFootPositionBaseFrame(int row, int col, double value){
+      this.hindRightFootPositionBaseFrame.set(row, col, value);
+   }
+
+   public DenseMatrix64F getFrontLeftFootPositionBaseFrame(){ return this.frontLeftFootPositionBaseFrame; }
+
+   public DenseMatrix64F getFrontRightFootPositionBaseFrame(){return this.frontRightFootPositionBaseFrame;}
+
+   public DenseMatrix64F getHindLeftFootPositionBaseFrame(){
+      return this.hindLeftFootPositionBaseFrame;
+   }
+
+   public DenseMatrix64F getHindRightFootPositionBaseFrame(){
+      return this.hindRightFootPositionBaseFrame;
    }
 }
