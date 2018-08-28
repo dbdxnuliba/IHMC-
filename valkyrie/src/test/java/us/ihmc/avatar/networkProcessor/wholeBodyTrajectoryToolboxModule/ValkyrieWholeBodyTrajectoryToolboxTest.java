@@ -66,9 +66,10 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       RobotSide robotSide = RobotSide.LEFT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
 
+      double radius = 0.1;
       Point3D sphereCenter = new Point3D(0.7, 0.2, 0.6);
       List<ReachingManifoldMessage> reachingManifoldMessages = ReachingManifoldTools.createSphereManifoldMessagesForValkyrie(robotSide, hand, sphereCenter,
-                                                                                                                             0.1);
+                                                                                                                             radius);
 
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
@@ -84,11 +85,13 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       RobotSide robotSide = RobotSide.LEFT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
 
+      double radius = 0.1;
+      double height = 0.2;
       Point3D center = new Point3D(0.7, 0.0, 0.6);
       RotationMatrix orientation = new RotationMatrix();
       orientation.appendPitchRotation(Math.PI * 0.3);
       List<ReachingManifoldMessage> reachingManifoldMessages = ReachingManifoldTools.createCylinderManifoldMessagesForValkyrie(robotSide, hand, center,
-                                                                                                                               orientation, 0.1, 0.2);
+                                                                                                                               orientation, radius, height);
 
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
@@ -104,11 +107,13 @@ public class ValkyrieWholeBodyTrajectoryToolboxTest extends AvatarWholeBodyTraje
       RobotSide robotSide = RobotSide.LEFT;
       RigidBody hand = fullRobotModel.getHand(robotSide);
 
+      double radius = 0.3;
+      double tubeRadius = 0.025;
       Point3D center = new Point3D(0.8, 0.0, 1.1);
       RotationMatrix orientation = new RotationMatrix();
       orientation.appendPitchRotation(-Math.PI * 0.25);
       List<ReachingManifoldMessage> reachingManifoldMessages = ReachingManifoldTools.createTorusManifoldMessagesForValkyrie(robotSide, hand, center,
-                                                                                                                            orientation, 0.3, 0.025);
+                                                                                                                            orientation, radius, tubeRadius);
 
       int maxNumberOfIterations = 10000;
       WholeBodyTrajectoryToolboxMessage message = createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, hand, robotSide, reachingManifoldMessages);
