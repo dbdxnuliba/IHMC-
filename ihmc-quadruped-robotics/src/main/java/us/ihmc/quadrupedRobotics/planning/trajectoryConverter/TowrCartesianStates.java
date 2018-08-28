@@ -98,7 +98,6 @@ public class TowrCartesianStates
    }
 
    public void setTargetFootholdWorldFrame(LegIndex legIndex, int row, int col, double footholdValue){
-      PrintTools.info("leg: "+legIndex);
    switch (legIndex){
    case FL: this.setFrontLeftFootPositionWorldFrame(row, col, footholdValue);
             break;
@@ -168,15 +167,30 @@ public class TowrCartesianStates
       this.hindRightFootPositionBaseFrame.set(row, col, value);
    }
 
-   public DenseMatrix64F getFrontLeftFootPositionBaseFrame(){ return this.frontLeftFootPositionBaseFrame; }
+   private DenseMatrix64F getFrontLeftFootPositionBaseFrame(){ return this.frontLeftFootPositionBaseFrame; }
 
-   public DenseMatrix64F getFrontRightFootPositionBaseFrame(){return this.frontRightFootPositionBaseFrame;}
+   private DenseMatrix64F getFrontRightFootPositionBaseFrame(){return this.frontRightFootPositionBaseFrame;}
 
-   public DenseMatrix64F getHindLeftFootPositionBaseFrame(){
+   private DenseMatrix64F getHindLeftFootPositionBaseFrame(){
       return this.hindLeftFootPositionBaseFrame;
    }
 
-   public DenseMatrix64F getHindRightFootPositionBaseFrame(){
+   private DenseMatrix64F getHindRightFootPositionBaseFrame(){
       return this.hindRightFootPositionBaseFrame;
+   }
+
+   public DenseMatrix64F getTargetFootholdBaseFrame(LegIndex legIndex){
+      DenseMatrix64F targetFootholds = new DenseMatrix64F(10,3);
+      switch (legIndex){
+      case FL: targetFootholds = this.getFrontLeftFootPositionBaseFrame();
+         break;
+      case FR: targetFootholds = this.getFrontRightFootPositionBaseFrame();
+         break;
+      case HL: targetFootholds = this.getHindLeftFootPositionBaseFrame();
+         break;
+      case HR: targetFootholds = this.getHindRightFootPositionBaseFrame();
+         break;
+      }
+      return targetFootholds;
    }
 }

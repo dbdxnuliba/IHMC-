@@ -179,10 +179,10 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
          PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
          PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
 
-         PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getFrontLeftFootPositionBaseFrame());
-         PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getFrontRightFootPositionBaseFrame());
-         PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getHindLeftFootPositionBaseFrame());
-         PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getHindRightFootPositionBaseFrame());
+         PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
+         PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
+         PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
+         PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
 
          PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
 
@@ -200,8 +200,8 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
          int legIdx = 0;
          DenseMatrix64F stepsTotal = towrCartesianStates.getStepsNumber();
          for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-            double targetPositionX = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 0);
-            double targetPositionY = towrCartesianStates.getFrontLeftFootPositionBaseFrame().get(stepCounter, 1);
+            double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL).get(stepCounter, 0);
+            double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL).get(stepCounter, 1);
             double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
             double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
             steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
@@ -209,8 +209,8 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 
       legIdx = 1;
       for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getFrontRightFootPositionBaseFrame().get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getFrontRightFootPositionBaseFrame().get(stepCounter, 1);
+         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR).get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR).get(stepCounter, 1);
          double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
          double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
          steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
@@ -218,8 +218,8 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 
       legIdx = 2;
       for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getHindLeftFootPositionBaseFrame().get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getHindLeftFootPositionBaseFrame().get(stepCounter, 1);
+         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL).get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL).get(stepCounter, 1);
          double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
          double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
          steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
@@ -227,8 +227,8 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 
       legIdx = 3;
       for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getHindRightFootPositionBaseFrame().get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getHindRightFootPositionBaseFrame().get(stepCounter, 1);
+         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR).get(stepCounter, 0);
+         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR).get(stepCounter, 1);
          double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
          double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
          steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
