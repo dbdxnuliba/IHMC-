@@ -109,6 +109,8 @@ public class GraspingJavaFXController
    private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final ReferenceFrame pelvisZUpFrame;
 
+   private boolean toolboxSelectingSide = false;
+   private RobotSide reachingSide = null;
    private final static double timeDurationForFinger = 2.0;
 
    private final static double ratioJoyStickToPosition = 0.01;
@@ -264,67 +266,79 @@ public class GraspingJavaFXController
       PrintTools.info("" + toolboxOutputPacket.get().getPlanningResult());
       PrintTools.info("" + toolboxOutputPacket.get().getRobotConfigurations());
 
-      if(toolboxOutputPacket.get().getPlanningResult() == 4)
+      if (toolboxOutputPacket.get().getPlanningResult() == 4)
       {
          motionPreviewVisualizer.enable(true);
-         motionPreviewVisualizer.submitWholeBodyTrajectoryToolboxOutputStatus(toolboxOutputPacket.get());   
+         motionPreviewVisualizer.submitWholeBodyTrajectoryToolboxOutputStatus(toolboxOutputPacket.get());
       }
    }
 
    private void sendReachingManifoldsToToolbox(ButtonState state)
    {
       if (state == ButtonState.PRESSED)
+         toolboxSelectingSide = true;
+      else
+         toolboxSelectingSide = false;
+
+      if (state == ButtonState.RELEASED)
       {
-         if (listOfShape3D.size() > 0)
+         if (reachingSide != null)
          {
-            motionPreviewVisualizer.enable(false);
-            toolboxStatePublisher.publish(MessageTools.createToolboxStateMessage(ToolboxState.WAKE_UP));
-
-            // TODO : fix another side? or not (Optional).
-            RobotSide robotSide = RobotSide.LEFT;
-            RigidBody hand = fullRobotModel.getHand(robotSide);
-
-            List<ReachingManifoldMessage> reachingManifoldMessages = new ArrayList<>();
-            for (int i = 0; i < listOfShape3D.size(); i++)
+            if (listOfShape3D.size() > 0)
             {
-               List<ReachingManifoldMessage> manifolds = null;
-               Shape3D<?> shape3d = listOfShape3D.get(i);
-               if (shape3d instanceof Sphere3D)
+               motionPreviewVisualizer.enable(false);
+               toolboxStatePublisher.publish(MessageTools.createToolboxStateMessage(ToolboxState.WAKE_UP));
+
+               RobotSide robotSide = reachingSide;
+               RigidBody hand = fullRobotModel.getHand(robotSide);
+
+               List<ReachingManifoldMessage> reachingManifoldMessages = new ArrayList<>();
+               for (int i = 0; i < listOfShape3D.size(); i++)
                {
-                  manifolds = ReachingManifoldTools.createSphereManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(),
-                                                                                            ((Sphere3D) shape3d).getRadius());
-               }
-               else if (shape3d instanceof Cylinder3D)
-               {
-                  manifolds = ReachingManifoldTools.createCylinderManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(), shape3d.getOrientation(),
-                                                                                              ((Cylinder3D) shape3d).getRadius(),
-                                                                                              ((Cylinder3D) shape3d).getHeight());
-               }
-               else if (shape3d instanceof Torus3D)
-               {
-                  manifolds = ReachingManifoldTools.createTorusManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(), shape3d.getOrientation(),
-                                                                                           ((Torus3D) shape3d).getRadius(),
-                                                                                           ((Torus3D) shape3d).getTubeRadius());
+                  List<ReachingManifoldMessage> manifolds = null;
+                  Shape3D<?> shape3d = listOfShape3D.get(i);
+                  if (shape3d instanceof Sphere3D)
+                  {
+                     manifolds = ReachingManifoldTools.createSphereManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(),
+                                                                                               ((Sphere3D) shape3d).getRadius());
+                  }
+                  else if (shape3d instanceof Cylinder3D)
+                  {
+                     manifolds = ReachingManifoldTools.createCylinderManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(),
+                                                                                                 shape3d.getOrientation(), ((Cylinder3D) shape3d).getRadius(),
+                                                                                                 ((Cylinder3D) shape3d).getHeight());
+                  }
+                  else if (shape3d instanceof Torus3D)
+                  {
+                     manifolds = ReachingManifoldTools.createTorusManifoldMessagesForValkyrie(robotSide, hand, shape3d.getPosition(), shape3d.getOrientation(),
+                                                                                              ((Torus3D) shape3d).getRadius(),
+                                                                                              ((Torus3D) shape3d).getTubeRadius());
+                  }
+
+                  if (manifolds != null)
+                     reachingManifoldMessages.addAll(manifolds);
+                  else
+                  {
+                     System.out.println("there is no objects created");
+                     break;
+                  }
                }
 
-               if (manifolds != null)
-                  reachingManifoldMessages.addAll(manifolds);
-               else
-               {
-                  System.out.println("there is no objects created");
-                  break;
-               }
+               System.out.println("number of manifolds " + reachingManifoldMessages.size());
+               System.out.println("reaching side is " + reachingSide);
+               WholeBodyTrajectoryToolboxMessage wbtmessage = ReachingManifoldTools.createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, robotSide,
+                                                                                                                                    reachingManifoldMessages,
+                                                                                                                                    5.0);
+
+               toolboxMessagePublisher.publish(wbtmessage);
+
+               reachingSide = null;
             }
-
-            System.out.println("number of manifolds " + reachingManifoldMessages.size());
-            WholeBodyTrajectoryToolboxMessage wbtmessage = ReachingManifoldTools.createReachingWholeBodyTrajectoryToolboxMessage(fullRobotModel, robotSide,
-                                                                                                                                 reachingManifoldMessages, 5.0);
-
-            toolboxMessagePublisher.publish(wbtmessage);
+            else
+               System.out.println("there is no objects created");
          }
          else
-            System.out.println("there is no objects created");
-
+            System.out.println("robot side is not selected");
       }
    }
 
@@ -380,10 +394,15 @@ public class GraspingJavaFXController
 
    private void appendingYawPositive(ButtonState state)
    {
-      if (state == ButtonState.PRESSED)
-         velocityYawProperty.set(ratioJoyStickToRotation);
+      if (toolboxSelectRightSide(state))
+         ;
       else
-         velocityYawProperty.set(0.0);
+      {
+         if (state == ButtonState.PRESSED)
+            velocityYawProperty.set(ratioJoyStickToRotation);
+         else
+            velocityYawProperty.set(0.0);
+      }
    }
 
    private void appendingXAxis(double alpha)
@@ -403,10 +422,41 @@ public class GraspingJavaFXController
 
    private void appendingZAxisPositive(ButtonState state)
    {
-      if (state == ButtonState.PRESSED)
-         velocityZProperty.set(ratioJoyStickToPosition);
+      if (toolboxSelectLeftSide(state))
+         ;
       else
-         velocityZProperty.set(0.0);
+      {
+         if (state == ButtonState.PRESSED)
+            velocityZProperty.set(ratioJoyStickToPosition);
+         else
+            velocityZProperty.set(0.0);
+      }
+   }
+
+   private boolean toolboxSelectRightSide(ButtonState state)
+   {
+      if (toolboxSelectingSide)
+      {
+         if (state == ButtonState.PRESSED)
+            reachingSide = RobotSide.RIGHT;
+
+         return true;
+      }
+      else
+         return false;
+   }
+
+   private boolean toolboxSelectLeftSide(ButtonState state)
+   {
+      if (toolboxSelectingSide)
+      {
+         if (state == ButtonState.PRESSED)
+            reachingSide = RobotSide.LEFT;
+
+         return true;
+      }
+      else
+         return false;
    }
 
    private void switchShapeToCreate(ButtonState state)
