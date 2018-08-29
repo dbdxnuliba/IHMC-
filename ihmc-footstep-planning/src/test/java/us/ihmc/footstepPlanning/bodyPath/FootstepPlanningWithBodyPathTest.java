@@ -3,6 +3,9 @@ package us.ihmc.footstepPlanning.bodyPath;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -60,6 +63,23 @@ public class FootstepPlanningWithBodyPathTest
    public void testWaypointPathOnFlat()
    {
       new JavaProcessSpawner(true).spawn(FootstepPlannerUIStandaloneLauncher.class);
+
+      PlatformImpl.startup(() -> {
+                              Platform.runLater(new Runnable()
+                              {
+                                 public void run()
+                                 {
+                                    try
+                                    {
+                                       new FootstepPlannerUIStandaloneLauncher().start(new Stage());
+                                    }
+                                    catch (Exception e)
+                                    {
+                                       e.printStackTrace();
+                                    }
+                                 }
+                              });
+                           });
 
 //      new FootstepPlannerUIStandaloneLauncher().launch();
 
