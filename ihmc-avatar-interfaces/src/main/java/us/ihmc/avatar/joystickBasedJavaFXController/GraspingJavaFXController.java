@@ -259,12 +259,16 @@ public class GraspingJavaFXController
 
    private void consumeToolboxOutputStatus(WholeBodyTrajectoryToolboxOutputStatus packet)
    {
+      PrintTools.info("packet arrived");
       toolboxOutputPacket.set(packet);
-      PrintTools.info("" + toolboxOutputPacket.get().planning_result_);
-      PrintTools.info("" + toolboxOutputPacket.get().robot_configurations_.size());
+      PrintTools.info("" + toolboxOutputPacket.get().getPlanningResult());
+      PrintTools.info("" + toolboxOutputPacket.get().getRobotConfigurations());
 
-      motionPreviewVisualizer.enable(true);
-      motionPreviewVisualizer.submitWholeBodyTrajectoryToolboxOutputStatus(toolboxOutputPacket.get());
+      if(toolboxOutputPacket.get().getPlanningResult() == 4)
+      {
+         motionPreviewVisualizer.enable(true);
+         motionPreviewVisualizer.submitWholeBodyTrajectoryToolboxOutputStatus(toolboxOutputPacket.get());   
+      }
    }
 
    private void sendReachingManifoldsToToolbox(ButtonState state)

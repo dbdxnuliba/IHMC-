@@ -581,7 +581,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          long endTime = System.nanoTime();
          double computationTime = Conversions.nanosecondsToSeconds(endTime - startTime);
          if (VERBOSE)
-            System.out.println("onEntry " + getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
+            System.out.println("onExit " + getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
 
          if (hasFail())
             setFailureOnOutputStatus(toolboxSolution, stateMachine.getCurrentStateKey());
@@ -616,7 +616,6 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          super.onExit();
          if (!hasFail())
          {
-            path.clear();
             nodePlotter.update(getPath(), 2);
             path.addAll(getPath());
          }
@@ -691,9 +690,11 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       public void onExit()
       {
          super.onExit();
-         path.clear();
-         nodePlotter.update(getPath(), 2);
-         path.addAll(getPath());
+         if (!hasFail())
+         {
+            nodePlotter.update(getPath(), 2);
+            path.addAll(getPath());
+         }
       }
 
       @Override
@@ -790,14 +791,19 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          super.onExit();
          nodePlotter.update(path, 3);
 
-         setOutputStatus(toolboxSolution, path);
+         if (path.size() > 0)
+            setOutputStatus(toolboxSolution, path);
       }
 
       @Override
       public void doAction(double timeInState)
       {
          super.doAction(timeInState);
-         pathDiff = updateShortcutPath(path);
+
+         if (path.size() == 0)
+            pathDiff = Double.MAX_VALUE;
+         else
+            pathDiff = updateShortcutPath(path);
          updateProgress(null);
       }
 
