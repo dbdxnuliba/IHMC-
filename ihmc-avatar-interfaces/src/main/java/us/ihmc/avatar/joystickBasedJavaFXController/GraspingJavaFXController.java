@@ -35,6 +35,9 @@ import us.ihmc.euclid.geometry.Shape3D;
 import us.ihmc.euclid.geometry.Sphere3D;
 import us.ihmc.euclid.geometry.Torus3D;
 import us.ihmc.euclid.matrix.RotationMatrix;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -44,6 +47,7 @@ import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.graphicsDescription.MeshDataHolder;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.WholeBodyTrajectoryToolboxOutputConverter;
+import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.javaFXToolkit.JavaFXTools;
 import us.ihmc.javaFXToolkit.graphics.JavaFXMeshDataInterpreter;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
@@ -100,6 +104,10 @@ public class GraspingJavaFXController
    private final static Vector3D defaultPositionToCreateObject = new Vector3D(0.6, 0.3, 1.0);
    private final Point3D controlPosition = new Point3D(defaultPositionToCreateObject);
    private final RotationMatrix controlOrientation = new RotationMatrix();
+   private final FramePoint3D controlFramePosition;
+   private final FrameQuaternion controlFrameOrientation;
+   private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private final ReferenceFrame pelvisZUpFrame;
 
    private final static double timeDurationForFinger = 2.0;
 
@@ -148,6 +156,11 @@ public class GraspingJavaFXController
 
       fullRobotModel = javaFXRobotVisualizer.getFullRobotModel();
       outputConverter = new WholeBodyTrajectoryToolboxOutputConverter(fullRobotModelFactory);
+
+      HumanoidReferenceFrames referenceFrames = new HumanoidReferenceFrames(fullRobotModel);
+      pelvisZUpFrame = referenceFrames.getPelvisZUpFrame();
+      controlFramePosition = new FramePoint3D(pelvisZUpFrame, defaultPositionToCreateObject);
+      controlFrameOrientation = new FrameQuaternion(pelvisZUpFrame, new Quaternion());
 
       sphereRadius = messager.createInput(GraspingJavaFXTopics.SphereRadius, 0.1);
 
@@ -330,11 +343,20 @@ public class GraspingJavaFXController
 
    private void updateSelectedObject()
    {
-      controlPosition.add(velocityXProperty.getValue(), velocityYProperty.getValue(), velocityZProperty.getValue());
-      controlOrientation.prependRollRotation(velocityRollProperty.getValue());
-      controlOrientation.prependPitchRotation(velocityPitchProperty.getValue());
-      controlOrientation.prependYawRotation(velocityYawProperty.getValue());
-      // if append rotations, it rotates with current reference.
+      pelvisZUpFrame.update();
+      controlFramePosition.changeFrame(pelvisZUpFrame);
+      controlFrameOrientation.changeFrame(pelvisZUpFrame);
+
+      controlFramePosition.add(velocityXProperty.getValue(), velocityYProperty.getValue(), velocityZProperty.getValue());
+      controlFrameOrientation.prependRollRotation(velocityRollProperty.getValue());
+      controlFrameOrientation.prependPitchRotation(velocityPitchProperty.getValue());
+      controlFrameOrientation.prependYawRotation(velocityYawProperty.getValue());
+
+      controlFramePosition.changeFrame(worldFrame);
+      controlFrameOrientation.changeFrame(worldFrame);
+
+      controlPosition.set(controlFramePosition);
+      controlOrientation.set(controlFrameOrientation);
    }
 
    private void appendingRoll(double alpha)
