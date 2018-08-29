@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
@@ -73,6 +74,10 @@ public class JoystickBasedGraspingMainUI
          @Override
          public void handle(long now)
          {
+            Point3DReadOnly controlObjectPosition = graspingJavaFXController.getControlObjectPosition();
+            rootJointOffset.setX(controlObjectPosition.getX());
+            rootJointOffset.setY(controlObjectPosition.getY());
+            rootJointOffset.setZ(controlObjectPosition.getZ());
          }
       };
 
