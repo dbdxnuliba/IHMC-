@@ -63,17 +63,19 @@ public class QuadrupedTowrTrajectoryConverter
       DenseMatrix64F stepsNumberCounter = new DenseMatrix64F(1,numberOfEndEffectors);
 
       for (RobotStateCartesian robotStateCartesianIter : incomingMessage.getPoints()){
-         this.messageToCartesianStateConverter(robotStateCartesianIter, pointIter, previousContactState, stepsNumberCounter, towrCartesianStatesToFill);
+
+         towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
+         towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
+         towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
+
+         this.messageToCartesianStateConverter(robotStateCartesianIter, previousContactState, stepsNumberCounter, towrCartesianStatesToFill);
+         pointIter++;
       }
       towrCartesianStatesToFill.setStepsNumber(stepsNumberCounter);
    }
 
-   public void messageToCartesianStateConverter(RobotStateCartesian robotStateCartesian, int pointNumber, DenseMatrixBool previousContactState, DenseMatrix64F stepCounterPerLeg, TowrCartesianStates towrCartesianStatesToFill){
+   public void messageToCartesianStateConverter(RobotStateCartesian robotStateCartesian, DenseMatrixBool previousContactState, DenseMatrix64F stepCounterPerLeg, TowrCartesianStates towrCartesianStatesToFill){
 
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 0, robotStateCartesian.getBase().getPose().getPosition().getX());
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 1, robotStateCartesian.getBase().getPose().getPosition().getY());
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 2, robotStateCartesian.getBase().getPose().getPosition().getZ());
-      pointNumber ++;
       for(LegIndex legIdx :LegIndex.values())
       {
 
