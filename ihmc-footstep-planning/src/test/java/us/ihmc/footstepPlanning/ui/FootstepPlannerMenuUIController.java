@@ -1,7 +1,6 @@
 package us.ihmc.footstepPlanning.ui;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.MenuItem;
 import javafx.stage.Window;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.javaFXToolkit.messager.Messager;

@@ -1,11 +1,5 @@
 package us.ihmc.footstepPlanning.ui;
 
-import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.GlobalResetTopic;
-import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.GoalOrientationTopic;
-import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.GoalPositionTopic;
-import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.StartOrientationTopic;
-import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.StartPositionTopic;
-
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Spinner;
@@ -14,6 +8,8 @@ import javafx.scene.control.ToggleButton;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.properties.Point3DProperty;
+
+import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.*;
 
 public class StartGoalTabController
 {
