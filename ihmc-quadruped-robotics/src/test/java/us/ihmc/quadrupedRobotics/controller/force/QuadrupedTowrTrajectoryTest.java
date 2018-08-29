@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 
-public abstract class QuadrupedTOWRTrajectoryTest implements QuadrupedMultiRobotTestInterface
+public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobotTestInterface
 {
    private GoalOrientedTestConductor conductor;
    private QuadrupedForceTestYoVariables variables;

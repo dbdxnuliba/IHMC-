@@ -18,7 +18,7 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 
 import java.util.ArrayList;
 
-public class QuadrupedTOWRTrajectoryConverter
+public class QuadrupedTowrTrajectoryConverter
 {
 
    private RobotQuadrant legIndexToRobotQuadrantConverter(LegIndex legIndex){

@@ -2,8 +2,6 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
 import controller_msgs.msg.dds.*;
 import org.apache.commons.lang3.SystemUtils;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.data.DenseMatrixBool;
 import org.junit.Test;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
@@ -11,12 +9,9 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
-import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
-import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTOWRTrajectoryTest;
-import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTOWRTrajectoryConverter;
+import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
-import us.ihmc.quadrupedRobotics.util.TimeInterval;
-import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.*;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
@@ -30,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
+public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
 {
    static ArrayList<Point3D> basePositions;
    @Override
@@ -89,7 +84,7 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       //}
 
       TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
-      QuadrupedTOWRTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
+      QuadrupedTowrTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
 
       //node.spin(); // start the realtime node thread
@@ -104,7 +99,7 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
    public List<QuadrupedTimedStepMessage> getSteps()
    {
       TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
-      QuadrupedTOWRTrajectoryConverter towrTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
+      QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       try
       {
          towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();

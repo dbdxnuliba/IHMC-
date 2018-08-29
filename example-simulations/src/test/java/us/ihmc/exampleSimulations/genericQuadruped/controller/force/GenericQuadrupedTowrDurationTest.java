@@ -2,37 +2,25 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
       import controller_msgs.msg.dds.Duration;
       import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
-      import controller_msgs.msg.dds.RobotStateCartesianTrajectory;
       import org.junit.Test;
       import us.ihmc.commons.PrintTools;
-      import us.ihmc.communication.ROS2Tools;
       import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
       import us.ihmc.euclid.tuple3D.Point3D;
       import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
       import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
-      import us.ihmc.pubsub.subscriber.Subscriber;
       import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
       import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
-      import us.ihmc.quadrupedRobotics.communication.subscribers.DurationConfigurationMessageSubscriber;
-      import us.ihmc.quadrupedRobotics.communication.subscribers.TowrConfigurationMessageSubscriber;
-      import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTOWRTrajectoryTest;
+      import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
       import us.ihmc.quadrupedRobotics.util.TimeInterval;
       import us.ihmc.robotics.robotSide.RobotQuadrant;
-      import us.ihmc.robotics.robotSide.RobotSide;
-      import us.ihmc.robotics.robotSide.SideDependentList;
-      import us.ihmc.ros2.NewMessageListener;
-      import us.ihmc.ros2.RealtimeRos2Node;
       import us.ihmc.ros2.Ros2Node;
       import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
-      import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTOWRTrajectoryConverter;
 
       import java.io.IOException;
       import java.util.ArrayList;
       import java.util.List;
 
-      import static us.ihmc.robotics.robotSide.RobotSide.LEFT;
-
-public class GenericQuadrupedTowrDurationTest extends QuadrupedTOWRTrajectoryTest
+public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTest
 {
    @Override
    public QuadrupedTestFactory createQuadrupedTestFactory()
