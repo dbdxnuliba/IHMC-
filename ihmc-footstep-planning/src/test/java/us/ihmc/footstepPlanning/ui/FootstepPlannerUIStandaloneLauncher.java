@@ -24,6 +24,11 @@ public class FootstepPlannerUIStandaloneLauncher extends Application
       Platform.exit();
    }
 
+   public FootstepPlannerUI getUI()
+   {
+      return ui;
+   }
+
    public static void main(String[] args)
    {
       launch();

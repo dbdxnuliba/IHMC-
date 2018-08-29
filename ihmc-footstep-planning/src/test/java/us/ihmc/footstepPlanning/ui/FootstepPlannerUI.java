@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
@@ -14,6 +15,7 @@ import us.ihmc.pathPlanning.visibilityGraphs.ui.viewers.PlanarRegionViewer;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.viewers.StartGoalPositionViewer;
 
 import java.io.IOException;
+import java.net.URL;
 
 import static us.ihmc.footstepPlanning.ui.FootstepPlannerUserInterfaceAPI.*;
 
@@ -21,7 +23,7 @@ public class FootstepPlannerUI
 {
    private static final boolean VERBOSE = true;
 
-   private final JavaFXMessager messager = new SharedMemoryJavaFXMessager(FootstepPlannerUserInterfaceAPI.API);
+   public final JavaFXMessager messager = new SharedMemoryJavaFXMessager(FootstepPlannerUserInterfaceAPI.API);
    private final Stage primaryStage;
    private final BorderPane mainPane;
 
@@ -52,7 +54,19 @@ public class FootstepPlannerUI
 
       FXMLLoader loader = new FXMLLoader();
       loader.setController(this);
-      loader.setLocation(getClass().getResource(getClass().getSimpleName() + ".fxml"));
+      String name = getClass().getSimpleName() + ".fxml";
+      PrintTools.info(name);
+      try
+      {
+         URL resource = getClass().getResource(name);
+      PrintTools.info(resource.getPath());
+      loader.setLocation(resource);
+      }
+      catch (Exception e)
+      {
+         e.printStackTrace();
+         throw e;
+      }
 
       mainPane = loader.load();
       messager.startMessager();

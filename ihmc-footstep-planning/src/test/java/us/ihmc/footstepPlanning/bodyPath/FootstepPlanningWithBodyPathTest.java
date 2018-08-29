@@ -1,15 +1,11 @@
 package us.ihmc.footstepPlanning.bodyPath;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.continuousIntegration.IntegrationCategory;
@@ -35,8 +31,7 @@ import us.ihmc.footstepPlanning.graphSearch.stepCost.DistanceAndYawBasedCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.testTools.PlanningTestTools;
 import us.ihmc.footstepPlanning.ui.FootstepPlannerUIStandaloneLauncher;
-import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
-import us.ihmc.javaFXToolkit.shapes.TextureColorPalette;
+import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.pathPlanning.bodyPathPlanner.WaypointDefinedBodyPathPlan;
 import us.ihmc.pathPlanning.visibilityGraphs.DefaultVisibilityGraphParameters;
 import us.ihmc.pathPlanning.visibilityGraphs.NavigableRegionsManager;
@@ -47,8 +42,10 @@ import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
-import us.ihmc.tools.processManagement.JavaProcessSpawner;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FootstepPlanningWithBodyPathTest
 {
@@ -64,24 +61,27 @@ public class FootstepPlanningWithBodyPathTest
    {
 //      new JavaProcessSpawner(true).spawn(FootstepPlannerUIStandaloneLauncher.class);
 
+      FootstepPlannerUIStandaloneLauncher footstepPlannerUIStandaloneLauncher = new FootstepPlannerUIStandaloneLauncher();
       PlatformImpl.startup(() -> {
-                              Platform.runLater(new Runnable()
-                              {
-                                 public void run()
-                                 {
-                                    try
-                                    {
-                                       new FootstepPlannerUIStandaloneLauncher().start(new Stage());
-                                    }
-                                    catch (Exception e)
-                                    {
-                                       e.printStackTrace();
-                                    }
-                                 }
-                              });
-                           });
+         Platform.runLater(new Runnable()
+         {
+            public void run()
+            {
+               try
+               {
+                  footstepPlannerUIStandaloneLauncher.start(new Stage());
+               }
+               catch (Exception e)
+               {
+                  e.printStackTrace();
+               }
+            }
+         });
+      });
 
-//      new FootstepPlannerUIStandaloneLauncher().launch();
+      JavaFXMessager messager = footstepPlannerUIStandaloneLauncher.getUI().messager;
+
+      //      new FootstepPlannerUIStandaloneLauncher().launch();
 
 
       YoVariableRegistry registry = new YoVariableRegistry(name.getMethodName());
