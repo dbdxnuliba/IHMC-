@@ -8,6 +8,7 @@ import controller_msgs.msg.dds.SO3TrajectoryMessage;
 import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxOutputStatus;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -15,7 +16,6 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.trajectories.waypoints.EuclideanTrajectoryPointCalculator;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.math.trajectories.waypoints.SO3TrajectoryPointCalculator;
@@ -25,29 +25,15 @@ public class WholeBodyTrajectoryToolboxOutputConverter
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   //   private final FullHumanoidRobotModel fullRobotModelToUseForConversion;
-   //   private final HumanoidReferenceFrames referenceFrames;
-   //   private final FloatingInverseDynamicsJoint rootJoint;
-   //   private final OneDoFJoint[] oneDoFJoints;
-   //   private final int jointsHashCode;
-
    private WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage;
 
    private KinematicsToolboxOutputConverter converter;
-
-   //private double trajectoryTime = 0.0;
 
    private double firstTrajectoryPointTime = 0.0;
 
    public WholeBodyTrajectoryToolboxOutputConverter(FullHumanoidRobotModelFactory fullRobotModelFactory)
    {
       converter = new KinematicsToolboxOutputConverter(fullRobotModelFactory);
-
-      //      this.fullRobotModelToUseForConversion = fullRobotModelFactory.createFullRobotModel();
-      //      rootJoint = fullRobotModelToUseForConversion.getRootJoint();
-      //      oneDoFJoints = FullRobotModelUtils.getAllJointsExcludingHands(fullRobotModelToUseForConversion);
-      //      jointsHashCode = (int) NameBasedHashCodeTools.computeArrayHashCode(oneDoFJoints);
-      //      referenceFrames = new HumanoidReferenceFrames(fullRobotModelToUseForConversion);
    }
 
    public void setMessageToCreate(WholeBodyTrajectoryMessage wholebodyTrajectoryMessage)
@@ -71,7 +57,7 @@ public class WholeBodyTrajectoryToolboxOutputConverter
          computHandTrajectoryMessage(solution, robotSide);
       computeChestTrajectoryMessage(solution);
       computePelvisTrajectoryMessage(solution);
-      //computeHeadTrajectoryMessage(solution);
+      computeHeadTrajectoryMessage(solution);
    }
 
    private void computHandTrajectoryMessage(WholeBodyTrajectoryToolboxOutputStatus solution, RobotSide robotSide)
@@ -127,7 +113,9 @@ public class WholeBodyTrajectoryToolboxOutputConverter
 
          orientationCalculator.getTrajectoryPoints().get(i).getAngularVelocity(desiredAngularVelocity);
 
-         trajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add().set(HumanoidMessageTools.createSE3TrajectoryPointMessage(time, desiredPositions[i], desiredOrientations[i], desiredLinearVelocity, desiredAngularVelocity));
+         trajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add()
+                          .set(HumanoidMessageTools.createSE3TrajectoryPointMessage(time, desiredPositions[i], desiredOrientations[i], desiredLinearVelocity,
+                                                                                    desiredAngularVelocity));
       }
 
       if (robotSide == RobotSide.LEFT)
@@ -241,7 +229,9 @@ public class WholeBodyTrajectoryToolboxOutputConverter
 
          orientationCalculator.getTrajectoryPoints().get(i).getAngularVelocity(desiredAngularVelocity);
 
-         trajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add().set(HumanoidMessageTools.createSE3TrajectoryPointMessage(time, desiredPositions[i], desiredOrientations[i], desiredLinearVelocity, desiredAngularVelocity));
+         trajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add()
+                          .set(HumanoidMessageTools.createSE3TrajectoryPointMessage(time, desiredPositions[i], desiredOrientations[i], desiredLinearVelocity,
+                                                                                    desiredAngularVelocity));
       }
 
       wholeBodyTrajectoryMessage.getPelvisTrajectoryMessage().set(trajectoryMessage);
