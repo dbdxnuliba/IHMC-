@@ -39,7 +39,7 @@ public class GraspingJavaFXMotionPreviewVisualizer
    private double localTime = 0.0;
    private WholeBodyTrajectoryToolboxOutputStatus packetInProgress = null;
 
-   private final double onetickTime = 0.1;
+   private final double onetickTime = 0.05;
 
    private final AnimationTimer animationTimer;
 
