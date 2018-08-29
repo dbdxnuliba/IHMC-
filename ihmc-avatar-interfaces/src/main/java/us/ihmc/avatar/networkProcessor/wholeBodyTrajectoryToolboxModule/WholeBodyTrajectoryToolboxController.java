@@ -236,6 +236,7 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
          return false;
 
       nodePlotter = new SpatialNodePlotter(exploringDefinition, visualize);
+      path.clear();
       validNodes.clear();
       inValidNodes.clear();
       stateMachine.resetToInitialState();
@@ -579,8 +580,8 @@ public class WholeBodyTrajectoryToolboxController extends ToolboxController
       {
          long endTime = System.nanoTime();
          double computationTime = Conversions.nanosecondsToSeconds(endTime - startTime);
-         //         if (VERBOSE)
-         //            System.out.println("onEntry " + getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
+         if (VERBOSE)
+            System.out.println("onEntry " + getClass().getSimpleName() + " computationTime " + computationTime + " " + validNodes.size() + " " + numberOfUpdate);
 
          if (hasFail())
             setFailureOnOutputStatus(toolboxSolution, stateMachine.getCurrentStateKey());
