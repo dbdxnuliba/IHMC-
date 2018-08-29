@@ -62,7 +62,7 @@ public class FootstepPlanningWithBodyPathTest
    @Test
    public void testWaypointPathOnFlat()
    {
-      new JavaProcessSpawner(true).spawn(FootstepPlannerUIStandaloneLauncher.class);
+//      new JavaProcessSpawner(true).spawn(FootstepPlannerUIStandaloneLauncher.class);
 
       PlatformImpl.startup(() -> {
                               Platform.runLater(new Runnable()
