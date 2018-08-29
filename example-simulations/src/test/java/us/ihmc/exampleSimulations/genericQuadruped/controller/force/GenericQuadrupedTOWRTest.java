@@ -61,7 +61,7 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
             new PeriodicRealtimeThreadSchedulerFactory(20) :
             new PeriodicNonRealtimeThreadSchedulerFactory();
-      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "NonRealtimeRos2PublishSubscribeExample", "");
+      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "RealtimeRos2Subscriber", "");
       RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
 
       RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = node.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
@@ -90,8 +90,7 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 
       TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
       QuadrupedTOWRTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
-
-      quadrupedTowrTrajectoryConverter.towrMessageToCartesianStateConverter(incomingMessage, towrCartesianStatesToFill);
+      quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
 
       //node.spin(); // start the realtime node thread
 
@@ -99,10 +98,13 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
 
    }
 
+
+
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
       TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
+      QuadrupedTOWRTrajectoryConverter towrTrajectoryConverter = new QuadrupedTOWRTrajectoryConverter();
       try
       {
          towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
@@ -126,47 +128,9 @@ public class GenericQuadrupedTOWRTest extends QuadrupedTOWRTrajectoryTest
       catch (Exception e)
       {
       }
-      //PrintTools.info("initial base pos TOWR:"+initial_base_pos);
 
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
-      int stepsTot = 3;
-      //for (LegIndex legIdx : LegIndex.values()){
-         int legIdx = 0;
-         DenseMatrix64F stepsTotal = towrCartesianStates.getStepsNumber();
-         for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-            double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL).get(stepCounter, 0);
-            double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL).get(stepCounter, 1);
-            double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
-            double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
-            steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
-         }
-
-      legIdx = 1;
-      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR).get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR).get(stepCounter, 1);
-         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
-         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
-         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
-      }
-
-      legIdx = 2;
-      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL).get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL).get(stepCounter, 1);
-         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
-         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
-         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
-      }
-
-      legIdx = 3;
-      for(int stepCounter = 0; stepCounter< stepsTot; stepCounter++){
-         double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR).get(stepCounter, 0);
-         double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR).get(stepCounter, 1);
-         double touchDown = towrCartesianStates.getTouchDown().get(stepCounter+1, legIdx);
-         double takeOff = towrCartesianStates.getTakeOff().get(stepCounter+1, legIdx);
-         steps.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(targetPositionX, targetPositionY, -0.012), 0.1, new TimeInterval(takeOff, touchDown)));
-      }
+      towrTrajectoryConverter.stateToTimedStepMessage(towrCartesianStates, steps);
 
       return steps;
    }
