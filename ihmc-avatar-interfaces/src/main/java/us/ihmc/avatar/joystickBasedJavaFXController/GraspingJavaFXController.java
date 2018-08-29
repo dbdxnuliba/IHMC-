@@ -66,6 +66,7 @@ import us.ihmc.ros2.Ros2Node;
 
 public class GraspingJavaFXController
 {
+   private final JavaFXMessager messager;
    private final FullHumanoidRobotModel fullRobotModel;
 
    private final WholeBodyTrajectoryToolboxOutputConverter outputConverter;
@@ -142,6 +143,7 @@ public class GraspingJavaFXController
    public GraspingJavaFXController(String robotName, JavaFXMessager messager, Ros2Node ros2Node, FullHumanoidRobotModelFactory fullRobotModelFactory,
                                    JavaFXRobotVisualizer javaFXRobotVisualizer)
    {
+      this.messager = messager;
       motionPreviewVisualizer = new GraspingJavaFXMotionPreviewVisualizer(fullRobotModelFactory);
 
       fullRobotModel = javaFXRobotVisualizer.getFullRobotModel();
@@ -389,6 +391,8 @@ public class GraspingJavaFXController
             shapeToCreate = ShapeToCreate.Sphere;
          else
             shapeToCreate = shapeToCreate.nextShape();
+
+         messager.submitMessage(GraspingJavaFXTopics.SelectedShape, shapeToCreate.ordinal());
 
          System.out.println("switch shape to " + shapeToCreate);
       }
