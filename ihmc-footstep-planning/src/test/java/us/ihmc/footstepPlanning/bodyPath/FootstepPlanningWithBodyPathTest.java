@@ -7,6 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.Pose2D;
@@ -49,13 +50,13 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 public class FootstepPlanningWithBodyPathTest
 {
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
-   private static final boolean visualize = simulationTestingParameters.getKeepSCSUp();
+   private static final boolean visualize = true; //simulationTestingParameters.getKeepSCSUp();
 
    @Rule
    public TestName name = new TestName();
 
    @ContinuousIntegrationTest(estimatedDuration = 7.0)
-   @Test(timeout = 30000)
+   @Test
    public void testWaypointPathOnFlat()
    {
       new JavaProcessSpawner(true).spawn(FootstepPlannerUIStandaloneLauncher.class);
@@ -88,7 +89,13 @@ public class FootstepPlanningWithBodyPathTest
       FootstepPlan footstepPlan = PlanningTestTools.runPlanner(planner, initialStanceFootPose, initialStanceFootSide, goalPose, null, true);
 
       if (visualize)
+      {
          PlanningTestTools.visualizeAndSleep(null, footstepPlan, goalPose, bodyPath);
+
+         ThreadTools.sleepForever();
+      }
+
+
    }
 
    @Test(timeout = 30000)
