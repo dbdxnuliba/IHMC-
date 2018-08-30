@@ -1,5 +1,6 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
+      import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
       import controller_msgs.msg.dds.Duration;
       import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
       import org.junit.Test;
@@ -11,6 +12,7 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
       import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
       import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
       import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
+      import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
       import us.ihmc.quadrupedRobotics.util.TimeInterval;
       import us.ihmc.robotics.robotSide.RobotQuadrant;
       import us.ihmc.ros2.Ros2Node;
@@ -31,9 +33,9 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 74.7)
    @Test(timeout = 370000)
-   public void testQuadrupedTOWRTrajectory() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
+   public void testQuadrupedTowrTrajectory() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
    {
-      super.testQuadrupedTOWRTrajectory();
+      super.testQuadrupedTowrTrajectory();
    }
 
    @Override
@@ -111,5 +113,12 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
       steps.add(QuadrupedMessageTools
                       .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(2.708, -0.080, -0.000), 0.1, new TimeInterval(4.860, 5.190)));
       return steps;
+   }
+
+   @Override
+   public CenterOfMassTrajectoryMessage getCenterOfMassTrajectoryMessage(){
+      QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
+      CenterOfMassTrajectoryMessage message = new CenterOfMassTrajectoryMessage();
+      return message;
    }
 }

@@ -27,6 +27,7 @@ import java.util.List;
 
 public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
 {
+   TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
    static ArrayList<Point3D> basePositions;
    @Override
    public QuadrupedTestFactory createQuadrupedTestFactory()
@@ -37,9 +38,16 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 74.7)
    @Test(timeout = 370000)
-   public void testQuadrupedTOWRTrajectory() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
+   public void testQuadrupedTowrTrajectory() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
    {
-      super.testQuadrupedTOWRTrajectory();
+      super.testQuadrupedTowrTrajectory();
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 74.7)
+   @Test(timeout = 370000)
+   public void testQuadrupedTowrCoMAndFeetTrajectory() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
+   {
+      super.testQuadrupedTowrCoMAndFeetTrajectory();
    }
 
    @Override
@@ -50,6 +58,25 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
 
 
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
+
+   private void printTowrTrajectory(TowrCartesianStates towrCartesianStates){
+      PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
+      PrintTools.info("Base trajectory: "+towrCartesianStates.getCenterOfMassLinearPathWorldFrame());
+      PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
+      PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
+      PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
+      PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
+
+      PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
+      PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
+      PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
+      PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
+
+      PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
+
+      PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
+      PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
+   }
 
    public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
    {
@@ -98,35 +125,28 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
-      TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
+
       QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       try
       {
          towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
-         PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
-         PrintTools.info("Base trajectory: "+towrCartesianStates.getBaseLinearTrajectoryWorldFrame());
-         PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
-         PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
-         PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
-         PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
-
-         PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
-         PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
-         PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
-         PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
-
-         PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
-
-         PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
-         PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
+         printTowrTrajectory(towrCartesianStates);
       }
       catch (Exception e)
       {
       }
 
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
-      towrTrajectoryConverter.stateToTimedStepMessage(towrCartesianStates, steps);
+      towrTrajectoryConverter.stateToTimedStepList(towrCartesianStates, steps);
 
       return steps;
    }
+
+   @Override
+   public CenterOfMassTrajectoryMessage getCenterOfMassTrajectoryMessage(){
+      QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
+      return towrTrajectoryConverter.createCenterOfMassMessage(towrCartesianStates);
+   }
+
+
 }

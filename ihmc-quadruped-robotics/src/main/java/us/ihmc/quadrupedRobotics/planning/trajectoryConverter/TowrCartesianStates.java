@@ -2,11 +2,13 @@ package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 
 import controller_msgs.msg.dds.RobotStateCartesian;
 import controller_msgs.msg.dds.StateLin3d;
+import gnu.trove.list.array.TDoubleArrayList;
 import javafx.geometry.Point3D;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
 import us.ihmc.commons.PrintTools;
 
+import java.util.ArrayList;
 
 public class TowrCartesianStates
 {
@@ -20,7 +22,7 @@ public class TowrCartesianStates
 
    int pointsNumber;
    int numberOfEndEffectors = 4;
-   private DenseMatrix64F baseLinearTrajectoryWorldFrame = new DenseMatrix64F(200, 3);
+   private DenseMatrix64F centerOfMassLinearPathWorldFrame = new DenseMatrix64F(200, 3);
 
    private DenseMatrix64F frontLeftFootPositionWorldFrame = new DenseMatrix64F(10, 3);
    private DenseMatrix64F frontRightFootPositionWorldFrame = new DenseMatrix64F(10, 3);
@@ -36,6 +38,17 @@ public class TowrCartesianStates
 
    private DenseMatrix64F touchDownInstants = new DenseMatrix64F(10, numberOfEndEffectors);
    private DenseMatrix64F takeOffInstants = new DenseMatrix64F(10, numberOfEndEffectors);
+
+   private TDoubleArrayList centerOfMassWaypointsTimeStamps = new TDoubleArrayList(200);
+
+   public void setTimeStamps(int waypointCounter, double timeFromStart){
+      this.centerOfMassWaypointsTimeStamps.set(waypointCounter, timeFromStart);
+      PrintTools.info("time stamps "+centerOfMassWaypointsTimeStamps);
+   }
+
+   public TDoubleArrayList getTimeStamps(){
+      return centerOfMassWaypointsTimeStamps;
+   }
 
    public void setPointsNumber(int pointsNum){
       this.pointsNumber = pointsNum;
@@ -78,31 +91,46 @@ public class TowrCartesianStates
       return this.takeOffInstants;
    }
 
-   public void setBaseLinearTrajectoryWorldFrame(int row, int col, double value){
-      this.baseLinearTrajectoryWorldFrame.set(row, col, value);
+   public void setCenterOfMassLinearPathWorldFrame(int row, int col, double value){
+      this.centerOfMassLinearPathWorldFrame.set(row, col, value);
    }
 
-   public DenseMatrix64F getBaseLinearTrajectoryWorldFrame(){
-      return this.baseLinearTrajectoryWorldFrame;
-   }
-
-   public void setTargetFootholdWorldFrame(LegIndex legIndex, int row, int col, double footholdValue){
-   switch (legIndex){
-   case FL: this.setFrontLeftFootPositionWorldFrame(row, col, footholdValue);
-            break;
-   case FR: this.setFrontRightFootPositionWorldFrame(row, col, footholdValue);
-            break;
-   case HL: this.setHindLeftFootPositionWorldFrame(row, col, footholdValue);
-            break;
-   case HR: this.setHindRightFootPositionWorldFrame(row,col, footholdValue);
-            break;
-   }
+   public DenseMatrix64F getCenterOfMassLinearPathWorldFrame(){
+      return this.centerOfMassLinearPathWorldFrame;
    }
 
    public void setTargetFootholdWorldFrame(LegIndex legIndex, int stepNumber, StateLin3d footholdPosition){
       this.setTargetFootholdWorldFrame(legIndex, stepNumber, 0, footholdPosition.getPos().getX());
       this.setTargetFootholdWorldFrame(legIndex, stepNumber, 1, footholdPosition.getPos().getY());
       this.setTargetFootholdWorldFrame(legIndex, stepNumber, 2, footholdPosition.getPos().getZ());
+   }
+
+   public void setTargetFootholdWorldFrame(LegIndex legIndex, int stepNumber, int coordinateIndex, double footholdValue){
+      switch (legIndex){
+      case FL: this.setFrontLeftFootPositionWorldFrame(stepNumber, coordinateIndex, footholdValue);
+         break;
+      case FR: this.setFrontRightFootPositionWorldFrame(stepNumber, coordinateIndex, footholdValue);
+         break;
+      case HL: this.setHindLeftFootPositionWorldFrame(stepNumber, coordinateIndex, footholdValue);
+         break;
+      case HR: this.setHindRightFootPositionWorldFrame(stepNumber,coordinateIndex, footholdValue);
+         break;
+      }
+   }
+
+   public DenseMatrix64F getTargetFootholdWorldFrame(LegIndex legIndex){
+      DenseMatrix64F targetFootholdsWF = new DenseMatrix64F(10,3);
+      switch (legIndex){
+      case FL: targetFootholdsWF = this.getFrontLeftFootPositionWorldFrame();
+         break;
+      case FR: targetFootholdsWF = this.getFrontRightFootPositionWorldFrame();
+         break;
+      case HL: targetFootholdsWF = this.getHindLeftFootPositionWorldFrame();
+         break;
+      case HR: targetFootholdsWF = this.getHindRightFootPositionWorldFrame();
+         break;
+      }
+      return targetFootholdsWF;
    }
 
    public DenseMatrix64F getFrontLeftFootPositionWorldFrame(){ return this.frontLeftFootPositionWorldFrame; }
@@ -137,18 +165,18 @@ public class TowrCartesianStates
    }
 
    public DenseMatrix64F getTargetFootholdBaseFrame(LegIndex legIndex){
-      DenseMatrix64F targetFootholds = new DenseMatrix64F(10,3);
+      DenseMatrix64F targetFootholdsBF = new DenseMatrix64F(10,3);
       switch (legIndex){
-      case FL: targetFootholds = this.getFrontLeftFootPositionBaseFrame();
+      case FL: targetFootholdsBF = this.getFrontLeftFootPositionBaseFrame();
          break;
-      case FR: targetFootholds = this.getFrontRightFootPositionBaseFrame();
+      case FR: targetFootholdsBF = this.getFrontRightFootPositionBaseFrame();
          break;
-      case HL: targetFootholds = this.getHindLeftFootPositionBaseFrame();
+      case HL: targetFootholdsBF = this.getHindLeftFootPositionBaseFrame();
          break;
-      case HR: targetFootholds = this.getHindRightFootPositionBaseFrame();
+      case HR: targetFootholdsBF = this.getHindRightFootPositionBaseFrame();
          break;
       }
-      return targetFootholds;
+      return targetFootholdsBF;
    }
 
 
@@ -156,9 +184,9 @@ public class TowrCartesianStates
 
       //TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(200);
 
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 0, robotStateCartesian.getBase().getPose().getPosition().getX());
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 1, robotStateCartesian.getBase().getPose().getPosition().getY());
-      towrCartesianStatesToFill.setBaseLinearTrajectoryWorldFrame(pointNumber, 2, robotStateCartesian.getBase().getPose().getPosition().getZ());
+      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 0, robotStateCartesian.getBase().getPose().getPosition().getX());
+      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 1, robotStateCartesian.getBase().getPose().getPosition().getY());
+      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 2, robotStateCartesian.getBase().getPose().getPosition().getZ());
       pointNumber ++;
       for(LegIndex legIdx :LegIndex.values())
       {
