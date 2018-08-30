@@ -62,16 +62,13 @@ public class QuadrupedTowrTrajectoryConverter
       CenterOfMassTrajectoryMessage comMessage = new CenterOfMassTrajectoryMessage();
       EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
       int numberOfPoints = towrCartesianStates.getPointsNumber();
-      for(int wayPointIterator = 0; wayPointIterator<5; wayPointIterator++){
+      for(int wayPointIterator = 0; wayPointIterator<numberOfPoints; wayPointIterator++){
          EuclideanTrajectoryPointMessage euclideanTrajectoryPointMessage = new EuclideanTrajectoryPointMessage();
          Point3D comWayPoint = new Point3D(comPath.get(wayPointIterator,0),comPath.get(wayPointIterator,1),comPath.get(wayPointIterator,2));
          euclideanTrajectoryPointMessage.getPosition().set(comWayPoint);
          double currentTime = timeStamps.get(wayPointIterator);
-         //PrintTools.info("time "+currentTime);
          euclideanTrajectoryPointMessage.setTime(currentTime);
-         //PrintTools.info("time after time "+ euclideanTrajectoryPointMessage.getTime());
          euclideanTrajectoryPointMessage.setSequenceId(wayPointIterator);
-         //PrintTools.info("euclidean point "+euclideanTrajectoryPointMessage);
          euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add().set(euclideanTrajectoryPointMessage);
       }
 
