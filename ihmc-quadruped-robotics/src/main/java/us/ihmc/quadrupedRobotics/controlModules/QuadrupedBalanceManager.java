@@ -121,7 +121,7 @@ public class QuadrupedBalanceManager
       adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
       adjustedActiveSteps.clear();
 
-      comTrajectoryHandler = new CenterOfMassTrajectoryHandler(robotTimestamp);
+      comTrajectoryHandler = new CenterOfMassTrajectoryHandler(robotTimestamp, registry);
 
       precomputedICPPlanner = new PrecomputedICPPlanner(comTrajectoryHandler, null, registry, yoGraphicsListRegistry);
 
@@ -294,29 +294,33 @@ public class QuadrupedBalanceManager
       //   precomputedICPPlanner.computeAndBlend(currentTime, ...);
       //}
       //PrintTools.info("time: "+robotTimestamp.getDoubleValue());
+      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+
       if (precomputedICPPlanner.isWithinInterval(robotTimestamp.getDoubleValue()))
       {
          //PrintTools.info("precomputed ICP case");
          FramePoint2D yoDesiredDCMPosition2D = new FramePoint2D();
          FrameVector2D yoDesiredDCMVelocity2D = new FrameVector2D();
-         //FramePoint2D desiredCoP = new FramePoint2D();
-         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         FramePoint2D desiredCoP = new FramePoint2D();
+         //dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         //mPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
 
-         precomputedICPPlanner.compute(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, null);
-         //precomputedICPPlanner.computeAndBlend(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP);
+         //precomputedICPPlanner.compute(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, null);
+         yoDesiredDCMPosition2D.set(yoDesiredDCMPosition);
+         yoDesiredDCMVelocity2D.set(yoDesiredDCMVelocity);
+         precomputedICPPlanner.computeAndBlend(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP);
 
-
-         //yoDesiredDCMPosition.set(yoDesiredDCMPosition2D.getX(), yoDesiredDCMPosition2D.getY(), yoDesiredDCMPosition.getZ());
-         //yoDesiredDCMVelocity.set(yoDesiredDCMVelocity2D.getX(), yoDesiredDCMVelocity2D.getY(), yoDesiredDCMVelocity.getZ());
-         dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
+         yoDesiredDCMPosition.set(yoDesiredDCMPosition2D, yoDesiredDCMPosition.getZ());
+         yoDesiredDCMVelocity.set(yoDesiredDCMVelocity2D, yoDesiredDCMVelocity.getZ());
+         //dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
 
       }else
       {
-         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-         dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
+         //dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         //dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
       }
+      dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
 
 
 
