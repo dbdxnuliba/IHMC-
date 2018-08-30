@@ -1,9 +1,14 @@
 package us.ihmc.quadrupedRobotics.controlModules;
 
 import org.apache.commons.lang3.mutable.MutableInt;
+import us.ihmc.commonWalkingControlModules.capturePoint.PrecomputedICPPlanner;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.virtualModelControl.VirtualModelControlCommand;
+import us.ihmc.commonWalkingControlModules.messageHandlers.CenterOfMassTrajectoryHandler;
+import us.ihmc.commonWalkingControlModules.messageHandlers.MomentumTrajectoryHandler;
+import us.ihmc.commonWalkingControlModules.messageHandlers.WalkingMessageHandler;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint2DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
@@ -13,6 +18,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CenterOfMassTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyHeightCommand;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.quadrupedRobotics.controller.toolbox.LinearInvertedPendulumModel;
@@ -28,6 +34,7 @@ import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.*;
+import us.ihmc.commonWalkingControlModules.capturePoint.PrecomputedICPPlanner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +59,10 @@ public class QuadrupedBalanceManager
    private final QuadrupedStepAdjustmentController stepAdjustmentController;
 
    private final DCMPlanner dcmPlanner;
+   private final CenterOfMassTrajectoryHandler comTrajectoryHandler;
+   private final PrecomputedICPPlanner precomputedICPPlanner;
+
+   private final FramePoint2D perfectCoP2d = new FramePoint2D();
 
    private final FramePoint3D dcmPositionEstimate = new FramePoint3D();
 
@@ -109,6 +120,10 @@ public class QuadrupedBalanceManager
 
       adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
       adjustedActiveSteps.clear();
+
+      comTrajectoryHandler = new CenterOfMassTrajectoryHandler(robotTimestamp);
+
+      precomputedICPPlanner = new PrecomputedICPPlanner(comTrajectoryHandler, null, registry, yoGraphicsListRegistry);
 
       if (yoGraphicsListRegistry != null)
          setupGraphics(yoGraphicsListRegistry);
@@ -187,6 +202,10 @@ public class QuadrupedBalanceManager
          step.getGoalPosition(stepSequenceVisualizationPosition);
          stepSequenceVisualization.get(quadrant).setBall(stepSequenceVisualizationPosition, 0);
       }
+   }
+
+   public void handleCenterOfMassTrajectoryCommand(CenterOfMassTrajectoryCommand command){
+      comTrajectoryHandler.handleComTrajectory(command);
    }
 
    public void handleBodyHeightCommand(QuadrupedBodyHeightCommand command)
@@ -270,9 +289,36 @@ public class QuadrupedBalanceManager
       controllerToolbox.getDCMPositionEstimate(dcmPositionEstimate);
       dcmPlanner.setCoMHeight(linearInvertedPendulumModel.getComHeight());
 
-      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-      dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
+      //if(precomputedICPPlanner.isWithinInterval(currentTime)){
+      //   precomputedICPPlanner.compute(currentTime, linearInvertedPendulumModel.getComHeight(), );
+      //   precomputedICPPlanner.computeAndBlend(currentTime, ...);
+      //}
+      //PrintTools.info("time: "+robotTimestamp.getDoubleValue());
+      if (precomputedICPPlanner.isWithinInterval(robotTimestamp.getDoubleValue()))
+      {
+         //PrintTools.info("precomputed ICP case");
+         FramePoint2D yoDesiredDCMPosition2D = new FramePoint2D();
+         FrameVector2D yoDesiredDCMVelocity2D = new FrameVector2D();
+         //FramePoint2D desiredCoP = new FramePoint2D();
+         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+
+         precomputedICPPlanner.compute(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, null);
+         //precomputedICPPlanner.computeAndBlend(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP);
+
+
+         //yoDesiredDCMPosition.set(yoDesiredDCMPosition2D.getX(), yoDesiredDCMPosition2D.getY(), yoDesiredDCMPosition.getZ());
+         //yoDesiredDCMVelocity.set(yoDesiredDCMVelocity2D.getX(), yoDesiredDCMVelocity2D.getY(), yoDesiredDCMVelocity.getZ());
+         dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
+
+      }else
+      {
+         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+         dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
+      }
+
+
 
       if (debug)
          runDebugChecks();
@@ -283,6 +329,7 @@ public class QuadrupedBalanceManager
       momentumRateOfChangeModule.setDCMSetpoints(yoDesiredDCMPosition, yoDesiredDCMVelocity);
       momentumRateOfChangeModule.setDesiredCenterOfMassHeightAcceleration(desiredCenterOfMassHeightAcceleration);
       momentumRateOfChangeModule.compute(yoVrpPositionSetpoint, yoDesiredCMP);
+
    }
 
    private void runDebugChecks()
