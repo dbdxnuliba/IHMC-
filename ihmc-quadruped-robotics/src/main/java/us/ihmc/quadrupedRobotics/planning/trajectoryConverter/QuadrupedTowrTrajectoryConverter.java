@@ -57,8 +57,8 @@ public class QuadrupedTowrTrajectoryConverter
    public CenterOfMassTrajectoryMessage createCenterOfMassMessage(TowrCartesianStates towrCartesianStates){
 
       DenseMatrix64F comPath = towrCartesianStates.getCenterOfMassLinearPathWorldFrame();
-      TDoubleArrayList timeStamps = towrCartesianStates.getTimeStamps();
-      //PrintTools.info("time stamps "+timeStamps);
+      DenseMatrix64F timeStamps = towrCartesianStates.getTimeStamps();
+      PrintTools.info("time stamps "+timeStamps);
       CenterOfMassTrajectoryMessage comMessage = new CenterOfMassTrajectoryMessage();
       EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
       int numberOfPoints = comPath.getNumRows();
@@ -66,8 +66,8 @@ public class QuadrupedTowrTrajectoryConverter
          EuclideanTrajectoryPointMessage euclideanTrajectoryPointMessage = new EuclideanTrajectoryPointMessage();
          Point3D comWayPoint = new Point3D(comPath.get(wayPointIterator,0),comPath.get(wayPointIterator,1),comPath.get(wayPointIterator,2));
          euclideanTrajectoryPointMessage.getPosition().set(comWayPoint);
-         //double currentTime = timeStamps.get(wayPointIterator);
-         //euclideanTrajectoryPointMessage.setTime(currentTime);
+         double currentTime = timeStamps.get(wayPointIterator);
+         euclideanTrajectoryPointMessage.setTime(currentTime);
          euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add();
       }
 
@@ -87,7 +87,7 @@ public class QuadrupedTowrTrajectoryConverter
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
-         //towrCartesianStatesToFill.setTimeStamps(pointIter, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
+         towrCartesianStatesToFill.setTimeStamps(pointIter, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
          this.messageToCartesianStateConverter(robotStateCartesianIter, previousContactState, stepsNumberCounter, towrCartesianStatesToFill);
          pointIter++;
       }

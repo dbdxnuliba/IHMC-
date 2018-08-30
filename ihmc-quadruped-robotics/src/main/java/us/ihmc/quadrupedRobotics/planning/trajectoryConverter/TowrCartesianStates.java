@@ -39,14 +39,14 @@ public class TowrCartesianStates
    private DenseMatrix64F touchDownInstants = new DenseMatrix64F(10, numberOfEndEffectors);
    private DenseMatrix64F takeOffInstants = new DenseMatrix64F(10, numberOfEndEffectors);
 
-   private TDoubleArrayList centerOfMassWaypointsTimeStamps = new TDoubleArrayList(200);
+   private DenseMatrix64F centerOfMassWaypointsTimeStamps = new DenseMatrix64F(200,1);
 
    public void setTimeStamps(int waypointCounter, double timeFromStart){
-      this.centerOfMassWaypointsTimeStamps.set(waypointCounter, timeFromStart);
+      this.centerOfMassWaypointsTimeStamps.set(waypointCounter, 0, timeFromStart);
       PrintTools.info("time stamps "+centerOfMassWaypointsTimeStamps);
    }
 
-   public TDoubleArrayList getTimeStamps(){
+   public DenseMatrix64F getTimeStamps(){
       return centerOfMassWaypointsTimeStamps;
    }
 
