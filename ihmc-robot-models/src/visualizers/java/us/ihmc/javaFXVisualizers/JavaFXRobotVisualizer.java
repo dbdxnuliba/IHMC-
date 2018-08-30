@@ -1,9 +1,11 @@
-package us.ihmc.avatar.joystickBasedJavaFXController;
+package us.ihmc.javaFXVisualizers;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.CRC32;
 
 import controller_msgs.msg.dds.RobotConfigurationData;
 import javafx.animation.AnimationTimer;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.graphicsDescription.structure.Graphics3DNode;
@@ -13,41 +15,47 @@ import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.robotDescription.RobotDescription;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
-import us.ihmc.sensorProcessing.communication.packets.dataobjects.RobotConfigurationDataFactory;
+import us.ihmc.robotics.sensors.ForceSensorDefinition;
+import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.simulationConstructionSetTools.grahics.GraphicsIDRobot;
 import us.ihmc.simulationconstructionset.graphics.GraphicsRobot;
 
 public class JavaFXRobotVisualizer
 {
-   private final GraphicsRobot graphicsRobot;
-   private final JavaFXGraphics3DNode rootNode;
+   private GraphicsRobot graphicsRobot;
+   private JavaFXGraphics3DNode robotRootNode;
    private final FullHumanoidRobotModel fullRobotModel;
    private final OneDoFJoint[] allJoints;
    private final int jointNameHash;
    private final AtomicReference<RigidBodyTransform> newRootJointPoseReference = new AtomicReference<>(null);
    private final AtomicReference<float[]> newJointConfigurationReference = new AtomicReference<>(null);
 
+   private boolean isRobotLoaded = false;
+   private final Group rootNode = new Group();
+
    private final AnimationTimer animationTimer;
 
    public JavaFXRobotVisualizer(FullHumanoidRobotModelFactory fullRobotModelFactory)
    {
       fullRobotModel = fullRobotModelFactory.createFullRobotModel();
-      RobotDescription robotDescription = fullRobotModelFactory.getRobotDescription();
-      graphicsRobot = new GraphicsIDRobot(robotDescription.getName(), fullRobotModel.getElevator(), robotDescription);
-      rootNode = new JavaFXGraphics3DNode(graphicsRobot.getRootNode());
-      rootNode.setMouseTransparent(true);
-      addNodesRecursively(graphicsRobot.getRootNode(), rootNode);
-      rootNode.update();
 
       allJoints = FullRobotModelUtils.getAllJointsExcludingHands(fullRobotModel);
-      jointNameHash = RobotConfigurationDataFactory.calculateJointNameHash(allJoints, fullRobotModel.getForceSensorDefinitions(),
+      
+      jointNameHash = calculateJointNameHash(allJoints, fullRobotModel.getForceSensorDefinitions(),
                                                                            fullRobotModel.getIMUDefinitions());
+
+      new Thread(() -> loadRobotModelAndGraphics(fullRobotModelFactory), "RobotVisualizerLoading").start();
 
       animationTimer = new AnimationTimer()
       {
          @Override
          public void handle(long now)
          {
+            if (!isRobotLoaded)
+               return;
+            else if (rootNode.getChildren().isEmpty())
+               rootNode.getChildren().add(robotRootNode);
+
             RigidBodyTransform newRootJointPose = newRootJointPoseReference.getAndSet(null);
             if (newRootJointPose != null)
                fullRobotModel.getRootJoint().setPositionAndRotation(newRootJointPose);
@@ -60,9 +68,42 @@ public class JavaFXRobotVisualizer
             }
             fullRobotModel.getElevator().updateFramesRecursively();
             graphicsRobot.update();
-            rootNode.update();
+            robotRootNode.update();
          }
       };
+   }
+
+   public static int calculateJointNameHash(OneDoFJoint[] joints, ForceSensorDefinition[] forceSensorDefinitions, IMUDefinition[] imuDefinitions)
+   {
+      CRC32 crc = new CRC32();
+      for (OneDoFJoint joint : joints)
+      {
+         crc.update(joint.getName().getBytes());
+      }
+   
+      for (ForceSensorDefinition forceSensorDefinition : forceSensorDefinitions)
+      {
+         crc.update(forceSensorDefinition.getSensorName().getBytes());
+      }
+   
+      for (IMUDefinition imuDefinition : imuDefinitions)
+      {
+         crc.update(imuDefinition.getName().getBytes());
+      }
+   
+      return (int) crc.getValue();
+   }
+   
+   private void loadRobotModelAndGraphics(FullHumanoidRobotModelFactory fullRobotModelFactory)
+   {
+      RobotDescription robotDescription = fullRobotModelFactory.getRobotDescription();
+      graphicsRobot = new GraphicsIDRobot(robotDescription.getName(), fullRobotModel.getElevator(), robotDescription);
+      robotRootNode = new JavaFXGraphics3DNode(graphicsRobot.getRootNode());
+      robotRootNode.setMouseTransparent(true);
+      addNodesRecursively(graphicsRobot.getRootNode(), robotRootNode);
+      robotRootNode.update();
+
+      isRobotLoaded = true;
    }
 
    public void start()
