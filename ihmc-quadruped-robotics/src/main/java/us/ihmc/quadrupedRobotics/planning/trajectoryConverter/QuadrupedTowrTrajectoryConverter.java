@@ -1,9 +1,8 @@
 package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 
 
-import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
-import controller_msgs.msg.dds.RobotStateCartesian;
-import controller_msgs.msg.dds.RobotStateCartesianTrajectory;
+import controller_msgs.msg.dds.*;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
@@ -33,7 +32,7 @@ public class QuadrupedTowrTrajectoryConverter
       return RobotQuadrant.FRONT_LEFT;
    }
 
-   public void stateToTimedStepMessage(TowrCartesianStates towrCartesianStates, ArrayList<QuadrupedTimedStepMessage> stepsToFill)
+   public void stateToTimedStepList(TowrCartesianStates towrCartesianStates, ArrayList<QuadrupedTimedStepMessage> stepsToPack)
    {
 
       DenseMatrix64F stepsTotal = towrCartesianStates.getStepsNumber();
@@ -43,16 +42,37 @@ public class QuadrupedTowrTrajectoryConverter
          int stepsTot = (int)stepsTotal.get(legIndex.ordinal()) - 1;
          for (int stepCounter = 0; stepCounter < stepsTot; stepCounter++)
          {
-            double targetPositionX = towrCartesianStates.getTargetFootholdBaseFrame(legIndex).get(stepCounter, 0);
-            double targetPositionY = towrCartesianStates.getTargetFootholdBaseFrame(legIndex).get(stepCounter, 1);
+            double targetPositionWorldFrameX = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter, 0);
+            double targetPositionWorldFrameY = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter, 1);
             double touchDown = towrCartesianStates.getTouchDown().get(stepCounter + 1, legIndex.ordinal());
             double takeOff = towrCartesianStates.getTakeOff().get(stepCounter + 1, legIndex.ordinal());
-            stepsToFill.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(this.legIndexToRobotQuadrantConverter(legIndex),
-                                                                                  new Point3D(targetPositionX, targetPositionY, -0.012), 0.1,
+            stepsToPack.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(this.legIndexToRobotQuadrantConverter(legIndex),
+                                                                                  new Point3D(targetPositionWorldFrameX, targetPositionWorldFrameY, -0.012), 0.1,
                                                                                   new TimeInterval(takeOff, touchDown)));
          }
       }
 
+   }
+
+   public CenterOfMassTrajectoryMessage createCenterOfMassMessage(TowrCartesianStates towrCartesianStates){
+
+      DenseMatrix64F comPath = towrCartesianStates.getCenterOfMassLinearPathWorldFrame();
+      TDoubleArrayList timeStamps = towrCartesianStates.getTimeStamps();
+      //PrintTools.info("time stamps "+timeStamps);
+      CenterOfMassTrajectoryMessage comMessage = new CenterOfMassTrajectoryMessage();
+      EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
+      int numberOfPoints = comPath.getNumRows();
+      for(int wayPointIterator = 0; wayPointIterator<numberOfPoints; wayPointIterator++){
+         EuclideanTrajectoryPointMessage euclideanTrajectoryPointMessage = new EuclideanTrajectoryPointMessage();
+         Point3D comWayPoint = new Point3D(comPath.get(wayPointIterator,0),comPath.get(wayPointIterator,1),comPath.get(wayPointIterator,2));
+         euclideanTrajectoryPointMessage.getPosition().set(comWayPoint);
+         //double currentTime = timeStamps.get(wayPointIterator);
+         //euclideanTrajectoryPointMessage.setTime(currentTime);
+         euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add();
+      }
+
+      comMessage.getEuclideanTrajectory().set(euclideanTrajectoryMessage);
+      return comMessage;
    }
 
    public void messageToCartesianTrajectoryConverter(RobotStateCartesianTrajectory incomingMessage, TowrCartesianStates towrCartesianStatesToFill){
@@ -67,7 +87,7 @@ public class QuadrupedTowrTrajectoryConverter
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 0, robotStateCartesianIter.getBase().getPose().getPosition().getX());
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 1, robotStateCartesianIter.getBase().getPose().getPosition().getY());
          towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointIter, 2, robotStateCartesianIter.getBase().getPose().getPosition().getZ());
-
+         //towrCartesianStatesToFill.setTimeStamps(pointIter, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
          this.messageToCartesianStateConverter(robotStateCartesianIter, previousContactState, stepsNumberCounter, towrCartesianStatesToFill);
          pointIter++;
       }
@@ -89,6 +109,7 @@ public class QuadrupedTowrTrajectoryConverter
 
             int currentStep = (int)stepCounterPerLeg.get(0, legIdx.ordinal());
             //PrintTools.info("leg ordinal: "+legIdx.ordinal());
+
             towrCartesianStatesToFill.setTargetFootholdWorldFrame(legIdx, currentStep, robotStateCartesian.getEeMotion().get(legIdx.ordinal()));
 
             towrCartesianStatesToFill.setTargetFootholdBaseFrame(legIdx, currentStep, 0, robotStateCartesian.getEeMotion().get(legIdx.ordinal()).getPos().getX() - robotStateCartesian.getBase().getPose().getPosition().getX());
