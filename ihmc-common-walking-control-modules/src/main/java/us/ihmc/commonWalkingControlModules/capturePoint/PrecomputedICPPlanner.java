@@ -178,7 +178,10 @@ public class PrecomputedICPPlanner
       currentlyBlendingICPTrajectories.set(false);
 
       centerOfMassTrajectoryHandler.clearPointsInPast();
-      momentumTrajectoryHandler.clearPointsInPast();
+      if (momentumTrajectoryHandler != null)
+      {
+         momentumTrajectoryHandler.clearPointsInPast();
+      }
    }
 
    public void computeAndBlend(double time, FixedFramePoint2DBasics desiredCapturePoint2dToPack, FixedFrameVector2DBasics desiredCapturePointVelocity2dToPack,
@@ -216,7 +219,10 @@ public class PrecomputedICPPlanner
       }
 
       centerOfMassTrajectoryHandler.clearPointsInPast();
-      momentumTrajectoryHandler.clearPointsInPast();
+      if (momentumTrajectoryHandler != null)
+      {
+         momentumTrajectoryHandler.clearPointsInPast();
+      }
    }
 
    public boolean isWithinInterval(double time)
