@@ -61,17 +61,22 @@ public class QuadrupedTowrTrajectoryConverter
       PrintTools.info("time stamps "+timeStamps);
       CenterOfMassTrajectoryMessage comMessage = new CenterOfMassTrajectoryMessage();
       EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
-      int numberOfPoints = comPath.getNumRows();
-      for(int wayPointIterator = 0; wayPointIterator<numberOfPoints; wayPointIterator++){
+      int numberOfPoints = towrCartesianStates.getPointsNumber();
+      for(int wayPointIterator = 0; wayPointIterator<5; wayPointIterator++){
          EuclideanTrajectoryPointMessage euclideanTrajectoryPointMessage = new EuclideanTrajectoryPointMessage();
          Point3D comWayPoint = new Point3D(comPath.get(wayPointIterator,0),comPath.get(wayPointIterator,1),comPath.get(wayPointIterator,2));
          euclideanTrajectoryPointMessage.getPosition().set(comWayPoint);
          double currentTime = timeStamps.get(wayPointIterator);
+         //PrintTools.info("time "+currentTime);
          euclideanTrajectoryPointMessage.setTime(currentTime);
-         euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add();
+         //PrintTools.info("time after time "+ euclideanTrajectoryPointMessage.getTime());
+         euclideanTrajectoryPointMessage.setSequenceId(wayPointIterator);
+         //PrintTools.info("euclidean point "+euclideanTrajectoryPointMessage);
+         euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add().set(euclideanTrajectoryPointMessage);
       }
 
       comMessage.getEuclideanTrajectory().set(euclideanTrajectoryMessage);
+      //PrintTools.info("euclidean trajectory: "+comMessage.getEuclideanTrajectory());
       return comMessage;
    }
 

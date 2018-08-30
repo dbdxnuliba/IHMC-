@@ -20,7 +20,7 @@ public class TowrCartesianStates
       FL, FR, HL, HR;
    }
 
-   int pointsNumber;
+   int centerOfMassWaypointsNumber;
    int numberOfEndEffectors = 4;
    private DenseMatrix64F centerOfMassLinearPathWorldFrame = new DenseMatrix64F(200, 3);
 
@@ -51,12 +51,12 @@ public class TowrCartesianStates
    }
 
    public void setPointsNumber(int pointsNum){
-      this.pointsNumber = pointsNum;
+      this.centerOfMassWaypointsNumber = pointsNum;
    }
 
    public int getPointsNumber()
    {
-      int points = this.pointsNumber;
+      int points = this.centerOfMassWaypointsNumber;
       PrintTools.info("get points num: "+points);
       return points;
    }
