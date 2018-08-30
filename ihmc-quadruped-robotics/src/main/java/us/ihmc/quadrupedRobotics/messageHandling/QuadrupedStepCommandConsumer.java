@@ -1,11 +1,9 @@
 package us.ihmc.quadrupedRobotics.messageHandling;
 
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.CommandConsumerWithDelayBuffers;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyHeightCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyOrientationCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBalanceManager;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBodyOrientationManager;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedControlManagerFactory;
@@ -19,6 +17,10 @@ public class QuadrupedStepCommandConsumer
 
    private final QuadrupedBalanceManager balanceManager;
    private final QuadrupedBodyOrientationManager bodyOrientationManager;
+
+   //QuadrupedComHandler
+   //Manager
+
 
    public QuadrupedStepCommandConsumer(CommandInputManager commandInputManager, QuadrupedStepMessageHandler stepMessageHandler,
                                        QuadrupedControllerToolbox controllerToolbox, QuadrupedControlManagerFactory managerFactory)
@@ -58,5 +60,16 @@ public class QuadrupedStepCommandConsumer
       {
          balanceManager.handleBodyHeightCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedBodyHeightCommand.class));
       }
+
+      if (commandConsumerWithDelayBuffers.isNewCommandAvailable(QuadrupedBodyHeightCommand.class))
+      {
+         balanceManager.handleBodyHeightCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedBodyHeightCommand.class));
+      }
+
+      if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CenterOfMassTrajectoryCommand.class))
+      {
+         balanceManager.handleCenterOfMassTrajectoryCommand(commandConsumerWithDelayBuffers.pollNewestCommand(CenterOfMassTrajectoryCommand.class));
+      }
+
    }
 }
