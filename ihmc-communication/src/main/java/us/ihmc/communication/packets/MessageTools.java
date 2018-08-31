@@ -32,6 +32,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
+import us.ihmc.commons.lists.BoundedRecyclingArrayList;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
@@ -531,7 +532,7 @@ public class MessageTools
     *            {@code StringBuilder}, {@code Settable<T>}.
     */
    @SuppressWarnings("unchecked")
-   public static <T> void copyData(List<T> source, RecyclingArrayList<T> destination)
+   public static <T> void copyData(List<T> source, BoundedRecyclingArrayList<T> destination)
    {
       destination.clear();
 
@@ -575,7 +576,7 @@ public class MessageTools
     * @param source the array containing the data to copy. Not modified.
     * @param destination the list to copy the data into. Modified.
     */
-   public static <T extends Settable<T>> void copyData(T[] source, RecyclingArrayList<T> destination)
+   public static <T extends Settable<T>> void copyData(T[] source, BoundedRecyclingArrayList<T> destination)
    {
       destination.clear();
 
@@ -603,7 +604,7 @@ public class MessageTools
     * @param source the array containing the data to copy. Not modified.
     * @param destination the list to copy the data into. Modified.
     */
-   public static void copyData(String[] source, RecyclingArrayList<StringBuilder> destination)
+   public static void copyData(String[] source, BoundedRecyclingArrayList<StringBuilder> destination)
    {
       destination.clear();
 
