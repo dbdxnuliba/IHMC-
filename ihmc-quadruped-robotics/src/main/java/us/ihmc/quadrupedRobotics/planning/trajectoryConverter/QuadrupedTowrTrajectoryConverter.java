@@ -39,15 +39,15 @@ public class QuadrupedTowrTrajectoryConverter
 
       for (LegIndex legIndex : LegIndex.values())
       {
-         int stepsTot = (int)stepsTotal.get(legIndex.ordinal()) - 1;
+         int stepsTot = (int)stepsTotal.get(legIndex.ordinal())-1;
          for (int stepCounter = 0; stepCounter < stepsTot; stepCounter++)
          {
-            double targetPositionWorldFrameX = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter, 0);
-            double targetPositionWorldFrameY = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter, 1);
+            double targetPositionWorldFrameX = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter + 1, 0);
+            double targetPositionWorldFrameY = towrCartesianStates.getTargetFootholdWorldFrame(legIndex).get(stepCounter + 1, 1);
             double touchDown = towrCartesianStates.getTouchDown().get(stepCounter + 1, legIndex.ordinal());
             double takeOff = towrCartesianStates.getTakeOff().get(stepCounter + 1, legIndex.ordinal());
             stepsToPack.add(QuadrupedMessageTools.createQuadrupedTimedStepMessage(this.legIndexToRobotQuadrantConverter(legIndex),
-                                                                                  new Point3D(targetPositionWorldFrameX, targetPositionWorldFrameY, -0.012), 0.1,
+                                                                                  new Point3D(targetPositionWorldFrameX, targetPositionWorldFrameY, 0.0), 0.1,
                                                                                   new TimeInterval(takeOff, touchDown)));
          }
       }
