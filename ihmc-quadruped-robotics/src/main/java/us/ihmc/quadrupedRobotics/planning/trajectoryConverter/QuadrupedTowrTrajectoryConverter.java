@@ -4,21 +4,79 @@ package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 import controller_msgs.msg.dds.*;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import org.apache.commons.lang3.SystemUtils;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.convexOptimization.qpOASES.DenseMatrix;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
 import us.ihmc.quadrupedRobotics.util.TimeInterval;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
+import us.ihmc.ros2.RealtimeRos2Node;
+import us.ihmc.ros2.RealtimeRos2Publisher;
+import us.ihmc.ros2.RealtimeRos2Subscription;
+import us.ihmc.util.PeriodicNonRealtimeThreadSchedulerFactory;
+import us.ihmc.util.PeriodicRealtimeThreadSchedulerFactory;
+import us.ihmc.util.PeriodicThreadSchedulerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class QuadrupedTowrTrajectoryConverter
 {
+
+   public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
+   {
+      PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
+            new PeriodicRealtimeThreadSchedulerFactory(20) :
+            new PeriodicNonRealtimeThreadSchedulerFactory();
+      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "RealtimeRos2Subscriber", "");
+      RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
+
+      RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = node.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
+
+      RobotStateCartesianTrajectory message = new RobotStateCartesianTrajectory();
+
+      RobotStateCartesianTrajectory incomingMessage = new RobotStateCartesianTrajectory();
+      while (!subscription.poll(incomingMessage))
+      {
+         ; // just waiting for the first message
+      }
+
+      subscription.poll(incomingMessage);
+
+      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
+      QuadrupedTowrTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
+      quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
+
+      //node.spin(); // start the realtime node thread
+
+      return towrCartesianStatesToFill;
+
+   }
+
+   public void printTowrTrajectory(TowrCartesianStates towrCartesianStates){
+      PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
+      PrintTools.info("Base trajectory: "+towrCartesianStates.getCenterOfMassLinearPathWorldFrame());
+      PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
+      PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
+      PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
+      PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
+
+      PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
+      PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
+      PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
+      PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
+
+      PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
+
+      PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
+      PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
+   }
 
    private RobotQuadrant legIndexToRobotQuadrantConverter(LegIndex legIndex){
 

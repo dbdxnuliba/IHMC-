@@ -59,82 +59,26 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
 
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
 
-   private void printTowrTrajectory(TowrCartesianStates towrCartesianStates){
-      PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
-      PrintTools.info("Base trajectory: "+towrCartesianStates.getCenterOfMassLinearPathWorldFrame());
-      PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
-      PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
-      PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
-      PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
-
-      PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
-      PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
-      PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
-      PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
-
-      PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
-
-      PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
-      PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
-   }
-
-   public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
-   {
-      PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
-            new PeriodicRealtimeThreadSchedulerFactory(20) :
-            new PeriodicNonRealtimeThreadSchedulerFactory();
-      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "RealtimeRos2Subscriber", "");
-      RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
-
-      RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = node.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
-
-      RobotStateCartesianTrajectory message = new RobotStateCartesianTrajectory();
-
-      RobotStateCartesianTrajectory incomingMessage = new RobotStateCartesianTrajectory();
-      while (!subscription.poll(incomingMessage))
-      {
-         ; // just waiting for the first message
-      }
-
-
-      //while (true)
-      //{
-      if (subscription.poll(incomingMessage))  // poll for new messages
-      {
-         //System.out.println(incomingMessage);
-         //i++;
-      }
-      else
-      {
-         // no available messages
-      }
-      //}
-
-      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
-      QuadrupedTowrTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
-      quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
-
-      //node.spin(); // start the realtime node thread
-
-      return towrCartesianStatesToFill;
-
-   }
-
-
-
    @Override
    public List<QuadrupedTimedStepMessage> getSteps()
    {
 
       QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
-      try
+      boolean useLoggedTrajectories = true;
+      if(useLoggedTrajectories)
       {
-         towrCartesianStates = subscribeToTowrRobotStateCartesianTrajectory();
-         printTowrTrajectory(towrCartesianStates);
+         try
+         {
+            towrCartesianStates = towrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
+            towrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
+         }
+         catch (Exception e)
+         {
+         }
+      }else{
+         //towrCartesianStates = loadLoggedTrajectories()
       }
-      catch (Exception e)
-      {
-      }
+
 
       ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
       towrTrajectoryConverter.stateToTimedStepList(towrCartesianStates, steps);

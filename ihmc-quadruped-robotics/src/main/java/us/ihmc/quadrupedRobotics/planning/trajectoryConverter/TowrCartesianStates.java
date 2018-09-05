@@ -43,7 +43,7 @@ public class TowrCartesianStates
 
    public void setTimeStamps(int waypointCounter, double timeFromStart){
       this.centerOfMassWaypointsTimeStamps.set(waypointCounter, 0, timeFromStart);
-      PrintTools.info("time stamps "+centerOfMassWaypointsTimeStamps);
+      //PrintTools.info("time stamps "+centerOfMassWaypointsTimeStamps);
    }
 
    public DenseMatrix64F getTimeStamps(){
@@ -57,7 +57,7 @@ public class TowrCartesianStates
    public int getPointsNumber()
    {
       int points = this.centerOfMassWaypointsNumber;
-      PrintTools.info("get points num: "+points);
+      //PrintTools.info("get points num: "+points);
       return points;
    }
 
