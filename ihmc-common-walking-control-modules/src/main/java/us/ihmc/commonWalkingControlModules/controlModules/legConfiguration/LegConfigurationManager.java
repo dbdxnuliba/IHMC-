@@ -143,6 +143,19 @@ public class LegConfigurationManager
       }
    }
 
+   public void setDesiredAngleWhenStraight(RobotSide supportSide, double angle)
+   {
+      useHighWeight(supportSide);
+      legConfigurationControlModules.get(supportSide).setDesiredAngleWhenStraight(angle);
+   }
+
+   public void setDefaultDesiredAngleWhenStraight(RobotSide supportSide)
+   {
+      double defaultAngle = legConfigurationControlModules.get(supportSide).getDefaultDesiredAngleWhenStraight().getDoubleValue();
+      legConfigurationControlModules.get(supportSide).setDesiredAngleWhenStraight(defaultAngle);
+   }
+
+
    public void setStepDuration(RobotSide supportSide, double stepDuration)
    {
       legConfigurationControlModules.get(supportSide).setStepDuration(stepDuration);

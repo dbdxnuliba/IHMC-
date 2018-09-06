@@ -13,10 +13,10 @@ import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager.StatusMessageListener;
-import us.ihmc.communication.packetCommunicator.PacketCommunicator;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
+import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.tools.TimestampProvider;
 import us.ihmc.valkyrie.fingers.ValkyrieFingerController;
 import us.ihmc.valkyrie.fingers.ValkyrieHandJointName;
@@ -57,7 +57,10 @@ public class ValkyrieRosControlLowLevelController
 
       wakeUpTime.set(Double.NaN);
 
-      fingerController = new ValkyrieFingerController(yoTime, updateDT, fingerStateEstimator, yoEffortJointHandleHolders, registry);
+      if (ValkyrieRosControlController.ENABLE_FINGER_JOINTS)
+         fingerController = new ValkyrieFingerController(yoTime, updateDT, fingerStateEstimator, yoEffortJointHandleHolders, registry);
+      else
+         fingerController = null;
 
       // Remove the finger joints to let the finger controller be the only controlling them
       yoEffortJointHandleHolders = yoEffortJointHandleHolders.stream().filter(h -> !isFingerJoint(h)).collect(Collectors.toList());
@@ -99,7 +102,8 @@ public class ValkyrieRosControlLowLevelController
 
       yoTime.set(Conversions.nanosecondsToSeconds(timestamp) - wakeUpTime.getDoubleValue());
 
-      fingerController.doControl();
+      if (ValkyrieRosControlController.ENABLE_FINGER_JOINTS)
+         fingerController.doControl();
       updateCommandCalculators();
    }
 
@@ -158,9 +162,10 @@ public class ValkyrieRosControlLowLevelController
       this.jointTorqueOffsetEstimator = jointTorqueOffsetEstimator;
    }
 
-   public void setupLowLevelControlWithPacketCommunicator(PacketCommunicator packetCommunicator)
+   public void setupLowLevelControlCommunication(String robotName, RealtimeRos2Node realtimeRos2Node)
    {
-      fingerController.setupCommunication(packetCommunicator);
+      if (ValkyrieRosControlController.ENABLE_FINGER_JOINTS)
+         fingerController.setupCommunication(robotName, realtimeRos2Node);
    }
 
    /**

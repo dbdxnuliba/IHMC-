@@ -21,20 +21,26 @@ public class AtlasFlatGroundWalkingTest extends DRCFlatGroundWalkingTest
 {
    private DRCRobotModel robotModel;
 
-   @ContinuousIntegrationTest(estimatedDuration = 348.7)
-   @Test(timeout = 1700000)
-   public void testAtlasFlatGroundWalking() throws SimulationExceededMaximumTimeException, ControllerFailureException
+   public boolean doPelvisWarmup()
    {
-      robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
-      super.testFlatGroundWalking(robotModel, true);
+      return true;
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 348.7, categoriesOverride = IntegrationCategory.IN_DEVELOPMENT)
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 348.7)
+   @Test(timeout = 1700000)
+   public void testFlatGroundWalking() throws SimulationExceededMaximumTimeException, ControllerFailureException
+   {
+      robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+      super.testFlatGroundWalking();
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 348.7, categoriesOverride = IntegrationCategory.EXCLUDE)
    @Test(timeout = 1700000)
    public void testAtlasFlatGroundWalkingWithShapeCollision() throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
       robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false, false, true);
-      super.testFlatGroundWalking(robotModel, true);
+      runFlatGroundWalking();
    }
 
    @ContinuousIntegrationTest(estimatedDuration = 0.3)

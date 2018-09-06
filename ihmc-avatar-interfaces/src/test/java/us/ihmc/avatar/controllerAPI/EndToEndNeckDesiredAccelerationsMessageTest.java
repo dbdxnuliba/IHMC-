@@ -11,6 +11,7 @@ import org.junit.Before;
 
 import controller_msgs.msg.dds.NeckDesiredAccelerationsMessage;
 import controller_msgs.msg.dds.NeckTrajectoryMessage;
+import org.junit.Test;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlMode;
@@ -18,6 +19,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyUse
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyInverseDynamicsSolver;
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
@@ -35,6 +37,8 @@ public abstract class EndToEndNeckDesiredAccelerationsMessageTest implements Mul
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
+   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 20.6)
+   @Test(timeout = 100000)
    public void testSimpleCommands() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -65,7 +69,7 @@ public abstract class EndToEndNeckDesiredAccelerationsMessageTest implements Mul
          desiredJointVelcoties[i] = 0.0;
       }
       NeckTrajectoryMessage neckTrajectoryMessage = HumanoidMessageTools.createNeckTrajectoryMessage(0.5, desiredJointPositions);
-      drcSimulationTestHelper.send(neckTrajectoryMessage);
+      drcSimulationTestHelper.publishToController(neckTrajectoryMessage);
       success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.55);
       assertTrue(success);
 
@@ -75,7 +79,7 @@ public abstract class EndToEndNeckDesiredAccelerationsMessageTest implements Mul
       SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
       assertEquals(RigidBodyControlMode.JOINTSPACE, findControllerState(headName, scs));
 
-      drcSimulationTestHelper.send(neckDesiredAccelerationsMessage);
+      drcSimulationTestHelper.publishToController(neckDesiredAccelerationsMessage);
       success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(RigidBodyUserControlState.TIME_WITH_NO_MESSAGE_BEFORE_ABORT - 0.05);
       assertTrue(success);
 

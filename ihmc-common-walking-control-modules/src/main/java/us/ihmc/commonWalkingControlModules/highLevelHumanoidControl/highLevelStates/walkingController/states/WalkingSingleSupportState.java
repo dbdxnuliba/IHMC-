@@ -5,6 +5,7 @@ import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParam
 import us.ihmc.commonWalkingControlModules.controlModules.WalkingFailureDetectionControlModule;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationManager;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegLengthBalanceModule;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOrientationManager;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.TransferToAndNextFootstepsData;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
@@ -15,6 +16,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -57,6 +59,7 @@ public class WalkingSingleSupportState extends SingleSupportState
 
    private final YoBoolean finishSingleSupportWhenICPPlannerIsDone = new YoBoolean("finishSingleSupportWhenICPPlannerIsDone", registry);
    private final YoBoolean minimizeAngularMomentumRateZDuringSwing = new YoBoolean("minimizeAngularMomentumRateZDuringSwing", registry);
+
 
    private final FrameVector3D touchdownErrorVector = new FrameVector3D(ReferenceFrame.getWorldFrame());
 
@@ -177,6 +180,25 @@ public class WalkingSingleSupportState extends SingleSupportState
          legConfigurationManager.collapseLegDuringSwing(swingSide.getOppositeSide());
       }
 
+      //balanceManager.getDesiredICP(new FramePoint2D());
+      /*
+      if(currentICP.getX()-desiredICP.getX()>0.15 && timeInState>0.4*swingTime)
+      {
+         LegLengthBalanceModule legLengthBalanceModule = new LegLengthBalanceModule();
+         legLengthBalanceModule.compute();
+         legConfigurationManager.setDesiredAngleWhenStraight(supportSide, legLengthBalanceModule.getDesiredAngleWhenStraight());
+      }
+      else
+      {
+         legConfigurationManager.setDefaultDesiredAngleWhenStraight(supportSide);
+      }
+      */
+
+
+
+
+
+
       walkingMessageHandler.clearFootTrajectory();
 
       switchToToeOffIfPossible(supportSide);
@@ -217,6 +239,9 @@ public class WalkingSingleSupportState extends SingleSupportState
          swingTime = walkingMessageHandler.getNextSwingTime();
          walkingMessageHandler.poll(nextFootstep, footstepTiming);
       }
+
+      /** 1/08/2018 RJG this has to be done before calling #updateFootstepParameters() to make sure the contact points are up to date */
+      feetManager.setContactStateForSwing(swingSide);
 
       updateFootstepParameters();
 
@@ -346,7 +371,7 @@ public class WalkingSingleSupportState extends SingleSupportState
     * {@link us.ihmc.commonWalkingControlModules.capturePoint.ICPPlannerInterface#estimateTimeRemainingForStateUnderDisturbance(FramePoint2d)}.
     * It is clamped w.r.t. to
     * {@link WalkingControllerParameters#getMinimumSwingTimeForDisturbanceRecovery()}.
-    * 
+    *
     * @return the current swing time remaining for the swing foot trajectory
     */
    private double requestSwingSpeedUpIfNeeded()
@@ -370,6 +395,10 @@ public class WalkingSingleSupportState extends SingleSupportState
 
    private void updateFootstepParameters()
    {
+      // Update the contact states based on the footstep. If the footstep doesn't have any predicted contact points, then use the default ones in the ContactablePlaneBodies.
+      controllerToolbox.updateContactPointsForUpcomingFootstep(nextFootstep);
+      controllerToolbox.updateBipedSupportPolygons();
+
       feetManager.adjustHeightIfNeeded(nextFootstep);
 
       pelvisOrientationManager.setTrajectoryTime(swingTime);
@@ -384,9 +413,10 @@ public class WalkingSingleSupportState extends SingleSupportState
          extraToeOffHeight = feetManager.getToeOffManager().getExtraCoMMaxHeightWithToes();
       comHeightManager.initialize(transferToAndNextFootstepsData, extraToeOffHeight);
 
-      // Update the contact states based on the footstep. If the footstep doesn't have any predicted contact points, then use the default ones in the ContactablePlaneBodies.
-      controllerToolbox.updateContactPointsForUpcomingFootstep(nextFootstep);
-      controllerToolbox.updateBipedSupportPolygons();
+      FixedFramePoint3DBasics stanceFootPosition = walkingMessageHandler.getFootstepAtCurrentLocation(swingSide.getOppositeSide()).getFootstepPose().getPosition();
+      FixedFramePoint3DBasics touchdownPosition = nextFootstep.getFootstepPose().getPosition();
+      double swingTime = footstepTiming.getSwingTime(); // TODO: Should be swing time remaining for step adjustments.
+      comHeightManager.step(stanceFootPosition, touchdownPosition, swingTime, swingSide, extraToeOffHeight);
    }
 
    @Override

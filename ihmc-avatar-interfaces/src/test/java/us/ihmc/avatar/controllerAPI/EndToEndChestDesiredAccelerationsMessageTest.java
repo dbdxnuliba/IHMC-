@@ -35,6 +35,8 @@ public abstract class EndToEndChestDesiredAccelerationsMessageTest implements Mu
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
+   @ContinuousIntegrationTest(estimatedDuration = 18.1)
+   @Test(timeout = 90000)
    public void testSimpleCommands() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -66,7 +68,7 @@ public abstract class EndToEndChestDesiredAccelerationsMessageTest implements Mu
 
       assertEquals(defaultControlState, findControllerState(scs));
 
-      drcSimulationTestHelper.send(desiredAccelerationsMessage);
+      drcSimulationTestHelper.publishToController(desiredAccelerationsMessage);
       success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(HandUserControlModeState.TIME_WITH_NO_MESSAGE_BEFORE_ABORT - 0.05);
       assertTrue(success);
 

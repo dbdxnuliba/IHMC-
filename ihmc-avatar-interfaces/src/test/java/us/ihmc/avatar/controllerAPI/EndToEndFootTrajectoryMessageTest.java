@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import controller_msgs.msg.dds.FootLoadBearingMessage;
 import controller_msgs.msg.dds.FootTrajectoryMessage;
 import us.ihmc.avatar.DRCObstacleCourseStartingLocation;
 import us.ihmc.avatar.MultiRobotTestInterface;
@@ -26,6 +27,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerData
 import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerDataReadOnly.Type;
 import us.ihmc.commonWalkingControlModules.controllerCore.FeedbackControllerToolbox;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.FootstepListVisualizer;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.MessageTools;
@@ -42,9 +44,9 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.humanoidRobotics.communication.packets.walking.LoadBearingRequest;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
-import us.ihmc.robotics.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.trajectories.waypoints.EuclideanTrajectoryPointCalculator;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameSE3TrajectoryPoint;
@@ -71,12 +73,6 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    protected double getLiftOffHeight()
    {
       return 0.15;
-   }
-
-   //This can be negative if you want to push the foot into the ground hard
-   protected double getDesiredTouchDownHeightInWorld()
-   {
-      return 0.0;
    }
 
    //the center of the trajectory
@@ -119,7 +115,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       footPoseCloseToActual.get(desiredPosition, desiredOrientation);
 
       FootTrajectoryMessage footTrajectoryMessage = HumanoidMessageTools.createFootTrajectoryMessage(robotSide, timeToPickupFoot, desiredPosition, desiredOrientation);
-      drcSimulationTestHelper.send(footTrajectoryMessage);
+      drcSimulationTestHelper.publishToController(footTrajectoryMessage);
 
       return drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(timeToPickupFoot + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
    }
@@ -132,11 +128,15 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       double trajectoryTime = 1.0;
 
       desiredPose.changeFrame(ReferenceFrame.getWorldFrame());
-      desiredPose.setZ(getDesiredTouchDownHeightInWorld());
       desiredPose.get(desiredPosition, desiredOrientation);
 
       FootTrajectoryMessage footTrajectoryMessage = HumanoidMessageTools.createFootTrajectoryMessage(robotSide, trajectoryTime, desiredPosition, desiredOrientation);
-      drcSimulationTestHelper.send(footTrajectoryMessage);
+      drcSimulationTestHelper.publishToController(footTrajectoryMessage);
+
+      FootLoadBearingMessage loadBearingMessage = new FootLoadBearingMessage();
+      loadBearingMessage.setRobotSide(robotSide.toByte());
+      loadBearingMessage.setLoadBearingRequest(LoadBearingRequest.LOAD.toByte());
+      drcSimulationTestHelper.publishToController(loadBearingMessage);
 
       return drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.2 + trajectoryTime + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
    }
@@ -158,7 +158,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       desiredRandomFootPose.get(desiredPosition, desiredOrientation);
       FootTrajectoryMessage footTrajectoryMessage = HumanoidMessageTools.createFootTrajectoryMessage(robotSide, trajectoryTime, desiredPosition, desiredOrientation);
 
-      drcSimulationTestHelper.send(footTrajectoryMessage);
+      drcSimulationTestHelper.publishToController(footTrajectoryMessage);
 
       boolean result = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime + getRobotModel().getWalkingControllerParameters().getDefaultInitialTransferTime());
       assertTrue(result);
@@ -239,6 +239,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
 
    //picks up a foot, moves it around in a ribbon shape, then puts the foot down, Done using both sides
+   @ContinuousIntegrationTest(estimatedDuration = 85.4)
+   @Test(timeout = 430000)
    public void testMultipleTrajectoryPoints() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -319,6 +321,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //moves each foot to a single position using a custom control point
+   @ContinuousIntegrationTest(estimatedDuration = 24.4)
+   @Test(timeout = 120000)
    public void testCustomControlPoint() throws SimulationExceededMaximumTimeException
    {
       DRCRobotModel robotModel = getRobotModel();
@@ -363,7 +367,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       footTrajectoryMessage.getSe3Trajectory().getControlFramePose().setPosition(new Point3D(controlFrameTransform.getTranslationVector()));
       footTrajectoryMessage.getSe3Trajectory().getFrameInformation().setTrajectoryReferenceFrameId(MessageTools.toFrameId(trajectoryFrame));
 
-      drcSimulationTestHelper.send(footTrajectoryMessage);
+      drcSimulationTestHelper.publishToController(footTrajectoryMessage);
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime));
 
       // Since the control frame is moved down below the foot this assert makes sure the singularity escape uses the desired ankle position, not the desired control point position.
@@ -376,6 +380,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //picks up the left foot, moves the foot around a sphere (ribbons yawed around the circle center)
+   @ContinuousIntegrationTest(estimatedDuration = 72.6)
+   @Test(timeout = 360000)
    public void testQueuedMessages() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -520,7 +526,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          }
 
          messages.add(footTrajectoryMessage);
-         drcSimulationTestHelper.send(footTrajectoryMessage);
+         drcSimulationTestHelper.publishToController(footTrajectoryMessage);
          boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(getRobotModel().getControllerDT());
          assertTrue(success);
       }
@@ -552,7 +558,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       for (RobotSide robotSide : RobotSide.values)
       {
          RigidBody foot = fullRobotModel.getFoot(robotSide);
-         FramePose3D initialFootPosition = new FramePose3D(foot.getBodyFixedFrame());
+         FramePose3D initialFootPosition = new FramePose3D(foot.getParentJoint().getFrameAfterJoint());
          initialFootPosition.changeFrame(ReferenceFrame.getWorldFrame());
 
          // First need to pick up the foot:
@@ -577,12 +583,12 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          footTrajectoryMessage.setRobotSide(robotSide.toByte());
          footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setMessageId(100);
          footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE.toByte());
-         footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setPreviousMessageId((long) 500); //not the right ID
+         footTrajectoryMessage.getSe3Trajectory().getQueueingProperties().setPreviousMessageId(500); //not the right ID
          for(int i = 0; i < 5; i++)
          {
-            footTrajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add().set(HumanoidMessageTools.createSE3TrajectoryPointMessage((double) i, new Point3D(), new Quaternion(), new Vector3D(), new Vector3D()));
+            footTrajectoryMessage.getSe3Trajectory().getTaskspaceTrajectoryPoints().add().set(HumanoidMessageTools.createSE3TrajectoryPointMessage(i, new Point3D(), new Quaternion(), new Vector3D(), new Vector3D()));
          }
-         drcSimulationTestHelper.send(footTrajectoryMessage);
+         drcSimulationTestHelper.publishToController(footTrajectoryMessage);
          success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(getRobotModel().getControllerDT() * 2);
          assertTrue(success);
 
@@ -639,6 +645,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //Picks a foot up, Sends queued messages, then sends a single point to test overriding the queue. Done for both feet
+   @ContinuousIntegrationTest(estimatedDuration = 72.6)
+   @Test(timeout = 360000)
    public void testQueueStoppedWithOverrideMessage() throws SimulationExceededMaximumTimeException
    {
       Random random = new Random(564574L);

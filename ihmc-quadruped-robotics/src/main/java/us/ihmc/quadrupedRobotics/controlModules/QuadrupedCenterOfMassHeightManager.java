@@ -1,35 +1,43 @@
 package us.ihmc.quadrupedRobotics.controlModules;
 
+import us.ihmc.commons.InterpolationTools;
+import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.EuclideanTrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyHeightCommand;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
+import us.ihmc.quadrupedRobotics.estimator.GroundPlaneEstimator;
 import us.ihmc.quadrupedRobotics.estimator.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.model.QuadrupedPhysicalProperties;
+import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedStep;
 import us.ihmc.robotics.controllers.PIDController;
 import us.ihmc.robotics.controllers.pidGains.implementations.PIDGains;
 import us.ihmc.robotics.controllers.pidGains.implementations.ParameterizedPIDGains;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsPositionTrajectoryGenerator;
-import us.ihmc.robotics.screwTheory.CenterOfMassJacobian;
 import us.ihmc.robotics.screwTheory.MovingReferenceFrame;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QuadrupedCenterOfMassHeightManager
 {
+   private static final double minimumTimeRemaining = 0.01;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final DoubleParameter initializationDuration = new DoubleParameter("heightInitializationDuration", registry, 0.5);
 
-   private final YoDouble robotTimestamp;
+   private final YoDouble controllerTime;
 
    private final YoBoolean controlBodyHeight = new YoBoolean("controlBodyHeight", registry);
+   private final YoBoolean heightCommandHasBeenReceived = new YoBoolean("heightCommandHasBeenReceived", registry);
 
    private final MovingReferenceFrame bodyFrame;
    private final ReferenceFrame centerOfMassFrame;
@@ -38,6 +46,12 @@ public class QuadrupedCenterOfMassHeightManager
 
    private final ReferenceFrame supportFrame;
    private final MultipleWaypointsPositionTrajectoryGenerator centerOfMassHeightTrajectory;
+
+   private final YoDouble currentDesiredHeightInWorld = new YoDouble("currentDesiredHeightInWorld", registry);
+   private final YoDouble currentDesiredVelocityInWorld = new YoDouble("currentDesiredVelocityInWorld", registry);
+   private final YoDouble upcomingDesiredHeightInWorld = new YoDouble("upcomingDesiredHeightInWorld", registry);
+
+   private final List<QuadrupedTimedStep> nextSteps = new ArrayList<>();
 
    private final PIDController linearMomentumZPDController;
 
@@ -55,21 +69,24 @@ public class QuadrupedCenterOfMassHeightManager
    private final YoDouble desiredVelocityInWorld;
    private final YoDouble currentVelocityInWorld;
 
-
    private final FramePoint3D nominalPosition;
    private final FrameVector3D nominalVelocity;
 
    private final double controlDT;
+   private final GroundPlaneEstimator groundPlaneEstimator;
+   private final GroundPlaneEstimator upcomingGroundPlaneEstimator;
 
    public QuadrupedCenterOfMassHeightManager(QuadrupedControllerToolbox controllerToolbox, QuadrupedPhysicalProperties physicalProperties,
                                              YoVariableRegistry parentRegistry)
    {
       this.controllerToolbox = controllerToolbox;
-      this.robotTimestamp = controllerToolbox.getRuntimeEnvironment().getRobotTimestamp();
+      this.controllerTime = controllerToolbox.getRuntimeEnvironment().getRobotTimestamp();
       this.controlDT = controllerToolbox.getRuntimeEnvironment().getControlDT();
 
       QuadrupedReferenceFrames referenceFrames = controllerToolbox.getReferenceFrames();
-      supportFrame = referenceFrames.getCenterOfFeetZUpFrameAveragingLowestZHeightsAcrossEnds();
+      groundPlaneEstimator = controllerToolbox.getGroundPlaneEstimator();
+      upcomingGroundPlaneEstimator = controllerToolbox.getUpcomingGroundPlaneEstimator();
+      supportFrame = groundPlaneEstimator.getGroundPlaneFrame();
       bodyFrame = referenceFrames.getBodyFrame();
       centerOfMassFrame = referenceFrames.getCenterOfMassFrame();
 
@@ -77,11 +94,14 @@ public class QuadrupedCenterOfMassHeightManager
       defaultComPositionGains.setKp(50.0);
       defaultComPositionGains.setKd(5.0);
       comPositionGainsParameter = new ParameterizedPIDGains("_comHeight", defaultComPositionGains, registry);
-
       linearMomentumZPDController = new PIDController("linearMomentumZPDController", registry);
+
+      controlBodyHeight.set(true);
+      heightCommandHasBeenReceived.set(false);
 
       nominalPosition = new FramePoint3D(supportFrame, 0.0, 0.0, physicalProperties.getNominalCoMHeight());
       nominalVelocity = new FrameVector3D(supportFrame);
+
       centerOfMassHeightTrajectory = new MultipleWaypointsPositionTrajectoryGenerator("centerOfMassHeight", supportFrame, registry);
 
       currentHeightInWorld = new YoDouble("currentHeightInWorld", registry);
@@ -96,7 +116,7 @@ public class QuadrupedCenterOfMassHeightManager
    {
       controlBodyHeight.set(command.controlBodyHeight());
 
-      double currentTime = robotTimestamp.getDoubleValue();
+      double currentTime = controllerTime.getDoubleValue();
       double timeShift = command.isExpressedInAbsoluteTime() ? 0.0 : currentTime;
       EuclideanTrajectoryControllerCommand euclideanTrajectory = command.getEuclideanTrajectory();
       euclideanTrajectory.getTrajectoryPointList().addTimeOffset(timeShift);
@@ -126,32 +146,116 @@ public class QuadrupedCenterOfMassHeightManager
       }
 
       centerOfMassHeightTrajectory.initialize();
+      heightCommandHasBeenReceived.set(true);
    }
 
    public void initialize()
    {
-      computeCurrentState();
+      if (!heightCommandHasBeenReceived.getBooleanValue())
+      {
+         computeCurrentState();
 
-      currentPosition.changeFrame(supportFrame);
-      currentVelocity.changeFrame(supportFrame);
+         currentPosition.changeFrame(supportFrame);
+         currentVelocity.changeFrame(supportFrame);
 
-      double startTime = robotTimestamp.getDoubleValue();
-      double endTime = startTime + initializationDuration.getValue();
-      centerOfMassHeightTrajectory.clear();
-      centerOfMassHeightTrajectory.appendWaypoint(startTime, currentPosition, currentVelocity);
-      centerOfMassHeightTrajectory.appendWaypoint(endTime, nominalPosition, nominalVelocity);
-      centerOfMassHeightTrajectory.initialize();
+         double startTime = controllerTime.getDoubleValue();
+         double endTime = startTime + initializationDuration.getValue();
+         centerOfMassHeightTrajectory.clear();
+         centerOfMassHeightTrajectory.appendWaypoint(startTime, currentPosition, currentVelocity);
+         centerOfMassHeightTrajectory.appendWaypoint(endTime, nominalPosition, nominalVelocity);
+         centerOfMassHeightTrajectory.initialize();
+      }
+
+      nextSteps.clear();
    }
+
+   public void setActiveSteps(List<? extends QuadrupedTimedStep> activeSteps)
+   {
+      double earliestEndTime = Double.POSITIVE_INFINITY;
+      nextSteps.clear();
+
+      for (int i = 0; i < activeSteps.size(); i++)
+      {
+         double endTime = activeSteps.get(i).getTimeInterval().getEndTime();
+         if (endTime < earliestEndTime)
+            earliestEndTime = endTime;
+      }
+
+      for (int i = 0; i < activeSteps.size(); i++)
+      {
+         QuadrupedTimedStep step = activeSteps.get(i);
+         if (step.getTimeInterval().getEndTime() == earliestEndTime)
+         {
+            nextSteps.add(step);
+         }
+      }
+   }
+
+   private final FramePoint3D tempDesiredPosition = new FramePoint3D();
 
    public void update()
    {
-      centerOfMassHeightTrajectory.compute(robotTimestamp.getDoubleValue());
+      centerOfMassHeightTrajectory.compute(controllerTime.getDoubleValue());
       centerOfMassHeightTrajectory.getLinearData(desiredPosition, desiredVelocity, desiredAcceleration);
+
+      // get the potential XY translation in height
+      double desiredZHeight = desiredPosition.getZ();
+      if (controlBodyHeight.getBooleanValue())
+      {
+         desiredPosition.setToZero(bodyFrame);
+         tempDesiredPosition.setToZero(bodyFrame);
+      }
+      else
+      {
+         desiredPosition.setToZero(centerOfMassFrame);
+         tempDesiredPosition.setToZero(centerOfMassFrame);
+      }
+      desiredPosition.changeFrame(supportFrame);
+      desiredPosition.setZ(desiredZHeight);
 
       desiredPosition.changeFrame(worldFrame);
       desiredVelocity.changeFrame(worldFrame);
-      desiredHeightInWorld.set(desiredPosition.getZ());
-      desiredVelocityInWorld.set(desiredVelocity.getZ());
+
+
+
+      // compute desired height in upcoming support frame
+      tempDesiredPosition.changeFrame(upcomingGroundPlaneEstimator.getGroundPlaneFrame());
+      tempDesiredPosition.setZ(desiredZHeight);
+      tempDesiredPosition.changeFrame(worldFrame);
+
+
+      currentDesiredHeightInWorld.set(desiredPosition.getZ());
+      currentDesiredVelocityInWorld.set(desiredVelocity.getZ());
+
+      upcomingDesiredHeightInWorld.set(tempDesiredPosition.getZ());
+
+      // blend between the current desired height and the upcoming desired height
+      double alpha = getHeightBlendingFactor();
+      double blendedHeight = InterpolationTools
+            .linearInterpolate(currentDesiredHeightInWorld.getDoubleValue(), upcomingDesiredHeightInWorld.getDoubleValue(), alpha);
+      double blendedHeightVelocity = currentDesiredVelocityInWorld.getDoubleValue() + getBlendedHeightVelocity();
+
+      /*
+      if (upcomingDesiredHeightInWorld.getDoubleValue() < currentDesiredHeightInWorld.getDoubleValue()) // stepping down
+      {
+         if (desiredHeightInWorld.getDoubleValue() < blendedHeight)
+         {
+            blendedHeight = desiredHeightInWorld.getDoubleValue();
+            blendedHeightVelocity = currentDesiredVelocityInWorld.getDoubleValue();
+         }
+      }
+      else if (upcomingDesiredHeightInWorld.getDoubleValue() > currentDesiredHeightInWorld.getDoubleValue()) // stepping up
+      {
+         if (desiredHeightInWorld.getDoubleValue() > blendedHeight)
+         {
+            blendedHeight = desiredHeightInWorld.getDoubleValue();
+            blendedHeightVelocity = currentDesiredVelocityInWorld.getDoubleValue();
+         }
+      }
+      */
+
+      desiredHeightInWorld.set(blendedHeight);
+      desiredVelocityInWorld.set(blendedHeightVelocity);
 
       computeCurrentState();
    }
@@ -168,6 +272,39 @@ public class QuadrupedCenterOfMassHeightManager
       return linearMomentumZPDController
             .compute(currentHeightInWorld.getDoubleValue(), desiredHeightInWorld.getDoubleValue(), currentVelocityInWorld.getDoubleValue(),
                      desiredVelocityInWorld.getDoubleValue(), controlDT);
+   }
+
+   private double getHeightBlendingFactor()
+   {
+      if (nextSteps.size() > 0)
+      {
+         double duration = nextSteps.get(0).getTimeInterval().getDuration();
+         double startTime = nextSteps.get(0).getTimeInterval().getStartTime();
+         double timeInState = controllerToolbox.getRuntimeEnvironment().getRobotTimestamp().getDoubleValue() - startTime;
+
+         return MathTools.clamp(timeInState / duration, 0.0, 1.0);
+      }
+      else
+      {
+         return 0.0;
+      }
+   }
+
+   private double getBlendedHeightVelocity()
+   {
+      if (nextSteps.size() > 0)
+      {
+         double timeRemainingInState =
+               nextSteps.get(0).getTimeInterval().getEndTime() - controllerToolbox.getRuntimeEnvironment().getRobotTimestamp().getDoubleValue();
+         timeRemainingInState = Math.max(timeRemainingInState, minimumTimeRemaining);
+         double heightDifference = upcomingDesiredHeightInWorld.getDoubleValue() - desiredHeightInWorld.getDoubleValue();
+
+         return heightDifference / timeRemainingInState;
+      }
+      else
+      {
+         return 0.0;
+      }
    }
 
    private void computeCurrentState()

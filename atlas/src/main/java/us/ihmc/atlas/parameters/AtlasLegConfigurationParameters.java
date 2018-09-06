@@ -30,42 +30,65 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
       return gains;
    }
 
-   @Override
    /** {@inheritDoc} */
+   @Override
    public LegConfigurationGains getStraightLegGains()
    {
       LegConfigurationGains gains = new LegConfigurationGains();
-      gains.setJointSpaceKp(runningOnRealRobot ? 10.0 : 40.0);
-      gains.setJointSpaceKd(runningOnRealRobot ? 3.0 : 6.0);
+      gains.setActuatorSpaceKp(750.0);
+      gains.setJointSpaceKd(runningOnRealRobot ? 3.0 : 10.0);
 
       return gains;
    }
 
-   @Override
    /** {@inheritDoc} */
+   @Override
    public double getLegPrivilegedHighWeight()
    {
-      return runningOnRealRobot ? 50.0 : 150.0;
+      return runningOnRealRobot ? 50.0 : 5.0;
    }
 
    @Override
+   public double getDesiredFractionOfMidrangeForCollapsedAngle()
+   {
+      return 0.3;
+      //      return 1.8; // for big step down
+   }
+
    /** {@inheritDoc} */
+   @Override
    public double getFractionOfSwingToStraightenLeg()
    {
       return runningOnRealRobot ? 0.6 : 0.4;
    }
 
    @Override
-   /** {@inheritDoc} */
-   public double getKneeAngleWhenExtended()
+   public double getFractionOfTransferToCollapseLeg()
    {
-      return runningOnRealRobot ? 0.2 : 0.0;
+      return 0.7;
+      //      return 1.0;
    }
 
    @Override
+   public double getFractionOfSwingToCollapseStanceLeg()
+   {
+      return 0.55;
+      //      return 1.0;
+      //      return 0.3; //for big step down
+   }
+
+
    /** {@inheritDoc} */
+   @Override
+   public double getKneeAngleWhenExtended()
+   {
+      return runningOnRealRobot ? 0.2 : 0.9;
+   }
+
+   /** {@inheritDoc} */
+   @Override
    public double getKneeAngleWhenStraight()
    {
-      return runningOnRealRobot ? 0.35 : 0.25;
-   }
+      return runningOnRealRobot ? 0.35 : 1.17819 ;
+   } //1.17
 }

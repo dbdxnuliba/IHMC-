@@ -29,7 +29,7 @@ import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableBody;
 import us.ihmc.humanoidRobotics.communication.packets.walking.FootstepStatus;
-import us.ihmc.idl.RecyclingArrayListPubSub;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
@@ -137,7 +137,7 @@ public class ContinuousStepGenerator implements Updatable
    private FootstepAdjustment footstepAdjustment;
 
    private final FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
-   private final RecyclingArrayListPubSub<FootstepDataMessage> footsteps = footstepDataListMessage.getFootstepDataList();
+   private final RecyclingArrayList<FootstepDataMessage> footsteps = footstepDataListMessage.getFootstepDataList();
    private final FootstepDataMessage firstFootstep = new FootstepDataMessage();
 
    private final SideDependentList<List<FootstepVisualizer>> footstepSideDependentVisualizers = new SideDependentList<>(new ArrayList<>(), new ArrayList<>());
@@ -539,7 +539,6 @@ public class ContinuousStepGenerator implements Updatable
          public FramePose3DReadOnly adjustFootstep(FramePose2DReadOnly footstepPose)
          {
             adjustedPose.getPosition().set(footstepPose.getPosition());
-            currentSupportFootPose.setMatchingFrame(footPoseProvider.getCurrentFootPose(currentSupportSide.getEnumValue()));
             adjustedPose.setZ(currentSupportFootPose.getZ());
             if (adjustPitchAndRoll)
             {
@@ -574,7 +573,6 @@ public class ContinuousStepGenerator implements Updatable
          {
             adjustedPose.getPosition().set(footstepPose.getPosition());
             adjustedPose.setZ(heightMap.heightAt(footstepPose.getX(), footstepPose.getY(), 0.0));
-            currentSupportFootPose.setMatchingFrame(footPoseProvider.getCurrentFootPose(currentSupportSide.getEnumValue()));
             currentSupportFootPose.getOrientationYawPitchRoll(yawPitchRoll);
             yawPitchRoll[0] = footstepPose.getYaw();
             adjustedPose.setOrientationYawPitchRoll(yawPitchRoll);
@@ -682,5 +680,25 @@ public class ContinuousStepGenerator implements Updatable
 
          footstepSideDependentVisualizers.put(robotSide, visualizers);
       }
+   }
+
+   /**
+    * Gets the read-only reference to the pose of the current support foot.
+    * 
+    * @return the current foot pose.
+    */
+   public FramePose3DReadOnly getCurrentSupportFootPose()
+   {
+      return currentSupportFootPose;
+   }
+
+   /**
+    * Gets the side of the current support foot.
+    * 
+    * @return the support foot side.
+    */
+   public RobotSide getCurrentSupportSide()
+   {
+      return currentSupportSide.getEnumValue();
    }
 }

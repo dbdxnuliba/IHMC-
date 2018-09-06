@@ -77,9 +77,9 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       momentumOptimizationSettings = new AtlasMomentumOptimizationSettings(jointMap, contactPointParameters.getNumberOfContactableBodies());
       angularMomentumModifierParameters = new ICPAngularMomentumModifierParameters();
 
-      minimumHeightAboveGround = jointMap.getModelScale() * ( 0.625 + 0.08 );
-      nominalHeightAboveGround = jointMap.getModelScale() * ( 0.705 + 0.08 );
-      maximumHeightAboveGround = jointMap.getModelScale() * ( 0.845 + 0.08 );
+      minimumHeightAboveGround = jointMap.getModelScale() * ( 0.625 + 0.08 );//0.625
+      nominalHeightAboveGround = jointMap.getModelScale() * ( 0.705 + 0.08 );//0.705
+      maximumHeightAboveGround = jointMap.getModelScale() * ( 0.845+ 0.08 ); //0.845
 
       runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
 
@@ -140,7 +140,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public boolean allowDisturbanceRecoveryBySpeedingUpSwing()
    {
-      return true; // TODO Seems to work well but still need to be heavily tested on the robot.
+      return false; // TODO Seems to work well but still need to be heavily tested on the robot.
    }
 
    @Override

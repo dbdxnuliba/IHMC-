@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import us.ihmc.commonWalkingControlModules.desiredFootStep.TransferToAndNextFootstepsData;
+import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.Packet;
@@ -25,9 +26,8 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisHeight
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
-import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.geometry.StringStretcher2d;
-import us.ihmc.robotics.lists.RecyclingArrayDeque;
+import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.robotics.math.trajectories.providers.YoVariableDoubleProvider;
 import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsTrajectoryGenerator;
@@ -75,7 +75,7 @@ public class LookAheadCoMHeightTrajectoryGenerator
          "pelvisHeightOffset", registry);
 
    private final YoDouble minimumHeightAboveGround = new YoDouble("minimumHeightAboveGround", registry);
-   private final YoDouble nominalHeightAboveGround = new YoDouble("nominalHeightAboveGround", registry);
+   private YoDouble nominalHeightAboveGround = new YoDouble("nominalHeightAboveGround", registry);
    private final YoDouble maximumHeightAboveGround = new YoDouble("maximumHeightAboveGround", registry);
 
    private final YoDouble doubleSupportPercentageIn = new YoDouble("doubleSupportPercentageIn", registry);
@@ -114,7 +114,7 @@ public class LookAheadCoMHeightTrajectoryGenerator
 
    private final YoBoolean isReadyToHandleQueuedCommands;
    private final YoLong numberOfQueuedCommands;
-   private final RecyclingArrayDeque<PelvisHeightTrajectoryCommand> commandQueue = new RecyclingArrayDeque<>(PelvisHeightTrajectoryCommand.class);
+   private final RecyclingArrayDeque<PelvisHeightTrajectoryCommand> commandQueue = new RecyclingArrayDeque<>(PelvisHeightTrajectoryCommand.class, PelvisHeightTrajectoryCommand::set);
 
    public LookAheadCoMHeightTrajectoryGenerator(double minimumHeightAboveGround, double nominalHeightAboveGround, double maximumHeightAboveGround,
          double defaultOffsetHeightAboveGround, double doubleSupportPercentageIn, ReferenceFrame centerOfMassFrame, ReferenceFrame pelvisFrame,
@@ -830,15 +830,16 @@ public class LookAheadCoMHeightTrajectoryGenerator
 
    public void handlePelvisHeightTrajectoryCommand(PelvisHeightTrajectoryCommand command)
    {
-      switch (command.getEuclideanTrajectory().getExecutionMode())
+      if (command.getEuclideanTrajectory().getExecutionMode() == ExecutionMode.OVERRIDE)
       {
-      case OVERRIDE:
          isReadyToHandleQueuedCommands.set(true);
          clearCommandQueue(command.getEuclideanTrajectory().getCommandId());
          offsetHeightAboveGroundChangedTime.set(yoTime.getDoubleValue());
          initializeOffsetTrajectoryGenerator(command, 0.0);
          return;
-      case QUEUE:
+      }
+      else if (command.getEuclideanTrajectory().getExecutionMode() == ExecutionMode.QUEUE)
+      {
          boolean success = queuePelvisHeightTrajectoryCommand(command);
          if (!success)
          {
@@ -849,7 +850,9 @@ public class LookAheadCoMHeightTrajectoryGenerator
             offsetHeightTrajectoryGenerator.initialize();
          }
          return;
-      default:
+      }
+      else
+      {
          PrintTools.warn(this, "Unknown " + ExecutionMode.class.getSimpleName() + " value: " + command.getEuclideanTrajectory().getExecutionMode() + ". Command ignored.");
          return;
       }
