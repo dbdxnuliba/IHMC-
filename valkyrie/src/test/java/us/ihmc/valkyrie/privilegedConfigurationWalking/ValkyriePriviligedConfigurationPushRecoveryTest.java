@@ -5,6 +5,7 @@ import org.junit.Test;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.pushRecovery.AvatarICPOptimizationPushRecoveryATest;
+import us.ihmc.avatar.straightLegWalking.AvatarPrivilegedConfigurationPushRecoveryTest;
 import us.ihmc.avatar.straightLegWalking.AvatarStraightLegWalkingTest;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
@@ -17,7 +18,7 @@ import us.ihmc.valkyrie.ValkyrieRobotModel;
 import us.ihmc.valkyrie.parameters.*;
 import us.ihmc.valkyrie.privilegedConfigurationWalking.ValkyrieStraightLegWalkingTest.*;
 
-public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarStraightLegWalkingTest
+public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivilegedConfigurationPushRecoveryTest
 {
    private final ValkyrieRobotModel valkyrieRobotModel = new MyValkyrieRobotModel();
 
@@ -86,9 +87,33 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarStrai
    }
 
    @Override
+   public double getNominalHeight()
+   {
+      return 0;
+   }
+
+   @Override
+   public double getSlowTransferDuration()
+   {
+      return 0;
+   }
+
+   @Override
+   public double getSlowSwingDuration()
+   {
+      return 0;
+   }
+
+   @Override
    public DRCRobotModel getRobotModel()
    {
       return valkyrieRobotModel;
+   }
+
+   @Override
+   protected double getSizeScale()
+   {
+      return 0;
    }
 
    @Override
