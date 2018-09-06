@@ -2,19 +2,15 @@ package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 
 
 import controller_msgs.msg.dds.*;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.lang3.SystemUtils;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.convexOptimization.qpOASES.DenseMatrix;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
-import us.ihmc.quadrupedRobotics.planning.QuadrupedTimedStep;
-import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.NewTowrCartesianStates.LegIndex;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
 import us.ihmc.quadrupedRobotics.util.TimeInterval;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -31,7 +27,7 @@ import java.util.List;
 public class QuadrupedTowrTrajectoryConverter
 {
 
-   public static NewTowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
+   public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
    {
       PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
             new PeriodicRealtimeThreadSchedulerFactory(20) :
@@ -51,7 +47,7 @@ public class QuadrupedTowrTrajectoryConverter
 
       subscription.poll(incomingMessage);
 
-      NewTowrCartesianStates towrCartesianStatesToFill = new NewTowrCartesianStates(incomingMessage.getPoints().size());
+      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
       QuadrupedTowrTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
 
@@ -61,12 +57,12 @@ public class QuadrupedTowrTrajectoryConverter
 
    }
 
-   public static void printTowrTrajectory(NewTowrCartesianStates towrCartesianStates)
+   public static void printTowrTrajectory(TowrCartesianStates towrCartesianStates)
    {
       PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
 
       String message = "Base linear trajectory: \n";
-      message += "\t Position \t Velocity \t Acceleration\n";
+      message += "\t\t Position \t\t Velocity \t\t Acceleration\n";
       for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
       {
          message += "\t" + towrCartesianStates.getCenterOfMassLinearPosition(i);
@@ -103,7 +99,7 @@ public class QuadrupedTowrTrajectoryConverter
       return RobotQuadrant.FRONT_LEFT;
    }
 
-   public static List<QuadrupedTimedStepMessage> stateToTimedStepList(NewTowrCartesianStates towrCartesianStates)
+   public static List<QuadrupedTimedStepMessage> stateToTimedStepList(TowrCartesianStates towrCartesianStates)
    {
       List<QuadrupedTimedStepMessage> steps = new ArrayList<>();
       DenseMatrix64F stepsTotal = towrCartesianStates.getStepsNumber();
@@ -126,7 +122,7 @@ public class QuadrupedTowrTrajectoryConverter
       return steps;
    }
 
-   public static QuadrupedTimedStepListMessage stateToTimedStepListMessage(NewTowrCartesianStates towrCartesianStates)
+   public static QuadrupedTimedStepListMessage stateToTimedStepListMessage(TowrCartesianStates towrCartesianStates)
    {
       QuadrupedTimedStepListMessage message = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(stateToTimedStepList(towrCartesianStates), false);
       message.setCanBeDelayed(false);
@@ -135,7 +131,7 @@ public class QuadrupedTowrTrajectoryConverter
       return message;
    }
 
-   public static CenterOfMassTrajectoryMessage createCenterOfMassMessage(NewTowrCartesianStates towrCartesianStates)
+   public static CenterOfMassTrajectoryMessage createCenterOfMassMessage(TowrCartesianStates towrCartesianStates)
    {
 
       DenseMatrix64F timeStamps = towrCartesianStates.getTimeStamps();
@@ -162,7 +158,7 @@ public class QuadrupedTowrTrajectoryConverter
       return comMessage;
    }
 
-   public static void messageToCartesianTrajectoryConverter(RobotStateCartesianTrajectory incomingMessage, NewTowrCartesianStates towrCartesianStatesToFill)
+   public static void messageToCartesianTrajectoryConverter(RobotStateCartesianTrajectory incomingMessage, TowrCartesianStates towrCartesianStatesToFill)
    {
 
       int pointIter = 0;
@@ -180,7 +176,7 @@ public class QuadrupedTowrTrajectoryConverter
       towrCartesianStatesToFill.setStepsNumber(stepsNumberCounter);
    }
 
-   public static void messageToCartesianStateConverter(RobotStateCartesian robotStateCartesian, DenseMatrixBool previousContactState, DenseMatrix64F stepCounterPerLeg, NewTowrCartesianStates towrCartesianStatesToFill){
+   public static void messageToCartesianStateConverter(RobotStateCartesian robotStateCartesian, DenseMatrixBool previousContactState, DenseMatrix64F stepCounterPerLeg, TowrCartesianStates towrCartesianStatesToFill){
 
       for(LegIndex legIdx :LegIndex.values())
       {
