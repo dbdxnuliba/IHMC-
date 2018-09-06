@@ -46,7 +46,7 @@ public class TowrCartesianStates
    private DenseMatrix64F hindLeftFootPositionBaseFrame = new DenseMatrix64F(10, 3);
    private DenseMatrix64F hindRightFootPositionBaseFrame = new DenseMatrix64F(10, 3);
 
-   private DenseMatrix64F numberOfSteps = new DenseMatrix64F(1,10);
+   private DenseMatrix64F numberOfSteps = new DenseMatrix64F(1,numberOfEndEffectors);
 
    private DenseMatrix64F touchDownInstants = new DenseMatrix64F(10, numberOfEndEffectors);
    private DenseMatrix64F takeOffInstants = new DenseMatrix64F(10, numberOfEndEffectors);

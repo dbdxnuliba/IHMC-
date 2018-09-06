@@ -8,6 +8,10 @@ import org.ejml.data.DenseMatrixBool;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
@@ -52,9 +56,171 @@ public class QuadrupedTowrTrajectoryConverter
       quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
 
       //node.spin(); // start the realtime node thread
-
+      
       return towrCartesianStatesToFill;
 
+   }
+
+   public static TowrCartesianStates loadExistingDataSet()
+   {
+      TowrWalkDataSet1 towrWalkDataSet1 = new TowrWalkDataSet1();
+
+      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(towrWalkDataSet1.getNumberOfWayPoints());
+      towrCartesianStatesToFill.setStepsNumber(towrWalkDataSet1.getNumberOfSteps());
+
+      for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.FL); i++)
+      {
+         double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FL, i, 0, currentValueX);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FL, i, 1, currentValueY);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FL, i, 2, currentValueZ);
+      }
+      for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.FR); i++)
+      {
+         double currentValueX = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FR, i, 0, currentValueX);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FR, i, 1, currentValueY);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.FR, i, 2, currentValueZ);
+      }
+      for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.HL); i++)
+      {
+         double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 0, currentValueX);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 1, currentValueY);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 2, currentValueZ);
+      }
+      for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.HR); i++)
+      {
+         double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 0, currentValueX);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 1, currentValueY);
+         towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 2, currentValueZ);
+      }
+
+      return towrCartesianStatesToFill;
+   }
+
+   public static void printDataSet(TowrCartesianStates towrCartesianStates)
+   {
+      PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
+
+      String message = "Base linear trajectory: \n";
+      //PrintTools.info("wayPointsNumber = "+towrCartesianStates.getPointsNumber());
+
+      message += "\t wayPointsNumber = "+towrCartesianStates.getPointsNumber()+"\n";
+      message += "\n";
+      message += "\t stepsNumber.set("+0+", "+towrCartesianStates.getStepsNumber(LegIndex.FL)+"); \n";
+      message += "\t stepsNumber.set("+1+", "+towrCartesianStates.getStepsNumber(LegIndex.FR)+"); \n";
+      message += "\t stepsNumber.set("+2+", "+towrCartesianStates.getStepsNumber(LegIndex.HL)+"); \n";
+      message += "\t stepsNumber.set("+3+", "+towrCartesianStates.getStepsNumber(LegIndex.HR)+"); \n";
+      message += "\n";
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.FL); i++)
+      {
+         for (LegIndex legIdx : LegIndex.values())
+         {
+            message += "\t touchDownInstants.set(" + i +", "+ legIdx.ordinal() +", "+towrCartesianStates.getTouchDown().get(i,legIdx.ordinal())+");\n";
+         }
+      }
+      message += "\n";
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.FL); i++)
+      {
+         for (LegIndex legIdx : LegIndex.values())
+         {
+            message += "\t takeOffInstants.set(" + i +", "+ legIdx.ordinal() +", "+towrCartesianStates.getTakeOff().get(i,legIdx.ordinal())+");\n";
+         }
+      }
+      message += "\n";
+      DenseMatrix64F frontLeftPositionWF = towrCartesianStates.getFrontLeftFootPositionWorldFrame();
+      DenseMatrix64F frontRightPositionWF = towrCartesianStates.getFrontRightFootPositionWorldFrame();
+      DenseMatrix64F hindLeftPositionWF = towrCartesianStates.getHindLeftFootPositionWorldFrame();
+      DenseMatrix64F hindRightPositionWF = towrCartesianStates.getHindRightFootPositionWorldFrame();
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.FL); i++)
+      {
+         message += "\t frontLeftFootPositionWorldFrame.set(" + i +", "+ 0 +", "+frontLeftPositionWF.get(i,0)+");\n";
+         message += "\t frontLeftFootPositionWorldFrame.set(" + i +", "+ 1 +", "+frontLeftPositionWF.get(i,1)+");\n";
+         message += "\t frontLeftFootPositionWorldFrame.set(" + i +", "+ 2 +", "+frontLeftPositionWF.get(i,2)+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.FR); i++)
+      {
+         message += "\t frontRightFootPositionWorldFrame.set(" + i +", "+ 0 +", "+frontRightPositionWF.get(i,0)+");\n";
+         message += "\t frontRightFootPositionWorldFrame.set(" + i +", "+ 1 +", "+frontRightPositionWF.get(i,1)+");\n";
+         message += "\t frontRightFootPositionWorldFrame.set(" + i +", "+ 2 +", "+frontRightPositionWF.get(i,2)+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.HL); i++)
+      {
+         message += "\t hindLeftFootPositionWorldFrame.set(" + i +", "+ 0 +", "+hindLeftPositionWF.get(i,0)+");\n";
+         message += "\t hindLeftFootPositionWorldFrame.set(" + i +", "+ 1 +", "+hindLeftPositionWF.get(i,1)+");\n";
+         message += "\t hindLeftFootPositionWorldFrame.set(" + i +", "+ 2 +", "+hindLeftPositionWF.get(i,2)+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i< towrCartesianStates.getStepsNumber(LegIndex.HR); i++)
+      {
+         message += "\t hindRightFootPositionWorldFrame.set(" + i +", "+ 0 +", "+hindRightPositionWF.get(i,0)+");\n";
+         message += "\t hindRightFootPositionWorldFrame.set(" + i +", "+ 1 +", "+hindRightPositionWF.get(i,1)+");\n";
+         message += "\t hindRightFootPositionWorldFrame.set(" + i +", "+ 2 +", "+hindRightPositionWF.get(i,2)+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         Point3DReadOnly currentPoint = towrCartesianStates.getCenterOfMassLinearPosition(i);
+         message += "\t centerOfMassLinearPositions.add().set(" + currentPoint.getX()+", "+currentPoint.getY()+", "+currentPoint.getZ()+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         Vector3DReadOnly currentVelocity = towrCartesianStates.getCenterOfMassLinearVelocity(i);
+         message += "\t centerOfMassLinearVelocities.add().set(" + currentVelocity.getX()+", "+currentVelocity.getY()+", "+currentVelocity.getZ()+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         Vector3DReadOnly currentAcceleration = towrCartesianStates.getCenterOfMassLinearAcceleration(i);
+         message += "\t centerOfMassLinearAccelerations.add().set(" + currentAcceleration.getX()+", "+currentAcceleration.getY()+", "+currentAcceleration.getZ()+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         QuaternionReadOnly currentPoint = towrCartesianStates.getCenterOfMassAngularOrientations(i);
+         message += "\t centerOfMassAngularOrientations.add().set(" + currentPoint.getX()+", "+currentPoint.getY()+", "+currentPoint.getZ()+", "+currentPoint.getS()+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         Vector3DReadOnly currentVelocity = towrCartesianStates.getCenterOfMassAngularVelocity(i);
+         message += "\t centerOfMassAngularVelocities.add().set(" + currentVelocity.getX()+", "+currentVelocity.getY()+", "+currentVelocity.getZ()+");\n";
+      }
+      message += "\n";
+      for (int i = 0; i < towrCartesianStates.getPointsNumber(); i++)
+      {
+         Vector3DReadOnly currentAcceleration = towrCartesianStates.getCenterOfMassAngularAcceleration(i);
+         message += "\t centerOfMassAngularAccelerations.add().set(" + currentAcceleration.getX()+", "+currentAcceleration.getY()+", "+currentAcceleration.getZ()+");\n";
+      }
+      PrintTools.info(message);
+      //
+      //PrintTools.info("FL foot trajectory WF: "+towrCartesianStates.getFrontLeftFootPositionWorldFrame());
+      //PrintTools.info("FR foot trajectory WF: "+towrCartesianStates.getFrontRightFootPositionWorldFrame());
+      //PrintTools.info("HL foot trajectory WF: "+towrCartesianStates.getHindLeftFootPositionWorldFrame());
+      //PrintTools.info("HR foot trajectory WF: "+towrCartesianStates.getHindRightFootPositionWorldFrame());
+      //
+      //PrintTools.info("FL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FL));
+      //PrintTools.info("FR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.FR));
+      //PrintTools.info("HL foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HL));
+      //PrintTools.info("HR foot trajectory BF: "+towrCartesianStates.getTargetFootholdBaseFrame(LegIndex.HR));
+      //
+      //PrintTools.info("Number of steps: "+towrCartesianStates.getStepsNumber());
+      //
+      //PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
+      //PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
    }
 
    public static void printTowrTrajectory(TowrCartesianStates towrCartesianStates)
