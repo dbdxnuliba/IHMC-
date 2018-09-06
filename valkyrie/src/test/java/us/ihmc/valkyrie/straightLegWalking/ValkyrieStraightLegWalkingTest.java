@@ -192,7 +192,7 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
    {
       public TestToeOffParameters(ValkyrieJointMap jointMap)
       {
-         super();
+         super(false);
       }
 
       @Override
