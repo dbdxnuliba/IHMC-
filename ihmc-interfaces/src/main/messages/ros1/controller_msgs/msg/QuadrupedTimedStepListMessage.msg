@@ -8,6 +8,10 @@ controller_msgs/QuadrupedTimedStepMessage[] quadruped_step_list
 # Field default value True
 bool is_expressed_in_absolute_time
 
+# If false, the robot should not shift these step times, and execute immediately
+# Field default value True
+bool can_be_delayed
+
 # Properties for queueing footstep lists.
 controller_msgs/QueueableMessage queueing_properties
 

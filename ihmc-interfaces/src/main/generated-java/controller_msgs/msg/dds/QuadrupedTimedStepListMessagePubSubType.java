@@ -47,6 +47,8 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
           current_alignment += controller_msgs.msg.dds.QuadrupedTimedStepMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
       current_alignment += controller_msgs.msg.dds.QueueableMessagePubSubType.getMaxCdrSerializedSize(current_alignment);
 
 
@@ -73,6 +75,9 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
       current_alignment += controller_msgs.msg.dds.QueueableMessagePubSubType.getCdrSerializedSize(data.getQueueingProperties(), current_alignment);
 
 
@@ -89,6 +94,8 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
 
       cdr.write_type_7(data.getIsExpressedInAbsoluteTime());
 
+      cdr.write_type_7(data.getCanBeDelayed());
+
       controller_msgs.msg.dds.QueueableMessagePubSubType.write(data.getQueueingProperties(), cdr);
    }
 
@@ -98,6 +105,8 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
       	
       cdr.read_type_e(data.getQuadrupedStepList());	
       data.setIsExpressedInAbsoluteTime(cdr.read_type_7());
+      	
+      data.setCanBeDelayed(cdr.read_type_7());
       	
       controller_msgs.msg.dds.QueueableMessagePubSubType.read(data.getQueueingProperties(), cdr);	
 
@@ -109,6 +118,7 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
       ser.write_type_4("sequence_id", data.getSequenceId());
       ser.write_type_e("quadruped_step_list", data.getQuadrupedStepList());
       ser.write_type_7("is_expressed_in_absolute_time", data.getIsExpressedInAbsoluteTime());
+      ser.write_type_7("can_be_delayed", data.getCanBeDelayed());
       ser.write_type_a("queueing_properties", new controller_msgs.msg.dds.QueueableMessagePubSubType(), data.getQueueingProperties());
 
    }
@@ -119,6 +129,7 @@ public class QuadrupedTimedStepListMessagePubSubType implements us.ihmc.pubsub.T
       data.setSequenceId(ser.read_type_4("sequence_id"));
       ser.read_type_e("quadruped_step_list", data.getQuadrupedStepList());
       data.setIsExpressedInAbsoluteTime(ser.read_type_7("is_expressed_in_absolute_time"));
+      data.setCanBeDelayed(ser.read_type_7("can_be_delayed"));
       ser.read_type_a("queueing_properties", new controller_msgs.msg.dds.QueueableMessagePubSubType(), data.getQueueingProperties());
 
    }

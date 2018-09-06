@@ -76,12 +76,14 @@ public class QuadrupedStepMessageHandler
    {
       double currentTime = robotTimestamp.getDoubleValue();
       boolean isExpressedInAbsoluteTime = command.isExpressedInAbsoluteTime();
+      boolean canBeDelayed = command.canBeDelayed();
       RecyclingArrayList<QuadrupedTimedStepCommand> stepCommands = command.getStepCommands();
 
       receivedStepSequence.clear();
+
       for (int i = 0; i < Math.min(stepCommands.size(), STEP_QUEUE_SIZE); i++)
       {
-         double timeShift = isExpressedInAbsoluteTime ? 0.0 : currentTime + initialTransferDurationForShifting.getDoubleValue();
+         double timeShift = isExpressedInAbsoluteTime ? 0.0 : currentTime;
          double touchdownTime = stepCommands.get(i).getTimeIntervalCommand().getEndTime();
          if (touchdownTime + timeShift >= currentTime)
          {
@@ -93,6 +95,16 @@ public class QuadrupedStepMessageHandler
       }
 
       receivedStepSequence.sort(TimeIntervalTools.endTimeComparator);
+
+      double firstStartTimeInFuture = receivedStepSequence.get(0).getTimeInterval().getStartTime() - currentTime;
+      double timeOffset = Math.max(0.0, initialTransferDurationForShifting.getDoubleValue() - firstStartTimeInFuture);
+      if (!isExpressedInAbsoluteTime && canBeDelayed && timeOffset > 0.0)
+      {
+         for (int i = 0; i < receivedStepSequence.size(); i++)
+         {
+            receivedStepSequence.get(i).getTimeInterval().shiftInterval(timeOffset);
+         }
+      }
    }
 
    public void clearSteps()

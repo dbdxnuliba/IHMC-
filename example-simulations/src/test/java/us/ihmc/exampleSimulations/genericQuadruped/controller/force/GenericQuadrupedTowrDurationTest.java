@@ -2,16 +2,19 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
       import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
       import controller_msgs.msg.dds.Duration;
+      import controller_msgs.msg.dds.QuadrupedTimedStepListMessage;
       import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
       import org.junit.Test;
       import us.ihmc.commons.PrintTools;
       import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
       import us.ihmc.euclid.tuple3D.Point3D;
       import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
+      import us.ihmc.exampleSimulations.genericQuadruped.parameters.GenericQuadrupedDefaultInitialPosition;
       import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
       import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
       import us.ihmc.quadrupedRobotics.communication.QuadrupedMessageTools;
       import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
+      import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
       import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
       import us.ihmc.quadrupedRobotics.util.TimeInterval;
       import us.ihmc.robotics.robotSide.RobotQuadrant;
@@ -29,6 +32,26 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
    {
       return new GenericQuadrupedTestFactory();
    }
+
+   public QuadrupedInitialPositionParameters getInitialPositionParameters()
+   {
+      return new GenericQuadrupedDefaultInitialPosition()
+   {
+      @Override
+      public Point3D getInitialBodyPosition()
+      {
+         return new Point3D(0.0, 0.0, 0.52);
+      }
+
+
+      @Override
+      public double getHipRollAngle()
+      {
+         return 0.3;
+      }
+   };
+   }
+
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 74.7)
@@ -61,7 +84,7 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
    }
 
    @Override
-   public List<QuadrupedTimedStepMessage> getSteps()
+   public QuadrupedTimedStepListMessage getSteps()
    {
       try
       {
@@ -112,7 +135,9 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
                       .createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, new Point3D(1.404, -0.083, -0.000), 0.1, new TimeInterval(4.645, 4.975)));
       steps.add(QuadrupedMessageTools
                       .createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, new Point3D(2.708, -0.080, -0.000), 0.1, new TimeInterval(4.860, 5.190)));
-      return steps;
+
+      QuadrupedTimedStepListMessage message = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(steps, false);
+      return message;
    }
 
    @Override

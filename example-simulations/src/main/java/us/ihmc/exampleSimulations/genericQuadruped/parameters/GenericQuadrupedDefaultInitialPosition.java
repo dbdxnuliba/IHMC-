@@ -21,7 +21,7 @@ public class GenericQuadrupedDefaultInitialPosition extends GenericQuadrupedInit
    }
 
    @Override
-   double getHipRollAngle()
+   public double getHipRollAngle()
    {
       return 0.6;
    }

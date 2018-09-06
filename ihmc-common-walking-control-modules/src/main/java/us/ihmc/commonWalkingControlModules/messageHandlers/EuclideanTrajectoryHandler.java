@@ -66,7 +66,7 @@ public class EuclideanTrajectoryHandler
       return position;
    }
 
-   protected FrameVector3DReadOnly getVelocity()
+   public FrameVector3DReadOnly getVelocity()
    {
       return velocity;
    }

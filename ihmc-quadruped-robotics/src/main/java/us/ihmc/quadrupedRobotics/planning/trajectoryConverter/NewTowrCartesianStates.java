@@ -1,19 +1,25 @@
 package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 
 import controller_msgs.msg.dds.RobotStateCartesian;
+import controller_msgs.msg.dds.State6d;
 import controller_msgs.msg.dds.StateLin3d;
-import gnu.trove.list.array.TDoubleArrayList;
-import javafx.geometry.Point3D;
+import geometry_msgs.msg.dds.Accel;
+import geometry_msgs.msg.dds.Twist;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
-import us.ihmc.commons.PrintTools;
+import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 
-import java.util.ArrayList;
-
-public class TowrCartesianStates
+public class NewTowrCartesianStates
 {
 
-   public TowrCartesianStates(int pointsNum){ setPointsNumber(pointsNum); }
+   public NewTowrCartesianStates(int pointsNum){ setPointsNumber(pointsNum); }
 
    public enum LegIndex
    {
@@ -22,7 +28,13 @@ public class TowrCartesianStates
 
    int centerOfMassWaypointsNumber;
    int numberOfEndEffectors = 4;
-   private DenseMatrix64F centerOfMassLinearPathWorldFrame = new DenseMatrix64F(200, 3);
+   private final RecyclingArrayList<Point3D> centerOfMassLinearPositions = new RecyclingArrayList<>(Point3D.class);
+   private final RecyclingArrayList<Vector3D> centerOfMassLinearVelocities = new RecyclingArrayList<>(Vector3D.class);
+   private final RecyclingArrayList<Vector3D> centerOfMassLinearAccelerations = new RecyclingArrayList<>(Vector3D.class);
+
+   private final RecyclingArrayList<Quaternion> centerOfMassAngularOrientations = new RecyclingArrayList<>(Quaternion.class);
+   private final RecyclingArrayList<Vector3D> centerOfMassAngularVelocities = new RecyclingArrayList<>(Vector3D.class);
+   private final RecyclingArrayList<Vector3D> centerOfMassAngularAccelerations = new RecyclingArrayList<>(Vector3D.class);
 
    private DenseMatrix64F frontLeftFootPositionWorldFrame = new DenseMatrix64F(10, 3);
    private DenseMatrix64F frontRightFootPositionWorldFrame = new DenseMatrix64F(10, 3);
@@ -91,13 +103,119 @@ public class TowrCartesianStates
       return this.takeOffInstants;
    }
 
-   public void setCenterOfMassLinearPathWorldFrame(int row, int col, double value)
+   public void addCenterOfMassState(State6d state)
    {
-      this.centerOfMassLinearPathWorldFrame.set(row, col, value);
+      addCenterOfMassPosition(state.getPose());
+      addCenterOfMassTwist(state.getTwist());
+      addCenterOfMassAcceleration(state.getAccel());
    }
 
-   public DenseMatrix64F getCenterOfMassLinearPathWorldFrame(){
-      return this.centerOfMassLinearPathWorldFrame;
+   public void addCenterOfMassPosition(Pose3DReadOnly pose)
+   {
+      addCenterOfMassLinearPosition(pose.getPosition());
+      addCenterOfMassAngularPosition(pose.getOrientation());
+   }
+
+   public void addCenterOfMassTwist(Twist twist)
+   {
+      addCenterOfMassLinearVelocity(twist.getLinear());
+      addCenterOfMassAngularVelocity(twist.getAngular());
+   }
+
+   public void addCenterOfMassAcceleration(Accel accel)
+   {
+      addCenterOfMassLinearAcceleration(accel.getLinear());
+      addCenterOfMassAngularAcceleration(accel.getAngular());
+   }
+
+   public void addCenterOfMassLinearPosition(Point3DReadOnly position)
+   {
+      addCenterOfMassLinearPosition(position.getX(), position.getY(), position.getZ());
+   }
+
+   public void addCenterOfMassLinearPosition(double x, double y, double z)
+   {
+      centerOfMassLinearPositions.add().set(x, y, z);
+   }
+
+   public void addCenterOfMassLinearVelocity(Vector3DReadOnly velocity)
+   {
+      addCenterOfMassLinearVelocity(velocity.getX(), velocity.getY(), velocity.getZ());
+   }
+
+   public void addCenterOfMassLinearVelocity(double x, double y, double z)
+   {
+      centerOfMassLinearVelocities.add().set(x, y, z);
+   }
+
+   public void addCenterOfMassLinearAcceleration(Vector3DReadOnly acceleration)
+   {
+      addCenterOfMassLinearAcceleration(acceleration.getX(), acceleration.getY(), acceleration.getZ());
+   }
+
+   public void addCenterOfMassLinearAcceleration(double x, double y, double z)
+   {
+      centerOfMassLinearAccelerations.add().set(x, y, z);
+   }
+
+   public void addCenterOfMassAngularPosition(QuaternionReadOnly orientation)
+   {
+      addCenterOfMassAngularPosition(orientation.getX(), orientation.getY(), orientation.getZ(), orientation.getS());
+   }
+
+   public void addCenterOfMassAngularPosition(double x, double y, double z, double s)
+   {
+      centerOfMassAngularOrientations.add().set(x, y, z, s);
+   }
+
+   public void addCenterOfMassAngularVelocity(Vector3DReadOnly velocity)
+   {
+      addCenterOfMassAngularVelocity(velocity.getX(), velocity.getY(), velocity.getZ());
+   }
+
+   public void addCenterOfMassAngularVelocity(double x, double y, double z)
+   {
+      centerOfMassAngularVelocities.add().set(x, y, z);
+   }
+
+   public void addCenterOfMassAngularAcceleration(Vector3DReadOnly acceleration)
+   {
+      addCenterOfMassAngularAcceleration(acceleration.getX(), acceleration.getY(), acceleration.getZ());
+   }
+
+   public void addCenterOfMassAngularAcceleration(double x, double y, double z)
+   {
+      centerOfMassAngularAccelerations.add().set(x, y, z);
+   }
+
+   public Point3DReadOnly getCenterOfMassLinearPosition(int index)
+   {
+      return centerOfMassLinearPositions.get(index);
+   }
+
+   public Vector3DReadOnly getCenterOfMassLinearVelocity(int index)
+   {
+      return centerOfMassLinearVelocities.get(index);
+   }
+
+   public Vector3DReadOnly getCenterOfMassLinearAcceleration(int index)
+   {
+      return centerOfMassLinearAccelerations.get(index);
+   }
+
+   public QuaternionReadOnly getCenterOfMassAngularOrientations(int index)
+   {
+      return centerOfMassAngularOrientations.get(index);
+   }
+
+   public Vector3DReadOnly getCenterOfMassAngularVelocity(int index)
+   {
+      return centerOfMassAngularVelocities.get(index);
+   }
+
+   public Vector3DReadOnly getCenterOfMassAngularAcceleration(int index)
+   {
+      return centerOfMassAngularAccelerations.get(index);
    }
 
    public void setTargetFootholdWorldFrame(LegIndex legIndex, int stepNumber, StateLin3d footholdPosition){
@@ -181,15 +299,14 @@ public class TowrCartesianStates
    }
 
 
-   public void messageToStateConverter(RobotStateCartesian robotStateCartesian, int pointNumber, DenseMatrixBool previousContactState, DenseMatrix64F stepsNumberCounter, TowrCartesianStates towrCartesianStatesToFill){
+   public void messageToStateConverter(RobotStateCartesian robotStateCartesian, int pointNumber, DenseMatrixBool previousContactState, DenseMatrix64F stepsNumberCounter, NewTowrCartesianStates towrCartesianStatesToFill){
 
       //TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(200);
 
-      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 0, robotStateCartesian.getBase().getPose().getPosition().getX());
-      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 1, robotStateCartesian.getBase().getPose().getPosition().getY());
-      towrCartesianStatesToFill.setCenterOfMassLinearPathWorldFrame(pointNumber, 2, robotStateCartesian.getBase().getPose().getPosition().getZ());
+      towrCartesianStatesToFill.addCenterOfMassState(robotStateCartesian.getBase());
+
       pointNumber ++;
-      for(LegIndex legIdx :LegIndex.values())
+      for(LegIndex legIdx : LegIndex.values())
       {
          //PrintTools.info("leg index"+ legIdx);
          if((previousContactState.get(legIdx.ordinal())==true)&&(robotStateCartesian.getEeContact().getBoolean(legIdx.ordinal())==false)){

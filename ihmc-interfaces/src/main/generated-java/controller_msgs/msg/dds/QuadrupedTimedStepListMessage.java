@@ -21,6 +21,10 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
             */
    public boolean is_expressed_in_absolute_time_ = true;
    /**
+            * If false, the robot should not shift these step times, and execute immediately
+            */
+   public boolean can_be_delayed_ = true;
+   /**
             * Properties for queueing footstep lists.
             */
    public controller_msgs.msg.dds.QueueableMessage queueing_properties_;
@@ -44,6 +48,8 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
 
       quadruped_step_list_.set(other.quadruped_step_list_);
       is_expressed_in_absolute_time_ = other.is_expressed_in_absolute_time_;
+
+      can_be_delayed_ = other.can_be_delayed_;
 
       controller_msgs.msg.dds.QueueableMessagePubSubType.staticCopy(other.queueing_properties_, queueing_properties_);
    }
@@ -87,6 +93,21 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
       return is_expressed_in_absolute_time_;
    }
 
+   /**
+            * If false, the robot should not shift these step times, and execute immediately
+            */
+   public void setCanBeDelayed(boolean can_be_delayed)
+   {
+      can_be_delayed_ = can_be_delayed;
+   }
+   /**
+            * If false, the robot should not shift these step times, and execute immediately
+            */
+   public boolean getCanBeDelayed()
+   {
+      return can_be_delayed_;
+   }
+
 
    /**
             * Properties for queueing footstep lists.
@@ -125,6 +146,8 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.is_expressed_in_absolute_time_, other.is_expressed_in_absolute_time_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.can_be_delayed_, other.can_be_delayed_, epsilon)) return false;
+
       if (!this.queueing_properties_.epsilonEquals(other.queueing_properties_, epsilon)) return false;
 
       return true;
@@ -144,6 +167,8 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
       if (!this.quadruped_step_list_.equals(otherMyClass.quadruped_step_list_)) return false;
       if(this.is_expressed_in_absolute_time_ != otherMyClass.is_expressed_in_absolute_time_) return false;
 
+      if(this.can_be_delayed_ != otherMyClass.can_be_delayed_) return false;
+
       if (!this.queueing_properties_.equals(otherMyClass.queueing_properties_)) return false;
 
       return true;
@@ -161,6 +186,8 @@ public class QuadrupedTimedStepListMessage extends Packet<QuadrupedTimedStepList
       builder.append(this.quadruped_step_list_);      builder.append(", ");
       builder.append("is_expressed_in_absolute_time=");
       builder.append(this.is_expressed_in_absolute_time_);      builder.append(", ");
+      builder.append("can_be_delayed=");
+      builder.append(this.can_be_delayed_);      builder.append(", ");
       builder.append("queueing_properties=");
       builder.append(this.queueing_properties_);
       builder.append("}");

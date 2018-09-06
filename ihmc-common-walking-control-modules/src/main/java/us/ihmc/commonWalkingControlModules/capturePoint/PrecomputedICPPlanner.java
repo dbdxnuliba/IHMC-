@@ -41,6 +41,7 @@ public class PrecomputedICPPlanner
    private final YoFramePoint3D yoDesiredCoPPosition = new YoFramePoint3D(name + "DesiredCoPPosition", ReferenceFrame.getWorldFrame(), registry);
    private final YoFramePoint3D yoDesiredCMPPosition = new YoFramePoint3D(name + "DesiredCMPPosition", ReferenceFrame.getWorldFrame(), registry);
    private final YoFramePoint3D yoDesiredCoMPosition = new YoFramePoint3D(name + "DesiredCoMPosition", ReferenceFrame.getWorldFrame(), registry);
+   private final YoFramePoint3D yoDesiredCoMVelocity = new YoFramePoint3D(name + "DesiredCoMVelocity", ReferenceFrame.getWorldFrame(), registry);
    private final YoFramePoint3D yoDesiredICPPosition = new YoFramePoint3D(name + "DesiredICPPosition", ReferenceFrame.getWorldFrame(), registry);
    private final YoFrameVector3D yoDesiredICPVelocity = new YoFrameVector3D(name + "DesiredICPVelocity", ReferenceFrame.getWorldFrame(), registry);
 
@@ -54,6 +55,7 @@ public class PrecomputedICPPlanner
    private final FramePoint3D desiredCoPPosition = new FramePoint3D();
    private final FramePoint3D desiredCMPPosition = new FramePoint3D();
    private final FramePoint3D desiredCoMPosition = new FramePoint3D();
+   private final FramePoint3D desiredCoMVelocity = new FramePoint3D();
    private final FramePoint3D desiredICPPosition = new FramePoint3D();
    private final FrameVector3D desiredICPVelocity = new FrameVector3D();
    private final FrameVector3D filteredDesiredICPVelocity = new FrameVector3D();
@@ -139,6 +141,7 @@ public class PrecomputedICPPlanner
    {
       double omega0 = this.omega0.getDoubleValue();
       centerOfMassTrajectoryHandler.packDesiredICPAtTime(time, omega0, desiredICPPosition, desiredICPVelocity, desiredCoMPosition);
+      desiredCoMVelocity.set(centerOfMassTrajectoryHandler.getVelocity());
 
       filteredPrecomputedIcpVelocity.set(desiredICPVelocity);
       filteredDesiredICPVelocity.set(filteredPrecomputedIcpVelocity);
@@ -157,6 +160,7 @@ public class PrecomputedICPPlanner
       yoDesiredICPPosition.set(desiredICPPosition);
       yoDesiredICPVelocity.set(desiredICPVelocity);
       yoDesiredCoMPosition.set(desiredCoMPosition);
+      yoDesiredCoMVelocity.set(desiredCoMVelocity);
       yoDesiredCoPPosition.set(desiredCoPPosition);
       yoDesiredCMPPosition.set(desiredCMPPosition);
    }
@@ -265,6 +269,7 @@ public class PrecomputedICPPlanner
       yoDesiredICPPosition.setToNaN();
       yoDesiredICPVelocity.setToNaN();
       yoDesiredCoMPosition.setToNaN();
+      yoDesiredCoMVelocity.setToNaN();
       yoDesiredCMPPosition.setToNaN();
    }
 }

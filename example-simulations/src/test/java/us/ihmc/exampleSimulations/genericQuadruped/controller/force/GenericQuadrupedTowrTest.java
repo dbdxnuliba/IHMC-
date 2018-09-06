@@ -7,9 +7,12 @@ import us.ihmc.commons.PrintTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
+import us.ihmc.exampleSimulations.genericQuadruped.parameters.GenericQuadrupedDefaultInitialPosition;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
 import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
+import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.NewTowrCartesianStates;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates.LegIndex;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -27,7 +30,27 @@ import java.util.List;
 
 public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
 {
-   TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
+   @Override
+   public QuadrupedInitialPositionParameters getInitialPositionParameters()
+   {
+      return new GenericQuadrupedDefaultInitialPosition()
+      {
+         @Override
+         public Point3D getInitialBodyPosition()
+         {
+            return new Point3D(0.0, 0.0, 0.52);
+         }
+
+
+         @Override
+         public double getHipRollAngle()
+         {
+            return 0.3;
+         }
+      };
+   }
+
+   NewTowrCartesianStates towrCartesianStates = new NewTowrCartesianStates(200);
    static ArrayList<Point3D> basePositions;
    @Override
    public QuadrupedTestFactory createQuadrupedTestFactory()
@@ -60,17 +83,15 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
 
    @Override
-   public List<QuadrupedTimedStepMessage> getSteps()
+   public QuadrupedTimedStepListMessage getSteps()
    {
-
-      QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       boolean useLoggedTrajectories = true;
       if(useLoggedTrajectories)
       {
          try
          {
-            towrCartesianStates = towrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
-            towrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
+            towrCartesianStates = QuadrupedTowrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
+            QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
          }
          catch (Exception e)
          {
@@ -80,16 +101,14 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
       }
 
 
-      ArrayList<QuadrupedTimedStepMessage> steps = new ArrayList<>();
-      towrTrajectoryConverter.stateToTimedStepList(towrCartesianStates, steps);
 
-      return steps;
+      return QuadrupedTowrTrajectoryConverter.stateToTimedStepListMessage(towrCartesianStates);
    }
 
    @Override
-   public CenterOfMassTrajectoryMessage getCenterOfMassTrajectoryMessage(){
-      QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
-      return towrTrajectoryConverter.createCenterOfMassMessage(towrCartesianStates);
+   public CenterOfMassTrajectoryMessage getCenterOfMassTrajectoryMessage()
+   {
+      return QuadrupedTowrTrajectoryConverter.createCenterOfMassMessage(towrCartesianStates);
    }
 
 

@@ -124,6 +124,8 @@ public class QuadrupedBalanceManager
       comTrajectoryHandler = new CenterOfMassTrajectoryHandler(robotTimestamp, registry);
 
       precomputedICPPlanner = new PrecomputedICPPlanner(comTrajectoryHandler, null, registry, yoGraphicsListRegistry);
+      precomputedICPPlanner.setGravity(controllerToolbox.getRuntimeEnvironment().getGravity());
+      precomputedICPPlanner.setMass(controllerToolbox.getFullRobotModel().getTotalMass());
 
       if (yoGraphicsListRegistry != null)
          setupGraphics(yoGraphicsListRegistry);
@@ -204,7 +206,8 @@ public class QuadrupedBalanceManager
       }
    }
 
-   public void handleCenterOfMassTrajectoryCommand(CenterOfMassTrajectoryCommand command){
+   public void handleCenterOfMassTrajectoryCommand(CenterOfMassTrajectoryCommand command)
+   {
       comTrajectoryHandler.handleComTrajectory(command);
    }
 
@@ -295,7 +298,6 @@ public class QuadrupedBalanceManager
       //}
       //PrintTools.info("time: "+robotTimestamp.getDoubleValue());
       dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-      dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
 
       if (precomputedICPPlanner.isWithinInterval(robotTimestamp.getDoubleValue()))
       {
@@ -309,7 +311,10 @@ public class QuadrupedBalanceManager
          //precomputedICPPlanner.compute(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, null);
          yoDesiredDCMPosition2D.set(yoDesiredDCMPosition);
          yoDesiredDCMVelocity2D.set(yoDesiredDCMVelocity);
-         precomputedICPPlanner.computeAndBlend(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP);
+         precomputedICPPlanner.setOmega0(controllerToolbox.getLinearInvertedPendulumModel().getNaturalFrequency());
+//         precomputedICPPlanner.computeAndBlend(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP); // TODO LOOK AT BLENDING
+         precomputedICPPlanner.compute(robotTimestamp.getDoubleValue(), yoDesiredDCMPosition2D, yoDesiredDCMVelocity2D, desiredCoP);
+
 
          yoDesiredDCMPosition.set(yoDesiredDCMPosition2D, yoDesiredDCMPosition.getZ());
          yoDesiredDCMVelocity.set(yoDesiredDCMVelocity2D, yoDesiredDCMVelocity.getZ());
@@ -318,7 +323,7 @@ public class QuadrupedBalanceManager
       }else
       {
          //dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
-         //dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
+//         dcmPlanner.computeDcmSetpoints(controllerToolbox.getContactStates(), yoDesiredDCMPosition, yoDesiredDCMVelocity);
       }
       dcmPlanner.getFinalDCMPosition(yoFinalDesiredDCM);
 
