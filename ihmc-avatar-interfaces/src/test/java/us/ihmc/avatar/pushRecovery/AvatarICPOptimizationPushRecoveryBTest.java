@@ -6,6 +6,7 @@ import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.Continuous
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
+import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 
 import java.util.Random;
 
@@ -18,7 +19,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationNoPush() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       validateTest(footsteps);
    }
 
@@ -27,7 +29,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationOutwardPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
 
       // push timing:
       StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.RIGHT);
@@ -47,7 +50,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationOutwardPushInSlowSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createSlowForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push timing:t
@@ -68,7 +72,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationDiagonalOutwardPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push timing:
@@ -89,7 +94,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationDiagonalYawingOutwardPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createYawingForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push parameters:
@@ -141,7 +147,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationRandomPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push timing:
@@ -166,7 +173,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationLongForwardPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push timing:
@@ -187,7 +195,8 @@ public abstract class AvatarICPOptimizationPushRecoveryBTest extends AvatarICPOp
    public void testPushICPOptimizationLongBackwardPushInSwing() throws Exception
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0);
 
       // push timing:

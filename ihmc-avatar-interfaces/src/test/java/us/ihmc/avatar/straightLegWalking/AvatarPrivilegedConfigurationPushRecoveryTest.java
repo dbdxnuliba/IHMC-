@@ -9,6 +9,7 @@ import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.Continuous
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
+import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 
 public abstract class AvatarPrivilegedConfigurationPushRecoveryTest extends AvatarICPOptimizationPushRecoveryTestSetup implements MultiRobotTestInterface
 {
@@ -18,14 +19,15 @@ public abstract class AvatarPrivilegedConfigurationPushRecoveryTest extends Avat
    {
       FootstepDataListMessage footsteps = createStandingFootstepMessage();
       footsteps.setAreFootstepsAdjustable(false);
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.5);
 
 
       // push parameters:
       Vector3D forceDirection = new Vector3D(1.0, 0, 0.0);
       double magnitude = percentWeight * totalMass * 9.81;
-      double duration = 0.05 * swingTime;
+      double duration = 0.05;
       pushRobotController.applyForce(forceDirection, magnitude, duration);
 
       validateTest(footsteps);
@@ -37,7 +39,8 @@ public abstract class AvatarPrivilegedConfigurationPushRecoveryTest extends Avat
    {
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
       footsteps.setAreFootstepsAdjustable(false);
-      setupAndRunTest(footsteps);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
 
       // push timing:

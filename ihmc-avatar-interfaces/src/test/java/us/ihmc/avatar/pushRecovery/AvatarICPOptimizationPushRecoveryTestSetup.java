@@ -22,6 +22,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
+import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 import us.ihmc.simulationToolkit.controllers.PushRobotController;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
@@ -103,11 +104,10 @@ public abstract class AvatarICPOptimizationPushRecoveryTestSetup
    }
 
 
-   protected void setupAndRunTest(FootstepDataListMessage message) throws SimulationExceededMaximumTimeException, ControllerFailureException
+   protected void setupAndRunTest(FootstepDataListMessage message, CommonAvatarEnvironmentInterface environment) throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
-      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(flatGround);
+      drcSimulationTestHelper.setTestEnvironment(environment);
       drcSimulationTestHelper.createSimulation("DRCSimpleFlatGroundScriptTest");
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       totalMass = fullRobotModel.getTotalMass();

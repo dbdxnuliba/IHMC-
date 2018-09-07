@@ -1,45 +1,33 @@
-package us.ihmc.valkyrie.privilegedConfigurationWalking;
+package us.ihmc.atlas.straightLegWalking;
 
 import org.junit.Test;
-
+import us.ihmc.atlas.AtlasJointMap;
+import us.ihmc.atlas.AtlasRobotModel;
+import us.ihmc.atlas.AtlasRobotVersion;
+import us.ihmc.atlas.parameters.*;
+import us.ihmc.atlas.straightLegWalking.AtlasStraightLegWalkingTest.*;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
-import us.ihmc.avatar.pushRecovery.AvatarICPOptimizationPushRecoveryATest;
 import us.ihmc.avatar.straightLegWalking.AvatarPrivilegedConfigurationPushRecoveryTest;
-import us.ihmc.avatar.straightLegWalking.AvatarStraightLegWalkingTest;
-import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
-import us.ihmc.commonWalkingControlModules.inverseKinematics.JointPrivilegedConfigurationHandler;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
-import us.ihmc.robotics.controllers.pidGains.PIDGainsReadOnly;
-import us.ihmc.robotics.controllers.pidGains.implementations.PDGains;
-import us.ihmc.robotics.controllers.pidGains.implementations.PIDGains;
-import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
-import us.ihmc.valkyrie.ValkyrieRobotModel;
-import us.ihmc.valkyrie.parameters.*;
-import us.ihmc.valkyrie.privilegedConfigurationWalking.ValkyrieStraightLegWalkingTest.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivilegedConfigurationPushRecoveryTest
+public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivilegedConfigurationPushRecoveryTest
 {
    private final RobotTarget target = RobotTarget.SCS;
-   private final ValkyrieRobotModel valkyrieRobotModel = new MyValkyrieRobotModel();
-   private final ValkyrieRobotModel valkyrieRobotModelNormal = new ValkyrieRobotModel(target,false);
-   private final boolean useNormal = false;
-   private final double privilegedAngleWhenStraight = 1.17;
-
+   private final AtlasRobotModel atlasRobotModel = new MyAtlasRobotModel();
+   private final AtlasRobotModel atlasRobotModelNormal = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, target, false);
+   private final boolean useNormal = true;
+   private final double privilegedAngleWhenStraight = 1.177;
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
    @Test(timeout = 300000)
    public void testPushFrontalStanding() throws Exception
    {
-      percentWeight = 0.57;
+      percentWeight = 0.62;
       super.testPushFrontalStanding();
    }
 
@@ -55,7 +43,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    @Override
    public double getNominalHeight()
    {
-      return 0.7;
+      return 0.9;
    }
 
    @Override
@@ -74,9 +62,9 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    public DRCRobotModel getRobotModel()
    {
       if(useNormal)
-      return valkyrieRobotModelNormal;
+         return atlasRobotModelNormal;
       else
-         return valkyrieRobotModel;
+      return atlasRobotModel;
    }
 
    @Override
@@ -88,40 +76,40 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    @Override
    public String getSimpleRobotName()
    {
-      return "Valkyrie";
+      return "Atlas";
    }
 
-   private class MyValkyrieRobotModel extends ValkyrieRobotModel
+   private class MyAtlasRobotModel extends AtlasRobotModel
    {
-      public MyValkyrieRobotModel()
+      public MyAtlasRobotModel()
       {
-         super(target,false);
+         super(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
       }
 
       @Override
       public WalkingControllerParameters getWalkingControllerParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestWalkingControllerParameters(getJointMap());
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestWalkingControllerParameters(getJointMap(), getContactPointParameters());
       }
 
       @Override
       public ICPWithTimeFreezingPlannerParameters getCapturePointPlannerParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestICPPlannerParameters();
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestICPPlannerParameters(getPhysicalProperties());
       }
    }
 
-   private class TestWalkingControllerParameters extends ValkyrieWalkingControllerParameters
+   private class TestWalkingControllerParameters extends AtlasWalkingControllerParameters
    {
-      private final ValkyrieJointMap jointMap;
+      private final AtlasJointMap jointMap;
+      private final AtlasContactPointParameters contactPointParameters;
 
-
-      public TestWalkingControllerParameters(ValkyrieJointMap jointMap)
+      public TestWalkingControllerParameters(AtlasJointMap jointMap, AtlasContactPointParameters contactPointParameters)
       {
-         super(jointMap,target);
+         super(RobotTarget.SCS, jointMap, contactPointParameters);
 
          this.jointMap = jointMap;
-
+         this.contactPointParameters = contactPointParameters;
       }
 
       @Override
@@ -151,88 +139,46 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       @Override
       public LeapOfFaithParameters getLeapOfFaithParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestLeapOfFaithParameters();
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestLeapOfFaithParameters();
       }
 
       @Override
       public LegConfigurationParameters getLegConfigurationParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestLegConfigurationParameters();
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestLegConfigurationParameters();
       }
 
       @Override
       public MomentumOptimizationSettings getMomentumOptimizationSettings()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestMomentumOptimizationSettings(jointMap);
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestMomentumOptimizationSettings(jointMap, contactPointParameters.getNumberOfContactableBodies());
       }
 
       @Override
       public SwingTrajectoryParameters getSwingTrajectoryParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestSwingTrajectoryParameters();
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestSwingTrajectoryParameters();
       }
 
       @Override
-      public ValkyriePriviligedConfigurationPushRecoveryTest.TestToeOffParameters getToeOffParameters()
+      public AtlasPriviligedConfigurationPushRecoveryTest.TestToeOffParameters getToeOffParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestToeOffParameters(jointMap);
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestToeOffParameters(jointMap);
       }
 
       @Override
       public SteppingParameters getSteppingParameters()
       {
-         return new ValkyriePriviligedConfigurationPushRecoveryTest.TestSteppingParameters(jointMap);
+         return new AtlasPriviligedConfigurationPushRecoveryTest.TestSteppingParameters(jointMap);
       }
 
-
-      @Override
-      public ICPControlGains createICPControlGains()
-      {
-         ICPControlGains gains = new ICPControlGains();
-         boolean runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
-
-         double kpOrthogonal = runningOnRealRobot ? 1.9 : 1.5;
-         double kpParallel = runningOnRealRobot ? 2.0 : 2.5;
-         double ki = runningOnRealRobot ? 0.0 : 0.0;
-         double kiBleedOff = 0.9;
-
-         gains.setKpParallelToMotion(kpParallel);
-         gains.setKpOrthogonalToMotion(kpOrthogonal);
-         gains.setKi(ki);
-         gains.setIntegralLeakRatio(kiBleedOff);
-
-         if (target == RobotTarget.REAL_ROBOT)
-            gains.setFeedbackPartMaxRate(1.5);
-
-         return gains;
-      }
-
-      @Override
-      public PDGains getCoMHeightControlGains()
-      {
-         PDGains gains = new PDGains();
-
-         boolean runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
-
-         double kp = runningOnRealRobot ? 40.0 : 50.0;
-         double zeta = runningOnRealRobot ? 0.4 : 1.0;
-         double maxAcceleration = 0.5 * 9.81;
-         double maxJerk = maxAcceleration / 0.05;
-
-         gains.setKp(kp);
-         gains.setZeta(zeta);
-         gains.setMaximumFeedback(maxAcceleration);
-         gains.setMaximumFeedbackRate(maxJerk);
-
-         return gains;
-      }
    }
 
-   private class TestToeOffParameters extends ValkyrieToeOffParameters
+   private class TestToeOffParameters extends AtlasToeOffParameters
    {
-      public TestToeOffParameters(ValkyrieJointMap jointMap)
+      public TestToeOffParameters(AtlasJointMap jointMap)
       {
-         super(false);
+         super(jointMap);
       }
 
       @Override
@@ -284,11 +230,11 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       }
    }
 
-   private class TestSwingTrajectoryParameters extends ValkyrieSwingTrajectoryParameters
+   private class TestSwingTrajectoryParameters extends AtlasSwingTrajectoryParameters
    {
       public TestSwingTrajectoryParameters()
       {
-         super(target);
+         super(RobotTarget.SCS, 1.0);
       }
 
       @Override
@@ -343,7 +289,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       }
    }
 
-   private class TestLegConfigurationParameters extends ValkyrieLegConfigurationParameters
+   private class TestLegConfigurationParameters extends AtlasLegConfigurationParameters
    {
       public TestLegConfigurationParameters()
       {
@@ -366,12 +312,13 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
          return gains;
       }
 
+
       @Override
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
          //gains.setJointSpaceKp(1000.0);
-         gains.setActuatorSpaceKp(700.0);
+         gains.setActuatorSpaceKp(1000);
          gains.setJointSpaceKd(20.0);
 
          return gains;
@@ -409,71 +356,13 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
          return 0.0;
       }
 
-      @Override
-      public double getDesiredFractionOfMidrangeForCollapsedAngle()
-      {
-         return 0.3;
-         //      return 1.8; // for big step down
-      }
-
-      @Override
-      public double getFractionOfSwingToStraightenLeg()
-      {
-         return 0.4;
-      }
-
-      @Override
-      public double getFractionOfTransferToCollapseLeg()
-      {
-         return 0.7;
-         //      return 1.0;
-      }
-
-      @Override
-      public double getFractionOfSwingToCollapseStanceLeg()
-      {
-         return 0.55;
-         //      return 1.0;
-         //      return 0.3; //for big step down
-      }
-
-      @Override
-      public double getLegPrivilegedLowWeight()
-      {
-         return 5.0;
-      }
-
-      @Override
-      public double getLegPrivilegedMediumWeight()
-      {
-         return 50.0;
-      }
-
-      @Override
-      public double getLegPrivilegedHighWeight()
-      {
-         return 100.0;
-      }
-
-      @Override
-      public double getPrivilegedMaxVelocity()
-      {
-         return Double.POSITIVE_INFINITY;
-      }
-
-      @Override
-      public double getPrivilegedMaxAcceleration()
-      {
-         return Double.POSITIVE_INFINITY;
-      }
-
    }
 
-   private class TestMomentumOptimizationSettings extends ValkyrieMomentumOptimizationSettings
+   private class TestMomentumOptimizationSettings extends AtlasMomentumOptimizationSettings
    {
-      public TestMomentumOptimizationSettings(ValkyrieJointMap jointMap)
+      public TestMomentumOptimizationSettings(AtlasJointMap jointMap, int numberOfContactableBodies)
       {
-         super(jointMap);
+         super(jointMap, numberOfContactableBodies);
       }
 
       @Override
@@ -483,11 +372,11 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       }
    }
 
-   private class TestICPPlannerParameters extends ValkyrieCapturePointPlannerParameters
+   private class TestICPPlannerParameters extends AtlasSmoothCMPPlannerParameters
    {
-      public TestICPPlannerParameters()
+      public TestICPPlannerParameters(AtlasPhysicalProperties physicalProperties)
       {
-         super(false);
+         super(physicalProperties);
       }
 
       @Override
@@ -503,11 +392,11 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       }
    }
 
-   private class TestSteppingParameters extends ValkyrieSteppingParameters
+   private class TestSteppingParameters extends AtlasSteppingParameters
    {
-      public TestSteppingParameters(ValkyrieJointMap jointMap)
+      public TestSteppingParameters(AtlasJointMap jointMap)
       {
-         super(target);
+         super(jointMap);
       }
 
       @Override
@@ -516,5 +405,4 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
          return 1.0;
       }
    }
-
 }
