@@ -2,6 +2,7 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
 import controller_msgs.msg.dds.*;
 import org.junit.Test;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedTestFactory;
@@ -73,22 +74,23 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
    @Override
    public QuadrupedTimedStepListMessage getSteps()
    {
-      boolean useLoggedTrajectories = true;
-      if(useLoggedTrajectories)
+      boolean useLoggedTrajectories = false;
+      if(!useLoggedTrajectories)
       {
          try
          {
             towrCartesianStates = QuadrupedTowrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
             QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
+            //QuadrupedTowrTrajectoryConverter.printDataSet(towrCartesianStates);
          }
          catch (Exception e)
          {
          }
       }else{
-         //towrCartesianStates = loadLoggedTrajectories()
+         towrCartesianStates = QuadrupedTowrTrajectoryConverter.loadExistingDataSet();
+         //PrintTools.info("load predefined trajectory!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+         //QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
       }
-
-
 
       return QuadrupedTowrTrajectoryConverter.stateToTimedStepListMessage(towrCartesianStates);
    }

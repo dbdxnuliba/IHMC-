@@ -180,7 +180,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
 
       // let's have the robot go to a narrower step position
 
-      double stanceWidth = 0.3;
+      double stanceWidth = 0.5;
       double stanceLength = 0.9;
 
       Point3D frontLeftPosition = new Point3D(stanceLength / 2.0, stanceWidth / 2.0, 0.0);

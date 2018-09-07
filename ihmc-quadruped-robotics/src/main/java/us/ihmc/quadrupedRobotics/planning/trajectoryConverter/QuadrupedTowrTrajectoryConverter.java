@@ -120,13 +120,9 @@ public class QuadrupedTowrTrajectoryConverter
       towrCartesianStatesToFill.setPointsNumber(towrWalkDataSet1.getNumberOfWayPoints());
       for(int wayPointCounter = 0; wayPointCounter<towrWalkDataSet1.getNumberOfWayPoints(); wayPointCounter++)
       {
-         PrintTools.info("waypoint "+ wayPointCounter);
          towrCartesianStatesToFill.addCenterOfMassLinearPosition(towrWalkDataSet1.getCenterOfMassLinearPositions().get(wayPointCounter));
-         PrintTools.info("waypoint "+ wayPointCounter);
          towrCartesianStatesToFill.addCenterOfMassAngularPosition(towrWalkDataSet1.getCenterOfMassAngularOrientations().get(wayPointCounter));
-         PrintTools.info("waypoint "+ wayPointCounter);
          towrCartesianStatesToFill.addCenterOfMassLinearVelocity(towrWalkDataSet1.getCenterOfMassLinearVelocities().get(wayPointCounter));
-         PrintTools.info("waypoint "+ wayPointCounter);
          towrCartesianStatesToFill.addCenterOfMassLinearAcceleration(towrWalkDataSet1.getCenterOfMassLinearAccelerations().get(wayPointCounter));
          towrCartesianStatesToFill.addCenterOfMassAngularVelocity(towrWalkDataSet1.getCenterOfMassAngularVelocities().get(wayPointCounter));
          towrCartesianStatesToFill.addCenterOfMassAngularAcceleration(towrWalkDataSet1.getCenterOfMassAngularAccelerations().get(wayPointCounter));
@@ -328,7 +324,7 @@ public class QuadrupedTowrTrajectoryConverter
    {
 
       DenseMatrix64F timeStamps = towrCartesianStates.getTimeStamps();
-      PrintTools.info("time stamps "+timeStamps);
+      //PrintTools.info("time stamps "+timeStamps);
       CenterOfMassTrajectoryMessage comMessage = new CenterOfMassTrajectoryMessage();
       EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
       int numberOfPoints = towrCartesianStates.getPointsNumber();
