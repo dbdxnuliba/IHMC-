@@ -1,21 +1,23 @@
 package us.ihmc.quadrupedRobotics.planning.trajectoryConverter;
 
 import org.ejml.data.DenseMatrix64F;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
 public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
 {
 
    TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
-
+   int numberOfEndEffectors = 4;
 
    @Override
    public DenseMatrix64F getNumberOfSteps()
    {
-      DenseMatrix64F stepsNumber = new DenseMatrix64F(1,4);
+      DenseMatrix64F stepsNumber = new DenseMatrix64F(1,numberOfEndEffectors);
 
       stepsNumber.set(0, 5);
       stepsNumber.set(1, 5);
@@ -36,7 +38,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
    @Override
    public DenseMatrix64F getTouchDownInstants()
    {
-      DenseMatrix64F touchDownInstants = new DenseMatrix64F(10,3);
+      DenseMatrix64F touchDownInstants = new DenseMatrix64F(10,numberOfEndEffectors);
 
       touchDownInstants.set(0, 0, 0.0);
       touchDownInstants.set(0, 1, 0.0);
@@ -65,8 +67,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
    @Override
    public DenseMatrix64F getTakeOffInstants()
    {
-      DenseMatrix64F takeOffInstants = new DenseMatrix64F(10,3);
-
+      DenseMatrix64F takeOffInstants = new DenseMatrix64F(10,numberOfEndEffectors);
       takeOffInstants.set(0, 0, 0.0);
       takeOffInstants.set(0, 1, 0.0);
       takeOffInstants.set(0, 2, 0.0);
@@ -184,10 +185,12 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
    }
 
    @Override
-   public RecyclingArrayList<Point3D> getCenterOfMassLinearPositions()
+   public RecyclingArrayList<Point3DReadOnly> getCenterOfMassLinearPositions()
    {
-      final RecyclingArrayList<Point3D> centerOfMassLinearPositions = new RecyclingArrayList<>(Point3D.class);
-      centerOfMassLinearPositions.add().set(0.0, 0.0, 0.58);
+      final RecyclingArrayList<Point3DReadOnly> centerOfMassLinearPositions = new RecyclingArrayList<>(Point3DReadOnly.class);
+
+      centerOfMassLinearPositions.add(new Point3D(0.0, 0.0, 0.58));
+
       centerOfMassLinearPositions.add().set(7.486199299848716E-5, -7.715067983528424E-5, 0.5807975736589519);
       centerOfMassLinearPositions.add().set(2.956185041621478E-4, -2.1572316789610467E-4, 0.5829825720416585);
       centerOfMassLinearPositions.add().set(6.565253317432804E-4, -2.7639813701491305E-4, 0.5862434112568954);

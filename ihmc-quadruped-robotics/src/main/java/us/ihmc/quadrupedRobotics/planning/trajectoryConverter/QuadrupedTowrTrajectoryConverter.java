@@ -7,6 +7,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.DenseMatrixBool;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
@@ -67,9 +69,13 @@ public class QuadrupedTowrTrajectoryConverter
 
       TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(towrWalkDataSet1.getNumberOfWayPoints());
       towrCartesianStatesToFill.setStepsNumber(towrWalkDataSet1.getNumberOfSteps());
-
       for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.FL); i++)
       {
+         DenseMatrix64F times = towrWalkDataSet1.getTakeOffInstants();
+         double val = towrWalkDataSet1.getTakeOffInstants().get(i,0);
+         towrCartesianStatesToFill.setTakeOff(i, LegIndex.FL, val);
+         towrCartesianStatesToFill.setTouchDown(i, LegIndex.FL, towrWalkDataSet1.getTouchDownInstants().get(i,0));
+
          double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
          double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
          double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
@@ -79,6 +85,8 @@ public class QuadrupedTowrTrajectoryConverter
       }
       for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.FR); i++)
       {
+         towrCartesianStatesToFill.setTakeOff(i, LegIndex.FR, towrWalkDataSet1.getTakeOffInstants().get(i,1));
+         towrCartesianStatesToFill.setTouchDown(i, LegIndex.FR, towrWalkDataSet1.getTouchDownInstants().get(i,1));
          double currentValueX = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,0);
          double currentValueY = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,1);
          double currentValueZ = towrWalkDataSet1.getFrontRightFootPositionWorldFrame().get(i,2);
@@ -88,21 +96,40 @@ public class QuadrupedTowrTrajectoryConverter
       }
       for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.HL); i++)
       {
-         double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
-         double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
-         double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTakeOff(i, LegIndex.HL, towrWalkDataSet1.getTakeOffInstants().get(i,2));
+         towrCartesianStatesToFill.setTouchDown(i, LegIndex.HL, towrWalkDataSet1.getTouchDownInstants().get(i,2));
+         double currentValueX = towrWalkDataSet1.getHindLeftFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getHindLeftFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getHindLeftFootPositionWorldFrame().get(i,2);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 0, currentValueX);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 1, currentValueY);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HL, i, 2, currentValueZ);
       }
       for (int i = 0; i< towrCartesianStatesToFill.getStepsNumber(LegIndex.HR); i++)
       {
-         double currentValueX = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,0);
-         double currentValueY = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,1);
-         double currentValueZ = towrWalkDataSet1.getFrontLeftFootPositionWorldFrame().get(i,2);
+         towrCartesianStatesToFill.setTakeOff(i, LegIndex.HR, towrWalkDataSet1.getTakeOffInstants().get(i,3));
+         towrCartesianStatesToFill.setTouchDown(i, LegIndex.HR, towrWalkDataSet1.getTouchDownInstants().get(i,3));
+         double currentValueX = towrWalkDataSet1.getHindRightFootPositionWorldFrame().get(i,0);
+         double currentValueY = towrWalkDataSet1.getHindRightFootPositionWorldFrame().get(i,1);
+         double currentValueZ = towrWalkDataSet1.getHindRightFootPositionWorldFrame().get(i,2);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 0, currentValueX);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 1, currentValueY);
          towrCartesianStatesToFill.setTargetFootholdWorldFrame(LegIndex.HR, i, 2, currentValueZ);
+      }
+
+      towrCartesianStatesToFill.setPointsNumber(towrWalkDataSet1.getNumberOfWayPoints());
+      for(int wayPointCounter = 0; wayPointCounter<towrWalkDataSet1.getNumberOfWayPoints(); wayPointCounter++)
+      {
+         PrintTools.info("waypoint "+ wayPointCounter);
+         towrCartesianStatesToFill.addCenterOfMassLinearPosition(towrWalkDataSet1.getCenterOfMassLinearPositions().get(wayPointCounter));
+         PrintTools.info("waypoint "+ wayPointCounter);
+         towrCartesianStatesToFill.addCenterOfMassAngularPosition(towrWalkDataSet1.getCenterOfMassAngularOrientations().get(wayPointCounter));
+         PrintTools.info("waypoint "+ wayPointCounter);
+         towrCartesianStatesToFill.addCenterOfMassLinearVelocity(towrWalkDataSet1.getCenterOfMassLinearVelocities().get(wayPointCounter));
+         PrintTools.info("waypoint "+ wayPointCounter);
+         towrCartesianStatesToFill.addCenterOfMassLinearAcceleration(towrWalkDataSet1.getCenterOfMassLinearAccelerations().get(wayPointCounter));
+         towrCartesianStatesToFill.addCenterOfMassAngularVelocity(towrWalkDataSet1.getCenterOfMassAngularVelocities().get(wayPointCounter));
+         towrCartesianStatesToFill.addCenterOfMassAngularAcceleration(towrWalkDataSet1.getCenterOfMassAngularAccelerations().get(wayPointCounter));
       }
 
       return towrCartesianStatesToFill;
@@ -110,7 +137,7 @@ public class QuadrupedTowrTrajectoryConverter
 
    public static void printDataSet(TowrCartesianStates towrCartesianStates)
    {
-      PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
+      //PrintTools.info("Number of points: "+towrCartesianStates.getPointsNumber());
 
       String message = "Base linear trajectory: \n";
       //PrintTools.info("wayPointsNumber = "+towrCartesianStates.getPointsNumber());
