@@ -55,7 +55,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       quadrupedTestFactory.setControlMode(QuadrupedControlMode.FORCE);
       quadrupedTestFactory.setGroundContactModelType(QuadrupedGroundContactModelType.FLAT);
       quadrupedTestFactory.setUseNetworking(true);
-      quadrupedTestFactory.setInitialPosition(getInitialPositionParameters());
+      //quadrupedTestFactory.setInitialPosition(getInitialPositionParameters());
       conductor = quadrupedTestFactory.createTestConductor();
       variables = new QuadrupedForceTestYoVariables(conductor.getScs());
       stepTeleopManager = quadrupedTestFactory.getStepTeleopManager();
@@ -242,7 +242,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       IHMCROS2Publisher<CenterOfMassTrajectoryMessage> centerOfMassTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, CenterOfMassTrajectoryMessage.class, controllerSubGenerator);
       centerOfMassTrajectoryPublisher.publish(comMessage);
 
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 5.0));
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 10.0));
       conductor.simulate();
 
       // check robot is still upright and walked forward

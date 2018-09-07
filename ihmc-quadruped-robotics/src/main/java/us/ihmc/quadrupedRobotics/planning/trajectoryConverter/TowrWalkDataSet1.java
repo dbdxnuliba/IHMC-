@@ -185,12 +185,11 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
    }
 
    @Override
-   public RecyclingArrayList<Point3DReadOnly> getCenterOfMassLinearPositions()
+   public RecyclingArrayList<Point3D> getCenterOfMassLinearPositions()
    {
-      final RecyclingArrayList<Point3DReadOnly> centerOfMassLinearPositions = new RecyclingArrayList<>(Point3DReadOnly.class);
+      final RecyclingArrayList<Point3D> centerOfMassLinearPositions = new RecyclingArrayList<>(Point3D.class);
 
-      centerOfMassLinearPositions.add(new Point3D(0.0, 0.0, 0.58));
-
+      centerOfMassLinearPositions.add().set(0.0, 0.0, 0.58);
       centerOfMassLinearPositions.add().set(7.486199299848716E-5, -7.715067983528424E-5, 0.5807975736589519);
       centerOfMassLinearPositions.add().set(2.956185041621478E-4, -2.1572316789610467E-4, 0.5829825720416585);
       centerOfMassLinearPositions.add().set(6.565253317432804E-4, -2.7639813701491305E-4, 0.5862434112568954);
@@ -312,7 +311,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassLinearPositions.add().set(0.9999350461627663, 1.0176970761134602E-4, 0.5537085751091598);
       centerOfMassLinearPositions.add().set(0.9999999999999999, 0.0, 0.5530332681870577);
 
-      return null;
+      return centerOfMassLinearPositions;
    }
 
    @Override
@@ -441,7 +440,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassAngularOrientations.add().set(-0.0011362044166262682, -7.413148804386758E-4, -1.4525686151404182E-4, 0.9999990691956747);
       centerOfMassAngularOrientations.add().set(1.214306433183765E-17, 3.469446951953614E-18, -2.1684043449710093E-19, 1.0);
 
-      return null;
+      return centerOfMassAngularOrientations;
 
    }
 
@@ -570,7 +569,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassLinearVelocities.add().set(0.01503424020003535, -0.016798637011857152, -0.1184062808658965);
       centerOfMassLinearVelocities.add().set(0.006750817817528497, -0.009732557697333714, -0.06544880426590362);
       centerOfMassLinearVelocities.add().set(-4.926614671774132E-16, 9.159339953157541E-16, 5.9674487573602164E-15);
-      return null;
+      return centerOfMassLinearVelocities;
    }
 
    @Override
@@ -698,7 +697,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassAngularVelocities.add().set(0.39509583841239415, 0.23825126834798122, 0.05266491462595882);
       centerOfMassAngularVelocities.add().set(0.21981057569616325, 0.14099332941822637, 0.02830703069378069);
       centerOfMassAngularVelocities.add().set(-1.9761969838327786E-14, -1.3322676295501878E-14, -2.581268532253489E-15);
-      return null;
+      return centerOfMassAngularVelocities;
    }
 
    @Override
@@ -827,7 +826,7 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassLinearAccelerations.add().set(-0.4524862332497881, 0.2866420061558899, 2.335590638351712);
       centerOfMassLinearAccelerations.add().set(-0.37585600500089655, 0.4199659252964529, 2.9601570216475683);
       centerOfMassLinearAccelerations.add().set(-0.2992257767520054, 0.5532898444370151, 3.5847234049434213);
-      return null;
+      return centerOfMassLinearAccelerations;
    }
 
    @Override
@@ -956,6 +955,6 @@ public class TowrWalkDataSet1 implements TowrTrajectoryDataSet
       centerOfMassAngularAccelerations.add().set(-9.876691245796144, -5.957975304725034, -1.3094245358589618);
       centerOfMassAngularAccelerations.add().set(-12.105928624464507, -8.138703985414988, -1.5343259775416347);
 
-      return null;
+      return centerOfMassAngularAccelerations;
    }
 }

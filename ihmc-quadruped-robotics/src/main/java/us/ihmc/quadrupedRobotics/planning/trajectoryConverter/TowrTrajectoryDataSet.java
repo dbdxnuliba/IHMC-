@@ -23,13 +23,13 @@ public interface TowrTrajectoryDataSet
    DenseMatrix64F getHindLeftFootPositionWorldFrame();
    DenseMatrix64F getHindRightFootPositionWorldFrame();
 
-   RecyclingArrayList<Point3DReadOnly> getCenterOfMassLinearPositions();
-   RecyclingArrayList<QuaternionReadOnly> getCenterOfMassAngularOrientations();
+   RecyclingArrayList<Point3D> getCenterOfMassLinearPositions();
+   RecyclingArrayList<Quaternion> getCenterOfMassAngularOrientations();
 
-   RecyclingArrayList<Vector3DReadOnly> getCenterOfMassLinearVelocities();
-   RecyclingArrayList<Vector3DReadOnly> getCenterOfMassAngularVelocities();
+   RecyclingArrayList<Vector3D> getCenterOfMassLinearVelocities();
+   RecyclingArrayList<Vector3D> getCenterOfMassAngularVelocities();
 
-   RecyclingArrayList<Vector3DReadOnly> getCenterOfMassLinearAccelerations();
-   RecyclingArrayList<Vector3DReadOnly> getCenterOfMassAngularAccelerations();
+   RecyclingArrayList<Vector3D> getCenterOfMassLinearAccelerations();
+   RecyclingArrayList<Vector3D> getCenterOfMassAngularAccelerations();
 
 }
