@@ -21,99 +21,59 @@ import us.ihmc.valkyrie.privilegedConfigurationWalking.ValkyrieStraightLegWalkin
 public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivilegedConfigurationPushRecoveryTest
 {
    private final ValkyrieRobotModel valkyrieRobotModel = new MyValkyrieRobotModel();
+   private final ValkyrieRobotModel valkyrieRobotModelNormal = new ValkyrieRobotModel(RobotTarget.SCS,false);
+   private final boolean useNormal = false;
+   private final double privilegedAngleWhenStraight = 1.17;
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
    @Test(timeout = 300000)
-   public void testForwardWalking() throws SimulationExceededMaximumTimeException
+   public void testPushFrontalStanding() throws Exception
    {
-      super.testForwardWalking();
+      percentWeight = 0.8;
+      super.testPushFrontalStanding();
    }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 400000)
-   public void testSlowerWalking() throws SimulationExceededMaximumTimeException
+   @Test(timeout = 300000)
+   public void testPushDiagonalInSwing() throws Exception
    {
-      super.testSlowerWalking();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 200000000)
-   public void testWalkingOverCinderBlockField() throws Exception
-   {
-      super.testWalkingOverCinderBlockField();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 520000)
-   public void testWalkingOverStairs() throws Exception
-   {
-      super.testWalkingOverStairs();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
-   public void testDropOffsWhileWalking() throws SimulationExceededMaximumTimeException
-   {
-      super.testDropOffsWhileWalking();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 680000)
-   public void testSteppingDown() throws SimulationExceededMaximumTimeException
-   {
-      super.testSteppingDown();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
-   public void testSteppingDownEveryTime() throws Exception
-   {
-      super.testSteppingDownEveryTime();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
-   public void testRandomHeightField() throws Exception
-   {
-      super.testRandomHeightField();
+      percentWeight = 0.5;
+      super.testPushDiagonalInSwing();
    }
 
    @Override
    public double getNominalHeight()
    {
-      return 0;
+      return 0.7;
    }
 
    @Override
    public double getSlowTransferDuration()
    {
-      return 0;
+      return 0.15;
    }
 
    @Override
    public double getSlowSwingDuration()
    {
-      return 0;
+      return 0.6;
    }
 
    @Override
    public DRCRobotModel getRobotModel()
    {
-      return valkyrieRobotModel;
+      if(useNormal)
+      return valkyrieRobotModelNormal;
+      else
+         return valkyrieRobotModel;
    }
 
    @Override
    protected double getSizeScale()
    {
-      return 0;
+      return 1.0;
    }
 
    @Override
@@ -359,8 +319,8 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
-         gains.setJointSpaceKp(40.0);
-         gains.setJointSpaceKd(6.0);
+         gains.setJointSpaceKp(1000.0);
+         gains.setJointSpaceKd(20.0);
 
          return gains;
       }
@@ -382,7 +342,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       @Override
       public double getKneeAngleWhenStraight()
       {
-         return 0.25;
+         return privilegedAngleWhenStraight;
       }
 
       @Override
@@ -440,7 +400,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       @Override
       public double getLegPrivilegedHighWeight()
       {
-         return 150.0;
+         return 100.0;
       }
 
       @Override

@@ -172,6 +172,27 @@ public abstract class AvatarICPOptimizationPushRecoveryTestSetup
       drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
    }
 
+   protected FootstepDataListMessage createStandingFootstepMessage()
+   {
+      double scale = getSizeScale();
+
+      FramePoint3D step1Location = new FramePoint3D(worldFrame, 0.0, -0.125, 0.0);
+
+      step1Location.scale(scale);
+
+      FootstepDataMessage message1 = createFootstepDataMessage(RobotSide.RIGHT, step1Location);
+
+      swingTime = getRobotModel().getWalkingControllerParameters().getDefaultSwingTime();
+      transferTime = getRobotModel().getWalkingControllerParameters().getDefaultTransferTime();
+
+      FootstepDataListMessage message = HumanoidMessageTools.createFootstepDataListMessage(swingTime, transferTime);
+      //message.getFootstepDataList().add().set(message1);
+
+      message.setAreFootstepsAdjustable(true);
+
+      return message;
+   }
+
    protected FootstepDataListMessage createForwardWalkingFootstepMessage()
    {
       double scale = getSizeScale();
