@@ -19,7 +19,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    private final RobotTarget target = RobotTarget.SCS;
    private final AtlasRobotModel atlasRobotModel = new MyAtlasRobotModel();
    private final AtlasRobotModel atlasRobotModelNormal = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, target, false);
-   private final boolean useNormal = true;
+   private final boolean useNormalRobotModel = true;
    private final double privilegedAngleWhenStraight = 1.177;
 
    @Override
@@ -61,7 +61,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Override
    public DRCRobotModel getRobotModel()
    {
-      if(useNormal)
+      if(useNormalRobotModel)
          return atlasRobotModelNormal;
       else
       return atlasRobotModel;
