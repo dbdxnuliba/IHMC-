@@ -320,6 +320,31 @@ public class QuadrupedTowrTrajectoryConverter
       return message;
    }
 
+   public static QuadrupedBodyHeightMessage createBodyHeightMessage(TowrCartesianStates towrCartesianStates)
+   {
+      QuadrupedBodyHeightMessage bodyHeightMessage = new QuadrupedBodyHeightMessage();
+      DenseMatrix64F timeStamps = towrCartesianStates.getTimeStamps();
+      EuclideanTrajectoryMessage euclideanTrajectoryMessage = new EuclideanTrajectoryMessage();
+      int numberOfPoints = towrCartesianStates.getPointsNumber();
+      PrintTools.info("number of points: "+numberOfPoints);
+
+      for(int wayPointIterator = 0; wayPointIterator < numberOfPoints; wayPointIterator++)
+      {
+         EuclideanTrajectoryPointMessage euclideanTrajectoryPointMessage = new EuclideanTrajectoryPointMessage();
+
+         euclideanTrajectoryPointMessage.getPosition().set(towrCartesianStates.getCenterOfMassLinearPosition(wayPointIterator));
+         //euclideanTrajectoryPointMessage.getLinearVelocity().set(towrCartesianStates.getCenterOfMassLinearVelocity(wayPointIterator));
+
+         double currentTime = timeStamps.get(wayPointIterator);
+         euclideanTrajectoryPointMessage.setTime(currentTime);
+         euclideanTrajectoryPointMessage.setSequenceId(wayPointIterator);
+         euclideanTrajectoryMessage.getTaskspaceTrajectoryPoints().add().set(euclideanTrajectoryPointMessage);
+      }
+      bodyHeightMessage.getEuclideanTrajectory().set(euclideanTrajectoryMessage);
+
+      return bodyHeightMessage;
+   }
+
    public static CenterOfMassTrajectoryMessage createCenterOfMassMessage(TowrCartesianStates towrCartesianStates)
    {
 

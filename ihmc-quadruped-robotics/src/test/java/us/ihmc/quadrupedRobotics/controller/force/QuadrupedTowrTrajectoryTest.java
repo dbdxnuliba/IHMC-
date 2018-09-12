@@ -242,6 +242,10 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       IHMCROS2Publisher<CenterOfMassTrajectoryMessage> centerOfMassTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, CenterOfMassTrajectoryMessage.class, controllerSubGenerator);
       centerOfMassTrajectoryPublisher.publish(comMessage);
 
+      QuadrupedBodyHeightMessage bodyHeightMessage = getBodyHeightMessage();
+      IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
+      bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
+
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 10.0));
       conductor.simulate();
 
@@ -263,6 +267,11 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
     * Steps to execute, not expressed in absolute time
     */
    public abstract CenterOfMassTrajectoryMessage getCenterOfMassTrajectoryMessage();
+
+   /**
+    * Body height message to execute
+    */
+   public abstract QuadrupedBodyHeightMessage getBodyHeightMessage();
 
    /**
     * Expected final planar position, given as x, y, yaw
