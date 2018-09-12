@@ -19,7 +19,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    private final RobotTarget target = RobotTarget.SCS;
    private final AtlasRobotModel atlasRobotModel = new MyAtlasRobotModel();
    private final AtlasRobotModel atlasRobotModelNormal = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, target, false);
-   private final boolean useNormalRobotModel = true;
+   private final boolean useNormalRobotModel = false;
    private final double privilegedAngleWhenStraight = 1.177;
 
    @Override
@@ -318,7 +318,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       {
          LegConfigurationGains gains = new LegConfigurationGains();
          //gains.setJointSpaceKp(1000.0);
-         gains.setActuatorSpaceKp(1000);
+         gains.setActuatorSpaceKp(100);
          gains.setJointSpaceKd(20.0);
 
          return gains;

@@ -377,7 +377,7 @@ public class LegConfigurationControlModule
       this.actuatorSpacePAction.set(actuatorSpacePAction);
       this.actuatorSpaceDAction.set(actuatorSpaceDAction);
 
-      double actuatorSpaceAcceleration = actuatorSpacePAction + actuatorSpaceDAction;
+      double actuatorSpaceAcceleration = actuatorSpacePAction + actuatorSpaceDAction; // gravity cancelation?
 
       double acceleration = computeJointAccelerationFromActuatorAcceleration(currentPosition, kneePitchJoint.getQd(), actuatorSpaceAcceleration);
 
@@ -395,7 +395,7 @@ public class LegConfigurationControlModule
    private double computeVirtualActuatorVelocity(double kneePitchAngle, double kneePitchVelocity)
    {
       double virtualLength = computeVirtualActuatorLength(kneePitchAngle);
-      return -thighLength * shinLength / virtualLength * kneePitchVelocity * Math.sin(kneePitchAngle);
+      return -thighLength * shinLength * kneePitchVelocity * Math.sin(kneePitchAngle) / virtualLength;
    }
 
    private double computeJointAccelerationFromActuatorAcceleration(double kneePitchAngle, double kneePitchVelocity, double actuatorAcceleration)
@@ -403,11 +403,18 @@ public class LegConfigurationControlModule
       double actuatorLength = computeVirtualActuatorLength(kneePitchAngle);
       double actuatorVelocity = computeVirtualActuatorVelocity(kneePitchAngle, kneePitchVelocity);
 
-      double coriolisAcceleration = thighLength * shinLength / actuatorLength * Math.pow(kneePitchVelocity, 2.0) * Math.cos(kneePitchAngle);
+      /*
+      double coriolisAcceleration = thighLength * shinLength * Math.pow(kneePitchVelocity, 2.0) * Math.cos(kneePitchAngle)/ actuatorLength;
       double centripetalAcceleration = -Math.pow(actuatorVelocity, 2.0) / actuatorLength;
-      double regularAcceleration = -thighLength * shinLength / actuatorLength * actuatorAcceleration * Math.sin(kneePitchAngle);
+      double regularAcceleration = -thighLength * shinLength * actuatorAcceleration * Math.sin(kneePitchAngle) / actuatorLength;
+      */
 
-      return regularAcceleration + coriolisAcceleration + centripetalAcceleration;
+      // Recheck WolframAlpha
+      double actuatorAccelerationTerm = -actuatorAcceleration * actuatorLength / thighLength / shinLength / Math.sin(kneePitchAngle);
+      double coriolisTerm1 = -thighLength * shinLength * Math.pow(kneePitchVelocity, 2) * Math.sin(kneePitchAngle) / Math.pow(actuatorLength, 2);
+      double coriolisTerm2 = -Math.pow(kneePitchVelocity, 2) * Math.cos(kneePitchAngle) / Math.sin(kneePitchAngle);
+
+      return actuatorAccelerationTerm + coriolisTerm1 + coriolisTerm2;
    }
 
    public void setKneeAngleState(LegConfigurationType controlType)

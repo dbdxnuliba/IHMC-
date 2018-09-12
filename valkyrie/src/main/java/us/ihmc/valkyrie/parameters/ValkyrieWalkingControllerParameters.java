@@ -81,6 +81,12 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    }
 
    @Override
+   public double getMaxAllowedDistanceCMPSupport()
+   {
+      return 0.06*jointMap.getModelScale();
+   }
+
+   @Override
    public double getOmega0()
    {
       // TODO probably need to be tuned.

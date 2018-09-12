@@ -48,7 +48,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    @Test(timeout = 300000)
    public void testPushDiagonalInSwing() throws Exception
    {
-      percentWeight = 0.8;
+      percentWeight = 0.5;
       super.testPushDiagonalInSwing();
    }
 
@@ -370,9 +370,8 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
-         //gains.setJointSpaceKp(1000.0);
-         gains.setActuatorSpaceKp(700.0);
-         gains.setJointSpaceKd(20.0);
+         gains.setActuatorSpaceKp(200.0);
+         gains.setActuatorSpaceKd(20.0);
 
          return gains;
       }

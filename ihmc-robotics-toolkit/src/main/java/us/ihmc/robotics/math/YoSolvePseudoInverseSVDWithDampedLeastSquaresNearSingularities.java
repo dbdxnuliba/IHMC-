@@ -133,7 +133,7 @@ public class YoSolvePseudoInverseSVDWithDampedLeastSquaresNearSingularities impl
          yoSingularValuesInverse[i].set(S[i]);
       }
 
-      // V*W
+      // V*W^-1
       for (int i = 0; i < V.numRows; i++)
       {
          int index = i * V.numCols;
@@ -143,7 +143,7 @@ public class YoSolvePseudoInverseSVDWithDampedLeastSquaresNearSingularities impl
          }
       }
 
-      // V*W*U^T
+      // V*W^-1*U^T
       CommonOps.mult(V, U_t, pseudoInverse);
 
       return true;
