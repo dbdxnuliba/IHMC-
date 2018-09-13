@@ -38,8 +38,8 @@ public class QuadrupedTowrTrajectoryConverter
       PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
             new PeriodicRealtimeThreadSchedulerFactory(20) :
             new PeriodicNonRealtimeThreadSchedulerFactory();
-      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "RealtimeRos2Subscriber", "");
-      RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
+      RealtimeRos2Node node = new RealtimeRos2Node(PubSubImplementation.FAST_RTPS, threadFactory, "quadrupedReplanner", "");
+      //RealtimeRos2Publisher<RobotStateCartesianTrajectory> publisher = node.createPublisher(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
 
       RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = node.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
 

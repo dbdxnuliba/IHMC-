@@ -21,9 +21,11 @@ import us.ihmc.quadrupedRobotics.controller.QuadrupedSteppingStateEnum;
 import us.ihmc.quadrupedRobotics.input.managers.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
 import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrReplanningHandler;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.ros2.Ros2Publisher;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.tools.MemoryTools;
@@ -55,6 +57,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       quadrupedTestFactory = createQuadrupedTestFactory();
       quadrupedTestFactory.setControlMode(QuadrupedControlMode.FORCE);
       quadrupedTestFactory.setGroundContactModelType(QuadrupedGroundContactModelType.FLAT);
+      //quadrupedTestFactory.setGroundContactModelType(QuadrupedGroundContactModelType.STEPPED);
       quadrupedTestFactory.setUseNetworking(true);
       //quadrupedTestFactory.setInitialPosition(getInitialPositionParameters());
       conductor = quadrupedTestFactory.createTestConductor();
@@ -139,7 +142,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 1.0));
       conductor.simulate();
 
-
+      boolean isTowrTrajectoryReceived = listenToTowr();
 
       QuadrupedTimedStepListMessage message = getSteps();
       message.setCanBeDelayed(false);
@@ -235,6 +238,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 1.0));
       conductor.simulate();
 
+      boolean isTowrTrajectoryReceived = listenToTowr();
       QuadrupedTimedStepListMessage stepsMessage = getSteps();
       IHMCROS2Publisher<QuadrupedTimedStepListMessage> timedStepPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTimedStepListMessage.class, controllerSubGenerator);
       timedStepPublisher.publish(stepsMessage);
@@ -324,36 +328,52 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       conductor.simulate();
 
       boolean isTowrTrajectoryReceived = listenToTowr();
-      if(isTowrTrajectoryReceived)
-      {
-         IHMCROS2Publisher<State6d> flagPublisher = ROS2Tools.createPublisher(ros2Node, State6d.class, "stateMachineFlag");
-      }
+
       QuadrupedTimedStepListMessage stepsMessage = getSteps();
       IHMCROS2Publisher<QuadrupedTimedStepListMessage> timedStepPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTimedStepListMessage.class, controllerSubGenerator);
       timedStepPublisher.publish(stepsMessage);
 
       CenterOfMassTrajectoryMessage comMessage = getCenterOfMassTrajectoryMessage();
       IHMCROS2Publisher<CenterOfMassTrajectoryMessage> centerOfMassTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, CenterOfMassTrajectoryMessage.class, controllerSubGenerator);
-      centerOfMassTrajectoryPublisher.publish(comMessage);
+      //centerOfMassTrajectoryPublisher.publish(comMessage);
 
       QuadrupedBodyHeightMessage bodyHeightMessage = getBodyHeightMessage();
       IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
-      bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
+      //bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
 
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 10.0));
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 3.0));
       conductor.simulate();
+
+      if(isTowrTrajectoryReceived)
+      {
+         PrintTools.info("publishing new initial position");
+         TowrReplanningHandler towrReplanningHandler = new TowrReplanningHandler();
+         towrReplanningHandler.publishInitialState6D();
+         isTowrTrajectoryReceived = false;
+      }
+
+      isTowrTrajectoryReceived = listenToTowr();
+
 
       stepsMessage = getSteps();
       timedStepPublisher.publish(stepsMessage);
 
       comMessage = getCenterOfMassTrajectoryMessage();
-      centerOfMassTrajectoryPublisher.publish(comMessage);
+      //centerOfMassTrajectoryPublisher.publish(comMessage);
 
       bodyHeightMessage = getBodyHeightMessage();
-      bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
+      //bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
 
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 10.0));
       conductor.simulate();
+
+      if(isTowrTrajectoryReceived)
+      {
+         PrintTools.info("publishing new initial position");
+         TowrReplanningHandler towrReplanningHandler = new TowrReplanningHandler();
+         towrReplanningHandler.publishInitialState6D();
+         isTowrTrajectoryReceived = false;
+      }
 
       // check robot is still upright and walked forward
       Point3D expectedFinalPlanarPosition = getFinalPlanarPosition();
@@ -368,7 +388,6 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
    * Listen to TOWR messages
    * */
    public abstract boolean listenToTowr();
-
 
    /**
     * Steps to execute, not expressed in absolute time
