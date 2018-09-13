@@ -274,6 +274,7 @@ public class QuadrupedTowrTrajectoryConverter
 
       PrintTools.info("Touch down: "+towrCartesianStates.getTouchDown());
       PrintTools.info("Take off: "+towrCartesianStates.getTakeOff());
+      PrintTools.info("Timestamps: "+towrCartesianStates.getTimeStamps());
    }
 
    private static RobotQuadrant legIndexToRobotQuadrantConverter(LegIndex legIndex){
