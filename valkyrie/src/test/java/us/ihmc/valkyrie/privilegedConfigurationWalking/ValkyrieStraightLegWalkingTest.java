@@ -35,13 +35,6 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       super.testSlowerWalking();
    }
 
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 200000000)
-   public void testWalkingOverCinderBlockField() throws Exception
-   {
-      super.testWalkingOverCinderBlockField();
-   }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 167.7)
@@ -312,8 +305,8 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
-         gains.setActuatorSpaceKp(500.0);
-         gains.setJointSpaceKd(10.0);
+         gains.setActuatorSpaceKp(600.0);
+         gains.setJointSpaceKd(20.0);
 
          return gains;
       }
@@ -341,7 +334,7 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       @Override
       public double getKneeAngleWhenBracing()
       {
-         return 0.4;
+         return 0.6;
       }
 
       @Override
