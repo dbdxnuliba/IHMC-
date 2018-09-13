@@ -30,7 +30,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    private final RobotTarget target = RobotTarget.SCS;
    private final ValkyrieRobotModel valkyrieRobotModel = new MyValkyrieRobotModel();
    private final ValkyrieRobotModel valkyrieRobotModelNormal = new ValkyrieRobotModel(target,false);
-   private final boolean useNormalRobotModel = true;
+   private final boolean useNormalRobotModel = false;
    private final double privilegedAngleWhenStraight = 1.17;
 
 
@@ -48,7 +48,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
    @Test(timeout = 300000)
    public void testPushDiagonalInSwing() throws Exception
    {
-      percentWeight = 0.5;
+      percentWeight = 0.4;
       super.testPushDiagonalInSwing();
    }
 
@@ -370,8 +370,8 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
-         gains.setActuatorSpaceKp(200.0);
-         gains.setActuatorSpaceKd(20.0);
+         gains.setActuatorSpaceKp(800.0);
+         gains.setJointSpaceKd(10.0);
 
          return gains;
       }
@@ -451,7 +451,7 @@ public class ValkyriePriviligedConfigurationPushRecoveryTest extends AvatarPrivi
       @Override
       public double getLegPrivilegedHighWeight()
       {
-         return 100.0;
+         return 150.0;
       }
 
       @Override

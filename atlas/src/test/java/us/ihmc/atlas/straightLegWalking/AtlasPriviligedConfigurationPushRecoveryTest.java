@@ -356,6 +356,24 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
          return 0.0;
       }
 
+      @Override
+      public double getLegPrivilegedLowWeight()
+      {
+         return 5.0;
+      }
+
+      @Override
+      public double getLegPrivilegedMediumWeight()
+      {
+         return 50.0;
+      }
+
+      @Override
+      public double getLegPrivilegedHighWeight()
+      {
+         return 150.0;
+      }
+
    }
 
    private class TestMomentumOptimizationSettings extends AtlasMomentumOptimizationSettings

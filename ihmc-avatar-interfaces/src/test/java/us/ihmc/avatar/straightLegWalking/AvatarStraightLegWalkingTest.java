@@ -437,7 +437,7 @@ public abstract class AvatarStraightLegWalkingTest implements MultiRobotTestInte
    @Test(timeout = 200000)
    public void testRandomHeightField() throws Exception
    {
-      double maxStepIncrease = 0.07;
+      double maxStepIncrease = 0.05;
       double maxStepHeight = 0.04;
       double minStepHeight = -0.12;
       runRandomHeightField(maxStepHeight, minStepHeight, maxStepIncrease);

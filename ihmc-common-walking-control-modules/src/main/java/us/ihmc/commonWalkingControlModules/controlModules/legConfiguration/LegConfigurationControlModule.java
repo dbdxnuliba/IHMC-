@@ -403,18 +403,22 @@ public class LegConfigurationControlModule
       double actuatorLength = computeVirtualActuatorLength(kneePitchAngle);
       double actuatorVelocity = computeVirtualActuatorVelocity(kneePitchAngle, kneePitchVelocity);
 
-      /*
+
       double coriolisAcceleration = thighLength * shinLength * Math.pow(kneePitchVelocity, 2.0) * Math.cos(kneePitchAngle)/ actuatorLength;
       double centripetalAcceleration = -Math.pow(actuatorVelocity, 2.0) / actuatorLength;
       double regularAcceleration = -thighLength * shinLength * actuatorAcceleration * Math.sin(kneePitchAngle) / actuatorLength;
-      */
 
-      // Recheck WolframAlpha
+
+      // TODO Compare with below
+      /*
       double actuatorAccelerationTerm = -actuatorAcceleration * actuatorLength / thighLength / shinLength / Math.sin(kneePitchAngle);
       double coriolisTerm1 = -thighLength * shinLength * Math.pow(kneePitchVelocity, 2) * Math.sin(kneePitchAngle) / Math.pow(actuatorLength, 2);
       double coriolisTerm2 = -Math.pow(kneePitchVelocity, 2) * Math.cos(kneePitchAngle) / Math.sin(kneePitchAngle);
 
       return actuatorAccelerationTerm + coriolisTerm1 + coriolisTerm2;
+      */
+
+      return coriolisAcceleration + centripetalAcceleration + regularAcceleration;
    }
 
    public void setKneeAngleState(LegConfigurationType controlType)

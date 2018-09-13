@@ -59,29 +59,9 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       super.testDropOffsWhileWalking();
    }
 
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 680000)
-   public void testSteppingDown() throws SimulationExceededMaximumTimeException
-   {
-      super.testSteppingDown();
-   }
 
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
-   public void testSteppingDownEveryTime() throws Exception
-   {
-      super.testSteppingDownEveryTime();
-   }
 
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
-   public void testRandomHeightField() throws Exception
-   {
-      super.testRandomHeightField();
-   }
+
 
    @Override
    public DRCRobotModel getRobotModel()
@@ -332,8 +312,8 @@ public class ValkyrieStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       public LegConfigurationGains getStraightLegGains()
       {
          LegConfigurationGains gains = new LegConfigurationGains();
-         gains.setJointSpaceKp(40.0);
-         gains.setJointSpaceKd(6.0);
+         gains.setActuatorSpaceKp(500.0);
+         gains.setJointSpaceKd(10.0);
 
          return gains;
       }
