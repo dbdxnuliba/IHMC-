@@ -348,12 +348,13 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       {
          PrintTools.info("publishing new initial position");
          TowrReplanningHandler towrReplanningHandler = new TowrReplanningHandler();
-         towrReplanningHandler.publishInitialState6D();
+         State6d newState = new State6d();
+         newState.getPose().getPosition().setX(0.3);
+         towrReplanningHandler.publishInitialState6D(newState);
          isTowrTrajectoryReceived = false;
       }
 
       isTowrTrajectoryReceived = listenToTowr();
-
 
       stepsMessage = getSteps();
       timedStepPublisher.publish(stepsMessage);
@@ -371,7 +372,9 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       {
          PrintTools.info("publishing new initial position");
          TowrReplanningHandler towrReplanningHandler = new TowrReplanningHandler();
-         towrReplanningHandler.publishInitialState6D();
+         State6d newState = new State6d();
+         newState.getPose().getPosition().setX(0.3);
+         towrReplanningHandler.publishInitialState6D(newState);
          isTowrTrajectoryReceived = false;
       }
 
