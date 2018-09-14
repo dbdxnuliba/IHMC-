@@ -20,8 +20,19 @@ public class MomentumTrajectoryHandler extends EuclideanTrajectoryHandler
       handleTrajectory(command.getAngularMomentumTrajectory());
    }
 
-   public void getAngularMomentumTrajectory(double startTime, double endTime, int numberOfPoints,
-                                            RecyclingArrayList<SimpleEuclideanTrajectoryPoint> trajectoryToPack)
+   /**
+    * This method will pack the angular momentum trajectory for planning the ICP trajectory. The parameters {@code startTime} and {@code endTime} refer
+    * to absolute controller time. To get the angular momentum trajectory from the current time to 1.0 seconds in the future the start time must
+    * be the value of yoTime and the end time must be the value of yoTime + 1.0. The packed trajectory points will start and end with points which were
+    * interpolated from the received waypoints. Any additional received points lying in the given interval are also included.
+    * If the interval of interest is not available the trajectory to pack will be empty. The times of the packed trajectory points
+    * will be relative to the start time of the interval.
+    *
+    * @param startTime is the controller time for the start of the interval for which the trajectory is packed
+    * @param endTime is the controller time for the end of the interval for which the trajectory is packed
+    * @param trajectoryToPack the trajectory will be packed in here
+    */
+   public void getAngularMomentumTrajectory(double startTime, double endTime, RecyclingArrayList<SimpleEuclideanTrajectoryPoint> trajectoryToPack)
    {
       trajectoryToPack.clear();
       if (!isWithinInterval(startTime) || !isWithinInterval(endTime))
@@ -29,16 +40,31 @@ public class MomentumTrajectoryHandler extends EuclideanTrajectoryHandler
          return;
       }
 
-      for (int idx = 0; idx < numberOfPoints; idx++)
-      {
-         double time = startTime + (endTime - startTime) * idx / (numberOfPoints - 1);
-         packDesiredsAtTime(time);
+      packDesiredsAtTime(startTime);
+      SimpleEuclideanTrajectoryPoint interpolatedStartPoint = trajectoryToPack.add();
+      interpolatedStartPoint.setTime(0.0);
+      interpolatedStartPoint.getEuclideanWaypoint().setPosition(getPosition());
+      interpolatedStartPoint.getEuclideanWaypoint().setLinearVelocity(getVelocity());
 
-         SimpleEuclideanTrajectoryPoint trajectoryPoint = trajectoryToPack.add();
-         trajectoryPoint.setTime(time - startTime);
-         trajectoryPoint.setPosition(getPosition());
-         trajectoryPoint.setLinearVelocity(getVelocity());
+      int waypointIndex = 0;
+      while(trajectoryPoints.get(waypointIndex).getTime() < startTime)
+      {
+         waypointIndex++;
       }
+
+      while(trajectoryPoints.get(waypointIndex).getTime() < endTime)
+      {
+         SimpleEuclideanTrajectoryPoint waypoint = trajectoryToPack.add();
+         waypoint.set(trajectoryPoints.get(waypointIndex));
+         waypoint.subtractTimeOffset(startTime);
+         waypointIndex++;
+      }
+
+      packDesiredsAtTime(endTime);
+      SimpleEuclideanTrajectoryPoint interpolatedEndPoint = trajectoryToPack.add();
+      interpolatedEndPoint.setTime(endTime - startTime);
+      interpolatedEndPoint.getEuclideanWaypoint().setPosition(getPosition());
+      interpolatedEndPoint.getEuclideanWaypoint().setLinearVelocity(getVelocity());
    }
 
    public boolean packDesiredAngularMomentumAtTime(double time, FrameVector3DBasics angularMomentumToPack, FrameVector3DBasics angularMomentumRateToPack)

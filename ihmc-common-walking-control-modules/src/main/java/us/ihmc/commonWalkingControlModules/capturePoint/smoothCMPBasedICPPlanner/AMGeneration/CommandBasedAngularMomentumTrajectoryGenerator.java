@@ -6,6 +6,7 @@ import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner
 import us.ihmc.commonWalkingControlModules.configurations.CoPPointName;
 import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.messageHandlers.MomentumTrajectoryHandler;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -24,7 +25,7 @@ import java.util.List;
 
 public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMomentumTrajectoryGeneratorInterface
 {
-   private static final int waypointsPerWalkingPhase = 12;
+   private static final int maxWaypointsPerWalkingPhase = 150; // calculated assuming a waypoint dt of 0.01 and 1.5s max per walking phase
    private static final int numberOfTrajectoryCoefficients = 4;
    private static final FramePoint3D zeroPoint = new FramePoint3D();
 
@@ -39,7 +40,7 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
    private final YoInteger numberOfRegisteredFootsteps;
    private final YoDouble[] commandedAngularMomentum = new YoDouble[3];
 
-   private final RecyclingArrayList<SimpleEuclideanTrajectoryPoint> waypoints = new RecyclingArrayList<>(waypointsPerWalkingPhase, SimpleEuclideanTrajectoryPoint::new);
+   private final RecyclingArrayList<SimpleEuclideanTrajectoryPoint> waypoints = new RecyclingArrayList<>(maxWaypointsPerWalkingPhase, SimpleEuclideanTrajectoryPoint::new);
    private final List<AngularMomentumTrajectory> transferTrajectories;
    private final List<AngularMomentumTrajectory> swingTrajectories;
 
@@ -63,10 +64,10 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
       swingTrajectories = new ArrayList<>(maxNumberOfStepsToConsider);
       for (int i = 0; i < maxNumberOfStepsToConsider; i++)
       {
-         transferTrajectories.add(new AngularMomentumTrajectory(waypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
-         swingTrajectories.add(new AngularMomentumTrajectory(waypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
+         transferTrajectories.add(new AngularMomentumTrajectory(maxWaypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
+         swingTrajectories.add(new AngularMomentumTrajectory(maxWaypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
       }
-      transferTrajectories.add(new AngularMomentumTrajectory(waypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
+      transferTrajectories.add(new AngularMomentumTrajectory(maxWaypointsPerWalkingPhase - 1, numberOfTrajectoryCoefficients));
 
       for (int i = 0; i < Axis.values.length; i++)
       {
@@ -152,7 +153,7 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
          CoPPointsInFoot pointsInFoot = copLocations.get(1);
 
          double swingPhaseDuration = getPhaseDuration(WalkingTrajectoryType.SWING, pointsInFoot, entryCoPName);
-         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime, currentTime + swingPhaseDuration, waypointsPerWalkingPhase, waypoints);
+         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime, currentTime + swingPhaseDuration, waypoints);
          setSubTrajectory(swingPhaseDuration, swingTrajectories.get(0), startingTrajectoryType);
          accumulatedTime += swingPhaseDuration;
 
@@ -166,12 +167,12 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
          CoPPointsInFoot pointsInFoot = copLocations.get(stepIndex + 1);
 
          double transferPhaseDuration = getPhaseDuration(WalkingTrajectoryType.TRANSFER, pointsInFoot, entryCoPName);
-         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + transferPhaseDuration, waypointsPerWalkingPhase, waypoints);
+         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + transferPhaseDuration, waypoints);
          setSubTrajectory(transferPhaseDuration, transferTrajectories.get(stepIndex), WalkingTrajectoryType.TRANSFER);
          accumulatedTime += transferPhaseDuration;
 
          double swingPhaseDuration = getPhaseDuration(WalkingTrajectoryType.SWING, pointsInFoot, entryCoPName);
-         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + swingPhaseDuration, waypointsPerWalkingPhase, waypoints);
+         momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + swingPhaseDuration, waypoints);
          setSubTrajectory(swingPhaseDuration, swingTrajectories.get(stepIndex), WalkingTrajectoryType.TRANSFER);
          accumulatedTime += swingPhaseDuration;
       }
@@ -179,7 +180,7 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
       // handle terminal transfer
       CoPPointsInFoot pointsInFoot = copLocations.get(stepIndex + 1);
       double finalTransferDuration = getPhaseDuration(WalkingTrajectoryType.TRANSFER, pointsInFoot, entryCoPName);
-      momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + finalTransferDuration, waypointsPerWalkingPhase, waypoints);
+      momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime + accumulatedTime, currentTime + accumulatedTime + finalTransferDuration, waypoints);
       setSubTrajectory(finalTransferDuration, transferTrajectories.get(numberOfSteps), WalkingTrajectoryType.TRANSFER);
    }
 
@@ -231,22 +232,33 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
    {
       subTrajectory.reset();
 
-      if(waypoints.isEmpty() || !calculateAngularMomentumForPhase(walkingTrajectoryType))
+      if(waypoints.isEmpty() || !calculateAngularMomentumForPhase(walkingTrajectoryType) || containsTooManyWaypoints())
       {
          subTrajectory.add().setConstant(0.0, subTrajectoryDuration, zeroPoint);
          return;
       }
 
-      int numberOfSegments = Math.min(waypointsPerWalkingPhase, waypoints.size() - 1);
+      int numberOfSegments = Math.min(maxWaypointsPerWalkingPhase, waypoints.size() - 1);
       for (int i = 0; i < numberOfSegments; i++)
       {
-         double subTrajectoryStartTime = (subTrajectoryDuration * i) / (waypointsPerWalkingPhase - 1);
-         double subTrajectoryEndTime = (subTrajectoryDuration * (i + 1)) / (waypointsPerWalkingPhase - 1);
+         double subTrajectoryStartTime = (subTrajectoryDuration * i) / (numberOfSegments - 1);
+         double subTrajectoryEndTime = (subTrajectoryDuration * (i + 1)) / (numberOfSegments - 1);
          EuclideanWaypoint startWaypoint = this.waypoints.get(i).getEuclideanWaypoint();
          EuclideanWaypoint endWaypoint = this.waypoints.get(i + 1).getEuclideanWaypoint();
          subTrajectory.add().setCubic(subTrajectoryStartTime, subTrajectoryEndTime, startWaypoint.getPosition(), startWaypoint.getLinearVelocity(),
                                       endWaypoint.getPosition(), endWaypoint.getLinearVelocity());
       }
+   }
+
+   private boolean containsTooManyWaypoints()
+   {
+      if(waypoints.size() > maxWaypointsPerWalkingPhase)
+      {
+         PrintTools.error("Too many waypoints received. Received: " + waypoints.size() + "pts, Max allowed: " + maxWaypointsPerWalkingPhase);
+         PrintTools.error("Setting angular momentum to zero for this segment of the plan");
+         return true;
+      }
+      return false;
    }
 
    private boolean calculateAngularMomentumForPhase(WalkingTrajectoryType walkingTrajectoryType)

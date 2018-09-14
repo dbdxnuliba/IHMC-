@@ -30,7 +30,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
 
    private final static int FIRST_SEGMENT = 0;
 
-   private final static int defaultSize = 300;
+   private final static int defaultSize = 600; // calculated assuming 150 max cmp segments x 3 steps x 2 phases / step
 
    private final boolean debug;
 

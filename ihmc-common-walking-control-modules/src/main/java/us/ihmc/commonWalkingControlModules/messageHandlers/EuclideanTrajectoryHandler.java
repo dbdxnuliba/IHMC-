@@ -26,7 +26,7 @@ public class EuclideanTrajectoryHandler
 
    private final YoVariableRegistry registry;
 
-   private final RecyclingArrayList<SimpleEuclideanTrajectoryPoint> trajectoryPoints = new RecyclingArrayList<>(defaultMaxNumberOfPoints,
+   protected final RecyclingArrayList<SimpleEuclideanTrajectoryPoint> trajectoryPoints = new RecyclingArrayList<>(defaultMaxNumberOfPoints,
                                                                                                                 SimpleEuclideanTrajectoryPoint.class);
 
    private final DoubleProvider yoTime;
