@@ -27,7 +27,7 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
 {
    private final static int FIRST_SEGMENT = 0;
 
-   private final static int defaultSize = 100;
+   private final static int defaultSize = 600; // calculated assuming 150 max cmp segments x 3 steps x 2 phases / step
 
    private final List<FramePoint3D> comDesiredInitialPositions = new ArrayList<>(defaultSize);
    private final List<FrameVector3D> comDesiredInitialVelocities = new ArrayList<>(defaultSize);

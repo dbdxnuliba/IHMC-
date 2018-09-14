@@ -17,7 +17,7 @@ import us.ihmc.robotics.math.trajectories.Trajectory;
 public class SmoothCoMIntegrationToolbox
 {
    private static final int defaultSize = 100;
-
+   
    private final DenseMatrix64F generalizedAlphaCoMPrimeRow = new DenseMatrix64F(1, defaultSize);
    private final DenseMatrix64F generalizedBetaCoMPrimeRow = new DenseMatrix64F(1, defaultSize);
 

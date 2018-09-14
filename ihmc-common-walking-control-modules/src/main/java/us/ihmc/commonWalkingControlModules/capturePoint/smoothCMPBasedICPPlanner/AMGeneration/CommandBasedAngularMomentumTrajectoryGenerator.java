@@ -25,7 +25,7 @@ import java.util.List;
 
 public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMomentumTrajectoryGeneratorInterface
 {
-   private static final int maxWaypointsPerWalkingPhase = 150; // calculated assuming a waypoint dt of 0.01 and 1.5s max per walking phase
+   private static final int maxWaypointsPerWalkingPhase = 125; // calculated assuming a waypoint dt of 0.01 and 1.25s max per walking phase
    private static final int numberOfTrajectoryCoefficients = 4;
    private static final FramePoint3D zeroPoint = new FramePoint3D();
 
