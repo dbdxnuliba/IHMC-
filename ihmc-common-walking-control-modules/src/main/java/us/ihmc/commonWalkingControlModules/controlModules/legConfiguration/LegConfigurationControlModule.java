@@ -6,7 +6,6 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinemat
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commons.MathTools;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
@@ -37,7 +36,7 @@ public class LegConfigurationControlModule
    private static final double minimumDampingScale = 0.2;
    private static final boolean scaleDamping = false;
 
-   private static final double minDistanceFromZeroKneeAngle = 1e-3;
+   private static final double minKneeAngle = 1e-2;
 
    private static final boolean ONLY_MOVE_PRIV_POS_IF_NOT_BENDING = true;
 
@@ -361,60 +360,63 @@ public class LegConfigurationControlModule
 
    private double computeActuatorSpaceAction(double dampingActionScaleFactor)
    {
-      double currentKneePitchPosition = kneePitchJoint.getQ();
-      double currentKneePitchVelocity = kneePitchJoint.getQd();
+      double currentPosition = kneePitchJoint.getQ();
 
       double desiredVirtualLength = computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue());
-      double currentVirtualLength = computeVirtualActuatorLength(currentKneePitchPosition);
+      double currentVirtualLength = computeVirtualActuatorLength(currentPosition);
 
       desiredVirtualActuatorLength.set(desiredVirtualLength);
       currentVirtualActuatorLength.set(currentVirtualLength);
 
-      double currentVirtualVelocity = computeVirtualActuatorVelocity(currentKneePitchPosition, currentKneePitchVelocity, currentVirtualLength);
+      double currentVirtualVelocity = computeVirtualActuatorVelocity(currentPosition, kneePitchJoint.getQd());
       currentVirtualActuatorVelocity.set(currentVirtualVelocity);
 
       double virtualError = desiredVirtualLength - currentVirtualLength;
 
       double actuatorSpacePAction = Double.isNaN(actuatorSpaceConfigurationGain) ? 0.0 : actuatorSpaceConfigurationGain * virtualError;
-      double actuatorSpaceDAction = Double.isNaN(actuatorSpaceVelocityGain) ?
-            0.0 :
-            -dampingActionScaleFactor * actuatorSpaceVelocityGain * currentVirtualVelocity;
+      double actuatorSpaceDAction = Double.isNaN(actuatorSpaceVelocityGain) ? 0.0 : -dampingActionScaleFactor * actuatorSpaceVelocityGain * currentVirtualVelocity;
 
       this.actuatorSpacePAction.set(actuatorSpacePAction);
       this.actuatorSpaceDAction.set(actuatorSpaceDAction);
 
       double actuatorSpaceAcceleration = actuatorSpacePAction + actuatorSpaceDAction;
 
-      double kneePitchAcceleration = computeKneePitchAccelerationFromActuatorAcceleration(currentKneePitchPosition, 0.0, actuatorSpaceAcceleration);
+      double acceleration = computeActuatorAccelerationFromJointAcceleration(currentPosition, kneePitchJoint.getQd(), actuatorSpaceAcceleration);
 
-      this.actuatorSpaceAction.set(kneePitchAcceleration);
+      this.actuatorSpaceAction.set(acceleration);
 
-      return kneePitchAcceleration;
+      return acceleration;
    }
 
    private double computeVirtualActuatorLength(double kneePitchAngle)
    {
-      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minDistanceFromZeroKneeAngle);
-
+      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
       return TriangleTools.computeSideLength(thighLength, shinLength, interiorAngle);
    }
 
-   private double computeVirtualActuatorVelocity(double kneePitchAngle, double kneePitchVelocity, double actuatorLength)
+   private double computeVirtualActuatorVelocity(double kneePitchAngle, double kneePitchVelocity)
    {
-      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minDistanceFromZeroKneeAngle);
-      double interiorVelocity = kneePitchAngle < 0.0 ? kneePitchVelocity : -kneePitchVelocity;
-
-      return TriangleTools.computeSideLengthVelocity(thighLength, shinLength, interiorAngle, interiorVelocity, actuatorLength);
+      double virtualLength = computeVirtualActuatorLength(kneePitchAngle);
+      return computeVirtualActuatorVelocity(kneePitchAngle, kneePitchVelocity, virtualLength);
    }
 
-   private double computeKneePitchAccelerationFromActuatorAcceleration(double kneePitchAngle, double kneePitchVelocity, double actuatorAcceleration)
+   private double computeVirtualActuatorVelocity(double kneePitchAngle, double kneePitchVelocity, double virtualLength)
+   {
+      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
+      double interiorVelocity = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchVelocity) : -kneePitchVelocity;
+      return TriangleTools.computeSideLengthVelocity(thighLength, shinLength, virtualLength, interiorAngle, interiorVelocity);
+   }
+
+   private double computeActuatorAccelerationFromJointAcceleration(double kneePitchAngle, double kneePitchVelocity, double kneePitchAcceleration)
    {
       double actuatorLength = computeVirtualActuatorLength(kneePitchAngle);
       double actuatorVelocity = computeVirtualActuatorVelocity(kneePitchAngle, kneePitchVelocity, actuatorLength);
 
-      double interiorAngleAcceleration = TriangleTools.computeInteriorAngleAcceleration(thighLength, shinLength, actuatorLength, actuatorVelocity, actuatorAcceleration);
+      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
+      double interiorVelocity = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchVelocity) : -kneePitchVelocity;
+      double interiorAcceleration = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchAcceleration) : -kneePitchAcceleration;
 
-      return -interiorAngleAcceleration;
+      return TriangleTools.computeSideLengthAcceleration(thighLength, shinLength, actuatorLength, actuatorVelocity, interiorAngle, interiorVelocity, interiorAcceleration);
    }
 
    public void setKneeAngleState(LegConfigurationType controlType)
