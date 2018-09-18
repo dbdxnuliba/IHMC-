@@ -3,15 +3,21 @@ package us.ihmc.robotics.math.trajectories;
 import static org.junit.Assert.assertEquals;
 
 import org.ejml.data.DenseMatrix64F;
+import org.junit.Assert;
 import org.junit.Test;
 
 import us.ihmc.commons.Epsilons;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.tools.EuclidCoreRandomTools;
+import us.ihmc.euclid.tools.EuclidCoreTools;
+
+import java.util.Random;
 
 public class TrajectoryTest
 {
    private static double EPSILON = 1e-6;
+   private final Random random = new Random(3294508L);
 
    String namePrefix = "TrajectoryTest";
    
@@ -128,6 +134,42 @@ public class TrajectoryTest
 
    @ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 30000)
+   public void testGeometricPowersOnRandomPolynomials()
+   {
+      int maxNumberOfCoefficients = 8;
+      int iterations = 50;
+      for (int i = 0; i < iterations; i++)
+      {
+         int numberOfCoefficients = 1 + random.nextInt(maxNumberOfCoefficients);
+         Trajectory trajectory = new Trajectory(numberOfCoefficients);
+         trajectory.setDirectly(new double[numberOfCoefficients]);
+
+         int derivativeOrder = 1 + random.nextInt(numberOfCoefficients);
+         double x0 = EuclidCoreRandomTools.nextDouble(random, 5.0);
+
+         DenseMatrix64F derivativeElements = trajectory.evaluateGeometricPolynomialDerivative(derivativeOrder, x0);
+         for (int j = 0; j < derivativeOrder; j++)
+         {
+            Assert.assertEquals(derivativeElements.get(j), 0.0, EPSILON);
+         }
+
+         for (int j = numberOfCoefficients - 1; j >= derivativeOrder; j--)
+         {
+            int exponent = j - derivativeOrder;
+            double expectedDerivativeElement = Math.pow(x0, exponent);
+            for (int k = 1; k <= derivativeOrder; k++)
+            {
+               expectedDerivativeElement *= (exponent + k);
+            }
+
+            double derivativeElement = derivativeElements.get(j);
+            Assert.assertEquals(expectedDerivativeElement, derivativeElement, EPSILON);
+         }
+      }
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 30000)
    public void testDerivativeCoefficients()
    {
       //cubic polynomial: y(x) = a0 + a1*x + a2*x^2 + a3*x^3
@@ -229,7 +271,7 @@ public class TrajectoryTest
       double[] coefficients = polynomial.getCoefficients();
       for (int i = 0; i < coefficients.length + 3; i++)
       {
-         DenseMatrix64F generalizedDYPoly = polynomial.getXPowersDerivativeVector(i, x);
+         DenseMatrix64F generalizedDYPoly = polynomial.evaluateGeometricPolynomialDerivative(i, x);
          DenseMatrix64F generalizedDYHand = new DenseMatrix64F(generalizedDYPoly.getNumRows(), generalizedDYPoly.getNumCols());
          if (i < coefficients.length)
          {
@@ -254,7 +296,7 @@ public class TrajectoryTest
          double generalizedDYPolyScalar = polynomial.getDerivative(i, x);
          double generalizedDYHandScalar = 0.0;
 
-         DenseMatrix64F generalizedDYPolyVector = polynomial.getXPowersDerivativeVector(i, x);
+         DenseMatrix64F generalizedDYPolyVector = polynomial.evaluateGeometricPolynomialDerivative(i, x);
          for (int j = 0; j < generalizedDYPolyVector.numCols; j++)
          {
             generalizedDYHandScalar += generalizedDYPolyVector.get(j) * coefficients[j];

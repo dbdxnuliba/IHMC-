@@ -4,6 +4,7 @@ import java.security.InvalidParameterException;
 import java.util.List;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import org.ejml.data.DenseMatrix64F;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.MathTools;

@@ -94,14 +94,16 @@ public class Trajectory
    }
 
    /**
-    * Returns the order-th derivative of the xPowers vector at value x (Note: does NOT return the Trajectories order-th derivative at x)
-    * @param order
-    * @param x
-    * @return
+    * Given the following polynomial and it's n-th derivative:
+    * <br> f(x) = 1 + x + ... + x<sup>N-1</sup> + x<sup>N</sup>
+    * <br> d<sup>n</sup>f(x)/dx<sup>n</sup> = a<sub>0</sub> + a<sub>1</sub>x + ... + a<sub>N-n-1</sub>x<sup>N-n-1</sup> + a<sub>N-n</sub>x<sup>N-n</sup>
+    *
+    * <br> This method returns a matrix such that matrixToPack.get(i) returns the i-th element of the following (N+1)-length vector:
+    * <br> [a<sub>0</sub>, a<sub>1</sub>x0, ..., a<sub>N-n-1</sub>x0<sup>N-n-1</sup>, a<sub>N-n</sub>x0<sup>N-n</sup>, ... , 0, 0]
     */
-   public DenseMatrix64F getXPowersDerivativeVector(int order, double x)
+   public DenseMatrix64F evaluateGeometricPolynomialDerivative(int order, double x0)
    {
-      setXPowers(xPowers, x);
+      setXPowers(xPowers, x0);
       xPowersDerivativeVector.zero();
       for (int i = order; i < numberOfCoefficients; i++)
          xPowersDerivativeVector.set(i, getCoefficientMultiplierForDerivative(order, i) * xPowers[i - order]);

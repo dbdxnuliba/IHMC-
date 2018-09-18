@@ -6,7 +6,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.interfaces.linsol.LinearSolver;
 
 import us.ihmc.euclid.Axis;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameTuple3DReadOnly;
 import us.ihmc.robotics.linearAlgebra.ConfigurableSolvePseudoInverseSVD;
@@ -119,7 +118,7 @@ public class SmoothCapturePointAdjustmentToolbox
 
       boundaryConditionVectorToPack.set(order + numberOfConstrainedDerivatives, cmpPolynomialSegment1.getDerivative(order, tInitial1));
 
-      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment1.getXPowersDerivativeVector(order, tInitial1);
+      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment1.evaluateGeometricPolynomialDerivative(order, tInitial1);
       MatrixTools.setMatrixBlock(boundaryConditionMatrixToPack, order + numberOfConstrainedDerivatives, 0, xPowersDerivativeVector, 0, 0,
                                  xPowersDerivativeVector.numRows, xPowersDerivativeVector.numCols, 1.0);
    }
@@ -133,11 +132,11 @@ public class SmoothCapturePointAdjustmentToolbox
 
       boundaryConditionVectorToPack.set(order + 2 * numberOfConstrainedDerivatives, 0.0);
 
-      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment1.getXPowersDerivativeVector(order, tFinal1);
+      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment1.evaluateGeometricPolynomialDerivative(order, tFinal1);
       MatrixTools.setMatrixBlock(boundaryConditionMatrixToPack, order + 2 * numberOfConstrainedDerivatives, 0, xPowersDerivativeVector, 0, 0,
                                  xPowersDerivativeVector.numRows, xPowersDerivativeVector.numCols, -1.0);
 
-      xPowersDerivativeVector = cmpPolynomialSegment2.getXPowersDerivativeVector(order, tInitial2);
+      xPowersDerivativeVector = cmpPolynomialSegment2.evaluateGeometricPolynomialDerivative(order, tInitial2);
       MatrixTools.setMatrixBlock(boundaryConditionMatrixToPack, order + 2 * numberOfConstrainedDerivatives, numberOfCoefficients, xPowersDerivativeVector, 0, 0,
                                  xPowersDerivativeVector.numRows, xPowersDerivativeVector.numCols, 1.0);
    }
@@ -149,7 +148,7 @@ public class SmoothCapturePointAdjustmentToolbox
 
       boundaryConditionVectorToPack.set(order + 3 * numberOfConstrainedDerivatives, cmpPolynomialSegment2.getDerivative(order, tFinal2));
 
-      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment2.getXPowersDerivativeVector(order, tFinal2);
+      DenseMatrix64F xPowersDerivativeVector = cmpPolynomialSegment2.evaluateGeometricPolynomialDerivative(order, tFinal2);
       MatrixTools.setMatrixBlock(boundaryConditionMatrixToPack, order + 3 * numberOfConstrainedDerivatives, numberOfCoefficients, xPowersDerivativeVector,
                                  0, 0, xPowersDerivativeVector.numRows, xPowersDerivativeVector.numCols, 1.0);
    }

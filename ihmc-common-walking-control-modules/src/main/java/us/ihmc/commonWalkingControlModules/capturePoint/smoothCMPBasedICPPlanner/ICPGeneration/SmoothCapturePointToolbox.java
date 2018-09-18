@@ -6,8 +6,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import us.ihmc.euclid.Axis;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
-import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
@@ -227,7 +225,7 @@ public class SmoothCapturePointToolbox
       for(int i = 0; i < numberOfCoefficients; i++)
       {
          double scalar = Math.pow(omega0, -i);
-         CommonOps.addEquals(generalizedAlphaPrimeRow, scalar, cmpPolynomial.getXPowersDerivativeVector(i + alphaDerivativeOrder, time));
+         CommonOps.addEquals(generalizedAlphaPrimeRow, scalar, cmpPolynomial.evaluateGeometricPolynomialDerivative(i + alphaDerivativeOrder, time));
       }
    }
    
@@ -263,7 +261,7 @@ public class SmoothCapturePointToolbox
       for(int i = 0; i < numberOfCoefficients; i++)
       {
          double scalar = Math.pow(omega0, betaDerivativeOrder-i) * Math.exp(omega0*(time-timeSegmentTotal));
-         CommonOps.addEquals(generalizedBetaPrimeRowToPack, scalar, cmpPolynomial.getXPowersDerivativeVector(i, timeSegmentTotal));
+         CommonOps.addEquals(generalizedBetaPrimeRowToPack, scalar, cmpPolynomial.evaluateGeometricPolynomialDerivative(i, timeSegmentTotal));
       }
    }
 
