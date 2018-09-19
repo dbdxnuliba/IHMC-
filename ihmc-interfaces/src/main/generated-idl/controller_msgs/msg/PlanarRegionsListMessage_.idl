@@ -21,13 +21,13 @@ module controller_msgs
          * Unique ID used to identify this message, should preferably be consecutively increasing.
          */
         unsigned long sequence_id;
-        sequence<long, 300> region_id;
-        sequence<geometry_msgs::msg::dds::Point, 300> region_origin;
-        sequence<geometry_msgs::msg::dds::Vector3, 300> region_normal;
-        sequence<long, 300> concave_hulls_size;
-        sequence<long, 300> number_of_convex_polygons;
-        sequence<long, 1000> convex_polygons_size;
-        sequence<geometry_msgs::msg::dds::Point, 5000> vertex_buffer;
+        sequence<long, 500> region_id;
+        sequence<geometry_msgs::msg::dds::Point, 500> region_origin;
+        sequence<geometry_msgs::msg::dds::Vector3, 500> region_normal;
+        sequence<long, 500> concave_hulls_size;
+        sequence<long, 500> number_of_convex_polygons;
+        sequence<long, 2000> convex_polygons_size;
+        sequence<geometry_msgs::msg::dds::Point, 10000> vertex_buffer;
       };
     };
   };

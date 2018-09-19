@@ -47,6 +47,7 @@ public class IHMCInterfacesGenerateMessages
 
       RosInterfaceGenerator.convertDirectoryToUnixEOL(Paths.get("src/main/generated-idl"));
       RosInterfaceGenerator.convertDirectoryToUnixEOL(Paths.get("src/main/generated-java"));
+      RosInterfaceGenerator.convertDirectoryToUnixEOL(Paths.get("src/main/messages"));
    }
 
    private static void deleteDuplicateFiles(String outputDirectory)

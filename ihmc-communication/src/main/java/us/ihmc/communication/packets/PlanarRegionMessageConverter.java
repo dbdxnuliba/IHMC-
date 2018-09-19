@@ -5,6 +5,7 @@ import java.util.List;
 
 import controller_msgs.msg.dds.PlanarRegionMessage;
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
@@ -95,6 +96,8 @@ public class PlanarRegionMessageConverter
       Object<Point3D> vertexBuffer = message.getVertexBuffer();
 
       vertexBuffer.clear();
+      
+      PrintTools.debug("Num regs: " + planarRegionsList.getNumberOfPlanarRegions());
 
       for (PlanarRegion planarRegion : planarRegionsList.getPlanarRegionsAsList())
       {

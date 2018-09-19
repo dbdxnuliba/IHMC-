@@ -26,17 +26,17 @@ public class PlanarRegionsListMessage extends Packet<PlanarRegionsListMessage> i
 
    public PlanarRegionsListMessage()
    {
-      region_id_ = new us.ihmc.idl.IDLSequence.Integer (300, "type_2");
+      region_id_ = new us.ihmc.idl.IDLSequence.Integer (500, "type_2");
 
-      region_origin_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D> (300, new geometry_msgs.msg.dds.PointPubSubType());
-      region_normal_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Vector3D> (300, new geometry_msgs.msg.dds.Vector3PubSubType());
-      concave_hulls_size_ = new us.ihmc.idl.IDLSequence.Integer (300, "type_2");
+      region_origin_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D> (500, new geometry_msgs.msg.dds.PointPubSubType());
+      region_normal_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Vector3D> (500, new geometry_msgs.msg.dds.Vector3PubSubType());
+      concave_hulls_size_ = new us.ihmc.idl.IDLSequence.Integer (500, "type_2");
 
-      number_of_convex_polygons_ = new us.ihmc.idl.IDLSequence.Integer (300, "type_2");
+      number_of_convex_polygons_ = new us.ihmc.idl.IDLSequence.Integer (500, "type_2");
 
-      convex_polygons_size_ = new us.ihmc.idl.IDLSequence.Integer (1000, "type_2");
+      convex_polygons_size_ = new us.ihmc.idl.IDLSequence.Integer (2000, "type_2");
 
-      vertex_buffer_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D> (5000, new geometry_msgs.msg.dds.PointPubSubType());
+      vertex_buffer_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D> (10000, new geometry_msgs.msg.dds.PointPubSubType());
 
    }
 
