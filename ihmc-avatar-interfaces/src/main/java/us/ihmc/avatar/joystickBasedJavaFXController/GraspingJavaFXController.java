@@ -6,10 +6,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.ReachingManifoldMessage;
 import controller_msgs.msg.dds.ToolboxStateMessage;
-import controller_msgs.msg.dds.ValkyrieHandFingerTrajectoryMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryToolboxOutputStatus;
+import gnu.trove.list.array.TDoubleArrayList;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -21,6 +21,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Affine;
+import us.ihmc.avatar.handControl.HandFingerTrajectoryMessagePublisher;
 import us.ihmc.avatar.networkProcessor.wholeBodyTrajectoryToolboxModule.WholeBodyTrajectoryToolboxModule;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.PrintTools;
@@ -45,13 +46,13 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.MeshDataBuilder;
 import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.graphicsDescription.MeshDataHolder;
-import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.WholeBodyTrajectoryToolboxOutputConverter;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.javaFXToolkit.JavaFXTools;
 import us.ihmc.javaFXToolkit.graphics.JavaFXMeshDataInterpreter;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
+import us.ihmc.javaFXVisualizers.JavaFXRobotVisualizer;
 import us.ihmc.manipulation.planning.manifold.ReachingManifoldTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
@@ -132,7 +133,7 @@ public class GraspingJavaFXController
    private final IHMCROS2Publisher<WholeBodyTrajectoryMessage> wholeBodyTrajectoryPublisher;
    private final IHMCROS2Publisher<ToolboxStateMessage> toolboxStatePublisher;
    private final IHMCROS2Publisher<WholeBodyTrajectoryToolboxMessage> toolboxMessagePublisher;
-   private final IHMCROS2Publisher<ValkyrieHandFingerTrajectoryMessage> handFingerTrajectoryMessagePublisher;
+   private final HandFingerTrajectoryMessagePublisher handFingerTrajectoryMessagePublisher;
 
    private final AtomicReference<WholeBodyTrajectoryToolboxOutputStatus> toolboxOutputPacket = new AtomicReference<>(null);
    private final GraspingJavaFXMotionPreviewVisualizer motionPreviewVisualizer;
@@ -151,7 +152,7 @@ public class GraspingJavaFXController
    }
 
    public GraspingJavaFXController(String robotName, JavaFXMessager messager, Ros2Node ros2Node, FullHumanoidRobotModelFactory fullRobotModelFactory,
-                                   JavaFXRobotVisualizer javaFXRobotVisualizer)
+                                   JavaFXRobotVisualizer javaFXRobotVisualizer, HandFingerTrajectoryMessagePublisher handFingerTrajectoryMessagePublisher)
    {
       this.messager = messager;
       motionPreviewVisualizer = new GraspingJavaFXMotionPreviewVisualizer(fullRobotModelFactory);
@@ -218,7 +219,7 @@ public class GraspingJavaFXController
       wholeBodyTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, WholeBodyTrajectoryMessage.class, subscriberTopicNameGenerator);
       toolboxStatePublisher = ROS2Tools.createPublisher(ros2Node, ToolboxStateMessage.class, toolboxRequestTopicNameGenerator);
       toolboxMessagePublisher = ROS2Tools.createPublisher(ros2Node, WholeBodyTrajectoryToolboxMessage.class, toolboxRequestTopicNameGenerator);
-      handFingerTrajectoryMessagePublisher = ROS2Tools.createPublisher(ros2Node, ValkyrieHandFingerTrajectoryMessage.class, subscriberTopicNameGenerator);
+      this.handFingerTrajectoryMessagePublisher = handFingerTrajectoryMessagePublisher;
 
       ROS2Tools.createCallbackSubscription(ros2Node, WholeBodyTrajectoryToolboxOutputStatus.class, toolboxResponseTopicNameGenerator,
                                            s -> consumeToolboxOutputStatus(s.takeNextData()));
@@ -231,12 +232,12 @@ public class GraspingJavaFXController
             updateSelectedObject();
             updateVisualizationObjects();
             rootNode.getChildren().add(motionPreviewVisualizer.getRootNode());
-            sendDesiredFingerConfigurationMessage();
+            submitDesiredFingerConfigurationMessage();
          }
       };
    }
 
-   private void sendDesiredFingerConfigurationMessage()
+   private void submitDesiredFingerConfigurationMessage()
    {
       for (RobotSide robotSide : RobotSide.values)
       {
@@ -244,17 +245,24 @@ public class GraspingJavaFXController
          {
             sendFingerMessages.get(robotSide).set(false);
 
-            ValkyrieHandFingerTrajectoryMessage message = new ValkyrieHandFingerTrajectoryMessage();
-            message.setRobotSide(robotSide.toByte());
+            TDoubleArrayList desiredPositions = new TDoubleArrayList();
+            TDoubleArrayList trajectoryTimes = new TDoubleArrayList();
 
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 0, timeDurationForFinger, desiredThumbRolls.get(robotSide).get(), message);
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 1, timeDurationForFinger, desiredThumbPitchs.get(robotSide).get(), message);
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 2, timeDurationForFinger, desiredThumbPitch2s.get(robotSide).get(), message);
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 3, timeDurationForFinger, desiredIndexes.get(robotSide).get(), message);
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 4, timeDurationForFinger, desiredMiddles.get(robotSide).get(), message);
-            HumanoidMessageTools.appendDesiredFingerConfiguration((byte) 5, timeDurationForFinger, desiredPinkys.get(robotSide).get(), message);
+            desiredPositions.add(desiredThumbRolls.get(robotSide).get());
+            desiredPositions.add(desiredThumbPitchs.get(robotSide).get());
+            desiredPositions.add(desiredThumbPitch2s.get(robotSide).get());
+            desiredPositions.add(desiredIndexes.get(robotSide).get());
+            desiredPositions.add(desiredMiddles.get(robotSide).get());
+            desiredPositions.add(desiredPinkys.get(robotSide).get());
 
-            handFingerTrajectoryMessagePublisher.publish(message);
+            trajectoryTimes.add(timeDurationForFinger);
+            trajectoryTimes.add(timeDurationForFinger);
+            trajectoryTimes.add(timeDurationForFinger);
+            trajectoryTimes.add(timeDurationForFinger);
+            trajectoryTimes.add(timeDurationForFinger);
+            trajectoryTimes.add(timeDurationForFinger);
+
+            handFingerTrajectoryMessagePublisher.sendFingerTrajectoryMessage(robotSide, desiredPositions, trajectoryTimes);
          }
       }
    }
