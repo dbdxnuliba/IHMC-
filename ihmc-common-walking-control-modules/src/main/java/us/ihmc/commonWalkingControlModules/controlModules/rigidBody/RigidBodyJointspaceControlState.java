@@ -15,7 +15,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 public class RigidBodyJointspaceControlState extends RigidBodyControlState
 {
-   public static final int maxPoints = 10000;
+   public static final int maxPoints = 50;
    public static final int maxPointsInGenerator = 5;
 
    private final RigidBodyJointControlHelper jointControlHelper;
