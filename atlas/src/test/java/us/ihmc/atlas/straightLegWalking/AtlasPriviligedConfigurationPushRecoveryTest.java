@@ -36,8 +36,35 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushDiagonalInSwing() throws Exception
    {
-      percentWeight = 0.5;
+      percentWeight = 0.7;
       super.testPushDiagonalInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushDiagonalFrontalInSwing() throws Exception
+   {
+      percentWeight = 1.15;
+      super.testPushDiagonalFrontalInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushFrontalInSwing() throws Exception
+   {
+      percentWeight = 1.3;
+      super.testPushFrontalInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushBackInSwing() throws Exception
+   {
+      percentWeight = 1.23;
+      super.testPushBackInSwing();
    }
 
    @Override
@@ -91,12 +118,6 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       {
          return new AtlasPriviligedConfigurationPushRecoveryTest.TestWalkingControllerParameters(getJointMap(), getContactPointParameters());
       }
-
-      @Override
-      public ICPWithTimeFreezingPlannerParameters getCapturePointPlannerParameters()
-      {
-         return new AtlasPriviligedConfigurationPushRecoveryTest.TestICPPlannerParameters(getPhysicalProperties());
-      }
    }
 
    private class TestWalkingControllerParameters extends AtlasWalkingControllerParameters
@@ -127,19 +148,13 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       @Override
       public boolean controlHeightWithMomentum()
       {
-         return false;
+         return true;
       }
 
       @Override
       public boolean applySecondaryJointScaleDuringSwing()
       {
          return true;
-      }
-
-      @Override
-      public LeapOfFaithParameters getLeapOfFaithParameters()
-      {
-         return new AtlasPriviligedConfigurationPushRecoveryTest.TestLeapOfFaithParameters();
       }
 
       @Override
@@ -154,139 +169,6 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
          return new AtlasPriviligedConfigurationPushRecoveryTest.TestMomentumOptimizationSettings(jointMap, contactPointParameters.getNumberOfContactableBodies());
       }
 
-      @Override
-      public SwingTrajectoryParameters getSwingTrajectoryParameters()
-      {
-         return new AtlasPriviligedConfigurationPushRecoveryTest.TestSwingTrajectoryParameters();
-      }
-
-      @Override
-      public AtlasPriviligedConfigurationPushRecoveryTest.TestToeOffParameters getToeOffParameters()
-      {
-         return new AtlasPriviligedConfigurationPushRecoveryTest.TestToeOffParameters(jointMap);
-      }
-
-      @Override
-      public SteppingParameters getSteppingParameters()
-      {
-         return new AtlasPriviligedConfigurationPushRecoveryTest.TestSteppingParameters(jointMap);
-      }
-
-   }
-
-   private class TestToeOffParameters extends AtlasToeOffParameters
-   {
-      public TestToeOffParameters(AtlasJointMap jointMap)
-      {
-         super(jointMap);
-      }
-
-      @Override
-      public boolean checkCoPLocationToTriggerToeOff()
-      {
-         return false;
-      }
-
-      @Override
-      public double getCoPProximityForToeOff()
-      {
-         return 0.05;
-      }
-
-      @Override
-      public double getICPPercentOfStanceForDSToeOff()
-      {
-         return 0.20;
-      }
-
-      @Override
-      public double getICPPercentOfStanceForSSToeOff()
-      {
-         return 0.10;
-      }
-
-      @Override
-      public boolean checkECMPLocationToTriggerToeOff()
-      {
-         return false;
-      }
-
-      @Override
-      public double getECMPProximityForToeOff()
-      {
-         return 0.01;
-      }
-
-      @Override
-      public boolean doToeOffIfPossibleInSingleSupport()
-      {
-         return true;
-      }
-
-      @Override
-      public double getAnkleLowerLimitToTriggerToeOff()
-      {
-         return -0.75;
-      }
-   }
-
-   private class TestSwingTrajectoryParameters extends AtlasSwingTrajectoryParameters
-   {
-      public TestSwingTrajectoryParameters()
-      {
-         super(RobotTarget.SCS, 1.0);
-      }
-
-      @Override
-      public boolean useSingularityAvoidanceInSwing()
-      {
-         return false;
-      }
-
-      @Override
-      public boolean useSingularityAvoidanceInSupport()
-      {
-         return false;
-      }
-
-      @Override
-      public boolean doHeelTouchdownIfPossible()
-      {
-         return true;
-      }
-
-      @Override
-      public boolean doToeTouchdownIfPossible()
-      {
-         return true;
-      }
-
-      @Override
-      public boolean addOrientationMidpointForObstacleClearance()
-      {
-         return true;
-      }
-   }
-
-   private class TestLeapOfFaithParameters extends LeapOfFaithParameters
-   {
-      @Override
-      public boolean scaleFootWeight()
-      {
-         return true;
-      }
-
-      @Override
-      public boolean usePelvisRotation()
-      {
-         return true;
-      }
-
-      @Override
-      public double getMinimumPelvisWeight()
-      {
-         return 0.5;
-      }
    }
 
    private class TestLegConfigurationParameters extends AtlasLegConfigurationParameters
@@ -318,8 +200,8 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       {
          LegConfigurationGains gains = new LegConfigurationGains();
          //gains.setJointSpaceKp(1000.0);
-         gains.setActuatorSpaceKp(1000);
-         gains.setJointSpaceKd(20.0);
+         gains.setActuatorSpaceKp(500);
+         gains.setJointSpaceKd(10.0);
 
          return gains;
       }
@@ -390,37 +272,4 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       }
    }
 
-   private class TestICPPlannerParameters extends AtlasSmoothCMPPlannerParameters
-   {
-      public TestICPPlannerParameters(AtlasPhysicalProperties physicalProperties)
-      {
-         super(physicalProperties);
-      }
-
-      @Override
-      public double getExitCoPForwardSafetyMarginOnToes()
-      {
-         return 0.015;
-      }
-
-      @Override
-      public boolean putExitCoPOnToes()
-      {
-         return true;
-      }
-   }
-
-   private class TestSteppingParameters extends AtlasSteppingParameters
-   {
-      public TestSteppingParameters(AtlasJointMap jointMap)
-      {
-         super(jointMap);
-      }
-
-      @Override
-      public double getMaxStepLength()
-      {
-         return 1.0;
-      }
-   }
 }

@@ -91,6 +91,8 @@ public class LegConfigurationControlModule
    private final YoDouble currentVirtualActuatorLength;
    private final YoDouble currentVirtualActuatorVelocity;
 
+   private YoDouble yoPrivilegedKneeAcceleration;
+
    private final OneDoFJoint kneePitchJoint;
 
    private final YoDouble dampingActionScaleFactor;
@@ -208,6 +210,8 @@ public class LegConfigurationControlModule
       currentVirtualActuatorLength = new YoDouble(namePrefix + "CurrentVirtualActuatorLength", registry);
       currentVirtualActuatorVelocity = new YoDouble(namePrefix + "CurrentVirtualActuatorVelocity", registry);
 
+      yoPrivilegedKneeAcceleration = new YoDouble(namePrefix + "ddq_kn_privileged",registry);
+
       // set up states and state machine
       YoDouble time = controllerToolbox.getYoTime();
       requestedState = YoEnum.create(namePrefix + "RequestedState", "", LegConfigurationType.class, registry, true);
@@ -279,6 +283,7 @@ public class LegConfigurationControlModule
          kneePitchPrivilegedConfigurationWeight = highPrivilegedWeight.getDoubleValue();
 
       double privilegedKneeAcceleration = computeKneeAcceleration();
+      yoPrivilegedKneeAcceleration.set(privilegedKneeAcceleration);
       double privilegedHipPitchAcceleration = -0.5 * privilegedKneeAcceleration;
       double privilegedAnklePitchAcceleration = -0.5 * privilegedKneeAcceleration;
 

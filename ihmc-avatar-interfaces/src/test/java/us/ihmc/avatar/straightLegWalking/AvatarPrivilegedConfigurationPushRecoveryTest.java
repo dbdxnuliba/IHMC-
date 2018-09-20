@@ -56,5 +56,73 @@ public abstract class AvatarPrivilegedConfigurationPushRecoveryTest extends Avat
       validateTest(footsteps);
    }
 
+   @ContinuousIntegrationTest(estimatedDuration = 60.0)
+   @Test(timeout = 150000)
+   public void testPushDiagonalFrontalInSwing() throws Exception
+   {
+      FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
+      footsteps.setAreFootstepsAdjustable(false);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
+
+      // push timing:
+      StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.LEFT);
+      double delay = 0.0 * swingTime;
+
+      // push parameters:
+      Vector3D forceDirection = new Vector3D(-1.0, 0.5, 0.0);
+      double magnitude = percentWeight * totalMass * 9.81;
+      double duration = 0.05 * swingTime;
+      pushRobotController.applyForceDelayed(pushCondition, delay, forceDirection, magnitude, duration);
+
+      validateTest(footsteps);
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 60.0)
+   @Test(timeout = 150000)
+   public void testPushFrontalInSwing() throws Exception
+   {
+      FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
+      footsteps.setAreFootstepsAdjustable(false);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
+
+      // push timing:
+      StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.LEFT);
+      double delay = 0.0 * swingTime;
+
+      // push parameters:
+      Vector3D forceDirection = new Vector3D(-1.0, 0, 0.0);
+      double magnitude = percentWeight * totalMass * 9.81;
+      double duration = 0.05 * swingTime;
+      pushRobotController.applyForceDelayed(pushCondition, delay, forceDirection, magnitude, duration);
+
+      validateTest(footsteps);
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 60.0)
+   @Test(timeout = 150000)
+   public void testPushBackInSwing() throws Exception
+   {
+      FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
+      footsteps.setAreFootstepsAdjustable(false);
+      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      setupAndRunTest(footsteps, flatGround);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
+
+      // push timing:
+      StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.LEFT);
+      double delay = 0.0 * swingTime;
+
+      // push parameters:
+      Vector3D forceDirection = new Vector3D(1.0, 0, 0.0);
+      double magnitude = percentWeight * totalMass * 9.81;
+      double duration = 0.05 * swingTime;
+      pushRobotController.applyForceDelayed(pushCondition, delay, forceDirection, magnitude, duration);
+
+      validateTest(footsteps);
+   }
 
 }
