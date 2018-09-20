@@ -291,8 +291,8 @@ public class ReachingManifoldTools
       HumanoidMessageTools.packManifold(ConfigurationSpaceName.toBytes(sideNegativeReverseSpaces), sideNegativeReverseLowerLimits, sideNegativeReverseUpperLimits, sideNegativeReverseMessage);
 
       ConfigurationSpaceName[] topSpaces = {ConfigurationSpaceName.Y, ConfigurationSpaceName.PITCH, ConfigurationSpaceName.X};
-      double[] topLowerLimits = new double[] {height - thicknessForViz, -Math.PI, -radius * topAreaReductionRatio};
-      double[] topUpperLimits = new double[] {height, Math.PI, radius * topAreaReductionRatio};
+      double[] topLowerLimits = new double[] {robotSide.negateIfRightSide(height) - thicknessForViz, -Math.PI, -radius * topAreaReductionRatio};
+      double[] topUpperLimits = new double[] {robotSide.negateIfRightSide(height), Math.PI, radius * topAreaReductionRatio};
 
       topMessage.getManifoldOriginPosition().set(manifoldOriginPosition);
       RotationMatrix topOrientation = new RotationMatrix(manifoldOriginOrientation);
