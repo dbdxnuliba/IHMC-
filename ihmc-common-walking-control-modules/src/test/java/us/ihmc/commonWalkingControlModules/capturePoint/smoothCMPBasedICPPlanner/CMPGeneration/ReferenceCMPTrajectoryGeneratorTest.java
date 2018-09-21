@@ -53,7 +53,7 @@ public class ReferenceCMPTrajectoryGeneratorTest
       clear();
       YoInteger numberOfFootstepsToConsider = new YoInteger(testName + "NumberOfFootstepsToConsider", registry);
       numberOfFootstepsToConsider.set(numberOfFootsteps);
-      cmpTrajectoryGenerator = new ReferenceCMPTrajectoryGenerator(testName, numberOfFootsteps, numberOfFootstepsToConsider, false, registry, null);
+      cmpTrajectoryGenerator = new ReferenceCMPTrajectoryGenerator(testName, numberOfFootsteps, numberOfFootstepsToConsider, registry);
       cmpTrajectoryGenerator.setGroundReaction(groundReactionForce);
       for (int i = 0; i < numberOfFootsteps; i++)
       {
@@ -215,7 +215,9 @@ public class ReferenceCMPTrajectoryGeneratorTest
          assertTrue("Number of segments mismatch for segment " + i + " got: " + transferCMPTrajectory.getNumberOfSegments() + " should have been: "
                + transferAngularMomentumTrajectories.get(i).getNumberOfSegments(),
                     transferCMPTrajectory.getNumberOfSegments() == transferAngularMomentumTrajectories.get(i).getNumberOfSegments());
-         torqueTrajectory.setFromAngularMomentumTrajectory(transferAngularMomentumTrajectories.get(i), groundReactionForce);
+         torqueTrajectory.reset();
+         torqueTrajectory.setNext(transferAngularMomentumTrajectories.get(i));
+         torqueTrajectory.scale(1.0 / groundReactionForce);
          for (int j = 0; j < transferCMPTrajectory.getNumberOfSegments(); j++)
          {
             TrajectoryMathTools.add(cmpSegmentTrajectory, transferCoPTrajectories.get(i).getSegment(j), torqueTrajectory.getSegment(j));
@@ -239,7 +241,8 @@ public class ReferenceCMPTrajectoryGeneratorTest
                + swingAngularMomentumTrajectories.get(i).getNumberOfSegments(),
                     swingCMPTrajectory.getNumberOfSegments() == swingAngularMomentumTrajectories.get(i).getNumberOfSegments());
          torqueTrajectory.reset();
-         torqueTrajectory.setFromAngularMomentumTrajectory(swingAngularMomentumTrajectories.get(i), groundReactionForce);
+         torqueTrajectory.setNext(swingAngularMomentumTrajectories.get(i));
+         torqueTrajectory.scale(1.0 / groundReactionForce);
          for (int j = 0; j < swingCMPTrajectory.getNumberOfSegments(); j++)
          {
             TrajectoryMathTools.add(cmpSegmentTrajectory, swingCoPTrajectories.get(i).getSegment(j), torqueTrajectory.getSegment(j));

@@ -1,7 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoMGeneration;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.ICPGeneration.SmoothCapturePointToolbox;
-import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
@@ -58,7 +57,6 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
    private final YoBoolean isDoubleSupport;
 
    private final YoInteger totalNumberOfCMPSegments;
-   private final YoInteger numberOfSegmentsInCurrentPhase;
    private final YoInteger numberOfFootstepsToConsider;
 
    private int numberOfFootstepsRegistered;
@@ -81,8 +79,7 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
       this.isInitialTransfer = isInitialTransfer;
       this.isDoubleSupport = isDoubleSupport;
 
-      totalNumberOfCMPSegments = new YoInteger("CoMGeneratorTotalNumberOfCMPSegments", registry);
-      numberOfSegmentsInCurrentPhase = new YoInteger("CoMGeneratorNumberOfCMPSegmentsInCurrentPhase", registry);
+      totalNumberOfCMPSegments = new YoInteger(namePrefix + "CoMGeneratorTotalNumberOfICPSegments", registry);
 
       startTimeOfCurrentPhase = new YoDouble(namePrefix + "CoMGeneratorStartTimeCurrentPhase", registry);
       localTimeInCurrentPhase = new YoDouble(namePrefix + "CoMGeneratorLocalTimeCurrentPhase", registry);
@@ -118,26 +115,29 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
          SegmentedFrameTrajectory3D transferCMPTrajectory = transferCMPTrajectories.get(stepIndex);
-         int numberOfCMPSegments = transferCMPTrajectory.getNumberOfSegments();
-         cmpTrajectories.addAll(transferCMPTrajectory.getSegments());
-         totalNumberOfCMPSegments.add(numberOfCMPSegments);
-
-         if (stepIndex == 0)
-            numberOfSegmentsInCurrentPhase.set(numberOfCMPSegments);
+         int cmpSegments = transferCMPTrajectory.getNumberOfSegments();
+         for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+         {
+            cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
+            totalNumberOfCMPSegments.increment();
+         }
 
          SegmentedFrameTrajectory3D swingCMPTrajectory = swingCMPTrajectories.get(stepIndex);
-         numberOfCMPSegments = swingCMPTrajectory.getNumberOfSegments();
-         cmpTrajectories.addAll(swingCMPTrajectory.getSegments());
-         totalNumberOfCMPSegments.add(numberOfCMPSegments);
+         cmpSegments = swingCMPTrajectory.getNumberOfSegments();
+         for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+         {
+            cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
+            totalNumberOfCMPSegments.increment();
+         }
       }
 
       SegmentedFrameTrajectory3D transferCMPTrajectory = transferCMPTrajectories.get(numberOfSteps);
-      int numberOfCMPSegments = transferCMPTrajectory.getNumberOfSegments();
-      cmpTrajectories.addAll(transferCMPTrajectory.getSegments());
-      totalNumberOfCMPSegments.add(numberOfCMPSegments);
-
-      if (numberOfSteps == 0)
-         numberOfSegmentsInCurrentPhase.set(numberOfCMPSegments);
+      int cmpSegments = transferCMPTrajectory.getNumberOfSegments();
+      for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+      {
+         cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
+         totalNumberOfCMPSegments.increment();
+      }
 
       numberOfSegmentsTransfer0 = transferCMPTrajectories.get(0).getNumberOfSegments();
       initialize();
@@ -147,7 +147,6 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
    {
       cmpTrajectories.clear();
       totalNumberOfCMPSegments.set(0);
-      numberOfSegmentsInCurrentPhase.set(0);
       localTimeInCurrentPhase.set(0.0);
    }
 
@@ -160,32 +159,43 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
       this.icpDesiredFinalPositions = icpDesiredFinalPositions;
 
       SegmentedFrameTrajectory3D swingCMPTrajectory = swingCMPTrajectories.get(0);
-      int numberOfCMPSegments = swingCMPTrajectory.getNumberOfSegments();
-      cmpTrajectories.addAll(swingCMPTrajectory.getSegments());
-      totalNumberOfCMPSegments.add(numberOfCMPSegments);
-
-      numberOfSegmentsInCurrentPhase.set(numberOfCMPSegments);
+      int cmpSegments = swingCMPTrajectory.getNumberOfSegments();
+      for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+      {
+         cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
+         totalNumberOfCMPSegments.increment();
+      }
 
       int numberOfSteps = Math.min(numberOfFootstepsRegistered, numberOfFootstepsToConsider.getIntegerValue());
       for (int stepIndex = 1; stepIndex < numberOfSteps; stepIndex++)
       {
          SegmentedFrameTrajectory3D transferCMPTrajectory = transferCMPTrajectories.get(stepIndex);
-         numberOfCMPSegments = transferCMPTrajectory.getNumberOfSegments();
-         cmpTrajectories.addAll(transferCMPTrajectory.getSegments());
-         totalNumberOfCMPSegments.add(numberOfCMPSegments);
+         cmpSegments = transferCMPTrajectory.getNumberOfSegments();
+         for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+         {
+            cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
+            totalNumberOfCMPSegments.increment();
+         }
 
          swingCMPTrajectory = swingCMPTrajectories.get(stepIndex);
-         numberOfCMPSegments = swingCMPTrajectory.getNumberOfSegments();
-         cmpTrajectories.addAll(swingCMPTrajectory.getSegments());
-         totalNumberOfCMPSegments.add(numberOfCMPSegments);
+         cmpSegments = swingCMPTrajectory.getNumberOfSegments();
+         for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+         {
+            cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
+            totalNumberOfCMPSegments.increment();
+         }
       }
 
       SegmentedFrameTrajectory3D transferCMPTrajectory = transferCMPTrajectories.get(numberOfSteps);
-      numberOfCMPSegments = transferCMPTrajectory.getNumberOfSegments();
-      cmpTrajectories.addAll(transferCMPTrajectory.getSegments());
-      totalNumberOfCMPSegments.add(numberOfCMPSegments);
+      cmpSegments = transferCMPTrajectory.getNumberOfSegments();
+      for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
+      {
+         cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
+         totalNumberOfCMPSegments.increment();
+      }
 
       numberOfSegmentsSwing0 = swingCMPTrajectories.get(0).getNumberOfSegments();
+
       initialize();
    }
 
@@ -235,19 +245,18 @@ public class ReferenceCoMTrajectoryGenerator implements PositionTrajectoryGenera
                                                         comAccelerationDesiredCurrent);
    }
 
-   private int getCurrentSegmentIndex(double timeInCurrentPhase, List<FrameTrajectory3D> trajectories)
+   private int getCurrentSegmentIndex(double timeInCurrentPhase, List<FrameTrajectory3D> cmpTrajectories)
    {
-      int currentSegmentIndex = numberOfSegmentsInCurrentPhase.getIntegerValue() - 1;
-      if (currentSegmentIndex < 0)
+      int currentSegmentIndex = FIRST_SEGMENT;
+      while (timeInCurrentPhase > cmpTrajectories.get(currentSegmentIndex).getFinalTime()
+            && Math.abs(cmpTrajectories.get(currentSegmentIndex).getFinalTime() - cmpTrajectories.get(currentSegmentIndex + 1).getInitialTime()) < 1.0e-5)
       {
-         return 0;
+         currentSegmentIndex++;
+         if (currentSegmentIndex + 1 > cmpTrajectories.size())
+         {
+            return currentSegmentIndex;
+         }
       }
-
-      while (timeInCurrentPhase < trajectories.get(currentSegmentIndex).getInitialTime() - 1e-6 && currentSegmentIndex > 0)
-      {
-         currentSegmentIndex--;
-      }
-
       return currentSegmentIndex;
    }
 

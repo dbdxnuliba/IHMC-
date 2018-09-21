@@ -7,7 +7,6 @@ import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
 
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.continuousIntegration.IntegrationCategory;
@@ -33,7 +32,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
    String namePrefix = "SmoothCapturePointAdjustmentToolboxTest";
 
    private final SmoothCapturePointToolbox icpToolbox = new SmoothCapturePointToolbox();
-   private final SmoothCapturePointAdjustmentToolbox icpAdjustmentToolbox = new SmoothCapturePointAdjustmentToolbox();
+   private final SmoothCapturePointAdjustmentToolbox icpAdjustmentToolbox = new SmoothCapturePointAdjustmentToolbox(icpToolbox);
    private final List<FrameTuple3DBasics> icpQuantityInitialConditionList = new ArrayList<>();
 
    @Before
@@ -59,8 +58,8 @@ public class SmoothCapturePointAdjustmentToolboxTest
       FrameTrajectory3D linear3DSegment3 = new FrameTrajectory3D(numberOfCoefficients, worldFrame);
 
       List<FrameTrajectory3D> cmpPolynomials3D = new ArrayList<FrameTrajectory3D>();
-      RecyclingArrayList<FramePoint3D> entryCornerPoints = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPoints = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPoints = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPoints = new ArrayList<FramePoint3D>();
 
       // Boundary Conditions
       List<FrameTuple3DBasics> icp0QuantitiesBefore = new ArrayList<>();
@@ -105,6 +104,12 @@ public class SmoothCapturePointAdjustmentToolboxTest
          cmpPolynomials3D.add(linear3DSegment2);
          cmpPolynomials3D.add(linear3DSegment3);
 
+         for (int j = 0; j < numberOfSegments; j++)
+         {
+            entryCornerPoints.add(new FramePoint3D());
+            exitCornerPoints.add(new FramePoint3D());
+         }
+
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPoints, exitCornerPoints, cmpPolynomials3D, omega0);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
@@ -124,8 +129,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
 
          setICPInitialConditionsForAdjustment(cmpPolynomials3D.get(0).getInitialTime(), exitCornerPoints, cmpPolynomials3D,
                                                                    numberOfSwingSegments, omega0);
-         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3D, icpQuantityInitialConditionList, exitCornerPoints.get(1));
-         icpToolbox.computeDesiredCornerPoints3D(entryCornerPoints, exitCornerPoints, cmpPolynomials3D, omega0);
+         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3D, icpQuantityInitialConditionList, entryCornerPoints, exitCornerPoints);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
          {
@@ -166,10 +170,10 @@ public class SmoothCapturePointAdjustmentToolboxTest
 
       List<FrameTrajectory3D> cmpPolynomials3DSwing = new ArrayList<FrameTrajectory3D>();
       List<FrameTrajectory3D> cmpPolynomials3DTransfer = new ArrayList<FrameTrajectory3D>();
-      RecyclingArrayList<FramePoint3D> entryCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> entryCornerPointsTransfer = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsTransfer = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPointsSwing = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsSwing = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> entryCornerPointsTransfer = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsTransfer = new ArrayList<FramePoint3D>();
 
       // Boundary Conditions
       List<FrameTuple3DBasics> icp1QuantitiesBefore = new ArrayList<>();
@@ -227,6 +231,14 @@ public class SmoothCapturePointAdjustmentToolboxTest
          cmpPolynomials3DTransfer.add(linear3DSegment3);
          cmpPolynomials3DTransfer.add(linear3DSegment4);
 
+         for (int j = 0; j < numberOfSegments - 1; j++)
+         {
+            entryCornerPointsSwing.add(new FramePoint3D());
+            exitCornerPointsSwing.add(new FramePoint3D());
+
+            entryCornerPointsTransfer.add(new FramePoint3D());
+            exitCornerPointsTransfer.add(new FramePoint3D());
+         }
 
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsSwing, exitCornerPointsSwing, cmpPolynomials3DSwing, omega0);
 
@@ -251,9 +263,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
                                               omega0);
 
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransfer, exitCornerPointsTransfer, cmpPolynomials3DTransfer, omega0);
-         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransfer, icpQuantityInitialConditionList, exitCornerPointsTransfer.get(1));
-         icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransfer, exitCornerPointsTransfer, cmpPolynomials3DTransfer, omega0);
-
+         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransfer, icpQuantityInitialConditionList, entryCornerPointsTransfer, exitCornerPointsTransfer);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
          {
@@ -300,11 +310,11 @@ public class SmoothCapturePointAdjustmentToolboxTest
       List<FrameTrajectory3D> cmpPolynomials3DSwing = new ArrayList<FrameTrajectory3D>();
       List<FrameTrajectory3D> cmpPolynomials3DTransferUpdated = new ArrayList<FrameTrajectory3D>();
 
-      RecyclingArrayList<FramePoint3D> entryCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPointsSwing = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsSwing = new ArrayList<FramePoint3D>();
 
-      RecyclingArrayList<FramePoint3D> entryCornerPointsTransferUpdated = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsTransferUpdated = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPointsTransferUpdated = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsTransferUpdated = new ArrayList<FramePoint3D>();
 
       // The way this test is implemented now, (tFinal - endTimeOffset) needs to be within the final swing segment
       // Otherwise (numberOfSwingSegments - 1) is not correct segment for setICPInitialConditions
@@ -386,6 +396,15 @@ public class SmoothCapturePointAdjustmentToolboxTest
          cmpPolynomials3DTransferUpdated.add(linear3DSegment3Updated);
          cmpPolynomials3DTransferUpdated.add(linear3DSegment4Updated);
 
+         for (int j = 0; j < numberOfSegments - 1; j++)
+         {
+            entryCornerPointsSwing.add(new FramePoint3D());
+            exitCornerPointsSwing.add(new FramePoint3D());
+
+            entryCornerPointsTransferUpdated.add(new FramePoint3D());
+            exitCornerPointsTransferUpdated.add(new FramePoint3D());
+         }
+
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsSwing, exitCornerPointsSwing, cmpPolynomials3DSwing, omega0);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
@@ -409,9 +428,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
                                                                    cmpPolynomials3DSwing, numberOfSwingSegments - 1, omega0);
 
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransferUpdated, exitCornerPointsTransferUpdated, cmpPolynomials3DTransferUpdated, omega0);
-         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransferUpdated, icpQuantityInitialConditionList, exitCornerPointsTransferUpdated.get(1));
-         icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransferUpdated, exitCornerPointsTransferUpdated, cmpPolynomials3DTransferUpdated, omega0);
-
+         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransferUpdated, icpQuantityInitialConditionList, entryCornerPointsTransferUpdated, exitCornerPointsTransferUpdated);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
          {
@@ -451,8 +468,8 @@ public class SmoothCapturePointAdjustmentToolboxTest
       FrameTrajectory3D cubic3DSegment3 = new FrameTrajectory3D(numberOfCoefficients, worldFrame);
 
       List<FrameTrajectory3D> cmpPolynomials3D = new ArrayList<FrameTrajectory3D>();
-      RecyclingArrayList<FramePoint3D> entryCornerPoints = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPoints = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPoints = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPoints = new ArrayList<FramePoint3D>();
 
       // Boundary Conditions
       List<FrameTuple3DBasics> icp0QuantitiesBefore = new ArrayList<>();
@@ -497,6 +514,12 @@ public class SmoothCapturePointAdjustmentToolboxTest
          cmpPolynomials3D.add(cubic3DSegment2);
          cmpPolynomials3D.add(cubic3DSegment3);
 
+         for (int j = 0; j < numberOfSegments; j++)
+         {
+            entryCornerPoints.add(new FramePoint3D());
+            exitCornerPoints.add(new FramePoint3D());
+         }
+
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPoints, exitCornerPoints, cmpPolynomials3D, omega0);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
@@ -516,8 +539,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
 
          setICPInitialConditionsForAdjustment(cmpPolynomials3D.get(0).getInitialTime(), exitCornerPoints, cmpPolynomials3D,
                                                                    numberOfSwingSegments, omega0);
-         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3D, icpQuantityInitialConditionList, exitCornerPoints.get(1));
-         icpToolbox.computeDesiredCornerPoints3D(entryCornerPoints, exitCornerPoints, cmpPolynomials3D, omega0);
+         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3D, icpQuantityInitialConditionList, entryCornerPoints, exitCornerPoints);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
          {
@@ -558,10 +580,10 @@ public class SmoothCapturePointAdjustmentToolboxTest
 
       List<FrameTrajectory3D> cmpPolynomials3DSwing = new ArrayList<FrameTrajectory3D>();
       List<FrameTrajectory3D> cmpPolynomials3DTransfer = new ArrayList<FrameTrajectory3D>();
-      RecyclingArrayList<FramePoint3D> entryCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsSwing = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> entryCornerPointsTransfer = new RecyclingArrayList<>(FramePoint3D::new);
-      RecyclingArrayList<FramePoint3D> exitCornerPointsTransfer = new RecyclingArrayList<>(FramePoint3D::new);
+      List<FramePoint3D> entryCornerPointsSwing = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsSwing = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> entryCornerPointsTransfer = new ArrayList<FramePoint3D>();
+      List<FramePoint3D> exitCornerPointsTransfer = new ArrayList<FramePoint3D>();
 
       // Boundary Conditions
       List<FrameTuple3DBasics> icp1QuantitiesBefore = new ArrayList<>();
@@ -619,6 +641,14 @@ public class SmoothCapturePointAdjustmentToolboxTest
          cmpPolynomials3DTransfer.add(cubic3DSegment3);
          cmpPolynomials3DTransfer.add(cubic3DSegment4);
 
+         for (int j = 0; j < numberOfSegments - 1; j++)
+         {
+            entryCornerPointsSwing.add(new FramePoint3D());
+            exitCornerPointsSwing.add(new FramePoint3D());
+
+            entryCornerPointsTransfer.add(new FramePoint3D());
+            exitCornerPointsTransfer.add(new FramePoint3D());
+         }
 
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsSwing, exitCornerPointsSwing, cmpPolynomials3DSwing, omega0);
 
@@ -642,9 +672,7 @@ public class SmoothCapturePointAdjustmentToolboxTest
                                                                    numberOfSwingSegments, omega0);
 
          icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransfer, exitCornerPointsTransfer, cmpPolynomials3DTransfer, omega0);
-         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransfer, icpQuantityInitialConditionList, exitCornerPointsTransfer.get(1));
-         icpToolbox.computeDesiredCornerPoints3D(entryCornerPointsTransfer, exitCornerPointsTransfer, cmpPolynomials3DTransfer, omega0);
-
+         icpAdjustmentToolbox.adjustDesiredTrajectoriesForInitialSmoothing3D(omega0, cmpPolynomials3DTransfer, icpQuantityInitialConditionList, entryCornerPointsTransfer, exitCornerPointsTransfer);
 
          for (int j = 0; j < numberOfCoefficients / 2; j++)
          {

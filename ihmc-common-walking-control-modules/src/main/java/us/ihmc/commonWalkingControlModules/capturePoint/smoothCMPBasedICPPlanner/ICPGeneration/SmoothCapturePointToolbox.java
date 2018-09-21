@@ -5,8 +5,9 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.Axis;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
@@ -36,14 +37,12 @@ public class SmoothCapturePointToolbox
    /**
     * Backward iteration to determine &xi;<sub>ref,&phi;</sub>(0) and &xi;<sub>ref,&phi;</sub>(T<sub>&phi;</sub>) for all segments &phi;
     */
-   public void computeDesiredCornerPoints3D(RecyclingArrayList<? extends FixedFramePoint3DBasics> entryCornerPointsToPack,
-                                            RecyclingArrayList<? extends FixedFramePoint3DBasics> exitCornerPointsToPack,
+   public void computeDesiredCornerPoints3D(List<? extends FixedFramePoint3DBasics> entryCornerPointsToPack,
+                                            List<? extends FixedFramePoint3DBasics> exitCornerPointsToPack,
                                             List<FrameTrajectory3D> cmpPolynomials3D, double omega0)
    {
       FrameTrajectory3D cmpPolynomial3D = cmpPolynomials3D.get(cmpPolynomials3D.size() - 1);
-      entryCornerPointsToPack.clear();
-      exitCornerPointsToPack.clear();
-
+      
       cmpPolynomial3D.compute(cmpPolynomial3D.getFinalTime());
       FramePoint3DReadOnly nextEntryCornerPoint = cmpPolynomial3D.getFramePosition();
             
@@ -51,8 +50,8 @@ public class SmoothCapturePointToolbox
       {
          cmpPolynomial3D = cmpPolynomials3D.get(i);
          
-         FixedFramePoint3DBasics exitCornerPoint = exitCornerPointsToPack.getAndGrowIfNeeded(i);
-         FixedFramePoint3DBasics entryCornerPoint = entryCornerPointsToPack.getAndGrowIfNeeded(i);
+         FixedFramePoint3DBasics exitCornerPoint = exitCornerPointsToPack.get(i);
+         FixedFramePoint3DBasics entryCornerPoint = entryCornerPointsToPack.get(i);
          
          exitCornerPoint.set(nextEntryCornerPoint);
          
@@ -61,25 +60,21 @@ public class SmoothCapturePointToolbox
       }
    }
    
-   public void computeDesiredCornerPoints(RecyclingArrayList<? extends FixedFramePoint3DBasics> entryCornerPointsToPack,
-                                          RecyclingArrayList<? extends FixedFramePoint3DBasics> exitCornerPointsToPack,
+   public void computeDesiredCornerPoints(List<? extends FixedFramePoint3DBasics> entryCornerPointsToPack,
+                                          List<? extends FixedFramePoint3DBasics> exitCornerPointsToPack,
                                           List<FrameTrajectory3D> cmpPolynomials3D, double omega0)
    {
       FrameTrajectory3D cmpPolynomial3D = cmpPolynomials3D.get(cmpPolynomials3D.size() - 1);
-      entryCornerPointsToPack.clear();
-      exitCornerPointsToPack.clear();
-
-      // Get the terminal ICP location
+      
       cmpPolynomial3D.compute(cmpPolynomial3D.getFinalTime());
       FramePoint3DReadOnly nextEntryCornerPoint = cmpPolynomial3D.getFramePosition();
-
             
       for (int i = cmpPolynomials3D.size() - 1; i >= 0; i--)
       {
          cmpPolynomial3D = cmpPolynomials3D.get(i);
          
-         FixedFramePoint3DBasics exitCornerPoint = exitCornerPointsToPack.getAndGrowIfNeeded(i);
-         FixedFramePoint3DBasics entryCornerPoint = entryCornerPointsToPack.getAndGrowIfNeeded(i);
+         FixedFramePoint3DBasics exitCornerPoint = exitCornerPointsToPack.get(i);
+         FixedFramePoint3DBasics entryCornerPoint = entryCornerPointsToPack.get(i);
          
          exitCornerPoint.set(nextEntryCornerPoint);
          
@@ -232,7 +227,7 @@ public class SmoothCapturePointToolbox
       for(int i = 0; i < numberOfCoefficients; i++)
       {
          double scalar = Math.pow(omega0, -i);
-         CommonOps.addEquals(generalizedAlphaPrimeRow, scalar, cmpPolynomial.evaluateGeometricSequenceDerivative(i + alphaDerivativeOrder, time));
+         CommonOps.addEquals(generalizedAlphaPrimeRow, scalar, cmpPolynomial.getXPowersDerivativeVector(i + alphaDerivativeOrder, time));
       }
    }
    
@@ -268,7 +263,7 @@ public class SmoothCapturePointToolbox
       for(int i = 0; i < numberOfCoefficients; i++)
       {
          double scalar = Math.pow(omega0, betaDerivativeOrder-i) * Math.exp(omega0*(time-timeSegmentTotal));
-         CommonOps.addEquals(generalizedBetaPrimeRowToPack, scalar, cmpPolynomial.evaluateGeometricSequenceDerivative(i, timeSegmentTotal));
+         CommonOps.addEquals(generalizedBetaPrimeRowToPack, scalar, cmpPolynomial.getXPowersDerivativeVector(i, timeSegmentTotal));
       }
    }
 
