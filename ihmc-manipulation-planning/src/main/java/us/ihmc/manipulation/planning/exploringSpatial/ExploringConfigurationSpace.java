@@ -29,7 +29,7 @@ public class ExploringConfigurationSpace
    {
       this.configurationSpaceName = configurationSpaceName;
 
-      if (configurationSpaceName == ConfigurationSpaceName.SE3)
+      if (configurationSpaceName == ConfigurationSpaceName.SO3)
       {
          this.configuration.addAll(new double[] {0, 0, 0});
       }
@@ -81,6 +81,6 @@ public class ExploringConfigurationSpace
          configuration[i] = this.configuration.get(i);
       }
 
-      return configurationSpaceName.getLocalRigidBodyTransform(configuration);
+      return ExploringRigidBodyTools.getLocalRigidBodyTransform(configurationSpaceName, configuration);
    }
 }

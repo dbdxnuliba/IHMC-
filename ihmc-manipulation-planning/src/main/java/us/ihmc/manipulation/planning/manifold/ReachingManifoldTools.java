@@ -34,6 +34,7 @@ import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTraj
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.manipulation.wholeBodyTrajectory.WholeBodyTrajectoryToolboxMessageTools.FunctionTrajectory;
 import us.ihmc.humanoidRobotics.communication.wholeBodyTrajectoryToolboxAPI.ReachingManifoldCommand;
+import us.ihmc.manipulation.planning.exploringSpatial.ExploringRigidBodyTools;
 import us.ihmc.manipulation.planning.exploringSpatial.TrajectoryLibraryForDRC;
 import us.ihmc.manipulation.planning.gradientDescent.GradientDescentModule;
 import us.ihmc.manipulation.planning.gradientDescent.SingleQueryFunction;
@@ -178,7 +179,7 @@ public class ReachingManifoldTools
 
       handTrajectories.add(trajectory);
 
-      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SE3};
+      ConfigurationSpaceName[] spaces = {ConfigurationSpaceName.X, ConfigurationSpaceName.Y, ConfigurationSpaceName.Z, ConfigurationSpaceName.SO3};
       rigidBodyConfigurations.add(HumanoidMessageTools.createRigidBodyExplorationConfigurationMessage(hand, spaces));
 
       WholeBodyTrajectoryToolboxMessage message = HumanoidMessageTools.createWholeBodyTrajectoryToolboxMessage(configuration, handTrajectories,
@@ -479,7 +480,10 @@ public class ReachingManifoldTools
       rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
 
       for (int i = 0; i < reachingManifoldCommand.getDimensionOfManifold(); i++)
-         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(optimalSolution.get(i)));
+      {
+         RigidBodyTransform appendingTransform = ExploringRigidBodyTools.getLocalRigidBodyTransform(reachingManifoldCommand.getDegreeOfManifold(i), optimalSolution.get(i));
+         rigidBodyTransformToPack.multiply(appendingTransform);
+      }
 
       return solver.getOptimalQuery();
    }
@@ -496,7 +500,10 @@ public class ReachingManifoldTools
       rigidBodyTransformToPack.setRotation(reachingManifoldCommand.getManifoldOriginOrientation());
 
       for (int i = 0; i < configurations.size(); i++)
-         rigidBodyTransformToPack.multiply(reachingManifoldCommand.getDegreeOfManifold(i).getLocalRigidBodyTransform(configurations.get(i)));
+      {
+         RigidBodyTransform appendingTransform = ExploringRigidBodyTools.getLocalRigidBodyTransform(reachingManifoldCommand.getDegreeOfManifold(i), configurations.get(i));
+         rigidBodyTransformToPack.multiply(appendingTransform);
+      }
 
    }
 }

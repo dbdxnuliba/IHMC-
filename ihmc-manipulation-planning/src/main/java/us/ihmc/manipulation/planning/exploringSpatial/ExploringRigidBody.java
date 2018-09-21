@@ -267,7 +267,7 @@ public class ExploringRigidBody
       case YAW:
          selectionMatrix.selectAngularZ(select);
          break;
-      case SE3:
+      case SO3:
          selectionMatrix.selectAngularX(select);
          selectionMatrix.selectAngularY(select);
          selectionMatrix.selectAngularZ(select);
