@@ -63,7 +63,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushBackInSwing() throws Exception
    {
-      percentWeight = 1.23;
+      percentWeight = 0.7;
       super.testPushBackInSwing();
    }
 
