@@ -376,7 +376,7 @@ public class WrenchMatrixCalculator
       CommonOps.scale(dtSquaredInv, copRateRegularizationWeight);
    }
 
-   public Map<RigidBody, Wrench> computeWrenchesFromRho(DenseMatrix64F rho)
+   public Map<RigidBody, Wrench> computeWrenchesFromRho(DenseMatrix64F rho, double rhoMin)
    {
       // Reinintialize wrenches
       for (int i = 0; i < rigidBodies.size(); i++)
@@ -394,7 +394,7 @@ public class WrenchMatrixCalculator
          ReferenceFrame bodyFixedFrame = rigidBody.getBodyFixedFrame();
          PlaneContactStateToWrenchMatrixHelper helper = planeContactStateToWrenchMatrixHelpers.get(rigidBody);
 
-         helper.computeWrenchFromRho(rhoStartIndex, rho);
+         helper.computeWrenchFromRho(rhoStartIndex, rho, rhoMin);
          Wrench wrenchFromRho = helper.getWrenchFromRho();
          wrenchFromRho.changeFrame(bodyFixedFrame);
          wrenchesFromRho.get(rigidBody).add(wrenchFromRho);

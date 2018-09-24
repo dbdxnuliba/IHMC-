@@ -141,7 +141,7 @@ public class GroundContactForceOptimizationControlModule
       if (noConvergenceException != null)
          throw noConvergenceException;
 
-      solutionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution);
+      solutionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution, rhoMin.getDoubleValue());
       for (int i = 0; i < contactablePlaneBodies.size(); i++)
       {
          RigidBody rigidBody = contactablePlaneBodies.get(i).getRigidBody();

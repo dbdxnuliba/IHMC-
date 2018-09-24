@@ -364,7 +364,7 @@ public class PlaneContactStateToWrenchMatrixHelper
    private final Wrench wrenchFromRho = new Wrench();
    private final DenseMatrix64F totalWrenchMatrix = new DenseMatrix64F(SpatialForceVector.SIZE, 1);
 
-   public void computeWrenchFromRho(int startIndex, DenseMatrix64F allRobotRho)
+   public void computeWrenchFromRho(int startIndex, DenseMatrix64F allRobotRho, double rhoMin)
    {
       CommonOps.extract(allRobotRho, startIndex, startIndex + rhoSize, 0, 1, rhoMatrix, 0, 0);
       yoRho.set(rhoMatrix);
@@ -372,6 +372,11 @@ public class PlaneContactStateToWrenchMatrixHelper
       ReferenceFrame bodyFixedFrame = getRigidBody().getBodyFixedFrame();
       if (yoPlaneContactState.inContact())
       {
+         for (int rhoIndex = 0; rhoIndex < rhoSize; rhoIndex++)
+         {
+            if (rhoMatrix.get(rhoIndex, 0) < rhoMin - 1.0e-5)
+               throw new IllegalArgumentException("Unexpected rho value: rhoMin = " + rhoMin + ", rho output:\n" + rhoMatrix);
+         }
          CommonOps.mult(wrenchJacobianInPlaneFrame, rhoMatrix, totalWrenchMatrix);
          wrenchFromRho.set(bodyFixedFrame, planeFrame, totalWrenchMatrix);
 

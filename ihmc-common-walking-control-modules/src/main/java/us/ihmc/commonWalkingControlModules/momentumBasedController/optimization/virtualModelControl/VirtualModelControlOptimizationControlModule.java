@@ -156,7 +156,7 @@ public class VirtualModelControlOptimizationControlModule
 
       DenseMatrix64F rhoSolution = qpSolver.getRhos();
 
-      Map<RigidBody, Wrench> groundReactionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution);
+      Map<RigidBody, Wrench> groundReactionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution, rhoMin.getDoubleValue());
       externalWrenchHandler.computeExternalWrenches(groundReactionWrenches);
 
       SpatialForceVector centroidalMomentumRateSolution = computeCentroidalMomentumRateSolution(rhoSolution);
