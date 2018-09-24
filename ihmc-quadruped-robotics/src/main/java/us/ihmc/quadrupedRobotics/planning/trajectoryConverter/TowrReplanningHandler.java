@@ -6,6 +6,7 @@ import controller_msgs.msg.dds.State6dPubSubType;
 import org.apache.commons.lang3.SystemUtils;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.IHMCROS2Publisher;
+import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -20,6 +21,16 @@ import java.io.IOException;
 
 public class TowrReplanningHandler
 {
+
+   public static void createRealTimeState6dPublisher(State6d newInitialStateToPublish) throws IOException, InterruptedException
+   {
+      RealtimeRos2Node realTimeNode = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.FAST_RTPS, "scripted_flat_ground_walking");
+      realTimeNode.spin();
+      PrintTools.info("SPiinging");
+      IHMCRealtimeROS2Publisher<State6d> realtimeROS2Publisher = ROS2Tools.createPublisher(realTimeNode, State6d.class, "initial_base_state");
+      realtimeROS2Publisher.publish(newInitialStateToPublish);
+      //realTimeNode.destroy();
+   }
 
    public static void createInitialState6dPublisher(State6d newInitialStateToPublish) throws IOException, InterruptedException
    {

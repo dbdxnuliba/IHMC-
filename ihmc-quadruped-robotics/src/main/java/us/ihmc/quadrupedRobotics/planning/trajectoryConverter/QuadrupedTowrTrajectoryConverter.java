@@ -33,6 +33,31 @@ import java.util.List;
 public class QuadrupedTowrTrajectoryConverter
 {
 
+   public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory(RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription)
+   {
+
+      RobotStateCartesianTrajectory message = new RobotStateCartesianTrajectory();
+
+      RobotStateCartesianTrajectory incomingMessage = new RobotStateCartesianTrajectory();
+      while (!subscription.poll(incomingMessage))
+      {
+         //PrintTools.info("listening to towr");
+         ThreadTools.sleep(10); // just waiting for the first message
+      }
+      PrintTools.info("message received!");
+      TowrCartesianStates towrCartesianStatesToFill = new TowrCartesianStates(incomingMessage.getPoints().size());
+      QuadrupedTowrTrajectoryConverter quadrupedTowrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
+
+      PrintTools.info("message received!");
+      quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
+
+      PrintTools.info("message received!");
+      //node.spin(); // start the realtime node thread
+      //node.destroy();
+      return towrCartesianStatesToFill;
+
+   }
+
    public static TowrCartesianStates subscribeToTowrRobotStateCartesianTrajectory() throws IOException
    {
       PeriodicThreadSchedulerFactory threadFactory = SystemUtils.IS_OS_LINUX ?
@@ -58,7 +83,7 @@ public class QuadrupedTowrTrajectoryConverter
       quadrupedTowrTrajectoryConverter.messageToCartesianTrajectoryConverter(incomingMessage, towrCartesianStatesToFill);
 
       //node.spin(); // start the realtime node thread
-      
+      //node.destroy();
       return towrCartesianStatesToFill;
 
    }
@@ -383,18 +408,24 @@ public class QuadrupedTowrTrajectoryConverter
 
       for (RobotStateCartesian robotStateCartesianIter : incomingMessage.getPoints())
       {
+         //PrintTools.info("time"+robotStateCartesianIter.getTimeFromStart().getSec());
+         //PrintTools.info("time"+robotStateCartesianIter.getTimeFromStart().getNanosec());
          towrCartesianStatesToFill.addCenterOfMassState(robotStateCartesianIter.getBase());
          towrCartesianStatesToFill.setTimeStamps(pointIter, robotStateCartesianIter.getTimeFromStart().getSec()/1000.0);
          messageToCartesianStateConverter(robotStateCartesianIter, previousContactState, stepsNumberCounter, towrCartesianStatesToFill);
          pointIter++;
+         PrintTools.info("points counter "+pointIter);
       }
+      PrintTools.info("Steps "+stepsNumberCounter);
       towrCartesianStatesToFill.setStepsNumber(stepsNumberCounter);
+      PrintTools.info("Steps "+stepsNumberCounter);
    }
 
    public static void messageToCartesianStateConverter(RobotStateCartesian robotStateCartesian, DenseMatrixBool previousContactState, DenseMatrix64F stepCounterPerLeg, TowrCartesianStates towrCartesianStatesToFill){
 
       for(LegIndex legIdx :LegIndex.values())
       {
+         //PrintTools.info("leg index "+legIdx);
 
          if((previousContactState.get(legIdx.ordinal())==true)&&(robotStateCartesian.getEeContact().getBoolean(legIdx.ordinal())==false)){
             int currentStep = (int)stepCounterPerLeg.get(0, legIdx.ordinal());

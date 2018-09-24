@@ -21,12 +21,12 @@ import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerRequestedEvent;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedSteppingStateEnum;
 import us.ihmc.quadrupedRobotics.input.managers.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
-import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrReplanningHandler;
+import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.ros2.RealtimeRos2Node;
+import us.ihmc.ros2.RealtimeRos2Subscription;
 import us.ihmc.ros2.Ros2Node;
-import us.ihmc.ros2.Ros2Publisher;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.tools.MemoryTools;
@@ -94,9 +94,12 @@ public abstract class QuadrupedTowrReplanningTest implements QuadrupedMultiRobot
       Point3D backRightPosition = new Point3D(-stanceLength / 2.0, -stanceWidth / 2.0, 0.0);
 
       QuadrupedTimedStepListMessage footsteps = new QuadrupedTimedStepListMessage();
-      footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, frontLeftPosition, 0.1, 0.0, 0.4));
-      footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, backRightPosition, 0.1, 0.3, 0.7));
-      footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, frontRightPosition, 0.1, 0.6, 1.0));
+      footsteps.getQuadrupedStepList().add()
+               .set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_LEFT, frontLeftPosition, 0.1, 0.0, 0.4));
+      footsteps.getQuadrupedStepList().add()
+               .set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_RIGHT, backRightPosition, 0.1, 0.3, 0.7));
+      footsteps.getQuadrupedStepList().add()
+               .set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.FRONT_RIGHT, frontRightPosition, 0.1, 0.6, 1.0));
       footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, backLeftPosition, 0.1, 0.9, 1.3));
       footsteps.setIsExpressedInAbsoluteTime(false);
 
@@ -118,7 +121,6 @@ public abstract class QuadrupedTowrReplanningTest implements QuadrupedMultiRobot
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 2.0));
       conductor.simulate();
 
-
       Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.INTRAPROCESS, "scripted_flat_ground_walking");
       RealtimeRos2Node realTimeNode = ROS2Tools.createRealtimeRos2Node(PubSubImplementation.FAST_RTPS, "scripted_flat_ground_walking");
       String robotName = quadrupedTestFactory.getRobotName();
@@ -136,48 +138,63 @@ public abstract class QuadrupedTowrReplanningTest implements QuadrupedMultiRobot
 
       IHMCRealtimeROS2Publisher<State6d> rtState6dPub = ROS2Tools.createPublisher(realTimeNode, State6d.class, "initial_base_state");
 
+      RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription = null;
+      try
+      {
+         subscription = realTimeNode.createQueuedSubscription(RobotStateCartesianTrajectory.getPubSubType().get(), "towr_ros2");
+      }
+      catch (Exception e)
+      {
+      }
+
       realTimeNode.spin();
 
       QuadrupedRequestedControllerStateMessage controllerMessage = new QuadrupedRequestedControllerStateMessage();
       controllerMessage.setQuadrupedControllerRequestedEvent(QuadrupedControllerRequestedEvent.REQUEST_STEPPING.toByte());
-      IHMCROS2Publisher<QuadrupedRequestedControllerStateMessage> controllerStatePublisher = ROS2Tools.createPublisher(ros2Node,QuadrupedRequestedControllerStateMessage.class, controllerSubGenerator);
+      IHMCROS2Publisher<QuadrupedRequestedControllerStateMessage> controllerStatePublisher = ROS2Tools
+            .createPublisher(ros2Node, QuadrupedRequestedControllerStateMessage.class, controllerSubGenerator);
       controllerStatePublisher.publish(controllerMessage);
 
-      PrintTools.info("publishing new initial position 1");
-      State6d newState = new State6d();
-      newState.getPose().getPosition().setX(0.5);
+      //PrintTools.info("publishing new initial position 1");
+      //State6d newState = new State6d();
+      //newState.getPose().getPosition().setX(0.5);
       //state6dPublisher.publish(newState);
       //isTowrTrajectoryReceived = false;
       //publishToTowr(newState);
       //rtState6dPub.publish(newState);
 
-
       conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 3.0));
+      PrintTools.info("before simultion ");
       conductor.simulate();
+      PrintTools.info("after simultion ");
 
-      boolean isTowrTrajectoryReceived = listenToTowr();
+      boolean isTowrTrajectoryReceived = listenToTowr(subscription);
+      PrintTools.info("new trajectory received " + isTowrTrajectoryReceived);
 
       QuadrupedTimedStepListMessage stepsMessage = getSteps();
-      IHMCROS2Publisher<QuadrupedTimedStepListMessage> timedStepPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTimedStepListMessage.class, controllerSubGenerator);
+      IHMCROS2Publisher<QuadrupedTimedStepListMessage> timedStepPublisher = ROS2Tools
+            .createPublisher(ros2Node, QuadrupedTimedStepListMessage.class, controllerSubGenerator);
       timedStepPublisher.publish(stepsMessage);
 
       CenterOfMassTrajectoryMessage comMessage = getCenterOfMassTrajectoryMessage();
-      IHMCROS2Publisher<CenterOfMassTrajectoryMessage> centerOfMassTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, CenterOfMassTrajectoryMessage.class, controllerSubGenerator);
+      IHMCROS2Publisher<CenterOfMassTrajectoryMessage> centerOfMassTrajectoryPublisher = ROS2Tools
+            .createPublisher(ros2Node, CenterOfMassTrajectoryMessage.class, controllerSubGenerator);
       centerOfMassTrajectoryPublisher.publish(comMessage);
 
       QuadrupedBodyHeightMessage bodyHeightMessage = getBodyHeightMessage();
-      IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightTrajectoryPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
+      IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightTrajectoryPublisher = ROS2Tools
+            .createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
       bodyHeightTrajectoryPublisher.publish((bodyHeightMessage));
 
       //IHMCROS2Publisher<State6d> state6dPublisher = ROS2Tools.createPublisher(ros2Node, State6d.class, "initial_base_state");
-      PrintTools.info("publishing new initial position 1");
-      newState.getPose().getPosition().setX(0.5);
+      //PrintTools.info("publishing new initial position 1");
+      //newState.getPose().getPosition().setX(0.5);
       //state6dPublisher.publish(newState);
       //isTowrTrajectoryReceived = false;
       //publishToTowr(newState);
 
-      rtState6dPub.publish(newState);
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 3.0));
+      //rtState6dPub.publish(newState);
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 5.0));
       conductor.simulate();
 
       //rtState6dPub.publish(newState);
@@ -198,7 +215,7 @@ public abstract class QuadrupedTowrReplanningTest implements QuadrupedMultiRobot
    /**
     * Listen to TOWR messages
     * */
-   public abstract boolean listenToTowr();
+   public abstract boolean listenToTowr(RealtimeRos2Subscription<RobotStateCartesianTrajectory> subscription);
 
    /**
     * Steps to execute, not expressed in absolute time
