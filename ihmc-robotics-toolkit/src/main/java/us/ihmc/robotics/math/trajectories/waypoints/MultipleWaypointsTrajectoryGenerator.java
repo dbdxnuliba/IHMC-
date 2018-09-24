@@ -14,7 +14,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 public class MultipleWaypointsTrajectoryGenerator implements DoubleTrajectoryGenerator
 {
-   public static final int defaultMaximumNumberOfWaypoints = 150;
+   public static final int defaultMaximumNumberOfWaypoints = 250;
 
    private final int maximumNumberOfWaypoints;
 
