@@ -672,12 +672,17 @@ public class InverseDynamicsQPSolver
       return true;
    }
 
-   private void printForJerry()
+   void printForJerry()
    {
       MatrixTools.printJavaForConstruction("H", solverInput_H);
       MatrixTools.printJavaForConstruction("f", solverInput_f);
       MatrixTools.printJavaForConstruction("lowerBounds", solverInput_lb);
       MatrixTools.printJavaForConstruction("upperBounds", solverInput_ub);
+      MatrixTools.printJavaForConstruction("activeVariables", solverInput_activeIndices);
+      MatrixTools.printJavaForConstruction("Ain", solverInput_Ain);
+      MatrixTools.printJavaForConstruction("bin", solverInput_bin);
+      MatrixTools.printJavaForConstruction("Aeq", solverInput_Aeq);
+      MatrixTools.printJavaForConstruction("beq", solverInput_beq);
       MatrixTools.printJavaForConstruction("solution", solverOutput);
    }
 
