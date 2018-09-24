@@ -209,7 +209,16 @@ public class InverseDynamicsOptimizationControlModule
       DenseMatrix64F qDDotSolution = qpSolver.getJointAccelerations();
       DenseMatrix64F rhoSolution = qpSolver.getRhos();
 
-      Map<RigidBody, Wrench> groundReactionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution, rhoMin.getDoubleValue());
+      Map<RigidBody, Wrench> groundReactionWrenches;
+      try
+      {
+         groundReactionWrenches = wrenchMatrixCalculator.computeWrenchesFromRho(rhoSolution, rhoMin.getDoubleValue());
+      }
+      catch (IllegalArgumentException e)
+      {
+         qpSolver.printForJerry();
+         throw e;
+      }
       externalWrenchHandler.computeExternalWrenches(groundReactionWrenches);
 
       SpatialForceVector centroidalMomentumRateSolution = motionQPInputCalculator.computeCentroidalMomentumRateFromSolution(qDDotSolution);

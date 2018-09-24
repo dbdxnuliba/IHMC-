@@ -374,7 +374,7 @@ public class PlaneContactStateToWrenchMatrixHelper
       {
          for (int rhoIndex = 0; rhoIndex < rhoSize; rhoIndex++)
          {
-            if (rhoMatrix.get(rhoIndex, 0) < rhoMin - 1.0e-5)
+            if (activeRhoMatrix.get(rhoIndex, 0) > 0.9 && rhoMatrix.get(rhoIndex, 0) < 0.0)
                throw new IllegalArgumentException("Unexpected rho value: rhoMin = " + rhoMin + ", rho output:\n" + rhoMatrix);
          }
          CommonOps.mult(wrenchJacobianInPlaneFrame, rhoMatrix, totalWrenchMatrix);
