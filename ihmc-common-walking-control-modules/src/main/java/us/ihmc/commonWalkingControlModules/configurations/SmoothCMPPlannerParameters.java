@@ -10,7 +10,8 @@ public class SmoothCMPPlannerParameters extends AbstractICPPlannerParameters
    private static final boolean adjustPlanForInitialDoubleSupport = true;
    private static final boolean adjustPlanForEachDoubleSupport = true;
    private static final boolean adjustPlanWhenGoingToStand = true;
-
+   private static final boolean doContinuousReplanningForTransfer = false;
+   private static final boolean doContinuousReplanningForSwing = false;
 
    /**
     * Vector offsets relative to centroid of support polygon defined copOffsetFrames
@@ -260,5 +261,15 @@ public class SmoothCMPPlannerParameters extends AbstractICPPlannerParameters
    public boolean adjustCoPPlanForStandingContinuity()
    {
       return adjustPlanWhenGoingToStand;
+   }
+
+   public boolean doContinuousReplanningForTransfer()
+   {
+      return doContinuousReplanningForTransfer;
+   }
+
+   public boolean doContinuousReplanningForSwing()
+   {
+      return doContinuousReplanningForSwing;
    }
 }
