@@ -19,12 +19,9 @@ import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools.Bound;
-import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
-import us.ihmc.euclid.referenceFrame.FramePoint2D;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
-import us.ihmc.euclid.referenceFrame.FrameVector3D;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.referenceFrame.interfaces.*;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple2D.interfaces.Vector2DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -34,6 +31,8 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.robotics.geometry.ConvexPolygonScaler;
+import us.ihmc.robotics.geometry.RigidBodyTransformGenerator;
+import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.providers.IntegerProvider;
@@ -130,6 +129,8 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
    private final FrameVector3D desiredCoPVelocity = new FrameVector3D();
    private final FrameVector3D desiredCoPAcceleration = new FrameVector3D();
    private final FramePoint3D heldCoPPosition = new FramePoint3D();
+   private final PoseReferenceFrame soleZUpFrameAtStartOfSwing = new PoseReferenceFrame("soleZUpPoseAtStartOfSwing", worldFrame);
+   private final RigidBodyTransform soleZUpTransformAtStartOfSwing = new RigidBodyTransform();
 
    private int plannedFootstepIndex = -1;
    private CoPTrajectory activeTrajectory;
@@ -650,6 +651,7 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
       // generate the cop trajectory
       generateCoPTrajectoriesFromWayPoints();
       planIsAvailable.set(true);
+      soleZUpTransformAtStartOfSwing.setToNaN();
    }
 
    @Override
@@ -667,7 +669,14 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
       }
       else
       {
-         updateFootPolygons(null, footstepIndex);
+         if(soleZUpTransformAtStartOfSwing.containsNaN())
+         {
+            ReferenceFrame soleZUpFrame = soleZUpFrames.get(upcomingFootstepsData.get(0).getSwingSide());
+            soleZUpFrame.getTransformToDesiredFrame(soleZUpTransformAtStartOfSwing, worldFrame);
+            soleZUpFrameAtStartOfSwing.setPoseAndUpdate(soleZUpTransformAtStartOfSwing);
+         }
+
+         updateFootPolygonsForStartOfSwing(footstepIndex);
          isDoneWalking.set(false);
 
          // compute cop waypoint location
@@ -1348,6 +1357,21 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
    }
 
    /**
+    * Sets foot polygons such that the support foot is set using its current pose,
+    * the swing initial position is set using its pose at the start of swing,
+    * and the swing final position is set using the expected touchdown location
+    *
+    * @param footstepIndex
+    */
+   private void updateFootPolygonsForStartOfSwing(int footstepIndex)
+   {
+      setFootPolygonFromPose(swingFootInitialPolygon, soleZUpFrameAtStartOfSwing, upcomingFootstepsData.get(0).getSwingSide());
+      setFootPolygonFromCurrentState(supportFootPolygon, upcomingFootstepsData.get(0).getSupportSide());
+      setFootPolygonFromFootstep(swingFootPredictedFinalPolygon, footstepIndex);
+      plannedFootstepIndex = 0;
+   }
+
+   /**
     * Updates the swing and support foot polygons based on footstepIndex
     * <p>
     * Has no memory of the previous state so should be used carefully
@@ -1467,6 +1491,13 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
          framePolygonToPack.clear(soleZUpFrames.get(robotSide));
          framePolygonToPack.addVertices(defaultFootPolygons.get(robotSide));
       }
+      framePolygonToPack.update();
+   }
+
+   private void setFootPolygonFromPose(FrameConvexPolygon2D framePolygonToPack, PoseReferenceFrame referenceFrame, RobotSide swingSide)
+   {
+      framePolygonToPack.clear(referenceFrame);
+      framePolygonToPack.addVertices(defaultFootPolygons.get(swingSide));
       framePolygonToPack.update();
    }
 
