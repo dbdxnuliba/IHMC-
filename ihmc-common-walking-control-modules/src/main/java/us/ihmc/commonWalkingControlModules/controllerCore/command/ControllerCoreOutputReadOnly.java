@@ -4,6 +4,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.RootJ
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.robotics.screwTheory.RigidBody;
+import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 
 /**
@@ -24,7 +25,15 @@ public interface ControllerCoreOutputReadOnly
    /**
     * Typically used to obtain the desired center of pressures for the feet.
     */
-   public abstract void getDesiredCenterOfPressure(FramePoint2D copToPack, RigidBody rigidBody);
+   void getDesiredCenterOfPressure(FramePoint2D copToPack, RigidBody rigidBody);
+
+   /**
+    * Typically used to obtain the desired ground reaction force/torque to be applied by the feet.
+    * 
+    * @param rigidBody the body for which to get the desired wrench.
+    * @param externalWrenchToPack the wrench used to store the desired external wrench. Modified.
+    */
+   void getDesiredExternalWrench(RigidBody rigidBody, Wrench externalWrenchToPack);
 
    /**
     * Retrieves the linear momentum rate obtained after the optimization problem has been solved.
@@ -39,7 +48,7 @@ public interface ControllerCoreOutputReadOnly
     * 
     * @param linearMomentumRateToPack the linear momentum rate after optimization.
     */
-   public abstract void getLinearMomentumRate(FrameVector3D linearMomentumRateToPack);
+   void getLinearMomentumRate(FrameVector3D linearMomentumRateToPack);
 
    /**
     * Retrieves the desired state for the root joint.
@@ -51,7 +60,7 @@ public interface ControllerCoreOutputReadOnly
     * 
     * @return the root joint desired state data.
     */
-   public abstract RootJointDesiredConfigurationDataReadOnly getRootJointDesiredConfigurationData();
+   RootJointDesiredConfigurationDataReadOnly getRootJointDesiredConfigurationData();
 
    /**
     * Retrieves the desired state for the robot joints.
@@ -61,5 +70,5 @@ public interface ControllerCoreOutputReadOnly
     * 
     * @return the desired state of the robot joints.
     */
-   public abstract JointDesiredOutputListReadOnly getLowLevelOneDoFJointDesiredDataHolder();
+   JointDesiredOutputListReadOnly getLowLevelOneDoFJointDesiredDataHolder();
 }

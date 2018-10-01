@@ -7,21 +7,26 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.humanoidRobotics.model.ExternalWrenchDataHolder;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
+import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 
 public class ControllerCoreOutput implements ControllerCoreOutputReadOnly
 {
    private final CenterOfPressureDataHolder centerOfPressureDataHolder;
+   private final ExternalWrenchDataHolder desiredExternalWrenchDataHolder;
    private final FrameVector3D linearMomentumRate = new FrameVector3D(ReferenceFrame.getWorldFrame());
    private final RootJointDesiredConfigurationData rootJointDesiredConfigurationData = new RootJointDesiredConfigurationData();
    private final JointDesiredOutputList lowLevelOneDoFJointDesiredDataHolder;
 
-   public ControllerCoreOutput(CenterOfPressureDataHolder centerOfPressureDataHolder, OneDoFJoint[] controlledOneDoFJoints, JointDesiredOutputList lowLevelControllerOutput)
+   public ControllerCoreOutput(CenterOfPressureDataHolder centerOfPressureDataHolder, ExternalWrenchDataHolder desiredExternalWrenchDataHolder,
+                               OneDoFJoint[] controlledOneDoFJoints, JointDesiredOutputList lowLevelControllerOutput)
    {
       this.centerOfPressureDataHolder = centerOfPressureDataHolder;
+      this.desiredExternalWrenchDataHolder = desiredExternalWrenchDataHolder;
       linearMomentumRate.setToNaN(ReferenceFrame.getWorldFrame());
       if (lowLevelControllerOutput != null)
          lowLevelOneDoFJointDesiredDataHolder = lowLevelControllerOutput;
@@ -38,6 +43,17 @@ public class ControllerCoreOutput implements ControllerCoreOutputReadOnly
    public void getDesiredCenterOfPressure(FramePoint2D copToPack, RigidBody rigidBody)
    {
       centerOfPressureDataHolder.getCenterOfPressure(copToPack, rigidBody);
+   }
+
+   public void setDesiredExternalWrench(RigidBody rigidBody, Wrench externalWrench)
+   {
+      desiredExternalWrenchDataHolder.setExternalWrench(rigidBody, externalWrench);
+   }
+
+   @Override
+   public void getDesiredExternalWrench(RigidBody rigidBody, Wrench externalWrenchToPack)
+   {
+      desiredExternalWrenchDataHolder.getExternalWrench(rigidBody, externalWrenchToPack);
    }
 
    public void setLinearMomentumRate(FrameVector3DReadOnly linearMomentumRate)

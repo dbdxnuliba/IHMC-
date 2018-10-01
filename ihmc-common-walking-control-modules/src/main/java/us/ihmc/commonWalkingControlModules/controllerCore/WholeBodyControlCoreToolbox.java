@@ -3,6 +3,7 @@ package us.ihmc.commonWalkingControlModules.controllerCore;
 import static us.ihmc.commonWalkingControlModules.visualizer.WrenchVisualizer.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import us.ihmc.commonWalkingControlModules.configurations.JointPrivilegedConfigurationParameters;
 import us.ihmc.commonWalkingControlModules.inverseKinematics.JointPrivilegedConfigurationHandler;
@@ -20,6 +21,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphic;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.humanoidRobotics.model.ExternalWrenchDataHolder;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
@@ -58,6 +60,7 @@ public class WholeBodyControlCoreToolbox
 
    private PlaneContactWrenchProcessor planeContactWrenchProcessor;
    private WrenchVisualizer wrenchVisualizer;
+   private ExternalWrenchDataHolder desiredExternalWrenchDataHolder;
 
    private YoFrameVector3D yoDesiredMomentumRateLinear;
    private YoFrameVector3D yoAchievedMomentumRateLinear;
@@ -360,6 +363,14 @@ public class WholeBodyControlCoreToolbox
    public CenterOfPressureDataHolder getDesiredCenterOfPressureDataHolder()
    {
       return getPlaneContactWrenchProcessor().getDesiredCenterOfPressureDataHolder();
+   }
+
+   public ExternalWrenchDataHolder getDesiredExternalWrenchDataHolder()
+   {
+      if (desiredExternalWrenchDataHolder == null)
+         desiredExternalWrenchDataHolder = new ExternalWrenchDataHolder(contactablePlaneBodies.stream().map(ContactablePlaneBody::getRigidBody)
+                                                                                              .collect(Collectors.toList()));
+      return desiredExternalWrenchDataHolder;
    }
 
    public WrenchVisualizer getWrenchVisualizer()

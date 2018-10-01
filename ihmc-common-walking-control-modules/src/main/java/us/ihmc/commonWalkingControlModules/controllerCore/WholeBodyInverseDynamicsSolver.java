@@ -7,6 +7,7 @@ import java.util.Map;
 import org.ejml.data.DenseMatrix64F;
 
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.CenterOfPressureCommand;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.ContactWrenchCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.ExternalWrenchCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommandList;
@@ -17,7 +18,6 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.MomentumRateCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.PlaneContactStateCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
-import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.ContactWrenchCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.JointLimitReductionCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedJointSpaceCommand;
@@ -34,6 +34,7 @@ import us.ihmc.commonWalkingControlModules.wrenchDistribution.WrenchMatrixCalcul
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.humanoidRobotics.model.ExternalWrenchDataHolder;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.InverseDynamicsCalculator;
@@ -71,6 +72,7 @@ public class WholeBodyInverseDynamicsSolver
    private final WrenchVisualizer wrenchVisualizer;
    private final JointAccelerationIntegrationCalculator jointAccelerationIntegrationCalculator;
    private final SpatialAccelerationCalculator spatialAccelerationCalculator;
+   private final ExternalWrenchDataHolder desiredExternalWrenchDataHolder;
 
    private final OneDoFJoint[] controlledOneDoFJoints;
    private final InverseDynamicsJoint[] jointsToOptimizeFor;
@@ -118,6 +120,7 @@ public class WholeBodyInverseDynamicsSolver
 
       planeContactWrenchProcessor = toolbox.getPlaneContactWrenchProcessor();
       wrenchVisualizer = toolbox.getWrenchVisualizer();
+      desiredExternalWrenchDataHolder = toolbox.getDesiredExternalWrenchDataHolder();
 
       jointAccelerationIntegrationCalculator = new JointAccelerationIntegrationCalculator(controlDT, registry);
 
@@ -232,6 +235,13 @@ public class WholeBodyInverseDynamicsSolver
          jointAccelerationsSolution.get(joint).set(joint.getQddDesired());
       }
 
+      desiredExternalWrenchDataHolder.setToZero();
+
+      for (int i = 0; i < rigidBodiesWithExternalWrench.size(); i++)
+      {
+         RigidBody rigidBody = rigidBodiesWithExternalWrench.get(i);
+         desiredExternalWrenchDataHolder.setExternalWrench(rigidBody, externalWrenchSolution.get(rigidBody));
+      }
       planeContactWrenchProcessor.compute(externalWrenchSolution);
       wrenchVisualizer.visualize(externalWrenchSolution);
    }
@@ -335,6 +345,11 @@ public class WholeBodyInverseDynamicsSolver
    public CenterOfPressureDataHolder getDesiredCenterOfPressureDataHolder()
    {
       return planeContactWrenchProcessor.getDesiredCenterOfPressureDataHolder();
+   }
+
+   public ExternalWrenchDataHolder getDesiredExternalWrenchDataHolder()
+   {
+      return desiredExternalWrenchDataHolder;
    }
 
    public FrameVector3DReadOnly getAchievedMomentumRateLinear()

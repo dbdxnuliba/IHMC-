@@ -13,6 +13,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.YoRoo
 import us.ihmc.commonWalkingControlModules.controllerCore.command.virtualModelControl.VirtualModelControlCommandList;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.JointIndexHandler;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.humanoidRobotics.model.ExternalWrenchDataHolder;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.time.ExecutionTimer;
@@ -84,7 +85,9 @@ public class WholeBodyControllerCore
       else
          desiredCenterOfPressureDataHolder = null;
 
-      controllerCoreOutput = new ControllerCoreOutput(desiredCenterOfPressureDataHolder, controlledOneDoFJoints, lowLevelControllerOutput);
+      ExternalWrenchDataHolder desiredExternalWrenchDataHolder = inverseDynamicsSolver != null ? toolbox.getDesiredExternalWrenchDataHolder() : null;
+
+      controllerCoreOutput = new ControllerCoreOutput(desiredCenterOfPressureDataHolder, desiredExternalWrenchDataHolder, controlledOneDoFJoints, lowLevelControllerOutput);
 
       parentRegistry.addChild(registry);
    }
