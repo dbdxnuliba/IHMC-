@@ -1,7 +1,7 @@
 package us.ihmc.commonWalkingControlModules.momentumBasedController;
 
-import static us.ihmc.graphicsDescription.appearance.YoAppearance.Blue;
-import static us.ihmc.robotics.lists.FrameTuple2dArrayList.createFramePoint2dArrayList;
+import static us.ihmc.graphicsDescription.appearance.YoAppearance.*;
+import static us.ihmc.robotics.lists.FrameTuple2dArrayList.*;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -96,6 +96,7 @@ public class HighLevelHumanoidControllerToolbox
    private final Collection<ReferenceFrame> trajectoryFrames;
 
    protected final LinkedHashMap<ContactablePlaneBody, YoFramePoint2D> footDesiredCenterOfPressures = new LinkedHashMap<>();
+   protected final LinkedHashMap<ContactablePlaneBody, Wrench> footDesiredWrenches = new LinkedHashMap<>();
    private final YoDouble desiredCoPAlpha;
    private final LinkedHashMap<ContactablePlaneBody, AlphaFilteredYoFramePoint2d> filteredFootDesiredCenterOfPressures = new LinkedHashMap<>();
 
@@ -236,6 +237,7 @@ public class HighLevelHumanoidControllerToolbox
                + namePrefix, "", registry, desiredCoPAlpha, yoDesiredCenterOfPressure);
          footDesiredCenterOfPressures.put(contactableFoot, yoDesiredCenterOfPressure);
          filteredFootDesiredCenterOfPressures.put(contactableFoot, yoFilteredDesiredCenterOfPressure);
+         footDesiredWrenches.put(contactableFoot, new Wrench(contactableFoot.getRigidBody().getBodyFixedFrame(), contactableFoot.getRigidBody().getBodyFixedFrame()));
       }
 
       if (updatables != null)
@@ -754,6 +756,20 @@ public class HighLevelHumanoidControllerToolbox
    public void getFilteredDesiredCenterOfPressure(ContactablePlaneBody contactablePlaneBody, FramePoint2D desiredCoPToPack)
    {
       desiredCoPToPack.setIncludingFrame(filteredFootDesiredCenterOfPressures.get(contactablePlaneBody));
+   }
+
+   public void setDesiredExternalWrench(ContactablePlaneBody contactablePlaneBody, Wrench desiredWrench)
+   {
+      Wrench wrench = footDesiredWrenches.get(contactablePlaneBody);
+      if (wrench != null)
+      {
+         wrench.set(desiredWrench);
+      }
+   }
+
+   public void getDesiredExternalWrench(ContactablePlaneBody contactablePlaneBody, Wrench desiredExternalWrenchToPack)
+   {
+      desiredExternalWrenchToPack.set(footDesiredWrenches.get(contactablePlaneBody));
    }
 
    public void updateContactPointsForUpcomingFootstep(Footstep nextFootstep)

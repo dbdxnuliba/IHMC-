@@ -23,7 +23,9 @@ import us.ihmc.robotics.controllers.pidGains.PIDSE3GainsReadOnly;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
+import us.ihmc.robotics.screwTheory.TotalMassCalculator;
 import us.ihmc.robotics.screwTheory.Twist;
+import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.robotics.weightMatrices.SolverWeightLevels;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
@@ -54,6 +56,7 @@ public class SupportState extends AbstractFootControlState
    private final YoBoolean copOnEdge;
    private final YoDouble footLoadThreshold;
    private final boolean[] isDirectionFeedbackControlled = new boolean[dofs];
+   private final double robotTotalWeight;
 
    private final FootSwitchInterface footSwitch;
 
@@ -85,6 +88,7 @@ public class SupportState extends AbstractFootControlState
    private final BooleanProvider assumeFootBarelyLoaded;
    private final BooleanProvider neverHoldRotation;
    private final BooleanProvider neverHoldPosition;
+   private final BooleanProvider computeFootLoadWithForceSensor;
 
    // For line contact walking and balancing:
    private final BooleanProvider holdFootOrientationFlat;
@@ -129,6 +133,7 @@ public class SupportState extends AbstractFootControlState
       copOnEdge = new YoBoolean(prefix + "CopOnEdge", registry);
       footLoadThreshold = new YoDouble(prefix + "LoadThreshold", registry);
       footLoadThreshold.set(defaultFootLoadThreshold);
+      robotTotalWeight = TotalMassCalculator.computeSubTreeMass(rootBody) * footControlHelper.getHighLevelHumanoidControllerToolbox().getGravityZ();
 
       WalkingControllerParameters walkingControllerParameters = footControlHelper.getWalkingControllerParameters();
       rampUpAllowableToeLoadAfterContact = walkingControllerParameters.rampUpAllowableToeLoadAfterContact();
@@ -158,6 +163,7 @@ public class SupportState extends AbstractFootControlState
       neverHoldRotation = new BooleanParameter(prefix + "NeverHoldRotation", registry, false);
       neverHoldPosition = new BooleanParameter(prefix + "NeverHoldPosition", registry, false);
       holdFootOrientationFlat = new BooleanParameter(prefix + "HoldFlatOrientation", registry, false);
+      computeFootLoadWithForceSensor = new BooleanParameter(prefix + "ComputeFootLoadWithForceSensor", registry, true);
 
       explorationHelper = new ExplorationHelper(contactableFoot, footControlHelper, prefix, registry);
       partialFootholdControlModule = footControlHelper.getPartialFootholdControlModule();
@@ -267,7 +273,18 @@ public class SupportState extends AbstractFootControlState
 
       // determine foot state
       copOnEdge.set(footControlHelper.isCoPOnEdge());
-      footBarelyLoaded.set(footSwitch.computeFootLoadPercentage() < footLoadThreshold.getDoubleValue());
+      if (computeFootLoadWithForceSensor.getValue())
+      {
+         footBarelyLoaded.set(footSwitch.computeFootLoadPercentage() < footLoadThreshold.getDoubleValue());
+      }
+      else
+      {
+         Wrench desiredExternalWrench = new Wrench();
+         footControlHelper.getHighLevelHumanoidControllerToolbox().getDesiredExternalWrench(contactableFoot, desiredExternalWrench);
+         double footForceZ = Math.max(desiredExternalWrench.getLinearPartZ(), 0.0);
+         double footLoadPercentage = footForceZ / robotTotalWeight;
+         footBarelyLoaded.set(footLoadPercentage < footLoadThreshold.getDoubleValue());
+      }
 
       if (assumeCopOnEdge.getValue())
          copOnEdge.set(true);

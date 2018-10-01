@@ -66,6 +66,7 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.ScrewTools;
+import us.ihmc.robotics.screwTheory.Wrench;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
@@ -499,7 +500,8 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
    private final FrameVector2D desiredICPVelocityAsFrameVector = new FrameVector2D();
 
-   private final SideDependentList<FramePoint2D> footDesiredCoPs = new SideDependentList<FramePoint2D>(new FramePoint2D(), new FramePoint2D());
+   private final SideDependentList<FramePoint2D> footDesiredCoPs = new SideDependentList<>(new FramePoint2D(), new FramePoint2D());
+   private final SideDependentList<Wrench> footDesiredWrenches = new SideDependentList<>(new Wrench(), new Wrench());
    private final RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandPool = new RecyclingArrayList<>(4, PlaneContactStateCommand.class);
    private final FramePoint2D capturePoint2d = new FramePoint2D();
    private final FramePoint2D desiredCapturePoint2d = new FramePoint2D();
@@ -548,7 +550,9 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       for (RobotSide robotSide : RobotSide.values)
       {
          controllerCoreOutput.getDesiredCenterOfPressure(footDesiredCoPs.get(robotSide), feet.get(robotSide).getRigidBody());
+         controllerCoreOutput.getDesiredExternalWrench(feet.get(robotSide).getRigidBody(), footDesiredWrenches.get(robotSide));
          controllerToolbox.setDesiredCenterOfPressure(feet.get(robotSide), footDesiredCoPs.get(robotSide));
+         controllerToolbox.setDesiredExternalWrench(feet.get(robotSide), footDesiredWrenches.get(robotSide));
          controllerToolbox.getFootContactState(robotSide).pollContactHasChangedNotification();
       }
 
