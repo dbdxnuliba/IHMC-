@@ -1480,7 +1480,7 @@ public class ReferenceCoPTrajectoryGenerator implements ReferenceCoPTrajectoryGe
       if (activeTrajectory.getNumberOfSegments() == 0)
          return 0.0;
       else
-         return activeTrajectory.getNodeTimes()[activeTrajectory.getNumberOfSegments()];
+         return activeTrajectory.getFinalTime();
    }
 
    public boolean getIsPlanAvailable()

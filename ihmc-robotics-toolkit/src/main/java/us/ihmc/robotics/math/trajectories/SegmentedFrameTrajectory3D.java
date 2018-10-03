@@ -31,13 +31,10 @@ public class SegmentedFrameTrajectory3D implements SegmentedFrameTrajectory3DInt
 
    protected final int maxNumberOfSegments;
    protected final int maxNumberOfCoefficients;
-
    protected final RecyclingArrayList<FrameTrajectory3D> segments;
 
    protected int currentSegmentIndex;
-
    protected FrameTrajectory3D currentSegment;
-   protected double[] nodeTime;
 
    public SegmentedFrameTrajectory3D(int maxNumberOfSegments, int maxNumberOfCoefficients)
    {
@@ -45,7 +42,6 @@ public class SegmentedFrameTrajectory3D implements SegmentedFrameTrajectory3DInt
       this.maxNumberOfCoefficients = maxNumberOfCoefficients;
       currentSegmentIndex = -1;
       segments = new RecyclingArrayList<>(maxNumberOfSegments, new FrameTrajectory3DBuilder());
-      nodeTime = new double[maxNumberOfSegments + 1];
    }
 
    public void reset()
@@ -173,17 +169,6 @@ public class SegmentedFrameTrajectory3D implements SegmentedFrameTrajectory3DInt
    public void removeSegment(int segmentToRemove)
    {
       segments.remove(segmentToRemove);
-   }
-
-   public double[] getNodeTimes()
-   {
-      nodeTime[0] = segments.get(0).getInitialTime();
-      int i;
-      for (i = 0; i < getNumberOfSegments(); i++)
-         nodeTime[i + 1] = segments.get(i).getFinalTime();
-      for (; i < maxNumberOfSegments; i++)
-         nodeTime[i + 1] = Double.NaN;
-      return nodeTime;
    }
 
    public int getMaxNumberOfSegments()

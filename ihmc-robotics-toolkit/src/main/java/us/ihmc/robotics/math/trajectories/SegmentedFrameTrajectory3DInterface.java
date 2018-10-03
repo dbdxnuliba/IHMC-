@@ -10,6 +10,5 @@ public interface SegmentedFrameTrajectory3DInterface
    List<?  extends FrameTrajectory3D> getSegments();
    FrameTrajectory3D getSegment(int index);
    FrameTrajectory3D getCurrentSegment(double timeInState);
-   public double[] getNodeTimes();
    int getNumberOfSegments();
 }
