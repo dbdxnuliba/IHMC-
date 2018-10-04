@@ -140,7 +140,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public boolean allowDisturbanceRecoveryBySpeedingUpSwing()
    {
-      return true; // TODO Seems to work well but still need to be heavily tested on the robot.
+      return false; // TODO Seems to work well but still need to be heavily tested on the robot.
    }
 
    @Override

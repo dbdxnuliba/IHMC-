@@ -80,6 +80,7 @@ public class BalanceManager
    private final PushRecoveryControlModule pushRecoveryControlModule;
    private final MomentumRecoveryControlModule momentumRecoveryControlModule;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
+   //private final VaryingHeightControlModule varyingHeightControlModule;
 
    private final YoFramePoint3D yoCenterOfMass = new YoFramePoint3D("centerOfMass", worldFrame, registry);
    private final YoFramePoint2D yoDesiredCapturePoint = new YoFramePoint2D("desiredICP", worldFrame, registry);
@@ -191,14 +192,14 @@ public class BalanceManager
          icpControlGains = null;
          linearMomentumRateOfChangeControlModule = new ICPOptimizationLinearMomentumRateOfChangeControlModule(referenceFrames, bipedSupportPolygons,
                controllerToolbox.getICPControlPolygons(), contactableFeet, walkingControllerParameters, yoTime, totalMass, gravityZ,
-               controlDT, registry, yoGraphicsListRegistry);
+               controlDT, registry, yoGraphicsListRegistry, controllerToolbox);
       }
       else
       {
          icpControlGains = new YoICPControlGains("", registry);
          icpControlGains.set(walkingControllerParameters.createICPControlGains());
          linearMomentumRateOfChangeControlModule = new ICPBasedLinearMomentumRateOfChangeControlModule(referenceFrames, bipedSupportPolygons, controlDT,
-               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection);
+               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection, controllerToolbox);
       }
       ICPOptimizationControllerInterface icpOptimizationController = linearMomentumRateOfChangeControlModule.getICPOptimizationController();
 
@@ -269,6 +270,7 @@ public class BalanceManager
       double maxAllowedDistanceCMPSupport = walkingControllerParameters.getMaxAllowedDistanceCMPSupport();
       boolean alwaysAllowMomentum = walkingControllerParameters.alwaysAllowMomentum();
       momentumRecoveryControlModule = new MomentumRecoveryControlModule(defaultFootPolygons, maxAllowedDistanceCMPSupport, alwaysAllowMomentum, registry, yoGraphicsListRegistry);
+      //varyingHeightControlModule = new VaryingHeightControlModule(registry, yoGraphicsListRegistry);
 
       controlHeightWithMomentum.set(walkingControllerParameters.controlHeightWithMomentum());
 
@@ -494,8 +496,23 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setPerfectCoP(yoPerfectCoP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
       desiredCMP.set(yoDesiredCMP);
+      linearMomentumRateOfChangeControlModule.setCenterOfMass(centerOfMassPosition);
       linearMomentumRateOfChangeControlModule.compute(desiredCMP, desiredCMP);
       yoDesiredCMP.set(desiredCMP);
+
+      icpError2d.changeFrame(worldFrame);
+      centerOfMassPosition.changeFrame(worldFrame);
+      desiredCMP.changeFrame(worldFrame);
+
+
+      /*
+      varyingHeightControlModule.setCoM(centerOfMassPosition);
+      varyingHeightControlModule.setICPError(icpError2d);
+      varyingHeightControlModule.setDesiredCMP(desiredCMP);
+      varyingHeightControlModule.setSupportPolygon(bipedSupportPolygons.getSupportPolygonInWorld());
+      varyingHeightControlModule.compute();
+      */
+
 
       tempPoint2D.setIncludingFrame(perfectCoP2d);
       tempPoint2D.changeFrame(midFootZUpFrame);

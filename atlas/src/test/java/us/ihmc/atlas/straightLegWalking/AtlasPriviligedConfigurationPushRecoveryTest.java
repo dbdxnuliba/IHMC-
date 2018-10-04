@@ -19,7 +19,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    private final RobotTarget target = RobotTarget.SCS;
    private final AtlasRobotModel atlasRobotModel = new MyAtlasRobotModel();
    private final AtlasRobotModel atlasRobotModelNormal = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, target, false);
-   private final boolean useNormalRobotModel = false;
+   private final boolean useNormalRobotModel = true;
    private final double privilegedAngleWhenStraight = 1.177;
 
    @Override
@@ -27,7 +27,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushFrontalStanding() throws Exception
    {
-      percentWeight = 0.62;
+      percentWeight = 0.60;
       super.testPushFrontalStanding();
    }
 
@@ -36,7 +36,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushDiagonalInSwing() throws Exception
    {
-      percentWeight = 0.7;
+      percentWeight = 0.65;
       super.testPushDiagonalInSwing();
    }
 
@@ -45,7 +45,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushDiagonalFrontalInSwing() throws Exception
    {
-      percentWeight = 1.15;
+      percentWeight = 1.25;
       super.testPushDiagonalFrontalInSwing();
    }
 
@@ -54,7 +54,7 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushFrontalInSwing() throws Exception
    {
-      percentWeight = 1.3;
+      percentWeight = 1.35;
       super.testPushFrontalInSwing();
    }
 
@@ -63,8 +63,26 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
    @Test(timeout = 300000)
    public void testPushBackInSwing() throws Exception
    {
-      percentWeight = 0.7;
+      percentWeight = 0.78;
       super.testPushBackInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushRightInSwing() throws Exception
+   {
+      percentWeight = 0.55;
+      super.testPushRightInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushLeftInSwing() throws Exception
+   {
+      percentWeight = 0.40;
+      super.testPushLeftInSwing();
    }
 
    @Override

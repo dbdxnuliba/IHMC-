@@ -2,7 +2,9 @@ package us.ihmc.commonWalkingControlModules.capturePoint;
 
 import static us.ihmc.graphicsDescription.appearance.YoAppearance.Purple;
 
+import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.MomentumRateCommand;
+import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commonWalkingControlModules.wrenchDistribution.WrenchDistributorTools;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
@@ -20,6 +22,9 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
+import us.ihmc.robotics.partNames.LegJointName;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.sensorProcessing.frames.ReferenceFrames;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -79,17 +84,25 @@ public abstract class LinearMomentumRateOfChangeControlModule
    private final FrameVector2D achievedCoMAcceleration2d = new FrameVector2D();
    private double desiredCoMHeightAcceleration = 0.0;
 
+   private VaryingHeightControlModule varyingHeightControlModule;
+   private HighLevelHumanoidControllerToolbox controllerToolbox;
+
+   private RobotSide supportSide;
+   private OneDoFJoint kneeJoint;
+   private YoBoolean isInDoubleSupport;
+
    public LinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
-                                                  YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2dProjection)
+                                                  YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2dProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
       MathTools.checkIntervalContains(gravityZ, 0.0, Double.POSITIVE_INFINITY);
 
       this.totalMass = totalMass;
       this.gravityZ = gravityZ;
-
+      this.controllerToolbox = controllerToolbox;
       registry = new YoVariableRegistry(namePrefix + getClass().getSimpleName());
+      isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
-
+      varyingHeightControlModule = new VaryingHeightControlModule(totalMass, controllerToolbox,registry,yoGraphicsListRegistry);
       centerOfMassFrame = referenceFrames.getCenterOfMassFrame();
       centerOfMass = new FramePoint3D(centerOfMassFrame);
 
@@ -218,6 +231,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
       return momentumRateCommand;
    }
 
+   public void setMomentumRateCommand(MomentumRateCommand momentumRateCommand){momentumRateCommand.set(momentumRateCommand);}
+
    public void computeAchievedCMP(FrameVector3DReadOnly achievedLinearMomentumRate, FramePoint2D achievedCMPToPack)
    {
       if (achievedLinearMomentumRate.containsNaN())
@@ -278,6 +293,32 @@ public abstract class LinearMomentumRateOfChangeControlModule
       linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
       linearMomentumRateOfChange.setZ(linearMomentumRateOfChange.getZ() - totalMass * gravityZ);
 
+      /*
+      FrameConvexPolygon2D supportPolygonInWorld = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
+      double CMPtoPolygon = supportPolygonInWorld.signedDistance(desiredCMP);
+      if(CMPtoPolygon>0)
+      {
+         double desiredAcceleration = CMPtoPolygon*50;
+         linearMomentumRateOfChange.set(linearMomentumRateOfChange.getX()*(gravityZ + desiredAcceleration)/gravityZ, linearMomentumRateOfChange.getY()*(gravityZ + desiredAcceleration)/gravityZ,linearMomentumRateOfChange.getZ()+totalMass*desiredAcceleration);
+      }
+      */
+
+      varyingHeightControlModule.setCoM(centerOfMass);
+      FrameVector2D icpError2d = new FrameVector2D();
+      icpError2d.set(desiredCapturePoint);
+      icpError2d.sub(capturePoint);
+      varyingHeightControlModule.setICPError(icpError2d);
+      varyingHeightControlModule.setDesiredCMP(desiredCMP);
+      varyingHeightControlModule.setSupportPolygon(controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld());
+      varyingHeightControlModule.setLinearMomentumRateOfChangeFromLIP(linearMomentumRateOfChange);
+      varyingHeightControlModule.setSupportSide(supportSide);
+      varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
+      varyingHeightControlModule.compute();
+      FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
+      modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
+     // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
+      linearMomentumRateOfChange.setIncludingFrame(modifiedLinearMomentumRate);
+
       if (linearMomentumRateOfChange.containsNaN())
          throw new RuntimeException("linearMomentumRateOfChange = " + linearMomentumRateOfChange);
 
@@ -325,6 +366,11 @@ public abstract class LinearMomentumRateOfChangeControlModule
       this.perfectCoP.setIncludingFrame(perfectCoP);
    }
 
+   public void setCenterOfMass(FramePoint3D centerOfMass)
+   {
+      this.centerOfMass.setIncludingFrame(centerOfMass);
+   }
+
    /**
     * Sets whether or not to include the momentum rate of change in the vertical direction in the
     * whole body optimization. If false, it will be controlled by attempting to drive the legs to a
@@ -341,4 +387,22 @@ public abstract class LinearMomentumRateOfChangeControlModule
    public abstract void computeCMPInternal(FramePoint2DReadOnly desiredCMPPreviousValue);
 
    public abstract void setKeepCoPInsideSupportPolygon(boolean keepCoPInsideSupportPolygon);
+
+   public void setSupportSide(RobotSide supportSide)
+   {
+      this.supportSide=supportSide;
+   }
+
+   public void initializeForStance()
+   {
+      isInDoubleSupport.set(true);
+   }
+   public void initializeForSingleSupport()
+   {
+      isInDoubleSupport.set(false);
+   }
+   public void initializeForTransfer()
+   {
+      isInDoubleSupport.set(true);
+   }
 }

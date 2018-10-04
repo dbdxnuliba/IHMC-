@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationControllerInterface;
+import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -20,10 +21,10 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    protected final YoEnum<RobotSide> supportLegPreviousTick;
 
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
-                                                       YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry,
-                                                       boolean use2dProjection)
+                                                        YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry,
+                                                        boolean use2dProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
-      super(namePrefix, referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2dProjection);
+      super(namePrefix, referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2dProjection, controllerToolbox);
 
       supportLegPreviousTick = YoEnum.create(namePrefix + "SupportLegPreviousTick", "", RobotSide.class, registry, true);
    }
@@ -31,6 +32,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    public void setSupportLeg(RobotSide newSupportSide)
    {
       supportSide = newSupportSide;
+      super.setSupportSide(supportSide);
    }
 
    public void setTransferToSide(RobotSide transferToSide)
@@ -57,11 +59,11 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
 
    public abstract void setFinalTransferDuration(double finalTransferDuration);
 
-   public abstract void initializeForStanding();
+   public void initializeForStanding(){super.initializeForStance();};
 
-   public abstract void initializeForSingleSupport();
+   public void initializeForSingleSupport(){super.initializeForSingleSupport();};
 
-   public abstract void initializeForTransfer();
+   public void initializeForTransfer(){super.initializeForTransfer();};
 
    public abstract boolean getUpcomingFootstepSolution(Footstep footstepToPack);
 

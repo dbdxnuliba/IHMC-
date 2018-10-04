@@ -4,6 +4,7 @@ import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPoly
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.*;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationController;
+import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -27,19 +28,19 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
                                                                  ICPControlPolygons icpControlPolygons, SideDependentList<ContactableFoot> contactableFeet,
                                                                  WalkingControllerParameters walkingControllerParameters, YoDouble yoTime, double totalMass,
                                                                  double gravityZ, double controlDT, YoVariableRegistry parentRegistry,
-                                                                 YoGraphicsListRegistry yoGraphicsListRegistry)
+                                                                 YoGraphicsListRegistry yoGraphicsListRegistry, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
       this(referenceFrames, bipedSupportPolygons, icpControlPolygons, contactableFeet, walkingControllerParameters, yoTime, totalMass, gravityZ, controlDT,
-           parentRegistry, yoGraphicsListRegistry, true);
+           parentRegistry, yoGraphicsListRegistry, true, controllerToolbox);
    }
 
    public ICPOptimizationLinearMomentumRateOfChangeControlModule(ReferenceFrames referenceFrames, BipedSupportPolygons bipedSupportPolygons,
                                                                  ICPControlPolygons icpControlPolygons, SideDependentList<ContactableFoot> contactableFeet,
                                                                  WalkingControllerParameters walkingControllerParameters, YoDouble yoTime, double totalMass,
                                                                  double gravityZ, double controlDT, YoVariableRegistry parentRegistry,
-                                                                 YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2DProjection)
+                                                                 YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2DProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
-      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2DProjection);
+      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2DProjection, controllerToolbox);
 
       this.yoTime = yoTime;
 
@@ -69,18 +70,21 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
    public void initializeForStanding()
    {
       icpOptimizationController.initializeForStanding(yoTime.getDoubleValue());
+      super.initializeForStanding();
    }
 
    @Override
    public void initializeForSingleSupport()
    {
       icpOptimizationController.initializeForSingleSupport(yoTime.getDoubleValue(), supportSide, omega0);
+      super.initializeForSingleSupport();
    }
 
    @Override
    public void initializeForTransfer()
    {
       icpOptimizationController.initializeForTransfer(yoTime.getDoubleValue(), transferToSide);
+      super.initializeForTransfer();
    }
 
    @Override
