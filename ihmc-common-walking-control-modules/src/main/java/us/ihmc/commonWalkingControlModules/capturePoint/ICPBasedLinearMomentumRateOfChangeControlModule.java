@@ -82,13 +82,10 @@ public class ICPBasedLinearMomentumRateOfChangeControlModule extends LeggedLinea
    @Override
    public void setFinalTransferDuration(double finalTransferDuration){}
 
-   @Override
    public void initializeForStanding(){}
 
-   @Override
    public void initializeForSingleSupport(){}
 
-   @Override
    public void initializeForTransfer(){}
 
    @Override

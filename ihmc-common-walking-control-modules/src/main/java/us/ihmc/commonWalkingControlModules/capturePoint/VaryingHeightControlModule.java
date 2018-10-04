@@ -14,15 +14,15 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoFramePoint2D;
-import us.ihmc.yoVariables.variable.YoInteger;
+import us.ihmc.yoVariables.variable.*;
 
 import java.awt.*;
 
 public class VaryingHeightControlModule
 {
+   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+
+   private enum VaryingHeightCondition {Aligned, Blah1, blah2};
    private FrameConvexPolygon2D supportPolygon = new FrameConvexPolygon2D();
    private FramePoint2D desiredCMPtoProject = new FramePoint2D();
    private FrameVector2D icpError = new FrameVector2D();
@@ -33,10 +33,10 @@ public class VaryingHeightControlModule
 
    private YoFramePoint2D yoProjectedDesiredCMP;
    private YoFramePoint2D yoProjectedCoM2D;
+   private final YoEnum<VaryingHeightCondition> varyingHeightConditionYoEnum;
 
    private double totalMass;
 
-   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private double desiredHeightAcceleration = 0;
    private YoDouble yoDesiredHeightAcceleration;
@@ -73,6 +73,8 @@ public class VaryingHeightControlModule
       copCoMICPeAngle = new YoDouble("CoPCoMICPeAngle", registry);
       condition = new YoInteger("VaryingHeightCondition", registry);
       yoStay = new YoBoolean("VaryingHeightStay",registry);
+
+      varyingHeightConditionYoEnum = new YoEnum<>("varyingHeightConditionEnum", registry, VaryingHeightCondition.class);
 
       String label = getClass().getSimpleName();
       ArtifactList artifacts = new ArtifactList(label);

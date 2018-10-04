@@ -56,7 +56,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
    private double totalMass;
    private double gravityZ;
 
-   private final ReferenceFrame centerOfMassFrame;
+   protected final ReferenceFrame centerOfMassFrame;
    private final FramePoint3D centerOfMass;
    private final FramePoint2D centerOfMass2d = new FramePoint2D();
 
@@ -84,12 +84,9 @@ public abstract class LinearMomentumRateOfChangeControlModule
    private final FrameVector2D achievedCoMAcceleration2d = new FrameVector2D();
    private double desiredCoMHeightAcceleration = 0.0;
 
-   private VaryingHeightControlModule varyingHeightControlModule;
-   private HighLevelHumanoidControllerToolbox controllerToolbox;
 
    private RobotSide supportSide;
    private OneDoFJoint kneeJoint;
-   private YoBoolean isInDoubleSupport;
 
    public LinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                   YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2dProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
@@ -98,11 +95,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
       this.totalMass = totalMass;
       this.gravityZ = gravityZ;
-      this.controllerToolbox = controllerToolbox;
       registry = new YoVariableRegistry(namePrefix + getClass().getSimpleName());
-      isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
-      varyingHeightControlModule = new VaryingHeightControlModule(totalMass, controllerToolbox,registry,yoGraphicsListRegistry);
       centerOfMassFrame = referenceFrames.getCenterOfMassFrame();
       centerOfMass = new FramePoint3D(centerOfMassFrame);
 
@@ -303,21 +297,9 @@ public abstract class LinearMomentumRateOfChangeControlModule
       }
       */
 
-      varyingHeightControlModule.setCoM(centerOfMass);
-      FrameVector2D icpError2d = new FrameVector2D();
-      icpError2d.set(desiredCapturePoint);
-      icpError2d.sub(capturePoint);
-      varyingHeightControlModule.setICPError(icpError2d);
-      varyingHeightControlModule.setDesiredCMP(desiredCMP);
-      varyingHeightControlModule.setSupportPolygon(controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld());
-      varyingHeightControlModule.setLinearMomentumRateOfChangeFromLIP(linearMomentumRateOfChange);
-      varyingHeightControlModule.setSupportSide(supportSide);
-      varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
-      varyingHeightControlModule.compute();
-      FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
-      modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
-     // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
-      linearMomentumRateOfChange.setIncludingFrame(modifiedLinearMomentumRate);
+      computeHeightModification(linearMomentumRateOfChange);
+
+
 
       if (linearMomentumRateOfChange.containsNaN())
          throw new RuntimeException("linearMomentumRateOfChange = " + linearMomentumRateOfChange);
@@ -386,6 +368,9 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
    public abstract void computeCMPInternal(FramePoint2DReadOnly desiredCMPPreviousValue);
 
+   public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
+   {}
+
    public abstract void setKeepCoPInsideSupportPolygon(boolean keepCoPInsideSupportPolygon);
 
    public void setSupportSide(RobotSide supportSide)
@@ -393,16 +378,4 @@ public abstract class LinearMomentumRateOfChangeControlModule
       this.supportSide=supportSide;
    }
 
-   public void initializeForStance()
-   {
-      isInDoubleSupport.set(true);
-   }
-   public void initializeForSingleSupport()
-   {
-      isInDoubleSupport.set(false);
-   }
-   public void initializeForTransfer()
-   {
-      isInDoubleSupport.set(true);
-   }
 }
