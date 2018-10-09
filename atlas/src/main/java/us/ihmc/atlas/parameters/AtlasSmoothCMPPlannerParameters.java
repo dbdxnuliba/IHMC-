@@ -74,7 +74,13 @@ public class AtlasSmoothCMPPlannerParameters extends SmoothCMPPlannerParameters
    }
 
    @Override
-   public boolean planWithAngularMomentum()
+   public boolean planSwingAngularMomentum()
+   {
+      return true;
+   }
+
+   @Override
+   public boolean planTransferAngularMomentum()
    {
       return true;
    }
@@ -101,7 +107,7 @@ public class AtlasSmoothCMPPlannerParameters extends SmoothCMPPlannerParameters
    @Override
    public double getSwingDurationShiftFraction()
    {
-      return 0.8;
+      return 0.85;
    }
 
    @Override
@@ -121,5 +127,47 @@ public class AtlasSmoothCMPPlannerParameters extends SmoothCMPPlannerParameters
             return 0.02;
          }
       };
+   }
+
+   @Override
+   public boolean adjustCoPPlanForSingleSupportContinuity()
+   {
+      return false;
+   }
+
+   @Override
+   public boolean adjustInitialCoPPlanForDoubleSupportContinuity()
+   {
+      return true;
+   }
+
+   @Override
+   public boolean adjustEveryCoPPlanForDoubleSupportContinuity()
+   {
+      return false;
+   }
+
+   @Override
+   public boolean adjustCoPPlanForStandingContinuity()
+   {
+      return true;
+   }
+
+   @Override
+   public boolean doContinuousReplanningForStanding()
+   {
+      return true;
+   }
+
+   @Override
+   public boolean doContinuousReplanningForTransfer()
+   {
+      return true;
+   }
+
+   @Override
+   public boolean doContinuousReplanningForSwing()
+   {
+      return true;
    }
 }

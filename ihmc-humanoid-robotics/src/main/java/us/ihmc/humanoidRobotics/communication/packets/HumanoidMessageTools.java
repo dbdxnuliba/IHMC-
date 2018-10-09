@@ -910,7 +910,7 @@ public class HumanoidMessageTools
    public static EuclideanTrajectoryMessage createEuclideanTrajectoryMessage(double trajectoryTime, Point3DReadOnly desiredPosition,
                                                                              ReferenceFrame trajectoryReferenceFrame)
    {
-      return createEuclideanTrajectoryMessage(trajectoryTime, desiredPosition, trajectoryReferenceFrame.getNameBasedHashCode());
+      return createEuclideanTrajectoryMessage(trajectoryTime, desiredPosition, trajectoryReferenceFrame.hashCode());
    }
 
    public static LocalizationPacket createLocalizationPacket(boolean reset, boolean toggle)
@@ -936,7 +936,7 @@ public class HumanoidMessageTools
    {
       PelvisHeightTrajectoryMessage message = new PelvisHeightTrajectoryMessage();
       message.getEuclideanTrajectory().set(HumanoidMessageTools.createEuclideanTrajectoryMessage(trajectoryTime, new Point3D(0.0, 0.0, desiredHeight),
-                                                                                                 trajectoryReferenceFrame.getNameBasedHashCode()));
+                                                                                                 trajectoryReferenceFrame.hashCode()));
       message.getEuclideanTrajectory().getFrameInformation().setDataReferenceFrameId(MessageTools.toFrameId(dataReferenceFrame));
       message.getEuclideanTrajectory().getSelectionMatrix().setXSelected(false);
       message.getEuclideanTrajectory().getSelectionMatrix().setYSelected(false);
@@ -1050,7 +1050,7 @@ public class HumanoidMessageTools
 
    public static SO3TrajectoryMessage createSO3TrajectoryMessage(double trajectoryTime, QuaternionReadOnly desiredOrientation, ReferenceFrame trajectoryFrame)
    {
-      return createSO3TrajectoryMessage(trajectoryTime, desiredOrientation, trajectoryFrame.getNameBasedHashCode());
+      return createSO3TrajectoryMessage(trajectoryTime, desiredOrientation, trajectoryFrame.hashCode());
    }
 
    public static SO3TrajectoryMessage createSO3TrajectoryMessage(double trajectoryTime, QuaternionReadOnly desiredOrientation, long trajectoryReferenceFrameId)
@@ -1413,6 +1413,14 @@ public class HumanoidMessageTools
       return message;
    }
 
+   public static JointspaceTrajectoryMessage createJointspaceTrajectoryMessage(double[] trajectoryTimes, double[] desiredJointPositions)
+   {
+      JointspaceTrajectoryMessage message = new JointspaceTrajectoryMessage();
+      for (int jointIndex = 0; jointIndex < desiredJointPositions.length; jointIndex++)
+         message.getJointTrajectoryMessages().add().set(createOneDoFJointTrajectoryMessage(trajectoryTimes[jointIndex], desiredJointPositions[jointIndex]));
+      return message;
+   }
+
    /**
     * Create a message using the given joint trajectory points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
@@ -1600,7 +1608,7 @@ public class HumanoidMessageTools
    public static SE3TrajectoryMessage createSE3TrajectoryMessage(double trajectoryTime, Point3DReadOnly desiredPosition, QuaternionReadOnly desiredOrientation,
                                                                  ReferenceFrame trajectoryReferenceFrame)
    {
-      return createSE3TrajectoryMessage(trajectoryTime, desiredPosition, desiredOrientation, trajectoryReferenceFrame.getNameBasedHashCode());
+      return createSE3TrajectoryMessage(trajectoryTime, desiredPosition, desiredOrientation, trajectoryReferenceFrame.hashCode());
    }
 
    public static DetectedObjectPacket createDetectedObjectPacket(Pose3D pose, int id)
@@ -1974,9 +1982,9 @@ public class HumanoidMessageTools
    {
       long expectedId = HumanoidMessageTools.getDataFrameIDConsideringDefault(frameInformation);
 
-      if (expectedId != referenceFrame.getNameBasedHashCode() && expectedId != referenceFrame.getAdditionalNameBasedHashCode())
+      if (expectedId != referenceFrame.hashCode() && expectedId != referenceFrame.getAdditionalNameBasedHashCode())
       {
-         String msg = "Argument's hashcode " + referenceFrame + " " + referenceFrame.getNameBasedHashCode() + " does not match " + expectedId;
+         String msg = "Argument's hashcode " + referenceFrame + " " + referenceFrame.hashCode() + " does not match " + expectedId;
          throw new ReferenceFrameMismatchException(msg);
       }
    }

@@ -6,6 +6,15 @@ import us.ihmc.euclid.tuple2D.Vector2D;
 
 public class SmoothCMPPlannerParameters extends AbstractICPPlannerParameters
 {
+   private static final boolean adjustPlanForSingleSupport = false;
+   private static final boolean adjustPlanForInitialDoubleSupport = true;
+   private static final boolean adjustPlanForEachDoubleSupport = true;
+   private static final boolean adjustPlanWhenGoingToStand = true;
+
+   private static final boolean doContinuousReplanningForStanding = false;
+   private static final boolean doContinuousReplanningForTransfer = false;
+   private static final boolean doContinuousReplanningForSwing = false;
+
    /**
     * Vector offsets relative to centroid of support polygon defined copOffsetFrames
     */
@@ -94,7 +103,12 @@ public class SmoothCMPPlannerParameters extends AbstractICPPlannerParameters
       copOffsetBoundsInFootFrame.put(CoPPointName.TOE_COP, new Vector2D(0.0, 0.08));
    }
 
-   public boolean planWithAngularMomentum()
+   public boolean planSwingAngularMomentum()
+   {
+      return false;
+   }
+
+   public boolean planTransferAngularMomentum()
    {
       return false;
    }
@@ -229,5 +243,40 @@ public class SmoothCMPPlannerParameters extends AbstractICPPlannerParameters
    public AngularMomentumEstimationParameters getAngularMomentumEstimationParameters()
    {
       return new AngularMomentumEstimationParameters();
+   }
+
+   public boolean adjustCoPPlanForSingleSupportContinuity()
+   {
+      return adjustPlanForSingleSupport;
+   }
+
+   public boolean adjustInitialCoPPlanForDoubleSupportContinuity()
+   {
+      return adjustPlanForInitialDoubleSupport;
+   }
+
+   public boolean adjustEveryCoPPlanForDoubleSupportContinuity()
+   {
+      return adjustPlanForEachDoubleSupport;
+   }
+
+   public boolean adjustCoPPlanForStandingContinuity()
+   {
+      return adjustPlanWhenGoingToStand;
+   }
+
+   public boolean doContinuousReplanningForStanding()
+   {
+      return doContinuousReplanningForStanding;
+   }
+
+   public boolean doContinuousReplanningForTransfer()
+   {
+      return doContinuousReplanningForTransfer;
+   }
+
+   public boolean doContinuousReplanningForSwing()
+   {
+      return doContinuousReplanningForSwing;
    }
 }
