@@ -6,6 +6,7 @@ import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.ReferenceCoPTrajectoryGenerator;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.WalkingTrajectoryType;
 import us.ihmc.commons.Epsilons;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -23,6 +24,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ReferenceCMPTrajectoryGenerator
 {
@@ -40,8 +42,8 @@ public class ReferenceCMPTrajectoryGenerator
 
    private static final double trajectoryEpsilon = Epsilons.ONE_HUNDRED_THOUSANDTH;
 
-   private final List<CMPTrajectory> transferCMPTrajectories = new ArrayList<>();
-   private final List<CMPTrajectory> swingCMPTrajectories = new ArrayList<>();
+   private final RecyclingArrayList<CMPTrajectory> transferCMPTrajectories;
+   private final RecyclingArrayList<CMPTrajectory> swingCMPTrajectories;
    private final YoDouble verticalGroundReaction;
    private final YoInteger numberOfFootstepsToConsider;
 
@@ -68,15 +70,10 @@ public class ReferenceCMPTrajectoryGenerator
       String fullPrefix = namePrefix + "CMPTrajectoryGenerator";
       this.numberOfFootstepsToConsider = numberOfFootstepsToConsider;
 
-      for (int i = 0; i < maxNumberOfFootstepsToConsider; i++)
-      {
-         CMPTrajectory transferCMPTrajectory = new CMPTrajectory(maxNumberOfSegments, maxNumberOfCoefficients);
-         CMPTrajectory swingCMPTrajectory = new CMPTrajectory(maxNumberOfSegments, maxNumberOfCoefficients);
-         transferCMPTrajectories.add(transferCMPTrajectory);
-         swingCMPTrajectories.add(swingCMPTrajectory);
-      }
-      CMPTrajectory transferCMPTrajectory = new CMPTrajectory(maxNumberOfSegments, maxNumberOfCoefficients);
-      transferCMPTrajectories.add(transferCMPTrajectory);
+      Supplier<CMPTrajectory> trajectorySupplier = () -> new CMPTrajectory(maxNumberOfSegments, maxNumberOfCoefficients);
+      transferCMPTrajectories = new RecyclingArrayList<>(maxNumberOfFootstepsToConsider + 1, trajectorySupplier);
+      swingCMPTrajectories = new RecyclingArrayList<>(maxNumberOfFootstepsToConsider, trajectorySupplier);
+
       this.torqueTrajectory = new TorqueTrajectory(maxNumberOfSegments, maxNumberOfCoefficients);
       this.verticalGroundReaction = new YoDouble(fullPrefix + "CMPTorqueOffsetScalingFactor", registry);
 
@@ -135,12 +132,18 @@ public class ReferenceCMPTrajectoryGenerator
 
    public void reset()
    {
-      for (int i = 0; i < numberOfFootstepsToConsider.getIntegerValue(); i++)
+      for (int i = 0; i < transferCMPTrajectories.size(); i++)
       {
          transferCMPTrajectories.get(i).reset();
+      }
+
+      for (int i = 0; i < swingCMPTrajectories.size(); i++)
+      {
          swingCMPTrajectories.get(i).reset();
       }
-      transferCMPTrajectories.get(numberOfFootstepsToConsider.getIntegerValue()).reset();
+
+      transferCMPTrajectories.clear();
+      swingCMPTrajectories.clear();
       activeTrajectory = null;
    }
 
@@ -219,10 +222,13 @@ public class ReferenceCMPTrajectoryGenerator
          for (int i = 0; i < segmentDurations.size(); i++)
             segmentDurations.get(i).setToNaN();
       }
-      copyCoPTrajectoriesToCMPTrajectories(transferCoPTrajectories, swingCoPTrajectories);
+
+      transferCMPTrajectories.clear();
+      swingCMPTrajectories.clear();
 
       if (transferAngularMomentumTrajectories == null || swingAngularMomentumTrajectories == null)
       {
+         copyCoPTrajectoriesToCMPTrajectories(transferCoPTrajectories, swingCoPTrajectories);
          return;
       }
 
@@ -238,7 +244,9 @@ public class ReferenceCMPTrajectoryGenerator
       {
          AngularMomentumTrajectory swingAngularMomentumTrajectory = swingAngularMomentumTrajectories.get(phaseIndex);
          CoPTrajectory swingCoPTrajectory = swingCoPTrajectories.get(phaseIndex);
-         CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.get(phaseIndex);
+
+         transferCMPTrajectories.add(); // the indexing is set up to assume a transfer precedes every swing trajectory. transfer index 0 (i.e. this one) is not used at start of swing
+         CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.add();
 
          torqueTrajectory.setFromAngularMomentumTrajectory(swingAngularMomentumTrajectory, verticalGroundReaction.getDoubleValue());
          if (swingCoPTrajectory.getNumberOfSegments() == 0 || torqueTrajectory.getNumberOfSegments() == 0)
@@ -276,7 +284,7 @@ public class ReferenceCMPTrajectoryGenerator
          // transfer
          AngularMomentumTrajectory transferAngularMomentumTrajectory = transferAngularMomentumTrajectories.get(phaseIndex);
          CoPTrajectory transferCoPTrajectory = transferCoPTrajectories.get(phaseIndex);
-         CMPTrajectory transferCMPTrajectory = transferCMPTrajectories.get(phaseIndex);
+         CMPTrajectory transferCMPTrajectory = transferCMPTrajectories.add();
 
          torqueTrajectory.setFromAngularMomentumTrajectory(transferAngularMomentumTrajectory, verticalGroundReaction.getDoubleValue());
          if (transferCoPTrajectory.getNumberOfSegments() == 0 || torqueTrajectory.getNumberOfSegments() == 0)
@@ -306,7 +314,7 @@ public class ReferenceCMPTrajectoryGenerator
          // swing
          AngularMomentumTrajectory swingAngularMomentumTrajectory = swingAngularMomentumTrajectories.get(phaseIndex);
          CoPTrajectory swingCoPTrajectory = swingCoPTrajectories.get(phaseIndex);
-         CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.get(phaseIndex);
+         CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.add();
 
          torqueTrajectory.setFromAngularMomentumTrajectory(swingAngularMomentumTrajectory, verticalGroundReaction.getDoubleValue());
          if (swingCoPTrajectory.getNumberOfSegments() == 0 || torqueTrajectory.getNumberOfSegments() == 0)
@@ -339,7 +347,7 @@ public class ReferenceCMPTrajectoryGenerator
             .setFromAngularMomentumTrajectory(transferAngularMomentumTrajectories.get(numberOfFootstepsToSet), verticalGroundReaction.getDoubleValue());
       if (transferCoPTrajectories.get(numberOfFootstepsToSet).getNumberOfSegments() == 0 || torqueTrajectory.getNumberOfSegments() == 0)
          return;
-      TrajectoryMathTools.addSegmentedTrajectories(transferCMPTrajectories.get(numberOfFootstepsToSet), transferCoPTrajectories.get(numberOfFootstepsToSet),
+      TrajectoryMathTools.addSegmentedTrajectories(transferCMPTrajectories.add(), transferCoPTrajectories.get(numberOfFootstepsToSet),
                                                    torqueTrajectory, trajectoryEpsilon);
       if (REMOVE_SHORT_SEGMENTS)
          TrajectoryMathTools.removeShortSegments(transferCMPTrajectories.get(phaseIndex), minimumSegmentDuration);
@@ -362,9 +370,9 @@ public class ReferenceCMPTrajectoryGenerator
       int numberOfFootstepsToCopy = Math.min(numberOfFootstepsToConsider.getIntegerValue(), numberOfRegisteredSteps);
       for (int i = 0; i < numberOfFootstepsToCopy; i++)
       {
-         transferCMPTrajectories.get(i).setAll(transferCoPTrajectories.get(i));
-         swingCMPTrajectories.get(i).setAll(swingCoPTrajectories.get(i));
+         transferCMPTrajectories.add().setAll(transferCoPTrajectories.get(i));
+         swingCMPTrajectories.add().setAll(swingCoPTrajectories.get(i));
       }
-      transferCMPTrajectories.get(numberOfFootstepsToCopy).setAll(transferCoPTrajectories.get(numberOfFootstepsToCopy));
+      transferCMPTrajectories.add().setAll(transferCoPTrajectories.get(numberOfFootstepsToCopy));
    }
 }
