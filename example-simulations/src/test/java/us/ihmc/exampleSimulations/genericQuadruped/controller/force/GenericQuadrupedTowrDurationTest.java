@@ -1,9 +1,6 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
-      import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-      import controller_msgs.msg.dds.Duration;
-      import controller_msgs.msg.dds.QuadrupedTimedStepListMessage;
-      import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
+      import controller_msgs.msg.dds.*;
       import org.junit.Test;
       import us.ihmc.commons.PrintTools;
       import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
@@ -16,6 +13,7 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
       import us.ihmc.quadrupedRobotics.controller.force.QuadrupedTowrTrajectoryTest;
       import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
       import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.QuadrupedTowrTrajectoryConverter;
+      import us.ihmc.quadrupedRobotics.planning.trajectoryConverter.TowrCartesianStates;
       import us.ihmc.quadrupedRobotics.util.TimeInterval;
       import us.ihmc.robotics.robotSide.RobotQuadrant;
       import us.ihmc.ros2.Ros2Node;
@@ -27,6 +25,8 @@ package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
 public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTest
 {
+
+   TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
    @Override
    public QuadrupedTestFactory createQuadrupedTestFactory()
    {
@@ -82,6 +82,36 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
 
       //Thread.currentThread().join(); // keep thread alive to receive more messages
    }
+
+   public boolean listenToTowr()
+   {
+      boolean messageReceived = false;
+      boolean useLoggedTrajectories = false;
+      if (!useLoggedTrajectories)
+      {
+         try
+         {
+            towrCartesianStates = QuadrupedTowrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
+            QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
+            //QuadrupedTowrTrajectoryConverter.printDataSet(towrCartesianStates);
+            PrintTools.info("received trajectory from towr!");
+            messageReceived = true;
+         }
+         catch (Exception e)
+         {
+         }
+      }
+      else
+      {
+         towrCartesianStates = QuadrupedTowrTrajectoryConverter.loadExistingDataSet();
+         PrintTools.info("load predefined trajectory!");
+         messageReceived = true;
+         //QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
+      }
+
+      return messageReceived;
+   }
+
 
    @Override
    public QuadrupedTimedStepListMessage getSteps()
@@ -145,5 +175,13 @@ public class GenericQuadrupedTowrDurationTest extends QuadrupedTowrTrajectoryTes
       QuadrupedTowrTrajectoryConverter towrTrajectoryConverter = new QuadrupedTowrTrajectoryConverter();
       CenterOfMassTrajectoryMessage message = new CenterOfMassTrajectoryMessage();
       return message;
+   }
+
+   @Override
+   public QuadrupedBodyHeightMessage getBodyHeightMessage()
+   {
+
+      TowrCartesianStates towrCartesianStates = new TowrCartesianStates(200);
+      return QuadrupedTowrTrajectoryConverter.createBodyHeightMessage(towrCartesianStates);
    }
 }
