@@ -146,9 +146,12 @@ public class CommandBasedAngularMomentumTrajectoryGenerator implements AngularMo
          // at the start of swing, for some reason the copLocation corresponding to the upcoming swing is at index 1
          CoPPointsInFoot pointsInFoot = copLocations.get(1);
 
+         transferTrajectories.add();
+         AngularMomentumTrajectory swingTrajectory = swingTrajectories.add();
+
          double swingPhaseDuration = getPhaseDuration(WalkingTrajectoryType.SWING, pointsInFoot, CoPPointName.ENTRY_COP);
          momentumTrajectoryHandler.getAngularMomentumTrajectory(currentTime, currentTime + swingPhaseDuration, waypointsPerWalkingPhase, waypoints);
-         setSubTrajectoryFromWaypoints(swingPhaseDuration, swingTrajectories.add(), startingTrajectoryType);
+         setSubTrajectoryFromWaypoints(swingPhaseDuration, swingTrajectory, startingTrajectoryType);
          accumulatedTime += swingPhaseDuration;
 
          // the first transfer copLocation is at index 2 at the start of swing. otherwise it's at index 0
