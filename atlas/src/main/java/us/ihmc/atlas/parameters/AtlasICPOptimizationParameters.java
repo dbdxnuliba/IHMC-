@@ -41,21 +41,28 @@ public class AtlasICPOptimizationParameters extends ICPOptimizationParameters
    @Override
    public double getFeedbackLateralWeight()
    {
-      return runningOnRealRobot ? 0.5 : 0.5;
+      return runningOnRealRobot ? 1.5 : 1.5;
    }
 
    /** {@inheritDoc} */
    @Override
    public double getFeedbackForwardWeight()
    {
-      return runningOnRealRobot ? 0.5 : 0.5;
+      return runningOnRealRobot ? 1.5 : 1.5;
    }
 
    /** {@inheritDoc} */
    @Override
    public double getFeedbackRateWeight()
    {
-      return 4e-13;
+      return 5e-8;
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public double getCoPCMPFeedbackRateWeight()
+   {
+      return 0.0;
    }
 
    /** {@inheritDoc} */
@@ -173,15 +180,20 @@ public class AtlasICPOptimizationParameters extends ICPOptimizationParameters
 
    /** {@inheritDoc} */
    @Override
-   public double getBackwardReachabilityLimit()
-   {
-      return runningOnRealRobot ? -0.3 : -0.5;
-   }
-
-   /** {@inheritDoc} */
-   @Override
    public boolean getLimitReachabilityFromAdjustment()
    {
       return false;
+   }
+
+   @Override
+   public double getTransferSplitFraction()
+   {
+      return 0.2;
+   }
+
+   @Override
+   public double getMinimumFootstepMultiplier()
+   {
+      return 0.25;
    }
 }

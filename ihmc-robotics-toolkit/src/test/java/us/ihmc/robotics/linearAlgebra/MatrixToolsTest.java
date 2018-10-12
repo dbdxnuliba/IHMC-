@@ -12,6 +12,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
 import org.ejml.ops.RandomMatrices;
+import org.junit.After;
 import org.junit.Test;
 
 import georegression.geometry.ConvertRotation3D_F64;
@@ -24,12 +25,19 @@ import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.Continuous
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.EuclidFrameRandomTools;
+import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotics.testing.JUnitTools;
 
 public class MatrixToolsTest
 {
+   @After
+   public void tearDown()
+   {
+      ReferenceFrameTools.clearWorldFrameTree();
+   }
+
    @ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 30000)
    public void testSetToNaNDenseMatrix()
@@ -552,5 +560,184 @@ public class MatrixToolsTest
          }
       }
 
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 8.1) @Test(timeout = 40000)
+   public void testMultAddBlockTransA()
+   {
+      Random random = new Random(124L);
+
+      int iters = 100;
+
+      for (int i = 0; i < iters; i++)
+      {
+         int rows = RandomNumbers.nextInt(random, 1, 100);
+         int cols = RandomNumbers.nextInt(random, 1, 100);
+         int fullRows = RandomNumbers.nextInt(random, rows, 500);
+         int fullCols = RandomNumbers.nextInt(random, cols, 500);
+         int taskSize = RandomNumbers.nextInt(random, 1, 100);
+
+         int rowStart = RandomNumbers.nextInt(random, 0, fullRows - rows);
+         int colStart = RandomNumbers.nextInt(random, 0, fullCols - cols);
+
+         double scale = RandomNumbers.nextDouble(random, 1000.0);
+         DenseMatrix64F randomMatrixA = RandomMatrices.createRandom(taskSize, rows, -50.0, 50.0, random);
+         DenseMatrix64F randomMatrixB = RandomMatrices.createRandom(taskSize, cols, -50.0, 50.0, random);
+
+         DenseMatrix64F solution = RandomMatrices.createRandom(fullRows, fullCols, -50.0, 50.0, random);
+         DenseMatrix64F solutionB = new DenseMatrix64F(solution);
+         DenseMatrix64F expectedSolution = new DenseMatrix64F(solution);
+         DenseMatrix64F expectedSolutionB = new DenseMatrix64F(solution);
+
+         DenseMatrix64F temp = new DenseMatrix64F(rows, cols);
+         CommonOps.multTransA(randomMatrixA, randomMatrixB, temp);
+         MatrixTools.addMatrixBlock(expectedSolution, rowStart, colStart, temp, 0, 0, rows, cols, 1.0);
+         MatrixTools.addMatrixBlock(expectedSolutionB, rowStart, colStart, temp, 0, 0, rows, cols, scale);
+
+         MatrixTools.multAddBlockTransA(randomMatrixA, randomMatrixB, solution, rowStart, colStart);
+         MatrixTools.multAddBlockTransA(scale, randomMatrixA, randomMatrixB, solutionB, rowStart, colStart);
+
+         JUnitTools.assertMatrixEquals(expectedSolution, solution, 1e-6);
+         JUnitTools.assertMatrixEquals(expectedSolutionB, solutionB, 1e-6);
+      }
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 8.1) @Test(timeout = 40000)
+   public void testMultAddBlock()
+   {
+      Random random = new Random(124L);
+
+      int iters = 100;
+
+      for (int i = 0; i < iters; i++)
+      {
+         int rows = RandomNumbers.nextInt(random, 1, 100);
+         int cols = RandomNumbers.nextInt(random, 1, 100);
+         int fullRows = RandomNumbers.nextInt(random, rows, 500);
+         int fullCols = RandomNumbers.nextInt(random, cols, 500);
+         int taskSize = RandomNumbers.nextInt(random, 1, 100);
+
+         int rowStart = RandomNumbers.nextInt(random, 0, fullRows - rows);
+         int colStart = RandomNumbers.nextInt(random, 0, fullCols - cols);
+
+         double scale = RandomNumbers.nextDouble(random, 1000.0);
+         DenseMatrix64F randomMatrixA = RandomMatrices.createRandom(rows, taskSize, -50.0, 50.0, random);
+         DenseMatrix64F randomMatrixB = RandomMatrices.createRandom(taskSize, cols, -50.0, 50.0, random);
+
+         DenseMatrix64F solution = RandomMatrices.createRandom(fullRows, fullCols, -50.0, 50.0, random);
+         DenseMatrix64F solutionB = new DenseMatrix64F(solution);
+         DenseMatrix64F expectedSolution = new DenseMatrix64F(solution);
+         DenseMatrix64F expectedSolutionB = new DenseMatrix64F(solution);
+
+         DenseMatrix64F temp = new DenseMatrix64F(rows, cols);
+         CommonOps.mult(randomMatrixA, randomMatrixB, temp);
+         MatrixTools.addMatrixBlock(expectedSolution, rowStart, colStart, temp, 0, 0, rows, cols, 1.0);
+         MatrixTools.addMatrixBlock(expectedSolutionB, rowStart, colStart, temp, 0, 0, rows, cols, scale);
+
+         MatrixTools.multAddBlock(randomMatrixA, randomMatrixB, solution, rowStart, colStart);
+         MatrixTools.multAddBlock(scale, randomMatrixA, randomMatrixB, solutionB, rowStart, colStart);
+
+         JUnitTools.assertMatrixEquals(expectedSolution, solution, 1e-6);
+         JUnitTools.assertMatrixEquals(expectedSolutionB, solutionB, 1e-6);
+      }
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 5.3)
+   @Test(timeout = 40000)
+   public void testRandomMultAddBlockInnerWithScalar()
+   {
+      Random random = new Random(124L);
+
+      int iters = 1000;
+
+      for (int i = 0; i < iters; i++)
+      {
+         int variables = RandomNumbers.nextInt(random, 1, 100);
+         int taskSize = RandomNumbers.nextInt(random, 1, 100);
+         int fullVariables = RandomNumbers.nextInt(random, variables, 500);
+
+         int startRow = RandomNumbers.nextInt(random, 0, fullVariables - variables);
+         int startCol = RandomNumbers.nextInt(random, 0, fullVariables - variables);
+
+         DenseMatrix64F diagonal = CommonOps.identity(taskSize, taskSize);
+         double diagonalValue = RandomNumbers.nextDouble(random, 50.0);
+         DenseMatrix64F randomMatrix = RandomMatrices.createRandom(taskSize, variables, -50.0, 50.0, random);
+
+         DenseMatrix64F expectedSolution = RandomMatrices.createRandom(fullVariables, fullVariables, -50, 50, random);
+         DenseMatrix64F solution = new DenseMatrix64F(expectedSolution);
+
+         for (int index = 0; index < taskSize; index++)
+         {
+            diagonal.set(index, index, diagonalValue);
+         }
+
+         DenseMatrix64F tempJtW = new DenseMatrix64F(variables, taskSize);
+         DenseMatrix64F temp = new DenseMatrix64F(variables, variables);
+         CommonOps.multTransA(randomMatrix, diagonal, tempJtW);
+         CommonOps.mult(tempJtW, randomMatrix, temp);
+
+         MatrixTools.addMatrixBlock(expectedSolution, startRow, startCol, temp, 0, 0, variables, variables, 1.0);
+
+         MatrixTools.multAddBlockInner(diagonalValue, randomMatrix, solution, startRow, startCol);
+
+         JUnitTools.assertMatrixEquals(expectedSolution, solution, 1e-6);
+      }
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test(timeout = 40000)
+   public void testEasyMultAddInner()
+   {
+      Random random = new Random(124L);
+
+      int iters = 1000;
+
+      for (int i = 0; i < iters; i++)
+      {
+         int variables = 4;
+         int taskSize = 3;
+
+         double diagonalScalar = RandomNumbers.nextDouble(random, 100.0);
+         DenseMatrix64F randomMatrix = RandomMatrices.createRandom(taskSize, variables, -50.0, 50.0, random);
+         DenseMatrix64F solution = RandomMatrices.createRandom(variables, variables, -50.0, 50.0, random);
+         DenseMatrix64F expectedSolution = new DenseMatrix64F(solution);
+
+         DenseMatrix64F tempJtW = new DenseMatrix64F(variables, taskSize);
+         CommonOps.transpose(randomMatrix, tempJtW);
+         CommonOps.multAdd(diagonalScalar, tempJtW, randomMatrix, expectedSolution);
+
+         MatrixTools.multAddInner(diagonalScalar, randomMatrix, solution);
+
+         JUnitTools.assertMatrixEquals(expectedSolution, solution, 1e-6);
+      }
+   }
+
+   @ContinuousIntegrationTest(estimatedDuration = 0.5)
+   @Test(timeout = 40000)
+   public void testRandomMultAddInner()
+   {
+      Random random = new Random(124L);
+
+      int iters = 100;
+
+      for (int i = 0; i < iters; i++)
+      {
+         int variables = RandomNumbers.nextInt(random, 1, 100);
+         int taskSize = RandomNumbers.nextInt(random, 1, 100);
+
+         double scale = RandomNumbers.nextDouble(random, 100.0);
+         DenseMatrix64F randomMatrix = RandomMatrices.createRandom(taskSize, variables, -50.0, 50.0, random);
+         DenseMatrix64F solution = RandomMatrices.createRandom(variables, variables, -50, 50, random);
+         DenseMatrix64F expectedSolution = new DenseMatrix64F(solution);
+
+
+         DenseMatrix64F tempJtW = new DenseMatrix64F(variables, taskSize);
+         CommonOps.transpose(randomMatrix, tempJtW);
+         CommonOps.multAdd(scale, tempJtW, randomMatrix, expectedSolution);
+
+         MatrixTools.multAddInner(scale, randomMatrix, solution);
+
+         JUnitTools.assertMatrixEquals(expectedSolution, solution, 1e-6);
+      }
    }
 }

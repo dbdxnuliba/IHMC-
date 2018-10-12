@@ -263,7 +263,7 @@ public class WalkingSingleSupportState extends SingleSupportState
          {
             double nextSwingTime = footstepTimings[0].getSwingTime();
             footstepTimings[0].setTimings(nextSwingTime, currentTouchdownDuration, nextTransferDuration);
-            walkingMessageHandler.adjustTimings(0, nextSwingTime, currentTouchdownDuration, nextTransferDuration);
+            walkingMessageHandler.adjustTiming(nextSwingTime, currentTouchdownDuration, nextTransferDuration);
          }
       }
 
@@ -289,6 +289,8 @@ public class WalkingSingleSupportState extends SingleSupportState
          FootstepTiming nextTiming = footstepTimings[0];
          pelvisOrientationManager.initializeSwing(supportSide, swingTime, nextTiming.getTransferTime(), nextTiming.getSwingTime());
       }
+
+      balanceManager.computeICPPlan(supportSide);
 
       nextFootstep.getPose(desiredFootPoseInWorld);
       desiredFootPoseInWorld.changeFrame(worldFrame);

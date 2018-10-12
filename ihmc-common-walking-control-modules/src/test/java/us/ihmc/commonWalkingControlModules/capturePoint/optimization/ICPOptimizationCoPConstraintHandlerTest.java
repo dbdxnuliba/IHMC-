@@ -10,6 +10,7 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
+import org.junit.After;
 import org.junit.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
@@ -22,6 +23,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.footstepPlanning.polygonWiggling.PolygonWiggler;
 import us.ihmc.humanoidRobotics.footstep.FootSpoof;
@@ -44,6 +46,12 @@ public class ICPOptimizationCoPConstraintHandlerTest
    private final SideDependentList<FramePose3D> footPosesAtTouchdown = new SideDependentList<>(new FramePose3D(), new FramePose3D());
    private final SideDependentList<ReferenceFrame> ankleFrames = new SideDependentList<>();
 
+   @After
+   public void tearDown()
+   {
+      ReferenceFrameTools.clearWorldFrameTree();
+   }
+
    @ContinuousIntegrationTest(estimatedDuration = 0.0)
    @Test(timeout = 30000)
    public void testDoubleSupportWithBipedSupportPolygonsAndAngularMomentum()
@@ -55,8 +63,6 @@ public class ICPOptimizationCoPConstraintHandlerTest
       YoBoolean useControlPolygons = new YoBoolean("useControlPolygons", registry);
       ICPOptimizationCoPConstraintHandler constraintHandler = new ICPOptimizationCoPConstraintHandler(bipedSupportPolygons, null, useControlPolygons, false, registry);
       ICPOptimizationQPSolver solver = new ICPOptimizationQPSolver(5, false);
-      solver.setMinimumFeedbackWeight(0.0001);
-      solver.setMinimumFootstepWeight(0.0001);
 
       solver.resetCoPLocationConstraint();
       solver.addSupportPolygon(constraintHandler.updateCoPConstraintForDoubleSupport());
@@ -114,8 +120,6 @@ public class ICPOptimizationCoPConstraintHandlerTest
       YoBoolean useControlPolygons = new YoBoolean("useControlPolygons", registry);
       ICPOptimizationCoPConstraintHandler constraintHandler = new ICPOptimizationCoPConstraintHandler(bipedSupportPolygons, null, useControlPolygons, false, registry);
       ICPOptimizationQPSolver solver = new ICPOptimizationQPSolver(5, false);
-      solver.setMinimumFeedbackWeight(0.0001);
-      solver.setMinimumFootstepWeight(0.0001);
 
       // test left support
       solver.resetCoPLocationConstraint();
@@ -218,8 +222,6 @@ public class ICPOptimizationCoPConstraintHandlerTest
       YoBoolean useControlPolygons = new YoBoolean("useControlPolygons", registry);
       ICPOptimizationCoPConstraintHandler constraintHandler = new ICPOptimizationCoPConstraintHandler(bipedSupportPolygons, null, useControlPolygons, false, registry);
       ICPOptimizationQPSolver solver = new ICPOptimizationQPSolver(5, false);
-      solver.setMinimumFeedbackWeight(0.0001);
-      solver.setMinimumFootstepWeight(0.0001);
 
       solver.resetCoPLocationConstraint();
       solver.addSupportPolygon(constraintHandler.updateCoPConstraintForDoubleSupport());
@@ -271,8 +273,6 @@ public class ICPOptimizationCoPConstraintHandlerTest
       YoBoolean useControlPolygons = new YoBoolean("useControlPolygons", registry);
       ICPOptimizationCoPConstraintHandler constraintHandler = new ICPOptimizationCoPConstraintHandler(bipedSupportPolygons, null, useControlPolygons, false, registry);
       ICPOptimizationQPSolver solver = new ICPOptimizationQPSolver(5, false);
-      solver.setMinimumFeedbackWeight(0.0001);
-      solver.setMinimumFootstepWeight(0.0001);
 
       // test left support
       solver.resetCoPLocationConstraint();
@@ -406,7 +406,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
       ReferenceFrame midFeetZUpFrame = new MidFrameZUpFrame("midFeetZupFrame", worldFrame, ankleZUpFrames.get(RobotSide.LEFT), ankleZUpFrames.get(RobotSide.RIGHT));
       midFeetZUpFrame.update();
 
-      BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(ankleZUpFrames, midFeetZUpFrame, ankleZUpFrames, registry, null);
+      BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(midFeetZUpFrame, ankleZUpFrames, registry, null);
       bipedSupportPolygons.updateUsingContactStates(contactStates);
 
       return bipedSupportPolygons;

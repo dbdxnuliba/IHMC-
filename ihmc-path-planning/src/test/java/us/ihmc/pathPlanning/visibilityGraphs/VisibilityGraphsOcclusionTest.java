@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.After;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -19,6 +20,7 @@ import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.tools.RotationMatrixTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -71,7 +73,7 @@ public class VisibilityGraphsOcclusionTest
    private static final double rayLengthSquared = MathTools.square(5.0);
    private static final int maxPolygonsToVisualize = 10;
    private static final int maxPolygonsVertices = 100;
-   private static final double defaultMaxAllowedSolveTime = 1.25;
+   private static final double defaultMaxAllowedSolveTime = 1.5;
    private static final int bodyPathVisualizationResolution = 500;
    private static final double defaultMarchingSpeedInMetersPerTick = 0.50;
    private static final double maximumFlyingDistance = 0.05;
@@ -87,6 +89,12 @@ public class VisibilityGraphsOcclusionTest
 
    @Rule
    public TestName name = new TestName();
+
+   @After
+   public void tearDown()
+   {
+      ReferenceFrameTools.clearWorldFrameTree();
+   }
 
    @Test(timeout = TIMEOUT)
    @ContinuousIntegrationTest(estimatedDuration = 10.0)
@@ -600,10 +608,10 @@ public class VisibilityGraphsOcclusionTest
       PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
       generator.addRectangle(50.0, 5.0);
 
-      startPoseToPack.set(-20.005, -2.001, 0.0);
+      startPoseToPack.set(-18.005, -2.001, 0.0);
       //      RotationMatrixTools.applyRollRotation(Math.toRadians(10.0), startPoseToPack, startPoseToPack);
 
-      goalPoseToPack.set(20.005, 2.001, 0.0);
+      goalPoseToPack.set(18.005, 2.001, 0.0);
       //      RotationMatrixTools.applyRollRotation(Math.toRadians(10.0), goalPoseToPack, goalPoseToPack);
 
       return generator.getPlanarRegionsList();
