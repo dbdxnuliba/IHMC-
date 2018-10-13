@@ -72,26 +72,38 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
    private final SideDependentList<RobotStateCartesianTrajectory> subscribers = new SideDependentList<>();
 
    @Override
-   public QuadrupedTimedStepListMessage getSteps()
+   public boolean listenToTowr()
    {
-      boolean useLoggedTrajectories = false;
-      if(!useLoggedTrajectories)
+      boolean messageReceived = false;
+      boolean useLoggedTrajectories = true;
+      if (!useLoggedTrajectories)
       {
          try
          {
             towrCartesianStates = QuadrupedTowrTrajectoryConverter.subscribeToTowrRobotStateCartesianTrajectory();
             QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
             //QuadrupedTowrTrajectoryConverter.printDataSet(towrCartesianStates);
+            PrintTools.info("received trajectory from towr!");
+            messageReceived = true;
          }
          catch (Exception e)
          {
          }
-      }else{
+      }
+      else
+      {
          towrCartesianStates = QuadrupedTowrTrajectoryConverter.loadExistingDataSet();
-         //PrintTools.info("load predefined trajectory!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+         PrintTools.info("load predefined trajectory!");
+         messageReceived = true;
          //QuadrupedTowrTrajectoryConverter.printTowrTrajectory(towrCartesianStates);
       }
 
+      return messageReceived;
+   }
+
+   @Override
+   public QuadrupedTimedStepListMessage getSteps()
+   {
       return QuadrupedTowrTrajectoryConverter.stateToTimedStepListMessage(towrCartesianStates);
    }
 
@@ -101,5 +113,10 @@ public class GenericQuadrupedTowrTest extends QuadrupedTowrTrajectoryTest
       return QuadrupedTowrTrajectoryConverter.createCenterOfMassMessage(towrCartesianStates);
    }
 
+   @Override
+   public QuadrupedBodyHeightMessage getBodyHeightMessage()
+   {
+      return QuadrupedTowrTrajectoryConverter.createBodyHeightMessage(towrCartesianStates);
+   }
 
 }

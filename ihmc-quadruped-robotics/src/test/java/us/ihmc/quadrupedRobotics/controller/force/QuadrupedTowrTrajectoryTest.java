@@ -98,7 +98,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, backLeftPosition, 0.1, 0.9, 1.3));
       footsteps.setIsExpressedInAbsoluteTime(false);
 
-      stepTeleopManager.pulishTimedStepListToController(footsteps);
+      stepTeleopManager.publishTimedStepListToController(footsteps);
 
       YoBoolean shiftPlanBasedOnStepAdjustment = (YoBoolean) conductor.getScs().getVariable("shiftPlanBasedOnStepAdjustment");
       YoBoolean useStepAdjustment = (YoBoolean) conductor.getScs().getVariable("useStepAdjustment");
@@ -196,7 +196,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, backLeftPosition, 0.1, 0.9, 1.3));
       footsteps.setIsExpressedInAbsoluteTime(false);
 
-      stepTeleopManager.pulishTimedStepListToController(footsteps);
+      stepTeleopManager.publishTimedStepListToController(footsteps);
 
       YoBoolean shiftPlanBasedOnStepAdjustment = (YoBoolean) conductor.getScs().getVariable("shiftPlanBasedOnStepAdjustment");
       YoBoolean useStepAdjustment = (YoBoolean) conductor.getScs().getVariable("useStepAdjustment");
@@ -284,7 +284,7 @@ public abstract class QuadrupedTowrTrajectoryTest implements QuadrupedMultiRobot
       footsteps.getQuadrupedStepList().add().set(QuadrupedMessageTools.createQuadrupedTimedStepMessage(RobotQuadrant.HIND_LEFT, backLeftPosition, 0.1, 0.9, 1.3));
       footsteps.setIsExpressedInAbsoluteTime(false);
 
-      stepTeleopManager.pulishTimedStepListToController(footsteps);
+      stepTeleopManager.publishTimedStepListToController(footsteps);
 
       YoBoolean shiftPlanBasedOnStepAdjustment = (YoBoolean) conductor.getScs().getVariable("shiftPlanBasedOnStepAdjustment");
       YoBoolean useStepAdjustment = (YoBoolean) conductor.getScs().getVariable("useStepAdjustment");
