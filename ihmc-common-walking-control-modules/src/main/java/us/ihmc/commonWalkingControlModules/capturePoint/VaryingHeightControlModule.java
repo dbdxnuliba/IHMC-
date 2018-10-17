@@ -120,11 +120,11 @@ public class VaryingHeightControlModule
 
       vMax = 0.7;
       vMin = -0.6;
-      aMaxCtrl = 7;
+      aMaxCtrl = 5;
       aMinCtrl = -5;
       jMax = 200;
-      aMaxPredicted = 0.5* aMaxCtrl;
-      aMinPredicted = 0.5* aMinCtrl;
+      aMaxPredicted = 0.6* aMaxCtrl;
+      aMinPredicted = 0.6* aMinCtrl;
       zMax = 1.17;
       zMaxTouchDown = 1.13;
       zMin = 1.00;
@@ -157,7 +157,7 @@ public class VaryingHeightControlModule
       yoDesiredHeightAcceleration.set(0.0);
 
 
-      if(isProjected && cmpOutsidePolygon  && distance>0.04) // cmp outside polygon & icp error larger than..
+      if(isProjected && cmpOutsidePolygon  && distance>0.04 && isInDoubleSupport==false) // cmp outside polygon & icp error larger than..
       {
 
          FrameLine2D desiredPushDirectionFromCoP = new FrameLine2D(desiredCMPtoProject, icpError); // should be positive
@@ -223,7 +223,7 @@ public class VaryingHeightControlModule
             zMax=zMaxTouchDown;
             if(dz>0)
             {
-               zMax=1.08;
+               zMax=1.1;
             }
          }
          else
@@ -270,7 +270,7 @@ public class VaryingHeightControlModule
             desiredHeightAcceleration = desiredHeightAccelerationPreviousTick + jMax *dt;
             if((stateClock>0.2 && stateClock<0.6) && (tMaxVelReachedPredicted<tr || tMaxPosReachedPredicted<tr))
             {
-               desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax *dt;
+               desiredHeightAcceleration = 0.0;
             }
          }
          else if(errorAngle>Math.PI-1.3 || errorAngle<-Math.PI+1.3)                                                                                // alignment ICPe and 'pendulum' negative force
@@ -279,10 +279,10 @@ public class VaryingHeightControlModule
             desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax *dt;
             if((stateClock>0.25 && stateClock<0.6) && (tMinVelReachedPredicted<tr || tMinPosReachedPredicted<tr))
             {
-               desiredHeightAcceleration = 0;
+               desiredHeightAcceleration = 0.0;
             }
          }
-         else if (hasSwitchInSwing && (errorAngleEndOfSwing>0) &&(errorAngleEndOfSwing<0.7 || errorAngleEndOfSwing>Math.PI-1.3))      // preparing for future angle
+         else if (hasSwitchInSwing)      // preparing for future angle
          {
             varyingHeightConditionYoEnum.set(VaryingHeightCondition.PREPARE);
             if(errorAngleEndOfSwing<0.7)
