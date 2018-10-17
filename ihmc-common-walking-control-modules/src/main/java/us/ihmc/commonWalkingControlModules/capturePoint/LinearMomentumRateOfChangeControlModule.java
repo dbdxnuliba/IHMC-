@@ -287,15 +287,6 @@ public abstract class LinearMomentumRateOfChangeControlModule
       linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
       linearMomentumRateOfChange.setZ(linearMomentumRateOfChange.getZ() - totalMass * gravityZ);
 
-      /*
-      FrameConvexPolygon2D supportPolygonInWorld = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
-      double CMPtoPolygon = supportPolygonInWorld.signedDistance(desiredCMP);
-      if(CMPtoPolygon>0)
-      {
-         double desiredAcceleration = CMPtoPolygon*50;
-         linearMomentumRateOfChange.set(linearMomentumRateOfChange.getX()*(gravityZ + desiredAcceleration)/gravityZ, linearMomentumRateOfChange.getY()*(gravityZ + desiredAcceleration)/gravityZ,linearMomentumRateOfChange.getZ()+totalMass*desiredAcceleration);
-      }
-      */
 
       computeHeightModification(linearMomentumRateOfChange);
 
@@ -370,6 +361,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
    public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
    {}
+
+   public void setFinalCoMPositionEndOfStep(FramePoint3D coMPositionEndOfStep){};
 
    public abstract void setKeepCoPInsideSupportPolygon(boolean keepCoPInsideSupportPolygon);
 

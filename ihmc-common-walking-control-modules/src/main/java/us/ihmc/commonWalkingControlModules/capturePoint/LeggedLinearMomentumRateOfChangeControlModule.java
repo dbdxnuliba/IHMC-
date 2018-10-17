@@ -27,6 +27,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    private VaryingHeightControlModule varyingHeightControlModule;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private YoBoolean isInDoubleSupport;
+   private FramePoint3D comEndOfStep = new FramePoint3D();
 
 
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
@@ -86,11 +87,17 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       varyingHeightControlModule.setLinearMomentumRateOfChangeFromLIP(linearMomentumRateOfChangeToModify);
       varyingHeightControlModule.setSupportSide(supportSide);
       varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
+      varyingHeightControlModule.setCoMEndOfSTep(comEndOfStep);
       varyingHeightControlModule.compute();
       FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
       modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
       // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
       linearMomentumRateOfChangeToModify.setIncludingFrame(modifiedLinearMomentumRate);
+   }
+
+   public void setFinalCoMPositionEndOfStep(FramePoint3D comEndOFStep)
+   {
+      this.comEndOfStep.setIncludingFrame(comEndOFStep);
    }
    
    public abstract void clearPlan();

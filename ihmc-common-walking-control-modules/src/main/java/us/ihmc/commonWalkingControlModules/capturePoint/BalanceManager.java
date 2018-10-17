@@ -80,7 +80,6 @@ public class BalanceManager
    private final PushRecoveryControlModule pushRecoveryControlModule;
    private final MomentumRecoveryControlModule momentumRecoveryControlModule;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
-   //private final VaryingHeightControlModule varyingHeightControlModule;
 
    private final YoFramePoint3D yoCenterOfMass = new YoFramePoint3D("centerOfMass", worldFrame, registry);
    private final YoFramePoint2D yoDesiredCapturePoint = new YoFramePoint2D("desiredICP", worldFrame, registry);
@@ -270,7 +269,6 @@ public class BalanceManager
       double maxAllowedDistanceCMPSupport = walkingControllerParameters.getMaxAllowedDistanceCMPSupport();
       boolean alwaysAllowMomentum = walkingControllerParameters.alwaysAllowMomentum();
       momentumRecoveryControlModule = new MomentumRecoveryControlModule(defaultFootPolygons, maxAllowedDistanceCMPSupport, alwaysAllowMomentum, registry, yoGraphicsListRegistry);
-      //varyingHeightControlModule = new VaryingHeightControlModule(registry, yoGraphicsListRegistry);
 
       controlHeightWithMomentum.set(walkingControllerParameters.controlHeightWithMomentum());
 
@@ -495,24 +493,13 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setPerfectCMP(yoPerfectCMP);
       linearMomentumRateOfChangeControlModule.setPerfectCoP(yoPerfectCoP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
+         FramePoint3D comEndOfStep = new FramePoint3D();
+         icpPlanner.getFinalDesiredCenterOfMassPosition(comEndOfStep);
+         linearMomentumRateOfChangeControlModule.setFinalCoMPositionEndOfStep(comEndOfStep);
       desiredCMP.set(yoDesiredCMP);
       linearMomentumRateOfChangeControlModule.setCenterOfMass(centerOfMassPosition);
       linearMomentumRateOfChangeControlModule.compute(desiredCMP, desiredCMP);
       yoDesiredCMP.set(desiredCMP);
-
-      icpError2d.changeFrame(worldFrame);
-      centerOfMassPosition.changeFrame(worldFrame);
-      desiredCMP.changeFrame(worldFrame);
-
-
-      /*
-      varyingHeightControlModule.setCoM(centerOfMassPosition);
-      varyingHeightControlModule.setICPError(icpError2d);
-      varyingHeightControlModule.setDesiredCMP(desiredCMP);
-      varyingHeightControlModule.setSupportPolygon(bipedSupportPolygons.getSupportPolygonInWorld());
-      varyingHeightControlModule.compute();
-      */
-
 
       tempPoint2D.setIncludingFrame(perfectCoP2d);
       tempPoint2D.changeFrame(midFootZUpFrame);

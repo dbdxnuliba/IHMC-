@@ -1,9 +1,8 @@
 package us.ihmc.commonWalkingControlModules.capturePoint;
 
-import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
-import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -11,7 +10,6 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.*;
@@ -22,13 +20,15 @@ public class VaryingHeightControlModule
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
-   private enum VaryingHeightCondition {Aligned, Blah1, blah2};
+   private enum VaryingHeightCondition {ALIGNED_NEG, ALIGNED_POS, MAXZ, MINZ, HOLD, GO_BACK, DEFAULT, PREPARE};
    private FrameConvexPolygon2D supportPolygon = new FrameConvexPolygon2D();
    private FramePoint2D desiredCMPtoProject = new FramePoint2D();
    private FrameVector2D icpError = new FrameVector2D();
    private FramePoint2D com2DtoProject = new FramePoint2D();
    private FramePoint3D com3D = new FramePoint3D();
    private FrameVector3D linearMomentumRateOfChangeFromLIP = new FrameVector3D();
+   private FramePoint2D comEndOfStep2D = new FramePoint2D();
+   private YoFramePoint2D yoCoMEndOfSTep2D;
 
 
    private YoFramePoint2D yoProjectedDesiredCMP;
@@ -36,9 +36,12 @@ public class VaryingHeightControlModule
    private final YoEnum<VaryingHeightCondition> varyingHeightConditionYoEnum;
 
    private double totalMass;
+   private double stateClock;
+   private YoDouble yoTimeInState;
 
 
    private double desiredHeightAcceleration = 0;
+   private double desiredHeightAccelerationPreviousTick = 0;
    private YoDouble yoDesiredHeightAcceleration;
 
 
@@ -57,24 +60,45 @@ public class VaryingHeightControlModule
    private boolean isInDoubleSupport;
 
    private YoDouble copCoMICPeAngle;
-   private YoInteger condition;
 
-   private boolean stopBouncing;
-   private boolean maxNegVelocityIsReached;
-   private YoBoolean yoStay;
+   private boolean hasSwitchInSwing;
+   private boolean approachingSwich;
+
+   double vMax;
+   double vMin;
+   double aMaxCtrl;
+   double aMinCtrl;
+   double jMax;
+   double dt;
+   double aMaxPredicted;
+   double aMinPredicted;
+   double zMax;
+   double zMaxTouchDown;
+   double zMin;
+   double minKneeAngle;
+   double maxKneeAngle;
+   double tf;
+   double tr;
+   double taft;
+   double a;
+   double b;
+   double c;
+
+   boolean walkingStateSwitch;
+   int ssCounter=0;
 
    public  VaryingHeightControlModule(double totalMass, HighLevelHumanoidControllerToolbox controllerToolbox, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       this.controllerToolbox=controllerToolbox;
       this.totalMass=totalMass;
       parentRegistry.addChild(registry);
-
+      dt = controllerToolbox.getControlDT();
       yoDesiredHeightAcceleration = new YoDouble("DesiredHeightAccelerationHeightControl", registry);
       copCoMICPeAngle = new YoDouble("CoPCoMICPeAngle", registry);
-      condition = new YoInteger("VaryingHeightCondition", registry);
-      yoStay = new YoBoolean("VaryingHeightStay",registry);
+      yoCoMEndOfSTep2D = new YoFramePoint2D("varyingHeightCoMEndOfSTep",ReferenceFrame.getWorldFrame(), registry);
 
       varyingHeightConditionYoEnum = new YoEnum<>("varyingHeightConditionEnum", registry, VaryingHeightCondition.class);
+      yoTimeInState = new YoDouble("varyingHeightTimeInState", registry);
 
       String label = getClass().getSimpleName();
       ArtifactList artifacts = new ArtifactList(label);
@@ -91,6 +115,23 @@ public class VaryingHeightControlModule
 
    public void compute()
    {
+      stateClock=stateClock+dt;
+      yoTimeInState.set(stateClock);
+
+      vMax = 0.7;
+      vMin = -0.6;
+      aMaxCtrl = 7;
+      aMinCtrl = -5;
+      jMax = 200;
+      aMaxPredicted = 0.5* aMaxCtrl;
+      aMinPredicted = 0.5* aMinCtrl;
+      zMax = 1.17;
+      zMaxTouchDown = 1.13;
+      zMin = 1.00;
+      minKneeAngle = 0.25;
+      maxKneeAngle = 2.1;
+
+      desiredHeightAccelerationPreviousTick = desiredHeightAcceleration;
       if(supportSide==null)
       {
          kneeAngle = 1.17;
@@ -104,45 +145,32 @@ public class VaryingHeightControlModule
       com3D.changeFrame(ReferenceFrame.getWorldFrame());
       desiredCMPtoProject.changeFrame(ReferenceFrame.getWorldFrame());
       icpError.changeFrame(ReferenceFrame.getWorldFrame());
+      yoCoMEndOfSTep2D.set(comEndOfStep2D);
 
-      double distance = supportPolygon.signedDistance(desiredCMPtoProject);
+      double distance = supportPolygon.distance(desiredCMPtoProject);
       boolean cmpOutsidePolygon = !supportPolygon.isPointInside(desiredCMPtoProject);
+      LineSegment2D projectedCMPPolygonEdge = new LineSegment2D();
+      boolean closestEdgeFound = supportPolygon.getClosestEdge(desiredCMPtoProject, projectedCMPPolygonEdge);
       boolean isProjected = supportPolygon.orthogonalProjection(desiredCMPtoProject);
+
       yoProjectedDesiredCMP.set(desiredCMPtoProject);
       yoDesiredHeightAcceleration.set(0.0);
-      if(isProjected && cmpOutsidePolygon  && icpError.length()>0.025) // cmp outside polygon & icp error larger than..
+
+
+      if(isProjected && cmpOutsidePolygon  && distance>0.04) // cmp outside polygon & icp error larger than..
       {
+
          FrameLine2D desiredPushDirectionFromCoP = new FrameLine2D(desiredCMPtoProject, icpError); // should be positive
          desiredPushDirectionFromCoP.orthogonalProjection(com2DtoProject);
          yoProjectedCoM2D.set(com2DtoProject);
-         FrameVector2D projectedCMPVector = new FrameVector2D(desiredCMPtoProject);
-         FrameVector2D projectedCoMVector = new FrameVector2D(com2DtoProject);
-         projectedCMPVector.sub(projectedCoMVector);
-         double copCoMOrthogonalDistance =  com2DtoProject.distance(desiredCMPtoProject)-0.05;
-         double icpXSign = MathTools.sign(icpError.getX());
-         double cmpXSign = MathTools.sign(projectedCMPVector.getX());
-         if(MathTools.epsilonEquals(icpXSign,cmpXSign,0.0001))
-         {
-            copCoMOrthogonalDistance = -com2DtoProject.distance(desiredCMPtoProject)-0.05;
-         }
+
          FrameVector3D centerOfMassVelocity = new FrameVector3D();
          controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
 
-         double maxAcceleration = 5;
-         double desiredJerk = 150;
-         double dt = controllerToolbox.getControlDT();
-         double maxCoMAccelerationFromTrajectoryController = 0.4*9.81;
-         double maxHeight = 1.15;
+         double x = com3D.getX();
          double z = com3D.getZ();
+         double dx = centerOfMassVelocity.getX();
          double dz = centerOfMassVelocity.getZ();
-
-         FramePoint2D com2D = new FramePoint2D();
-         com2D.setIncludingFrame(com3D);
-         double comDistanceToPolygon = supportPolygon.distance(com2D);
-
-
-
-
 
          FrameVector2D copCoMVec = new FrameVector2D();
          copCoMVec.setIncludingFrame(com3D);
@@ -150,56 +178,147 @@ public class VaryingHeightControlModule
          double errorAngle = copCoMVec.angle(icpError);
          copCoMICPeAngle.set(errorAngle);
 
+         // Very hacky, fix later (this is only for 4th and 5th step)
+         double errorAngleEndOfSwing;
+         FrameVector2D copCoMEndOfSwingVec = new FrameVector2D();
+         comEndOfStep2D.set(0.0,0.0);
+         if(com3D.getX()>1.25 && com3D.getX()<1.68)
+         {
+            comEndOfStep2D.set(1.68,-0.028);
+         }
+         else if(com3D.getX()>1.75 && com3D.getX()<2.178)
+         {
+            comEndOfStep2D.set(2.178,0.021);
+         }
+         copCoMEndOfSwingVec.setIncludingFrame(comEndOfStep2D);
+         copCoMEndOfSwingVec.changeFrame(ReferenceFrame.getWorldFrame());
+         copCoMEndOfSwingVec.sub(desiredCMPtoProject);
+         errorAngleEndOfSwing = copCoMEndOfSwingVec.angle(icpError);
+
+         double copCoMProjDistance = com2DtoProject.distance(desiredCMPtoProject);
+
+         if(isInDoubleSupport)
+         {
+            tf = 0.15;
+            tr = tf - stateClock;
+            taft = 0;
+            hasSwitchInSwing=false;
+            approachingSwich=false;
+         }
+         else
+         {
+            tf = 0.6;
+            tr = tf - stateClock;
+            taft = 0;
+            approachingSwich=false;
+            if( MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(),projectedCMPPolygonEdge.getSecondEndpointX(),0.04) );
+            {
+               hasSwitchInSwing=true;
+            }
+         }
 
 
-         if(stopBouncing || maxNegVelocityIsReached)
+         if(isInDoubleSupport==false && stateClock>0.25)
          {
-            desiredHeightAcceleration = 0.0;
-            if(z<1.15 || isInDoubleSupport==false) stopBouncing = false;
-            if(dz>-0.5) maxNegVelocityIsReached = false;
-            condition.set(6);
-         }
-         else if(z+MathTools.sign(dz)*dz*dz/(2*maxCoMAccelerationFromTrajectoryController)>maxHeight|| kneeAngle<0.25)            // max height and singularity
-         {
-            desiredHeightAcceleration = desiredHeightAcceleration-desiredJerk*dt;
-            if (dz<0 && isInDoubleSupport==true)
+            zMax=zMaxTouchDown;
+            if(dz>0)
             {
-               stopBouncing = true;
+               zMax=1.08;
             }
-            if(dz<-0.5)
+         }
+         else
+         {
+            zMax=1.17;
+         }
+
+
+
+         double tMinVelReachedPredicted = (vMin-dz)/aMinPredicted;
+         double tMaxVelReachedPredicted = (vMax-dz)/aMaxPredicted;
+         a = 0.5*(aMaxPredicted+aMaxPredicted*aMaxPredicted/-aMinPredicted);
+         b = dz+dz*aMaxPredicted/-aMinPredicted;
+         c = z-zMax+0.5*dz*dz/-aMinPredicted;
+         double tMaxPosReachedPredicted = (-b + Math.sqrt(b*b-4*a*c))/(2*a);
+
+         // NEEDS WORK:
+         a = 0.5*(aMinPredicted-aMinPredicted*aMinPredicted/aMaxPredicted);
+         b = dz - dz*aMinPredicted/aMaxPredicted;
+         c = z-zMin - 0.5*dz*dz/aMaxPredicted;
+         double tMinPosReachedPredicted = (-b - Math.sqrt(b*b-4*a*c))/(2*a);
+
+         if(z+MathTools.sign(dz)*dz*dz/(2* -aMinPredicted)>zMax|| kneeAngle<minKneeAngle )                             // max height/vel and singularity
+         {
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.MAXZ);
+            desiredHeightAcceleration = desiredHeightAccelerationPreviousTick- jMax *dt;
+            if(dz<-0.03 && tMinVelReachedPredicted<tr )
             {
-               maxNegVelocityIsReached = true;
+               desiredHeightAcceleration=0.0;
             }
-            condition.set(1);
          }
-         else if (com3D.getZ()<1.04 && dz<0.0)                                                                                    // min height
+         else if (z+MathTools.sign(dz)*dz*dz/(2*aMaxPredicted)<zMin || kneeAngle >maxKneeAngle )                         // min height / min vel
          {
-            desiredHeightAcceleration = desiredHeightAcceleration+desiredJerk*dt;
-            condition.set(2);
-         }
-         else if(errorAngle<0.7 && errorAngle>-0.7)                                                                               // alignment ICPe and 'pendulum' positive force
-         {
-            desiredHeightAcceleration = desiredHeightAcceleration +desiredJerk*dt;
-            condition.set(3);
-         }
-         else if(errorAngle>Math.PI-1.3 && errorAngle<Math.PI+1.3)                                                                // alignment ICPe and 'pendulum' negative force
-         {
-            desiredHeightAcceleration = desiredHeightAcceleration - desiredJerk*dt;
-            if(dz<-0.5)
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.MINZ);
+            desiredHeightAcceleration = desiredHeightAccelerationPreviousTick+ jMax *dt;
+            if (dz>0.03 && tMaxPosReachedPredicted<tr )
             {
-               maxNegVelocityIsReached = true;
+               desiredHeightAcceleration=0.0;
             }
-            condition.set(4);
+         }
+         else if(errorAngle<0.7 && errorAngle>-0.7)                                                                                         // alignment ICPe and 'pendulum' positive force
+         {
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.ALIGNED_POS);
+            desiredHeightAcceleration = desiredHeightAccelerationPreviousTick + jMax *dt;
+            if((stateClock>0.2 && stateClock<0.6) && (tMaxVelReachedPredicted<tr || tMaxPosReachedPredicted<tr))
+            {
+               desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax *dt;
+            }
+         }
+         else if(errorAngle>Math.PI-1.3 || errorAngle<-Math.PI+1.3)                                                                                // alignment ICPe and 'pendulum' negative force
+         {
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.ALIGNED_NEG);
+            desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax *dt;
+            if((stateClock>0.25 && stateClock<0.6) && (tMinVelReachedPredicted<tr || tMinPosReachedPredicted<tr))
+            {
+               desiredHeightAcceleration = 0;
+            }
+         }
+         else if (hasSwitchInSwing && (errorAngleEndOfSwing>0) &&(errorAngleEndOfSwing<0.7 || errorAngleEndOfSwing>Math.PI-1.3))      // preparing for future angle
+         {
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.PREPARE);
+            if(errorAngleEndOfSwing<0.7)
+            {
+               desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax * dt;
+               double tbreak = (0.7-errorAngle)/(errorAngleEndOfSwing-errorAngle)*tr;
+               if(tbreak>tMinPosReachedPredicted)
+               {
+                  aMinCtrl = (tMinPosReachedPredicted/tbreak)*aMinCtrl;
+               }
+            }
+            else if (errorAngleEndOfSwing>Math.PI-1.3)
+            {
+               desiredHeightAcceleration = desiredHeightAccelerationPreviousTick + jMax * dt;
+               double tbreak = (Math.PI-1.3-errorAngle)/(errorAngleEndOfSwing-errorAngle)*tr;
+               if(tbreak>tMaxPosReachedPredicted)
+               {
+                  aMaxCtrl = (tMinPosReachedPredicted/tbreak)*aMaxCtrl;
+               }
+            }
+
          }
          else                                                                                                                     // go back to trajectory
          {
+            varyingHeightConditionYoEnum.set(VaryingHeightCondition.GO_BACK);
             desiredHeightAcceleration = linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
-            condition.set(5);
          }
 
+         /**
+          * Velocity, acceleration and jerk checks, respectively
+          */
+         //desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, (vMin -dz)/dt, (vMax -dz)/dt);                      // Velocity
+         desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, aMinCtrl, aMaxCtrl);                                         // Acceleration
+         desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jMax *dt, desiredHeightAccelerationPreviousTick+
+               jMax *dt); // Jerk
 
-
-         desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, -maxAcceleration,maxAcceleration);
          yoDesiredHeightAcceleration.set(desiredHeightAcceleration);
 
          addedHorizontalAcceleration.set(com3D);
@@ -209,10 +328,20 @@ public class VaryingHeightControlModule
       }
       else
       {
-         desiredHeightAcceleration = 0;
-         yoDesiredHeightAcceleration.set(desiredHeightAcceleration);
-         modifiedLinearMomentumRateOfChange.setIncludingFrame(linearMomentumRateOfChangeFromLIP);
-         condition.set(0);
+         FrameVector3D centerOfMassVelocity = new FrameVector3D();
+         controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
+         double z = com3D.getZ();
+         double dz = centerOfMassVelocity.getZ();
+
+         /**
+          * Only smoothing out differences if varying height controller kicked in
+          */
+         varyingHeightConditionYoEnum.set(VaryingHeightCondition.DEFAULT);
+         desiredHeightAcceleration = linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
+         desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jMax *dt, desiredHeightAccelerationPreviousTick+
+               jMax *dt); // Jerk
+         yoDesiredHeightAcceleration.set(desiredHeightAcceleration); // HERE DOESNT AFFECT Ld!!
+         modifiedLinearMomentumRateOfChange.setIncludingFrame(linearMomentumRateOfChangeFromLIP.getReferenceFrame(),linearMomentumRateOfChangeFromLIP.getX(),linearMomentumRateOfChangeFromLIP.getY(),desiredHeightAcceleration*totalMass);
       }
 
    }
@@ -244,6 +373,10 @@ public class VaryingHeightControlModule
       this.com3D.setIncludingFrame(CoM);
    }
 
+   public void setCoMEndOfSTep(FramePoint3D coMEndOfSTep)
+   {
+   }
+
    public void setLinearMomentumRateOfChangeFromLIP(FrameVector3D linearMomentumRateOfChangeFromLIP)
    {
       this.linearMomentumRateOfChangeFromLIP.setIncludingFrame(linearMomentumRateOfChangeFromLIP);
@@ -255,6 +388,17 @@ public class VaryingHeightControlModule
    }
    public void setIsInDoubleSupport(boolean isInDoubleSupport)
    {
-      this.isInDoubleSupport = isInDoubleSupport;
+      if(this.isInDoubleSupport==isInDoubleSupport)
+      {
+         walkingStateSwitch=false;
+         this.isInDoubleSupport = isInDoubleSupport;
+      }
+      else
+      {
+         walkingStateSwitch=true;
+         stateClock=0;
+         if(isInDoubleSupport=false)ssCounter=ssCounter+1;
+         this.isInDoubleSupport = isInDoubleSupport;
+      }
    }
 }
