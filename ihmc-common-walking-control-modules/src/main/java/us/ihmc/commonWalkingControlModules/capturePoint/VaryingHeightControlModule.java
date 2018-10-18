@@ -64,6 +64,11 @@ public class VaryingHeightControlModule
    private boolean hasSwitchInSwing;
    private boolean approachingSwich;
 
+   private YoDouble yoTimeMinVelReached;
+   private YoDouble yoTimeMaxVelReached;
+   private YoDouble yoTimeMinPosReached;
+   private YoDouble yoTimeMaxPosReached;
+
    double vMax;
    double vMin;
    double aMaxCtrl;
@@ -97,6 +102,11 @@ public class VaryingHeightControlModule
       copCoMICPeAngle = new YoDouble("CoPCoMICPeAngle", registry);
       yoCoMEndOfSTep2D = new YoFramePoint2D("varyingHeightCoMEndOfSTep",ReferenceFrame.getWorldFrame(), registry);
 
+      yoTimeMinVelReached = new YoDouble("estTimeMinVel", registry);
+      yoTimeMaxVelReached = new YoDouble("estTimeMaxVel", registry);
+      yoTimeMinPosReached = new YoDouble("estTimeMinPos", registry);
+      yoTimeMaxPosReached = new YoDouble("estTimeMaxPos", registry);
+
       varyingHeightConditionYoEnum = new YoEnum<>("varyingHeightConditionEnum", registry, VaryingHeightCondition.class);
       yoTimeInState = new YoDouble("varyingHeightTimeInState", registry);
 
@@ -126,7 +136,7 @@ public class VaryingHeightControlModule
       aMaxPredicted = 0.6* aMaxCtrl;
       aMinPredicted = 0.6* aMinCtrl;
       zMax = 1.17;
-      zMaxTouchDown = 1.13;
+      zMaxTouchDown = 1.14;
       zMin = 1.00;
       minKneeAngle = 0.25;
       maxKneeAngle = 2.1;
@@ -234,17 +244,21 @@ public class VaryingHeightControlModule
 
 
          double tMinVelReachedPredicted = (vMin-dz)/aMinPredicted;
+         yoTimeMinVelReached.set(tMinVelReachedPredicted);
          double tMaxVelReachedPredicted = (vMax-dz)/aMaxPredicted;
+         yoTimeMaxVelReached.set(tMaxVelReachedPredicted);
          a = 0.5*(aMaxPredicted+aMaxPredicted*aMaxPredicted/-aMinPredicted);
          b = dz+dz*aMaxPredicted/-aMinPredicted;
          c = z-zMax+0.5*dz*dz/-aMinPredicted;
          double tMaxPosReachedPredicted = (-b + Math.sqrt(b*b-4*a*c))/(2*a);
+         yoTimeMaxPosReached.set(tMaxPosReachedPredicted);
 
          // NEEDS WORK:
          a = 0.5*(aMinPredicted-aMinPredicted*aMinPredicted/aMaxPredicted);
          b = dz - dz*aMinPredicted/aMaxPredicted;
          c = z-zMin - 0.5*dz*dz/aMaxPredicted;
          double tMinPosReachedPredicted = (-b - Math.sqrt(b*b-4*a*c))/(2*a);
+         yoTimeMinPosReached.set(tMinPosReachedPredicted);
 
          if(z+MathTools.sign(dz)*dz*dz/(2* -aMinPredicted)>zMax|| kneeAngle<minKneeAngle )                             // max height/vel and singularity
          {
