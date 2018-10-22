@@ -16,6 +16,10 @@ import us.ihmc.yoVariables.variable.*;
 
 import java.awt.*;
 
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
+
 public class VaryingHeightControlModule
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -23,6 +27,7 @@ public class VaryingHeightControlModule
    private enum VaryingHeightCondition {ALIGNED_NEG, ALIGNED_POS, MAXZ, MINZ, HOLD, GO_BACK, DEFAULT, PREPARE};
    private FrameConvexPolygon2D supportPolygon = new FrameConvexPolygon2D();
    private FramePoint2D desiredCMPtoProject = new FramePoint2D();
+   private FramePoint2D desiredCMP = new FramePoint2D();
    private FrameVector2D icpError = new FrameVector2D();
    private FramePoint2D com2DtoProject = new FramePoint2D();
    private FramePoint3D com3D = new FramePoint3D();
@@ -68,6 +73,10 @@ public class VaryingHeightControlModule
    private YoDouble yoTimeMaxVelReached;
    private YoDouble yoTimeMinPosReached;
    private YoDouble yoTimeMaxPosReached;
+   private YoDouble yoTimeRemaining;
+   private YoDouble yoTimeToOptimalAngle;
+
+   private YoDouble yoCoMVelocity;
 
    double vMax;
    double vMin;
@@ -106,6 +115,10 @@ public class VaryingHeightControlModule
       yoTimeMaxVelReached = new YoDouble("estTimeMaxVel", registry);
       yoTimeMinPosReached = new YoDouble("estTimeMinPos", registry);
       yoTimeMaxPosReached = new YoDouble("estTimeMaxPos", registry);
+      yoTimeRemaining = new YoDouble("estTimeRemainingToEnd", registry);
+      yoTimeToOptimalAngle = new YoDouble("estTimeToOptimalAngle",registry);
+
+      yoCoMVelocity = new YoDouble("comVelocityHeightControl", registry);
 
       varyingHeightConditionYoEnum = new YoEnum<>("varyingHeightConditionEnum", registry, VaryingHeightCondition.class);
       yoTimeInState = new YoDouble("varyingHeightTimeInState", registry);
@@ -178,9 +191,12 @@ public class VaryingHeightControlModule
          controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
 
          double x = com3D.getX();
+         double y = com3D.getY();
          double z = com3D.getZ();
          double dx = centerOfMassVelocity.getX();
+         double dy = centerOfMassVelocity.getY();
          double dz = centerOfMassVelocity.getZ();
+         yoCoMVelocity.set(dz);
 
          FrameVector2D copCoMVec = new FrameVector2D();
          copCoMVec.setIncludingFrame(com3D);
@@ -226,8 +242,11 @@ public class VaryingHeightControlModule
                hasSwitchInSwing=true;
             }
          }
+         yoTimeRemaining.set(tr);
 
-
+         /**
+          * Different max heights
+          */
          if(isInDoubleSupport==false && stateClock>0.25)
          {
             zMax=zMaxTouchDown;
@@ -241,25 +260,56 @@ public class VaryingHeightControlModule
             zMax=1.17;
          }
 
+         /**
+          * Computation of time to optimal angle in trajectory (DOESN'T WORK (YET))
+          */
+         double alpha = (icpError.getY()*cos(-0.7)+icpError.getX()*sin(-0.7))/(icpError.getX()*cos(-0.7) -icpError.getY()*sin(-0.7));
+         double halveEomegaT;
+         double omega = sqrt(9.81/1.1);
+         double icpx = x + dx/omega;
+         double icpy = y + dy/omega;
+         a = (icpy - desiredCMP.getY()- alpha*(icpx - desiredCMP.getX()));
+         b = (desiredCMP.getY()-y - alpha*(desiredCMP.getX()-x));
+         c = - (icpy - desiredCMP.getY() -2*y - alpha*(icpx - desiredCMP.getX()- 2*x));
+         double t1 = Math.log(2*(-b + sqrt(b*b-4*a*c))/(2*a))/omega;
+         double t2 = Math.log(2*(-b - sqrt(b*b-4*a*c))/(2*a))/omega;
+         double tOptimal;
+         if (t1>0.0 && t1<(tf-stateClock))
+         {
+            tOptimal = t1;
+         }
+         else
+         {
+            tOptimal = t2;
+         }
+         yoTimeToOptimalAngle.set(tOptimal);
 
-
+         /**
+          * Computation of time to velocity constraints
+          */
          double tMinVelReachedPredicted = (vMin-dz)/aMinPredicted;
          yoTimeMinVelReached.set(tMinVelReachedPredicted);
          double tMaxVelReachedPredicted = (vMax-dz)/aMaxPredicted;
          yoTimeMaxVelReached.set(tMaxVelReachedPredicted);
+
+         /**
+          * Computation of time to position constraints
+          */
          a = 0.5*(aMaxPredicted+aMaxPredicted*aMaxPredicted/-aMinPredicted);
          b = dz+dz*aMaxPredicted/-aMinPredicted;
          c = z-zMax+0.5*dz*dz/-aMinPredicted;
-         double tMaxPosReachedPredicted = (-b + Math.sqrt(b*b-4*a*c))/(2*a);
+         double tMaxPosReachedPredicted = (-b + sqrt(b*b-4*a*c))/(2*a);
          yoTimeMaxPosReached.set(tMaxPosReachedPredicted);
 
-         // NEEDS WORK:
          a = 0.5*(aMinPredicted-aMinPredicted*aMinPredicted/aMaxPredicted);
          b = dz - dz*aMinPredicted/aMaxPredicted;
          c = z-zMin - 0.5*dz*dz/aMaxPredicted;
-         double tMinPosReachedPredicted = (-b - Math.sqrt(b*b-4*a*c))/(2*a);
+         double tMinPosReachedPredicted = (-b - sqrt(b*b-4*a*c))/(2*a);
          yoTimeMinPosReached.set(tMinPosReachedPredicted);
 
+         /**
+          * Conditions
+          */
          if(z+MathTools.sign(dz)*dz*dz/(2* -aMinPredicted)>zMax|| kneeAngle<minKneeAngle )                             // max height/vel and singularity
          {
             varyingHeightConditionYoEnum.set(VaryingHeightCondition.MAXZ);
@@ -291,7 +341,7 @@ public class VaryingHeightControlModule
          {
             varyingHeightConditionYoEnum.set(VaryingHeightCondition.ALIGNED_NEG);
             desiredHeightAcceleration = desiredHeightAccelerationPreviousTick - jMax *dt;
-            if((stateClock>0.25 && stateClock<0.6) && (tMinVelReachedPredicted<tr || tMinPosReachedPredicted<tr))
+            if((stateClock>0.25 && stateClock<0.6) && (tMinVelReachedPredicted<tr))
             {
                desiredHeightAcceleration = 0.0;
             }
@@ -374,6 +424,7 @@ public class VaryingHeightControlModule
    public void setDesiredCMP(FramePoint2D desiredCMP)
    {
       this.desiredCMPtoProject.setIncludingFrame(desiredCMP);
+      this.desiredCMP.setIncludingFrame(desiredCMP);
    }
 
    public void setICPError(FrameVector2D icpError)
