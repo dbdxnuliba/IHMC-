@@ -40,7 +40,7 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
                                                                  double gravityZ, double controlDT, YoVariableRegistry parentRegistry,
                                                                  YoGraphicsListRegistry yoGraphicsListRegistry, boolean use2DProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
-      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2DProjection, controllerToolbox);
+      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2DProjection, controllerToolbox, walkingControllerParameters);
 
       this.yoTime = yoTime;
 

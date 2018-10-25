@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationControllerInterface;
+import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -24,7 +25,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    protected RobotSide transferToSide = null;
    protected final YoEnum<RobotSide> supportLegPreviousTick;
 
-   private VaryingHeightControlModule varyingHeightControlModule;
+   private VaryingHeightControlModuleInterface varyingHeightControlModule;
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private YoBoolean isInDoubleSupport;
    private FramePoint3D comEndOfStep = new FramePoint3D();
@@ -32,7 +33,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
 
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry,
-                                                        boolean use2dProjection, HighLevelHumanoidControllerToolbox controllerToolbox)
+                                                        boolean use2dProjection, HighLevelHumanoidControllerToolbox controllerToolbox, WalkingControllerParameters walkingControllerParameters)
    {
       super(namePrefix, referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry, use2dProjection, controllerToolbox);
 
@@ -42,7 +43,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
 
-      varyingHeightControlModule = new VaryingHeightControlModule(totalMass, controllerToolbox,registry,yoGraphicsListRegistry);
+      varyingHeightControlModule = new VaryingHeightControlModule2(totalMass, controllerToolbox,registry,yoGraphicsListRegistry, walkingControllerParameters);
 
    }
 

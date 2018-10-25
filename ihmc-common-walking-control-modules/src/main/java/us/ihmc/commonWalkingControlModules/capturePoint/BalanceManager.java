@@ -198,7 +198,7 @@ public class BalanceManager
          icpControlGains = new YoICPControlGains("", registry);
          icpControlGains.set(walkingControllerParameters.createICPControlGains());
          linearMomentumRateOfChangeControlModule = new ICPBasedLinearMomentumRateOfChangeControlModule(referenceFrames, bipedSupportPolygons, controlDT,
-               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection, controllerToolbox);
+               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection, controllerToolbox, walkingControllerParameters);
       }
       ICPOptimizationControllerInterface icpOptimizationController = linearMomentumRateOfChangeControlModule.getICPOptimizationController();
 
@@ -494,6 +494,7 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setPerfectCoP(yoPerfectCoP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
          FramePoint3D comEndOfStep = new FramePoint3D();
+         icpPlanner.computeFinalCoMPositionInSwing();
          icpPlanner.getFinalDesiredCenterOfMassPosition(comEndOfStep);
          linearMomentumRateOfChangeControlModule.setFinalCoMPositionEndOfStep(comEndOfStep);
       desiredCMP.set(yoDesiredCMP);

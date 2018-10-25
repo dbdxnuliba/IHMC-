@@ -222,6 +222,7 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       referenceCoPGenerator.clear();
       referenceCMPGenerator.reset();
       referenceICPGenerator.reset();
+      referenceCoMGenerator.reset();
       angularMomentumGenerator.clear();
 
       for (int i = 0; i < swingDurations.size(); i++)
@@ -240,6 +241,7 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       referenceCoPGenerator.clearPlan();
       referenceCMPGenerator.reset();
       referenceICPGenerator.reset();
+      referenceCoMGenerator.reset();
       angularMomentumGenerator.clear();
    }
 

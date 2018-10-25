@@ -218,8 +218,8 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       {
          LegConfigurationGains gains = new LegConfigurationGains();
          //gains.setJointSpaceKp(1000.0);
-         gains.setActuatorSpaceKp(500);
-         gains.setJointSpaceKd(10.0);
+         gains.setActuatorSpaceKp(80);
+         gains.setJointSpaceKd(5.0);
 
          return gains;
       }
