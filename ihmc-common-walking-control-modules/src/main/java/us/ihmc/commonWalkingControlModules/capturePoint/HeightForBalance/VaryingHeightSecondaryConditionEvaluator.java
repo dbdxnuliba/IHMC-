@@ -39,7 +39,7 @@ public class VaryingHeightSecondaryConditionEvaluator
    public VaryingHeightSecondaryConditionEnum computeAndGetSecondaryConditionEnum(double z, double dz,VaryingHeightPrimaryConditionEnum primaryCondition, boolean primaryConditionHasChanged, VaryingHeightSecondaryConditionEnum secondaryConditionPreviousTick,
                                                                                   double tInState, double tToMinVelocityPredicted, double tToMinPositionPredicted,
                                                                                   double tToMaxVelocityPredicted, double tToMaxPositionPredicted, double tRemainingEndOfWalkingState, double errorAngle,
-                                                                                  double errorAngleEndOfSwing, boolean angleGrows, double posAlignTresh, double negAlignTresh, double zMax)
+                                                                                  double errorAngleEndOfSwing, boolean angleGrows, double posAlignTresh, double negAlignTresh, double zMax, boolean nonDynamicCase)
    {
       this.secondaryConditionPreviousTick=secondaryConditionPreviousTick;
       tToSwitch=tRemainingEndOfWalkingState;
@@ -56,6 +56,9 @@ public class VaryingHeightSecondaryConditionEvaluator
          {
             tToSwitch = (posAlignTresh - errorAngle) / (errorAngleEndOfSwing - errorAngle) * tRemainingEndOfWalkingState;
          }
+         /**
+          *
+          */
          modifyPosAlignTreshold(tRemainingEndOfWalkingState,posAlignTresh,zMax);
       }
       else if (primaryCondition== VaryingHeightPrimaryConditionEnum.PREPARE_POS)
@@ -117,6 +120,7 @@ public class VaryingHeightSecondaryConditionEvaluator
             */
          }
       }
+      aSmooth = MathTools.clamp(aSmooth,aMinCtrl,aMaxCtrl);
 
       /**
        * Evaluate secondary conditions
@@ -128,7 +132,7 @@ public class VaryingHeightSecondaryConditionEvaluator
       {
          secondaryCondition = VaryingHeightSecondaryConditionEnum.SMOOTH;
       }
-      else if (tInState > tHalfWaySwing && tToConst < tToSwitch)
+      else if (tInState > tHalfWaySwing && tToConst < tToSwitch || (nonDynamicCase && (primaryCondition==VaryingHeightPrimaryConditionEnum.MAXZ && dz<0.0 || primaryCondition==VaryingHeightPrimaryConditionEnum.MINZ && dz>0.0)))
       {
          secondaryCondition = VaryingHeightSecondaryConditionEnum.HOLD;
          if (secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.SMOOTH)

@@ -5,6 +5,8 @@ import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHuma
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
@@ -37,6 +39,8 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    private FramePoint2D comEndOfStep2D = new FramePoint2D();
    private YoFramePoint2D yoCoMEndOfSTep2D;
    private YoFramePoint2D yoCoMEndOfSwing2DNotHacky;
+
+   private FrameVector2D desiredICPVelocity = new FrameVector2D();
 
    private YoFramePoint2D yoProjectedDesiredCMP;
    private YoFramePoint2D yoProjectedCoM2D;
@@ -88,10 +92,12 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    double aMaxCtrl;
    double aMinCtrl;
    double jMax;
+   double jCtrl;
    double dt;
    double aMaxPredicted;
    double aMinPredicted;
    double zMax;
+   double zMaxStartSwing;
    double zMaxTouchDown;
    double zMin;
    double minKneeAngle;
@@ -173,10 +179,10 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       jMax = 200;
       aMaxPredicted = 0.6 * aMaxCtrl;
       aMinPredicted = 0.6 * aMinCtrl;
-      zMax = 1.17;
+      zMaxStartSwing = 1.18;
       zMaxTouchDown = 1.12;
       zMin = 1.00;
-      smoothEpsilon = 0.03;
+      smoothEpsilon = 0.04;
       minKneeAngle = 0.25;
       maxKneeAngle = 2.1;
       posAlignTresh = 0.7;
@@ -221,8 +227,10 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       yoProjectedDesiredCMP.set(desiredCMPtoProject);
       yoDesiredHeightAcceleration.set(0.0);
 
+      boolean nonDynamicCase = desiredICPVelocity.length()<0.02;
+
       boolean heightControlCondition = (
-            isProjected && cmpOutsidePolygon && distance > 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && isInDoubleSupport == false
+            isProjected && cmpOutsidePolygon && distance > 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && (isInDoubleSupport == false || nonDynamicCase==true)
                   || heightControlInThisWalkingState == true);
 
       if (heightControlCondition)
@@ -286,13 +294,17 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          /**
           * Different max heights
           */
-         if (stateClock > tForHalfWaySwing)
+         if(nonDynamicCase)
+         {
+            zMax = zMaxStartSwing;
+         }
+         else if (stateClock > tForHalfWaySwing)
          {
             zMax = zMaxTouchDown;
          }
          else
          {
-            zMax = 1.17;
+            zMax = zMaxStartSwing;
          }
 
          /**
@@ -328,7 +340,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
                                                                                                                                   secondaryConditionPreviousTick, stateClock,tMinVelReachedPredicted,tMinPosReachedPredicted,
                                                                                                                                   tMaxVelReachedPredicted,tMaxPosReachedPredicted,tRemainingEndOfWalkingState,errorAngle,
                                                                                                                                   errorAngleEndOfSwing,angleGrows,posAlignTresh, negAlignTresh,
-                                                                                                                                  zMaxTouchDown);
+                                                                                                                                  zMaxTouchDown, nonDynamicCase);
          secondaryConditionYoEnum.set(secondaryCondition);
          posAlignTresh = secondaryConditionEvaluator.getModifiedPosAlignTresh();
          yoPosAlignThresh.set(posAlignTresh);
@@ -344,15 +356,20 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          if (secondaryCondition == VaryingHeightSecondaryConditionEnum.SMOOTH)
          {
             desiredHeightAcceleration = aSmooth;//tConst*aCtrl/tRemainingConditionSwitch;
+            jCtrl=jMax;
          }
          else if (secondaryCondition == VaryingHeightSecondaryConditionEnum.HOLD)
          {
             desiredHeightAcceleration = 0;
+            jCtrl=jMax;
          }
          else if (secondaryCondition == VaryingHeightSecondaryConditionEnum.DEFAULT)
          {
             desiredHeightAcceleration = aCtrl;
+            jCtrl=jMax;
          }
+         jCtrl = MathTools.clamp(jCtrl,-jMax,jMax);
+
 
          /**
           * Velocity, acceleration and jerk checks, respectively
@@ -360,7 +377,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          //desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, (vMin -dz)/dt, (vMax -dz)/dt);                      // Velocity
          desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration, aMinCtrl, aMaxCtrl);                                         // Acceleration
          desiredHeightAcceleration = MathTools
-               .clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jMax * dt, desiredHeightAccelerationPreviousTick + jMax * dt); // Jerk
+               .clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jCtrl * dt, desiredHeightAccelerationPreviousTick + jCtrl * dt); // Jerk
 
          yoDesiredHeightAcceleration.set(desiredHeightAcceleration);
 
@@ -462,5 +479,11 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          stateClock = 0;
          this.isInDoubleSupport = isInDoubleSupport;
       }
+   }
+
+   public void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity)
+   {
+      desiredICPVelocity.setIncludingFrame(desiredCapturePointVelocity);
+      desiredICPVelocity.changeFrame(ReferenceFrame.getWorldFrame());
    }
 }

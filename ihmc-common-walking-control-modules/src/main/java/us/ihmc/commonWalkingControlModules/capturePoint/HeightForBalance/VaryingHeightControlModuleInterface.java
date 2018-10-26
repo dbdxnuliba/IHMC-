@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.HeightForBalance;
 
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 public interface VaryingHeightControlModuleInterface
@@ -15,4 +16,5 @@ public interface VaryingHeightControlModuleInterface
    void setLinearMomentumRateOfChangeFromLIP(FrameVector3D linearMomentumRateOfChangeFromLIP);
    void setSupportSide(RobotSide supportSide);
    void setIsInDoubleSupport(boolean isInDoubleSupport);
+   void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity);
 }

@@ -5,6 +5,7 @@ import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHuma
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
@@ -697,5 +698,11 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          stateClock=0;
          this.isInDoubleSupport = isInDoubleSupport;
       }
+   }
+
+   @Override
+   public void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity)
+   {
+
    }
 }

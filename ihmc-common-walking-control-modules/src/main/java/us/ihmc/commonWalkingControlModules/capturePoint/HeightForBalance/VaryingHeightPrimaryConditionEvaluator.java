@@ -39,7 +39,7 @@ public class VaryingHeightPrimaryConditionEvaluator
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MINZ;
       }
-      else if(errorAngle<posAlignTresh && errorAngle>-posAlignTresh && copCoMOrthDistance>0.0) //||(!useAngleForConditions && distancePosAlignment)                                         // alignment ICPe and 'pendulum' positive force
+      else if(errorAngle<posAlignTresh && errorAngle>-posAlignTresh ) //||(!useAngleForConditions && distancePosAlignment)                                         // alignment ICPe and 'pendulum' positive force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_POS && angleGrows && MathTools.epsilonEquals(errorAngle,posAlignTresh,0.2))
@@ -51,7 +51,7 @@ public class VaryingHeightPrimaryConditionEvaluator
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_POS;
          }
       }
-      else if((errorAngle>negAlignTresh|| errorAngle<-negAlignTresh) && copCoMOrthDistance>0.0 )   //||(!useAngleForConditions && !distancePosAlignment)                                                         // alignment ICPe and 'pendulum' negative force
+      else if(errorAngle>negAlignTresh|| errorAngle<-negAlignTresh )   //||(!useAngleForConditions && !distancePosAlignment)                                                         // alignment ICPe and 'pendulum' negative force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_NEG;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_NEG && angleGrows && MathTools.epsilonEquals(errorAngle,-negAlignTresh,0.2))

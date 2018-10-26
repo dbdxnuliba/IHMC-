@@ -92,6 +92,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       varyingHeightControlModule.setSupportSide(supportSide);
       varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
       varyingHeightControlModule.setCoMEndOfSTep(comEndOfStep);
+      varyingHeightControlModule.setDesiredCapturePointVelocity(desiredCapturePointVelocity);
       varyingHeightControlModule.compute();
       FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
       modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
