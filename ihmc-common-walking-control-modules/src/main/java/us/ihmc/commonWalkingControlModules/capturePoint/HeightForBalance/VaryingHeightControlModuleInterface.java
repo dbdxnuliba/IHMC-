@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.capturePoint;
+package us.ihmc.commonWalkingControlModules.capturePoint.HeightForBalance;
 
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.robotics.robotSide.RobotSide;

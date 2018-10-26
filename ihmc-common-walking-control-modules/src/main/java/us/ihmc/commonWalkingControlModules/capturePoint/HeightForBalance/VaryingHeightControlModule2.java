@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.capturePoint;
+package us.ihmc.commonWalkingControlModules.capturePoint.HeightForBalance;
 
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
@@ -111,6 +111,7 @@ public class VaryingHeightControlModule2 implements VaryingHeightControlModuleIn
    private YoBoolean yoAngleImproves;
    private YoBoolean yoDistanceImproves;
 
+   private YoDouble yoPosAlignThresh;
    boolean heightControlInThisWalkingState = false;
 
 
@@ -140,6 +141,7 @@ public class VaryingHeightControlModule2 implements VaryingHeightControlModuleIn
       yoTimeMaxPosReached = new YoDouble("estTimeMaxPos", registry);
       yoTimeRemaining = new YoDouble("estTimeRemainingToEnd", registry);
 
+      yoPosAlignThresh = new YoDouble("posAlignmentThreshold",registry);
       yoCoMVelocity = new YoDouble("comVelocityHeightControl", registry);
 
       varyingHeightConditionYoEnum = new YoEnum<>("varyingHeightCondition", registry, VaryingHeightCondition.class);
@@ -288,11 +290,13 @@ public class VaryingHeightControlModule2 implements VaryingHeightControlModuleIn
           */
          if(isInDoubleSupport==false && stateClock>0.25)
          {
-            zMax=zMaxTouchDown;
+            zMax=1.12;
+            /*
             if(dz>0)
             {
                zMax=1.1;
             }
+            */
          }
          else if (isInDoubleSupport==true)
          {
@@ -400,6 +404,8 @@ public class VaryingHeightControlModule2 implements VaryingHeightControlModuleIn
                tr = (negAlignTresh-errorAngle)/(errorAngleEndOfSwing-errorAngle)*tr;
             }
          }
+
+         yoPosAlignThresh.set(posAlignTresh);
 
          /**
           * Evaluate secondary conditions

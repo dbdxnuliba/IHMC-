@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.capturePoint;
+package us.ihmc.commonWalkingControlModules.capturePoint.HeightForBalance;
 
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
