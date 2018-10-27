@@ -22,6 +22,7 @@ import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 import java.awt.*;
 
+import static java.lang.Math.max;
 import static java.lang.Math.sqrt;
 
 public class VaryingHeightControlModuleCentral implements VaryingHeightControlModuleInterface
@@ -39,6 +40,8 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    private FramePoint2D comEndOfStep2D = new FramePoint2D();
    private YoFramePoint2D yoCoMEndOfSTep2D;
    private YoFramePoint2D yoCoMEndOfSwing2DNotHacky;
+
+   private YoFramePoint2D captureLimit;
 
    private FrameVector2D desiredICPVelocity = new FrameVector2D();
 
@@ -170,6 +173,9 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       yoProjectedCoM2D = new YoFramePoint2D(label + "projCOM2D", ReferenceFrame.getWorldFrame(), registry);
       artifacts.add(new YoArtifactPosition("proj CoM2D", yoProjectedCoM2D.getYoX(), yoProjectedCoM2D.getYoY(), GraphicType.BALL_WITH_CROSS, Color.RED, 0.02));
 
+      captureLimit = new YoFramePoint2D(label + "captureLimit", ReferenceFrame.getWorldFrame(), registry);
+      artifacts.add(new YoArtifactPosition("captureLimitViz", captureLimit, GraphicType.BALL_WITH_CROSS, Color.blue, 0.02));
+
       artifacts.setVisible(true);
       yoGraphicsListRegistry.registerArtifactList(artifacts);
       vMax = 0.7;
@@ -181,6 +187,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       aMinPredicted = 0.6 * aMinCtrl;
       zMaxStartSwing = 1.18;
       zMaxTouchDown = 1.12;
+      zMax = 1.17;
       zMin = 1.00;
       smoothEpsilon = 0.04;
       minKneeAngle = 0.25;
@@ -233,6 +240,33 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
             isProjected && cmpOutsidePolygon && distance > 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && (isInDoubleSupport == false || nonDynamicCase==true)
                   || heightControlInThisWalkingState == true);
 
+      FrameVector3D centerOfMassVelocity = new FrameVector3D();
+      controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
+
+      double x = com3D.getX();
+      double y = com3D.getY();
+      double z = com3D.getZ();
+      double dx = centerOfMassVelocity.getX();
+      double dy = centerOfMassVelocity.getY();
+      double dz = centerOfMassVelocity.getZ();
+      yoCoMVelocity.set(dz);
+
+      double deltaZMax = zMax-z;
+      deltaZMax = max(0,deltaZMax);
+      double dzI = Math.sqrt(2*9.81*deltaZMax);
+      double term1 = (dzI/9.81 + Math.sqrt(zMax/9.81));
+      double xCPLim = x + term1*dx/(1 + term1*dzI/z);
+      double yCPLim = y + term1*dy/(1 + term1*dzI/z);
+      FramePoint2D cpLim = new FramePoint2D();
+      cpLim.set(xCPLim,yCPLim);
+      cpLim.changeFrame(ReferenceFrame.getWorldFrame());
+      captureLimit.set(cpLim);
+
+
+      FrameVector2D centerOfMassVelocity2D = new FrameVector2D();
+      centerOfMassVelocity2D.setIncludingFrame(centerOfMassVelocity);
+      centerOfMassVelocity2D.changeFrame(ReferenceFrame.getWorldFrame());
+
       if (heightControlCondition)
       {
          heightControlInThisWalkingState = true;
@@ -247,16 +281,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          desiredPushDirectionFromCoP.orthogonalProjection(com2DtoProjectEndOfSwing);
          yoProjectedCoM2D.set(com2DtoProject);
 
-         FrameVector3D centerOfMassVelocity = new FrameVector3D();
-         controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
 
-         double z = com3D.getZ();
-         double dz = centerOfMassVelocity.getZ();
-         yoCoMVelocity.set(dz);
-
-         FrameVector2D centerOfMassVelocity2D = new FrameVector2D();
-         centerOfMassVelocity2D.setIncludingFrame(centerOfMassVelocity);
-         centerOfMassVelocity2D.changeFrame(ReferenceFrame.getWorldFrame());
 
          /**
           * Error angle current
@@ -390,8 +415,6 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       }
       else
       {
-         FrameVector3D centerOfMassVelocity = new FrameVector3D();
-         controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
          /**
           * Smoothing out differences if varying height controller kicked in
           */
