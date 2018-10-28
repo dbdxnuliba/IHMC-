@@ -13,6 +13,9 @@ public class VaryingHeightTimeToConstraintsPredictor
    /**
     * Gives an estimate of the time until the maximum velocity or position constraint is reached, given a predicted constant acceleration and deceleration.
     * Those are a predefined fraction of the min/max acceleration for the controller.
+    *
+    * IS 0 A GOOD VALUE WHEN NAN?
+    *
     * @param zMin
     * @param vMin
     * @param vMax
@@ -42,7 +45,7 @@ public class VaryingHeightTimeToConstraintsPredictor
       double c = zCurrent - zMinForPrediction - 0.5 * dzCurrent * dzCurrent / aMaxPredicted;
       double tMinPosReachedPredicted = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
       tMinPosReachedPredicted = Math.max(0, tMinPosReachedPredicted);
-      if(Double.isNaN(tMinPosReachedPredicted)){tMinPosReachedPredicted=5.0;}
+      if(Double.isNaN(tMinPosReachedPredicted)){tMinPosReachedPredicted=0;}
       return tMinPosReachedPredicted;
    }
 
@@ -61,7 +64,7 @@ public class VaryingHeightTimeToConstraintsPredictor
       double c = zCurrent - zMaxForPrediction + 0.5 * dzCurrent * dzCurrent / -aMinPredicted;
       double tMaxPosReachedPredicted = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
       tMaxPosReachedPredicted = Math.max(0, tMaxPosReachedPredicted);
-      if(Double.isNaN(tMaxPosReachedPredicted)){tMaxPosReachedPredicted=5.0;}
+      if(Double.isNaN(tMaxPosReachedPredicted)){tMaxPosReachedPredicted=0;}
       return tMaxPosReachedPredicted;
    }
 
@@ -74,14 +77,14 @@ public class VaryingHeightTimeToConstraintsPredictor
    {
       double tMinVelReachedPredicted = (vMin - dzCurrent) / aMinPredicted;
       tMinVelReachedPredicted = Math.max(0, tMinVelReachedPredicted);
-      if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=5.0;}
+      if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=0;}
       return tMinVelReachedPredicted;
    }
    public double getTMaxVelReachedPredicted(double dzCurrent)
    {
       double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMaxPredicted;
       tMaxVelReachedPredicted = Math.max(0, tMaxVelReachedPredicted);
-      if(Double.isNaN(tMaxVelReachedPredicted)){tMaxVelReachedPredicted=5.0;}
+      if(Double.isNaN(tMaxVelReachedPredicted)){tMaxVelReachedPredicted=0;}
       return tMaxVelReachedPredicted;
    }
 

@@ -28,7 +28,7 @@ public class VaryingHeightPrimaryConditionEvaluator
    public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double z, double dz, double zMax, double kneeAngle, double errorAngle, double errorAngleEndOfSwing,
                                                                               boolean angleGrows, double negAlignTresh, double posAlignTresh,
                                                                               VaryingHeightPrimaryConditionEnum varyingHeightConditionPreviousTick, boolean useAngleForConditions,
-                                                                              double copCoMOrthDistance)
+                                                                              boolean distancePosAlignment, double copCoMOrthDistance)
    {
       this.primaryConditionPreviousTick = varyingHeightConditionPreviousTick;
       if((z+MathTools.sign(dz)*dz*dz/(2* -aMinPredicted)>zMax|| kneeAngle<minKneeAngle)    )                             // max height/vel and singularity
@@ -51,7 +51,7 @@ public class VaryingHeightPrimaryConditionEvaluator
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_POS;
          }
       }
-      else if(errorAngle>negAlignTresh|| errorAngle<-negAlignTresh )   //||(!useAngleForConditions && !distancePosAlignment)                                                         // alignment ICPe and 'pendulum' negative force
+      else if(errorAngle>negAlignTresh|| errorAngle<-negAlignTresh  )   //||(!useAngleForConditions && !distancePosAlignment)                                                         // alignment ICPe and 'pendulum' negative force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_NEG;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_NEG && angleGrows && MathTools.epsilonEquals(errorAngle,-negAlignTresh,0.2))
@@ -63,7 +63,7 @@ public class VaryingHeightPrimaryConditionEvaluator
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_NEG;
          }
       }
-      else if (useAngleForConditions)      // preparing for future angle
+      else //if (useAngleForConditions)      // preparing for future angle
       {
          if(errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh)
          {

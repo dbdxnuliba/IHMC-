@@ -42,7 +42,6 @@ public class VaryingHeightSecondaryConditionEvaluator
                                                                                   double errorAngleEndOfSwing, boolean angleGrows, double posAlignTresh, double negAlignTresh, double zMax, boolean nonDynamicCase)
    {
       this.secondaryConditionPreviousTick=secondaryConditionPreviousTick;
-      tToSwitch=tRemainingEndOfWalkingState;
       this.modifiedPosAlignTresh=posAlignTresh;
 
 
@@ -71,6 +70,10 @@ public class VaryingHeightSecondaryConditionEvaluator
          {
             tToSwitch = (negAlignTresh - errorAngle) / (errorAngleEndOfSwing - errorAngle) * tRemainingEndOfWalkingState;
          }
+      }
+      else
+      {
+         tToSwitch=tRemainingEndOfWalkingState;
       }
 
       if (primaryCondition== VaryingHeightPrimaryConditionEnum.ALIGNED_NEG || primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_NEG
@@ -101,7 +104,7 @@ public class VaryingHeightSecondaryConditionEvaluator
             || primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_POS)
       {
          aCtrl = aMaxCtrl;
-         if(tToMinVelocityPredicted<tToMinPositionPredicted)
+         if(tToMaxVelocityPredicted<tToMaxPositionPredicted)
          {
             tToConst = tToMaxVelocityPredicted;
             aSmooth = tToMaxVelocityPredicted*aCtrl/tToSwitch;
@@ -143,7 +146,7 @@ public class VaryingHeightSecondaryConditionEvaluator
       else
       {
          secondaryCondition = VaryingHeightSecondaryConditionEnum.DEFAULT;
-         if (secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD)
+         if (!primaryConditionHasChanged && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD)
          {
             secondaryCondition = VaryingHeightSecondaryConditionEnum.HOLD;
          }

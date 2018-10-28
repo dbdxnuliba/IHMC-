@@ -85,6 +85,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    private YoDouble yoTimeMinPosReached;
    private YoDouble yoTimeMaxPosReached;
    private YoDouble yoTimeRemaining;
+   private YoDouble yoTimeToSwitch;
 
    private YoDouble yoCoMVelocity;
 
@@ -153,6 +154,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       yoTimeMinPosReached = new YoDouble("estTimeMinPos", registry);
       yoTimeMaxPosReached = new YoDouble("estTimeMaxPos", registry);
       yoTimeRemaining = new YoDouble("estTimeRemainingToEnd", registry);
+      yoTimeToSwitch = new YoDouble("estTimeToSwitch",registry);
 
       yoPosAlignThresh = new YoDouble("posAlignmentThreshold",registry);
 
@@ -185,15 +187,15 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       jMax = 200;
       aMaxPredicted = 0.6 * aMaxCtrl;
       aMinPredicted = 0.6 * aMinCtrl;
-      zMaxStartSwing = 1.18;
+      zMaxStartSwing = 1.17;
       zMaxTouchDown = 1.12;
       zMax = 1.17;
       zMin = 1.00;
-      smoothEpsilon = 0.04;
+      smoothEpsilon = 0.03;
       minKneeAngle = 0.25;
       maxKneeAngle = 2.1;
       posAlignTresh = 0.7;
-      negAlignTresh = Math.PI - 1.0;
+      negAlignTresh = Math.PI - 0.9;
       tForHalfWaySwing = 0.416*walkingControllerParameters.getDefaultSwingTime();
 
       angleAndDistanceEvaluator = new VaryingHeightAngleAndDistanceEvaluator();
@@ -316,6 +318,20 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          useAngleForConditions = angleAndDistanceEvaluator.getUseAngleForConditions(supportPolygon, desiredCMPtoProject);
          yoUseAngleForConditions.set(useAngleForConditions);
 
+         /*
+         if(!useAngleForConditions)
+         {
+            aMinCtrl=-1.5;
+            aMaxCtrl=1.5;
+            jMax=50;
+         }
+         else
+         {
+            aMinCtrl=-5;
+            aMaxCtrl=5;
+            jMax=200;
+         }
+         */
          /**
           * Different max heights
           */
@@ -354,7 +370,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
           */
          VaryingHeightPrimaryConditionEnum primaryCondition = primaryConditionEvaluator.computeAndGetPrimaryConditionEnum(z,dz,zMax,kneeAngle,errorAngle,
                                                                                                                           errorAngleEndOfSwing,angleGrows,negAlignTresh,
-                                                                                                                          posAlignTresh,primaryConditionPreviousTick,useAngleForConditions, copCoMProjDistance);
+                                                                                                                          posAlignTresh,primaryConditionPreviousTick,useAngleForConditions, distancePosAlignment, copCoMProjDistance);
          primaryConditionYoEnum.set(primaryCondition);
          primaryConditionHasChanged = primaryConditionEvaluator.getPrimaryConditionHasChanged();
 
@@ -370,6 +386,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          posAlignTresh = secondaryConditionEvaluator.getModifiedPosAlignTresh();
          yoPosAlignThresh.set(posAlignTresh);
          tRemainingConditionSwitch =secondaryConditionEvaluator.getTimeToConditionSwitch();
+         yoTimeToSwitch.set(tRemainingConditionSwitch);
          double tConst = secondaryConditionEvaluator.getTimeToClosestConstraint();
          double aCtrl = secondaryConditionEvaluator.getControlBound();
 
