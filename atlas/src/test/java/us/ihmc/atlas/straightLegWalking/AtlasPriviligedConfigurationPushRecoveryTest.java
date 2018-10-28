@@ -30,6 +30,23 @@ public class AtlasPriviligedConfigurationPushRecoveryTest extends AvatarPrivileg
       percentWeight = 0.60;
       super.testPushFrontalStanding();
    }
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushContraDiagonalInSwing() throws Exception
+   {
+      percentWeight = 0.7;
+      super.testPushContraDiagonalInSwing();
+   }
+
+   @Override
+   @ContinuousIntegrationTest(estimatedDuration = 20.0)
+   @Test(timeout = 300000)
+   public void testPushContraDiagonalFrontalInSwing() throws Exception
+   {
+      percentWeight = 1.0;
+      super.testPushContraDiagonalFrontalInSwing();
+   }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
