@@ -981,7 +981,8 @@ public class SmoothCMPBasedICPPlanner implements ICPPlannerInterface
       angularMomentumTrajectoryGenerator.computeReferenceAngularMomentumStartingFromDoubleSupport(isInitialTransfer.getValue(), isStanding.getValue());
       angularMomentumTrajectoryGenerator.initializeForDoubleSupport(ZERO_TIME, isStanding.getBooleanValue());
 
-      if (isInitialTransfer.getValue() && isStanding.getValue())
+      // If standing still or in final transfer do not use angular momentum.
+      if (isStanding.getValue())
       {
          referenceCMPGenerator
                .initializeForTransfer(ZERO_TIME, referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories(), null,
@@ -1096,7 +1097,8 @@ public class SmoothCMPBasedICPPlanner implements ICPPlannerInterface
          referenceICPGenerator.getLinearData(desiredICPPosition, desiredICPVelocity, desiredICPAcceleration);
          referenceCoMGenerator.getLinearData(desiredCoMPosition, desiredCoMVelocity, desiredCoMAcceleration);
 
-         if (isInitialTransfer.getValue() && isStanding.getValue())
+         // If standing still or in final transfer do not use angular momentum.
+         if (isStanding.getValue())
          {
             desiredCentroidalAngularMomentum.setToZero();
             desiredCentroidalTorque.setToZero();
