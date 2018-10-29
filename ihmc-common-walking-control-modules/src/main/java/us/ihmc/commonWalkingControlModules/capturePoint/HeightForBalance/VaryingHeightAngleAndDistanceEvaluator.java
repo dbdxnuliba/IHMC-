@@ -90,21 +90,35 @@ public class VaryingHeightAngleAndDistanceEvaluator
       return errorAngleEndOfSwing;
    }
 
-   public boolean getUseAngleForConditions(FrameConvexPolygon2D supportPolygon, FramePoint2D projectedDesiredCMP)
+   public boolean getUseAngleForConditions(FrameConvexPolygon2D supportPolygon, FramePoint2D projectedDesiredCMP, FramePoint2DReadOnly comEndOfSwing2D)
    {
       boolean useAngleForConditions;
       LineSegment2D projectedCMPPolygonEdge = new LineSegment2D();
       boolean closestEdgeFound = supportPolygon.getClosestEdge(projectedDesiredCMP, projectedCMPPolygonEdge);
       FramePoint2D closestVertex = new FramePoint2D();
       supportPolygon.getClosestVertex(projectedDesiredCMP, closestVertex);
-      if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), projectedCMPPolygonEdge.getSecondEndpointX(), 0.05))
+
+      // FRONT EDGE: Checks if the polygon edge the CoP is projected on is the 'front' one. Hacky, should be in walking direction and not in x.
+      if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), supportPolygon.getMaxX(), 0.04)
+            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMaxX(),0.04))
       {
          useAngleForConditions = true;
       }
-      else if (closestVertex.distance(projectedDesiredCMP) < 0.02)
+
+      // CLOSE TO FRONT EDGE: Checks if the projected CoP is close to the 'front' polygon edge. Also hacky.
+      else if (MathTools.epsilonEquals(projectedDesiredCMP.getX(),supportPolygon.getMaxX(),0.02))
       {
          useAngleForConditions = true;
       }
+
+      // BACK EDGE:
+      else if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), supportPolygon.getMinX(), 0.04)
+            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMinX(),0.04) && closestVertex.distance(projectedDesiredCMP)>0.03)
+      {
+         useAngleForConditions = true;
+      }
+
+      // ELSE: (don't use angle)
       else
       {
          useAngleForConditions = false;

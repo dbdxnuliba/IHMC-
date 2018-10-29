@@ -2,13 +2,14 @@ package us.ihmc.commonWalkingControlModules.capturePoint.HeightForBalance;
 
 import us.ihmc.commons.MathTools;
 
+import static java.lang.Math.asin;
 import static java.lang.Math.sqrt;
 
 public class VaryingHeightSecondaryConditionEvaluator
 {
    private final double zMin;
-   private final double aMinCtrl;
-   private final double aMaxCtrl;
+   private double aMinCtrl;
+   private double aMaxCtrl;
    private double aCtrl;
    private double aSmooth;
    private double tToConst;
@@ -21,12 +22,10 @@ public class VaryingHeightSecondaryConditionEvaluator
    private VaryingHeightSecondaryConditionEnum secondaryConditionPreviousTick;
    private VaryingHeightTimeToConstraintsPredictor timeToConstraintsPredictor;
 
-   public VaryingHeightSecondaryConditionEvaluator(double zMin, double aMinCtrl, double aMaxCtrl, double tHalfWaySwing, double epsilonForSmooth,
+   public VaryingHeightSecondaryConditionEvaluator(double zMin, double tHalfWaySwing, double epsilonForSmooth,
                                                    VaryingHeightTimeToConstraintsPredictor timeToConstraintsPredictor)
    {
       this.zMin = zMin;
-      this.aMinCtrl=aMinCtrl;
-      this.aMaxCtrl=aMaxCtrl;
       this.tHalfWaySwing = tHalfWaySwing;
       this.epsilonForSmooth =epsilonForSmooth;
       this.timeToConstraintsPredictor=timeToConstraintsPredictor;
@@ -36,14 +35,15 @@ public class VaryingHeightSecondaryConditionEvaluator
       secondaryConditionPreviousTick = secondaryCondition;
    }
 
-   public VaryingHeightSecondaryConditionEnum computeAndGetSecondaryConditionEnum(double z, double dz,VaryingHeightPrimaryConditionEnum primaryCondition, boolean primaryConditionHasChanged, VaryingHeightSecondaryConditionEnum secondaryConditionPreviousTick,
+   public VaryingHeightSecondaryConditionEnum computeAndGetSecondaryConditionEnum(double aMinCtrl, double aMaxCtrl,double z, double dz,VaryingHeightPrimaryConditionEnum primaryCondition, boolean primaryConditionHasChanged, VaryingHeightSecondaryConditionEnum secondaryConditionPreviousTick,
                                                                                   double tInState, double tToMinVelocityPredicted, double tToMinPositionPredicted,
                                                                                   double tToMaxVelocityPredicted, double tToMaxPositionPredicted, double tRemainingEndOfWalkingState, double errorAngle,
                                                                                   double errorAngleEndOfSwing, boolean angleGrows, double posAlignTresh, double negAlignTresh, double zMax, boolean nonDynamicCase)
    {
       this.secondaryConditionPreviousTick=secondaryConditionPreviousTick;
       this.modifiedPosAlignTresh=posAlignTresh;
-
+      this.aMinCtrl=aMinCtrl;
+      this.aMaxCtrl=aMaxCtrl;
 
       if (primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
       {
@@ -99,6 +99,7 @@ public class VaryingHeightSecondaryConditionEvaluator
             */
 
          }
+         aSmooth = MathTools.clamp(aSmooth,aMinCtrl,0);
       }
       if (primaryCondition == VaryingHeightPrimaryConditionEnum.ALIGNED_POS || primaryCondition == VaryingHeightPrimaryConditionEnum.MINZ
             || primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_POS)
@@ -122,8 +123,9 @@ public class VaryingHeightSecondaryConditionEvaluator
             aSmooth = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
             */
          }
+         aSmooth=MathTools.clamp(aSmooth,0,aMaxCtrl);
       }
-      aSmooth = MathTools.clamp(aSmooth,aMinCtrl,aMaxCtrl);
+
 
       /**
        * Evaluate secondary conditions
@@ -160,9 +162,9 @@ public class VaryingHeightSecondaryConditionEvaluator
 
    private void modifyPosAlignTreshold(double tRemainingEndOfWalkingState, double posAlignTresh, double zMax)
    {
-      if (tRemainingEndOfWalkingState -tToSwitch > timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax))
+      if (tRemainingEndOfWalkingState -tToSwitch > timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax,0.6*aMinCtrl,0.6*aMaxCtrl))
       {
-         modifiedPosAlignTresh = timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax) / (tRemainingEndOfWalkingState-tToSwitch) * posAlignTresh;
+         modifiedPosAlignTresh = timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax,0.6*aMinCtrl,0.6*aMaxCtrl) / (tRemainingEndOfWalkingState-tToSwitch) * posAlignTresh;
       }
       else
       {

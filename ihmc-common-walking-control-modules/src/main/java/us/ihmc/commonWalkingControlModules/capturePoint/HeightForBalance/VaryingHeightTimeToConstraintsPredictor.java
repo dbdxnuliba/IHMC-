@@ -7,8 +7,6 @@ public class VaryingHeightTimeToConstraintsPredictor
    private final double zMin;
    private final double vMin;
    private final double vMax;
-   private final double aMinPredicted;
-   private final double aMaxPredicted;
 
    /**
     * Gives an estimate of the time until the maximum velocity or position constraint is reached, given a predicted constant acceleration and deceleration.
@@ -19,16 +17,12 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param zMin
     * @param vMin
     * @param vMax
-    * @param aMinPredicted
-    * @param aMaxPredicted
     */
-   public VaryingHeightTimeToConstraintsPredictor(double zMin, double vMin, double vMax, double aMinPredicted, double aMaxPredicted)
+   public VaryingHeightTimeToConstraintsPredictor(double zMin, double vMin, double vMax)
    {
       this.zMin=zMin;
       this.vMin=vMin;
       this.vMax=vMax;
-      this.aMinPredicted=aMinPredicted;
-      this.aMaxPredicted=aMaxPredicted;
    }
 
    /**
@@ -37,7 +31,7 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param dzCurrent current height velocity
     * @return
     */
-   public double getTMinPosReachedPredicted(double zCurrent, double dzCurrent)
+   public double getTMinPosReachedPredicted(double zCurrent, double dzCurrent, double aMinPredicted, double aMaxPredicted)
    {
       double zMinForPrediction = 1.03 * zMin;
       double a = 0.5 * (aMinPredicted - aMinPredicted * aMinPredicted / aMaxPredicted);
@@ -56,7 +50,7 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param zMax Max height, changes halfway swing
     * @return
     */
-   public double getTMaxPosReachedPredicted(double zCurrent, double dzCurrent, double zMax)
+   public double getTMaxPosReachedPredicted(double zCurrent, double dzCurrent, double zMax, double aMinPredicted, double aMaxPredicted)
    {
       double zMaxForPrediction = zMax;
       double a = 0.5 * (aMaxPredicted + aMaxPredicted * aMaxPredicted / -aMinPredicted);
@@ -73,14 +67,14 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param dzCurrent
     * @return
     */
-   public double getTMinVelReachedPredicted(double dzCurrent)
+   public double getTMinVelReachedPredicted(double dzCurrent, double aMinPredicted)
    {
       double tMinVelReachedPredicted = (vMin - dzCurrent) / aMinPredicted;
       tMinVelReachedPredicted = Math.max(0, tMinVelReachedPredicted);
       if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=0;}
       return tMinVelReachedPredicted;
    }
-   public double getTMaxVelReachedPredicted(double dzCurrent)
+   public double getTMaxVelReachedPredicted(double dzCurrent, double aMaxPredicted)
    {
       double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMaxPredicted;
       tMaxVelReachedPredicted = Math.max(0, tMaxVelReachedPredicted);

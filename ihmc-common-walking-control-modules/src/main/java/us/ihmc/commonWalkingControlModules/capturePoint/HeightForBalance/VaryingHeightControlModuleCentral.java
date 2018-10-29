@@ -51,6 +51,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    private final YoEnum<VaryingHeightSecondaryConditionEnum> secondaryConditionYoEnum;
    private boolean primaryConditionHasChanged;
    private boolean secondaryConditionHasChanged;
+   private boolean calculateUseAngleForConditions;
 
    private double totalMass;
    private double stateClock;
@@ -113,6 +114,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    double smoothEpsilon;
 
    boolean walkingStateSwitch;
+   private YoBoolean yoWalkingStateSwitch;
    private YoBoolean yoAngleGrows;
 
    private YoBoolean yoAngleImproves;
@@ -149,6 +151,8 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       yoDistanceImproves = new YoBoolean("distanceImproves", registry);
       yoUseAngleForConditions = new YoBoolean("useAngleForConditions", registry);
 
+      yoWalkingStateSwitch = new YoBoolean("stateSwitch",registry);
+
       yoTimeMinVelReached = new YoDouble("estTimeMinVel", registry);
       yoTimeMaxVelReached = new YoDouble("estTimeMaxVel", registry);
       yoTimeMinPosReached = new YoDouble("estTimeMinPos", registry);
@@ -182,11 +186,6 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       yoGraphicsListRegistry.registerArtifactList(artifacts);
       vMax = 0.7;
       vMin = -0.6;
-      aMaxCtrl = 5;
-      aMinCtrl = -5;
-      jMax = 200;
-      aMaxPredicted = 0.6 * aMaxCtrl;
-      aMinPredicted = 0.6 * aMinCtrl;
       zMaxStartSwing = 1.17;
       zMaxTouchDown = 1.12;
       zMax = 1.17;
@@ -194,14 +193,20 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       smoothEpsilon = 0.03;
       minKneeAngle = 0.25;
       maxKneeAngle = 2.1;
+
+      aMaxCtrl = 5;
+      aMinCtrl = -5;
+      jMax = 200;
+      aMaxPredicted = 0.6 * aMaxCtrl;
+      aMinPredicted = 0.6 * aMinCtrl;
       posAlignTresh = 0.7;
       negAlignTresh = Math.PI - 0.9;
       tForHalfWaySwing = 0.416*walkingControllerParameters.getDefaultSwingTime();
 
       angleAndDistanceEvaluator = new VaryingHeightAngleAndDistanceEvaluator();
-      primaryConditionEvaluator = new VaryingHeightPrimaryConditionEvaluator(zMin, minKneeAngle, maxKneeAngle, aMinPredicted, aMaxPredicted);
-      timeToConstraintsPredictor = new VaryingHeightTimeToConstraintsPredictor(zMin,vMin,vMax,aMinPredicted,aMaxPredicted);
-      secondaryConditionEvaluator = new VaryingHeightSecondaryConditionEvaluator(zMin,aMinCtrl,aMaxCtrl,tForHalfWaySwing,smoothEpsilon,
+      primaryConditionEvaluator = new VaryingHeightPrimaryConditionEvaluator(zMin, minKneeAngle, maxKneeAngle);
+      timeToConstraintsPredictor = new VaryingHeightTimeToConstraintsPredictor(zMin,vMin,vMax);
+      secondaryConditionEvaluator = new VaryingHeightSecondaryConditionEvaluator(zMin,tForHalfWaySwing,smoothEpsilon,
                                                                                  timeToConstraintsPredictor);
    }
 
@@ -238,6 +243,12 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
 
       boolean nonDynamicCase = desiredICPVelocity.length()<0.02;
 
+      if (walkingStateSwitch)
+      {
+         heightControlInThisWalkingState = false;
+         posAlignTresh = 0.7;
+         negAlignTresh = Math.PI - 1.0;
+      }
       boolean heightControlCondition = (
             isProjected && cmpOutsidePolygon && distance > 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && (isInDoubleSupport == false || nonDynamicCase==true)
                   || heightControlInThisWalkingState == true);
@@ -269,15 +280,69 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       centerOfMassVelocity2D.setIncludingFrame(centerOfMassVelocity);
       centerOfMassVelocity2D.changeFrame(ReferenceFrame.getWorldFrame());
 
+      calculateUseAngleForConditions = (
+            isProjected && cmpOutsidePolygon && distance <= 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && (isInDoubleSupport == false || nonDynamicCase==true)
+                  && heightControlInThisWalkingState == false);
+
+
+      if(calculateUseAngleForConditions || walkingStateSwitch)
+      {
+         useAngleForConditions = angleAndDistanceEvaluator.getUseAngleForConditions(supportPolygon, desiredCMPtoProject, yoCoMEndOfSwing2DNotHacky);
+         yoUseAngleForConditions.set(useAngleForConditions);
+         if(!useAngleForConditions )
+         {
+            /*
+            aMinCtrl=2*(zMin-z)/(tRemainingEndOfWalkingState*tRemainingEndOfWalkingState);
+            aMinCtrl=MathTools.clamp(aMinCtrl,-1.5,0);
+            aMaxCtrl=2*(zMin-z)/(tRemainingEndOfWalkingState*tRemainingEndOfWalkingState);
+            aMaxPredicted = 0.8 * aMaxCtrl;
+            aMinPredicted = 0.8 * aMinCtrl;
+            */
+            aMinCtrl=-1.0;
+            aMaxCtrl=3.0;
+            aMaxPredicted = 0.6 * aMaxCtrl;
+            aMinPredicted = 0.6 * -3;
+            jMax=50;
+         }
+         else if(useAngleForConditions)
+         {
+            aMinCtrl=-5;
+            aMaxCtrl=5;
+            aMaxPredicted = 0.6 * aMaxCtrl;
+            aMinPredicted = 0.6 * aMinCtrl;
+            jMax=200;
+         }
+
+         //useAngleForConditions=true; //REMOVE!!!!!!!
+      }
+
+
+
+
       if (heightControlCondition)
       {
-         heightControlInThisWalkingState = true;
-         if (walkingStateSwitch)
+         /**
+          * Different max heights
+          */
+         if(nonDynamicCase)
          {
-            heightControlInThisWalkingState = false;
-            posAlignTresh = 0.7;
-            negAlignTresh = Math.PI - 1.0;
+            zMax = zMaxStartSwing;
          }
+         else if (stateClock > tForHalfWaySwing)
+         {
+            zMax = zMaxTouchDown;
+         }
+         else
+         {
+            zMax = zMaxStartSwing;
+         }
+
+
+
+         heightControlInThisWalkingState = true;
+         calculateUseAngleForConditions=false;
+         yoUseAngleForConditions.set(useAngleForConditions);
+
          FrameLine2D desiredPushDirectionFromCoP = new FrameLine2D(desiredCMPtoProject, icpError); // should be positive
          desiredPushDirectionFromCoP.orthogonalProjection(com2DtoProject);
          desiredPushDirectionFromCoP.orthogonalProjection(com2DtoProjectEndOfSwing);
@@ -313,71 +378,53 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          double copCoMProjDistance = com2DtoProject.distance(desiredCMPtoProject);
          double copCoMProjDistanceEndOFSwing = com2DtoProjectEndOfSwing.distance(desiredCMPtoProject);
          boolean distanceImproves = angleAndDistanceEvaluator.getDistanceImproves(centerOfMassVelocity2D,icpError);
-         boolean distancePosAlignment = angleAndDistanceEvaluator.getDistancePosAlignment(errorAngle);
+         //boolean distancePosAlignment = angleAndDistanceEvaluator.getDistancePosAlignment(errorAngle);
+         FrameVector2D copCoMVec = new FrameVector2D();
+         copCoMVec.setIncludingFrame(com3D);
+         copCoMVec.sub(desiredCMPtoProject);
+         boolean distancePosAlignment = (MathTools.sign(copCoMVec.getY())==MathTools.sign(icpError.getY()));
          yoDistanceImproves.set(distanceImproves);
-         useAngleForConditions = angleAndDistanceEvaluator.getUseAngleForConditions(supportPolygon, desiredCMPtoProject);
-         yoUseAngleForConditions.set(useAngleForConditions);
 
-         /*
-         if(!useAngleForConditions)
-         {
-            aMinCtrl=-1.5;
-            aMaxCtrl=1.5;
-            jMax=50;
-         }
-         else
-         {
-            aMinCtrl=-5;
-            aMaxCtrl=5;
-            jMax=200;
-         }
-         */
-         /**
-          * Different max heights
-          */
-         if(nonDynamicCase)
-         {
-            zMax = zMaxStartSwing;
-         }
-         else if (stateClock > tForHalfWaySwing)
-         {
-            zMax = zMaxTouchDown;
-         }
-         else
-         {
-            zMax = zMaxStartSwing;
-         }
+
+
+
+
 
          /**
           * Computation of time to velocity constraints
           */
-         double tMinVelReachedPredicted = timeToConstraintsPredictor.getTMinVelReachedPredicted(dz);
+         double tMinVelReachedPredicted = timeToConstraintsPredictor.getTMinVelReachedPredicted(dz, aMinPredicted);
          yoTimeMinVelReached.set(tMinVelReachedPredicted);
-         double tMaxVelReachedPredicted = timeToConstraintsPredictor.getTMaxVelReachedPredicted(dz);
+         double tMaxVelReachedPredicted = timeToConstraintsPredictor.getTMaxVelReachedPredicted(dz, aMaxPredicted);
          yoTimeMaxVelReached.set(tMaxVelReachedPredicted);
 
          /**
           * Computation of time to position constraints
           */
-         double tMinPosReachedPredicted = timeToConstraintsPredictor.getTMinPosReachedPredicted(z,dz);
+         double tMinPosReachedPredicted = timeToConstraintsPredictor.getTMinPosReachedPredicted(z,dz,aMinPredicted,aMaxPredicted);
          yoTimeMinPosReached.set(tMinPosReachedPredicted);
-         double tMaxPosReachedPredicted = timeToConstraintsPredictor.getTMaxPosReachedPredicted(z,dz,zMaxTouchDown);
+         double tMaxPosReachedPredicted = timeToConstraintsPredictor.getTMaxPosReachedPredicted(z,dz,zMaxTouchDown,aMinPredicted,aMaxPredicted);
          yoTimeMaxPosReached.set(tMaxPosReachedPredicted);
+
 
 
          /**
           * Evaluate primary conditions
           */
-         VaryingHeightPrimaryConditionEnum primaryCondition = primaryConditionEvaluator.computeAndGetPrimaryConditionEnum(z,dz,zMax,kneeAngle,errorAngle,
+         VaryingHeightPrimaryConditionEnum primaryCondition = primaryConditionEvaluator.computeAndGetPrimaryConditionEnum(aMinPredicted,aMaxPredicted,z,dz,zMax,kneeAngle,errorAngle,
                                                                                                                           errorAngleEndOfSwing,angleGrows,negAlignTresh,
                                                                                                                           posAlignTresh,primaryConditionPreviousTick,useAngleForConditions, distancePosAlignment, copCoMProjDistance);
          primaryConditionYoEnum.set(primaryCondition);
          primaryConditionHasChanged = primaryConditionEvaluator.getPrimaryConditionHasChanged();
+         if(primaryCondition==VaryingHeightPrimaryConditionEnum.MAXZ)
+         {
+            aMinCtrl = -5;
+         }
 
          /**
           * Parameters for control and secondary condition
           */
-         VaryingHeightSecondaryConditionEnum secondaryCondition = secondaryConditionEvaluator.computeAndGetSecondaryConditionEnum(z, dz,primaryCondition,primaryConditionHasChanged,
+         VaryingHeightSecondaryConditionEnum secondaryCondition = secondaryConditionEvaluator.computeAndGetSecondaryConditionEnum(aMinCtrl,aMaxCtrl,z, dz,primaryCondition,primaryConditionHasChanged,
                                                                                                                                   secondaryConditionPreviousTick, stateClock,tMinVelReachedPredicted,tMinPosReachedPredicted,
                                                                                                                                   tMaxVelReachedPredicted,tMaxPosReachedPredicted,tRemainingEndOfWalkingState,errorAngle,
                                                                                                                                   errorAngleEndOfSwing,angleGrows,posAlignTresh, negAlignTresh,
@@ -519,6 +566,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
          stateClock = 0;
          this.isInDoubleSupport = isInDoubleSupport;
       }
+      yoWalkingStateSwitch.set(walkingStateSwitch);
    }
 
    public void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity)
