@@ -25,7 +25,7 @@ import java.awt.*;
 import static java.lang.Math.max;
 import static java.lang.Math.sqrt;
 
-public class VaryingHeightControlModuleCentral implements VaryingHeightControlModuleInterface
+public class VaryingHeightControlModule implements VaryingHeightControlModuleInterface
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private WalkingControllerParameters walkingControllerParameters;
@@ -127,8 +127,8 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
    VaryingHeightSecondaryConditionEvaluator secondaryConditionEvaluator;
 
 
-   public VaryingHeightControlModuleCentral(double totalMass, HighLevelHumanoidControllerToolbox controllerToolbox, YoVariableRegistry parentRegistry,
-                                            YoGraphicsListRegistry yoGraphicsListRegistry, WalkingControllerParameters walkingControllerParameters)
+   public VaryingHeightControlModule(double totalMass, HighLevelHumanoidControllerToolbox controllerToolbox, YoVariableRegistry parentRegistry,
+                                     YoGraphicsListRegistry yoGraphicsListRegistry, WalkingControllerParameters walkingControllerParameters)
    {
       this.controllerToolbox = controllerToolbox;
       this.totalMass = totalMass;

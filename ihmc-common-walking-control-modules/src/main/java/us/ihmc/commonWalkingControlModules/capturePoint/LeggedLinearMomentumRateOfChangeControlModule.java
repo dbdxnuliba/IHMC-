@@ -1,6 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint;
 
-import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightControlModuleCentral;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightControlModule;
 import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightControlModuleInterface;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationControllerInterface;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
@@ -42,7 +42,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
 
-      varyingHeightControlModule = new VaryingHeightControlModuleCentral(totalMass, controllerToolbox, registry, yoGraphicsListRegistry, walkingControllerParameters);
+      varyingHeightControlModule = new VaryingHeightControlModule(totalMass, controllerToolbox, registry, yoGraphicsListRegistry, walkingControllerParameters);
    }
 
    public void setSupportLeg(RobotSide newSupportSide)
