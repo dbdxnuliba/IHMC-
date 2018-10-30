@@ -9,7 +9,7 @@ public class AtlasICPOptimizationParameters extends ICPOptimizationParameters
 {
    private final boolean runningOnRealRobot;
    private final boolean useAngularMomentum = true;
-   private final boolean useStepAdjustment = true;
+   private final boolean useStepAdjustment = false;
 
    public AtlasICPOptimizationParameters(boolean runningOnRealRobot)
    {

@@ -4,6 +4,7 @@ import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPoly
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.*;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationController;
+import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -27,9 +28,9 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
                                                                  ICPControlPolygons icpControlPolygons, SideDependentList<ContactableFoot> contactableFeet,
                                                                  WalkingControllerParameters walkingControllerParameters, YoDouble yoTime, double totalMass,
                                                                  double gravityZ, double controlDT, YoVariableRegistry parentRegistry,
-                                                                 YoGraphicsListRegistry yoGraphicsListRegistry)
+                                                                 YoGraphicsListRegistry yoGraphicsListRegistry, HighLevelHumanoidControllerToolbox controllerToolbox)
    {
-      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry);
+      super("", referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry,controllerToolbox,walkingControllerParameters);
 
       this.yoTime = yoTime;
 
@@ -59,18 +60,21 @@ public class ICPOptimizationLinearMomentumRateOfChangeControlModule extends Legg
    public void initializeForStanding()
    {
       icpOptimizationController.initializeForStanding(yoTime.getDoubleValue());
+      super.initializeForStanding();
    }
 
    @Override
    public void initializeForSingleSupport()
    {
       icpOptimizationController.initializeForSingleSupport(yoTime.getDoubleValue(), supportSide, omega0);
+      super.initializeForSingleSupport();
    }
 
    @Override
    public void initializeForTransfer()
    {
       icpOptimizationController.initializeForTransfer(yoTime.getDoubleValue(), transferToSide);
+      super.initializeForTransfer();
    }
 
    @Override

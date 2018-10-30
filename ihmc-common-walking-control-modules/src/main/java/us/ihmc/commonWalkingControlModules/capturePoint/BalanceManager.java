@@ -193,14 +193,14 @@ public class BalanceManager
          icpControlGains = null;
          linearMomentumRateOfChangeControlModule = new ICPOptimizationLinearMomentumRateOfChangeControlModule(referenceFrames, bipedSupportPolygons,
                controllerToolbox.getICPControlPolygons(), contactableFeet, walkingControllerParameters, yoTime, totalMass, gravityZ,
-               controlDT, registry, yoGraphicsListRegistry);
+               controlDT, registry, yoGraphicsListRegistry, controllerToolbox);
       }
       else
       {
          icpControlGains = new YoICPControlGains("", registry);
          icpControlGains.set(walkingControllerParameters.createICPControlGains());
          linearMomentumRateOfChangeControlModule = new ICPBasedLinearMomentumRateOfChangeControlModule(referenceFrames, bipedSupportPolygons, controlDT,
-               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection);
+               totalMass, gravityZ,icpControlGains, registry, yoGraphicsListRegistry, use2DCMPProjection, controllerToolbox, walkingControllerParameters);
       }
       ICPOptimizationControllerInterface icpOptimizationController = linearMomentumRateOfChangeControlModule.getICPOptimizationController();
 
@@ -498,6 +498,11 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setPerfectCMP(yoPerfectCMP);
       linearMomentumRateOfChangeControlModule.setPerfectCoP(yoPerfectCoP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
+      FramePoint3D comEndOfStep = new FramePoint3D();
+      icpPlanner.computeFinalCoMPositionInSwing();
+      icpPlanner.getFinalDesiredCenterOfMassPosition(comEndOfStep);
+      linearMomentumRateOfChangeControlModule.setFinalCoMPositionEndOfStep(comEndOfStep);
+      linearMomentumRateOfChangeControlModule.setCenterOfMass(centerOfMassPosition);
       desiredCMP.set(yoDesiredCMP);
       boolean success = linearMomentumRateOfChangeControlModule.compute(desiredCMP, desiredCMP, desiredCoP);
       yoDesiredCMP.set(desiredCMP);

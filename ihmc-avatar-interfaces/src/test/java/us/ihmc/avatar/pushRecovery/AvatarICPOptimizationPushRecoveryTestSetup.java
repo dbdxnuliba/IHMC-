@@ -303,6 +303,27 @@ public abstract class AvatarICPOptimizationPushRecoveryTestSetup
       return message;
    }
 
+   protected FootstepDataListMessage createStandingFootstepMessage()
+   {
+      double scale = getSizeScale();
+
+      FramePoint3D step1Location = new FramePoint3D(worldFrame, 0.0, -0.125, 0.0);
+
+      step1Location.scale(scale);
+
+      FootstepDataMessage message1 = createFootstepDataMessage(RobotSide.RIGHT, step1Location);
+
+      swingTime = getRobotModel().getWalkingControllerParameters().getDefaultSwingTime();
+      transferTime = getRobotModel().getWalkingControllerParameters().getDefaultTransferTime();
+
+      FootstepDataListMessage message = HumanoidMessageTools.createFootstepDataListMessage(swingTime, transferTime);
+      //message.getFootstepDataList().add().set(message1);
+
+      message.setAreFootstepsAdjustable(true);
+
+      return message;
+   }
+
    private FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, FramePoint3D placeToStep)
    {
       return createFootstepDataMessage(robotSide, placeToStep, new FrameQuaternion());

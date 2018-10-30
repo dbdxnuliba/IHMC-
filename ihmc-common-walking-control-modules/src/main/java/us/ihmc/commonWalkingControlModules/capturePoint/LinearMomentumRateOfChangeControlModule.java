@@ -20,6 +20,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.sensorProcessing.frames.ReferenceFrames;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -51,7 +52,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
    private double totalMass;
    private double gravityZ;
 
-   private final ReferenceFrame centerOfMassFrame;
+   protected final ReferenceFrame centerOfMassFrame;
    private final FramePoint3D centerOfMass;
    private final FramePoint2D centerOfMass2d = new FramePoint2D();
 
@@ -72,6 +73,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
    private final FrameVector2D achievedCoMAcceleration2d = new FrameVector2D();
    private double desiredCoMHeightAcceleration = 0.0;
+
+   private RobotSide supportSide;
 
    public LinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                   YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
@@ -290,6 +293,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
       linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
       linearMomentumRateOfChange.setZ(linearMomentumRateOfChange.getZ() - totalMass * gravityZ);
 
+      computeHeightModification(linearMomentumRateOfChange);
+
       if (linearMomentumRateOfChange.containsNaN())
          throw new RuntimeException("linearMomentumRateOfChange = " + linearMomentumRateOfChange);
 
@@ -384,4 +389,18 @@ public abstract class LinearMomentumRateOfChangeControlModule
    public abstract void computeCMPInternal(FramePoint2DReadOnly desiredCMPPreviousValue);
 
    public abstract void setKeepCoPInsideSupportPolygon(boolean keepCoPInsideSupportPolygon);
+
+   public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
+   {}
+
+   public void setFinalCoMPositionEndOfStep(FramePoint3D coMPositionEndOfStep){};
+
+   public void setCenterOfMass(FramePoint3D centerOfMass)
+   {
+      this.centerOfMass.setIncludingFrame(centerOfMass);
+   }
+   public void setSupportSide(RobotSide supportSide)
+   {
+      this.supportSide=supportSide;
+   }
 }
