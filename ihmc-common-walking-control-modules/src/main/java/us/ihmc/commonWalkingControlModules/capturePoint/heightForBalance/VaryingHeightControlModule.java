@@ -94,7 +94,6 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    double aMaxCtrl;
    double aMinCtrl;
    double jMax;
-   double jCtrl;
    double dt;
    double aMaxPredicted;
    double aMinPredicted;
