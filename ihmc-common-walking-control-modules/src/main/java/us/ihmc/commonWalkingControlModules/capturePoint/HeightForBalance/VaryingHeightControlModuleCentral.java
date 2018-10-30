@@ -281,7 +281,7 @@ public class VaryingHeightControlModuleCentral implements VaryingHeightControlMo
       centerOfMassVelocity2D.changeFrame(ReferenceFrame.getWorldFrame());
 
       calculateUseAngleForConditions = (
-            isProjected && cmpOutsidePolygon && distance <= 0.7 * walkingControllerParameters.getMaxAllowedDistanceCMPSupport() && (isInDoubleSupport == false || nonDynamicCase==true)
+            isProjected && cmpOutsidePolygon
                   && heightControlInThisWalkingState == false);
 
 
