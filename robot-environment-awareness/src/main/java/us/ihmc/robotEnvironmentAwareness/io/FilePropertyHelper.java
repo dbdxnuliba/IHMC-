@@ -9,6 +9,8 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import us.ihmc.commons.nio.FileTools;
+
 public final class FilePropertyHelper
 {
    private final File configurationFile;
@@ -16,6 +18,18 @@ public final class FilePropertyHelper
    public FilePropertyHelper(File configurationFile)
    {
       this.configurationFile = configurationFile;
+
+      if (!configurationFile.getParentFile().exists())
+      {
+         try
+         {
+            FileTools.ensureDirectoryExists(configurationFile.getParentFile().toPath());
+         }
+         catch (IOException e)
+         {
+            e.printStackTrace();
+         }
+      }
    }
 
    public void saveProperty(String propertyName, double propertyValue)
@@ -50,7 +64,6 @@ public final class FilePropertyHelper
                return Collections.enumeration(new TreeSet<Object>(super.keySet()));
             }
          };
-
 
          if (configurationFile.exists() && configurationFile.isFile())
          {
