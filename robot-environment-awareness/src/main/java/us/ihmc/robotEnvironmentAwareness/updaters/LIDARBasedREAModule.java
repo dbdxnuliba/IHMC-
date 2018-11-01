@@ -13,12 +13,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import controller_msgs.msg.dds.LidarScanMessage;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.util.NetworkPorts;
 import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.jOctoMap.tools.JOctoMapTools;
 import us.ihmc.javaFXToolkit.messager.Messager;
+import us.ihmc.log.LogTools;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.robotEnvironmentAwareness.communication.KryoMessager;
@@ -146,7 +146,7 @@ public class LIDARBasedREAModule
          }
          else
          {
-            PrintTools.error(LIDARBasedREAModule.class, e.getClass().getSimpleName());
+            LogTools.error(e.getClass().getSimpleName());
          }
       }
 
@@ -172,7 +172,7 @@ public class LIDARBasedREAModule
 
    public void stop() throws Exception
    {
-      PrintTools.info("REA Module is going down.");
+      LogTools.info("REA Module is going down.");
 
       reaMessager.closeMessager();
       ros2Node.destroy();

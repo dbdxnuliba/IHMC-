@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.lang3.time.StopWatch;
 
 import us.ihmc.commons.Conversions;
-import us.ihmc.commons.PrintTools;
+import us.ihmc.log.LogTools;
 
 public class TimeReporter
 {
@@ -40,7 +40,7 @@ public class TimeReporter
          command.run();
          long nanoTime = stopWatch.getNanoTime();
          if (nanoTime > minimumNanoTimeToReport.get())
-            PrintTools.info(caller, timeReportPrefix + Conversions.nanosecondsToSeconds(nanoTime));
+            LogTools.info(caller.getClass().getSimpleName() + timeReportPrefix + Conversions.nanosecondsToSeconds(nanoTime));
       }
       else
          command.run();

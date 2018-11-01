@@ -250,7 +250,6 @@ public abstract class ParametersProperty<T> extends SimpleObjectProperty<T>
          this.field = field;
       }
 
-      @SuppressWarnings("unchecked")
       @Override
       public void invalidated(Observable observable)
       {
@@ -273,6 +272,7 @@ public abstract class ParametersProperty<T> extends SimpleObjectProperty<T>
       }
    }
 
+   @SuppressWarnings("unchecked")
    private void setNumberValue(Property<? extends Number> numberProperty, Field field)
    {
       if (numberProperty.getValue() instanceof Double)
