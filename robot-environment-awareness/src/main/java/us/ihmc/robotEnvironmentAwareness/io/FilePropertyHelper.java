@@ -65,7 +65,7 @@ public final class FilePropertyHelper
       }
       catch (Exception ex)
       {
-         throw new RuntimeException("Problem when saving property.");
+         throw new RuntimeException("Problem when saving property: ", ex);
       }
       finally
       {
