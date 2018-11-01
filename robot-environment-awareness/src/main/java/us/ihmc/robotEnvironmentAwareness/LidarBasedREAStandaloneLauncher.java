@@ -8,16 +8,14 @@ import us.ihmc.robotEnvironmentAwareness.updaters.LIDARBasedREAModule;
 
 public class LidarBasedREAStandaloneLauncher extends Application
 {
-   private static final String MODULE_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAModuleConfiguration.txt";
-
    private LIDARBasedEnvironmentAwarenessUI ui;
    private LIDARBasedREAModule module;
 
    @Override
    public void start(Stage primaryStage) throws Exception
    {
-      ui = LIDARBasedEnvironmentAwarenessUI.creatIntraprocessUI(primaryStage);
-      module = LIDARBasedREAModule.createIntraprocessModule(MODULE_CONFIGURATION_FILE_NAME);
+      ui = LIDARBasedEnvironmentAwarenessUI.creatIntraprocessUI(null, primaryStage);
+      module = LIDARBasedREAModule.createIntraprocessModule(null);
 
       ui.show();
       module.start();

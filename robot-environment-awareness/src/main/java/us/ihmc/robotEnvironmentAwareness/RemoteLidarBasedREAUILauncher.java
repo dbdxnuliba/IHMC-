@@ -24,7 +24,7 @@ public class RemoteLidarBasedREAUILauncher extends Application
       if (!parameters.getRaw().isEmpty())
          LogTools.info("Received the program arguments: " + parameters.getRaw());
 
-      LIDARBasedEnvironmentAwarenessUI remoteUI = LIDARBasedEnvironmentAwarenessUI.creatRemoteUI(primaryStage, host);
+      LIDARBasedEnvironmentAwarenessUI remoteUI = LIDARBasedEnvironmentAwarenessUI.creatRemoteUI(null, primaryStage, host);
       remoteUI.show();
    }
 

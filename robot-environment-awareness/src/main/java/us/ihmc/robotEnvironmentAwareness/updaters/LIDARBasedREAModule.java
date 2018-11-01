@@ -1,10 +1,10 @@
 package us.ihmc.robotEnvironmentAwareness.updaters;
 
-import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.publisherTopicNameGenerator;
-import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.subscriberTopicNameGenerator;
+import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +31,8 @@ import us.ihmc.ros2.Ros2Node;
 
 public class LIDARBasedREAModule
 {
+   public static final String DEFUALT_MODULE_CONFIGURATION_FILE_NAME = Paths.get(System.getProperty("user.home"), ".ihmc", "Configurations", "defaultREAModuleConfiguration.txt").toString();
+
    private static final String ocTreeTimeReport = "OcTree update took: ";
    private static final String reportOcTreeStateTimeReport = "Reporting OcTree state took: ";
    private static final String planarRegionsTimeReport = "OcTreePlanarRegion update took: ";
@@ -194,6 +196,8 @@ public class LIDARBasedREAModule
    {
       Messager server = KryoMessager.createTCPServer(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT, REACommunicationProperties.getPrivateNetClassList());
       server.startMessager();
+      if (configurationFilePath == null)
+         configurationFilePath = DEFUALT_MODULE_CONFIGURATION_FILE_NAME;
       return new LIDARBasedREAModule(server, new File(configurationFilePath));
    }
 
@@ -202,6 +206,8 @@ public class LIDARBasedREAModule
       Messager messager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
                                                           REACommunicationProperties.getPrivateNetClassList());
       messager.startMessager();
+      if (configurationFilePath == null)
+         configurationFilePath = DEFUALT_MODULE_CONFIGURATION_FILE_NAME;
       return new LIDARBasedREAModule(messager, new File(configurationFilePath));
    }
 }
