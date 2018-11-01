@@ -19,18 +19,20 @@ public class RemoteLidarBasedREAUILauncher extends Application
       Parameters parameters = getParameters();
       Map<String, String> namedParameters = parameters.getNamed();
       String host = namedParameters.getOrDefault("host", "localhost");
+      String configFileName = namedParameters.getOrDefault("configFileName", null);
       LogTools.info("Creating REA UI with the module address: " + host);
 
       if (!parameters.getRaw().isEmpty())
          LogTools.info("Received the program arguments: " + parameters.getRaw());
 
-      LIDARBasedEnvironmentAwarenessUI remoteUI = LIDARBasedEnvironmentAwarenessUI.creatRemoteUI(null, primaryStage, host);
+      LIDARBasedEnvironmentAwarenessUI remoteUI = LIDARBasedEnvironmentAwarenessUI.creatRemoteUI(configFileName, primaryStage, host);
       remoteUI.show();
    }
 
    public static void main(String[] args)
    {
       LogTools.info("To change the address of the module, enter its IP address as a program argument. For instance: " + "--host=127.0.0.1");
+      LogTools.info("To change the location of the config file: \"--configFileName=C:\\myFolder\\myConfigFileName.txt\"");
       launch(args);
    }
 }

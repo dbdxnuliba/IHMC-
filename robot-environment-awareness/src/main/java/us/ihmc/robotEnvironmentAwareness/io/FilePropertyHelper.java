@@ -19,7 +19,7 @@ public final class FilePropertyHelper
    {
       this.configurationFile = configurationFile;
 
-      if (!configurationFile.getParentFile().exists())
+      if (configurationFile.getParentFile() != null && !configurationFile.getParentFile().exists())
       {
          try
          {

@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javafx.fxml.FXML;
@@ -31,9 +32,8 @@ import us.ihmc.robotEnvironmentAwareness.ui.viewer.REAMeshViewer;
 
 public class LIDARBasedEnvironmentAwarenessUI
 {
-   public static final String DEFAULT_UI_CONFIGURATION_FILE_NAME = Paths.get(System.getProperty("user.home"), ".ihmc", "Configurations",
-                                                                             "defaultREAUIConfiguration.txt")
-                                                                        .toString();
+   public static final Path DEFAULT_UI_CONFIGURATION_FILE_NAME = Paths.get(System.getProperty("user.home"), ".ihmc", "Configurations",
+                                                                             "defaultREAUIConfiguration.txt");
 
    private final BorderPane mainPane;
 
@@ -164,23 +164,21 @@ public class LIDARBasedEnvironmentAwarenessUI
       }
    }
 
-   public static LIDARBasedEnvironmentAwarenessUI creatIntraprocessUI(String configurationeFileName, Stage primaryStage) throws Exception
+   public static LIDARBasedEnvironmentAwarenessUI creatIntraprocessUI(String configurationFilePath, Stage primaryStage) throws Exception
    {
       Messager moduleMessager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
                                                                 REACommunicationProperties.getPrivateNetClassList());
       REAUIMessager uiMessager = new REAUIMessager(moduleMessager);
-      if (configurationeFileName == null)
-         configurationeFileName = DEFAULT_UI_CONFIGURATION_FILE_NAME;
-      return new LIDARBasedEnvironmentAwarenessUI(new File(configurationeFileName), uiMessager, primaryStage);
+      File configFile = configurationFilePath != null ? new File(configurationFilePath) : DEFAULT_UI_CONFIGURATION_FILE_NAME.toFile();
+      return new LIDARBasedEnvironmentAwarenessUI(configFile, uiMessager, primaryStage);
    }
 
-   public static LIDARBasedEnvironmentAwarenessUI creatRemoteUI(String configurationeFileName, Stage primaryStage, String host) throws Exception
+   public static LIDARBasedEnvironmentAwarenessUI creatRemoteUI(String configurationFilePath, Stage primaryStage, String host) throws Exception
    {
       Messager moduleMessager = KryoMessager.createTCPClient(REAModuleAPI.API, host, NetworkPorts.REA_MODULE_UI_PORT,
                                                              REACommunicationProperties.getPrivateNetClassList());
       REAUIMessager uiMessager = new REAUIMessager(moduleMessager);
-      if (configurationeFileName == null)
-         configurationeFileName = DEFAULT_UI_CONFIGURATION_FILE_NAME;
-      return new LIDARBasedEnvironmentAwarenessUI(new File(configurationeFileName), uiMessager, primaryStage);
+      File configFile = configurationFilePath != null ? new File(configurationFilePath) : DEFAULT_UI_CONFIGURATION_FILE_NAME.toFile();
+      return new LIDARBasedEnvironmentAwarenessUI(configFile, uiMessager, primaryStage);
    }
 }

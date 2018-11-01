@@ -4,6 +4,7 @@ import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationPr
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -31,7 +32,8 @@ import us.ihmc.ros2.Ros2Node;
 
 public class LIDARBasedREAModule
 {
-   public static final String DEFUALT_MODULE_CONFIGURATION_FILE_NAME = Paths.get(System.getProperty("user.home"), ".ihmc", "Configurations", "defaultREAModuleConfiguration.txt").toString();
+   public static final Path DEFAULT_MODULE_CONFIGURATION_FILE_NAME = Paths.get(System.getProperty("user.home"), ".ihmc", "Configurations",
+                                                                               "defaultREAModuleConfiguration.txt");
 
    private static final String ocTreeTimeReport = "OcTree update took: ";
    private static final String reportOcTreeStateTimeReport = "Reporting OcTree state took: ";
@@ -73,6 +75,7 @@ public class LIDARBasedREAModule
 
       ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
 
+      LogTools.info("REA Module config file: " + configurationFile.getAbsolutePath());
       FilePropertyHelper filePropertyHelper = new FilePropertyHelper(configurationFile);
       loadConfigurationFile(filePropertyHelper);
 
@@ -194,11 +197,10 @@ public class LIDARBasedREAModule
 
    public static LIDARBasedREAModule createRemoteModule(String configurationFilePath) throws Exception
    {
-      Messager server = KryoMessager.createTCPServer(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT, REACommunicationProperties.getPrivateNetClassList());
-      server.startMessager();
-      if (configurationFilePath == null)
-         configurationFilePath = DEFUALT_MODULE_CONFIGURATION_FILE_NAME;
-      return new LIDARBasedREAModule(server, new File(configurationFilePath));
+      Messager messager = KryoMessager.createTCPServer(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT, REACommunicationProperties.getPrivateNetClassList());
+      messager.startMessager();
+      File configFile = configurationFilePath != null ? new File(configurationFilePath) : DEFAULT_MODULE_CONFIGURATION_FILE_NAME.toFile();
+      return new LIDARBasedREAModule(messager, configFile);
    }
 
    public static LIDARBasedREAModule createIntraprocessModule(String configurationFilePath) throws Exception
@@ -206,8 +208,7 @@ public class LIDARBasedREAModule
       Messager messager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
                                                           REACommunicationProperties.getPrivateNetClassList());
       messager.startMessager();
-      if (configurationFilePath == null)
-         configurationFilePath = DEFUALT_MODULE_CONFIGURATION_FILE_NAME;
-      return new LIDARBasedREAModule(messager, new File(configurationFilePath));
+      File configFile = configurationFilePath != null ? new File(configurationFilePath) : DEFAULT_MODULE_CONFIGURATION_FILE_NAME.toFile();
+      return new LIDARBasedREAModule(messager, configFile);
    }
 }
