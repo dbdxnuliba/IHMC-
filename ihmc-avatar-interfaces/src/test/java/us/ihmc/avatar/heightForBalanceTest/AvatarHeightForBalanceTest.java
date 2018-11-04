@@ -12,7 +12,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 
-public abstract class AvatarHeightForBalanceTest extends AvatarICPOptimizationPushRecoveryTestSetup implements MultiRobotTestInterface
+public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceTestSetup implements MultiRobotTestInterface
 {
    @ContinuousIntegrationTest(estimatedDuration = 60.0)
    @Test(timeout = 150000)
