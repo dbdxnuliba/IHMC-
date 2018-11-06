@@ -72,6 +72,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
    protected final YoFramePoint2D yoUnprojectedDesiredCMP;
 
    private final FrameVector2D achievedCoMAcceleration2d = new FrameVector2D();
+   private final FrameVector3D achievedCoMAcceleration = new FrameVector3D();
+
    private double desiredCoMHeightAcceleration = 0.0;
 
    private RobotSide supportSide;
@@ -223,6 +225,26 @@ public abstract class LinearMomentumRateOfChangeControlModule
       achievedCMPToPack.set(achievedCoMAcceleration2d);
       achievedCMPToPack.scale(-1.0 / (omega0 * omega0));
       achievedCMPToPack.add(centerOfMass2d);
+   }
+
+   public void computeRealAchievedCMP(FrameVector3DReadOnly achievedLinearMomentumRate, FramePoint2D realAchievedCMPToPack)
+   {
+      if (achievedLinearMomentumRate.containsNaN())
+         return;
+
+      centerOfMass.setToZero(centerOfMassFrame);
+      centerOfMass.changeFrame(worldFrame);
+      centerOfMass2d.setToZero(centerOfMassFrame);
+      centerOfMass2d.changeFrame(worldFrame);
+
+      achievedCoMAcceleration.setIncludingFrame(achievedLinearMomentumRate);
+      achievedCoMAcceleration.scale(1/totalMass);
+      achievedCoMAcceleration.changeFrame(worldFrame);
+
+      realAchievedCMPToPack.set(achievedCoMAcceleration2d);
+      realAchievedCMPToPack.scale(-centerOfMass.getZ()/(Math.abs(gravityZ)+ achievedCoMAcceleration.getZ()));
+      realAchievedCMPToPack.add(centerOfMass2d);
+
    }
 
    private final FramePoint3D cmp3d = new FramePoint3D();

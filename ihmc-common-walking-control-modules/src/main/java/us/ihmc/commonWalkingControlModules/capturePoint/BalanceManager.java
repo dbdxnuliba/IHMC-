@@ -97,6 +97,7 @@ public class BalanceManager
    // TODO It seems that the achieved CMP can be off sometimes.
    // Need to review the computation of the achieved linear momentum rate or of the achieved CMP. (Sylvain)
    private final YoFramePoint2D yoAchievedCMP = new YoFramePoint2D("achievedCMP", worldFrame, registry);
+   private final YoFramePoint2D yoRealAchievedCMP = new YoFramePoint2D("realAchievedCMP", worldFrame,registry);
 
    private final YoBoolean editStepTimingForReachability = new YoBoolean("editStepTimingForReachability", registry);
 
@@ -123,6 +124,7 @@ public class BalanceManager
    private final FramePoint2D desiredCMP = new FramePoint2D();
    private final FramePoint2D desiredCoP = new FramePoint2D();
    private final FramePoint2D achievedCMP = new FramePoint2D();
+   private final FramePoint2D realAchievedCMP = new FramePoint2D();
 
    private final FrameVector2D icpError2d = new FrameVector2D();
 
@@ -838,7 +840,9 @@ public class BalanceManager
    public void computeAchievedCMP(FrameVector3DReadOnly achievedLinearMomentumRate)
    {
       linearMomentumRateOfChangeControlModule.computeAchievedCMP(achievedLinearMomentumRate, achievedCMP);
+      linearMomentumRateOfChangeControlModule.computeRealAchievedCMP(achievedLinearMomentumRate, realAchievedCMP);
       yoAchievedCMP.setMatchingFrame(achievedCMP);
+      yoRealAchievedCMP.setMatchingFrame(realAchievedCMP);
    }
 
    public CapturabilityBasedStatus updateAndReturnCapturabilityBasedStatus()
