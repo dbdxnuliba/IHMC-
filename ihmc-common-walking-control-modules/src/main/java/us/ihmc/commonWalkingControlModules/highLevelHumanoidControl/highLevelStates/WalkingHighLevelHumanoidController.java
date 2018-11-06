@@ -633,7 +633,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       if (pelvisOrientationManager != null)
          pelvisOrientationManager.compute();
 
-      comHeightManager.compute();
+      comHeightManager.compute(isInDoubleSupport);
       controlledCoMHeightAcceleration.set(comHeightManager.computeDesiredCoMHeightAcceleration(desiredICPVelocityAsFrameVector, isInDoubleSupport, omega0,
                                                                                                isRecoveringFromPush, feetManager));
 

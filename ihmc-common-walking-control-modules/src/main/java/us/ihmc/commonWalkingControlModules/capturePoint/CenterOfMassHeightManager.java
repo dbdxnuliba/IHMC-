@@ -118,7 +118,7 @@ public class CenterOfMassHeightManager
       pelvisHeightControlState.setWeights(weight);
    }
 
-   public void compute()
+   public void compute(boolean isInDoubleSupport)
    {
       if (useStateMachine)
       {
@@ -127,6 +127,11 @@ public class CenterOfMassHeightManager
       else
       {
          pelvisHeightControlState.doAction(Double.NaN);
+      }
+
+      if(isInDoubleSupport)
+      {
+         goHome(0.15);
       }
    }
 
