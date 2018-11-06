@@ -60,7 +60,7 @@ public class QuadrupedControllerToolbox
    private final List<ContactablePlaneBody> contactablePlaneBodies;
 
    private final YoFrameConvexPolygon2D supportPolygon;
-   private final YoArtifactPolygon supportPolygonVisualizer;
+//   private final YoArtifactPolygon supportPolygonVisualizer;
 
    private final FramePoint3D tempPoint = new FramePoint3D();
    private final FrameVector3D comVelocityEstimate = new FrameVector3D();
@@ -83,8 +83,8 @@ public class QuadrupedControllerToolbox
       registry.addChild(footControlModuleParameters.getYoVariableRegistry());
 
       supportPolygon = new YoFrameConvexPolygon2D("supportPolygon", ReferenceFrame.getWorldFrame(), 4, registry);
-      supportPolygonVisualizer = new YoArtifactPolygon("supportPolygonVisualizer", supportPolygon, Color.black, false, 1);
-      yoGraphicsListRegistry.registerArtifact("supportPolygon", supportPolygonVisualizer);
+//      supportPolygonVisualizer = new YoArtifactPolygon("supportPolygonVisualizer", supportPolygon, Color.black, false, 1);
+//      yoGraphicsListRegistry.registerArtifact("supportPolygon", supportPolygonVisualizer);
 
 
       // create controllers and estimators

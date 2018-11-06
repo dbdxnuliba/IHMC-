@@ -39,8 +39,8 @@ public class DivergentComponentOfMotionEstimator
 
       parentRegistry.addChild(registry);
 
-      if (graphicsListRegistry != null)
-         createGraphics(nameSuffix, graphicsListRegistry);
+//      if (graphicsListRegistry != null)
+//         createGraphics(nameSuffix, graphicsListRegistry);
    }
 
    private void createGraphics(String suffix, YoGraphicsListRegistry graphicsListRegistry)

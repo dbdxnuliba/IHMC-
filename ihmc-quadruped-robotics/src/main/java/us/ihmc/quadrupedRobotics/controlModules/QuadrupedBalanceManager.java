@@ -110,8 +110,8 @@ public class QuadrupedBalanceManager
       adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
       adjustedActiveSteps.clear();
 
-      if (yoGraphicsListRegistry != null)
-         setupGraphics(yoGraphicsListRegistry);
+//      if (yoGraphicsListRegistry != null)
+//         setupGraphics(yoGraphicsListRegistry);
 
       parentRegistry.addChild(registry);
    }

@@ -152,7 +152,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
 
       //      swingTrajectoryWaypointCalculator = new OneWaypointSwingGenerator(namePrefix, 0.5, 0.04, 0.3, registry, graphicsListRegistry);
       swingTrajectoryWaypointCalculator = new TwoWaypointSwingGenerator(namePrefix, new double[] {0.33, 0.66}, new double[] {0.25, 0.75}, 0.04, 0.3, registry,
-                                                                        graphicsListRegistry);
+                                                                        null);
       FramePoint3D dummyPoint = new FramePoint3D();
       dummyPoint.setToNaN();
       swingTrajectoryWaypointCalculator.setStanceFootPosition(dummyPoint);

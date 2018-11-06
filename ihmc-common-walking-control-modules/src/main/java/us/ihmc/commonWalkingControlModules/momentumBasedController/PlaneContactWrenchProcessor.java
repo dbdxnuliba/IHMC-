@@ -79,15 +79,15 @@ public class PlaneContactWrenchProcessor
          yoCop.set(footCenter2d);
          yoCops.put(contactableBody, yoCop);
 
-         if (yoGraphicsListRegistry != null)
-         {
-            YoGraphicPosition copViz = new YoGraphicPosition(copName, cop, 0.005, YoAppearance.Navy(), YoGraphicPosition.GraphicType.BALL);
-            copViz.setVisible(VISUALIZE);
-            yoGraphicsListRegistry.registerYoGraphic(listName, copViz);
-            YoArtifactPosition artifact = copViz.createArtifact();
-            artifact.setVisible(VISUALIZE);
-            yoGraphicsListRegistry.registerArtifact(listName, artifact);
-         }
+//         if (yoGraphicsListRegistry != null)
+//         {
+//            YoGraphicPosition copViz = new YoGraphicPosition(copName, cop, 0.005, YoAppearance.Navy(), YoGraphicPosition.GraphicType.BALL);
+//            copViz.setVisible(VISUALIZE);
+//            yoGraphicsListRegistry.registerYoGraphic(listName, copViz);
+//            YoArtifactPosition artifact = copViz.createArtifact();
+//            artifact.setVisible(VISUALIZE);
+//            yoGraphicsListRegistry.registerArtifact(listName, artifact);
+//         }
       }
 
       desiredCenterOfPressureDataHolder = new CenterOfPressureDataHolder(soleFrames);

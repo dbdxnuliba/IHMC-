@@ -90,8 +90,8 @@ public class DCMPlanner
 
       parentRegistry.addChild(registry);
 
-      if (yoGraphicsListRegistry != null)
-         setupVisualizers(yoGraphicsListRegistry);
+//      if (yoGraphicsListRegistry != null)
+//         setupVisualizers(yoGraphicsListRegistry);
    }
 
    private void setupVisualizers(YoGraphicsListRegistry yoGraphicsListRegistry)

@@ -122,7 +122,7 @@ public class QuadrupedSteppingState implements QuadrupedController, QuadrupedSte
                                                                                        fullRobotModel.getControllableOneDoFJoints(),
                                                                                        controllerToolbox.getReferenceFrames().getCenterOfMassFrame(),
                                                                                        runtimeEnvironment.getControllerCoreOptimizationSettings(),
-                                                                                       runtimeEnvironment.getGraphicsListRegistry(), registry);
+                                                                                       null, registry);
       controlCoreToolbox.setupForVirtualModelControlSolver(fullRobotModel.getBody(), controllerToolbox.getContactablePlaneBodies());
       FeedbackControlCommandList feedbackTemplate = controlManagerFactory.createFeedbackControlTemplate();
       controllerCore = new WholeBodyControllerCore(controlCoreToolbox, feedbackTemplate, runtimeEnvironment.getJointDesiredOutputList(), registry);
