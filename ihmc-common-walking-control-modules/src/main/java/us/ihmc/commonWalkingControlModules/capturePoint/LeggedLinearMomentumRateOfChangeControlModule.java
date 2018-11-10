@@ -29,6 +29,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private YoBoolean isInDoubleSupport;
    private FramePoint3D comEndOfStep = new FramePoint3D();
+   private WalkingControllerParameters walkingControllerParameters;
 
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, HighLevelHumanoidControllerToolbox controllerToolbox,
@@ -36,6 +37,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    {
       super(namePrefix, referenceFrames, gravityZ, totalMass, parentRegistry, yoGraphicsListRegistry);
       this.controllerToolbox=controllerToolbox;
+      this.walkingControllerParameters=walkingControllerParameters;
       supportLegPreviousTick = YoEnum.create(namePrefix + "SupportLegPreviousTick", "", RobotSide.class, registry, true);
       isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
@@ -113,36 +115,42 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    @Override
    public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
    {
-      centerOfMass.setToZero(centerOfMassFrame);
+      if(walkingControllerParameters.useHeightForBalanceController())
+      {
+         centerOfMass.setToZero(centerOfMassFrame);
 
-      varyingHeightControlModule.setCoM(centerOfMass);
-      FrameVector2D icpError2d = new FrameVector2D();
-      icpError2d.set(desiredCapturePoint);
-      icpError2d.sub(capturePoint);
-      varyingHeightControlModule.setICPError(icpError2d);
-      varyingHeightControlModule.setDesiredCMP(desiredCMP);
-      varyingHeightControlModule.setSupportPolygon(controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld());
-      varyingHeightControlModule.setLinearMomentumRateOfChangeFromLIP(linearMomentumRateOfChangeToModify);
-      varyingHeightControlModule.setSupportSide(supportSide);
-      varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
-      varyingHeightControlModule.setCoMEndOfSTep(comEndOfStep);
-      varyingHeightControlModule.setDesiredCapturePointVelocity(desiredCapturePointVelocity);
-      varyingHeightControlModule.compute();
-      FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
-      modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
-      // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
-      linearMomentumRateOfChangeToModify.setIncludingFrame(modifiedLinearMomentumRate);
+         varyingHeightControlModule.setCoM(centerOfMass);
+         FrameVector2D icpError2d = new FrameVector2D();
+         icpError2d.set(desiredCapturePoint);
+         icpError2d.sub(capturePoint);
+         varyingHeightControlModule.setICPError(icpError2d);
+         varyingHeightControlModule.setDesiredCMP(desiredCMP);
+         varyingHeightControlModule.setSupportPolygon(controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld());
+         varyingHeightControlModule.setLinearMomentumRateOfChangeFromLIP(linearMomentumRateOfChangeToModify);
+         varyingHeightControlModule.setSupportSide(supportSide);
+         varyingHeightControlModule.setIsInDoubleSupport(isInDoubleSupport.getBooleanValue());
+         varyingHeightControlModule.setCoMEndOfSTep(comEndOfStep);
+         varyingHeightControlModule.setDesiredCapturePointVelocity(desiredCapturePointVelocity);
+         varyingHeightControlModule.compute();
+         FrameVector3D modifiedLinearMomentumRate = new FrameVector3D();
+         modifiedLinearMomentumRate.setIncludingFrame(varyingHeightControlModule.getModifiedLinearMomentumRateOfChange());
+         // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
+         linearMomentumRateOfChangeToModify.setIncludingFrame(modifiedLinearMomentumRate);
+      }
    }
 
    @Override
    public void computeModifiedCMPHeight(FramePoint2D cmpToModify, FramePoint2DReadOnly com2D)
    {
-      if(varyingHeightControlModule.getPrimaryCondition()==VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
+      if(walkingControllerParameters.useHeightForBalanceController())
       {
-         FrameConvexPolygon2D supportPolygon = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
-         FramePoint2D vertex = new FramePoint2D();
-         supportPolygon.getClosestVertex(com2D,vertex);
-         cmpToModify.set(vertex.getX()-0.04,vertex.getY());
+         if (varyingHeightControlModule.getPrimaryCondition() == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
+         {
+            FrameConvexPolygon2D supportPolygon = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
+            FramePoint2D vertex = new FramePoint2D();
+            supportPolygon.getClosestVertex(com2D, vertex);
+            cmpToModify.set(vertex.getX() - 0.04, vertex.getY());
+         }
       }
    }
 

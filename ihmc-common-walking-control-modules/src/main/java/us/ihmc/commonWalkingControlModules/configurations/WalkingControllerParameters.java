@@ -75,12 +75,12 @@ public abstract class WalkingControllerParameters
    }
 
    /**
-    * Method returns robot specific parameters for the {@link #ToeSlippingDetector}.
+    * Method returns robot specific parameters for the {@link #}.
     * <p>
     * Must be overwritten if {@link #enableToeOffSlippingDetection()} returns {@code true}.
     * </p>
     * @return the parameters for slip detection during toe off.
-    * @see ToeSlippingDetector#configure(double, double, double, double)
+    * @see ToeSlippingDetector#(double, double, double, double)
     */
    public ToeSlippingDetectorParameters getToeSlippingDetectorParameters()
    {
@@ -837,4 +837,6 @@ public abstract class WalkingControllerParameters
 
 
    public abstract HeightForBalanceParameters getHeightForBalanceParameters();
+
+   public boolean useHeightForBalanceController(){ return false;}
 }
