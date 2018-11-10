@@ -1685,6 +1685,21 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
       return combinedTerrainObject;
    }
 
+   public static CombinedTerrainObject3D setUpWater(String name)
+   {
+      CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(name);
+
+      //    URL fileURL = DRCDemo01NavigationEnvironment.class.getClassLoader().getResource("Textures/ground2.png");
+      YoAppearanceTexture texture = new YoAppearanceTexture("Textures/water1.jpg");
+
+      RigidBodyTransform location = new RigidBodyTransform();
+      location.setTranslation(new Vector3D(1.9, 0, -0.5));
+      RotatableBoxTerrainObject newBox = new RotatableBoxTerrainObject(new Box3D(location, 45, 45, 1), texture);
+      combinedTerrainObject.addTerrainObject(newBox);
+
+      return combinedTerrainObject;
+   }
+
    public static CombinedTerrainObject3D addFiducial(Vector3D position, double yaw, Fiducial fiducial)
    {
       YoAppearanceTexture fiducialTexture = new YoAppearanceTexture(fiducial.getPathString());

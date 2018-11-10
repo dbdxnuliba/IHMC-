@@ -2,13 +2,11 @@ package us.ihmc.commonWalkingControlModules.capturePoint;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightControlModule;
 import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightControlModuleInterface;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightPrimaryConditionEnum;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationControllerInterface;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
-import us.ihmc.euclid.referenceFrame.FramePoint2D;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
-import us.ihmc.euclid.referenceFrame.FrameVector2D;
-import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
@@ -135,6 +133,20 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       // modifiedLinearMomentumRate.changeFrame(centerOfMassFrame);
       linearMomentumRateOfChangeToModify.setIncludingFrame(modifiedLinearMomentumRate);
    }
+
+   @Override
+   public void computeModifiedCMPHeight(FramePoint2D cmpToModify, FramePoint2DReadOnly com2D)
+   {
+      if(varyingHeightControlModule.getPrimaryCondition()==VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
+      {
+         FrameConvexPolygon2D supportPolygon = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
+         FramePoint2D vertex = new FramePoint2D();
+         supportPolygon.getClosestVertex(com2D,vertex);
+         cmpToModify.set(vertex.getX()-0.04,vertex.getY());
+      }
+   }
+
+
 
    public void setFinalCoMPositionEndOfStep(FramePoint3D comEndOFStep)
    {

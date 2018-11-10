@@ -32,11 +32,11 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
    @Test(timeout = 300000)
-   public void testPushFrontalStanding() throws Exception
+   public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.57
-      percentWeight = 0.57;
-      super.testPushFrontalStanding();
+      percentWeight = 0.60;
+      super.testPushStanding();
    }
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)

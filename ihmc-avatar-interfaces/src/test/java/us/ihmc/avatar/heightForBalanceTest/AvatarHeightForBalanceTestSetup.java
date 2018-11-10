@@ -22,7 +22,9 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
+import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
+import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.StepTilesEnvironment;
 import us.ihmc.simulationToolkit.controllers.PushRobotController;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.util.ControllerFailureException;
@@ -103,12 +105,22 @@ public abstract class AvatarHeightForBalanceTestSetup
    }
 
 
-   protected void setupAndRunTest(FootstepDataListMessage message) throws SimulationExceededMaximumTimeException, ControllerFailureException
+   protected void setupAndRunTest(FootstepDataListMessage message, boolean showTiles) throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
-      FlatGroundEnvironment flatGround = new FlatGroundEnvironment();
+      CommonAvatarEnvironmentInterface environment;
+      if(showTiles)
+      {
+         environment = new StepTilesEnvironment(0.25, 0.35, 0.125, 0.5, 6);
+      }
+      else
+      {
+         environment = new FlatGroundEnvironment();
+      }
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
-      drcSimulationTestHelper.setTestEnvironment(flatGround);
+      drcSimulationTestHelper.setTestEnvironment(environment);
       drcSimulationTestHelper.createSimulation("DRCSimpleFlatGroundScriptTest");
+      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("ICPTestVars",
+                                                                           new String[]{"desiredICPX", "desiredICPY","perfectCMPX","perfectCMPY","centerOfMassX","centerOfMassY", "centerOfMassZ", "achievedMomentumRateAngularY"});
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       totalMass = fullRobotModel.getTotalMass();
 
@@ -153,6 +165,7 @@ public abstract class AvatarHeightForBalanceTestSetup
          double duration = size * (footsteps.getDefaultSwingDuration() + footsteps.getDefaultTransferDuration());
          assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(duration + 3.0));
       }
+
 
    }
 

@@ -11,6 +11,7 @@ import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPoly
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGainsReadOnly;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SwingTrajectoryParameters;
@@ -97,8 +98,8 @@ public class ICPOptimizationControllerTest
       SideDependentList<FootSpoof> contactableFeet = setupContactableFeet(footLength, 0.1, stanceWidth);
       BipedSupportPolygons bipedSupportPolygons = setupBipedSupportPolygons(contactableFeet, registry);
       double controlDT = 0.001;
-      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons,
-                                                                           null, contactableFeet, controlDT, registry, null);
+      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons, null,
+                                                                           contactableFeet, controlDT, registry, null);
       new DefaultParameterReader().readParametersInRegistry(registry);
 
       double omega = walkingControllerParameters.getOmega0();
@@ -168,8 +169,8 @@ public class ICPOptimizationControllerTest
       SideDependentList<FootSpoof> contactableFeet = setupContactableFeet(footLength, 0.1, stanceWidth);
       BipedSupportPolygons bipedSupportPolygons = setupBipedSupportPolygons(contactableFeet, registry);
       double controlDT = 0.001;
-      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons,
-                                                                           null, contactableFeet, controlDT, registry, null);
+      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons, null,
+                                                                           contactableFeet, controlDT, registry, null);
       new DefaultParameterReader().readParametersInRegistry(registry);
 
       double omega = walkingControllerParameters.getOmega0();
@@ -239,8 +240,8 @@ public class ICPOptimizationControllerTest
       SideDependentList<FootSpoof> contactableFeet = setupContactableFeet(footLength, 0.1, stanceWidth);
       BipedSupportPolygons bipedSupportPolygons = setupBipedSupportPolygons(contactableFeet, registry);
       double controlDT = 0.001;
-      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons,
-                                                                           null, contactableFeet, controlDT, registry, null);
+      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons, null,
+                                                                           contactableFeet, controlDT, registry, null);
       new DefaultParameterReader().readParametersInRegistry(registry);
 
       double omega = walkingControllerParameters.getOmega0();
@@ -326,8 +327,8 @@ public class ICPOptimizationControllerTest
       SideDependentList<FootSpoof> contactableFeet = setupContactableFeet(footLength, 0.1, stanceWidth);
       BipedSupportPolygons bipedSupportPolygons = setupBipedSupportPolygons(contactableFeet, registry);
       double controlDT = 0.001;
-      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons,
-                                                                           null, contactableFeet, controlDT, registry, null);
+      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters, optimizationParameters, bipedSupportPolygons, null,
+                                                                           contactableFeet, controlDT, registry, null);
       new DefaultParameterReader().readParametersInRegistry(registry);
 
       double omega = walkingControllerParameters.getOmega0();
@@ -406,12 +407,14 @@ public class ICPOptimizationControllerTest
          ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
          List<FramePoint2D> contactFramePoints = contactableFoot.getContactPoints2d();
          double coefficientOfFriction = contactableFoot.getCoefficientOfFriction();
-         YoPlaneContactState yoPlaneContactState = new YoPlaneContactState(sidePrefix + "Foot", foot, soleFrame, contactFramePoints, coefficientOfFriction, registry);
+         YoPlaneContactState yoPlaneContactState = new YoPlaneContactState(sidePrefix + "Foot", foot, soleFrame, contactFramePoints, coefficientOfFriction,
+                                                                           registry);
          yoPlaneContactState.setFullyConstrained();
          contactStates.put(robotSide, yoPlaneContactState);
       }
 
-      ReferenceFrame midFeetZUpFrame = new MidFrameZUpFrame("midFeetZupFrame", worldFrame, ankleZUpFrames.get(RobotSide.LEFT), ankleZUpFrames.get(RobotSide.RIGHT));
+      ReferenceFrame midFeetZUpFrame = new MidFrameZUpFrame("midFeetZupFrame", worldFrame, ankleZUpFrames.get(RobotSide.LEFT),
+                                                            ankleZUpFrames.get(RobotSide.RIGHT));
       midFeetZUpFrame.update();
 
       BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(midFeetZUpFrame, ankleZUpFrames, registry, null);
@@ -533,7 +536,7 @@ public class ICPOptimizationControllerTest
          return 0.0001;
       }
 
-
+      
       @Override
       public double getMinimumTimeRemaining()
       {
@@ -733,6 +736,12 @@ public class ICPOptimizationControllerTest
       public SteppingParameters getSteppingParameters()
       {
          return new TestSteppingParameters();
+      }
+
+      @Override
+      public HeightForBalanceParameters getHeightForBalanceParameters()
+      {
+         return null;
       }
    }
 

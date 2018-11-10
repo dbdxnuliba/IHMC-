@@ -118,7 +118,7 @@ public class VaryingHeightAngleAndDistanceEvaluator
 
       // BACK EDGE:
       else if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), supportPolygon.getMinX(), 0.04)
-            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMinX(),0.04) && closestVertex.distance(projectedDesiredCMP)>0.01)
+            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMinX(),0.04) && closestVertex.distance(projectedDesiredCMP)>0.02)
       {
          useAngleForConditions = true;
       }

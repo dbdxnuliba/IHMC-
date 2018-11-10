@@ -7,6 +7,7 @@ import java.util.Map;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.PelvisICPBasedTranslationManager;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.ToeSlippingDetector;
@@ -833,4 +834,7 @@ public abstract class WalkingControllerParameters
    {
       return false;
    }
+
+
+   public abstract HeightForBalanceParameters getHeightForBalanceParameters();
 }

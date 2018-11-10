@@ -9,6 +9,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.atlas.AtlasJointMap;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.GroupParameter;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
@@ -68,6 +69,8 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    private final AtlasSteppingParameters steppingParameters;
    private final LeapOfFaithParameters leapOfFaithParameters;
 
+   private final AtlasHeightForBalanceParameters heightForBalanceParameters;
+
    public AtlasWalkingControllerParameters(RobotTarget target, AtlasJointMap jointMap, AtlasContactPointParameters contactPointParameters)
    {
       this.target = target;
@@ -91,6 +94,8 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       leapOfFaithParameters = new AtlasLeapOfFaithParameters(runningOnRealRobot);
 
       icpOptimizationParameters = new AtlasICPOptimizationParameters(runningOnRealRobot);
+
+      heightForBalanceParameters = new AtlasHeightForBalanceParameters();
 
       for (RobotSide robotSide : RobotSide.values)
       {
@@ -588,5 +593,11 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    public double getMinSwingTrajectoryClearanceFromStanceFoot()
    {
       return 0.15;
+   }
+
+   @Override
+   public HeightForBalanceParameters getHeightForBalanceParameters()
+   {
+      return heightForBalanceParameters;
    }
 }

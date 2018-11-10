@@ -102,16 +102,9 @@ public class VaryingHeightSecondaryConditionEvaluator
    {
       if (primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
       {
-         if (angleGrows)
-         {
-            tToSwitch = (-posAlignTresh - errorAngle) / (errorAngleEndOfSwing - errorAngle) * tRemainingEndOfWalkingState;
-         }
-         else
-         {
-            tToSwitch = (posAlignTresh - errorAngle) / (errorAngleEndOfSwing - errorAngle) * tRemainingEndOfWalkingState;
-         }
-         // see below
-         modifyPosAlignTreshold(tRemainingEndOfWalkingState,posAlignTresh,zMax, aMinPredicted,aMaxPredicted);
+         double tFromMinToMax = timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin,0,zMax,aMinPredicted,aMaxCtrl);
+         tToSwitch = tRemainingEndOfWalkingState-tFromMinToMax;
+         modifiedPosAlignTresh = 0;
       }
       else if (primaryCondition== VaryingHeightPrimaryConditionEnum.PREPARE_POS)
       {
@@ -150,15 +143,6 @@ public class VaryingHeightSecondaryConditionEvaluator
          {
             tToConst = tToMinPositionPredicted;
             aSmooth = tToMinPositionPredicted*aCtrl/tToSwitch;
-            /*
-            aSmooth = tToMinPositionPredicted*tToMinPositionPredicted*aCtrl/tToSwitch/tToSwitch;
-            aSmooth = (-0.6-dz)/tToSwitch;
-            double a = -0.5*tToConst*tToConst/5;
-            double b = 0.5*tToConst*tToConst - dz*tToConst/5;
-            double c = 0.5*dz*dz/5+dz*tToConst+z-zMin;
-            aSmooth = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
-            */
-
          }
          aSmooth = MathTools.clamp(aSmooth,aMinCtrl,0);
       }
@@ -175,36 +159,8 @@ public class VaryingHeightSecondaryConditionEvaluator
          {
             tToConst = tToMaxPositionPredicted;
             aSmooth = tToMaxPositionPredicted*aCtrl/tToSwitch;
-            /*
-            aSmooth = tToMaxPositionPredicted*tToMaxPositionPredicted*aCtrl/tToSwitch/tToSwitch;
-            aSmooth = (0.7-dz)/tToSwitch;
-            double a = 0.5*tToConst*tToConst/5;
-            double b = 0.5*tToConst*tToConst + dz*tToConst/5;
-            double c = 0.5*dz*dz/5+dz*tToConst+z-zMax;
-            aSmooth = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
-            */
          }
          aSmooth=MathTools.clamp(aSmooth,0,aMaxCtrl);
-      }
-   }
-
-   /**
-    * Threshold for pos alignment is modified when the time after the predicted threshold is higher than the time to the max position at that moment.
-    * @param tRemainingEndOfWalkingState
-    * @param posAlignTresh
-    * @param zMax
-    * @param aMinPredicted
-    * @param aMaxPredcited
-    */
-   private void modifyPosAlignTreshold(double tRemainingEndOfWalkingState, double posAlignTresh, double zMax, double aMinPredicted, double aMaxPredcited)
-   {
-      if (tRemainingEndOfWalkingState -tToSwitch > timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax,aMinPredicted,aMaxPredcited))
-      {
-         modifiedPosAlignTresh = timeToConstraintsPredictor.getTMaxPosReachedPredicted(zMin, 0,zMax,aMinPredicted,aMaxPredcited) / (tRemainingEndOfWalkingState-tToSwitch) * posAlignTresh;
-      }
-      else
-      {
-         modifiedPosAlignTresh = posAlignTresh;
       }
    }
 

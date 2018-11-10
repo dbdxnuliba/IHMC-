@@ -29,7 +29,7 @@ public class VaryingHeightPrimaryConditionEvaluator
    public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double aMinPredicted, double aMaxPredicted,double z, double dz, double zMax, double kneeAngle, double errorAngle, double errorAngleEndOfSwing,
                                                                               boolean angleGrows, double negAlignTresh, double posAlignTresh,
                                                                               VaryingHeightPrimaryConditionEnum varyingHeightConditionPreviousTick, boolean useAngleForConditions,
-                                                                              boolean distancePosAlignment, double copCoMOrthDistance, boolean nonDynamicCase)
+                                                                              boolean distancePosAlignment, double copCoMOrthDistance, boolean nonDynamicCase, double tToSwitch)
    {
       this.primaryConditionPreviousTick = varyingHeightConditionPreviousTick;
       // MAXZ
@@ -43,7 +43,7 @@ public class VaryingHeightPrimaryConditionEvaluator
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MINZ;
       }
       // ALIGNED_POS (errorAngle or distance based)
-      else if(errorAngle<posAlignTresh && errorAngle>-posAlignTresh ||(!useAngleForConditions && distancePosAlignment)  )                    // alignment ICPe and 'pendulum' positive force
+      else if((errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment)  || tToSwitch<0.02)                    // alignment ICPe and 'pendulum' positive force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_POS && angleGrows && MathTools.epsilonEquals(errorAngle,posAlignTresh,0.2))

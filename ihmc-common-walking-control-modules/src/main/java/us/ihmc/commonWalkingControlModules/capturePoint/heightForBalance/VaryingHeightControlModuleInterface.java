@@ -17,4 +17,8 @@ public interface VaryingHeightControlModuleInterface
    void setSupportSide(RobotSide supportSide);
    void setIsInDoubleSupport(boolean isInDoubleSupport);
    void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity);
+   VaryingHeightPrimaryConditionEnum getPrimaryCondition();
+   double getTimeToSwitch();
+   double getTimeRemaining();
+   double getErrorAngleEndOfSwing();
 }

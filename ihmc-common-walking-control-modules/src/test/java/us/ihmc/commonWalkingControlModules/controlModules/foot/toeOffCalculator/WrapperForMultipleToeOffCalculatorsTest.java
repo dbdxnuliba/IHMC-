@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
@@ -462,6 +463,12 @@ public class WrapperForMultipleToeOffCalculatorsTest
 
          @Override
          public SteppingParameters getSteppingParameters()
+         {
+            return null;
+         }
+
+         @Override
+         public HeightForBalanceParameters getHeightForBalanceParameters()
          {
             return null;
          }

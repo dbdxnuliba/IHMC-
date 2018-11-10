@@ -8,6 +8,7 @@ import java.util.Map;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.GroupParameter;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
@@ -54,6 +55,8 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    private final ValkyrieSteppingParameters steppingParameters;
    private final ICPOptimizationParameters icpOptimizationParameters;
 
+   private final ValkyrieHeightForBalanceParameters heightForBalanceParameters;
+
    public ValkyrieWalkingControllerParameters(ValkyrieJointMap jointMap)
    {
       this(jointMap, RobotTarget.SCS);
@@ -69,6 +72,8 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       swingTrajectoryParameters = new ValkyrieSwingTrajectoryParameters(target);
       steppingParameters = new ValkyrieSteppingParameters(target);
       icpOptimizationParameters = new ValkyrieICPOptimizationParameters(target);
+
+      heightForBalanceParameters = new ValkyrieHeightForBalanceParameters();
 
       // Generated using ValkyrieFullRobotModelVisualizer
       RigidBodyTransform leftHandLocation = new RigidBodyTransform(new double[] { 0.8772111323383822, -0.47056204413925823, 0.09524700476706424,
@@ -168,6 +173,12 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    }
 
    @Override
+   public double getMaxAllowedDistanceCMPSupport()
+   {
+      return 0.06*jointMap.getModelScale();
+   }
+
+   @Override
    public ICPControlGains createICPControlGains()
    {
       ICPControlGains gains = new ICPControlGains();
@@ -206,7 +217,6 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
       gains.setZeta(zeta);
       gains.setMaximumFeedback(maxAcceleration);
       gains.setMaximumFeedbackRate(maxJerk);
-
       return gains;
    }
 
@@ -738,6 +748,12 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    public double getMinSwingTrajectoryClearanceFromStanceFoot()
    {
       return 0.18;
+   }
+
+   @Override
+   public HeightForBalanceParameters getHeightForBalanceParameters()
+   {
+      return heightForBalanceParameters;
    }
 
    /** {@inheritDoc} */

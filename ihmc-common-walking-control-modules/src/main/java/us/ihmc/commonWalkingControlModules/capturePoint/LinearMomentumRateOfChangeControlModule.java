@@ -310,6 +310,9 @@ public abstract class LinearMomentumRateOfChangeControlModule
       desiredCoPToPack.setIncludingFrame(desiredCoP);
       desiredCoPToPack.changeFrame(worldFrame);
 
+      computeModifiedCMPHeight(desiredCMP,centerOfMass2d);
+      computeModifiedCMPHeight(desiredCMPToPack,centerOfMass2d);
+
       double fZ = WrenchDistributorTools.computeFz(totalMass, gravityZ, desiredCoMHeightAcceleration);
       FrameVector3D linearMomentumRateOfChange = computeGroundReactionForce(desiredCMP, fZ);
       linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
@@ -414,6 +417,8 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
    public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
    {}
+
+   public void computeModifiedCMPHeight(FramePoint2D cmpToModify, FramePoint2DReadOnly com2D){}
 
    public void setFinalCoMPositionEndOfStep(FramePoint3D coMPositionEndOfStep){};
 
