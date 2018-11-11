@@ -119,8 +119,24 @@ public abstract class AvatarHeightForBalanceTestSetup
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel());
       drcSimulationTestHelper.setTestEnvironment(environment);
       drcSimulationTestHelper.createSimulation("DRCSimpleFlatGroundScriptTest");
-      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("ICPTestVars",
-                                                                           new String[]{"desiredICPX", "desiredICPY","perfectCMPX","perfectCMPY","centerOfMassX","centerOfMassY", "centerOfMassZ", "achievedMomentumRateAngularY"});
+      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("HeightForBalanceVars",
+                                                                           new String[]{"desiredMomentumRateLinearX","desiredMomentumRateLinearY","desiredMomentumRateLinearZ",
+                                                                                 "achievedMomentumRateLinearX","achievedMomentumRateLinearY","achievedMomentumRateLinearZ",
+                                                                                 "achievedMomentumRateAngularX","achievedMomentumRateAngularY","achievedMomentumRateAngularZ",
+                                                                                 "LinearMomentumX","LinearMomentumY","LinearMomentumZ",
+                                                                                 "AngularMomentumX","AngularMomentumY","AngularMomentumZ",
+                                                                                 "q_leftHipPitch","qd_leftHipPitch","tau_leftHipPitch",
+                                                                                 "q_rightHipPitch","qd_rightHipPitch","tau_rightHipPitch",
+                                                                                 "q_leftKneePitch","qd_leftKneePitch","tau_leftKneePitch",
+                                                                                 "q_rightKneePitch","qd_rightKneePitch","tau_rightKneePitch",
+                                                                                 "q_leftAnklePitch","qd_leftAnklePitch","tau_leftAnklePitch",
+                                                                                 "q_rightAnklePitch","qd_rightAnklePitch","tau_rightAnklePitch",
+                                                                                 "q_torsoPitch","qd_torsoPitch","tau_torsoPitch",
+                                                                                 "torsoErrorRotationVectorX","torsoErrorRotationVectorY","torsoErrorRotationVectorZ",
+                                                                                 "pelvisErrorRotationVectorX","pelvisErrorRotationVectorY","pelvisErrorRotationVectorZ",
+                                                                                 "perfectCMPX","perfectCMPY","desiredCMPX","desiredCMPY","achievedCMPX","achievedCMPY", "realActualCMPX", "realActualCMPY",
+                                                                                 "CenterOfPressureX","CenterOfPressureY","centerOfMassX","centerOfMassY","centerOfMassZ",
+                                                                                 "capturePointX","capturePointY","desiredICPX","desiredICPY"});
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       totalMass = fullRobotModel.getTotalMass();
 

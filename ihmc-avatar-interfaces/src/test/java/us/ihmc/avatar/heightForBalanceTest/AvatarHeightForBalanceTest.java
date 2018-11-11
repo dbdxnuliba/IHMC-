@@ -118,7 +118,6 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
       footsteps.setAreFootstepsAdjustable(false);
       setupAndRunTest(footsteps, true);
 
-      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("ICPTestVars", new String[]{"desiredICPX", "desiredICPY","perfectCMPX","perfectCMPY","centerOfMassX","centerOfMassY"});
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
 
       // push timing:
