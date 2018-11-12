@@ -17,6 +17,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -81,7 +82,14 @@ public abstract class AvatarHeightForBalanceTestSetup
       // Do this here in case a test fails. That way the memory will be recycled.
       if (drcSimulationTestHelper != null)
       {
-         drcSimulationTestHelper.destroySimulation();
+         try
+         {
+            drcSimulationTestHelper.destroySimulation();
+         }
+         catch (Exception e)
+         {
+            LogTools.info(e.getMessage());
+         }
          drcSimulationTestHelper = null;
       }
 

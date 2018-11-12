@@ -4,13 +4,17 @@ package us.ihmc.avatar.heightForBalanceTest;
 import com.vividsolutions.jts.math.Vector2D;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
+import org.junit.Assert;
 import org.junit.Test;
 import org.opencv.core.Mat;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.pushRecovery.AvatarICPOptimizationPushRecoveryTestSetup;
+import us.ihmc.commons.PrintTools;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.StateTransitionCondition;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
@@ -247,16 +251,22 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
    {
       FileWriter writer = new FileWriter("angleAndPercentWeight.txt");
       ArrayList<Vector2D> angleAndPercentWeight = new ArrayList<Vector2D>();
-      for(int i=0; i<12; i++)
+      int numberOfDirections = 12;
+      double increment = 0.01;
+      double weightForTest;
+
+      for(int i=0; i<numberOfDirections; i++)
       {
-         double angle = i*30*Math.PI/180;
-         percentWeight = 0.30;
-         for (int j = 0; j < 10000; j++)
+         double angle = i*(360/numberOfDirections)*Math.PI/180;
+         weightForTest = percentWeight;
+         for (int k = 0; k < 1000; k++)
          {
-            percentWeight += 0.01;
+            weightForTest += increment;
+            LogTools.info("Current percentWeight = " + weightForTest + ", current angle = " + angle);
             FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
             footsteps.setAreFootstepsAdjustable(false);
             setupAndRunTest(footsteps, true);
+
             drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
             // push timing:
             StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.LEFT);
@@ -264,24 +274,85 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
 
             // push parameters:
             Vector3D forceDirection = new Vector3D(Math.cos(angle), Math.sin(angle), 0.0);
-            double magnitude = percentWeight * totalMass * 9.81;
+            double magnitude = weightForTest * totalMass * 9.81;
             double duration = 0.05 * swingTime;
             pushRobotController.applyForceDelayed(pushCondition, delay, forceDirection, magnitude, duration);
             List<FootstepDataMessage> footstepList = footsteps.getFootstepDataList();
             int size = footstepList.size();
             duration = size * (footsteps.getDefaultSwingDuration() + footsteps.getDefaultTransferDuration());
-            boolean succes = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(duration + 1.0);
+
+            boolean succes;
+            try
+            {
+              succes = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(duration + 4.0);
+            }
+            catch (Exception e)
+            {
+               LogTools.info(e.getMessage());
+               succes = false;
+            }
+
             drcSimulationTestHelper.destroySimulation();
             if(!succes)
             {
-               Vector2D resultVector = new Vector2D(angle,percentWeight-0.01);
+               weightForTest = weightForTest-increment;
+               Vector2D resultVector = new Vector2D(angle,weightForTest);
                angleAndPercentWeight.add(resultVector);
-               writer.write(" " +  angle + " " + percentWeight + System.lineSeparator());
-               continue;
+               writer.write(" " +  angle + " " + weightForTest + System.lineSeparator());
+               break;
             }
+
          }
       }
       writer.close();
+      Assert.assertTrue(true);
+   }
 
+
+
+   @Test()
+   public void testIterativePushStanding() throws Exception
+   {
+      FileWriter writer = new FileWriter("standingCase.txt");
+      ArrayList<Vector2D> standingCase = new ArrayList<Vector2D>();
+      double increment= 0.001;
+         for (int j = 0; j < 10000; j++)
+         {
+            percentWeight += increment;
+            LogTools.info("Current percentWeight = " + percentWeight);
+            FootstepDataListMessage footsteps = createStandingFootstepMessage();
+            footsteps.setAreFootstepsAdjustable(false);
+            setupAndRunTest(footsteps, false);
+
+
+            drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.5);
+
+
+            // push parameters:
+            Vector3D forceDirection = new Vector3D(1.0, 0, 0.0);
+            double magnitude = percentWeight * totalMass * 9.81;
+            double duration = 0.05;
+            pushRobotController.applyForce(forceDirection, magnitude, duration);
+            boolean succes;
+            try
+            {
+               succes = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(6.0);
+            }
+            catch (Exception e)
+            {
+               LogTools.info(e.getMessage());
+               succes = false;
+            }
+
+            drcSimulationTestHelper.destroySimulation();
+            if(!succes)
+            {
+               percentWeight=percentWeight-increment;
+               writer.write(" " +  + percentWeight + System.lineSeparator());
+               break;
+            }
+         }
+      writer.close();
+      Assert.assertTrue(true);
    }
 }

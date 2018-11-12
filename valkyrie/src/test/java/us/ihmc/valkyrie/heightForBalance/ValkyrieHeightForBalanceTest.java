@@ -123,8 +123,16 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testIterativePush() throws Exception
    {
       // No-height max recoverable percentWeight: 0.54
-      percentWeight = 0.0;
+      percentWeight = 0.8;
       super.testIterativePush();
+   }
+
+   @Override
+   @Test()
+   public void testIterativePushStanding() throws Exception
+   {
+      percentWeight= 0.579;
+      super.testIterativePushStanding();
    }
 
    @Override
