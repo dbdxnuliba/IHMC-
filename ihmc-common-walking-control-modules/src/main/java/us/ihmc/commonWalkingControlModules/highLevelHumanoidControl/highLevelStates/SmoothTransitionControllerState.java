@@ -5,6 +5,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.LowLe
 import us.ihmc.commons.MathTools;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
+import us.ihmc.robotics.math.filters.RateLimitedYoVariable;
 import us.ihmc.robotics.math.trajectories.YoPolynomial;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
@@ -15,7 +16,10 @@ public class SmoothTransitionControllerState extends HighLevelControllerState
 {
    private final YoDouble standTransitionDuration;
    private final YoDouble standTransitionRatioCurrentValue;
+   private final RateLimitedYoVariable limitedStandTransitionRatioCurrentValue;
    private final YoPolynomial transitionRatioTrajectory;
+
+   private final YoDouble maxTransitionRate;
 
    private final PairList<OneDoFJointBasics, JointControlBlender> jointCommandBlenders = new PairList<>();
    private final LowLevelOneDoFJointDesiredDataHolder lowLevelOneDoFJointDesiredDataHolder = new LowLevelOneDoFJointDesiredDataHolder();
@@ -25,15 +29,20 @@ public class SmoothTransitionControllerState extends HighLevelControllerState
 
    public SmoothTransitionControllerState(String namePrefix, HighLevelControllerName controllerState, HighLevelControllerState initialControllerState,
                                           HighLevelControllerState finalControllerState, OneDoFJointBasics[] controlledJoints,
-                                          HighLevelControllerParameters highLevelControllerParameters)
+                                          HighLevelControllerParameters highLevelControllerParameters, double controlDt)
    {
       super(namePrefix, controllerState, highLevelControllerParameters, controlledJoints);
 
       this.initialControllerState = initialControllerState;
       this.finalControllerState = finalControllerState;
 
+      maxTransitionRate = new YoDouble(namePrefix + "MaxTransitionRate", registry);
+      maxTransitionRate.set(2.0);
+
       standTransitionDuration = new YoDouble(namePrefix + "TransitionDuration", registry);
       standTransitionRatioCurrentValue = new YoDouble(namePrefix + "TransitionRatioCurrentValue", registry);
+      limitedStandTransitionRatioCurrentValue = new RateLimitedYoVariable(namePrefix + "LimitedTransitionRatioCurrentValue", registry, maxTransitionRate, standTransitionRatioCurrentValue,
+                                                                          controlDt);
       transitionRatioTrajectory = new YoPolynomial(namePrefix + "TransitionRatioTrajectory", 2, registry);
       this.standTransitionDuration.set(highLevelControllerParameters.getTimeInStandTransition());
 
@@ -62,8 +71,10 @@ public class SmoothTransitionControllerState extends HighLevelControllerState
 
       double timeInBlending = MathTools.clamp(timeInState, 0.0, standTransitionDuration.getDoubleValue());
       transitionRatioTrajectory.compute(timeInBlending);
-      double gainRatio = transitionRatioTrajectory.getPosition();
-      standTransitionRatioCurrentValue.set(gainRatio);
+//      double gainRatio = transitionRatioTrajectory.getPosition();
+
+      limitedStandTransitionRatioCurrentValue.update();
+      double gainRatio = limitedStandTransitionRatioCurrentValue.getDoubleValue();
 
       JointDesiredOutputListReadOnly standReadyJointCommand = initialControllerState.getOutputForLowLevelController();
       JointDesiredOutputListReadOnly walkingJointCommand = finalControllerState.getOutputForLowLevelController();
@@ -91,7 +102,8 @@ public class SmoothTransitionControllerState extends HighLevelControllerState
    @Override
    public boolean isDone(double timeInState)
    {
-      return timeInState > standTransitionDuration.getDoubleValue();
+      return false;
+//      return timeInState > standTransitionDuration.getDoubleValue();
    }
 
    @Override
