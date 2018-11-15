@@ -37,7 +37,7 @@ public class SmoothTransitionControllerState extends HighLevelControllerState
       this.finalControllerState = finalControllerState;
 
       maxTransitionRate = new YoDouble(namePrefix + "MaxTransitionRate", registry);
-      maxTransitionRate.set(2.0);
+      maxTransitionRate.set(0.5);
 
       standTransitionDuration = new YoDouble(namePrefix + "TransitionDuration", registry);
       standTransitionRatioCurrentValue = new YoDouble(namePrefix + "TransitionRatioCurrentValue", registry);
