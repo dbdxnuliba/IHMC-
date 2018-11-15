@@ -386,6 +386,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       submitControllerCoreCommands();
 
       JointDesiredOutputList stateSpecificJointSettings = getStateSpecificJointSettings();
+      controllerCoreCommand.completeLowLevelJointData(stateSpecificJointSettings);
 
       if (requestIntegratorReset)
       {
@@ -401,7 +402,6 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       JointAccelerationIntegrationCommand accelerationIntegrationCommand = getAccelerationIntegrationCommand();
       if (!deactivateAccelerationIntegrationInWBC)
          controllerCoreCommand.addVirtualModelControlCommand(accelerationIntegrationCommand);
-      controllerCoreCommand.completeLowLevelJointData(stateSpecificJointSettings);
 
       controllerCoreTimer.startMeasurement();
       controllerCore.submitControllerCoreCommand(controllerCoreCommand);
