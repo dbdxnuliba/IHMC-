@@ -32,7 +32,8 @@ public class ExitWalkingTransitionControllerStateFactory implements HighLevelCon
          OneDoFJointBasics[] controlledJoints = controllerFactoryHelper.getHighLevelHumanoidControllerToolbox().getControlledOneDoFJoints();
 
          transitionControllerState = new SmoothTransitionControllerState("exitWalking", HighLevelControllerName.EXIT_WALKING, initialControllerState,
-                                                                         finalControllerState, controlledJoints, controllerFactoryHelper.getHighLevelControllerParameters());
+                                                                         finalControllerState, controlledJoints, controllerFactoryHelper.getHighLevelControllerParameters(),
+                                                                         controllerFactoryHelper.getHighLevelHumanoidControllerToolbox().getControlDT());
       }
 
       return transitionControllerState;

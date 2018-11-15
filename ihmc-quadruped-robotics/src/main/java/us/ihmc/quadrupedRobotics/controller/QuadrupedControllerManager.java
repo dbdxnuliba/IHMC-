@@ -248,9 +248,9 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       FreezeControllerState freezeState = new FreezeControllerState(controlledJoints, highLevelControllerParameters, jointDesiredOutputList);
       SmoothTransitionControllerState standTransitionState = new SmoothTransitionControllerState("toWalking", HighLevelControllerName.STAND_TRANSITION_STATE,
                                                                                                  standReadyState, walkingState, controlledJoints,
-                                                                                                 highLevelControllerParameters);
+                                                                                                 highLevelControllerParameters, controllerToolbox.getRuntimeEnvironment().getControlDT());
       SmoothTransitionControllerState exitWalkingState = new SmoothTransitionControllerState("exitWalking", HighLevelControllerName.EXIT_WALKING, walkingState,
-                                                                                             freezeState, controlledJoints, highLevelControllerParameters);
+                                                                                             freezeState, controlledJoints, highLevelControllerParameters, controllerToolbox.getRuntimeEnvironment().getControlDT());
 
       QuadrupedSitDownControllerState sitDownState = new QuadrupedSitDownControllerState(sitDownStateName, controlledJoints, highLevelControllerParameters,
                                                                                          sitDownParameters, jointDesiredOutputList);

@@ -27,7 +27,8 @@ public class StandTransitionControllerStateFactory implements HighLevelControlle
 
          standTransitionControllerState = new SmoothTransitionControllerState("toWalking", HighLevelControllerName.STAND_TRANSITION_STATE,
                                                                               standReadyControllerState, walkingControllerState,
-                                                                              controlledJoints, controllerFactoryHelper.getHighLevelControllerParameters());
+                                                                              controlledJoints, controllerFactoryHelper.getHighLevelControllerParameters(),
+                                                                              controllerFactoryHelper.getHighLevelHumanoidControllerToolbox().getControlDT());
       }
 
       return standTransitionControllerState;
