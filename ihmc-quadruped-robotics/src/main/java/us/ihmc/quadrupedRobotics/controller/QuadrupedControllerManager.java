@@ -170,6 +170,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       case STAND_READY:
       case STAND_TRANSITION_STATE:
       case FREEZE_STATE:
+      case CUSTOM1:
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          {
             runtimeEnvironment.getFootSwitches().get(robotQuadrant).trustFootSwitch(false);
