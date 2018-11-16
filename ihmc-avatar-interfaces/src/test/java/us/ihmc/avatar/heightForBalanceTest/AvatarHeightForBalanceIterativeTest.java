@@ -26,7 +26,6 @@ import us.ihmc.tools.MemoryTools;
 import us.ihmc.yoVariables.variable.YoEnum;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -37,7 +36,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private double percentWeight;
    private double delayFractionOfSwing = 0.0;
    private boolean unreasonableFailure;
-   private String fileName = "angleAndPercentWeight72TilesV2";
+   private String fileName = "angleAndPercentWeight12TilesTest";
    protected boolean useNormalRobot = false;
    private Integer recursiveIter = 0;
 
@@ -51,7 +50,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       sb.append("PercentWeight");
       sb.append('\n');
 
-      int numberOfDirections = 72;
+      int numberOfDirections = 12;
       double increment;
       int incrementCount;
 
@@ -107,6 +106,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       }
       pw.close();
       Assert.assertTrue(true);
+      /*
       if(recursiveIter ==0)
       {
          fileName = fileName+"Normal";
@@ -129,12 +129,12 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter +=1;
          testIterativePush();
       }
+      */
    }
 
    @Test
    public void testPush()
    {
-
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
 
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
@@ -183,9 +183,6 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          doubleSupportStartConditions1.put(robotSide, new DoubleSupportStartCondition(walkingState, robotSide));
       }
 
-      Point3D cameraFix = new Point3D(0.0, 0.0, 0.89);
-      Point3D cameraPosition = new Point3D(10.0, 2.0, 1.37);
-      drcSimulationTestHelper1.setupCameraForUnitTest(cameraFix, cameraPosition);
       ThreadTools.sleep(1000);
 
       try
@@ -230,17 +227,9 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       scs.getPlayCycleListeners().clear();
       scs.getDataBuffer().getEntries().clear();
 
-
-
       drcSimulationTestHelper1.destroySimulation();
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
       BambooTools.reportTestFinishedMessage(simulationTestingParameters1.getShowWindows());
-
-      simulationTestingParameters1 = null;
-      drcSimulationTestHelper1 = null;
-      singleSupportStartConditions1 = null;
-      doubleSupportStartConditions1 = null;
-      pushRobotController1 = null;
 
 
       System.gc();

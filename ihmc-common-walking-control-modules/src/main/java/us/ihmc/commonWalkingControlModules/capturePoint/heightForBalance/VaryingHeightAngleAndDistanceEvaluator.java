@@ -12,17 +12,12 @@ import us.ihmc.robotics.partNames.LegJointName;
 public class VaryingHeightAngleAndDistanceEvaluator
 {
 
-   public boolean getDistancePosAlignment(double errorAngle)
+   public boolean getDistancePosAlignment(FramePoint3D com3D, FramePoint2D projectedCMP, FrameVector2D icpError)
    {
-      boolean distancePosAlignment;
-      if (errorAngle < 0.5 * Math.PI && errorAngle > -0.5 * Math.PI)
-      {
-         distancePosAlignment = true;
-      }
-      else
-      {
-         distancePosAlignment = false;
-      }
+      FrameVector2D copCoMVec = new FrameVector2D();
+      copCoMVec.setIncludingFrame(com3D);
+      copCoMVec.sub(projectedCMP);
+      boolean distancePosAlignment=(MathTools.sign(copCoMVec.getY()) == MathTools.sign(icpError.getY()));
       return distancePosAlignment;
    }
 

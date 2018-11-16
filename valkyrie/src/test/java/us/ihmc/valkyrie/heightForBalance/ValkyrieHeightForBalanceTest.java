@@ -18,7 +18,7 @@ import us.ihmc.valkyrie.parameters.*;
 public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
 {
    // Which robot model to use. Default uses the VaryingHeight/HeightForBalance controller
-   private final boolean useNormalRobot = true;
+   private final boolean useNormalRobot = false;
    private final boolean useQPbasedModel = false;
    private ValkyrieRobotModel valkyrieRobotModel = new ValkyrieRobotModel(RobotTarget.SCS,false);
    private HeightForBalanceModel heightForBalanceModel = new HeightForBalanceModel();
@@ -43,8 +43,8 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    @Test(timeout = 30000)
    public void testPushAngle() throws Exception
    {
-      angle = 6.10865238198015;
-      percentWeight = 1.50;
+      angle = 3.14159265358979;
+      percentWeight = 1.47;
       super.testPushAngle();
    }
 

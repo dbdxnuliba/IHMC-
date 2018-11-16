@@ -73,7 +73,7 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
 
       // push timing:
       StateTransitionCondition pushCondition = singleSupportStartConditions.get(RobotSide.LEFT);
-      double delay = 0.5 * swingTime;
+      double delay = 0.0 * swingTime;
 
       // push parameters:
       Vector3D forceDirection = new Vector3D(Math.cos(angle), Math.sin(angle), 0.0);
