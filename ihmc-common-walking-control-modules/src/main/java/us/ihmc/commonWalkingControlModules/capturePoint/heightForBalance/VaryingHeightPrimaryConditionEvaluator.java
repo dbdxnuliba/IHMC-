@@ -29,7 +29,7 @@ public class VaryingHeightPrimaryConditionEvaluator
    public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double aMinPredicted, double aMaxPredicted,double z, double dz, double zMax, double kneeAngle, double errorAngle, double errorAngleEndOfSwing,
                                                                               boolean angleGrows, double negAlignTresh, double posAlignTresh,
                                                                               VaryingHeightPrimaryConditionEnum varyingHeightConditionPreviousTick, boolean useAngleForConditions,
-                                                                              boolean distancePosAlignment, double copCoMOrthDistance, boolean nonDynamicCase, double tToSwitch)
+                                                                              boolean distancePosAlignment, double copCoMOrthDistance, boolean nonDynamicCase, double tToSwitch, boolean useThreshold)
    {
       this.primaryConditionPreviousTick = varyingHeightConditionPreviousTick;
       // MAXZ
@@ -43,7 +43,7 @@ public class VaryingHeightPrimaryConditionEvaluator
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MINZ;
       }
       // ALIGNED_POS (errorAngle or distance based)
-      else if((errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment)  || tToSwitch<0.02)                    // alignment ICPe and 'pendulum' positive force
+      else if(useThreshold&&(errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment)  || tToSwitch<0.02)                    // alignment ICPe and 'pendulum' positive force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_POS && angleGrows && MathTools.epsilonEquals(errorAngle,posAlignTresh,0.2))
@@ -61,7 +61,7 @@ public class VaryingHeightPrimaryConditionEvaluator
 
       }
       // ALIGNED_NEG (errorAngle or distance based)
-      else if(errorAngle>negAlignTresh|| errorAngle<-negAlignTresh  ||(!useAngleForConditions && !distancePosAlignment)  )                                                       // alignment ICPe and 'pendulum' negative force
+      else if(useThreshold&&(errorAngle>negAlignTresh|| errorAngle<-negAlignTresh)  ||(!useAngleForConditions && !distancePosAlignment)  )                                                       // alignment ICPe and 'pendulum' negative force
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_NEG;
          if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.PREPARE_NEG && angleGrows && MathTools.epsilonEquals(errorAngle,-negAlignTresh,0.2))
@@ -77,9 +77,9 @@ public class VaryingHeightPrimaryConditionEvaluator
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MINZ;
          }
       }
-      else //if (useAngleForConditions)      // preparing for future angle
+      else //if d(useAngleForConditions)      // preparing for future angle
       {
-         if(errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh)
+         if(errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh || varyingHeightConditionPreviousTick == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
          {
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_NEG;
             if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.ALIGNED_POS)
@@ -87,12 +87,16 @@ public class VaryingHeightPrimaryConditionEvaluator
                primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
             }
          }
-         else if (errorAngleEndOfSwing>negAlignTresh || errorAngleEndOfSwing<-negAlignTresh)
+         else if (errorAngleEndOfSwing>negAlignTresh || errorAngleEndOfSwing<-negAlignTresh || varyingHeightConditionPreviousTick == VaryingHeightPrimaryConditionEnum.PREPARE_POS)
          {
             primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_POS;
-            if(varyingHeightConditionPreviousTick==VaryingHeightPrimaryConditionEnum.ALIGNED_NEG)
+            if (varyingHeightConditionPreviousTick == VaryingHeightPrimaryConditionEnum.ALIGNED_NEG)
             {
                primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_NEG;
+            }
+            else if (varyingHeightConditionPreviousTick == VaryingHeightPrimaryConditionEnum.MAXZ)
+            {
+               primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MAXZ;
             }
          }
       }

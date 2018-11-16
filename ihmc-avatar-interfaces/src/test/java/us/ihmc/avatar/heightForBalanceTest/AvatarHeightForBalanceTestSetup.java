@@ -9,11 +9,9 @@ import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FootControlModule.ConstraintType;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.states.WalkingStateEnum;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
@@ -26,6 +24,7 @@ import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.StepTilesEnvironment;
+import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.StepTilesEnvironmentWithWater;
 import us.ihmc.simulationToolkit.controllers.PushRobotController;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.util.ControllerFailureException;
@@ -55,6 +54,8 @@ public abstract class AvatarHeightForBalanceTestSetup
    protected SideDependentList<StateTransitionCondition> doubleSupportStartConditions = new SideDependentList<>();
 
    protected Double percentWeight;
+   protected Double angle;
+   protected Boolean succes;
 
    public abstract double getNominalHeight();
 
@@ -113,10 +114,14 @@ public abstract class AvatarHeightForBalanceTestSetup
    }
 
 
-   protected void setupAndRunTest(FootstepDataListMessage message, boolean showTiles) throws SimulationExceededMaximumTimeException, ControllerFailureException
+   protected void setupAndRunTest(FootstepDataListMessage message, boolean showTiles, boolean useWaterObject) throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
       CommonAvatarEnvironmentInterface environment;
-      if(showTiles)
+      if(useWaterObject)
+      {
+         environment = new StepTilesEnvironmentWithWater(0.25, 0.35, 0.125, 0.5, 6);
+      }
+      else if(showTiles)
       {
          environment = new StepTilesEnvironment(0.25, 0.35, 0.125, 0.5, 6);
       }
@@ -241,95 +246,6 @@ public abstract class AvatarHeightForBalanceTestSetup
       return message;
    }
 
-   protected FootstepDataListMessage createSlowForwardWalkingFootstepMessage()
-   {
-      double scale = getSizeScale();
-
-      FramePoint3D step1Location = new FramePoint3D(worldFrame, 0.3, -0.125, 0.0);
-      FramePoint3D step2Location = new FramePoint3D(worldFrame, 0.6,  0.125, 0.0);
-      FramePoint3D step3Location = new FramePoint3D(worldFrame, 0.9, -0.125, 0.0);
-      FramePoint3D step4Location = new FramePoint3D(worldFrame, 1.2,  0.125, 0.0);
-      FramePoint3D step5Location = new FramePoint3D(worldFrame, 1.5, -0.125, 0.0);
-      FramePoint3D step6Location = new FramePoint3D(worldFrame, 1.8,  0.125, 0.0);
-
-      step1Location.scale(scale);
-      step2Location.scale(scale);
-      step3Location.scale(scale);
-      step4Location.scale(scale);
-      step5Location.scale(scale);
-      step6Location.scale(scale);
-
-      FootstepDataMessage message1 = createFootstepDataMessage(RobotSide.RIGHT, step1Location);
-      FootstepDataMessage message2 = createFootstepDataMessage(RobotSide.LEFT, step2Location);
-      FootstepDataMessage message3 = createFootstepDataMessage(RobotSide.RIGHT, step3Location);
-      FootstepDataMessage message4 = createFootstepDataMessage(RobotSide.LEFT, step4Location);
-      FootstepDataMessage message5 = createFootstepDataMessage(RobotSide.RIGHT, step5Location);
-      FootstepDataMessage message6 = createFootstepDataMessage(RobotSide.LEFT, step6Location);
-
-      swingTime = getSlowSwingDuration();
-      transferTime = getSlowTransferDuration();
-
-      FootstepDataListMessage message = HumanoidMessageTools.createFootstepDataListMessage(swingTime, transferTime);
-      message.getFootstepDataList().add().set(message1);
-      message.getFootstepDataList().add().set(message2);
-      message.getFootstepDataList().add().set(message3);
-      message.getFootstepDataList().add().set(message4);
-      message.getFootstepDataList().add().set(message5);
-      message.getFootstepDataList().add().set(message6);
-
-      message.setAreFootstepsAdjustable(true);
-
-
-      return message;
-   }
-
-   protected FootstepDataListMessage createYawingForwardWalkingFootstepMessage()
-   {
-      RigidBodyTransform transform = new RigidBodyTransform();
-      transform.appendYawRotation(0.5);
-      ReferenceFrame referenceFrame = ReferenceFrame.constructFrameWithUnchangingTransformToParent("yawing", ReferenceFrame.getWorldFrame(), transform);
-
-      double scale = getSizeScale();
-
-      FramePoint3D step1Location = new FramePoint3D(referenceFrame, 0.5, -0.125, 0.0);
-      FramePoint3D step2Location = new FramePoint3D(referenceFrame, 1.0,  0.125, 0.0);
-      FramePoint3D step3Location = new FramePoint3D(referenceFrame, 1.5, -0.125, 0.0);
-      FramePoint3D step4Location = new FramePoint3D(referenceFrame, 2.0,  0.125, 0.0);
-      FramePoint3D step5Location = new FramePoint3D(referenceFrame, 2.5, -0.125, 0.0);
-      FramePoint3D step6Location = new FramePoint3D(referenceFrame, 3.0,  0.125, 0.0);
-
-      FrameQuaternion orientation = new FrameQuaternion(referenceFrame);
-
-      step1Location.scale(scale);
-      step2Location.scale(scale);
-      step3Location.scale(scale);
-      step4Location.scale(scale);
-      step5Location.scale(scale);
-      step6Location.scale(scale);
-
-      FootstepDataMessage message1 = createFootstepDataMessage(RobotSide.RIGHT, step1Location, orientation);
-      FootstepDataMessage message2 = createFootstepDataMessage(RobotSide.LEFT, step2Location, orientation);
-      FootstepDataMessage message3 = createFootstepDataMessage(RobotSide.RIGHT, step3Location, orientation);
-      FootstepDataMessage message4 = createFootstepDataMessage(RobotSide.LEFT, step4Location, orientation);
-      FootstepDataMessage message5 = createFootstepDataMessage(RobotSide.RIGHT, step5Location, orientation);
-      FootstepDataMessage message6 = createFootstepDataMessage(RobotSide.LEFT, step6Location, orientation);
-
-      swingTime = getRobotModel().getWalkingControllerParameters().getDefaultSwingTime();
-      transferTime = getRobotModel().getWalkingControllerParameters().getDefaultTransferTime();
-
-      FootstepDataListMessage message = HumanoidMessageTools.createFootstepDataListMessage(swingTime, transferTime);
-      message.getFootstepDataList().add().set(message1);
-      message.getFootstepDataList().add().set(message2);
-      message.getFootstepDataList().add().set(message3);
-      message.getFootstepDataList().add().set(message4);
-      message.getFootstepDataList().add().set(message5);
-      message.getFootstepDataList().add().set(message6);
-
-      message.setAreFootstepsAdjustable(true);
-
-      return message;
-   }
-
    protected FootstepDataListMessage createStandingFootstepMessage()
    {
       double scale = getSizeScale();
@@ -371,7 +287,7 @@ public abstract class AvatarHeightForBalanceTestSetup
       return footstepData;
    }
 
-   private class SingleSupportStartCondition implements StateTransitionCondition
+   protected class SingleSupportStartCondition implements StateTransitionCondition
    {
       private final YoEnum<ConstraintType> footConstraintType;
 
@@ -387,7 +303,7 @@ public abstract class AvatarHeightForBalanceTestSetup
       }
    }
 
-   private class DoubleSupportStartCondition implements StateTransitionCondition
+   protected class DoubleSupportStartCondition implements StateTransitionCondition
    {
       private final YoEnum<WalkingStateEnum> walkingState;
 

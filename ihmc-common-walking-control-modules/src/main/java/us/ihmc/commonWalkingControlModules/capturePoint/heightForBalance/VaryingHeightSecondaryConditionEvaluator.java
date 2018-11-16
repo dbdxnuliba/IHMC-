@@ -66,7 +66,7 @@ public class VaryingHeightSecondaryConditionEvaluator
       /**
        * If time to constraint is smaller than time to switch: HOLD. From SMOOTH into HOLD again not possible.
        */
-      else if (tInState > tHalfWaySwing && tToConst < tToSwitch || (nonDynamicCase && (primaryCondition==VaryingHeightPrimaryConditionEnum.MAXZ && dz<0.0 || primaryCondition==VaryingHeightPrimaryConditionEnum.MINZ && dz>0.0)))
+      else if ((tInState > tHalfWaySwing && tToConst < tToSwitch || nonDynamicCase) && (primaryCondition==VaryingHeightPrimaryConditionEnum.MAXZ && dz<0.0 || primaryCondition==VaryingHeightPrimaryConditionEnum.MINZ && dz>0.0 || primaryCondition==VaryingHeightPrimaryConditionEnum.ALIGNED_NEG))
       {
          secondaryCondition = VaryingHeightSecondaryConditionEnum.HOLD;
          if (secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.SMOOTH)

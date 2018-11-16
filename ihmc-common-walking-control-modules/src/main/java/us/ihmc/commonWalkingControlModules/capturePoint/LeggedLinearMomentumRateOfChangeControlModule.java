@@ -6,6 +6,7 @@ import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.Varying
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationControllerInterface;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
+import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -16,8 +17,7 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.sensorProcessing.frames.ReferenceFrames;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.*;
 
 public abstract class LeggedLinearMomentumRateOfChangeControlModule extends LinearMomentumRateOfChangeControlModule
 {
@@ -31,6 +31,13 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    private FramePoint3D comEndOfStep = new FramePoint3D();
    private WalkingControllerParameters walkingControllerParameters;
 
+   private YoFrameVector2D yoPreviousVertexICPd;
+   private YoInteger yoPreviousVertexIndex;
+
+   private YoDouble yoXForVec;
+   private YoDouble yoYCoordinateOnVec;
+   private YoDouble yoCMPY;
+
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, HighLevelHumanoidControllerToolbox controllerToolbox,
                                                         WalkingControllerParameters walkingControllerParameters)
@@ -42,7 +49,13 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       isInDoubleSupport = new YoBoolean("varyingHeightDoubleSupport",registry);
 
 
+      yoPreviousVertexICPd = new YoFrameVector2D("previousVertexToICPD",ReferenceFrame.getWorldFrame(),registry);
       varyingHeightControlModule = new VaryingHeightControlModule(totalMass, controllerToolbox, registry, yoGraphicsListRegistry, walkingControllerParameters);
+
+      yoXForVec = new YoDouble("xForVecHeight",registry);
+      yoYCoordinateOnVec = new YoDouble("yCoordinateForVecWorld",registry);
+      yoCMPY = new YoDouble("cmpyWorld",registry);
+      yoPreviousVertexIndex = new YoInteger("PreviousVertexIndexHeight",registry);
    }
 
    public void setSupportLeg(RobotSide newSupportSide)
@@ -149,7 +162,40 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
             FrameConvexPolygon2D supportPolygon = controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld();
             FramePoint2D vertex = new FramePoint2D();
             supportPolygon.getClosestVertex(com2D, vertex);
-            cmpToModify.set(vertex.getX() - 0.04, vertex.getY());
+            int vertexIndex = supportPolygon.getClosestVertexIndex(com2D);
+            FramePoint2DReadOnly previousVertex;
+            if(vertexIndex==0)
+            {
+               previousVertex = supportPolygon.getVertex(3);
+            }
+            else if(vertexIndex==1)
+            {
+               previousVertex = supportPolygon.getVertex(0);
+            }
+            else
+            {
+               previousVertex = null;
+            }
+
+            if(previousVertex!=null)
+            {
+               yoPreviousVertexIndex.set(supportPolygon.getClosestEdgeIndex(previousVertex));
+               FrameVector2D lowerFootEdgeICPd = new FrameVector2D();
+               lowerFootEdgeICPd.set(desiredCapturePoint);
+               lowerFootEdgeICPd.sub(previousVertex);
+               yoPreviousVertexICPd.set(lowerFootEdgeICPd);
+               double xForVec = capturePoint.getX()-previousVertex.getX();
+               yoXForVec.set(xForVec);
+               double yPreviousCoPToVec = xForVec*lowerFootEdgeICPd.getY()/lowerFootEdgeICPd.getX()+previousVertex.getY()+0.02; //
+               yoYCoordinateOnVec.set(yPreviousCoPToVec);
+
+
+               double midBound = (previousVertex.getY()+vertex.getY())/2;
+               double cmpy = -3*(yPreviousCoPToVec-capturePoint.getY())+midBound;
+               yoCMPY.set(cmpy);
+               cmpy = MathTools.clamp(cmpy,midBound-0.15,midBound+0.15);
+               cmpToModify.set(vertex.getX() - 0.04, cmpy);
+            }
          }
       }
    }

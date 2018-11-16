@@ -13,6 +13,6 @@ public class ValkyrieHeightForBalanceParameters extends HeightForBalanceParamete
    @Override
    public double getMinHeight()
    {
-      return 0.85;
+      return 0.87;
    }
 }

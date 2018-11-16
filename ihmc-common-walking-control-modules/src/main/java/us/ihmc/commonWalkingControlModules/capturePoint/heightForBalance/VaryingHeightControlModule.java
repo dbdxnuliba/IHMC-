@@ -15,6 +15,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.InverseDynamicsJoint;
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
+import us.ihmc.robotics.trajectories.MinimumJerkTrajectory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -23,9 +24,7 @@ import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 import java.awt.*;
 
-import static java.lang.Math.copySign;
-import static java.lang.Math.cos;
-import static java.lang.Math.max;
+import static java.lang.Math.*;
 
 public class VaryingHeightControlModule implements VaryingHeightControlModuleInterface
 {
@@ -119,6 +118,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private double tRemainingConditionSwitch;
    private double smoothEpsilon;
    private double cmpFracOfMaxDistance;
+   private boolean useThreshold;
 
    boolean walkingStateSwitch;
    private YoBoolean yoWalkingStateSwitch;
@@ -129,8 +129,12 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
    private YoDouble yoPosAlignThresh;
    private YoDouble yoCoMHeightVelocity;
+   private YoDouble yozMax;
+   private YoDouble yozMaxAlpha;
 
    boolean heightControlInThisWalkingState = false;
+   boolean dsTrajectoryIsGenerated = false;
+   MinimumJerkTrajectory minimumJerkTrajectory = new MinimumJerkTrajectory();
 
    VaryingHeightAngleAndDistanceEvaluator angleAndDistanceEvaluator;
    VaryingHeightPrimaryConditionEvaluator primaryConditionEvaluator;
@@ -174,6 +178,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       // threshold for positive alignment, can be modifed
       yoPosAlignThresh = new YoDouble("posAlignmentThreshold", registry);
+      yozMax = new YoDouble("zMaxHeightCtrl",registry);
+      yozMaxAlpha = new YoDouble("zMaxAlphaHeightCtrl",registry);
 
       yoTimeToSwitch.set(walkingControllerParameters.getDefaultSwingTime());
 
@@ -261,6 +267,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             .getMaxAllowedDistanceCMPSupport())
       {
          heightControlInThisWalkingState = false;
+         dsTrajectoryIsGenerated = false;
          posAlignTresh = posAlignTreshFromStart;
          negAlignTresh = negAlignTreshFromStart;
       }
@@ -291,16 +298,20 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          if (nonDynamicCase)
          {
             zMax = zMaxStartSwing;
+            yozMaxAlpha.set(0.0);
          }
          else if (stateClock > tForHalfWaySwing)
          {
-            zMax = zMaxTouchDown;
+            double alpha = (stateClock-tForHalfWaySwing)/(walkingControllerParameters.getDefaultSwingTime()-tForHalfWaySwing);
+            yozMaxAlpha.set(alpha);
+            zMax = zMaxStartSwing - alpha*(zMaxStartSwing-zMaxTouchDown);
          }
          else
          {
+            yozMaxAlpha.set(0.0);
             zMax = zMaxStartSwing;
          }
-
+         yozMax.set(zMax);
          // Min/max - control law set based on using angle or distance
          if (calculateUseAngleForConditions || walkingStateSwitch)
          {
@@ -319,6 +330,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
                aMaxCtrl = aMaxCtrlAngle;
                aMaxPredicted = fracOfAForPrediction * aMaxCtrl;
                aMinPredicted = fracOfAForPrediction * aMinCtrlAngle;
+               useThreshold=false;
             }
             else if (useAngleForConditions)
             {
@@ -326,6 +338,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
                aMaxCtrl = aMaxCtrlAngle;
                aMaxPredicted = fracOfAForPrediction * aMaxCtrl;
                aMinPredicted = fracOfAForPrediction * aMinCtrl;
+               useThreshold=true;
             }
 
          }
@@ -396,7 +409,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          VaryingHeightPrimaryConditionEnum primaryCondition = primaryConditionEvaluator
                .computeAndGetPrimaryConditionEnum(aMinPredicted, aMaxPredicted, z, dz, zMax, kneeAngle, errorAngle, errorAngleEndOfSwing, angleGrows,
                                                   negAlignTresh, posAlignTresh, primaryConditionPreviousTick, useAngleForConditions, distancePosAlignment,
-                                                  copCoMProjDistance, nonDynamicCase, yoTimeToSwitch.getDoubleValue());
+                                                  copCoMProjDistance, nonDynamicCase, yoTimeToSwitch.getDoubleValue(),useThreshold);
          primaryConditionYoEnum.set(primaryCondition);
          primaryConditionHasChanged = primaryConditionEvaluator.getPrimaryConditionHasChanged();
 
@@ -479,6 +492,11 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             desiredHeightAcceleration = aCtrl;
          }
 
+         if(isInDoubleSupport&&yoTimeInState.getDoubleValue()>walkingControllerParameters.getDefaultTransferTime()&&!nonDynamicCase)
+         {
+            desiredHeightAcceleration=linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
+         }
+
          /**
           * Acceleration and jerk checks, respectively
           */
@@ -493,11 +511,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
           */
          if (primaryCondition == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
          {
-            FramePoint2D com2D = new FramePoint2D();
-            com2D.set(com3D);
-            FramePoint2D vertex = new FramePoint2D();
-            supportPolygon.getClosestVertex(com2D, vertex);
-            desiredCMPtoProject.set(vertex);
+            useThreshold=false;
          }
          yoProjectedDesiredCMP.set(desiredCMPtoProject);
          addedHorizontalAcceleration.set(com3D);
@@ -516,6 +530,29 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          primaryConditionYoEnum.set(VaryingHeightPrimaryConditionEnum.DEFAULT);
          secondaryConditionYoEnum.set(VaryingHeightSecondaryConditionEnum.DEFAULT);
          desiredHeightAcceleration = linearMomentumRateOfChangeFromLIP.getZ() / totalMass;
+         /*
+         if(desiredHeightAcceleration>2.0 && !nonDynamicCase)
+         {
+            if (isInDoubleSupport && yoTimeInState.getDoubleValue() < 0.1)
+            {
+               desiredHeightAcceleration = 0.0;
+            }
+            else if (isInDoubleSupport)
+            {
+               double kp = walkingControllerParameters.getCoMHeightControlGains().getKp();
+               double kd = walkingControllerParameters.getCoMHeightControlGains().getKd();
+               if (!dsTrajectoryIsGenerated)
+               {
+                  minimumJerkTrajectory.setMoveParameters(z, dz, desiredHeightAccelerationPreviousTick, 1.0, 0.0, 0.0, 0.1);
+                  dsTrajectoryIsGenerated = true;
+               }
+               minimumJerkTrajectory.computeTrajectory(yoTimeInState.getDoubleValue()-0.1);
+               desiredHeightAcceleration =
+                     kp * (minimumJerkTrajectory.getPosition() - z) + kd * (minimumJerkTrajectory.getVelocity() - dz) + minimumJerkTrajectory.getAcceleration();
+            }
+         }
+         */
+         desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration,aMinCtrlAngle,aMaxCtrlAngle);
          desiredHeightAcceleration = MathTools
                .clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jMax * dt, desiredHeightAccelerationPreviousTick + jMax * dt); // Jerk
          yoDesiredHeightAcceleration.set(desiredHeightAcceleration); // HERE DOESNT AFFECT Ld!!

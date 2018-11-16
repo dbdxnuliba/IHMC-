@@ -33,7 +33,7 @@ public abstract class HeightForBalanceParameters
 
    public double getFractionOfMaxHeightAccelerationToConsiderInPrediction()
    {
-      return 0.3;
+      return 0.23;
    }
 
    public double getMaxHeightAccelerationForDistanceCase()
@@ -70,7 +70,7 @@ public abstract class HeightForBalanceParameters
 
    public double getMinVelocityForPrediction()
    {
-      return -0.6;
+      return -0.7;
    }
 
    public double getSmoothEpsilon()

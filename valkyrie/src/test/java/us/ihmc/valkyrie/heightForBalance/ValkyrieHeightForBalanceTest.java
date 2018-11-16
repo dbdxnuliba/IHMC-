@@ -1,6 +1,7 @@
 package us.ihmc.valkyrie.heightForBalance;
 
 import org.junit.Test;
+import org.opencv.core.Mat;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.heightForBalanceTest.AvatarHeightForBalanceTest;
@@ -16,9 +17,8 @@ import us.ihmc.valkyrie.parameters.*;
 
 public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
 {
-   private final RobotTarget target = RobotTarget.SCS;
    // Which robot model to use. Default uses the VaryingHeight/HeightForBalance controller
-   private final boolean useNormalRobot = false;
+   private final boolean useNormalRobot = true;
    private final boolean useQPbasedModel = false;
    private ValkyrieRobotModel valkyrieRobotModel = new ValkyrieRobotModel(RobotTarget.SCS,false);
    private HeightForBalanceModel heightForBalanceModel = new HeightForBalanceModel();
@@ -34,48 +34,18 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.55
-      percentWeight = 0.58;
+      percentWeight = 1.03;
       super.testPushStanding();
    }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushContraDiagonalInSwing() throws Exception
+   @Test(timeout = 30000)
+   public void testPushAngle() throws Exception
    {
-      // No-height max recoverable percentWeight: 0.98
-      percentWeight = 1.07;
-      super.testPushContraDiagonalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushContraDiagonalFrontalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 1.23
-      percentWeight = 1.30;
-      super.testPushContraDiagonalFrontalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushDiagonalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 0.76
-      percentWeight = 0.81;
-      super.testPushDiagonalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushDiagonalFrontalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 1.25
-      percentWeight = 1.26;
-      super.testPushDiagonalFrontalInSwing();
+      angle = 6.10865238198015;
+      percentWeight = 1.50;
+      super.testPushAngle();
    }
 
    @Override
@@ -118,17 +88,9 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
       super.testPushLeftInSwing();
    }
 
-   @Override
-   @Test()
-   public void testIterativePush() throws Exception
-   {
-      // No-height max recoverable percentWeight: 0.54
-      percentWeight = 0.8;
-      super.testIterativePush();
-   }
 
    @Override
-   @Test()
+   @Test
    public void testIterativePushStanding() throws Exception
    {
       percentWeight= 0.579;

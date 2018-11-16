@@ -20,7 +20,7 @@ public class ValkyrieMomentumOptimizationSettings extends MomentumOptimizationSe
    private final Vector3D highLinearMomentumWeightForRecovery = new Vector3D(0.5, 0.5, 0.05);
    private final Vector3D angularMomentumWeight = new Vector3D(0.0, 0.0, 0.1);
 
-   private final Vector3D footAngularWeight = new Vector3D(0.5, 0.5, 0.5);
+   private final Vector3D footAngularWeight = new Vector3D(2.0, 2.0, 2.0);
    private final Vector3D footLinearWeight = new Vector3D(80.0, 80.0, 80.0);
    private final Vector3D highAngularFootWeight = new Vector3D(5.0, 5.0, 5.0);
    private final Vector3D highLinearFootWeight = new Vector3D(80.0, 80.0, 80.0);

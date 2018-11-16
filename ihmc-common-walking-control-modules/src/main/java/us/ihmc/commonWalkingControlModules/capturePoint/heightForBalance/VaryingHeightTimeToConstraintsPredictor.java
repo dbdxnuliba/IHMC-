@@ -67,16 +67,16 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param dzCurrent
     * @return
     */
-   public double getTMinVelReachedPredicted(double dzCurrent, double aMinPredicted)
+   public double getTMinVelReachedPredicted(double dzCurrent, double aMin)
    {
-      double tMinVelReachedPredicted = (vMin - dzCurrent) / aMinPredicted;
+      double tMinVelReachedPredicted = (vMin - dzCurrent) / aMin;
       tMinVelReachedPredicted = Math.max(0, tMinVelReachedPredicted);
       if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=0;}
       return tMinVelReachedPredicted;
    }
-   public double getTMaxVelReachedPredicted(double dzCurrent, double aMaxPredicted)
+   public double getTMaxVelReachedPredicted(double dzCurrent, double aMax)
    {
-      double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMaxPredicted;
+      double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMax;
       tMaxVelReachedPredicted = Math.max(0, tMaxVelReachedPredicted);
       if(Double.isNaN(tMaxVelReachedPredicted)){tMaxVelReachedPredicted=0;}
       return tMaxVelReachedPredicted;

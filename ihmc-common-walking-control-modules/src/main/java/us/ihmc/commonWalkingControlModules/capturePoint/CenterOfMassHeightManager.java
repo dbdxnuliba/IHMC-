@@ -128,11 +128,6 @@ public class CenterOfMassHeightManager
       {
          pelvisHeightControlState.doAction(Double.NaN);
       }
-
-      if(isInDoubleSupport)
-      {
-         goHome(0.15);
-      }
    }
 
    /**
