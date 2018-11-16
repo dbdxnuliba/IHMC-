@@ -35,7 +35,6 @@ public class QuadrupedStateEstimatorFactory
    private final RequiredFactoryField<Double> gravity = new RequiredFactoryField<>("gravity");
    private final RequiredFactoryField<Double> estimatorDT = new RequiredFactoryField<>("estimatorDT");
    private final RequiredFactoryField<CenterOfMassDataHolder> centerOfMassDataHolder = new RequiredFactoryField<>("centerOfMassDataHolder");
-   private final RequiredFactoryField<YoVariableRegistry> registry = new RequiredFactoryField<>("registry");
    private final RequiredFactoryField<YoGraphicsListRegistry> yoGraphicsListRegistry = new RequiredFactoryField<>("yoGraphicsListRegistry");
 
    public StateEstimatorController createStateEstimator()
@@ -70,7 +69,6 @@ public class QuadrupedStateEstimatorFactory
                                                                                      imuSensorsToUseInStateEstimator, gravityMagnitude, footSwitchMap,
                                                                                      centerOfPressureDataHolder, robotMotionStatusFromController, feetMap, yoGraphicsListRegistry.get());
 
-      registry.get().addChild(stateEstimator.getYoVariableRegistry());
       FactoryTools.disposeFactory(this);
 
       return stateEstimator;
@@ -124,10 +122,5 @@ public class QuadrupedStateEstimatorFactory
    public void setCenterOfMassDataHolder(CenterOfMassDataHolder centerOfMassDataHolder)
    {
       this.centerOfMassDataHolder.set(centerOfMassDataHolder);
-   }
-
-   public void setYoVariableRegistry(YoVariableRegistry registry)
-   {
-      this.registry.set(registry);
    }
 }
