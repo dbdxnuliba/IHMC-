@@ -167,8 +167,6 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       {
       case DO_NOTHING_BEHAVIOR:
       case STAND_PREP_STATE:
-      case STAND_READY:
-      case STAND_TRANSITION_STATE:
       case FREEZE_STATE:
       case CUSTOM1:
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
@@ -181,10 +179,22 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
          runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_LEFT).setFootContactState(false);
          runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_RIGHT).setFootContactState(true);
          break;
+      case STAND_READY:
+         for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
+         {
+            runtimeEnvironment.getFootSwitches().get(robotQuadrant).trustFootSwitch(false);
+         }
+
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.FRONT_LEFT).setFootContactState(true);
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.FRONT_RIGHT).setFootContactState(true);
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_LEFT).setFootContactState(true);
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_RIGHT).setFootContactState(true);
+         break;
+      case STAND_TRANSITION_STATE:
       default:
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          {
-            runtimeEnvironment.getFootSwitches().get(robotQuadrant).trustFootSwitch(true);
+            runtimeEnvironment.getFootSwitches().get(robotQuadrant).trustFootSwitch(false);
             if (controllerToolbox.getContactState(robotQuadrant) == ContactState.IN_CONTACT)
             {
                runtimeEnvironment.getFootSwitches().get(robotQuadrant).setFootContactState(true);
