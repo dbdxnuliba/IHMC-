@@ -98,7 +98,7 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    @Override
    public boolean allowDisturbanceRecoveryBySpeedingUpSwing()
    {
-      return target == RobotTarget.REAL_ROBOT;
+      return false;
    }
 
    @Override
@@ -175,7 +175,7 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    @Override
    public double getMaxAllowedDistanceCMPSupport()
    {
-      return 0.06*jointMap.getModelScale();
+      return 0.0*jointMap.getModelScale();
    }
 
    @Override

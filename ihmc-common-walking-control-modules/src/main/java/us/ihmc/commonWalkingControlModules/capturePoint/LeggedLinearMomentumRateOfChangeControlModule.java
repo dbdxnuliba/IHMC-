@@ -155,6 +155,9 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    @Override
    public void computeModifiedCMPHeight(FramePoint2D cmpToModify, FramePoint2DReadOnly com2D)
    {
+      FrameVector2D icpError2d = new FrameVector2D();
+      icpError2d.set(desiredCapturePoint);
+      icpError2d.sub(capturePoint);
       if(walkingControllerParameters.useHeightForBalanceController())
       {
          if (varyingHeightControlModule.getPrimaryCondition() == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
@@ -186,7 +189,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
                yoPreviousVertexICPd.set(lowerFootEdgeICPd);
                double xForVec = capturePoint.getX()-previousVertex.getX();
                yoXForVec.set(xForVec);
-               double yPreviousCoPToVec = xForVec*lowerFootEdgeICPd.getY()/lowerFootEdgeICPd.getX()+previousVertex.getY()+0.02; //
+               double yPreviousCoPToVec = xForVec*lowerFootEdgeICPd.getY()/lowerFootEdgeICPd.getX()+previousVertex.getY()+0.02+0.03*icpError2d.getY()/icpError2d.getX(); //
                yoYCoordinateOnVec.set(yPreviousCoPToVec);
 
 

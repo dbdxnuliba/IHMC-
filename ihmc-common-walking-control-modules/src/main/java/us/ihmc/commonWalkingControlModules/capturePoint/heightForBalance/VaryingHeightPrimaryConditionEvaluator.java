@@ -37,11 +37,19 @@ public class VaryingHeightPrimaryConditionEvaluator
       if((z+MathTools.sign(dz)*dz*dz/(2* -aMinPredicted)>zMax|| kneeAngle<minKneeAngle)    )                             // max height/vel and singularity
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MAXZ;
+         if(primaryConditionPreviousTick==VaryingHeightPrimaryConditionEnum.ALIGNED_NEG)
+         {
+            primaryConditionEnum=VaryingHeightPrimaryConditionEnum.ALIGNED_NEG;
+         }
       }
       // MINZ
       else if (z+MathTools.sign(dz)*dz*dz/(2*aMaxPredicted)<zMin || kneeAngle >maxKneeAngle )                         // min height / min vel
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.MINZ;
+         if(primaryConditionPreviousTick==VaryingHeightPrimaryConditionEnum.ALIGNED_POS)
+         {
+            primaryConditionEnum=VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
+         }
       }
       // ALIGNED_POS (errorAngle or distance based)
       else if((useThreshold&&useAngleForConditions&&(errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment))&&copCoMProjDistance>copCoMProjMinDistance  || tToSwitch<0.02)                    // alignment ICPe and 'pendulum' positive force

@@ -37,9 +37,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private FramePoint2D com2DtoProject = new FramePoint2D();
    private FramePoint2D com2DtoProjectEndOfSwing = new FramePoint2D();
    private FramePoint3D com3D = new FramePoint3D();
+   private FrameVector3D comVelocity3D = new FrameVector3D();
    private FrameVector3D linearMomentumRateOfChangeFromLIP = new FrameVector3D();
-   private FramePoint2D comEndOfStep2D = new FramePoint2D();
-   private YoFramePoint2D yoCoMEndOfSTep2D;
    private YoFramePoint2D yoCoMEndOfSwing2DNotHacky;
 
    private FrameVector2D desiredICPVelocity = new FrameVector2D();
@@ -119,12 +118,12 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private double cmpFracOfMaxDistance;
    private boolean useThreshold;
    private double copCoMProjMinDistance;
+   private double minICPerror;
 
    boolean walkingStateSwitch;
    private YoBoolean yoWalkingStateSwitch;
    private YoBoolean yoAngleGrows;
 
-   private YoBoolean yoAngleImproves;
    private YoBoolean yoDistanceImproves;
 
    private YoDouble yoPosAlignThresh;
@@ -132,9 +131,11 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private YoDouble yozMax;
    private YoDouble yozMaxAlpha;
 
+   private YoDouble yoAlphaAngle;
+   private YoDouble yoAlphaDistance;
+
    boolean heightControlInThisWalkingState = false;
    boolean dsTrajectoryIsGenerated = false;
-   MinimumJerkTrajectory minimumJerkTrajectory = new MinimumJerkTrajectory();
 
    VaryingHeightAngleAndDistanceEvaluator angleAndDistanceEvaluator;
    VaryingHeightPrimaryConditionEvaluator primaryConditionEvaluator;
@@ -155,13 +156,11 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       copCoMICPeAngle = new YoDouble("CoPCoMICPeAngle", registry);
       copCoMICPeAngleFinal = new YoDouble("CoPCoMICPeAngleFinal", registry);
 
-      yoCoMEndOfSTep2D = new YoFramePoint2D("varyingHeightCoMEndOfSTep", ReferenceFrame.getWorldFrame(), registry);
       yoCoMEndOfSwing2DNotHacky = new YoFramePoint2D("varyingHeightCoMEndOfSwingFromPlanner", ReferenceFrame.getWorldFrame(), registry);
       yoCoMHeightVelocity = new YoDouble("heightForBalanceVelocity", registry);
 
       // angle and distance booleans
       yoAngleGrows = new YoBoolean("angleGrows", registry);
-      yoAngleImproves = new YoBoolean("angleImproves", registry);
       yoDistanceImproves = new YoBoolean("distanceImproves", registry);
       yoUseAngleForConditions = new YoBoolean("useAngleForConditions", registry);
 
@@ -180,6 +179,9 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       yozMax = new YoDouble("zMaxHeightCtrl",registry);
       yozMaxAlpha = new YoDouble("zMaxAlphaHeightCtrl",registry);
 
+      yoAlphaAngle= new YoDouble("AlphaAngle",registry);
+      yoAlphaDistance = new YoDouble("AlphaDistance",registry);
+
       yoTimeToSwitch.set(walkingControllerParameters.getDefaultSwingTime());
 
       primaryConditionYoEnum = new YoEnum<>("varyingHeightCondition", registry, VaryingHeightPrimaryConditionEnum.class);
@@ -192,10 +194,10 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       yoProjectedDesiredCMP = new YoFramePoint2D(label + "projCMPd", ReferenceFrame.getWorldFrame(), registry);
       artifacts.add(new YoArtifactPosition("proj CMPd", yoProjectedDesiredCMP.getYoX(), yoProjectedDesiredCMP.getYoY(), GraphicType.BALL_WITH_CROSS, Color.RED,
-                                           0.05));
+                                           0.025));
 
       yoProjectedCoM2D = new YoFramePoint2D(label + "projCOM2D", ReferenceFrame.getWorldFrame(), registry);
-      artifacts.add(new YoArtifactPosition("proj CoM2D", yoProjectedCoM2D.getYoX(), yoProjectedCoM2D.getYoY(), GraphicType.BALL_WITH_CROSS, Color.RED, 0.02));
+      artifacts.add(new YoArtifactPosition("proj CoM2D", yoProjectedCoM2D.getYoX(), yoProjectedCoM2D.getYoY(), GraphicType.BALL_WITH_CROSS, Color.RED, 0.01));
 
       primaryConditionYoEnum.set(VaryingHeightPrimaryConditionEnum.DEFAULT);
       secondaryConditionYoEnum.set(VaryingHeightSecondaryConditionEnum.DEFAULT);
@@ -223,6 +225,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             .getDefaultSwingTime();
       fracOfAForPrediction = walkingControllerParameters.getHeightForBalanceParameters().getFractionOfMaxHeightAccelerationToConsiderInPrediction();
       copCoMProjMinDistance = walkingControllerParameters.getHeightForBalanceParameters().getMinimumCoPCoMProjectedICPeDistanceToControl();
+      minICPerror=0.04;
 
       posAlignTresh = posAlignTreshFromStart;
       negAlignTresh = negAlignTreshFromStart;
@@ -253,18 +256,14 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       desiredCMPtoProject.changeFrame(ReferenceFrame.getWorldFrame());
       icpError.changeFrame(ReferenceFrame.getWorldFrame());
 
-      yoCoMEndOfSTep2D.set(comEndOfStep2D);
-      double distance = supportPolygon.signedDistance(desiredCMPtoProject);
-      boolean cmpOutsidePolygon = (!supportPolygon.isPointInside(desiredCMPtoProject));
       boolean isProjected = supportPolygon.orthogonalProjection(desiredCMPtoProject);
 
       // For standing push
-      boolean nonDynamicCase = desiredICPVelocity.length() < 0.02;
+      boolean nonDynamicCase = yoCoMEndOfSwing2DNotHacky.distanceFromOrigin()<0.08;
 
       // Reset values if state switch occurs, or if standing
       if (walkingStateSwitch
-            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && distance < 0.1 * walkingControllerParameters
-            .getMaxAllowedDistanceCMPSupport())
+            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && icpError.length()<0.02)
       {
          heightControlInThisWalkingState = false;
          dsTrajectoryIsGenerated = false;
@@ -274,28 +273,27 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       // Determines if height control or not
       boolean heightControlCondition = (
-            icpError.length() > 0.05 && isProjected && cmpOutsidePolygon && (distance > cmpFracOfMaxDistance * walkingControllerParameters
-                  .getMaxAllowedDistanceCMPSupport()) && (isInDoubleSupport == false || nonDynamicCase == true) || heightControlInThisWalkingState == true);
+            icpError.length() > minICPerror && (isInDoubleSupport == false || nonDynamicCase == true) || heightControlInThisWalkingState == true);
 
       // Some variables
-      FrameVector3D centerOfMassVelocity = new FrameVector3D();
-      controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(centerOfMassVelocity);
+      comVelocity3D = new FrameVector3D();
+      controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(comVelocity3D);
       double z = com3D.getZ();
-      double dz = centerOfMassVelocity.getZ();
+      double dz = comVelocity3D.getZ();
       yoCoMHeightVelocity.set(dz);
       FrameVector2D centerOfMassVelocity2D = new FrameVector2D();
-      centerOfMassVelocity2D.setIncludingFrame(centerOfMassVelocity);
+      centerOfMassVelocity2D.setIncludingFrame(comVelocity3D);
       centerOfMassVelocity2D.changeFrame(ReferenceFrame.getWorldFrame());
 
       // Determines if the decision has to be made which control law has to be used.
-      calculateUseAngleForConditions = (isProjected && cmpOutsidePolygon && heightControlInThisWalkingState == false);
+      calculateUseAngleForConditions = (heightControlInThisWalkingState == false);
 
 
       // HEIGHT CONTROL
       if (heightControlCondition)
       {
          // different max heights
-         zMax = getzMax(nonDynamicCase,stateClock,tForHalfWaySwing);
+         zMax = getzMax(nonDynamicCase,stateClock,tForHalfWaySwing,useAngleForConditions);
          yozMax.set(zMax);
          // Min/max - control law set based on using angle or distance
          if (calculateUseAngleForConditions || walkingStateSwitch)
@@ -410,42 +408,15 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          }
          else if (secondaryCondition == VaryingHeightSecondaryConditionEnum.HOLD)
          {
-            FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
-            ReferenceFrame hipPitchFrame = fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.HIP_PITCH).getFrameAfterJoint();
-            FramePoint3D hipPoint = new FramePoint3D(hipPitchFrame);
-            FramePoint3D kneePoint = new FramePoint3D(fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH).getFrameBeforeJoint());
-            kneePoint.changeFrame(hipPitchFrame);
-
-            double thighLength = hipPoint.distance(kneePoint);
-
-            ReferenceFrame kneePitchFrame = fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH).getFrameAfterJoint();
-            kneePoint.setToZero(kneePitchFrame);
-            FramePoint3D anklePoint = new FramePoint3D(fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.ANKLE_PITCH).getFrameBeforeJoint());
-            anklePoint.changeFrame(kneePitchFrame);
-
-            double shinLength = kneePoint.distance(anklePoint);
-            anklePoint.changeFrame(ReferenceFrame.getWorldFrame());
-
-            double r = shinLength + thighLength;
-            double comXToAnkle = com3D.getX() - anklePoint.getX();
-            double x = com3D.getX();
-            double dx = centerOfMassVelocity.getX();
-            double legHeightDistance = r- shinLength*cos(getAnkleAngle())-thighLength*cos(getAnkleAngle()+getKneeAngle());
-
-            double omega0 = controllerToolbox.getOmega0();
-            double ddx = omega0*omega0*(com3D.getX()-desiredCMPtoProject.getX());
-            double rsqminxsq = r*r-comXToAnkle*comXToAnkle;
-            double ddzdHold = -(r*r/rsqminxsq-1)*2*dx*ddx - 2*r*r*x*dx*dx*dx/(rsqminxsq*rsqminxsq);
-
             if (nonDynamicCase)
             {
                double kp = walkingControllerParameters.getCoMHeightControlGains().getKp();
                double kd = walkingControllerParameters.getCoMHeightControlGains().getKd();
                desiredHeightAcceleration = kp * (zMax - z) - kd * dz;
             }
-            else if (z>(zMaxStartSwing-legHeightDistance))
+            else if (z>zMax) //(zMaxStartSwing-legHeightDistance)
             {
-               desiredHeightAcceleration = ddzdHold;
+               desiredHeightAcceleration = getHeightAccelerationFromCircle();
             }
             else
             {
@@ -457,9 +428,32 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             desiredHeightAcceleration = aCtrl;
          }
 
-         if(isInDoubleSupport&&yoTimeInState.getDoubleValue()>walkingControllerParameters.getDefaultTransferTime()&&!nonDynamicCase || primaryCondition ==VaryingHeightPrimaryConditionEnum.DEFAULT)
+         if(isInDoubleSupport&&(yoTimeInState.getDoubleValue()>walkingControllerParameters.getDefaultTransferTime())&&!nonDynamicCase || primaryCondition ==VaryingHeightPrimaryConditionEnum.DEFAULT)
          {
+            primaryCondition = VaryingHeightPrimaryConditionEnum.DEFAULT;
             desiredHeightAcceleration=linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
+         }
+
+         if(primaryCondition == VaryingHeightPrimaryConditionEnum.ALIGNED_POS || primaryCondition == VaryingHeightPrimaryConditionEnum.ALIGNED_NEG)
+         {
+            double alphaAngle = 1.0;
+            double alphaDistance = 1.0;
+            if(useThreshold&&MathTools.epsilonEquals(posAlignTresh,Math.abs(errorAngle),0.1))
+            {
+               alphaAngle = (posAlignTresh-Math.abs(errorAngle))/(0.1);
+            }
+            else if(useThreshold&&MathTools.epsilonEquals(negAlignTresh,Math.abs(errorAngle),0.1))
+            {
+               alphaAngle = (Math.abs(errorAngle)-negAlignTresh)/(0.1);
+            }
+
+            if(MathTools.epsilonEquals(copCoMProjDistance,copCoMProjMinDistance, 0.005)&& copCoMProjDistance>copCoMProjMinDistance)
+            {
+               alphaDistance = (copCoMProjDistance-copCoMProjMinDistance)/0.005;
+            }
+            yoAlphaAngle.set(alphaAngle);
+            yoAlphaDistance.set(alphaDistance);
+            desiredHeightAcceleration = alphaAngle*alphaDistance*desiredHeightAcceleration;
          }
 
          /**
@@ -495,28 +489,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          primaryConditionYoEnum.set(VaryingHeightPrimaryConditionEnum.DEFAULT);
          secondaryConditionYoEnum.set(VaryingHeightSecondaryConditionEnum.DEFAULT);
          desiredHeightAcceleration = linearMomentumRateOfChangeFromLIP.getZ() / totalMass;
-         /*
-         if(desiredHeightAcceleration>2.0 && !nonDynamicCase)
-         {
-            if (isInDoubleSupport && yoTimeInState.getDoubleValue() < 0.1)
-            {
-               desiredHeightAcceleration = 0.0;
-            }
-            else if (isInDoubleSupport)
-            {
-               double kp = walkingControllerParameters.getCoMHeightControlGains().getKp();
-               double kd = walkingControllerParameters.getCoMHeightControlGains().getKd();
-               if (!dsTrajectoryIsGenerated)
-               {
-                  minimumJerkTrajectory.setMoveParameters(z, dz, desiredHeightAccelerationPreviousTick, 1.0, 0.0, 0.0, 0.1);
-                  dsTrajectoryIsGenerated = true;
-               }
-               minimumJerkTrajectory.computeTrajectory(yoTimeInState.getDoubleValue()-0.1);
-               desiredHeightAcceleration =
-                     kp * (minimumJerkTrajectory.getPosition() - z) + kd * (minimumJerkTrajectory.getVelocity() - dz) + minimumJerkTrajectory.getAcceleration();
-            }
-         }
-         */
+
          desiredHeightAcceleration = MathTools.clamp(desiredHeightAcceleration,aMinCtrlAngle,aMaxCtrlAngle);
          desiredHeightAcceleration = MathTools
                .clamp(desiredHeightAcceleration, desiredHeightAccelerationPreviousTick - jMax * dt, desiredHeightAccelerationPreviousTick + jMax * dt); // Jerk
@@ -556,8 +529,12 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       return angle;
    }
 
-   private double getzMax(boolean nonDynamicCase, double stateClock, double timeHalfWaySwing)
+   private double getzMax(boolean nonDynamicCase, double stateClock, double timeHalfWaySwing, boolean useAngleForConditions)
    {
+      if(!useAngleForConditions && !nonDynamicCase)
+      {
+         zMax= zMaxStartSwing*1.01;
+      }
       if (nonDynamicCase)
       {
          zMax = zMaxStartSwing;
@@ -566,6 +543,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       else if (stateClock > timeHalfWaySwing)
       {
          double alpha = (stateClock-tForHalfWaySwing)/(walkingControllerParameters.getDefaultSwingTime()-tForHalfWaySwing);
+         alpha= Math.min(alpha,1);
          yozMaxAlpha.set(alpha);
          zMax = zMaxStartSwing - alpha*(zMaxStartSwing-zMaxTouchDown);
       }
@@ -575,6 +553,38 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          zMax = zMaxStartSwing;
       }
       return zMax;
+   }
+
+   private double getHeightAccelerationFromCircle()
+   {
+      FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
+      ReferenceFrame hipPitchFrame = fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.HIP_PITCH).getFrameAfterJoint();
+      FramePoint3D hipPoint = new FramePoint3D(hipPitchFrame);
+      FramePoint3D kneePoint = new FramePoint3D(fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH).getFrameBeforeJoint());
+      kneePoint.changeFrame(hipPitchFrame);
+
+      double thighLength = hipPoint.distance(kneePoint);
+
+      ReferenceFrame kneePitchFrame = fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH).getFrameAfterJoint();
+      kneePoint.setToZero(kneePitchFrame);
+      FramePoint3D anklePoint = new FramePoint3D(fullRobotModel.getLegJoint(RobotSide.LEFT, LegJointName.ANKLE_PITCH).getFrameBeforeJoint());
+      anklePoint.changeFrame(kneePitchFrame);
+
+      double shinLength = kneePoint.distance(anklePoint);
+      anklePoint.changeFrame(ReferenceFrame.getWorldFrame());
+
+      double r = shinLength + thighLength;
+      double comXToAnkle = com3D.getX() - anklePoint.getX();
+      double x = com3D.getX();
+      double dx = comVelocity3D.getX();
+      double legHeightDistance = r- shinLength*cos(getAnkleAngle())-thighLength*cos(getAnkleAngle()+getKneeAngle());
+
+      double omega0 = controllerToolbox.getOmega0();
+      double ddx = omega0*omega0*(com3D.getX()-desiredCMPtoProject.getX());
+      double rsqminxsq = r*r-comXToAnkle*comXToAnkle;
+      double ddzCircle = -(r*r/rsqminxsq-1)*2*dx*ddx - 2*r*r*x*dx*dx*dx/(rsqminxsq*rsqminxsq);
+
+      return  ddzCircle;
    }
    public FrameVector3D getModifiedLinearMomentumRateOfChange()
    {

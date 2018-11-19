@@ -29,13 +29,13 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
       setupAndRunTest(footsteps, false, false);
 
 
-      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.5);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(4.0);
 
 
       // push parameters:
-      Vector3D forceDirection = new Vector3D(0.0, 1.0, 0.0);
+      Vector3D forceDirection = new Vector3D(-1.0, 0.0, 0.0);
       double magnitude = percentWeight * totalMass * 9.81;
-      double duration = 0.05;
+      double duration = 0.05*swingTime;
       pushRobotController.applyForce(forceDirection, magnitude, duration);
 
       validateTest(footsteps);

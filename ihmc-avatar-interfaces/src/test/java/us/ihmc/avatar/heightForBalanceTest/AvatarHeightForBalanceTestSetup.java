@@ -119,11 +119,11 @@ public abstract class AvatarHeightForBalanceTestSetup
       CommonAvatarEnvironmentInterface environment;
       if(useWaterObject)
       {
-         environment = new StepTilesEnvironmentWithWater(0.25, 0.35, 0.125, 0.5, 6);
+         environment = new StepTilesEnvironmentWithWater(0.25, 0.36, 0.125, 0.5, 6);
       }
       else if(showTiles)
       {
-         environment = new StepTilesEnvironment(0.25, 0.35, 0.125, 0.5, 6);
+         environment = new StepTilesEnvironment(0.25, 0.36, 0.125, 0.5, 6);
       }
       else
       {
@@ -241,8 +241,6 @@ public abstract class AvatarHeightForBalanceTestSetup
       message.getFootstepDataList().add().set(message5);
       message.getFootstepDataList().add().set(message6);
 
-      message.setAreFootstepsAdjustable(true);
-
       return message;
    }
 
@@ -250,7 +248,7 @@ public abstract class AvatarHeightForBalanceTestSetup
    {
       double scale = getSizeScale();
 
-      FramePoint3D step1Location = new FramePoint3D(worldFrame, 0.0, -0.125, 0.0);
+      FramePoint3D step1Location = new FramePoint3D(worldFrame, 0.0, -0.3, 0.0);
 
       step1Location.scale(scale);
 
@@ -262,7 +260,6 @@ public abstract class AvatarHeightForBalanceTestSetup
       FootstepDataListMessage message = HumanoidMessageTools.createFootstepDataListMessage(swingTime, transferTime);
       //message.getFootstepDataList().add().set(message1);
 
-      message.setAreFootstepsAdjustable(true);
 
       return message;
    }
