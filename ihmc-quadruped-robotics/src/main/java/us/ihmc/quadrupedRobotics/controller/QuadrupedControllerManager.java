@@ -174,10 +174,10 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
             runtimeEnvironment.getFootSwitches().get(robotQuadrant).trustFootSwitch(false);
          }
 
-         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.FRONT_LEFT).setFootContactState(false);
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.FRONT_LEFT).setFootContactState(true);
          runtimeEnvironment.getFootSwitches().get(RobotQuadrant.FRONT_RIGHT).setFootContactState(false);
          runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_LEFT).setFootContactState(false);
-         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_RIGHT).setFootContactState(true);
+         runtimeEnvironment.getFootSwitches().get(RobotQuadrant.HIND_RIGHT).setFootContactState(false);
          break;
       case STAND_READY:
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
@@ -218,6 +218,8 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       outputProcessor.update();
 
       copyJointDesiredsToJoints();
+
+      requestedControllerStateReference.set(null);
    }
 
    @Override
@@ -304,7 +306,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
       // Set up standard operating transitions
       factory.addDoneTransition(HighLevelControllerName.STAND_PREP_STATE, HighLevelControllerName.STAND_READY);
-      factory.addDoneTransition(HighLevelControllerName.STAND_TRANSITION_STATE, HighLevelControllerName.WALKING);
+//      factory.addDoneTransition(HighLevelControllerName.STAND_TRANSITION_STATE, HighLevelControllerName.WALKING);
 
       // Set up walking controller failure transition
       HighLevelControllerName fallbackControllerState = highLevelControllerParameters.getFallbackControllerState();
