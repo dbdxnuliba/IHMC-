@@ -38,45 +38,6 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
       percentWeight = 0.60;
       super.testPushStanding();
    }
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushContraDiagonalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 0.76
-      percentWeight = 0.78;
-      super.testPushContraDiagonalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushContraDiagonalFrontalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 0.91
-      percentWeight = 1.0;
-      super.testPushContraDiagonalFrontalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushDiagonalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 0.53
-      percentWeight = 0.64;
-      super.testPushDiagonalInSwing();
-   }
-
-   @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
-   public void testPushDiagonalFrontalInSwing() throws Exception
-   {
-      // No-height max recoverable percentWeight: 1.22      WORSE!
-      percentWeight = 1.16;
-      super.testPushDiagonalFrontalInSwing();
-   }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)

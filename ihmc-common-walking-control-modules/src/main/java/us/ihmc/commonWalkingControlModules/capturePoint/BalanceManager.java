@@ -500,6 +500,7 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setPerfectCMP(yoPerfectCMP);
       linearMomentumRateOfChangeControlModule.setPerfectCoP(yoPerfectCoP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
+      linearMomentumRateOfChangeControlModule.setSupportPolygon(controllerToolbox.getBipedSupportPolygons().getSupportPolygonInWorld());
       FramePoint3D comEndOfStep = new FramePoint3D();
       icpPlanner.computeFinalCoMPositionInSwing();
       icpPlanner.getFinalDesiredCenterOfMassPosition(comEndOfStep);

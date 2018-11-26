@@ -33,7 +33,7 @@ public abstract class HeightForBalanceParameters
 
    public double getFractionOfMaxHeightAccelerationToConsiderInPrediction()
    {
-      return 0.23;
+      return 0.3;
    }
 
    public double getMaxHeightAccelerationForDistanceCase()

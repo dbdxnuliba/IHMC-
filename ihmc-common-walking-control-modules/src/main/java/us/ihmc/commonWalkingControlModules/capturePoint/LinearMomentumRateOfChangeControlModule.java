@@ -6,6 +6,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.commonWalkingControlModules.wrenchDistribution.WrenchDistributorTools;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
+import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -40,6 +41,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
    private Vector3DReadOnly highLinearMomentumRateWeight;
    private final YoFrameVector3D angularMomentumRateWeight;
    private final YoFrameVector3D linearMomentumRateWeight;
+   private ConvexPolygon2DBasics supportPolygon = new FrameConvexPolygon2D();
 
    private final YoBoolean minimizeAngularMomentumRateZ;
 
@@ -328,7 +330,6 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
       linearMomentumRateOfChange.changeFrame(worldFrame);
       momentumRateCommand.setLinearMomentumRate(linearMomentumRateOfChange);
-
       selectionMatrix.setToLinearSelectionOnly();
       selectionMatrix.selectLinearZ(controlHeightWithMomentum);
       selectionMatrix.selectAngularZ(minimizeAngularMomentumRateZ.getBooleanValue());
@@ -430,4 +431,5 @@ public abstract class LinearMomentumRateOfChangeControlModule
    {
       this.supportSide=supportSide;
    }
+   public void setSupportPolygon(ConvexPolygon2DBasics supportPolygon){this.supportPolygon.set(supportPolygon);}
 }

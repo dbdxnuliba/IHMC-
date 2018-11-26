@@ -36,12 +36,13 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private double percentWeight;
    private double delayFractionOfSwing = 0.0;
    private boolean unreasonableFailure;
-   private String fileNamePrefix = "angleAndPercentWeight72TilesV4CoP";
+   private String fileNamePrefix = "angleAndPercentWeight18TilesCoPStanding";
    private String fileName = fileNamePrefix;
    protected boolean useNormalRobot = false;
-   protected boolean standingPush = false;
+   protected boolean standingPush = true;
    private Integer recursiveIter = 0;
    private Integer numberOfTests = 1;
+   protected Vector3D linearMomentumWeight = new Vector3D(0.05,0.05,0.01);
 
    public void testIterativePush() throws Exception
    {
@@ -59,7 +60,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
 
       for (int i = 0; i < numberOfDirections; i++)
       {
-         angle = i * (360 / numberOfDirections) * Math.PI / 180;
+         angle = i * (180 / numberOfDirections) * Math.PI / 180;
          if (Math.cos(angle) > 0.85)
             percentWeight = 0.4;
          else if (Math.cos(angle) < -0.85)
@@ -68,7 +69,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
             percentWeight = 0.2;
          if (standingPush)
          {
-            percentWeight = 0.2;
+            percentWeight = 0.5;
          }
          increment = 0.16;
          incrementCount = 0;
@@ -123,7 +124,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       }
       pw.close();
       Assert.assertTrue(true);
-      /*
+
       if (recursiveIter == 0)
       {
          fileName = fileNamePrefix + "Normal";
@@ -131,6 +132,90 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
+      else if(recursiveIter==1)
+      {
+         fileName = fileNamePrefix + "02";
+         useNormalRobot =false;
+         zOffsetFromChestRootJointForPush=0.2;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==2)
+      {
+         fileName =fileNamePrefix +"02Normal";
+         useNormalRobot=true;
+         zOffsetFromChestRootJointForPush=0.2;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==3)
+      {
+         fileName = fileNamePrefix + "01";
+         useNormalRobot =false;
+         zOffsetFromChestRootJointForPush=0.1;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==4)
+      {
+         fileName =fileNamePrefix +"01Normal";
+         useNormalRobot=true;
+         zOffsetFromChestRootJointForPush=0.1;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 5)
+      {
+         fileName = fileNamePrefix+"High";
+         Vector3D highLinearWeight = new Vector3D(0.5,0.5,0.05);
+         linearMomentumWeight.set(highLinearWeight);
+         zOffsetFromChestRootJointForPush=0.3;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if(recursiveIter==6)
+      {
+         fileName = fileNamePrefix + "HighNormal";
+         useNormalRobot =true;
+         zOffsetFromChestRootJointForPush=0.3;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==7)
+      {
+         fileName =fileNamePrefix +"High02";
+         useNormalRobot=false;
+         zOffsetFromChestRootJointForPush=0.2;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==8)
+      {
+         fileName = fileNamePrefix + "High02Normal";
+         useNormalRobot =true;
+         zOffsetFromChestRootJointForPush=0.2;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==9)
+      {
+         fileName =fileNamePrefix +"High01";
+         useNormalRobot=false;
+         zOffsetFromChestRootJointForPush=0.1;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+      else if(recursiveIter==10)
+      {
+         fileName =fileNamePrefix +"High01Normal";
+         useNormalRobot=true;
+         zOffsetFromChestRootJointForPush=0.1;
+         recursiveIter+=1;
+         testIterativePush();
+      }
+
+      /*
       else if (recursiveIter == 1)
       {
          fileName = fileNamePrefix + "HalfWay";
@@ -181,7 +266,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       double totalMass1 = fullRobotModel.getTotalMass();
 
-      double z = getForcePointOffsetZInChestFrame();
+      double z = zOffsetFromChestRootJointForPush;
       PushRobotController pushRobotController1 = new PushRobotController(drcSimulationTestHelper1.getRobot(),
                                                                          fullRobotModel.getChest().getParentJoint().getName(), new Vector3D(0, 0, z));
       SimulationConstructionSet scs = drcSimulationTestHelper1.getSimulationConstructionSet();
@@ -283,7 +368,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       double totalMass1 = fullRobotModel.getTotalMass();
 
-      double z = getForcePointOffsetZInChestFrame();
+      double z = zOffsetFromChestRootJointForPush;
       PushRobotController pushRobotController1 = new PushRobotController(drcSimulationTestHelper1.getRobot(),
                                                                          fullRobotModel.getChest().getParentJoint().getName(), new Vector3D(0, 0, z));
       SimulationConstructionSet scs = drcSimulationTestHelper1.getSimulationConstructionSet();

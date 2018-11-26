@@ -1,21 +1,20 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance;
 
+import org.ejml.data.DenseMatrix64F;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
-import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControlCoreToolbox;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DBasics;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
+import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.screwTheory.FloatingInverseDynamicsJoint;
-import us.ihmc.robotics.screwTheory.InverseDynamicsJoint;
-import us.ihmc.robotics.screwTheory.OneDoFJoint;
-import us.ihmc.robotics.trajectories.MinimumJerkTrajectory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -37,7 +36,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private FramePoint2D com2DtoProject = new FramePoint2D();
    private FramePoint2D com2DtoProjectEndOfSwing = new FramePoint2D();
    private FramePoint3D com3D = new FramePoint3D();
-   private FrameVector3D comVelocity3D = new FrameVector3D();
+   private FrameVector3DReadOnly comVelocity3D = new FrameVector3D();
    private FrameVector3D linearMomentumRateOfChangeFromLIP = new FrameVector3D();
    private YoFramePoint2D yoCoMEndOfSwing2DNotHacky;
 
@@ -67,8 +66,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
    private HighLevelHumanoidControllerToolbox controllerToolbox;
 
-   private OneDoFJoint kneeJoint;
-   private OneDoFJoint ankleJoint;
+   private OneDoFJointBasics kneeJoint;
+   private OneDoFJointBasics ankleJoint;
 
    private double kneeAngle;
 
@@ -277,7 +276,9 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       // Some variables
       comVelocity3D = new FrameVector3D();
-      controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity(comVelocity3D);
+      DenseMatrix64F notUsed = new DenseMatrix64F();
+      notUsed.setNumRows(6);
+      comVelocity3D = controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity();
       double z = com3D.getZ();
       double dz = comVelocity3D.getZ();
       yoCoMHeightVelocity.set(dz);

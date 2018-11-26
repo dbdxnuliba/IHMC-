@@ -24,27 +24,23 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    private HeightForBalanceModel heightForBalanceModel = new HeightForBalanceModel();
    private QPForHeightValkyrieRobotModel qpForHeightModel = new QPForHeightValkyrieRobotModel();
 
-   /**
-    *  Almost all tests do better in maximum recoverable push than the 'normal' configuration, except for two tests, which seem to have
-    *  a similar problem.
-    */
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
    @Test(timeout = 300000)
    public void testPushStanding() throws Exception
    {
-      // No-height max recoverable percentWeight: 0.55
-      percentWeight = 1.03;
+      // No-height max recoverable percentWeight: 0.88
+      percentWeight = 1.5;
       super.testPushStanding();
    }
 
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 30000)
+   @Test(timeout = 10000000)
    public void testPushAngle() throws Exception
    {
       angle = 3.14159265358979;
-      percentWeight = 1.47;
+      percentWeight = 1.44;
       super.testPushAngle();
    }
 

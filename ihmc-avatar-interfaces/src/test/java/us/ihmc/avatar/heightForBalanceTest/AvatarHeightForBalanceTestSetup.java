@@ -56,6 +56,7 @@ public abstract class AvatarHeightForBalanceTestSetup
    protected Double percentWeight;
    protected Double angle;
    protected Boolean succes;
+   protected Double zOffsetFromChestRootJointForPush = 0.3;
 
    public abstract double getNominalHeight();
 
@@ -110,7 +111,7 @@ public abstract class AvatarHeightForBalanceTestSetup
 
    protected double getForcePointOffsetZInChestFrame()
    {
-      return 0.3;
+      return zOffsetFromChestRootJointForPush;
    }
 
 
