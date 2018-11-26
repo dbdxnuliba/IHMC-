@@ -258,7 +258,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       boolean isProjected = supportPolygon.orthogonalProjection(desiredCMPtoProject);
 
       // For standing push
-      boolean nonDynamicCase = yoCoMEndOfSwing2DNotHacky.distanceFromOrigin()<0.08;
+      boolean nonDynamicCase = yoCoMEndOfSwing2DNotHacky.distanceFromOrigin()<0.5;
 
       // Reset values if state switch occurs, or if standing
       if (walkingStateSwitch

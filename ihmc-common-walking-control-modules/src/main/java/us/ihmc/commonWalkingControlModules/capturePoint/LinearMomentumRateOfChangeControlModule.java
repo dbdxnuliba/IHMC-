@@ -78,6 +78,9 @@ public abstract class LinearMomentumRateOfChangeControlModule
 
    private double desiredCoMHeightAcceleration = 0.0;
 
+   private boolean useBangBangAngularMomentum = false;
+   private double bangTime;
+
    private RobotSide supportSide;
 
    public LinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
@@ -304,6 +307,43 @@ public abstract class LinearMomentumRateOfChangeControlModule
       else
       {
          desiredCoPcontainedNaN = false;
+      }
+
+
+      if(!supportPolygon.isPointInside(desiredCMP))
+      {
+         if(!useBangBangAngularMomentum)
+         {
+            bangTime=0.0;
+         }
+         useBangBangAngularMomentum=true;
+      }
+      if(useBangBangAngularMomentum && MathTools.epsilonEquals(desiredCMP.getX(),0.15,0.06))
+      {
+         bangTime+=0.002;
+         double inertia = 0.005;
+         double thetamax=0.33*Math.PI;
+         double rCMPmax =0.05;
+         double tRM = Math.sqrt(inertia*thetamax/rCMPmax)/3.3;
+         if(bangTime<tRM)
+         {
+            desiredCoP.set(desiredCMP);
+            supportPolygon.orthogonalProjection(desiredCoP);
+         }
+         else if(bangTime>tRM && bangTime<2*tRM && !supportPolygon.isPointInside(desiredCMP))
+         {
+            desiredCoP.set(0.15,0.0);
+            desiredCMP.set(0.10,0.0);
+         }
+         else if(bangTime>2*tRM && !supportPolygon.isPointInside(desiredCMP))
+         {
+            supportPolygon.orthogonalProjection(desiredCMP);
+            desiredCoP.set(desiredCMP);
+         }
+         else
+         {
+            useBangBangAngularMomentum=false;
+         }
       }
 
       desiredCMPToPack.setIncludingFrame(desiredCMP);
