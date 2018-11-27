@@ -37,6 +37,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    private YoDouble yoXForVec;
    private YoDouble yoYCoordinateOnVec;
    private YoDouble yoCMPY;
+   private YoBoolean yoUseHeightForBalanceControl;
 
    public LeggedLinearMomentumRateOfChangeControlModule(String namePrefix, ReferenceFrames referenceFrames, double gravityZ, double totalMass,
                                                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry, HighLevelHumanoidControllerToolbox controllerToolbox,
@@ -56,6 +57,8 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       yoYCoordinateOnVec = new YoDouble("yCoordinateForVecWorld",registry);
       yoCMPY = new YoDouble("cmpyWorld",registry);
       yoPreviousVertexIndex = new YoInteger("PreviousVertexIndexHeight",registry);
+      yoUseHeightForBalanceControl= new YoBoolean("UseHeightForBalanceController",registry);
+      yoUseHeightForBalanceControl.set(walkingControllerParameters.useHeightForBalanceController());
    }
 
    public void setSupportLeg(RobotSide newSupportSide)
@@ -128,7 +131,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
    @Override
    public void computeHeightModification(FrameVector3D linearMomentumRateOfChangeToModify)
    {
-      if(walkingControllerParameters.useHeightForBalanceController())
+      if(yoUseHeightForBalanceControl.getBooleanValue())
       {
          centerOfMass.setToZero(centerOfMassFrame);
 
@@ -158,7 +161,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
       FrameVector2D icpError2d = new FrameVector2D();
       icpError2d.set(desiredCapturePoint);
       icpError2d.sub(capturePoint);
-      if(walkingControllerParameters.useHeightForBalanceController())
+      if(yoUseHeightForBalanceControl.getBooleanValue())
       {
          if (varyingHeightControlModule.getPrimaryCondition() == VaryingHeightPrimaryConditionEnum.PREPARE_NEG)
          {

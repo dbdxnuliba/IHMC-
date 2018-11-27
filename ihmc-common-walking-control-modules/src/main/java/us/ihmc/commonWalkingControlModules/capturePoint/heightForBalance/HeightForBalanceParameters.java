@@ -13,7 +13,7 @@ public abstract class HeightForBalanceParameters
 
    public double getMinKneeAngle()
    {
-      return 0.15;
+      return 0.10;
    }
 
    public double getMaxKneeAngle()
