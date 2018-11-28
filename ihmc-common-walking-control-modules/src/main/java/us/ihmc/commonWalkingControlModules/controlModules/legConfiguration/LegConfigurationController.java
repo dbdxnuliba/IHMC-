@@ -145,8 +145,8 @@ public class LegConfigurationController
    private double computeJointSpaceAction(double dampingActionScaleFactor)
    {
       double jointError = kneePitchPrivilegedConfiguration.getDoubleValue() - kneePitchJoint.getQ();
-      double jointSpaceKp = legConfigurationGains.hasJointSpaceKp() ? 0.0 : 2.0 * legConfigurationGains.getJointSpaceKp() / toolbox.getKneeSquareRangeOfMotion();
-      double jointSpaceKd = legConfigurationGains.hasJointSpaceKd() ? 0.0 : dampingActionScaleFactor * legConfigurationGains.getJointSpaceKd();
+      double jointSpaceKp = legConfigurationGains.hasJointSpaceKp() ? 2.0 * legConfigurationGains.getJointSpaceKp() / toolbox.getKneeSquareRangeOfMotion() : 0.0;
+      double jointSpaceKd = legConfigurationGains.hasJointSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getJointSpaceKd() : 0.0;
 
       jointSpacePAction.set(jointSpaceKp * jointError);
       jointSpaceDAction.set(jointSpaceKd * -kneePitchJoint.getQd());
@@ -165,8 +165,8 @@ public class LegConfigurationController
       currentVirtualActuatorVelocity.set(computeVirtualActuatorVelocity(currentPosition, currentVelocity));
 
       double virtualError = desiredVirtualActuatorLength.getDoubleValue() - currentVirtualActuatorLength.getDoubleValue();
-      double actuatorSpaceKp = legConfigurationGains.hasActuatorSpaceKp() ? 0.0 : legConfigurationGains.getActuatorSpaceKp();
-      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ? 0.0 : dampingActionScaleFactor * legConfigurationGains.getActuatorSpaceKd();
+      double actuatorSpaceKp = legConfigurationGains.hasActuatorSpaceKp() ? legConfigurationGains.getActuatorSpaceKp() : 0.0;
+      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getActuatorSpaceKd() : 0.0;
 
       this.actuatorSpacePAction.set(actuatorSpaceKp * virtualError);
       this.actuatorSpaceDAction.set(actuatorSpaceKd * -currentVirtualActuatorVelocity.getDoubleValue());
@@ -185,14 +185,13 @@ public class LegConfigurationController
       double currentPosition = kneePitchJoint.getQ();
       double currentVelocity = kneePitchJoint.getQd();
 
-
       desiredVirtualSpringLength.set(computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue()));
       currentVirtualSpringLength.set(computeVirtualActuatorLength(currentPosition));
       currentVirtualSpringVelocity.set(computeVirtualActuatorVelocity(currentPosition, currentVelocity));
 
       double virtualError = desiredVirtualSpringLength.getDoubleValue() - currentVirtualSpringLength.getDoubleValue();
-      double springSpaceKp = legConfigurationGains.hasSpringSpaceKp() ? 0.0 : legConfigurationGains.getSpringSpaceKp();
-      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ? 0.0 : dampingActionScaleFactor * legConfigurationGains.getSpringSpaceKd();
+      double springSpaceKp = legConfigurationGains.hasSpringSpaceKp() ? legConfigurationGains.getSpringSpaceKp() : 0.0;
+      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getSpringSpaceKd() : 0.0;
 
       this.springSpacePAction.set(springSpaceKp * virtualError);
       this.springSpaceDAction.set(springSpaceKd * -currentVirtualSpringVelocity.getDoubleValue());
