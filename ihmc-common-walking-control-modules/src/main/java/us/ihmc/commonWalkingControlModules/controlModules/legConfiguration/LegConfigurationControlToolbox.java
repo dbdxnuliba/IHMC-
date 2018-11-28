@@ -91,6 +91,16 @@ public class LegConfigurationControlToolbox
       return kneeMidRangeOfMotion;
    }
 
+   public double getKneeSquareRangeOfMotion()
+   {
+      return kneeSquareRangeOfMotion;
+   }
+
+   public double getKneeRangeOfMotion()
+   {
+      return kneeRangeOfMotion;
+   }
+
    public OneDoFJointBasics getKneePitchJoint()
    {
       return kneePitchJoint;
