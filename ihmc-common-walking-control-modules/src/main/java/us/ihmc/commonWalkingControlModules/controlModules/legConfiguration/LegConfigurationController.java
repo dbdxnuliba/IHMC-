@@ -117,9 +117,7 @@ public class LegConfigurationController
       this.legConfigurationGains = legConfigurationGains;
    }
 
-
-
-   private double computeKneeAcceleration()
+   public double computeKneeAcceleration()
    {
       double currentPosition = kneePitchJoint.getQ();
 

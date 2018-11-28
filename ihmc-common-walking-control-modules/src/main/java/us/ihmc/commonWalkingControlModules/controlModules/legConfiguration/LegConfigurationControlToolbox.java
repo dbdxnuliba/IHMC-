@@ -111,6 +111,11 @@ public class LegConfigurationControlToolbox
       return parameters;
    }
 
+   public void setDesiredStraightLegAngle(double desiredStraightLegAngle)
+   {
+      this.desiredStraightLegAngle.set(desiredStraightLegAngle);
+   }
+
    public void setUseBracingAngle(boolean useBracingAngle)
    {
       this.useBracingAngle.set(useBracingAngle);
