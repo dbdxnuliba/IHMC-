@@ -1,7 +1,7 @@
 package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.states;
 
-import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationControlModule;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationControlToolbox;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegControlWeight;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGainsReadOnly;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commons.MathTools;
@@ -58,7 +58,7 @@ public class CollapseKneeControlState implements LegControlState
    @Override
    public void onEntry()
    {
-      toolbox.setLegControlWeight(LegConfigurationControlModule.LegControlWeight.MEDIUM);
+      toolbox.setLegControlWeight(LegControlWeight.MEDIUM);
    }
 
    @Override

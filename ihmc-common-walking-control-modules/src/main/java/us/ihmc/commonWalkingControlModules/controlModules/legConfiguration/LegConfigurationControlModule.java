@@ -18,16 +18,6 @@ import us.ihmc.yoVariables.variable.YoEnum;
 
 public class LegConfigurationControlModule
 {
-   public enum LegConfigurationType
-   {
-      STRAIGHTEN, STRAIGHT, COLLAPSE, BENT
-   }
-
-   public enum LegControlWeight
-   {
-      HIGH, MEDIUM, LOW
-   }
-
    private final YoVariableRegistry registry;
 
    private final PrivilegedJointSpaceCommand privilegedAccelerationCommand = new PrivilegedJointSpaceCommand();

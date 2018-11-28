@@ -1,10 +1,8 @@
 package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.states;
 
-import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationControlModule;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationControlToolbox;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegControlWeight;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGainsReadOnly;
-import us.ihmc.yoVariables.providers.DoubleProvider;
-import us.ihmc.yoVariables.variable.YoEnum;
 
 public class BentKneeControlState implements LegControlState
 {
@@ -29,7 +27,7 @@ public class BentKneeControlState implements LegControlState
    @Override
    public void onEntry()
    {
-      toolbox.setLegControlWeight(LegConfigurationControlModule.LegControlWeight.LOW);
+      toolbox.setLegControlWeight(LegControlWeight.LOW);
    }
 
    @Override
