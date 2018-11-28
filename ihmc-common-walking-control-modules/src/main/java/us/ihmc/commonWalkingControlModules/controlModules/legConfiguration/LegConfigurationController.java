@@ -27,27 +27,27 @@ public class LegConfigurationController
    private final YoDouble dampingActionScaleFactor;
 
    private final YoDouble kneePitchPrivilegedConfiguration;
-   private final YoDouble kneePitchPrivilegedError;
 
    private final YoDouble jointSpacePAction;
    private final YoDouble jointSpaceDAction;
-   private final YoDouble jointSpaceAction;
+   private final YoDouble jointSpaceJointAction;
 
    private final YoDouble actuatorSpacePAction;
    private final YoDouble actuatorSpaceDAction;
    private final YoDouble actuatorSpaceAction;
+   private final YoDouble actuatorSpaceJointAction;
 
    private final YoDouble springSpacePAction;
    private final YoDouble springSpaceDAction;
    private final YoDouble springSpaceAction;
+   private final YoDouble springSpaceJointAction;
 
-   private final YoDouble desiredVirtualActuatorLength;
-   private final YoDouble currentVirtualActuatorLength;
-   private final YoDouble currentVirtualActuatorVelocity;
+   private final YoDouble jointSpaceError;
+   private final YoDouble legLengthError;
 
-   private final YoDouble desiredVirtualSpringLength;
-   private final YoDouble currentVirtualSpringLength;
-   private final YoDouble currentVirtualSpringVelocity;
+   private final YoDouble desiredLegLength;
+   private final YoDouble currentLegLength;
+   private final YoDouble currentLegVelocity;
 
    private final double thighLength;
    private final double shinLength;
@@ -61,31 +61,31 @@ public class LegConfigurationController
 
       String namePrefix = sidePrefix + "Leg";
 
-      kneePitchPrivilegedConfiguration = new YoDouble(sidePrefix + "KneePitchPrivilegedConfiguration", registry);
-      kneePitchPrivilegedError = new YoDouble(sidePrefix + "KneePitchPrivilegedError", registry);
+      kneePitchPrivilegedConfiguration = new YoDouble(sidePrefix + "KneePitchConfiguration", registry);
 
       privilegedMaxAcceleration = new YoDouble(sidePrefix + "LegPrivilegedMaxAcceleration", registry);
       dampingActionScaleFactor = new YoDouble(namePrefix + "DampingActionScaleFactor", registry);
 
-      jointSpacePAction = new YoDouble(sidePrefix + "KneePrivilegedJointSpacePAction", registry);
-      jointSpaceDAction = new YoDouble(sidePrefix + "KneePrivilegedJointSpaceDAction", registry);
-      jointSpaceAction = new YoDouble(sidePrefix + "KneePrivilegedJointSpaceAction", registry);
+      jointSpacePAction = new YoDouble(sidePrefix + "KneeJointSpacePAction", registry);
+      jointSpaceDAction = new YoDouble(sidePrefix + "KneeJointSpaceDAction", registry);
+      jointSpaceJointAction = new YoDouble(sidePrefix + "KneeJointSpaceJointAction", registry);
 
-      actuatorSpacePAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpacePAction", registry);
-      actuatorSpaceDAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpaceDAction", registry);
-      actuatorSpaceAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpaceAction", registry);
+      actuatorSpacePAction = new YoDouble(sidePrefix + "KneeActuatorSpacePAction", registry);
+      actuatorSpaceDAction = new YoDouble(sidePrefix + "KneeActuatorSpaceDAction", registry);
+      actuatorSpaceAction = new YoDouble(sidePrefix + "KneeActuatorSpaceAction", registry);
+      actuatorSpaceJointAction = new YoDouble(sidePrefix + "KneeActuatorSpaceJointAction", registry);
 
-      springSpacePAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpacePAction", registry);
-      springSpaceDAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpaceDAction", registry);
-      springSpaceAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpaceAction", registry);
+      springSpacePAction = new YoDouble(sidePrefix + "KneeSpringSpacePAction", registry);
+      springSpaceDAction = new YoDouble(sidePrefix + "KneeSpringSpaceDAction", registry);
+      springSpaceAction = new YoDouble(sidePrefix + "KneeSpringSpaceAction", registry);
+      springSpaceJointAction = new YoDouble(sidePrefix + "KneeSpringSpaceJointAction", registry);
 
-      desiredVirtualActuatorLength = new YoDouble(namePrefix + "DesiredVirtualActuatorLength", registry);
-      currentVirtualActuatorLength = new YoDouble(namePrefix + "CurrentVirtualActuatorLength", registry);
-      currentVirtualActuatorVelocity = new YoDouble(namePrefix + "CurrentVirtualActuatorVelocity", registry);
+      legLengthError = new YoDouble(namePrefix + "LegLengthError", registry);
+      jointSpaceError = new YoDouble(namePrefix + "JointSpaceError", registry);
 
-      desiredVirtualSpringLength = new YoDouble(namePrefix + "DesiredVirtualSpringLength", registry);
-      currentVirtualSpringLength = new YoDouble(namePrefix + "CurrentVirtualSpringLength", registry);
-      currentVirtualSpringVelocity = new YoDouble(namePrefix + "CurrentVirtualSpringVelocity", registry);
+      desiredLegLength = new YoDouble(namePrefix + "DesiredLegLength", registry);
+      currentLegLength = new YoDouble(namePrefix + "CurrentLegLength", registry);
+      currentLegVelocity = new YoDouble(namePrefix + "CurrentLegVelocity", registry);
 
       privilegedMaxAcceleration.set(toolbox.getParameters().getPrivilegedMaxAcceleration());
 
@@ -122,87 +122,70 @@ public class LegConfigurationController
       double currentPosition = kneePitchJoint.getQ();
 
       double jointError = kneePitchPrivilegedConfiguration.getDoubleValue() - currentPosition;
-      kneePitchPrivilegedError.set(jointError);
 
       // modify gains based on error. If there's a big error, don't damp velocities
       double percentError = Math.abs(jointError) / (0.5 * toolbox.getKneeRangeOfMotion());
-      double dampingActionScaleFactor;
-      if (scaleDamping)
-         dampingActionScaleFactor = MathTools.clamp(1.0 - (1.0 - minimumDampingScale) * percentError, 0.0, 1.0);
-      else
-         dampingActionScaleFactor = 1.0;
+      double dampingActionScaleFactor = scaleDamping ? MathTools.clamp(1.0 - (1.0 - minimumDampingScale) * percentError, 0.0, 1.0) : 1.0;
       this.dampingActionScaleFactor.set(dampingActionScaleFactor);
 
-      double jointSpaceAction = computeJointSpaceAction(dampingActionScaleFactor);
-      double actuatorSpaceAction = computeActuatorSpaceAction(dampingActionScaleFactor);
-      double springSpaceAction = computeSpringSpaceAction(dampingActionScaleFactor);
+      updateLegLengths();
+
+      double jointSpaceAction = computeJointSpaceAction();
+      double actuatorSpaceAction = computeActuatorSpaceAction();
+      double springSpaceAction = computeSpringSpaceAction();
 
       double desiredAcceleration = jointSpaceAction + actuatorSpaceAction + springSpaceAction;
 
       return MathTools.clamp(desiredAcceleration, privilegedMaxAcceleration.getDoubleValue());
    }
 
-   private double computeJointSpaceAction(double dampingActionScaleFactor)
+   private void updateLegLengths()
    {
-      double jointError = kneePitchPrivilegedConfiguration.getDoubleValue() - kneePitchJoint.getQ();
+      desiredLegLength.set(computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue()));
+      currentLegLength.set(computeVirtualActuatorLength(kneePitchJoint.getQ()));
+      currentLegVelocity.set(computeVirtualActuatorVelocity(kneePitchJoint.getQ(), kneePitchJoint.getQd()));
+
+      legLengthError.set(desiredLegLength.getDoubleValue() - currentLegLength.getDoubleValue());
+   }
+
+   private double computeJointSpaceAction()
+   {
+      jointSpaceError.set(kneePitchPrivilegedConfiguration.getDoubleValue() - kneePitchJoint.getQ());
       double jointSpaceKp = legConfigurationGains.hasJointSpaceKp() ? 2.0 * legConfigurationGains.getJointSpaceKp() / toolbox.getKneeSquareRangeOfMotion() : 0.0;
-      double jointSpaceKd = legConfigurationGains.hasJointSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getJointSpaceKd() : 0.0;
+      double jointSpaceKd = legConfigurationGains.hasJointSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getJointSpaceKd() : 0.0;
 
-      jointSpacePAction.set(jointSpaceKp * jointError);
+      jointSpacePAction.set(jointSpaceKp * jointSpaceError.getDoubleValue());
       jointSpaceDAction.set(jointSpaceKd * -kneePitchJoint.getQd());
-      jointSpaceAction.set(jointSpacePAction.getDoubleValue() + jointSpaceDAction.getDoubleValue());
+      jointSpaceJointAction.set(jointSpacePAction.getDoubleValue() + jointSpaceDAction.getDoubleValue());
 
-      return jointSpaceAction.getDoubleValue();
+      return jointSpaceJointAction.getDoubleValue();
    }
 
-   private double computeActuatorSpaceAction(double dampingActionScaleFactor)
+
+   private double computeActuatorSpaceAction()
    {
-      double currentPosition = kneePitchJoint.getQ();
-      double currentVelocity = kneePitchJoint.getQd();
-
-      desiredVirtualActuatorLength.set(computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue()));
-      currentVirtualActuatorLength.set(computeVirtualActuatorLength(currentPosition));
-      currentVirtualActuatorVelocity.set(computeVirtualActuatorVelocity(currentPosition, currentVelocity));
-
-      double virtualError = desiredVirtualActuatorLength.getDoubleValue() - currentVirtualActuatorLength.getDoubleValue();
       double actuatorSpaceKp = legConfigurationGains.hasActuatorSpaceKp() ? legConfigurationGains.getActuatorSpaceKp() : 0.0;
-      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getActuatorSpaceKd() : 0.0;
+      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getActuatorSpaceKd() : 0.0;
 
-      this.actuatorSpacePAction.set(actuatorSpaceKp * virtualError);
-      this.actuatorSpaceDAction.set(actuatorSpaceKd * -currentVirtualActuatorVelocity.getDoubleValue());
+      actuatorSpacePAction.set(actuatorSpaceKp * legLengthError.getDoubleValue());
+      actuatorSpaceDAction.set(actuatorSpaceKd * -currentLegVelocity.getDoubleValue());
+      actuatorSpaceAction.set(actuatorSpacePAction.getDoubleValue() + actuatorSpaceDAction.getDoubleValue());
 
-      double actuatorSpaceAcceleration = actuatorSpacePAction.getDoubleValue() + actuatorSpaceDAction.getDoubleValue();
-
-      double acceleration = computeActuatorAccelerationFromJointAcceleration(currentPosition, currentVelocity, actuatorSpaceAcceleration);
-
-      this.actuatorSpaceAction.set(acceleration);
-
-      return actuatorSpaceAction.getDoubleValue();
+      actuatorSpaceJointAction.set(computeActuatorAccelerationFromJointAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), actuatorSpaceAction.getDoubleValue()));
+      return actuatorSpaceJointAction.getDoubleValue();
    }
 
-   private double computeSpringSpaceAction(double dampingActionScaleFactor)
+   private double computeSpringSpaceAction()
    {
-      double currentPosition = kneePitchJoint.getQ();
-      double currentVelocity = kneePitchJoint.getQd();
-
-      desiredVirtualSpringLength.set(computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue()));
-      currentVirtualSpringLength.set(computeVirtualActuatorLength(currentPosition));
-      currentVirtualSpringVelocity.set(computeVirtualActuatorVelocity(currentPosition, currentVelocity));
-
-      double virtualError = desiredVirtualSpringLength.getDoubleValue() - currentVirtualSpringLength.getDoubleValue();
       double springSpaceKp = legConfigurationGains.hasSpringSpaceKp() ? legConfigurationGains.getSpringSpaceKp() : 0.0;
-      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ? dampingActionScaleFactor * legConfigurationGains.getSpringSpaceKd() : 0.0;
+      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getSpringSpaceKd() : 0.0;
 
-      this.springSpacePAction.set(springSpaceKp * virtualError);
-      this.springSpaceDAction.set(springSpaceKd * -currentVirtualSpringVelocity.getDoubleValue());
+      springSpacePAction.set(springSpaceKp * legLengthError.getDoubleValue());
+      springSpaceDAction.set(springSpaceKd * -currentLegVelocity.getDoubleValue());
+      springSpaceAction.set(springSpacePAction.getDoubleValue() + springSpaceDAction.getDoubleValue());
 
-      double springSpaceAcceleration = springSpacePAction.getDoubleValue() + springSpaceDAction.getDoubleValue();
-
-      double acceleration = computeKneeAccelerationFromLegAcceleration(currentPosition, currentVelocity, springSpaceAcceleration);
-
-      this.springSpaceAction.set(acceleration);
-
-      return acceleration;
+      springSpaceJointAction.set(computeKneeAccelerationFromLegAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), springSpaceAction.getDoubleValue()));
+      return springSpaceJointAction.getDoubleValue();
    }
 
    private double computeVirtualActuatorLength(double kneePitchAngle)
