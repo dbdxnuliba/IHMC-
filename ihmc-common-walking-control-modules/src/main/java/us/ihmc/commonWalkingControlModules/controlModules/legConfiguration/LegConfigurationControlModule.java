@@ -57,11 +57,15 @@ public class LegConfigurationControlModule
    private final YoDouble straightJointSpaceVelocityGain;
    private final YoDouble straightActuatorSpacePositionGain;
    private final YoDouble straightActuatorSpaceVelocityGain;
+   private final YoDouble straightSpringSpacePositionGain;
+   private final YoDouble straightSpringSpaceVelocityGain;
 
    private final YoDouble bentJointSpacePositionGain;
    private final YoDouble bentJointSpaceVelocityGain;
-   private final YoDouble bentActuatorSpaceVelocityGain;
    private final YoDouble bentActuatorSpacePositionGain;
+   private final YoDouble bentActuatorSpaceVelocityGain;
+   private final YoDouble bentSpringSpacePositionGain;
+   private final YoDouble bentSpringSpaceVelocityGain;
 
    private final YoDouble kneePitchPrivilegedConfiguration;
    private final YoDouble kneePitchPrivilegedError;
@@ -73,6 +77,10 @@ public class LegConfigurationControlModule
    private final YoDouble actuatorSpacePAction;
    private final YoDouble actuatorSpaceDAction;
    private final YoDouble actuatorSpaceAction;
+
+   private final YoDouble springSpacePAction;
+   private final YoDouble springSpaceDAction;
+   private final YoDouble springSpaceAction;
 
    private final YoDouble privilegedMaxAcceleration;
 
@@ -105,6 +113,8 @@ public class LegConfigurationControlModule
    private double jointSpaceVelocityGain;
    private double actuatorSpaceConfigurationGain;
    private double actuatorSpaceVelocityGain;
+   private double springSpaceConfigurationGain;
+   private double springSpaceVelocityGain;
 
    private final double kneeRangeOfMotion;
    private final double kneeSquareRangeOfMotion;
@@ -145,11 +155,15 @@ public class LegConfigurationControlModule
       straightJointSpaceVelocityGain = new YoDouble(sidePrefix + "StraightLegJointSpaceKv", registry);
       straightActuatorSpacePositionGain = new YoDouble(sidePrefix + "StraightLegActuatorSpaceKp", registry);
       straightActuatorSpaceVelocityGain = new YoDouble(sidePrefix + "StraightLegActuatorSpaceKv", registry);
+      straightSpringSpacePositionGain = new YoDouble(sidePrefix + "StraightLegSpringSpaceKp", registry);
+      straightSpringSpaceVelocityGain = new YoDouble(sidePrefix + "StraightLegSpringSpaceKv", registry);
 
       bentJointSpacePositionGain = new YoDouble(sidePrefix + "BentLegJointSpaceKp", registry);
       bentJointSpaceVelocityGain = new YoDouble(sidePrefix + "BentLegJointSpaceKv", registry);
       bentActuatorSpacePositionGain = new YoDouble(sidePrefix + "BentLegActuatorSpaceKp", registry);
       bentActuatorSpaceVelocityGain = new YoDouble(sidePrefix + "BentLegActuatorSpaceKv", registry);
+      bentSpringSpacePositionGain = new YoDouble(sidePrefix + "BentLegSpringSpaceKp", registry);
+      bentSpringSpaceVelocityGain = new YoDouble(sidePrefix + "BentLegSpringSpaceKv", registry);
 
       kneePitchPrivilegedConfiguration = new YoDouble(sidePrefix + "KneePitchPrivilegedConfiguration", registry);
       privilegedMaxAcceleration = new YoDouble(sidePrefix + "LegPrivilegedMaxAcceleration", registry);
@@ -162,6 +176,10 @@ public class LegConfigurationControlModule
       actuatorSpacePAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpacePAction", registry);
       actuatorSpaceDAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpaceDAction", registry);
       actuatorSpaceAction = new YoDouble(sidePrefix + "KneePrivilegedActuatorSpaceAction", registry);
+
+      springSpacePAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpacePAction", registry);
+      springSpaceDAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpaceDAction", registry);
+      springSpaceAction = new YoDouble(sidePrefix + "KneePrivilegedSpringSpaceAction", registry);
 
       highPrivilegedWeight.set(legConfigurationParameters.getLegPrivilegedHighWeight());
       mediumPrivilegedWeight.set(legConfigurationParameters.getLegPrivilegedMediumWeight());
@@ -336,8 +354,9 @@ public class LegConfigurationControlModule
 
       double jointSpaceAction = computeJointSpaceAction(dampingActionScaleFactor);
       double actuatorSpaceAction = computeActuatorSpaceAction(dampingActionScaleFactor);
+      double springSpaceAction = computeSpringSpaceAction(dampingActionScaleFactor);
 
-      double desiredAcceleration = jointSpaceAction + actuatorSpaceAction;
+      double desiredAcceleration = jointSpaceAction + actuatorSpaceAction + springSpaceAction;
 
       return MathTools.clamp(desiredAcceleration, privilegedMaxAcceleration.getDoubleValue());
    }
@@ -388,6 +407,33 @@ public class LegConfigurationControlModule
       return acceleration;
    }
 
+   private double computeSpringSpaceAction(double dampingActionScaleFactor)
+   {
+      double currentPosition = kneePitchJoint.getQ();
+      double currentVelocity = kneePitchJoint.getQ();
+
+      double desiredVirtualLength = computeVirtualActuatorLength(kneePitchPrivilegedConfiguration.getDoubleValue());
+      double currentVirtualLength = computeVirtualActuatorLength(currentPosition);
+
+      double currentVirtualVelocity = computeVirtualActuatorVelocity(currentPosition, currentVelocity);
+
+      double virtualError = desiredVirtualLength - currentVirtualLength;
+
+      double springSpacePAction = Double.isNaN(springSpaceConfigurationGain) ? 0.0 : springSpaceConfigurationGain * virtualError;
+      double springSpaceDAction = Double.isNaN(springSpaceVelocityGain) ? 0.0 : -dampingActionScaleFactor * springSpaceVelocityGain * currentVirtualVelocity;
+
+      this.springSpacePAction.set(springSpacePAction);
+      this.springSpaceDAction.set(springSpaceDAction);
+
+      double springSpaceAcceleration = springSpacePAction + springSpaceDAction;
+
+      double acceleration = computeKneeAccelerationFromLegAcceleration(currentPosition, currentVelocity, springSpaceAcceleration);
+
+      this.springSpaceAction.set(acceleration);
+
+      return acceleration;
+   }
+
    private double computeVirtualActuatorLength(double kneePitchAngle)
    {
       double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
@@ -417,6 +463,17 @@ public class LegConfigurationControlModule
       double interiorAcceleration = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchAcceleration) : -kneePitchAcceleration;
 
       return TriangleTools.computeSideLengthAcceleration(thighLength, shinLength, actuatorLength, actuatorVelocity, interiorAngle, interiorVelocity, interiorAcceleration);
+   }
+
+   private double computeKneeAccelerationFromLegAcceleration(double kneePitchAngle, double kneePitchVelocity, double actuatorAcceleration)
+   {
+      double actuatorLength = computeVirtualActuatorLength(kneePitchAngle);
+      double actuatorVelocity = computeVirtualActuatorVelocity(kneePitchAngle, kneePitchVelocity, actuatorLength);
+
+      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
+      double interiorVelocity = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchVelocity) : -kneePitchVelocity;
+
+      return TriangleTools.computeInteriorAngleAcceleration(thighLength, shinLength, actuatorLength, actuatorVelocity, actuatorAcceleration, interiorAngle, interiorVelocity);
    }
 
    public void setKneeAngleState(LegConfigurationType controlType)
@@ -548,6 +605,8 @@ public class LegConfigurationControlModule
          jointSpaceVelocityGain = straightJointSpaceVelocityGain.getDoubleValue();
          actuatorSpaceConfigurationGain = straightActuatorSpacePositionGain.getDoubleValue();
          actuatorSpaceVelocityGain = straightActuatorSpaceVelocityGain.getDoubleValue();
+         springSpaceConfigurationGain = straightSpringSpacePositionGain.getDoubleValue();
+         springSpaceVelocityGain = straightSpringSpaceVelocityGain.getDoubleValue();
       }
 
       @Override
@@ -578,6 +637,8 @@ public class LegConfigurationControlModule
          jointSpaceVelocityGain = bentJointSpaceVelocityGain.getDoubleValue();
          actuatorSpaceConfigurationGain = bentActuatorSpacePositionGain.getDoubleValue();
          actuatorSpaceVelocityGain = bentActuatorSpaceVelocityGain.getDoubleValue();
+         springSpaceConfigurationGain = bentSpringSpacePositionGain.getDoubleValue();
+         springSpaceVelocityGain = bentSpringSpaceVelocityGain.getDoubleValue();
       }
 
       @Override
@@ -615,6 +676,8 @@ public class LegConfigurationControlModule
          jointSpaceVelocityGain = straightJointSpaceVelocityGain.getDoubleValue();
          actuatorSpaceConfigurationGain = straightActuatorSpacePositionGain.getDoubleValue();
          actuatorSpaceVelocityGain = straightActuatorSpaceVelocityGain.getDoubleValue();
+         springSpaceConfigurationGain = straightSpringSpacePositionGain.getDoubleValue();
+         springSpaceVelocityGain = straightSpringSpaceVelocityGain.getDoubleValue();
       }
 
       private double computeConstantCollapseFactor(double timeInState, double duration)
