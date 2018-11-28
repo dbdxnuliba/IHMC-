@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration;
+package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains;
 
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -21,12 +21,24 @@ public class YoLegConfigurationGains implements LegConfigurationGainsBasics
       springSpaceKp = new YoDouble(prefix + "_SpringSpaceKp", registry);
       springSpaceKd = new YoDouble(prefix + "_SpringSpaceKd", registry);
 
-      jointSpaceKp.set(Double.NaN);
-      jointSpaceKd.set(Double.NaN);
-      actuatorSpaceKp.set(Double.NaN);
-      actuatorSpaceKd.set(Double.NaN);
-      springSpaceKp.set(Double.NaN);
-      springSpaceKd.set(Double.NaN);
+      setJointSpaceKp(Double.NaN);
+      setJointSpaceKd(Double.NaN);
+      setActuatorSpaceKp(Double.NaN);
+      setActuatorSpaceKd(Double.NaN);
+      setSpringSpaceKp(Double.NaN);
+      setSpringSpaceKd(Double.NaN);
+   }
+
+   public YoLegConfigurationGains(String prefix, LegConfigurationGainsReadOnly gains, YoVariableRegistry registry)
+   {
+      jointSpaceKp = new YoDouble(prefix + "_JointSpaceKp", registry);
+      jointSpaceKd = new YoDouble(prefix + "_JointSpaceKd", registry);
+      actuatorSpaceKp = new YoDouble(prefix + "_ActuatorSpaceKp", registry);
+      actuatorSpaceKd = new YoDouble(prefix + "_ActuatorSpaceKd", registry);
+      springSpaceKp = new YoDouble(prefix + "_SpringSpaceKp", registry);
+      springSpaceKd = new YoDouble(prefix + "_SpringSpaceKd", registry);
+
+      set(gains);
    }
 
    @Override

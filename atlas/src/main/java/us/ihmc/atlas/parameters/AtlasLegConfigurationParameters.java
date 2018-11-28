@@ -1,7 +1,7 @@
 package us.ihmc.atlas.parameters;
 
 import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
-import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGains;
 
 public class AtlasLegConfigurationParameters extends LegConfigurationParameters
 {

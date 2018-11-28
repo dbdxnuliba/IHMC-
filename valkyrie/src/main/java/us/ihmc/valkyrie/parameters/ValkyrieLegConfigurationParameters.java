@@ -2,7 +2,7 @@ package us.ihmc.valkyrie.parameters;
 
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
-import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGains;
 
 public class ValkyrieLegConfigurationParameters extends LegConfigurationParameters
 {

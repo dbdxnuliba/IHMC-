@@ -9,7 +9,7 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.straightLegWalking.AvatarStraightLegWalkingTest;
 import us.ihmc.commonWalkingControlModules.configurations.*;
-import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGains;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;

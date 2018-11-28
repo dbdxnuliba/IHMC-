@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration;
+package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains;
 
 public interface LegConfigurationGainsReadOnly
 {
