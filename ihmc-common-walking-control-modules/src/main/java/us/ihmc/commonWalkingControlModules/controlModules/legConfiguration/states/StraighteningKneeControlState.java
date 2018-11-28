@@ -5,6 +5,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegCo
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGainsReadOnly;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.yoVariables.providers.DoubleProvider;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
 public class StraighteningKneeControlState implements LegControlState
@@ -30,9 +31,10 @@ public class StraighteningKneeControlState implements LegControlState
 
    private final DoubleProvider desiredStraightLegAngle;
 
-   public StraighteningKneeControlState(YoDouble straighteningAcceleration, LegConfigurationControlToolbox toolbox)
+   public StraighteningKneeControlState(String namePrefix, LegConfigurationControlToolbox toolbox, YoVariableRegistry registry)
    {
-      this.yoStraighteningAcceleration = straighteningAcceleration;
+      yoStraighteningAcceleration = new YoDouble(namePrefix + "SupportKneeStraighteningAcceleration", registry);
+      yoStraighteningAcceleration.set(toolbox.getParameters().getAccelerationForSupportKneeStraightening());
       this.toolbox = toolbox;
       this.kneePitchJoint = toolbox.getKneePitchJoint();
       this.desiredStraightLegAngle = toolbox.getDesiredStraightLegAngle();
