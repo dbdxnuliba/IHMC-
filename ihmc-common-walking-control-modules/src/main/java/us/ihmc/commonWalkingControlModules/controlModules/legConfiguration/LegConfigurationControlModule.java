@@ -89,14 +89,14 @@ public class LegConfigurationControlModule
       requestedState = YoEnum.create(namePrefix + "RequestedState", "", LegConfigurationType.class, registry, true);
       requestedState.set(null);
 
-
       stateMachine = setupStateMachine(namePrefix, legConfigurationParameters.attemptToStraightenLegs(), time);
       controller = new LegConfigurationController(sidePrefix, toolbox, controllerToolbox.getFullRobotModel(), registry);
 
       parentRegistry.addChild(registry);
    }
 
-   private StateMachine<LegConfigurationType, LegControlState> setupStateMachine(String namePrefix, boolean attemptToStraightenLegs, DoubleProvider timeProvider)
+   private StateMachine<LegConfigurationType, LegControlState> setupStateMachine(String namePrefix, boolean attemptToStraightenLegs,
+                                                                                 DoubleProvider timeProvider)
    {
       StateMachineFactory<LegConfigurationType, LegControlState> factory = new StateMachineFactory<>(LegConfigurationType.class);
       factory.setNamePrefix(namePrefix).setRegistry(registry).buildYoClock(timeProvider);
@@ -122,26 +122,9 @@ public class LegConfigurationControlModule
 
    public void doControl()
    {
-      double desiredStraightLegAngle;
-      if (toolbox.useBracingAngle())
-         desiredStraightLegAngle = desiredAngleWhenBracing.getDoubleValue();
-      else if (useFullyExtendedLeg.getBooleanValue())
-         desiredStraightLegAngle = desiredAngleWhenExtended.getDoubleValue();
-      else
-         desiredStraightLegAngle = desiredAngleWhenStraight.getDoubleValue();
-      toolbox.setDesiredStraightLegAngle(desiredStraightLegAngle);
+      toolbox.setDesiredStraightLegAngle(getDesiredStraightLegAngle());
 
       stateMachine.doActionAndTransition();
-
-
-      double kneePitchPrivilegedConfigurationWeight;
-      LegControlWeight legControlWeight = toolbox.getLegControlWeight().getEnumValue();
-      if (legControlWeight == LegControlWeight.LOW)
-         kneePitchPrivilegedConfigurationWeight = lowPrivilegedWeight.getDoubleValue();
-      else if (legControlWeight == LegControlWeight.MEDIUM)
-         kneePitchPrivilegedConfigurationWeight = mediumPrivilegedWeight.getDoubleValue();
-      else
-         kneePitchPrivilegedConfigurationWeight = highPrivilegedWeight.getDoubleValue();
 
       LegControlState currentState = stateMachine.getCurrentState();
 
@@ -156,6 +139,7 @@ public class LegConfigurationControlModule
       privilegedAccelerationCommand.setOneDoFJoint(kneePitchJointIndex, privilegedKneeAcceleration);
       privilegedAccelerationCommand.setOneDoFJoint(anklePitchJointIndex, privilegedAnklePitchAcceleration);
 
+      double kneePitchPrivilegedConfigurationWeight = getWeight();
       privilegedAccelerationCommand.setWeight(hipPitchJointIndex, kneePitchPrivilegedConfigurationWeight);
       privilegedAccelerationCommand.setWeight(kneePitchJointIndex, kneePitchPrivilegedConfigurationWeight);
       privilegedAccelerationCommand.setWeight(anklePitchJointIndex, kneePitchPrivilegedConfigurationWeight);
@@ -186,7 +170,6 @@ public class LegConfigurationControlModule
       toolbox.setLegControlWeight(legControlWeight);
    }
 
-
    public void setKneeAngleState(LegConfigurationType controlType)
    {
       requestedState.set(controlType);
@@ -200,5 +183,28 @@ public class LegConfigurationControlModule
    public InverseDynamicsCommand<?> getInverseDynamicsCommand()
    {
       return privilegedAccelerationCommand;
+   }
+
+   private double getDesiredStraightLegAngle()
+   {
+      if (toolbox.useBracingAngle())
+         return desiredAngleWhenBracing.getDoubleValue();
+      else if (useFullyExtendedLeg.getBooleanValue())
+         return desiredAngleWhenExtended.getDoubleValue();
+      else
+         return desiredAngleWhenStraight.getDoubleValue();
+   }
+
+   private double getWeight()
+   {
+      switch (toolbox.getLegControlWeight().getEnumValue())
+      {
+      case LOW:
+         return lowPrivilegedWeight.getDoubleValue();
+      case MEDIUM:
+         return mediumPrivilegedWeight.getDoubleValue();
+      default:
+         return highPrivilegedWeight.getDoubleValue();
+      }
    }
 }
