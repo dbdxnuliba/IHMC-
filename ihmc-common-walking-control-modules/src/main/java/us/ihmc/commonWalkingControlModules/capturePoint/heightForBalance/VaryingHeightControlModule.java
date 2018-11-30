@@ -329,7 +329,6 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       DenseMatrix64F notUsed = new DenseMatrix64F();
       notUsed.setNumRows(6);
       comVelocity3D = controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity();
-      getAnkleAngle();
       double z = com3D.getZ();
       double dz = comVelocity3D.getZ();
       yoCoMHeightVelocity.set(dz);
