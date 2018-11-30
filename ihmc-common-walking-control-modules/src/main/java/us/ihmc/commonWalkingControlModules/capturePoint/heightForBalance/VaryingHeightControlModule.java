@@ -257,7 +257,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             .getDefaultSwingTime();
       yoFracAPred.set(walkingControllerParameters.getHeightForBalanceParameters().getFractionOfMaxHeightAccelerationToConsiderInPrediction());
       yoCoPProjectedCoMMinDistance.set(walkingControllerParameters.getHeightForBalanceParameters().getMinimumCoPCoMProjectedICPeDistanceToControl());
-      yoMinICPError.set(0.04);
+      yoMinICPError.set(0.03);
 
       angleAndDistanceEvaluator = new VaryingHeightAngleAndDistanceEvaluator();
       primaryConditionEvaluator = new VaryingHeightPrimaryConditionEvaluator(yoZMin.getDoubleValue(), yoMinKneeAngle.getDoubleValue(), yoMaxKneeAngle.getDoubleValue());
@@ -330,7 +330,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       notUsed.setNumRows(6);
       comVelocity3D = controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity();
       getAnkleAngle();
-      double z = com3D.getZ()-ankleJoint.getJointAxis().getZ();
+      double z = com3D.getZ();
       double dz = comVelocity3D.getZ();
       yoCoMHeightVelocity.set(dz);
       FrameVector2D centerOfMassVelocity2D = new FrameVector2D();

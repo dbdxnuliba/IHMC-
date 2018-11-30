@@ -7,7 +7,7 @@ public class ValkyrieHeightForBalanceParameters extends HeightForBalanceParamete
    @Override
    public double getMaxHeightFirstPhaseOfSwing()
    {
-      return 1.06;
+      return 1.064;
    }
 
    @Override

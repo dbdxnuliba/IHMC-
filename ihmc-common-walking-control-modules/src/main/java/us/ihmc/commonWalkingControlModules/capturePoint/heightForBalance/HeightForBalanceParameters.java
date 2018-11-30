@@ -23,17 +23,17 @@ public abstract class HeightForBalanceParameters
 
    public double getMaxHeightAccelerationForAngleCase()
    {
-      return 5.0;
+      return 2.4;
    }
 
    public double getMinHeightAccelerationForAngleCase()
    {
-      return -5.0;
+      return -2.4;
    }
 
    public double getFractionOfMaxHeightAccelerationToConsiderInPrediction()
    {
-      return 0.3;
+      return 0.9;
    }
 
    public double getMaxHeightAccelerationForDistanceCase()
@@ -48,7 +48,7 @@ public abstract class HeightForBalanceParameters
 
    public double getMaximumJerk()
    {
-      return 200.0;
+      return 80.0;
    }
 
    public double getAnglePositiveAlignmentThresholdFromStart()
