@@ -61,7 +61,6 @@ public class KinematicsBasedFootSwitch implements FootSwitchInterface
       hitGround = new YoBoolean(footName + "hitGround", registry);
       fixedOnGround = new YoBoolean(footName + "fixedOnGround", registry);
       soleZ = new YoDouble(footName + "soleZ", registry);
-      ankleZ = new YoDouble(footName + "ankleZ", registry);
       this.switchZThreshold = switchZThreshold;
 
       yoResolvedCoP = new YoFramePoint2D(footName + "ResolvedCoP", "", foot.getSoleFrame(), registry);
