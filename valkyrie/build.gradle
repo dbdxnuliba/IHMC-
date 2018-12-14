@@ -13,12 +13,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "SLOW", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-   maximumSuiteDuration = 15.0
-}
-
 mainDependencies {
    compile group: "com.martiansoftware", name: "jsap", version: "2.1"
    compile group: "org.yaml", name: "snakeyaml", version: "1.17" //1.11

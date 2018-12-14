@@ -12,11 +12,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-}
-
 mainDependencies {
    compile group: "com.martiansoftware", name: "jsap", version: "2.1"
    compile group: "net.wimpi", name: "jamod", version: "1.2"

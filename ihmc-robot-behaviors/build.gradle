@@ -11,11 +11,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-}
-
 mainDependencies {
    compile group: "com.ibm.watson.developer_cloud", name: "java-sdk", version: "2.10.0"
    compile group: "us.ihmc.thirdparty.org.kc7bfi", name: "jflac", version: "1.4.0"

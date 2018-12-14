@@ -11,11 +11,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-}
-
 mainDependencies {
    compile group: "us.ihmc", name: "euclid-core", version: "0.7.0"
    compile group: "us.ihmc", name: "ihmc-yovariables", version: "0.3.6"

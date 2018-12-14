@@ -11,11 +11,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-}
-
 mainDependencies {
    compile group: "org.apache.commons", name: "commons-lang3", version: "3.8.1"
    compile group: "javax.vecmath", name: "vecmath", version: "1.5.2"

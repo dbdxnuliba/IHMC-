@@ -11,12 +11,6 @@ ihmc {
    configurePublications()
 }
 
-testSuites {
-   def prefix = "LIBS-IHMCOPENROBOTICSSOFTWARE"
-   bambooPlanKeys = [prefix + "FAST", prefix + "SLOW", prefix + "INDEVELOPMENT", prefix + "UI", prefix + "VIDEO"]
-   maximumSuiteDuration = 15.0
-}
-
 mainDependencies {
    compile "org.ejml:core:0.30"
    compile "org.ejml:dense64:0.30"
