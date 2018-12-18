@@ -137,7 +137,7 @@ public abstract class AvatarHeightForBalanceTestSetup
                                                                            new String[]{"desiredMomentumRateLinearX","desiredMomentumRateLinearY","desiredMomentumRateLinearZ",
                                                                                  "achievedMomentumRateLinearX","achievedMomentumRateLinearY","achievedMomentumRateLinearZ",
                                                                                  "achievedMomentumRateAngularX","achievedMomentumRateAngularY","achievedMomentumRateAngularZ",
-                                                                                 "LinearMomentumX","LinearMomentumY","LinearMomentumZ",
+                                                                                 "exactCenterOfMassVelocityX","exactCenterOfMassVelocityY","exactCenterOfMassVelocityZ",
                                                                                  "AngularMomentumX","AngularMomentumY","AngularMomentumZ",
                                                                                  "q_leftHipPitch","qd_leftHipPitch","tau_leftHipPitch",
                                                                                  "q_rightHipPitch","qd_rightHipPitch","tau_rightHipPitch",
@@ -193,7 +193,7 @@ public abstract class AvatarHeightForBalanceTestSetup
       if (simulate)
       {
          double duration = size * (footsteps.getDefaultSwingDuration() + footsteps.getDefaultTransferDuration());
-         assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(duration + 3.0));
+         assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(duration + 5.0));
       }
 
 

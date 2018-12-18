@@ -326,10 +326,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       // Some variables
       comVelocity3D = new FrameVector3D();
-      DenseMatrix64F notUsed = new DenseMatrix64F();
-      notUsed.setNumRows(6);
       comVelocity3D = controllerToolbox.getCenterOfMassJacobian().getCenterOfMassVelocity();
-      getAnkleAngle();
       double z = com3D.getZ();
       double dz = comVelocity3D.getZ();
       yoCoMHeightVelocity.set(dz);
@@ -478,12 +475,16 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             desiredHeightAcceleration = aCtrl;
          }
 
+         /**
+          * Prevents from height variation when swing leg 'waits' for example
+          */
          if(isInDoubleSupport&&(yoTimeInState.getDoubleValue()>walkingControllerParameters.getDefaultTransferTime())&&!nonDynamicCase || primaryCondition ==VaryingHeightPrimaryConditionEnum.DEFAULT)
          {
             primaryCondition = VaryingHeightPrimaryConditionEnum.DEFAULT;
             desiredHeightAcceleration=linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
          }
 
+         /*
          if(primaryCondition == VaryingHeightPrimaryConditionEnum.ALIGNED_POS || primaryCondition == VaryingHeightPrimaryConditionEnum.ALIGNED_NEG)
          {
             double alphaAngle = 1.0;
@@ -505,7 +506,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             yoAlphaDistance.set(alphaDistance);
             desiredHeightAcceleration = alphaAngle*alphaDistance*desiredHeightAcceleration;
          }
-
+         */
          /**
           * Acceleration and jerk checks, respectively
           */

@@ -36,7 +36,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private double percentWeight;
    private double delayFractionOfSwing = 0.0;
    private boolean unreasonableFailure;
-   private String fileNamePrefix = "angleAndPercentWeight18TilesCoPStanding";
+   private String fileNamePrefix = "angleAndPercentWeight36TilesStanding24";
    private String fileName = fileNamePrefix;
    protected boolean useNormalRobot = false;
    protected boolean standingPush = true;
@@ -53,14 +53,14 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       sb.append("PercentWeight");
       sb.append('\n');
 
-      int numberOfDirections = 36;
+      int numberOfDirections = 18;
       double increment;
       int incrementCount;
       double startTime =  System.currentTimeMillis();
 
       for (int i = 0; i < numberOfDirections; i++)
       {
-         angle = i * (180 / numberOfDirections) * Math.PI / 180;
+         angle = i * (180/ numberOfDirections) * Math.PI / 180;
          if (Math.cos(angle) > 0.85)
             percentWeight = 0.4;
          else if (Math.cos(angle) < -0.85)
@@ -69,9 +69,9 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
             percentWeight = 0.2;
          if (standingPush)
          {
-            percentWeight = 0.5;
+            percentWeight = 0.05;
          }
-         increment = 0.16;
+         increment = 0.08;
          incrementCount = 0;
          double percentWeightFail = 0.0;
          for (int k = 0; k < 1000; k++)
@@ -98,7 +98,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
             {
                percentWeight = percentWeight - increment;
             }
-            else if (!succes && incrementCount > 3)
+            else if (!succes && incrementCount > 2)
             {
                percentWeight = percentWeight - increment;
                sb.append(angle);
@@ -132,6 +132,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if(recursiveIter==1)
       {
          fileName = fileNamePrefix + "02";
@@ -214,7 +215,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter+=1;
          testIterativePush();
       }
-
+      */
       /*
       else if (recursiveIter == 1)
       {
@@ -417,7 +418,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       // push parameters:
       Vector3D forceDirection = new Vector3D(Math.cos(angle), Math.sin(angle), 0.0);
       double magnitude = percentWeight * totalMass1 * 9.81;
-      double duration = 0.05 * swingTime;
+      double duration = 0.15;
       pushRobotController1.applyForce(forceDirection, magnitude, duration);
       List<FootstepDataMessage> footstepList = footsteps.getFootstepDataList();
       int size = footstepList.size();

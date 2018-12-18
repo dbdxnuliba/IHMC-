@@ -11,6 +11,7 @@ import us.ihmc.atlas.parameters.*;
 import us.ihmc.atlas.straightLegWalking.AtlasStraightLegWalkingTest.*;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.HeightForBalanceParameters;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
@@ -35,7 +36,7 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.57
-      percentWeight = 0.60;
+      percentWeight = 0.206;
       super.testPushStanding();
    }
 
@@ -103,7 +104,7 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
       if(useNormalRobotModel)
          return atlasRobotModelNormal;
       else
-         return atlasRobotModel;
+         return new HeightForBalanceModel();
    }
 
    @Override
@@ -116,6 +117,34 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    public String getSimpleRobotName()
    {
       return "Atlas";
+   }
+
+   private class HeightForBalanceModel extends AtlasRobotModel
+   {
+      public HeightForBalanceModel() { super(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);}
+
+      @Override
+      public WalkingControllerParameters getWalkingControllerParameters()
+      {
+         return new HeightForBalanceWalkingControllerParameters(getJointMap(),getContactPointParameters());
+      }
+   }
+
+   private class HeightForBalanceWalkingControllerParameters extends AtlasWalkingControllerParameters
+   {
+      private final AtlasJointMap jointMap;
+      private final AtlasContactPointParameters contactPointParameters;
+      public HeightForBalanceWalkingControllerParameters(AtlasJointMap jointmap, AtlasContactPointParameters contactPointParameters)
+      {
+         super(RobotTarget.SCS,jointmap,contactPointParameters);
+         this.jointMap=jointmap;
+         this.contactPointParameters=contactPointParameters;
+      }
+      @Override
+      public boolean useHeightForBalanceController()
+      {
+         return  true;
+      }
    }
 
    private class MyAtlasRobotModel extends AtlasRobotModel

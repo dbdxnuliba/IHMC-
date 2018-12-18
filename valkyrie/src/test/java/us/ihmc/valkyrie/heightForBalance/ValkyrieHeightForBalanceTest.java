@@ -18,7 +18,7 @@ import us.ihmc.valkyrie.parameters.*;
 public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
 {
    // Which robot model to use. Default uses the VaryingHeight/HeightForBalance controller
-   private final boolean useNormalRobot = true;
+   private final boolean useNormalRobot = false;
    private final boolean useQPbasedModel = false;
    private ValkyrieRobotModel valkyrieRobotModel = new ValkyrieRobotModel(RobotTarget.SCS,false);
    private HeightForBalanceModel heightForBalanceModel = new HeightForBalanceModel();
@@ -30,7 +30,7 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.88
-      percentWeight = 0.90;
+      percentWeight =0.201;//0.201;//0.184;
       super.testPushStanding();
    }
 
@@ -40,7 +40,7 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushAngle() throws Exception
    {
       angle = 3.14159265358979;
-      percentWeight = 1.44;
+      percentWeight = 1.28;
       super.testPushAngle();
    }
 
@@ -60,7 +60,7 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushBackInSwing() throws Exception
    {
       // No-height max recoverable percentWeight: 0.85
-      percentWeight = 0.90;
+      percentWeight = 0.70;
       super.testPushBackInSwing();
    }
 
@@ -70,7 +70,7 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushRightInSwing() throws Exception
    {
       // No-height max recoverable percentWeight: 0.62
-      percentWeight = 0.62;                            // Needs improvement: DISTANCE case
+      percentWeight = 0.62;
       super.testPushRightInSwing();
    }
 

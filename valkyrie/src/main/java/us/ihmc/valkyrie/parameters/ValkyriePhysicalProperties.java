@@ -7,7 +7,7 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 
 public class ValkyriePhysicalProperties
 {
-   public static final double footsizeReduction = 0.01;
+   public static final double footsizeReduction = 0.03;
 
    public static final double ankleHeight = 0.09; // Should be 0.075 + 0.015 (sole thickness)
    public static final double footLength = 0.25 - footsizeReduction;

@@ -321,7 +321,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
       if(useBangBangAngularMomentum && MathTools.epsilonEquals(desiredCMP.getX(),0.15,0.06))
       {
          bangTime+=0.002;
-         double inertia = 0.005;
+         double inertia = 0.05;
          double thetamax=0.33*Math.PI;
          double rCMPmax =0.05;
          double tRM = Math.sqrt(inertia*thetamax/rCMPmax)/3.3;
@@ -365,6 +365,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
       if (linearMomentumRateOfChange.containsNaN())
          throw new RuntimeException("linearMomentumRateOfChange = " + linearMomentumRateOfChange);
 
+      linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
       controlledCoMAcceleration.set(linearMomentumRateOfChange);
       controlledCoMAcceleration.scale(1.0 / totalMass);
 

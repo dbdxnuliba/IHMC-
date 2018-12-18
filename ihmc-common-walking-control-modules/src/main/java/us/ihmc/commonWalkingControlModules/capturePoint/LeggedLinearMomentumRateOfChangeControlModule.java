@@ -192,7 +192,7 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
                yoPreviousVertexICPd.set(lowerFootEdgeICPd);
                double xForVec = capturePoint.getX()-previousVertex.getX();
                yoXForVec.set(xForVec);
-               double yPreviousCoPToVec = xForVec*lowerFootEdgeICPd.getY()/lowerFootEdgeICPd.getX()+previousVertex.getY()+0.02+0.03*icpError2d.getY()/icpError2d.getX(); //
+               double yPreviousCoPToVec = xForVec*lowerFootEdgeICPd.getY()/lowerFootEdgeICPd.getX()+previousVertex.getY()+0.0+0.03*icpError2d.getY()/icpError2d.getX(); //
                yoYCoordinateOnVec.set(yPreviousCoPToVec);
 
 
