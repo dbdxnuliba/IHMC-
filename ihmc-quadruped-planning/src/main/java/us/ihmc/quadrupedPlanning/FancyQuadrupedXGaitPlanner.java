@@ -15,6 +15,7 @@ import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
 import us.ihmc.quadrupedPlanning.stepStream.QuadrupedPlanarFootstepPlan;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.*;
+import us.ihmc.robotics.time.TimeInterval;
 
 public class FancyQuadrupedXGaitPlanner
 {
@@ -87,8 +88,7 @@ public class FancyQuadrupedXGaitPlanner
             double endTimeShift = xGaitSettings.getEndDoubleSupportDuration() + xGaitSettings.getStepDuration();
             endTimeShift *= Math.max(Math.min(endPhaseShift, 180.0), 0.0) / 180.0;
             thisStepStartTime = lastStepStartTime + endTimeShift;
-            thisStepEndTime = optimizeStepTime(thisStepStartTime);
-//            thisStepEndTime = thisStepStartTime + xGaitSettings.getStepDuration();
+            thisStepEndTime = thisStepStartTime + optimizeStepDuration(thisStepStartTime, xGaitSettings.getStepDuration());
          }
          step.getTimeInterval().setStartTime(thisStepStartTime);
          step.getTimeInterval().setEndTime(thisStepEndTime);
@@ -160,9 +160,15 @@ public class FancyQuadrupedXGaitPlanner
       // compute step goal positions and ground clearances
       for (int i = 0; i < plannedSteps.size(); i++)
       {
+         // optimize the step time
+         TimeInterval timeInterval = plannedSteps.get(i).getTimeInterval();
+         double initialTIme = timeInterval.getStartTime();
+         double nominalDuration = timeInterval.getDuration();
+         double endTime = initialTIme + optimizeStepDuration(initialTIme, nominalDuration);
+         timeInterval.setEndTime(endTime);
+
          // compute xGait rectangle pose at end of step
-         double time = plannedSteps.get(i).getTimeInterval().getEndTime();
-         extrapolatePose(xGaitRectanglePose, time);
+         extrapolatePose(xGaitRectanglePose, endTime);
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
          plannedSteps.get(i).setStepYaw(xGaitRectanglePose.getYaw());
 
@@ -210,26 +216,26 @@ public class FancyQuadrupedXGaitPlanner
    private final FramePose3D initialPose = new FramePose3D();
    private final FramePose3D finalPose = new FramePose3D();
 
-   private double optimizeStepTime(double initialTime)
+   private double optimizeStepDuration(double initialTime, double nominalDuration)
    {
       double bestStepCost = Double.POSITIVE_INFINITY;
       extrapolatePose(initialPose, initialTime);
 
-      double finalTime = initialTime + minStepTime;
+      double duration = minStepTime;
 
-      while (finalTime < initialTime + maxStepTime)
+      while (duration < maxStepTime)
       {
-         extrapolatePose(finalPose, finalTime);
+         extrapolatePose(finalPose, initialTime + duration);
 
          double translationCost = computeTranslationCost(initialPose, finalPose);
          double yawCost = computeYawCost(initialPose, finalPose);
-         double timeCost = computeTimeCost(finalTime, initialTime);
+         double timeCost = computeTimeCost(nominalDuration, duration);
          double stepCost = translationCost + yawCost + timeCost;
 
          if (stepCost < bestStepCost)
          {
             bestStepCost = stepCost;
-            finalTime += timeResolution;
+            duration += timeResolution;
          }
          else
          {
@@ -238,11 +244,12 @@ public class FancyQuadrupedXGaitPlanner
 
       }
 
+      return duration;
    }
 
    private double computeTranslationCost(FramePose3DReadOnly initialPose, FramePose3DReadOnly finalPose)
    {
-      double stepLength = initialPose.getPositionDistance(finalPose):
+      double stepLength = initialPose.getPositionDistance(finalPose);
       double deviationFromNominal = stepLength - nominalLength;
       return stepLengthWeight * MathTools.square(deviationFromNominal);
    }
@@ -253,10 +260,9 @@ public class FancyQuadrupedXGaitPlanner
       return stepYawWeight * MathTools.square(rotationDistance);
    }
 
-   private double computeTimeCost(double finalTime, double initialTime)
+   private double computeTimeCost(double nominalDuration, double currentDuration)
    {
-      double duration = finalTime - initialTime;
-      double deviationFromNominal = duration - xGaitSettings.getStepDuration();
+      double deviationFromNominal = currentDuration - nominalDuration;
       return stepTimeWeight * MathTools.square(deviationFromNominal);
    }
 
@@ -268,7 +274,7 @@ public class FancyQuadrupedXGaitPlanner
       finalPose.setOrientationYawPitchRoll(bodyPathPose.getYaw(), finalPose.getPitch(), finalPose.getRoll());
    }
 
-   private void computeStepTimeInterval(QuadrupedTimedStep thisStep, QuadrupedTimedStep pastStepOnSameEnd, QuadrupedTimedStep pastStepOnOppositeEnd,
+   private static void computeStepTimeInterval(QuadrupedTimedStep thisStep, QuadrupedTimedStep pastStepOnSameEnd, QuadrupedTimedStep pastStepOnOppositeEnd,
                                         QuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
       RobotEnd thisStepEnd = thisStep.getRobotQuadrant().getEnd();
