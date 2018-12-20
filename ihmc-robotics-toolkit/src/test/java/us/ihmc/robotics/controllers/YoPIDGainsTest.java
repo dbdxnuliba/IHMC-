@@ -5,19 +5,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.controllers.pidGains.implementations.YoPIDGains;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class YoPIDGainsTest
 {
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test()
    {
       YoPIDGains pidGains = new YoPIDGains("test", new YoVariableRegistry("PIDGainsRegistry"));
@@ -58,8 +55,7 @@ public class YoPIDGainsTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testParameters_2()
    {
       YoPIDGains pidGains = new YoPIDGains("test", new YoVariableRegistry("PIDGainsRegistry"));
@@ -99,8 +95,7 @@ public class YoPIDGainsTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testParameters_3()
    {
       YoPIDGains pidGains = new YoPIDGains("test", new YoVariableRegistry("PIDGainsRegistry"));
@@ -138,8 +133,7 @@ public class YoPIDGainsTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testClippingLeakRate()
    {
       YoPIDGains pidGains = new YoPIDGains("test", new YoVariableRegistry("PIDGainsRegistry"));

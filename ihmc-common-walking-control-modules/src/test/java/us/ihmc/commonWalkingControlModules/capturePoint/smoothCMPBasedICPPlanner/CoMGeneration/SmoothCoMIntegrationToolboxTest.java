@@ -8,15 +8,14 @@ import java.util.Random;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.DenseMatrixVector3D;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.ICPGeneration.SmoothCapturePointToolbox;
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -31,7 +30,6 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class SmoothCoMIntegrationToolboxTest
 {
    private static final int nTests = 20;
@@ -45,14 +43,13 @@ public class SmoothCoMIntegrationToolboxTest
    private final SmoothCapturePointToolbox icpToolbox = new SmoothCapturePointToolbox();
    private final SmoothCoMIntegrationToolbox comToolbox = new SmoothCoMIntegrationToolbox();
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testMatricesCoMPrime3DLinear()
    {
       // Linear polynomial: y(x) = a0 + a1*x
@@ -122,8 +119,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testDMatricesCoMPrime3DLinear()
    {
       // Linear polynomial: y(x) = a0 + a1*x
@@ -196,8 +192,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCalculateCoMPositionAndVelocityOnSegment3DLinear()
    {
       // Linear polynomial: y(x) = a0 + a1*x
@@ -283,8 +278,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCalculateCoMQuantity3DWithDenseMatrixVector3D() throws Exception
    {
       Random random = new Random(2432);
@@ -346,8 +340,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCalculateGeneralizedAlphaBetaCoMPrimeOnCMPSegment3D() throws Exception
    {
       Random random = new Random(545645);
@@ -467,8 +460,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testComputeDesiredCenterOfMassPositionVelocityAcceleration() throws Exception
    {
       Random random = new Random(453453);
@@ -505,8 +497,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testPower() throws Exception
    {
       Random random = new Random(34549037);
@@ -522,8 +513,7 @@ public class SmoothCoMIntegrationToolboxTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testBugWithDataset()
    {
       double omega0 = 3.0;

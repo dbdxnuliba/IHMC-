@@ -5,12 +5,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import controller_msgs.msg.dds.HeadTrajectoryMessage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.avatar.DRCObstacleCourseStartingLocation;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCBehaviorTestHelper;
@@ -18,7 +18,8 @@ import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -39,13 +40,13 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
 {
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())
@@ -63,7 +64,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @AfterClass
+   @AfterAll
    public static void printMemoryUsageAfterClass()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(DRCHeadTrajectoryBehaviorTest.class + " after class.");
@@ -78,7 +79,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
 
    private DRCBehaviorTestHelper drcBehaviorTestHelper;
 
-   @Before
+   @BeforeEach
    public void setUp()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -90,8 +91,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
 
    //TODO: Fix HeadOrienationManager() so that head actually tracks desired yaw and roll orientations.  Currently, only pitch orientation tracks properly.
 
-   @ContinuousIntegrationTest(estimatedDuration = 73.6)
-   @Test(timeout = 370000)
+   @Test// timeout = 370000
    public void testHeadPitch() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -105,8 +105,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 37.6)
-   @Test(timeout = 950000)
+   @Test// timeout = 950000
    public void testHeadRoll() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -120,8 +119,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 37.6)
-   @Test(timeout = 950000)
+   @Test// timeout = 950000
    public void testHeadYaw() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -135,8 +133,7 @@ public abstract class DRCHeadTrajectoryBehaviorTest implements MultiRobotTestInt
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 37.6)
-   @Test(timeout = 950000)
+   @Test// timeout = 950000
    public void testRandomOrientation() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());

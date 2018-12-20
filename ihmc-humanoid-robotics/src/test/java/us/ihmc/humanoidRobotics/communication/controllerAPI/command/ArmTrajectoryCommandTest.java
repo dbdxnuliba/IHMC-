@@ -7,14 +7,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.ArmTrajectoryMessage;
 import controller_msgs.msg.dds.TrajectoryPoint1DMessage;
 import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.communication.controllerAPI.command.QueueableCommand;
 import us.ihmc.communication.packets.Packet;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.humanoidRobotics.communication.packets.RandomHumanoidMessages;
 import us.ihmc.robotics.math.trajectories.waypoints.SimpleTrajectoryPoint1D;
@@ -23,8 +24,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 public class ArmTrajectoryCommandTest
 {
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000, expected = IndexOutOfBoundsException.class)
+   @Test// timeout = 30000, expected = IndexOutOfBoundsException.class
    public void testClear()
    {
       ArmTrajectoryCommand armTrajectoryCommand = new ArmTrajectoryCommand();
@@ -40,8 +40,7 @@ public class ArmTrajectoryCommandTest
       armTrajectoryCommand.getJointspaceTrajectory().getJointTrajectoryPoint(0, 0);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testIsCommandValid()
    {
       ArmTrajectoryCommand armTrajectoryCommand = new ArmTrajectoryCommand(new Random());
@@ -50,15 +49,13 @@ public class ArmTrajectoryCommandTest
       assertFalse(armTrajectoryCommand.isCommandValid());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testArmTrajectoryCommand()
    {
       new ArmTrajectoryCommand();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testClearRobotSide()
    {
       ArmTrajectoryCommand armTrajectoryCommand = new ArmTrajectoryCommand();
@@ -75,8 +72,7 @@ public class ArmTrajectoryCommandTest
       assertEquals(0, armTrajectoryCommand.getJointspaceTrajectory().getTrajectoryPointLists().size());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSetRobotSide()
    {
       ArmTrajectoryCommand armTrajectoryCommand = new ArmTrajectoryCommand();
@@ -85,8 +81,7 @@ public class ArmTrajectoryCommandTest
       assertEquals(RobotSide.LEFT, armTrajectoryCommand.getRobotSide());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSetArmTrajectoryMessage()
    {
       Random random = new Random();
@@ -116,8 +111,7 @@ public class ArmTrajectoryCommandTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSetArmTrajectoryCommand()
    {
       ArmTrajectoryCommand armTrajectoryCommand = new ArmTrajectoryCommand(new Random());
@@ -157,8 +151,7 @@ public class ArmTrajectoryCommandTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testGetMessageClass()
    {
       ArmTrajectoryCommand otherArmTrajectoryCommand = new ArmTrajectoryCommand();

@@ -7,19 +7,19 @@ import static us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI.
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import us.ihmc.commons.Conversions;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
-import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
 import us.ihmc.footstepPlanning.tools.FootstepPlannerDataExporter;
@@ -66,7 +66,7 @@ public abstract class FootstepPlannerDataSetTest
 
    protected abstract FootstepPlannerType getPlannerType();
 
-   @Before
+   @BeforeEach
    public void setup()
    {
       VISUALIZE = VISUALIZE && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
@@ -102,7 +102,7 @@ public abstract class FootstepPlannerDataSetTest
       uiPlanningResultReference = messager.createInput(PlanningResultTopic);
    }
 
-   @After
+   @AfterEach
    public void tearDown() throws Exception
    {
       module.stop();
@@ -138,8 +138,7 @@ public abstract class FootstepPlannerDataSetTest
       actualResult.set(null);
    }
 
-   @Test(timeout = 500000)
-   @ContinuousIntegrationTest(estimatedDuration = 13.0)
+   @Test// timeout = 500000
    public void testDatasetsWithoutOcclusion()
    {
       List<FootstepPlannerUnitTestDataset> allDatasets = FootstepPlannerIOTools
@@ -147,8 +146,8 @@ public abstract class FootstepPlannerDataSetTest
       runAssertionsOnAllDatasets(this::runAssertions, allDatasets);
    }
 
-   @Test(timeout = 500000)
-   @ContinuousIntegrationTest(estimatedDuration = 13.0, categoriesOverride = IntegrationCategory.IN_DEVELOPMENT)
+   @Test// timeout = 500000
+   @Disabled
    public void testDatasetsWithoutOcclusionInDevelopment()
    {
       List<FootstepPlannerUnitTestDataset> allDatasets = FootstepPlannerIOTools

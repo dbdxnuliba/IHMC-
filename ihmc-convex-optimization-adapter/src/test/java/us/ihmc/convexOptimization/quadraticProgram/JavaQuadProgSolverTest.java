@@ -3,12 +3,11 @@ package us.ihmc.convexOptimization.quadraticProgram;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import us.ihmc.commons.PrintTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.commons.MathTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.robotics.testing.JUnitTools;
@@ -17,7 +16,6 @@ import us.ihmc.tools.exceptions.NoConvergenceException;
 
 import static org.junit.Assert.assertEquals;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
 {
    private static final double epsilon = 1e-4;
@@ -30,8 +28,7 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
       return solver;
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testTimingAgainstStandardQuadProg() throws NoConvergenceException
    {
       YoVariableRegistry registry = new YoVariableRegistry("test");
@@ -93,8 +90,7 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
       PrintTools.info("Java solve time : " + javaSolverTimer.getAverageTime());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testTimingAgainstSimpleSolver()
    {
       YoVariableRegistry registry = new YoVariableRegistry("test");
@@ -157,8 +153,7 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
       PrintTools.info("Simple solve time : " + simpleTimer.getAverageTime());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testAgainstStandardQuadProg() throws NoConvergenceException
    {
       int numberOfInequalityConstraints = 1;
@@ -229,8 +224,7 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSolveProblemWithParallelConstraints() throws NoConvergenceException
    {
       // our simple active set solver can not solve this:
@@ -274,55 +268,48 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
    }
 
    @Override /** have to override because quad prog uses fewer iterations */
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSolutionMethodsAreAllConsistent() throws NoConvergenceException
    {
       testSolutionMethodsAreAllConsistent(1);
    }
 
    @Override /** have to override because quad prog uses fewer iterations */
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSimpleCasesWithInequalityConstraints()
    {
       testSimpleCasesWithInequalityConstraints(0);
    }
 
    @Override /** have to override because quad prog uses fewer iterations */
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSimpleCasesWithBoundsConstraints()
    {
       testSimpleCasesWithBoundsConstraints(0, 1, 2, 6, true);
    }
 
    @Override /** have to override because quad prog uses different iterations */
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testClear()
    {
       testClear(6, 1, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testMaxIterations()
    {
       testMaxIterations(6, false);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test2DCasesWithPolygonConstraints()
    {
       test2DCasesWithPolygonConstraints(2, 1);
    }
 
 
-   @Ignore
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Disabled
+   @Test// timeout = 30000
    public void testChallengingCasesWithPolygonConstraints()
    {
       testChallengingCasesWithPolygonConstraints(1, 5);
@@ -330,8 +317,7 @@ public class JavaQuadProgSolverTest extends AbstractSimpleActiveSetQPSolverTest
 
 
    @Override /** This IS a good solver **/
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testChallengingCasesWithPolygonConstraintsCheckFailsWithSimpleSolver()
    {
       SimpleActiveSetQPSolverInterface solver = createSolverToTest();

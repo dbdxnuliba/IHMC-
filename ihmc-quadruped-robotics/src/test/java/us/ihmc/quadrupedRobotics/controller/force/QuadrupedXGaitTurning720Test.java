@@ -2,11 +2,12 @@ package us.ihmc.quadrupedRobotics.controller.force;
 
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.quadrupedPlanning.input.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.QuadrupedForceTestYoVariables;
 import us.ihmc.quadrupedRobotics.QuadrupedMultiRobotTestInterface;
@@ -28,7 +29,7 @@ public abstract class QuadrupedXGaitTurning720Test implements QuadrupedMultiRobo
    private QuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
 
-   @Before
+   @BeforeEach
    public void setup()
    {
       try
@@ -49,7 +50,7 @@ public abstract class QuadrupedXGaitTurning720Test implements QuadrupedMultiRobo
       }
    }
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       quadrupedTestFactory.close();
@@ -61,8 +62,7 @@ public abstract class QuadrupedXGaitTurning720Test implements QuadrupedMultiRobo
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 370.6)
-   @Test(timeout = 1900000)
+   @Test// timeout = 1900000
    public void rotate720InPlaceRight() throws SimulationExceededMaximumTimeException, ControllerFailureException, IOException
    {
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
@@ -93,8 +93,7 @@ public abstract class QuadrupedXGaitTurning720Test implements QuadrupedMultiRobo
       conductor.concludeTesting();
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 370.6)
-   @Test(timeout = 1900000)
+   @Test// timeout = 1900000
    public void rotate720InPlaceLeft() throws SimulationExceededMaximumTimeException, ControllerFailureException, IOException
    {
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);

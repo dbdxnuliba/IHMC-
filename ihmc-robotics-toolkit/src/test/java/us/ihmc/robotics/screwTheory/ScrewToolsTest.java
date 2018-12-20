@@ -13,12 +13,13 @@ import java.util.Random;
 import java.util.Set;
 
 import org.ejml.data.DenseMatrix64F;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
@@ -59,7 +60,7 @@ public class ScrewToolsTest
    protected ReferenceFrame theFrame = ReferenceFrame.constructARootFrame("theFrame");
    protected ReferenceFrame aFrame = ReferenceFrame.constructARootFrame("aFrame");
 
-   @Before
+   @BeforeEach
    public void setUp()
    {
       elevator = new RigidBody("elevator", ReferenceFrame.getWorldFrame());
@@ -141,8 +142,7 @@ public class ScrewToolsTest
       return excludedJoints;
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddRevoluteJoint_String_RigidBody_Vector3d_Vector3d()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -171,8 +171,7 @@ public class ScrewToolsTest
       assertTrue(jointAxis.equals(joint.getJointAxis()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddRevoluteJoint_String_RigidBody_Transform3D_Vector3d()
    {
       String jointName = "joint";
@@ -187,8 +186,7 @@ public class ScrewToolsTest
       assertTrue(jointAxis.equals(joint.getJointAxis()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddPrismaticJoint_String_RigidBody_Vector3d_Vector3d()
    {
       String jointName = "joint";
@@ -202,8 +200,7 @@ public class ScrewToolsTest
       assertTrue(parentBody.equals(joint.getPredecessor()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddPrismaticJoint_String_RigidBody_Transform3D_Vector3d()
    {
       String jointName = "joint";
@@ -217,8 +214,7 @@ public class ScrewToolsTest
       assertTrue(parentBody.equals(joint.getPredecessor()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddRigidBody_String_InverseDynamicsJoint_Matrix3d_double_Vector3d()
    {
       String name = "body";
@@ -233,8 +229,7 @@ public class ScrewToolsTest
       assertTrue(parentJoint.equals(body.getParentJoint()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddRigidBody_String_InverseDynamicsJoint_Matrix3d_double_Transform3D()
    {
       String name = "body";
@@ -250,8 +245,7 @@ public class ScrewToolsTest
       assertTrue(parentJoint.equals(body.getParentJoint()));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeSuccessors()
    {  
       int numJoints = 3;
@@ -272,8 +266,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeSupportAndSubtreeSuccessors_RigidBody()
    {
       int numberOfBodiesOnChain = 6;
@@ -285,8 +278,7 @@ public class ScrewToolsTest
       assertEquals(numberOfBodies - 1, successors.length);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeSupportAndSubtreeJoints_RigidBody()
    {
       int numberOfJointsOnChain = 5;
@@ -298,8 +290,7 @@ public class ScrewToolsTest
       assertEquals(numberOfJoints, successors.length);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeSupportJoints_RigidBody()
    {
       RigidBodyBasics[] bodies = {elevator};
@@ -315,8 +306,7 @@ public class ScrewToolsTest
       assertEquals(jointsSupportingSecondLevelSubTree * numberOfChainsUsed, supportJoints.length);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeSubtreeJoints_RigidBody()
    {
       List<RigidBodyBasics> bodies = new ArrayList<RigidBodyBasics>();
@@ -332,16 +322,14 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testGetRootBody()
    {
       RigidBodyBasics randomBody = MultiBodySystemTools.getRootBody(joints.get(joints.size() - 1).getPredecessor());
       assertTrue(randomBody.isRootBody());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testCreateJointPath()
    {
       int numberOfJoints = joints.size(), numberOfBodies = numberOfJoints + 1;
@@ -360,8 +348,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testIsAncestor()
    {
       int numberOfJoints = joints.size(), numberOfBodies = numberOfJoints + 1;
@@ -382,8 +369,7 @@ public class ScrewToolsTest
       assertFalse(MultiBodySystemTools.isAncestor(d0, d3)); //descendant 
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeDistanceToAncestor()
    {
       int numberOfJoints = joints.size(), numberOfBodies = numberOfJoints + 1;
@@ -404,8 +390,7 @@ public class ScrewToolsTest
       assertEquals(-1, MultiBodySystemTools.computeDistanceToAncestor(d0, d3)); //descendant 
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackJointVelocitiesMatrix_Array()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -427,8 +412,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackJointVelocitiesMatrix_Iterable()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -455,8 +439,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackDesiredJointAccelerationsMatrix()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -478,8 +461,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeDegreesOfFreedom_Array()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -500,8 +482,7 @@ public class ScrewToolsTest
       assertEquals(11, result);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeDegreesOfFreedom_Iterable()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -522,8 +503,7 @@ public class ScrewToolsTest
       MultiBodySystemTools.computeDegreesOfFreedom(jointsList);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testCreateGravitationalSpatialAcceleration()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -545,8 +525,7 @@ public class ScrewToolsTest
       assertEquals(gravity, linearPart.getZ(), epsilon);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSetDesiredAccelerations()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -577,8 +556,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSetVelocities()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -609,8 +587,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeIndicesForJoint()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -631,8 +608,7 @@ public class ScrewToolsTest
       assertEquals(10, indices.get(indices.size() - 1));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testExtractRevoluteJoints()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -647,8 +623,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testComputeNumberOfJointsOfType()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -662,8 +637,7 @@ public class ScrewToolsTest
       assertEquals(jointsArr.length - 1, numberRev);      
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testFilterJoints()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -692,8 +666,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testFilterJoints_dest()
    {
       Vector3D[] jointAxes = {X, Y, Z, Y, X};
@@ -724,8 +697,7 @@ public class ScrewToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testFindJointsWithNames()
    {
       int numberOfJoints = joints.size();
@@ -748,8 +720,7 @@ public class ScrewToolsTest
       matches = ScrewTools.findJointsWithNames(allJoints, "chainAJoint0");
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testFindRigidBodiesWithNames_RigidBody_String()
    {
       int numberOfJoints = joints.size();

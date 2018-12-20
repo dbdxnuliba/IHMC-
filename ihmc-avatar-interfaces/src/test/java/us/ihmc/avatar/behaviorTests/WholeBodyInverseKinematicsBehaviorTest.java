@@ -7,10 +7,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.controllerAPI.EndToEndChestTrajectoryMessageTest;
 import us.ihmc.avatar.controllerAPI.EndToEndHandTrajectoryMessageTest;
@@ -18,8 +18,8 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.testTools.DRCBehaviorTestHelper;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -49,13 +49,13 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
    private DRCBehaviorTestHelper drcBehaviorTestHelper;
    private KinematicsToolboxModule kinematicsToolboxModule;
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())
@@ -79,7 +79,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @Before
+   @BeforeEach
    public void setUp() throws IOException
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -91,8 +91,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       setupKinematicsToolboxModule();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 46.9)
-   @Test(timeout = 230000)
+   @Test// timeout = 230000
    public void testSolvingForAHandPose() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -173,8 +172,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 46.5)
-   @Test(timeout = 230000)
+   @Test// timeout = 230000
    public void testSolvingForBothHandPoses() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -255,8 +253,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 47.0)
-   @Test(timeout = 230000)
+   @Test// timeout = 230000
    public void testSolvingForHandSelectionMatrix() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -338,8 +335,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 48.8)
-   @Test(timeout = 240000)
+   @Test// timeout = 240000
    public void testSolvingForHandAngularLinearControl() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -440,8 +436,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 50.3)
-   @Test(timeout = 250000)
+   @Test// timeout = 250000
    public void testSolvingForHandRollConstraint() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -516,8 +511,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 36.6)
-   @Test(timeout = 180000)
+   @Test// timeout = 180000
    public void testSolvingForChestAngularControl() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -572,8 +566,7 @@ public abstract class WholeBodyInverseKinematicsBehaviorTest implements MultiRob
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 35.8)
-   @Test(timeout = 180000)
+   @Test// timeout = 180000
    public void testSolvingForPelvisAngularControl() throws SimulationExceededMaximumTimeException, IOException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());

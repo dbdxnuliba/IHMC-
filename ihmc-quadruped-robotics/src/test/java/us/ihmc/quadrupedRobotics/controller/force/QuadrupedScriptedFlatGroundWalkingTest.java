@@ -1,10 +1,11 @@
 package us.ihmc.quadrupedRobotics.controller.force;
 
 import controller_msgs.msg.dds.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.quadrupedCommunication.QuadrupedMessageTools;
 import us.ihmc.quadrupedPlanning.input.QuadrupedTeleopManager;
@@ -26,7 +27,7 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
    private QuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
 
-   @Before
+   @BeforeEach
    public void setup() throws IOException
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -40,7 +41,7 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
       stepTeleopManager = quadrupedTestFactory.getStepTeleopManager();
    }
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       quadrupedTestFactory.close();
@@ -52,8 +53,7 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 74.7)
-   @Test(timeout = 370000)
+   @Test// timeout = 370000
    public void testScriptedFlatGroundWalking() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
    {
       QuadrupedTestBehaviors.standUp(conductor, variables);

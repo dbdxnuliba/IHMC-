@@ -1,20 +1,17 @@
 package us.ihmc.robotics.geometry;
 
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.tuple2D.Point2D;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class ConvexPolygonScalerTest
 {
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testScaleSquareExteriorPolygonToContainSquareInteriorPolygon()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();
@@ -213,8 +210,7 @@ public class ConvexPolygonScalerTest
       assertFalse(success);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testScaleSquareExteriorPolygonToContainQuadrulateralInteriorPolygon()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();
@@ -276,8 +272,7 @@ public class ConvexPolygonScalerTest
       assertTrue(success);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testScaleHexagonExteriorPolygonToContainSquareInteriorPolygon()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();
@@ -331,8 +326,7 @@ public class ConvexPolygonScalerTest
       assertTrue(success);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testWithPointScaleExteriorPolygon()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();
@@ -417,8 +411,7 @@ public class ConvexPolygonScalerTest
       assertTrue(success);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testWithLineScaleExteriorPolygon()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();
@@ -580,8 +573,8 @@ public class ConvexPolygonScalerTest
       assertFalse(success);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0, categoriesOverride = {IntegrationCategory.IN_DEVELOPMENT})
-   @Test(timeout = 30000)
+   @Disabled
+   @Test// timeout = 30000
    public void testTroublingCollapseExteriorRectangleToLine()
    {
       ConvexPolygonScaler scaler = new ConvexPolygonScaler();

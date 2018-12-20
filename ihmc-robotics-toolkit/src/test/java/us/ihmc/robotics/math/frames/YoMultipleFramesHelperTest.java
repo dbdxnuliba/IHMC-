@@ -8,10 +8,11 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -19,14 +20,13 @@ import us.ihmc.robotics.referenceFrames.TranslationReferenceFrame;
 
 public class YoMultipleFramesHelperTest
 {
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCommonUsageOfYoMultipleFramesHelper()
    {
       String namePrefix = "framesHelper";
@@ -56,8 +56,7 @@ public class YoMultipleFramesHelperTest
       assertEquals(3, referenceFrames.size());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testRepeatFrames()
    {
       YoVariableRegistry registry = new YoVariableRegistry("framesHelper");
@@ -71,8 +70,7 @@ public class YoMultipleFramesHelperTest
       assertEquals("Should ignore repeat frames!", 1, helper.getNumberOfReferenceFramesRegistered());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testExceptions()
    {
       YoVariableRegistry registry = new YoVariableRegistry("framesHelper");

@@ -5,16 +5,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class HyperCubeNodeTest
 {
    public static final double eps = 1.0e-6;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAssumptions()
    {
       assertEquals(6, 3 << 1);
@@ -28,8 +27,7 @@ public class HyperCubeNodeTest
       assertTrue(index == 7);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testToIndex()
    {
       int dimensionality = 3;
@@ -45,8 +43,7 @@ public class HyperCubeNodeTest
       assertEquals(2, index);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testToBooleanArray()
    {
       int dimensionality = 3;
@@ -86,8 +83,7 @@ public class HyperCubeNodeTest
       return node;
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testLocatePoint()
    {
       int dimensionality = 3;
@@ -111,8 +107,7 @@ public class HyperCubeNodeTest
       assertEquals(expectation, index);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testIndexing()
    {
       int dimensionality = 12;
@@ -125,8 +120,7 @@ public class HyperCubeNodeTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testWithinBounds()
    {
       OneDimensionalBounds[] bounds = new OneDimensionalBounds[] { new OneDimensionalBounds(-0.35, -0.1), new OneDimensionalBounds(57.6, 65.3) };
@@ -138,8 +132,7 @@ public class HyperCubeNodeTest
       assertFalse(HyperCubeNode.withinBounds(bounds, test3));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSubdivideBounds()
    {
       int dimensionality = 3;
@@ -153,8 +146,7 @@ public class HyperCubeNodeTest
       assertEquals(0.5, subBounds[2].max(), eps);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSplit()
    {
       for (int i=1;i<11; i++)
@@ -168,8 +160,7 @@ public class HyperCubeNodeTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testReplaceLeaf()
    {
       int dimensionality = 3;

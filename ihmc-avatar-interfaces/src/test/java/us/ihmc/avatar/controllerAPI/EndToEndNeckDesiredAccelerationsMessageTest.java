@@ -6,9 +6,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.NeckDesiredAccelerationsMessage;
 import controller_msgs.msg.dds.NeckTrajectoryMessage;
@@ -19,7 +19,8 @@ import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyUse
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyInverseDynamicsSolver;
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
@@ -38,8 +39,7 @@ public abstract class EndToEndNeckDesiredAccelerationsMessageTest implements Mul
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 20.6)
-   @Test(timeout = 100000)
+   @Test// timeout = 100000
    public void testSimpleCommands() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -127,13 +127,13 @@ public abstract class EndToEndNeckDesiredAccelerationsMessageTest implements Mul
       return qdd_ds;
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())

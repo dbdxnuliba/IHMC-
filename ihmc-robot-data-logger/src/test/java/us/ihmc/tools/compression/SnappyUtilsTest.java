@@ -7,16 +7,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class SnappyUtilsTest
 {
       private final Random rand = new Random(98753244356L);
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testDirectByteBuffers() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -31,8 +30,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testDirectInput() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -47,8 +45,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testDirectOutput() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -63,8 +60,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testDirectCompressed() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -79,8 +75,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testHeap() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -95,8 +90,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testSlice() throws IOException
       {
          int elements = 128 + rand.nextInt(128);
@@ -122,8 +116,7 @@ public class SnappyUtilsTest
          testCompression(elements, in, inOffset, out, outOffset, decompress, decompressOffset);
       }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
       public void testCompressionRatio() throws IOException
       {
          int elements = 1024;

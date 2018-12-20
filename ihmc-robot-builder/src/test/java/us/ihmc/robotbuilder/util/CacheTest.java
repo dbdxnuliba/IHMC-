@@ -1,16 +1,15 @@
 package us.ihmc.robotbuilder.util;
 
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class CacheTest {
 
-    @Test(timeout = 30000)
-    @ContinuousIntegrationTest(estimatedDuration = 0.0)
+    @Test// timeout = 30000
     public void testItemsGetStoredInTheCache() {
         Cache<Integer, String> stringCache = new Cache<>(Integer.MAX_VALUE);
         final int numItems = 1000;
@@ -23,8 +22,7 @@ public class CacheTest {
         }
     }
 
-    @Test(timeout = 30000)
-    @ContinuousIntegrationTest(estimatedDuration = 0.0)
+    @Test// timeout = 30000
     public void testCacheSizeLimit() {
         final int numItems = 200;
         final int cacheSize = numItems / 2;
@@ -42,8 +40,7 @@ public class CacheTest {
         }
     }
 
-    @Test(timeout = 30000)
-    @ContinuousIntegrationTest(estimatedDuration = 0.0)
+    @Test// timeout = 30000
     public void testLeastRecentlyUsedGetsRemoved() {
         Cache<Integer, String> stringCache = new Cache<>(3);
         stringCache.cacheItem(1, "1");
@@ -59,8 +56,7 @@ public class CacheTest {
         assertFalse(stringCache.getItem(2).isPresent());
     }
 
-    @Test(timeout = 30000)
-    @ContinuousIntegrationTest(estimatedDuration = 0.0)
+    @Test// timeout = 30000
     public void testItemsDoNotGetRemovedEarly() {
         Cache<Integer, String> stringCache = new Cache<>(3);
         stringCache.cacheItem(1, "1");
@@ -73,8 +69,7 @@ public class CacheTest {
         assertTrue(stringCache.getItem(3).isPresent());
     }
 
-    @Test(timeout = 30000)
-    @ContinuousIntegrationTest(estimatedDuration = 0.0)
+    @Test// timeout = 30000
     public void testCacheHitsAndMissesAreCountedCorrectly() {
         Cache<Integer, String> stringCache = new Cache<>(3);
         stringCache.cacheItem(1, "1");

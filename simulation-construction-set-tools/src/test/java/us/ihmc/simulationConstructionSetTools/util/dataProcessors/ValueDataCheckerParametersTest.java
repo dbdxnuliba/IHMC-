@@ -2,19 +2,15 @@ package us.ihmc.simulationConstructionSetTools.util.dataProcessors;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
-
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class ValueDataCheckerParametersTest
 {
    private double EPSILON = 1e-10;
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
       public void testGetDefensiveCopy()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -33,8 +29,7 @@ public class ValueDataCheckerParametersTest
       assertEquals(valueDataCheckerParametersOriginal.getMinimumValue(), valueDataCheckerParametersCopy.getMinimumValue(), EPSILON);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
       public void testErrorThresholdOnDerivativeComparison()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -48,8 +43,7 @@ public class ValueDataCheckerParametersTest
    }
 
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
       public void testMaximumDerivative()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -63,8 +57,7 @@ public class ValueDataCheckerParametersTest
    }
 
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testMaximumSecondDerivative()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -77,8 +70,7 @@ public class ValueDataCheckerParametersTest
       assertEquals(valueDataCheckerParametersOriginal.getMaximumSecondDerivative(), value, EPSILON);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
       public void testMaximumValue()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -92,8 +84,7 @@ public class ValueDataCheckerParametersTest
    }
 
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testMinimumValue()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -106,8 +97,7 @@ public class ValueDataCheckerParametersTest
       assertFalse(valueDataCheckerParametersOriginal.getMinimumValue() == value);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000, expected=RuntimeException.class)
+   @Test// timeout = 30000, expected=RuntimeException.class
    public void testSetMinGreaterThanMax()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();
@@ -117,8 +107,7 @@ public class ValueDataCheckerParametersTest
       valueDataCheckerParametersOriginal.setMinimumValue(value + 1.0);
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000, expected=RuntimeException.class)
+   @Test// timeout = 30000, expected=RuntimeException.class
    public void testSetMaxLessThanMin()
    {
       ValueDataCheckerParameters valueDataCheckerParametersOriginal = new ValueDataCheckerParameters();

@@ -6,13 +6,14 @@ import static org.junit.Assert.assertNotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import gnu.trove.map.hash.TLongObjectHashMap;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
@@ -27,21 +28,20 @@ import us.ihmc.tools.MemoryTools;
 public abstract class ReferenceFrameHashTest
 {
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void showMemoryUsageAfterTest()
    {
       ReferenceFrameTools.clearWorldFrameTree();
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testGetReferenceFrameFromHashCodeReturnsSameNamedFrames()
    {
       DRCRobotModel robotModelA = getRobotModel();
@@ -60,8 +60,7 @@ public abstract class ReferenceFrameHashTest
       checkReferenceFramesMatch(midFeetZUpFrameA, midZUpFrameB);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testAllFramesInFullRobotModelMatchHumanoidReferenceFramesThroughHashCode()
    {
       DRCRobotModel robotModelA = getRobotModel();
@@ -93,8 +92,7 @@ public abstract class ReferenceFrameHashTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testAllFramesGottenFromHumanoidReferenceFrameMethodsAreInTheHashList()
          throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
@@ -135,8 +133,7 @@ public abstract class ReferenceFrameHashTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testAllFramesGottenFromFullRobotModelMethodsAreInTheHashList()
          throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
@@ -177,8 +174,7 @@ public abstract class ReferenceFrameHashTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 30000, expected = IllegalArgumentException.class)
+   @Test// timeout = 30000, expected = IllegalArgumentException.class
    public void testAddingTwoFramesWithTheSameNameThrowsException()
    {
       DRCRobotModel robotModelA = getRobotModel();

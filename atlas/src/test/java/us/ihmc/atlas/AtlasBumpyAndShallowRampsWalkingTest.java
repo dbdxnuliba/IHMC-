@@ -1,18 +1,17 @@
 package us.ihmc.atlas;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.avatar.DRCBumpyAndShallowRampsWalkingTest;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.ControllerFailureException;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST, IntegrationCategory.VIDEO})
+@Tag("video")
 public class AtlasBumpyAndShallowRampsWalkingTest extends DRCBumpyAndShallowRampsWalkingTest
 {
    @Override
@@ -27,8 +26,7 @@ public class AtlasBumpyAndShallowRampsWalkingTest extends DRCBumpyAndShallowRamp
       return BambooTools.getSimpleRobotNameFor(BambooTools.SimpleRobotNameKeys.ATLAS);
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 182.6)
-   @Test(timeout = 910000)
+   @Test// timeout = 910000
    @Override
    public void testDRCBumpyGroundWalking() throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
@@ -36,16 +34,15 @@ public class AtlasBumpyAndShallowRampsWalkingTest extends DRCBumpyAndShallowRamp
    }
    
    // This has never worked. Would be nice if we can get it to work.")
-   @ContinuousIntegrationTest(estimatedDuration = 0.1, categoriesOverride = IntegrationCategory.EXCLUDE)
-   @Test(timeout=300000)
+   @Disabled
+   @Test// timeout=300000
    @Override
    public void testDRCOverRandomBlocks() throws SimulationExceededMaximumTimeException, ControllerFailureException
    {
       super.testDRCOverRandomBlocks();
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 129.0)
-   @Test(timeout = 650000)
+   @Test// timeout = 650000
    @Override
    public void testDRCOverShallowRamp() throws SimulationExceededMaximumTimeException, ControllerFailureException
    {

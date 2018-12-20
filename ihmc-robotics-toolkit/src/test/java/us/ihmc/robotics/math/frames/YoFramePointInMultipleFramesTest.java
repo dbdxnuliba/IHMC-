@@ -7,9 +7,10 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.EuclidFrameRandomTools;
@@ -32,8 +33,7 @@ public class YoFramePointInMultipleFramesTest
 
    private static final ReferenceFrame[] allFrames = new ReferenceFrame[] { worldFrame, frameA, frameB, frameC };
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testConstructor()
    {
       YoVariableRegistry registry = new YoVariableRegistry("youhou");
@@ -67,8 +67,7 @@ public class YoFramePointInMultipleFramesTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testRegisterFrame()
    {
       ArrayList<ReferenceFrame> referenceFrames = new ArrayList<ReferenceFrame>();
@@ -105,8 +104,7 @@ public class YoFramePointInMultipleFramesTest
       assertEquals(frameA, referenceFrames.get(1));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetToZero()
    {
       YoVariableRegistry registry = new YoVariableRegistry("youhou");
@@ -119,8 +117,7 @@ public class YoFramePointInMultipleFramesTest
       assertTrue(framePoint.epsilonEquals(yoFramePointInMultipleFrames, 1e-10));
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testChangeToRegisteredFrame()
    {
       YoVariableRegistry registry = new YoVariableRegistry("youhou");
@@ -150,8 +147,7 @@ public class YoFramePointInMultipleFramesTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetIncludingFrame()
    {
       YoVariableRegistry registry = new YoVariableRegistry("youhou");

@@ -6,11 +6,12 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -38,7 +39,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
    
    private OrientationInterpolationTrajectoryGenerator generator;
    
-   @Before
+   @BeforeEach
    public void setUp()
    {
       referenceFrame = ReferenceFrame.constructARootFrame("rootFrameTEST");
@@ -50,7 +51,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       parentRegistry = new YoVariableRegistry("registry");
    }
    
-   @After
+   @AfterEach
    public void tearDown()
    {
       orientation = null;
@@ -63,8 +64,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testConstructor()
    {
       try
@@ -77,8 +77,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       generator = new OrientationInterpolationTrajectoryGenerator(namePrefix, referenceFrame, trajectoryTimeProvider, initialOrientationProvider, finalOrientationProvider, parentRegistry);    
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testIsDone()
    {
       generator = new OrientationInterpolationTrajectoryGenerator(namePrefix, referenceFrame, trajectoryTimeProvider, initialOrientationProvider, finalOrientationProvider, parentRegistry);
@@ -91,8 +90,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       assertTrue(generator.isDone());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testGet()
    {
       generator = new OrientationInterpolationTrajectoryGenerator(namePrefix, referenceFrame, trajectoryTimeProvider, initialOrientationProvider, finalOrientationProvider, parentRegistry);
@@ -103,8 +101,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       assertEquals(referenceFrame, orientationToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackAngularVelocity()
    {      
       generator = new OrientationInterpolationTrajectoryGenerator(namePrefix, referenceFrame, trajectoryTimeProvider, initialOrientationProvider, finalOrientationProvider, parentRegistry);
@@ -120,8 +117,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
      assertSame(referenceFrame, angularVelocityToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackAngularAcceleration()
    {      
       generator = new OrientationInterpolationTrajectoryGenerator(namePrefix, referenceFrame, trajectoryTimeProvider, initialOrientationProvider, finalOrientationProvider, parentRegistry);
@@ -137,8 +133,7 @@ public class OrientationInterpolationTrajectoryGeneratorTest
       assertSame(referenceFrame, angularAccelerationToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackAngularData()
    {
       FrameQuaternion orientationToPack = new FrameQuaternion(referenceFrame);

@@ -4,13 +4,12 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
 import org.jcodec.common.Assert;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -20,17 +19,15 @@ import us.ihmc.footstepPlanning.polygonWiggling.PolygonWiggler;
 import java.util.ArrayList;
 import java.util.Random;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class ConstraintToConvexRegionTest
 {
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConstraintFormulation()
    {
       Random random = new Random(10L);

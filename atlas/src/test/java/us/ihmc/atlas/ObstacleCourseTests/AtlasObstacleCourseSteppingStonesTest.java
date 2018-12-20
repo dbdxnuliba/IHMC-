@@ -1,20 +1,19 @@
 package us.ihmc.atlas.ObstacleCourseTests;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.obstacleCourseTests.DRCObstacleCourseSteppingStonesTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
 // this test is flaky because toe off is not triggered properly - the toe off condition needs to be fixed
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST, IntegrationCategory.VIDEO})
+@Tag("video")
 public class AtlasObstacleCourseSteppingStonesTest extends DRCObstacleCourseSteppingStonesTest
 {
    @Override
@@ -30,8 +29,7 @@ public class AtlasObstacleCourseSteppingStonesTest extends DRCObstacleCourseStep
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 84.4)
-   @Test(timeout = 420000)
+   @Test// timeout = 420000
    public void testWalkingOverEasySteppingStones() throws SimulationExceededMaximumTimeException
    {
       super.testWalkingOverEasySteppingStones();

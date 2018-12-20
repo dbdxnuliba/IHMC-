@@ -3,10 +3,10 @@ package us.ihmc.robotics.trajectories;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 /**
  * Created by agrabertilton on 2/10/15.
  */
@@ -17,8 +17,7 @@ public class ParametricSplineTrajectorySolverTest
     * @Agraber
     */
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test3rdOrder2DTrajectoryWithMidpoint(){
       double tolerance = 1e-13;
 
@@ -61,8 +60,7 @@ public class ParametricSplineTrajectorySolverTest
       assertArrayEquals(midPointPosition, trajectory.getPositions(midPointTime), tolerance);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test3rdOrder1DTrajectoryWithMidpoint(){
       double tolerance = 1e-13;
 
@@ -106,8 +104,7 @@ public class ParametricSplineTrajectorySolverTest
       assertArrayEquals(midPointPosition, trajectory.getPositions(midPointTime), tolerance);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test3rdOrderBasic1DMovementTrajectory(){
       double tolerance = 1e-13;
 
@@ -146,8 +143,7 @@ public class ParametricSplineTrajectorySolverTest
       assertArrayEquals(endVelocity, trajectory.getVelocities(endTime), tolerance);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test3rdOrderNoMovementTrajectory(){
       double tolerance = 1e-13;
 
@@ -186,8 +182,7 @@ public class ParametricSplineTrajectorySolverTest
       assertArrayEquals(endVelocity, trajectory.getVelocities(endTime), tolerance);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testInvalidNumberOfConstraints(){
       int order = 3;
       int continuityConstraints = 3;

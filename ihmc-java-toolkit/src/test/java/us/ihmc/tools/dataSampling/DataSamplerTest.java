@@ -6,11 +6,11 @@ import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class DataSamplerTest
 {
    private static double epsilon = 1e-10;
@@ -28,14 +28,13 @@ public class DataSamplerTest
    HashMap<String, Double> secondData = createSecondData();
    HashMap<String, Double> thirdData = createThirdData();
    
-   @Before
+   @BeforeEach
    public void createDataSampler()
    {
       dataSampler = new DataSampler<Double>();
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testInitialization()
    {
       dataSampler.initialize(variableNames, initialTime, timeInterval, numberOfSamples);
@@ -49,8 +48,7 @@ public class DataSamplerTest
       assertNotNull(array2);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSampling()
    {
       dataSampler.initialize(variableNames, initialTime, timeInterval, numberOfSamples);

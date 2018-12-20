@@ -2,30 +2,30 @@ package us.ihmc.robotics.statistics;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.statistics.OnePassMeanAndStandardDeviation.InsufficientMeasurementsException;
 
 public class OnePassMeanAndStandardDeviationTest
 {
    private OnePassMeanAndStandardDeviation meanAndStandardDeviation;
 
-   @Before
+   @BeforeEach
    public void setUp() throws Exception
    {
       meanAndStandardDeviation = new OnePassMeanAndStandardDeviation();
    }
 
-   @After
+   @AfterEach
    public void tearDown() throws Exception
    {
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testCalculateMeanAndStandardDeviationExample()
    {
       double[] data =
@@ -45,8 +45,7 @@ public class OnePassMeanAndStandardDeviationTest
       assertEquals(9.730769230769189, meanAndStandardDeviation.getSampleVariance(), delta);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testCalculateMeanAndStandardDeviationSingleValue()
    {
       meanAndStandardDeviation.compute(65.0);
@@ -57,8 +56,7 @@ public class OnePassMeanAndStandardDeviationTest
       assertEquals(0.0, meanAndStandardDeviation.getStandardDeviation(), delta);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = InsufficientMeasurementsException.class)
+	@Test// timeout = 30000,expected = InsufficientMeasurementsException.class
    public void testCalculateSampleVarianceSingleValue()
    {
       meanAndStandardDeviation.compute(65.0);
@@ -66,16 +64,14 @@ public class OnePassMeanAndStandardDeviationTest
       assertEquals(0.0, meanAndStandardDeviation.getSampleVariance(), delta);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = InsufficientMeasurementsException.class)
+	@Test// timeout = 30000,expected = InsufficientMeasurementsException.class
    public void testCalculateAverageNoValue()
    {
       double delta = 1e-10;
       assertEquals(0.0, meanAndStandardDeviation.getAverage(), delta);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = InsufficientMeasurementsException.class)
+	@Test// timeout = 30000,expected = InsufficientMeasurementsException.class
    public void testCalculateVarianceNoValue()
    {
       double delta = 1e-10;

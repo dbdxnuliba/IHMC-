@@ -6,11 +6,12 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -38,7 +39,7 @@ public class PositionTrajectorySmootherTest
    private static double finalTime = 10.0;
    private static double dt = 0.001;
 
-   @Before
+   @BeforeEach
    public void setUp()
    {
       parentRegistry = new YoVariableRegistry("parentRegistryTEST");
@@ -48,14 +49,13 @@ public class PositionTrajectorySmootherTest
       positionTrajectoryInput = new ConstantPositionTrajectoryGenerator(namePrefix, referenceFrame, positionProvider, finalTime, parentRegistry);
    }
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testConstructor()
    {
       try
@@ -71,13 +71,13 @@ public class PositionTrajectorySmootherTest
    }
 
    //TODO: Implement this test
-   //   @Test(timeout=300000)
+   //   @Test// timeout=300000
    //   public void testComputeGains()
    //   {
    //      smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
    //   }
    
-//   @Test(timeout=300000)
+//   @Test// timeout=300000
 //   public void testSetMaxAccelerationAndJerk()
 //   {
 //      smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
@@ -87,8 +87,7 @@ public class PositionTrajectorySmootherTest
 //      smoother.setMaxAccelerationAndJerk(maxAbsoluteAcceleration, maxAbsoluteJerk);
 //   }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testIsDone()
    {
       smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
@@ -100,8 +99,7 @@ public class PositionTrajectorySmootherTest
       assertTrue(smoother.isDone());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testGet()
    {
       smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
@@ -112,8 +110,7 @@ public class PositionTrajectorySmootherTest
       assertEquals(referenceFrame, positionToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackVelocity()
    {
       smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
@@ -129,8 +126,7 @@ public class PositionTrajectorySmootherTest
       assertSame(referenceFrame, velocityToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackAcceleration()
    {
       smoother = new PositionTrajectorySmoother(namePrefix, positionTrajectoryInput, dt, parentRegistry);
@@ -146,8 +142,7 @@ public class PositionTrajectorySmootherTest
       assertSame(referenceFrame, accelerationToPack.getReferenceFrame());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPackLinearData()
    {
       FramePoint3D positionToPack = new FramePoint3D(referenceFrame);

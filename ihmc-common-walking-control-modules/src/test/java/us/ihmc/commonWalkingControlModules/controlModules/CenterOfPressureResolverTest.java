@@ -6,11 +6,12 @@ import static org.junit.Assert.assertTrue;
 import java.util.Random;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -31,21 +32,20 @@ public class CenterOfPressureResolverTest
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void showMemoryUsageAfterTest()
    {
       ReferenceFrameTools.clearWorldFrameTree();
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCenterOfPressureResolverSimpleCaseWithNoTorque()
    {
       Point3D groundPoint = new Point3D();
@@ -64,8 +64,7 @@ public class CenterOfPressureResolverTest
             expectedCenterOfPressure, expectedNormalTorque);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCenterOfPressureResolverSimpleCaseWithVerticalForce()
    {
       Point3D groundPoint = new Point3D();
@@ -84,8 +83,7 @@ public class CenterOfPressureResolverTest
             expectedCenterOfPressure, expectedNormalTorque);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCenterOfPressureResolverNoForceInZ()
    {
       Point3D groundPoint = new Point3D();
@@ -104,8 +102,7 @@ public class CenterOfPressureResolverTest
             expectedCenterOfPressure, expectedNormalTorque);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.5)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testRandomExamples()
    {
       Random random = new Random(1776L);

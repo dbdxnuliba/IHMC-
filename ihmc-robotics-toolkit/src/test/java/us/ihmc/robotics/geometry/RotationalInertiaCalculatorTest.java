@@ -4,17 +4,15 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.commons.MathTools;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class RotationalInertiaCalculatorTest
 {
    private static final double DELTA = 1e-3;
@@ -22,7 +20,7 @@ public class RotationalInertiaCalculatorTest
    private double maxRandomValue;
    private Random random;
 
-   @Before
+   @BeforeEach
    public void setUp()
    {
       maxRandomValue = 1e3;
@@ -34,8 +32,7 @@ public class RotationalInertiaCalculatorTest
       return random.nextDouble() * maxRandomValue;
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testBasicCylinder()
    {
       for (int i = 0; i < ITERATIONS; i++)
@@ -94,8 +91,7 @@ public class RotationalInertiaCalculatorTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testBasicCylinderNegativeMass()
    {
       double mass = -1.0;
@@ -105,8 +101,7 @@ public class RotationalInertiaCalculatorTest
       RotationalInertiaCalculator.getIxxIyyIzzOfSolidCylinder(mass, radius, height, axis);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testBasicCylinderNegativeRadius()
    {
       double mass = 1.0;
@@ -116,8 +111,7 @@ public class RotationalInertiaCalculatorTest
       RotationalInertiaCalculator.getIxxIyyIzzOfSolidCylinder(mass, radius, height, axis);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testBasicCylinderNegativeHeight()
    {
       double mass = 1.0;
@@ -127,8 +121,7 @@ public class RotationalInertiaCalculatorTest
       RotationalInertiaCalculator.getIxxIyyIzzOfSolidCylinder(mass, radius, height, axis);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSolidEllipsoid()
    {
 	   for( int i = 0 ; i < ITERATIONS; i++)
@@ -150,8 +143,7 @@ public class RotationalInertiaCalculatorTest
 	   }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testSolidEllipsoidNegativeMass()
    {
 	   double mass = -1.0;
@@ -162,8 +154,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaMatrixOfSolidEllipsoid(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testSolidEllipsoidNegativeXRadius()
    {
 	   double mass = 1.0;
@@ -174,8 +165,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaMatrixOfSolidEllipsoid(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testSolidEllipsoidNegativeYRadius()
    {
 	   double mass = 1.0;
@@ -186,8 +176,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaMatrixOfSolidEllipsoid(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testSolidEllipsoidNegativeZRadius()
    {
 	   double mass = 1.0;
@@ -198,8 +187,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaMatrixOfSolidEllipsoid(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testRadiiOfGyration()
    {
 	   for(int i = 0; i< ITERATIONS; i++)
@@ -223,8 +211,7 @@ public class RotationalInertiaCalculatorTest
 	   }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testRadiiOfGyrationNegativeMass()
    {
 	   double mass = -1.0;
@@ -235,8 +222,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaFromRadiiOfGyration(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testRadiiOfGyrationNegativeXRadius()
    {
 	   double mass = 1.0;
@@ -247,8 +233,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaFromRadiiOfGyration(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testRadiiOfGyrationNegativeYRadius()
    {
 	   double mass = 1.0;
@@ -259,8 +244,7 @@ public class RotationalInertiaCalculatorTest
 	   RotationalInertiaCalculator.getRotationalInertiaFromRadiiOfGyration(mass, xRadius, yRadius, zRadius);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000,expected = RuntimeException.class)
+	@Test// timeout = 30000,expected = RuntimeException.class
    public void testRadiiOfGyrationNegativeZRadius()
    {
 	   double mass = 1.0;

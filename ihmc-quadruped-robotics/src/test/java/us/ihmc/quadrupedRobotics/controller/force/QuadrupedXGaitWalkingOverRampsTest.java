@@ -2,12 +2,13 @@ package us.ihmc.quadrupedRobotics.controller.force;
 
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import junit.framework.AssertionFailedError;
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.quadrupedPlanning.input.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.*;
@@ -26,14 +27,14 @@ public abstract class QuadrupedXGaitWalkingOverRampsTest implements QuadrupedMul
    private QuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
 
-   @Before
+   @BeforeEach
    public void setup()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
       quadrupedTestFactory = createQuadrupedTestFactory();
    }
    
-   @After
+   @AfterEach
    public void tearDown()
    {
       quadrupedTestFactory.close();
@@ -45,8 +46,7 @@ public abstract class QuadrupedXGaitWalkingOverRampsTest implements QuadrupedMul
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 80.0)
-   @Test(timeout = 2200000)
+   @Test// timeout = 2200000
    public void testWalkingOverShallowRamps() throws IOException
    {
       RampsGroundProfile groundProfile = new RampsGroundProfile(0.075, 0.75, 1.2);
@@ -54,8 +54,7 @@ public abstract class QuadrupedXGaitWalkingOverRampsTest implements QuadrupedMul
       walkOverRamps(groundProfile, getComHeightForRoughTerrain());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 80.0)
-   @Test(timeout = 2000000)
+   @Test// timeout = 2000000
    public void testWalkingOverAggressiveRamps() throws IOException
    {
       RampsGroundProfile groundProfile = new RampsGroundProfile(0.15, 0.75, 1.2);
@@ -103,15 +102,13 @@ public abstract class QuadrupedXGaitWalkingOverRampsTest implements QuadrupedMul
       conductor.concludeTesting();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 45.0)
-   @Test(timeout = 1200000)
+   @Test// timeout = 1200000
    public void testWalkingDownSlope() throws IOException
    {
       walkSlope(0.2, getWalkingDownSlopePosition());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 50.0)
-   @Test(timeout = 980000)
+   @Test// timeout = 980000
    public void testWalkingUpSlope() throws IOException
    {
       walkSlope(-0.1, getWalkingUpSlopePosition());

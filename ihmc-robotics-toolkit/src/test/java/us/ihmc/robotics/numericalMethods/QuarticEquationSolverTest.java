@@ -2,17 +2,15 @@ package us.ihmc.robotics.numericalMethods;
 
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class QuarticEquationSolverTest
 {
    private static final boolean DEBUG = false;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testUpToQuarticEquationSolver()
    {
       QuarticEquationSolver solver = new QuarticEquationSolver();
@@ -70,8 +68,8 @@ public class QuarticEquationSolverTest
 
    }
    
-	@ContinuousIntegrationTest(estimatedDuration = 0.1, categoriesOverride = IntegrationCategory.EXCLUDE)
-	@Test(timeout=300000)
+	@Disabled
+	@Test// timeout=300000
    public void testQuarticEquationSolver()
    {
       QuarticEquationSolver solver = new QuarticEquationSolver();

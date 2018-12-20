@@ -6,15 +6,14 @@ import static org.junit.Assert.assertNull;
 
 import java.util.concurrent.locks.LockSupport;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class HyperCubeTreeTest
 {
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPutGetNoSplit()
    {
       int dimensionality = 3;
@@ -66,8 +65,7 @@ public class HyperCubeTreeTest
       return tree;
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPutGetRemove2D()
    {
       int dimensionality = 2;
@@ -116,8 +114,7 @@ public class HyperCubeTreeTest
       assertEquals(testValue1, tree.get(point).getValue());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPutGetWithSplit2()
    {
       int dimensionality = 2;
@@ -160,8 +157,7 @@ public class HyperCubeTreeTest
 
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testPutGetWithSplit3()
    {
       int dimensionality = 3;
@@ -201,7 +197,7 @@ public class HyperCubeTreeTest
    }
 
 
-// @Test(timeout=300000)
+// @Test// timeout=300000
 // public void testGatherLeavesWithinBounds()
 // {
 //    int dimensionality = 2;
@@ -217,8 +213,7 @@ public class HyperCubeTreeTest
 
    public static final double eps = 1e-13;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testLocationSpecificRecursions()
    {
       int dimensionality = 3;
@@ -228,8 +223,7 @@ public class HyperCubeTreeTest
       assertEquals(1.6, node.getLeaf().getValue(), eps);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSimplePutting()
    {
       int dimensionality = 3;
@@ -239,8 +233,7 @@ public class HyperCubeTreeTest
       assertEquals(1.6, node.getLeaf().getValue(), eps);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testGatherAllLeaves()
    {
       int dimensionality = 2;
@@ -292,8 +285,7 @@ public class HyperCubeTreeTest
    private final static int alpha = 9;
    private final static double DIVISOR = 1 / ((double) (1 << alpha));
 
-	@ContinuousIntegrationTest(estimatedDuration = 1.1)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testTimingMeasurement()
    {
       for (int i = 0; i < 1000; i++)
@@ -307,8 +299,7 @@ public class HyperCubeTreeTest
       System.out.println("ThreadTools.sleep(1L) takes on average " + averageSeconds + " seconds to store a point.");
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testTimer()
    {
       LowPassTimingReporter time = new LowPassTimingReporter(7);
@@ -333,8 +324,7 @@ public class HyperCubeTreeTest
       // 0.0010669192539062501
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testMinimumMeasurableTime()
    {
       LowPassTimingReporter time = new LowPassTimingReporter(7);
@@ -361,8 +351,7 @@ public class HyperCubeTreeTest
       // 0.0010669192539062501
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testSystemTimeNano()
    {
       long[] times = new long[1000];

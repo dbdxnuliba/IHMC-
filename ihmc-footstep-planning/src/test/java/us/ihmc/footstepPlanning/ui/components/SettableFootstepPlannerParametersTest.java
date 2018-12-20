@@ -1,6 +1,6 @@
 package us.ihmc.footstepPlanning.ui.components;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
 import us.ihmc.footstepPlanning.FootstepPlanningTestTools;
@@ -18,7 +18,7 @@ public class SettableFootstepPlannerParametersTest
    private final static int iters = 10;
    private final static double epsilon = 1e-7;
 
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test()
    {
       Random random = new Random(1738L);

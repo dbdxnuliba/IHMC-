@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.RobotConfigurationData;
 import us.ihmc.commons.PrintTools;
@@ -19,13 +19,13 @@ public class RobotConfigurationDataPacketCommunicatorTest
 {
    private static final int NUMBER_OF_MESSAGES_TO_SEND = 20;
 
-   @Test(timeout = 60000)
+   @Test// timeout = 60000
    public void testRealPacketCommunicatorKryo() throws IOException
    {
       performRealTest();
    }
 
-   @Test(timeout = 60000)
+   @Test// timeout = 60000
    public void testIntraprocessPacketCommunicatorKryo() throws IOException
    {
       performIntraprocessTest();

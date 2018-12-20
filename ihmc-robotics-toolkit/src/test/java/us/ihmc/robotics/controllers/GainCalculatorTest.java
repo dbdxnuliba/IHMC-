@@ -5,18 +5,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.controllers.pidGains.GainCalculator;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class GainCalculatorTest
 {
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testComputeDerivativeGain()
    {
       Random random = new Random();
@@ -30,8 +27,7 @@ public class GainCalculatorTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testComputeDampingRatio()
    {
       Random random = new Random();
@@ -50,8 +46,7 @@ public class GainCalculatorTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testComputeDampingForSecondOrderSystem()
    {
       double dampingCoeff = GainCalculator.computeDampingForSecondOrderSystem(1, 1, 1);

@@ -6,11 +6,12 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.State;
 import us.ihmc.robotics.stateMachine.old.conditionBasedStateMachine.StateChangeRecorder;
 
@@ -23,27 +24,25 @@ public class StateChangeRecorderTest
    {
    }
 
-   @Before
+   @BeforeEach
    public void setUp() throws Exception
    {
       listOfStates = getListOfStates();
       stateChangeRecorder = new StateChangeRecorder<TestEnum>();
    }
 
-   @After
+   @AfterEach
    public void tearDown() throws Exception
    {
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testConstructor()
    {
       // empty, work being done in setUp()
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testAddingValues()
    {
       int index = Math.max(0, listOfStates.size() - 2);
@@ -69,8 +68,7 @@ public class StateChangeRecorderTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testClearAllData()
    {
       int index = Math.max(0, listOfStates.size() - 2);

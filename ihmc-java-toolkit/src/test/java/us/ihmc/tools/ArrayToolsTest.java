@@ -22,15 +22,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 public class ArrayToolsTest
 {
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseDoubleArrayFromMATLABString()
    {
       try
@@ -53,8 +52,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseDoubleArrayFromMATLABBufferedReader()
    {
       try
@@ -78,8 +76,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseDoubleArrayFromDataInputStream()
    {
       try
@@ -105,8 +102,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseIntegerArrayFromString()
    {
       try
@@ -125,8 +121,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseIntegerArrayFromBufferedReader()
    {
       try
@@ -146,8 +141,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseIntegerArrayFromDataInputStream()
    {
       try
@@ -174,8 +168,7 @@ public class ArrayToolsTest
    }
 
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testDeltaEquals()
    {
       double[] array1 = generateDoubleArray();
@@ -192,8 +185,7 @@ public class ArrayToolsTest
       assertFalse(ArrayTools.deltaEquals(array1, array2, largestDifference - 1));
    }
 	
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
 	public void testDeltaEqualsWithNull()
 	{
 	   double[] array1 = null;
@@ -208,8 +200,7 @@ public class ArrayToolsTest
 
 
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.9)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseDoubleArrayFromString() throws IOException
    {
       Random random = new Random();
@@ -234,8 +225,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testParseDoubleArrayFromBufferedReader()
    {
       Random random = new Random();
@@ -271,8 +261,7 @@ public class ArrayToolsTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000 , expected = IOException.class)
+	@Test// timeout = 30000 , expected = IOException.class
    public void testParseDoubleArrayFromBufferedReaderWithIOException() throws IOException
    {
       BufferedReader mockBufferedReader = new BufferedReader(new Reader()
@@ -350,8 +339,7 @@ public class ArrayToolsTest
       return array;
    }
 	
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testGetRearrangedArrayList()
    {
       ArrayList<Integer> arrayList = new ArrayList<Integer>();
@@ -375,8 +363,7 @@ public class ArrayToolsTest
    }
 
 	
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testGetMaximumAbsoluteChangeBetweenTicks()
    {
       double[] array = new double[]{1.7};
@@ -400,8 +387,7 @@ public class ArrayToolsTest
       assertEquals(0.02, maxChange, 1e-7);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testIsContinuous()
    {
       double[] array = new double[]{1.7};

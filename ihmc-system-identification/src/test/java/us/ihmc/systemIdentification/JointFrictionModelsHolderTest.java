@@ -3,9 +3,10 @@ package us.ihmc.systemIdentification;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.systemIdentification.frictionId.frictionModels.AsymmetricCoulombViscousFrictionModel;
 import us.ihmc.systemIdentification.frictionId.frictionModels.AsymmetricCoulombViscousStribeckFrictionModel;
@@ -59,8 +60,7 @@ public class JointFrictionModelsHolderTest
    private String name = "simpleHolder";
    private YoVariableRegistry registry = new YoVariableRegistry("simpleRegistry");
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout = 30000)
+	@Test// timeout = 30000
    public void testConstructorAndFrictionStateSelection()
    {
       JointFrictionModelsHolderForTest holder = new JointFrictionModelsHolderForTest(name, registry);

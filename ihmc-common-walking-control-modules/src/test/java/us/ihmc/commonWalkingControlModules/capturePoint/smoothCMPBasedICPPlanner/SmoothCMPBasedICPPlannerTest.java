@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
@@ -27,9 +27,8 @@ import us.ihmc.commonWalkingControlModules.desiredFootStep.footstepGenerator.Foo
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -70,7 +69,6 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class SmoothCMPBasedICPPlannerTest
 {
    private static final String testClassName = "UltimateSmoothCMPBasedICPPlannerTest";
@@ -185,7 +183,7 @@ public class SmoothCMPBasedICPPlannerTest
 
    private int numberOfFootstepsForTest;
 
-   @Before
+   @BeforeEach
    public void setupTest()
    {
       this.newTestStartDiscontinuity = true;
@@ -354,7 +352,7 @@ public class SmoothCMPBasedICPPlannerTest
       copTrack = new BagOfBalls(numberOfTrackBalls, trackBallSize, "CoPTrack", new YoAppearanceRGBColor(copPointsColor, 0.0), registry, graphicsListRegistry);
    }
 
-   @After
+   @AfterEach
    public void cleanUpTest()
    {
       if (keepSCSUp)
@@ -367,8 +365,7 @@ public class SmoothCMPBasedICPPlannerTest
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.9)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testForDiscontinuitiesWithoutAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -377,8 +374,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(true, false, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.8)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testForDiscontinuitiesWithAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -387,8 +383,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(true, false, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 3000000)
+   @Test// timeout = 3000000
    public void testForPlanningConsistencyWithoutAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -397,8 +392,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(false, true, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.5)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testForPlanningConsistencyWithAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -408,8 +402,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(false, true, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.5)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testForPlanningConsistencyWithAndWithoutContinuousReplanning()
    {
       numberOfFootstepsForTest = 10;

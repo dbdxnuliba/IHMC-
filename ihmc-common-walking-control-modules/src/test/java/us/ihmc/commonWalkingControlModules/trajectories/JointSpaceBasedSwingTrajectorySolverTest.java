@@ -12,11 +12,10 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.geometry.Line2D;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.plotting.Plotter;
@@ -29,11 +28,10 @@ import us.ihmc.simulationConstructionSetTools.util.graphs.JFreePlot;
 /**
  * Created by agrabertilton on 2/5/15.
  */
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.EXCLUDE})
+@Disabled
 public class JointSpaceBasedSwingTrajectorySolverTest
 {
-   @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test// timeout = 300000
    public void testOneDoFTrajectory()
    {
       boolean VISUALIZE = false;
@@ -102,8 +100,7 @@ public class JointSpaceBasedSwingTrajectorySolverTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.1)
-   @Test(timeout = 300000)
+   @Test// timeout = 300000
    public void testPendulumTrajectory()
    {
       boolean VISUALIZE = false;

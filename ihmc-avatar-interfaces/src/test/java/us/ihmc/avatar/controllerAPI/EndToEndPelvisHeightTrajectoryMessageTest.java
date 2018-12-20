@@ -5,10 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
 import controller_msgs.msg.dds.StopAllTrajectoryMessage;
@@ -18,7 +18,8 @@ import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.trajectories.LookAheadCoMHeightTrajectoryGenerator;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
@@ -47,8 +48,7 @@ public abstract class EndToEndPelvisHeightTrajectoryMessageTest implements Multi
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 38.3)
-   @Test(timeout = 190000)
+   @Test// timeout = 190000
    public void testSingleWaypoint() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -282,13 +282,13 @@ public abstract class EndToEndPelvisHeightTrajectoryMessageTest implements Multi
       Assert.assertEquals(initialPelvisHeight, finalPelvisHeight, 1.0e-5);
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())

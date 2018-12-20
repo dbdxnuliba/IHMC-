@@ -4,11 +4,12 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.quadrupedBasics.QuadrupedSteppingRequestedEvent;
 import us.ihmc.quadrupedPlanning.input.QuadrupedTeleopManager;
 import us.ihmc.quadrupedRobotics.QuadrupedForceTestYoVariables;
@@ -31,7 +32,7 @@ public abstract class QuadrupedStepControllerTest implements QuadrupedMultiRobot
    private QuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
    
-   @Before
+   @BeforeEach
    public void setup()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -52,7 +53,7 @@ public abstract class QuadrupedStepControllerTest implements QuadrupedMultiRobot
       }
    }
    
-   @After
+   @AfterEach
    public void tearDown()
    {
       quadrupedTestFactory.close();
@@ -63,8 +64,7 @@ public abstract class QuadrupedStepControllerTest implements QuadrupedMultiRobot
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 10.0)
-   @Test(timeout = 200000)
+   @Test// timeout = 200000
    public void testTakingAStep() throws SimulationExceededMaximumTimeException
    {
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);

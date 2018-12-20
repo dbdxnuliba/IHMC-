@@ -11,10 +11,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
@@ -44,8 +45,7 @@ public class PlanarRegionToolsTest
    private static final int ITERATIONS = 1000;
    private static final double EPSILON = 1.0e-12;
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testTruncatePlanarRegionIfIntersectingWithPlane() throws Exception
    {
       Point3D groundOrigin = new Point3D();
@@ -87,8 +87,7 @@ public class PlanarRegionToolsTest
       return inWorld;
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
+   @Test// timeout = 30000
    public void testIsInsidePolygon() throws Exception
    {
       Random random = new Random(324534L);
@@ -125,8 +124,7 @@ public class PlanarRegionToolsTest
       }
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testIsInsidePolygonBug1() throws Exception
    {
       Point2D[] polygon = {new Point2D(-0.3, 0.5), new Point2D(0.3, 0.5), new Point2D(0.3, -0.5), new Point2D(-0.3, -0.5)};
@@ -135,8 +133,7 @@ public class PlanarRegionToolsTest
       assertFalse(PlanarRegionTools.isPointInsidePolygon(polygon, pointToCheck));
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testProjectPointToPlanesVertically()
    {
       Random random = new Random(1738L);
@@ -224,8 +221,7 @@ public class PlanarRegionToolsTest
       EuclidCoreTestTools.assertPoint3DGeometricallyEquals(new Point3D(-0.2, 0.0, 0.1), projectedPoint, 1e-6);
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testFilterPlanarRegionsWithBoundingCircle()
    {
       Random random = new Random(1738L);
@@ -308,8 +304,7 @@ public class PlanarRegionToolsTest
       }
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testFilterPlanarRegionsWithBoundingCirclePointWithinBigRegion()
    {
       ConvexPolygon2D polygon2D = new ConvexPolygon2D();
@@ -340,8 +335,7 @@ public class PlanarRegionToolsTest
       assertTrue(regionsWithinDistance.contains(planarRegion));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testTrivialCase() throws Exception
    {
       // polygons forming a "|"-shaped region.
@@ -422,8 +416,7 @@ public class PlanarRegionToolsTest
       return convexPolygon.translateCopy(translation);
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testFilterPlanarRegionsWithBoundingCapsule()
    {
       Random random = new Random(1738L);
@@ -516,8 +509,7 @@ public class PlanarRegionToolsTest
       }
    }
 
-   @Test(timeout = 30000)
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   @Test// timeout = 30000
    public void testFilterPlanarRegionsWithBoundingCapsulePointWithinBigRegion()
    {
       ConvexPolygon2D polygon2D = new ConvexPolygon2D();

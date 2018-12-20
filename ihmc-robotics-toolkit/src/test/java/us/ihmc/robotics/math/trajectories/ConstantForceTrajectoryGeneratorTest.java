@@ -5,9 +5,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class ConstantForceTrajectoryGeneratorTest
@@ -23,8 +24,7 @@ public class ConstantForceTrajectoryGeneratorTest
 
    private ConstantForceTrajectoryGenerator generator;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testConstructor()
    {
       generator = null;
@@ -51,8 +51,7 @@ public class ConstantForceTrajectoryGeneratorTest
 
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testIsDone()
    {
       generator = new ConstantForceTrajectoryGenerator(namePrefix, force, finalTime, parentRegistry);
@@ -65,8 +64,7 @@ public class ConstantForceTrajectoryGeneratorTest
       assertTrue(generator.isDone());
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testIncreasing()
    {
       generator = new ConstantForceTrajectoryGenerator(namePrefix, force, finalTime, parentRegistry);

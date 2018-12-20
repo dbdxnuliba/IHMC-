@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -61,7 +61,7 @@ public abstract class MessagerFootstepPlannerOnRoughTerrainTest
 
    private static boolean visualize = false;
 
-   @Before
+   @BeforeEach
    public void setup()
    {
       visualize = visualize && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
@@ -119,7 +119,7 @@ public abstract class MessagerFootstepPlannerOnRoughTerrainTest
 
    }
 
-   @After
+   @AfterEach
    public void tearDown() throws Exception
    {
       module.stop();

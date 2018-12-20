@@ -5,24 +5,21 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.commons.MathTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-@ContinuousIntegrationPlan(categories = IntegrationCategory.FAST)
 public class AlphaFilteredWrappingYoVariableTest
 {
    private static final boolean DEBUG = false;
    private final Random random = new Random();
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout=60000)
+   @Test// timeout=60000
    public void testInputModulo()
    {
       YoVariableRegistry registry = new YoVariableRegistry("testRegistry");
@@ -69,8 +66,7 @@ public class AlphaFilteredWrappingYoVariableTest
    }
    
    
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=60000)
+	@Test// timeout=60000
    public void testNoisyFixedPosition()
    {
       // Use a reasonably large alpha for a reasonably large amount of noise
@@ -98,8 +94,7 @@ public class AlphaFilteredWrappingYoVariableTest
       assertEquals(10.0, alphaFilteredWrappingYoVariable.getDoubleValue(), 1.0);
    }
 	
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout=60000)
+	@Test// timeout=60000
 	public void testErrorAlwaysDecreases()
 	{
 	   // Use a reasonably large alpha for a reasonably large amount of noise
@@ -166,8 +161,7 @@ public class AlphaFilteredWrappingYoVariableTest
 	   return wrappingError;
 	}
 	
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout=60000)
+   @Test// timeout=60000
    public void testWrappingError()
    {
 	   double e = getErrorConsideringWrap(0.2,0.8,0.0,1.0);
@@ -207,8 +201,7 @@ public class AlphaFilteredWrappingYoVariableTest
 	   
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=60000)
+	@Test// timeout=60000
    public void testAlphaAndBreakFrequencyComputations()
    {
       double DT = 0.1;

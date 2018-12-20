@@ -6,11 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.math.trajectories.ConstantVelocityTrajectoryGenerator;
 import us.ihmc.robotics.math.trajectories.DoubleTrajectoryGenerator;
 import us.ihmc.robotics.trajectories.providers.ConstantDoubleProvider;
@@ -22,8 +23,7 @@ public class BacklashCompensatingVelocityYoVariableTest
 {
    private static final double EPSILON = 1e-8;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testWithoutBacklashOrFiltering1()
    {
       Random rand = new Random(1798L);
@@ -50,8 +50,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testWithoutBacklashOrFiltering2()
    {
       Random rand = new Random(1798L);
@@ -80,8 +79,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testWithoutBacklash1()
    {
       Random rand = new Random(1798L);
@@ -109,8 +107,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testWithoutBacklash2()
    {
       Random rand = new Random(1798L);
@@ -139,8 +136,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testVelocityPositiveWithoutCrossingZero2()
    {
       Random rand = new Random(1798L);
@@ -170,8 +166,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.0)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testVelocityNegativeWithoutCrossingZero2()
    {
       Random rand = new Random(1798L);
@@ -201,8 +196,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.5)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testBacklashOnlyCrossingZeroConstantPositiveAcceleration2()
    {
       Random rand = new Random(1798L);
@@ -266,8 +260,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       }
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.5)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testBacklashOnlyCrossingZeroConstantNegativeAcceleration2()
    {
       Random rand = new Random(1798L);
@@ -332,8 +325,7 @@ public class BacklashCompensatingVelocityYoVariableTest
    }
 
 	
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testNoisySignalAndMakeSureVelocityHasSignalContent()
    {
       Random random = new Random(1798L);
@@ -406,8 +398,7 @@ public class BacklashCompensatingVelocityYoVariableTest
       assertTrue(averageReconstructedPositionError2.getDoubleValue() < 0.25);
    }
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testSignalWithBacklash()
    {
       YoVariableRegistry registry = new YoVariableRegistry("Registry");
@@ -481,8 +472,7 @@ public class BacklashCompensatingVelocityYoVariableTest
    }
    
    
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testRemoveSquareWaveBacklash()
    {
       YoVariableRegistry registry = new YoVariableRegistry("Registry");

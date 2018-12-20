@@ -2,13 +2,12 @@ package us.ihmc.footstepPlanning.polygonWiggling;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
@@ -31,7 +30,6 @@ import java.util.Random;
 
 import static org.junit.Assert.*;
 
-@ContinuousIntegrationAnnotations.ContinuousIntegrationPlan(categories = IntegrationCategory.FAST)
 public class PolygonWigglingTest
 {
    private static final boolean visualize = false;
@@ -42,14 +40,13 @@ public class PolygonWigglingTest
 
    private final static double epsilon = 0.00001;
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSimpleProjection()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -79,8 +76,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSimpleProjectionWithDeltaInside()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -131,8 +127,7 @@ public class PolygonWigglingTest
       assertFalse(largestDistance < -wiggleParameters.deltaInside - 0.003);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testSimpleProjectionWithWiggleLimits()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -164,8 +159,7 @@ public class PolygonWigglingTest
       assertTrue(foot == null);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionThatRequiredRotation()
    {
       ConvexPolygon2D plane = PlannerTools.createDefaultFootPolygon();
@@ -190,8 +184,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testImpossibleCases()
    {
       ConvexPolygon2D plane = PlannerTools.createDefaultFootPolygon();
@@ -227,8 +220,7 @@ public class PolygonWigglingTest
 
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionOnlyTranslation()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -256,8 +248,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionTranslationLimits()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -287,8 +278,7 @@ public class PolygonWigglingTest
       assertTrue(foot == null);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionTranslationLimitX1()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -329,8 +319,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionTranslationLimitX2()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -365,8 +354,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionTranslationLimitY1()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -401,8 +389,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionTranslationLimitY2()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -437,8 +424,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testKnownResult()
    {
       // this is a regression test - this will check if the expected result is produced.
@@ -490,8 +476,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testCompexProjectionArea()
    {
       ConvexPolygon2D plane = new ConvexPolygon2D();
@@ -547,8 +532,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionIntoPlanarRegion1()
    {
       ArrayList<ConvexPolygon2D> planes = new ArrayList<>();
@@ -601,8 +585,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane2));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionIntoPlanarRegion2()
    {
       ArrayList<ConvexPolygon2D> planes = new ArrayList<>();
@@ -648,8 +631,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane1));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionIntoPlanarRegionNoOverlap()
    {
       ArrayList<ConvexPolygon2D> planes = new ArrayList<>();
@@ -689,8 +671,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionIntoPlanarRegionInvalidLimits()
    {
       ArrayList<ConvexPolygon2D> planes = new ArrayList<>();
@@ -732,8 +713,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testProjectionIntoPlanarRegionHull()
    {
       ArrayList<ConvexPolygon2D> planes = new ArrayList<>();
@@ -780,8 +760,7 @@ public class PolygonWigglingTest
       assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, hullOfRegion));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConvexConstraintOfPoint()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -989,8 +968,8 @@ public class PolygonWigglingTest
    }
 
    // TODO: 05/10/2017 moved to development
-   @ContinuousIntegrationTest(estimatedDuration = 0.0, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 300000)
+   @Disabled
+   @Test// timeout = 300000
    public void testConvexConstraintOfLine()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1171,8 +1150,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConvexConstraintOfSimpleLine()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1246,8 +1224,7 @@ public class PolygonWigglingTest
       assertFalse(allLessThan);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConvexConstraintOfDeltaInsideLine()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1301,8 +1278,8 @@ public class PolygonWigglingTest
    }
 
    // TODO: 05/03/2017 moved to development
-   @ContinuousIntegrationTest(estimatedDuration = 0.0, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 300000)
+   @Disabled
+   @Test// timeout = 300000
    public void testConvexConstraintOfQuadrangle()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1518,8 +1495,7 @@ public class PolygonWigglingTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConvexConstraintOfQuadrangleDeltaInside()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1593,8 +1569,7 @@ public class PolygonWigglingTest
       assertFalse(allInside);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConstraintOfSquarePolygonInSquarePolygon()
    {
       DenseMatrix64F A = new DenseMatrix64F(4, 2);
@@ -1761,8 +1736,7 @@ public class PolygonWigglingTest
       assertFalse(allInside);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void testConstraintOfSquarePolygonInPentagon()
    {
       DenseMatrix64F A = new DenseMatrix64F(5, 2);

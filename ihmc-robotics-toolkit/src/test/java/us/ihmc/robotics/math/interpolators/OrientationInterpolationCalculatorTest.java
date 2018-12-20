@@ -5,10 +5,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -21,14 +22,13 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 
 public class OrientationInterpolationCalculatorTest
 {
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
 
    /**
     * Numerically differentiate, then use OrientationInterpolationAngularVelocityCalculator, compare results.

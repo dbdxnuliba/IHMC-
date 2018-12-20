@@ -1,6 +1,6 @@
 package us.ihmc.pathPlanning.visibilityGraphs.dataStructure;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.pathPlanning.visibilityGraphs.VisibilityGraphRandomTools;
 import us.ihmc.pathPlanning.visibilityGraphs.VisibilityGraphTestTools;
@@ -20,7 +20,7 @@ public class NavigableRegionTest
 
    private static final double epsilon = 1e-12;
 
-   @Test(timeout = 30000)
+   @Test// timeout = 30000
    public void test()
    {
       Random random = new Random(1738L);

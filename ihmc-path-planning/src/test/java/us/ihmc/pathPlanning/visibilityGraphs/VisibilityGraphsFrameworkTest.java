@@ -7,10 +7,10 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -18,9 +18,9 @@ import javafx.util.Pair;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
-import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.Ellipsoid3D;
 import us.ihmc.euclid.geometry.LineSegment3D;
@@ -87,7 +87,7 @@ public class VisibilityGraphsFrameworkTest extends Application
       return new DefaultVisibilityGraphParameters();
    }
 
-   @Before
+   @BeforeEach
    public void setup() throws InterruptedException, Exception
    {
       VISUALIZE = VISUALIZE && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
@@ -113,7 +113,7 @@ public class VisibilityGraphsFrameworkTest extends Application
       }
    }
 
-   @After
+   @AfterEach
    public void tearDown() throws Exception
    {
       if (VISUALIZE)
@@ -124,8 +124,7 @@ public class VisibilityGraphsFrameworkTest extends Application
       }
    }
 
-   @Test(timeout = TIMEOUT)
-   @ContinuousIntegrationTest(estimatedDuration = 13.0)
+   @Test// timeout = TIMEOUT
    public void testDatasetsWithoutOcclusion() throws Exception
    {
       if (VISUALIZE)
@@ -137,8 +136,8 @@ public class VisibilityGraphsFrameworkTest extends Application
       runAssertionsOnAllDatasets(dataset -> runAssertionsWithoutOcclusion(dataset));
    }
 
-   @Test(timeout = TIMEOUT)
-   @ContinuousIntegrationTest(estimatedDuration = 10.0, categoriesOverride = {IntegrationCategory.IN_DEVELOPMENT})
+   @Test// timeout = TIMEOUT
+   @Disabled
    public void testDatasetsNoOcclusionSimulateDynamicReplanning() throws Exception
    {
       if (VISUALIZE)
@@ -148,8 +147,8 @@ public class VisibilityGraphsFrameworkTest extends Application
       runAssertionsOnAllDatasets(dataset -> runAssertionsSimulateDynamicReplanning(dataset, 0.20, 1000, false));
    }
 
-   @Test(timeout = TIMEOUT)
-   @ContinuousIntegrationTest(estimatedDuration = 10.0, categoriesOverride = {IntegrationCategory.IN_DEVELOPMENT})
+   @Test// timeout = TIMEOUT
+   @Disabled
    public void testDatasetsSimulateOcclusionAndDynamicReplanning() throws Exception
    {
       if (VISUALIZE)

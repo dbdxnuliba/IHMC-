@@ -5,37 +5,34 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.controllers.pidGains.implementations.YoPIDGains;
 import us.ihmc.tools.MemoryTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class PIDControllerTest
 {
    private final Random random = new Random();
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void showMemoryUsageAfterTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " after test.");
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testPIDControllerConstructor()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -58,8 +55,7 @@ public class PIDControllerTest
       assertEquals(10.0, maxError.getDoubleValue(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testPIDControllerConstructorFromGains()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -91,8 +87,7 @@ public class PIDControllerTest
       assertEquals(maxOutput, pid.getMaximumFeedback(), 1e-5);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testPIDControllerConstructorFromGains2()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -122,8 +117,7 @@ public class PIDControllerTest
       assertEquals(1.0, pid.getIntegralLeakRatio(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testPIDControllerConstructorFromGains3()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -151,8 +145,7 @@ public class PIDControllerTest
       assertEquals(1.0, pid.getIntegralLeakRatio(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testPIDControllerConstructorFromGains4()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -178,8 +171,7 @@ public class PIDControllerTest
       assertEquals(1.0, pid.getIntegralLeakRatio(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testGetProportionalGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -187,8 +179,7 @@ public class PIDControllerTest
       assertEquals(0.0, pid.getProportionalGain(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testGetIntegralGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -196,8 +187,7 @@ public class PIDControllerTest
       assertEquals(0.0, pid.getIntegralGain(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testGetDerivativeGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -205,8 +195,7 @@ public class PIDControllerTest
       assertEquals(0.0, pid.getDerivativeGain(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testGetDeadband()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -214,8 +203,7 @@ public class PIDControllerTest
       assertEquals(0.0, pid.getPositionDeadband(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testGetMaxIntegralError()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -223,8 +211,7 @@ public class PIDControllerTest
       assertEquals(Double.POSITIVE_INFINITY, pid.getMaxIntegralError(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testGetCumulativeError()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -232,8 +219,7 @@ public class PIDControllerTest
       assertEquals(0.0, pid.getCumulativeError(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testGetLeakRate()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -241,8 +227,7 @@ public class PIDControllerTest
       assertEquals(1.0, pid.getIntegralLeakRatio(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetProportionalGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -251,8 +236,7 @@ public class PIDControllerTest
       assertEquals(5.0, pid.getProportionalGain(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetIntegralGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -261,8 +245,7 @@ public class PIDControllerTest
       assertEquals(5.0, pid.getIntegralGain(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetDerivativeGain()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -271,8 +254,7 @@ public class PIDControllerTest
       assertEquals(5.0, pid.getDerivativeGain(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testSetDeadband()
    {
       double deadband = random.nextDouble() * 10.0;
@@ -283,8 +265,7 @@ public class PIDControllerTest
       assertEquals(deadband, pid.getPositionDeadband(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetMaxIntegralError()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -293,8 +274,7 @@ public class PIDControllerTest
       assertEquals(5.0, pid.getMaxIntegralError(), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testSetCumulativeError()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -303,8 +283,7 @@ public class PIDControllerTest
       assertEquals(5.0, pid.getCumulativeError(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.2)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testSetIntegralLeakRatio()
    {
       double leakRatio = random.nextDouble();
@@ -314,8 +293,7 @@ public class PIDControllerTest
       assertEquals(leakRatio, pid.getIntegralLeakRatio(), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testSetIntegralLeakRatio2()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -332,8 +310,7 @@ public class PIDControllerTest
       assertTrue(pid.getIntegralLeakRatio() >= 0.0);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testSetIntegralLeakRatio3()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -357,8 +334,7 @@ public class PIDControllerTest
       assertTrue(pid.getIntegralLeakRatio() >= 0.0);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCompute()
    {
       YoVariableRegistry registry = new YoVariableRegistry("mike");
@@ -384,8 +360,7 @@ public class PIDControllerTest
       assertEquals(17.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testComputeFromYoPIDGains()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -411,8 +386,7 @@ public class PIDControllerTest
       assertEquals(17.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCompute_proportional()
    {
       PIDController pid = new PIDController("", null);
@@ -429,8 +403,7 @@ public class PIDControllerTest
       assertEquals(30.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testCompute_proportional_withDeadband()
    {
       PIDController pid = new PIDController("", null);
@@ -449,8 +422,7 @@ public class PIDControllerTest
       assertEquals(6.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.3)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCompute_integral()
    {
       PIDController pid = new PIDController("", null);
@@ -467,8 +439,7 @@ public class PIDControllerTest
       assertEquals(8.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCompute_derivative()
    {
       PIDController pid = new PIDController("", null);
@@ -485,8 +456,7 @@ public class PIDControllerTest
       assertEquals(36.0, pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 0.1), 0.001);
    }
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.2)
-	@Test(timeout=300000)
+	@Test// timeout=300000
    public void testCompute_all_PID()
    {
       PIDController pid = new PIDController("", null);
@@ -508,8 +478,7 @@ public class PIDControllerTest
       assertEquals((10.0 + 30.0 + 8.0), pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 1.01), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testCompute_all_PID_withDeadband()
    {
       PIDController pid = new PIDController("", null);
@@ -532,8 +501,7 @@ public class PIDControllerTest
       assertEquals((7.0 + 30.0 + 8.0), pid.compute(currentPosition, desiredPosition, currentRate, desiredRate, 3.0), 0.001);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout=300000)
+   @Test// timeout=300000
    public void testCompute_all_PID_From_YoPID()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");

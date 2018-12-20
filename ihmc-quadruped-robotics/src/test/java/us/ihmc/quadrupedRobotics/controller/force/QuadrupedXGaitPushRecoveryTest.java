@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import controller_msgs.msg.dds.QuadrupedTimedStepListMessage;
 import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.commonWalkingControlModules.pushRecovery.PushRobotTestConductor;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.time.TimeInterval;
@@ -37,7 +38,7 @@ public abstract class QuadrupedXGaitPushRecoveryTest implements QuadrupedMultiRo
    private QuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
 
-   @Before
+   @BeforeEach
    public void setup()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -60,7 +61,7 @@ public abstract class QuadrupedXGaitPushRecoveryTest implements QuadrupedMultiRo
       }
    }
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       quadrupedTestFactory.close();
@@ -77,15 +78,13 @@ public abstract class QuadrupedXGaitPushRecoveryTest implements QuadrupedMultiRo
    public abstract double getWalkingSpeed();
    public abstract double getStepDuration();
 
-   @ContinuousIntegrationTest(estimatedDuration = 30.0)
-   @Test(timeout = 630000)
+   @Test// timeout = 630000
    public void testWalkingForwardFastWithPush()
    {
       testWalkingWithPush(90.0, getWalkingSpeed());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 30.0)
-   @Test(timeout = 630000)
+   @Test// timeout = 630000
    public void testScriptedWalkingForwardFastWithPush()
    {
       testScriptedWalkingWithPush(90.0, getWalkingSpeed(), getStepDuration());
