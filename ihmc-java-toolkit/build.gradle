@@ -1,6 +1,6 @@
 plugins {
    id("us.ihmc.ihmc-build") version "0.15.5"
-   id("us.ihmc.ihmc-ci") version "4.3"
+   id("us.ihmc.ihmc-ci") version "4.4"
    id("us.ihmc.log-tools") version "0.2.2"
 }
 
@@ -20,7 +20,7 @@ mainDependencies {
    compile group: "us.ihmc.thirdparty.jinput", name: "jinput", version: "180727"
    compile group: "com.google.guava", name: "guava", version: "18.0"
 
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons", version: "0.25.0"
    compile group: "us.ihmc", name: "euclid-core", version: "0.7.0"
    compile group: "us.ihmc", name: "ihmc-graphics-description", version: "0.12.7"
 }
@@ -30,6 +30,6 @@ testDependencies {
    compile group: "org.junit.vintage", name: "junit-vintage-engine", version: "5.3.1"
 
    compile group: "us.ihmc", name: "ihmc-ci-core-api", version: "0.18.0"
-   compile group: "us.ihmc", name: "ihmc-commons-testing", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons-testing", version: "0.25.0"
    compile group: "us.ihmc", name: "ihmc-robotics-toolkit-test", version: "source"
 }

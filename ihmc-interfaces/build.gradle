@@ -15,7 +15,7 @@ buildscript {
 
 plugins {
    id("us.ihmc.ihmc-build") version "0.15.5"
-   id("us.ihmc.ihmc-ci") version "4.3"
+   id("us.ihmc.ihmc-ci") version "4.4"
    id("us.ihmc.log-tools") version "0.2.2"
 }
 
@@ -37,7 +37,7 @@ mainDependencies {
    compile group: "us.ihmc", name: "euclid", version: "0.10.0"
    compile group: "us.ihmc", name: "ihmc-pub-sub", version: "0.10.0"
    compile group: "us.ihmc", name: "ros2-common-interfaces", version: "0.13.0"
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons", version: "0.25.0"
 }
 
 testDependencies {
@@ -46,7 +46,7 @@ testDependencies {
 }
 
 generatorDependencies {
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons", version: "0.25.0"
    compile group: "us.ihmc", name: "ros2-msg-to-pubsub-generator", version: "0.13.0"
 }
 

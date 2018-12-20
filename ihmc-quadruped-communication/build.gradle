@@ -1,6 +1,6 @@
 plugins {
    id("us.ihmc.ihmc-build") version "0.15.5"
-   id("us.ihmc.ihmc-ci") version "4.3"
+   id("us.ihmc.ihmc-ci") version "4.4"
    id("us.ihmc.log-tools") version "0.2.2"
 }
 
@@ -18,7 +18,7 @@ mainDependencies {
 
    compile group: "us.ihmc", name: "euclid", version: "0.10.0"
    compile group: "us.ihmc", name: "ihmc-yovariables", version: "0.3.6"
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons", version: "0.25.0"
    compile group: "us.ihmc", name: "ihmc-robotics-toolkit", version: "source"
    compile group: "us.ihmc", name: "ihmc-quadruped-basics", version: "source"
    compile group: "us.ihmc", name: "ihmc-common-walking-control-modules", version: "source"
