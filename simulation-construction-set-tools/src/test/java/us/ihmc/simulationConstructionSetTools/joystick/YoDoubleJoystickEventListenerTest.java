@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Disabled;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 public class YoDoubleJoystickEventListenerTest
 {

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import us.ihmc.commons.thread.ThreadTools;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
-import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
+import us.ihmc.commons.ContinuousIntegrationTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -23,7 +23,7 @@ import us.ihmc.robotics.graphics.Graphics3DObjectTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public class ConstructingGroundPlaneAroundFeetTest
 {

@@ -1,6 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.optimization.qpInput;
 
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.qpInput.ICPQPIndexHandler;
 import us.ihmc.commons.MutationTestFacilitator;

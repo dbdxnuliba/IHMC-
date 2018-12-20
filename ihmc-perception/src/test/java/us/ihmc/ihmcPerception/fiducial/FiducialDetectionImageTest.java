@@ -1,6 +1,6 @@
 package us.ihmc.ihmcPerception.fiducial;
 
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -26,7 +26,7 @@ import georegression.struct.se.Se3_F64;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
 import us.ihmc.commons.PrintTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
+import us.ihmc.commons.ContinuousIntegrationTools;
 import us.ihmc.tools.io.resources.ResourceTools;
 import us.ihmc.commons.thread.ThreadTools;
 

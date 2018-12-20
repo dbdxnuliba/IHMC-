@@ -1,6 +1,6 @@
 package us.ihmc.simulationConstructionSetTools.util.globalParameters;
 
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

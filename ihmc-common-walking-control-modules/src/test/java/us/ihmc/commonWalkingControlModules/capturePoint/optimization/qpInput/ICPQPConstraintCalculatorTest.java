@@ -11,9 +11,9 @@ import us.ihmc.robotics.testing.JUnitTools;
 
 import java.util.Random;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static us.ihmc.robotics.Assert.*;
+
+import static us.ihmc.robotics.Assert.*;
 
 public class ICPQPConstraintCalculatorTest
 {

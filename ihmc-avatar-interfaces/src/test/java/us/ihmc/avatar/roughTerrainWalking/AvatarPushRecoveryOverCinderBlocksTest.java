@@ -1,6 +1,6 @@
 package us.ihmc.avatar.roughTerrainWalking;
 
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

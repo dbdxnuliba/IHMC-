@@ -17,7 +17,7 @@ import us.ihmc.tools.MemoryTools;
 
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements QuadrupedMultiRobotTestInterface
 {

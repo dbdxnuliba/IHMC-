@@ -2,7 +2,6 @@ package us.ihmc.parameterTuner;
 
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.PrintTools;
@@ -10,6 +9,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
 import us.ihmc.parameterTuner.guiElements.GuiParameter;
 import us.ihmc.parameterTuner.guiElements.GuiRegistry;
+import us.ihmc.robotics.Assert;
 
 public class ParameterSavingToolsTest
 {

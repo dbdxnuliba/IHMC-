@@ -26,7 +26,7 @@ import us.ihmc.robotics.testing.YoVariableTestGoal;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.tools.MemoryTools;
 
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public abstract class QuadrupedForceBasedStandControllerTest implements QuadrupedMultiRobotTestInterface
 {

@@ -1,6 +1,6 @@
 package us.ihmc.sensorProcessing.pointClouds.combinationQuadTreeOctTree;
 
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Collection;

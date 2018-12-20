@@ -19,7 +19,7 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public class QuadrupedXGaitPlannerTest
 {

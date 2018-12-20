@@ -12,7 +12,7 @@ import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityMapHolder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public class DijkstraVisibilityGraphPlannerTest
 {

@@ -1,7 +1,7 @@
 package us.ihmc.robotics.math;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.*;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;

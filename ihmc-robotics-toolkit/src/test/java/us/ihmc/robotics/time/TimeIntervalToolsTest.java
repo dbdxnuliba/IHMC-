@@ -1,6 +1,6 @@
 package us.ihmc.robotics.time;
 
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
@@ -9,7 +9,7 @@ import us.ihmc.robotics.time.TimeIntervalTools;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 public class TimeIntervalToolsTest
 {

@@ -1,12 +1,12 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

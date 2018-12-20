@@ -1,7 +1,7 @@
 package us.ihmc.pathPlanning.visibilityGraphs.tools;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertNull;
+import static us.ihmc.robotics.Assert.*;
+
 import static us.ihmc.euclid.tools.EuclidCoreRandomTools.nextDouble;
 
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.RandomNumbers;

@@ -1,6 +1,6 @@
 package us.ihmc.robotics.math.trajectories.waypoints;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

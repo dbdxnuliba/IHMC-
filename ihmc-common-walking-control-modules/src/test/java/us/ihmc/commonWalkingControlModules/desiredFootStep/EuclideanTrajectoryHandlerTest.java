@@ -1,6 +1,6 @@
 package us.ihmc.commonWalkingControlModules.desiredFootStep;
 
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 import us.ihmc.commonWalkingControlModules.messageHandlers.EuclideanTrajectoryHandler;
 import org.junit.jupiter.api.Tag;

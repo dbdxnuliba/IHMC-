@@ -5,8 +5,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
 import us.ihmc.robotics.time.TimeInterval;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
+
+import static us.ihmc.robotics.Assert.*;
 
 public class TimeIntervalTest
 {

@@ -20,7 +20,7 @@ import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.communication.packets.ToolboxState;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
-import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
+import us.ihmc.commons.ContinuousIntegrationTools;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -59,8 +59,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static us.ihmc.robotics.Assert.*;
 
 @Disabled
 public abstract class AvatarBipedalFootstepPlannerEndToEndTest implements MultiRobotTestInterface

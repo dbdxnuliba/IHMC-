@@ -1,12 +1,11 @@
 package us.ihmc.avatar.controllerAPI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.Random;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

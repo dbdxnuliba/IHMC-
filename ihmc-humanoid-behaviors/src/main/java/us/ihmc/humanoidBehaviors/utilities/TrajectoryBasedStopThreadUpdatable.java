@@ -1,6 +1,5 @@
 package us.ihmc.humanoidBehaviors.utilities;
 
-import static org.junit.Assert.assertTrue;
 
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
@@ -86,7 +85,7 @@ public class TrajectoryBasedStopThreadUpdatable extends StopThreadUpdatable
       }
       else if ((elapsedTimeOld - pauseStartTime) < pauseDuration && (elapsedTime - pauseStartTime) >= pauseDuration)
       {
-         assertTrue(!behavior.isDone());
+//         assertTrue(!behavior.isDone());
 
          PrintTools.debug(this, "Requesting Resume");
          setRequestedBehaviorControlMode(BehaviorControlModeEnum.RESUME);

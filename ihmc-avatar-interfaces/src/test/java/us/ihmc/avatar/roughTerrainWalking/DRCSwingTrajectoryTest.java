@@ -1,12 +1,12 @@
 package us.ihmc.avatar.roughTerrainWalking;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.BeforeEach;
 
 import controller_msgs.msg.dds.FootstepDataListMessage;

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 public class DoubleGlobalParameterTest
 {

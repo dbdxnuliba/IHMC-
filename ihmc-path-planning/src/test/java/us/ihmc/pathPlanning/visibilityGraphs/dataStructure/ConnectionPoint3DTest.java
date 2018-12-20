@@ -8,7 +8,7 @@ import us.ihmc.euclid.tools.EuclidCoreRandomTools;
 
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 public class ConnectionPoint3DTest
 {

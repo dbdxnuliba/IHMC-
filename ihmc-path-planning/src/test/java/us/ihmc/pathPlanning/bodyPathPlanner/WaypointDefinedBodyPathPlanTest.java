@@ -9,7 +9,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.Rule;
 import org.junit.jupiter.api.Test;
 import org.junit.rules.TestName;

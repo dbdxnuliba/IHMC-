@@ -16,8 +16,7 @@ import us.ihmc.robotics.geometry.PlanarRegionTestTools;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 public class VisibilityGraphTestTools
 {

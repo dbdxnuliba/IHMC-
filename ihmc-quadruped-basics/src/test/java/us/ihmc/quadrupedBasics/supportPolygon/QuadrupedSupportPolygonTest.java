@@ -32,7 +32,7 @@ import us.ihmc.yoVariables.variable.YoFramePoint3D;
 
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.*;
 
 @VmOptions("-XX:-TieredCompilation")
 public class QuadrupedSupportPolygonTest

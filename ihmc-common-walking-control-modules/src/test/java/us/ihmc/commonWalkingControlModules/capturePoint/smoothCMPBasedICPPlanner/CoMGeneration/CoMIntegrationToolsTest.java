@@ -1,7 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoMGeneration;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.Assert;
+import us.ihmc.robotics.Assert;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.CapturePointTools;

@@ -1,6 +1,6 @@
 package us.ihmc.commonWalkingControlModules.trajectories;
 
-import static org.junit.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

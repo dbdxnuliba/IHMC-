@@ -29,8 +29,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 import java.util.Random;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 @Disabled
 public class PlanarRegionBaseOfCliffAvoiderTest
