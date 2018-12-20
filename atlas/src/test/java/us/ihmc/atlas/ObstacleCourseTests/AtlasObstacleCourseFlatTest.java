@@ -15,7 +15,6 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
-import static us.ihmc.continuousIntegration.IntegrationCategory.SLOW;
 
 @Tag("video")
 public class AtlasObstacleCourseFlatTest extends DRCObstacleCourseFlatTest
