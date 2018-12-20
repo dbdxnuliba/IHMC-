@@ -111,7 +111,6 @@ public class YoMinimumJerkTrajectoryTest
    }
 
 	// FIXME That test is stuck in an infinite loop of some sort.
-	@Disabled
    @Disabled
    @Test// timeout=300000
    public void testTimeExtension()

@@ -51,7 +51,6 @@ public class AStarOnRoughTerrainTest extends FootstepPlannerOnRoughTerrainTest
 
    @Override
    @Disabled
-   @Disabled
    @Test// timeout = 51000
    public void testPartialGaps()
    {
@@ -59,7 +58,6 @@ public class AStarOnRoughTerrainTest extends FootstepPlannerOnRoughTerrainTest
    }
 
    @Override
-   @Disabled
    @Disabled
    @Test// timeout = 51000
    public void testSpiralStaircase()

@@ -48,7 +48,6 @@ public class ComparePushRodTransmissionsTest
    }
 
 	@Disabled
-	@Disabled
 	@Test// timeout=300000
    public void testTiming()
    {

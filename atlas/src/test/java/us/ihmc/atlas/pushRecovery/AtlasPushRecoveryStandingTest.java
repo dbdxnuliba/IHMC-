@@ -30,7 +30,6 @@ public class AtlasPushRecoveryStandingTest extends DRCPushRecoveryStandingTest
 	}
 
 	@Disabled("Needs to be improved")
-	@Disabled
    @Test// timeout = 270000
 	@Override
 	public void testDoublePushForwardInDoubleSupportAndContinueWalking() throws SimulationExceededMaximumTimeException, InterruptedException, ControllerFailureException
