@@ -5,6 +5,10 @@ import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.state
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedJointSpaceCommand;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -18,6 +22,8 @@ import us.ihmc.yoVariables.variable.YoEnum;
 
 public class LegConfigurationControlModule
 {
+   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+
    private final YoVariableRegistry registry;
 
    private final PrivilegedJointSpaceCommand privilegedAccelerationCommand = new PrivilegedJointSpaceCommand();
@@ -57,7 +63,7 @@ public class LegConfigurationControlModule
       OneDoFJointBasics kneePitchJoint = controllerToolbox.getFullRobotModel().getLegJoint(robotSide, LegJointName.KNEE_PITCH);
       OneDoFJointBasics anklePitchJoint = controllerToolbox.getFullRobotModel().getLegJoint(robotSide, LegJointName.ANKLE_PITCH);
 
-      toolbox = new LegConfigurationControlToolbox(sidePrefix, kneePitchJoint, legConfigurationParameters, registry);
+      toolbox = new LegConfigurationControlToolbox(sidePrefix, hipPitchJoint, kneePitchJoint, anklePitchJoint, legConfigurationParameters, registry);
 
       privilegedAccelerationCommand.addJoint(hipPitchJoint, Double.NaN);
       privilegedAccelerationCommand.addJoint(kneePitchJoint, Double.NaN);
@@ -130,8 +136,9 @@ public class LegConfigurationControlModule
 
       controller.setKneePitchPrivilegedConfiguration(currentState.getKneePitchPrivilegedConfiguration());
       controller.setLegConfigurationGains(currentState.getLegConfigurationGains());
+      controller.computeKneeAcceleration();
 
-      double privilegedKneeAcceleration = controller.computeKneeAcceleration();
+      double privilegedKneeAcceleration = controller.getKneeAcceleration();
       double privilegedHipPitchAcceleration = -0.5 * privilegedKneeAcceleration;
       double privilegedAnklePitchAcceleration = -0.5 * privilegedKneeAcceleration;
 
@@ -143,6 +150,8 @@ public class LegConfigurationControlModule
       privilegedAccelerationCommand.setWeight(hipPitchJointIndex, kneePitchPrivilegedConfigurationWeight);
       privilegedAccelerationCommand.setWeight(kneePitchJointIndex, kneePitchPrivilegedConfigurationWeight);
       privilegedAccelerationCommand.setWeight(anklePitchJointIndex, kneePitchPrivilegedConfigurationWeight);
+
+      computeDesiredLegAcceleration();
    }
 
    public void setStepDuration(double stepDuration)
@@ -185,17 +194,7 @@ public class LegConfigurationControlModule
       return privilegedAccelerationCommand;
    }
 
-   private double getDesiredStraightLegAngle()
-   {
-      if (toolbox.useBracingAngle())
-         return desiredAngleWhenBracing.getDoubleValue();
-      else if (useFullyExtendedLeg.getBooleanValue())
-         return desiredAngleWhenExtended.getDoubleValue();
-      else
-         return desiredAngleWhenStraight.getDoubleValue();
-   }
-
-   private double getWeight()
+   public double getWeight()
    {
       switch (toolbox.getLegControlWeight().getEnumValue())
       {
@@ -206,5 +205,37 @@ public class LegConfigurationControlModule
       default:
          return highPrivilegedWeight.getDoubleValue();
       }
+   }
+
+   public FrameVector3DReadOnly getDesiredLegAcceleration()
+   {
+      return legAcceleration;
+   }
+
+   private double getDesiredStraightLegAngle()
+   {
+      if (toolbox.useBracingAngle())
+         return desiredAngleWhenBracing.getDoubleValue();
+      else if (useFullyExtendedLeg.getBooleanValue())
+         return desiredAngleWhenExtended.getDoubleValue();
+      else
+         return desiredAngleWhenStraight.getDoubleValue();
+   }
+
+   private final FramePoint3D hipPosition = new FramePoint3D();
+   private final FramePoint3D anklePosition = new FramePoint3D();
+
+   private final FrameVector3D legAcceleration = new FrameVector3D();
+
+   private void computeDesiredLegAcceleration()
+   {
+      hipPosition.setToZero(toolbox.getHipPitchJoint().getFrameAfterJoint());
+      anklePosition.setToZero(toolbox.getAnklePitchJoint().getFrameBeforeJoint());
+      hipPosition.changeFrame(worldFrame);
+      anklePosition.changeFrame(worldFrame);
+
+      legAcceleration.sub(hipPosition, anklePosition);
+      legAcceleration.normalize();
+      legAcceleration.scale(controller.getKneeAcceleration());
    }
 }

@@ -14,6 +14,7 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class LegConfigurationManager
 {
@@ -33,6 +34,9 @@ public class LegConfigurationManager
    private final YoDouble stepHeightForForcedCollapse = new YoDouble("stepHeightForForcedCollapsing", registry);
    private final YoDouble minStepLengthForCollapse = new YoDouble("minStepLengthForCollapse", registry);
 
+   private final YoFrameVector3D weightedAverageAcceleration = new YoFrameVector3D("weightedAverageLegAcceleration", ReferenceFrame.getWorldFrame(), registry);
+
+   private final HighLevelHumanoidControllerToolbox controllerToolbox;
    private final SideDependentList<LegConfigurationControlModule> legConfigurationControlModules = new SideDependentList<>();
    private final SideDependentList<? extends ContactablePlaneBody> feet;
 
@@ -42,6 +46,7 @@ public class LegConfigurationManager
    public LegConfigurationManager(HighLevelHumanoidControllerToolbox controllerToolbox, WalkingControllerParameters walkingControllerParameters,
                                   YoVariableRegistry parentRegistry)
    {
+      this.controllerToolbox = controllerToolbox;
       this.feet = controllerToolbox.getContactableFeet();
 
       LegConfigurationParameters legConfigurationParameters = walkingControllerParameters.getLegConfigurationParameters();
@@ -51,8 +56,8 @@ public class LegConfigurationManager
       attemptToStraightenLegs.set(legConfigurationParameters.attemptToStraightenLegs());
 
       this.inPlaceWidth = walkingControllerParameters.getSteppingParameters().getInPlaceWidth();
-      this.footLength = walkingControllerParameters.getSteppingParameters().getFootBackwardOffset()
-            + walkingControllerParameters.getSteppingParameters().getFootForwardOffset();
+      this.footLength = walkingControllerParameters.getSteppingParameters().getFootBackwardOffset() + walkingControllerParameters.getSteppingParameters()
+                                                                                                                                 .getFootForwardOffset();
 
       maxStepHeightForCollapse.set(stepHeightForCollapse);
       stepHeightForForcedCollapse.set(stepDownTooFar);
@@ -71,9 +76,24 @@ public class LegConfigurationManager
 
    public void compute()
    {
+      double totalWeight = 0.0;
       for (RobotSide robotSide : RobotSide.values)
       {
-         legConfigurationControlModules.get(robotSide).doControl();
+         LegConfigurationControlModule controlModule = legConfigurationControlModules.get(robotSide);
+         controlModule.doControl();
+         if (controllerToolbox.getFootContactState(robotSide).inContact())
+            totalWeight += controlModule.getWeight();
+      }
+
+      weightedAverageAcceleration.setToZero();
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         LegConfigurationControlModule controlModule = legConfigurationControlModules.get(robotSide);
+         if (controllerToolbox.getFootContactState(robotSide).inContact())
+         {
+            weightedAverageAcceleration
+                  .scaleAdd(controlModule.getWeight() / totalWeight, controlModule.getDesiredLegAcceleration(), weightedAverageAcceleration);
+         }
       }
    }
 
@@ -120,8 +140,8 @@ public class LegConfigurationManager
 
    public void straightenLegDuringSwing(RobotSide swingSide)
    {
-      if (legConfigurationControlModules.get(swingSide).getCurrentKneeControlState() != LegConfigurationType.STRAIGHTEN &&
-            legConfigurationControlModules.get(swingSide).getCurrentKneeControlState() != LegConfigurationType.STRAIGHT)
+      if (legConfigurationControlModules.get(swingSide).getCurrentKneeControlState() != LegConfigurationType.STRAIGHTEN
+            && legConfigurationControlModules.get(swingSide).getCurrentKneeControlState() != LegConfigurationType.STRAIGHT)
       {
          setStraight(swingSide);
          setFullyExtendLeg(swingSide, true);
@@ -241,13 +261,19 @@ public class LegConfigurationManager
       if (isNextStepTooHigh)
          return false;
 
-      boolean isSideStepping = Math.abs(Math.atan2(tempLeadingFootPosition.getY(), tempLeadingFootPosition.getX())) > Math.toRadians(minimumAngleForSideStepping);
+      boolean isSideStepping =
+            Math.abs(Math.atan2(tempLeadingFootPosition.getY(), tempLeadingFootPosition.getX())) > Math.toRadians(minimumAngleForSideStepping);
       if (isSideStepping)
          return false;
 
       boolean isStepLongEnough = tempLeadingFootPosition.distance(tempTrailingFootPosition) > minStepLengthForCollapse.getDoubleValue();
       boolean isStepLongEnoughAlongX = tempLeadingFootPosition.getX() > footLength;
       return isStepLongEnough && isStepLongEnoughAlongX;
+   }
+
+   public double getDesiredVerticalAcceleration()
+   {
+      return weightedAverageAcceleration.getZ();
    }
 
    public FeedbackControlCommand<?> getFeedbackControlCommand(RobotSide robotSide)

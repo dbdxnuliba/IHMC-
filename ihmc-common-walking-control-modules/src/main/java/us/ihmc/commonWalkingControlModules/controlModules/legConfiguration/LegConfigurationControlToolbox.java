@@ -28,14 +28,19 @@ public class LegConfigurationControlToolbox
    private final double kneeRangeOfMotion;
    private final double kneeMidRangeOfMotion;
 
+   private final OneDoFJointBasics hipPitchJoint;
    private final OneDoFJointBasics kneePitchJoint;
+   private final OneDoFJointBasics anklePitchJoint;
 
    private final LegConfigurationParameters parameters;
 
-   public LegConfigurationControlToolbox(String sidePrefix, OneDoFJointBasics kneePitchJoint, LegConfigurationParameters parameters, YoVariableRegistry parentRegistry)
+   public LegConfigurationControlToolbox(String sidePrefix, OneDoFJointBasics hipPitchJoint, OneDoFJointBasics kneePitchJoint, OneDoFJointBasics anklePitchJoint,
+                                         LegConfigurationParameters parameters, YoVariableRegistry parentRegistry)
    {
       String namePrefix = sidePrefix + "Leg";
+      this.hipPitchJoint = hipPitchJoint;
       this.kneePitchJoint = kneePitchJoint;
+      this.anklePitchJoint = anklePitchJoint;
       this.straightLegGains = new YoLegConfigurationGains("straight", parameters.getStraightLegGains(), registry);
       this.bentLegGains = new YoLegConfigurationGains("bent", parameters.getBentLegGains(), registry);
       this.parameters = parameters;
@@ -99,10 +104,21 @@ public class LegConfigurationControlToolbox
       return kneeRangeOfMotion;
    }
 
+   public OneDoFJointBasics getHipPitchJoint()
+   {
+      return hipPitchJoint;
+   }
+
    public OneDoFJointBasics getKneePitchJoint()
    {
       return kneePitchJoint;
    }
+
+   public OneDoFJointBasics getAnklePitchJoint()
+   {
+      return anklePitchJoint;
+   }
+
 
    public LegConfigurationParameters getParameters()
    {
