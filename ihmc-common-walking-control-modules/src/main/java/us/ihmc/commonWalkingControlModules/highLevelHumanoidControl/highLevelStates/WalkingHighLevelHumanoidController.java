@@ -662,12 +662,13 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       // the comHeightManager can control the pelvis with a feedback controller and doesn't always need the z component of the momentum command. It would be better to remove the coupling between these two modules
       boolean controlHeightWithMomentum = comHeightManager.getControlHeightWithMomentum();
       boolean keepCMPInsideSupportPolygon = !bodyManagerIsLoadBearing;
+
+      double comHeightAcceleration = controlHeightWithMomentum ? controlledCoMHeightAcceleration.getDoubleValue() : legConfigurationManager.getDesiredVerticalAcceleration();
+
       if (currentState.isDoubleSupportState())
-         balanceManager.compute(currentState.getTransferToSide(), controlledCoMHeightAcceleration.getDoubleValue(), keepCMPInsideSupportPolygon,
-                                controlHeightWithMomentum);
+         balanceManager.compute(currentState.getTransferToSide(), comHeightAcceleration, keepCMPInsideSupportPolygon, controlHeightWithMomentum);
       else
-         balanceManager.compute(currentState.getSupportSide(), controlledCoMHeightAcceleration.getDoubleValue(), keepCMPInsideSupportPolygon,
-                                controlHeightWithMomentum);
+         balanceManager.compute(currentState.getSupportSide(), comHeightAcceleration, keepCMPInsideSupportPolygon, controlHeightWithMomentum);
    }
 
    private void submitControllerCoreCommands()
