@@ -38,6 +38,8 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
       gains.setActuatorSpaceKp(750.0);
       gains.setJointSpaceKd(runningOnRealRobot ? 3.0 : 10.0);
 
+//      gains.setSpringSpaceKp(15.0); // this is normalized w.r.t. body weight
+
       return gains;
    }
 

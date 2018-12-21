@@ -1,7 +1,10 @@
 package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration;
 
 import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
+import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGainsReadOnly;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.YoLegConfigurationGains;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
@@ -50,14 +53,22 @@ public class LegConfigurationManager
       this.feet = controllerToolbox.getContactableFeet();
 
       LegConfigurationParameters legConfigurationParameters = walkingControllerParameters.getLegConfigurationParameters();
+
+      LegConfigurationGainsReadOnly straightLegGains = new YoLegConfigurationGains("straight", legConfigurationParameters.getStraightLegGains(), registry);
+      LegConfigurationGainsReadOnly bentLegGains = new YoLegConfigurationGains("bent", legConfigurationParameters.getBentLegGains(), registry);
+
       for (RobotSide robotSide : RobotSide.values)
-         legConfigurationControlModules.put(robotSide, new LegConfigurationControlModule(robotSide, controllerToolbox, legConfigurationParameters, registry));
+      {
+         LegConfigurationControlModule controlModule = new LegConfigurationControlModule(robotSide, controllerToolbox, legConfigurationParameters, registry);
+         controlModule.setLegGains(straightLegGains, bentLegGains);
+         legConfigurationControlModules.put(robotSide, controlModule);
+      }
 
       attemptToStraightenLegs.set(legConfigurationParameters.attemptToStraightenLegs());
 
-      this.inPlaceWidth = walkingControllerParameters.getSteppingParameters().getInPlaceWidth();
-      this.footLength = walkingControllerParameters.getSteppingParameters().getFootBackwardOffset() + walkingControllerParameters.getSteppingParameters()
-                                                                                                                                 .getFootForwardOffset();
+      SteppingParameters steppingParameters = walkingControllerParameters.getSteppingParameters();
+      this.inPlaceWidth = steppingParameters.getInPlaceWidth();
+      this.footLength = steppingParameters.getFootBackwardOffset() + steppingParameters.getFootForwardOffset();
 
       maxStepHeightForCollapse.set(stepHeightForCollapse);
       stepHeightForForcedCollapse.set(stepDownTooFar);

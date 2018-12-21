@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.controlModules.legConfiguration;
 
 import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
+import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.gains.LegConfigurationGainsReadOnly;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.states.*;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedJointSpaceCommand;
@@ -120,6 +121,12 @@ public class LegConfigurationControlModule
       }
 
       return factory.build(attemptToStraightenLegs ? LegConfigurationType.STRAIGHT : LegConfigurationType.BENT);
+   }
+
+   public void setLegGains(LegConfigurationGainsReadOnly straightLegGains, LegConfigurationGainsReadOnly bentLegGains)
+   {
+      toolbox.setStraightLegGains(straightLegGains);
+      toolbox.setBentLegGains(bentLegGains);
    }
 
    public void initialize()

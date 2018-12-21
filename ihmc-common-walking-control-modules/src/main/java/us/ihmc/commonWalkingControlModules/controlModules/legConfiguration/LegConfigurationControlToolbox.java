@@ -21,8 +21,8 @@ public class LegConfigurationControlToolbox
    private final YoBoolean useBracingAngle;
 
 
-   private final LegConfigurationGainsReadOnly straightLegGains;
-   private final LegConfigurationGainsReadOnly bentLegGains;
+   private LegConfigurationGainsReadOnly straightLegGains;
+   private LegConfigurationGainsReadOnly bentLegGains;
 
    private final double kneeSquareRangeOfMotion;
    private final double kneeRangeOfMotion;
@@ -41,8 +41,6 @@ public class LegConfigurationControlToolbox
       this.hipPitchJoint = hipPitchJoint;
       this.kneePitchJoint = kneePitchJoint;
       this.anklePitchJoint = anklePitchJoint;
-      this.straightLegGains = new YoLegConfigurationGains("straight", parameters.getStraightLegGains(), registry);
-      this.bentLegGains = new YoLegConfigurationGains("bent", parameters.getBentLegGains(), registry);
       this.parameters = parameters;
 
       legControlWeight = YoEnum.create(namePrefix + "LegControlWeight", "", LegControlWeight.class, registry, false);
@@ -62,6 +60,16 @@ public class LegConfigurationControlToolbox
       kneeMidRangeOfMotion = 0.5 * (kneeLimitUpper + kneeLimitLower);
 
       parentRegistry.addChild(registry);
+   }
+
+   public void setStraightLegGains(LegConfigurationGainsReadOnly straightLegGains)
+   {
+      this.straightLegGains = straightLegGains;
+   }
+
+   public void setBentLegGains(LegConfigurationGainsReadOnly bentLegGains)
+   {
+      this.bentLegGains = bentLegGains;
    }
 
    public LegConfigurationGainsReadOnly getStraightLegGains()

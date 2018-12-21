@@ -16,7 +16,7 @@ public class LegConfigurationController
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private static final double minKneeAngle = 1e-2;
-   private static final double minKneeAngleToAvoidAccelExplosion = 0.7;
+   private static final double minKneeAngleToAvoidAccelExplosion = 0.3;
 
    private static final double minimumDampingScale = 0.2;
    private static final boolean scaleDamping = false;
@@ -56,7 +56,8 @@ public class LegConfigurationController
 
    private LegConfigurationGainsReadOnly legConfigurationGains;
 
-   public LegConfigurationController(String sidePrefix, LegConfigurationControlToolbox toolbox, FullHumanoidRobotModel fullRobotModel, YoVariableRegistry parentRegistry)
+   public LegConfigurationController(String sidePrefix, LegConfigurationControlToolbox toolbox, FullHumanoidRobotModel fullRobotModel,
+                                     YoVariableRegistry parentRegistry)
    {
       this.toolbox = toolbox;
       this.kneePitchJoint = toolbox.getKneePitchJoint();
@@ -159,7 +160,9 @@ public class LegConfigurationController
    private double computeJointSpaceAction()
    {
       jointSpaceError.set(kneePitchPrivilegedConfiguration.getDoubleValue() - kneePitchJoint.getQ());
-      double jointSpaceKp = legConfigurationGains.hasJointSpaceKp() ? 2.0 * legConfigurationGains.getJointSpaceKp() / toolbox.getKneeSquareRangeOfMotion() : 0.0;
+      double jointSpaceKp = legConfigurationGains.hasJointSpaceKp() ?
+            2.0 * legConfigurationGains.getJointSpaceKp() / toolbox.getKneeSquareRangeOfMotion() :
+            0.0;
       double jointSpaceKd = legConfigurationGains.hasJointSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getJointSpaceKd() : 0.0;
 
       jointSpacePAction.set(jointSpaceKp * jointSpaceError.getDoubleValue());
@@ -169,30 +172,35 @@ public class LegConfigurationController
       return jointSpaceJointAction.getDoubleValue();
    }
 
-
    private double computeActuatorSpaceAction()
    {
       double actuatorSpaceKp = legConfigurationGains.hasActuatorSpaceKp() ? legConfigurationGains.getActuatorSpaceKp() : 0.0;
-      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getActuatorSpaceKd() : 0.0;
+      double actuatorSpaceKd = legConfigurationGains.hasActuatorSpaceKd() ?
+            dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getActuatorSpaceKd() :
+            0.0;
 
       actuatorSpacePAction.set(actuatorSpaceKp * legLengthError.getDoubleValue());
       actuatorSpaceDAction.set(actuatorSpaceKd * -currentLegVelocity.getDoubleValue());
       actuatorSpaceAction.set(actuatorSpacePAction.getDoubleValue() + actuatorSpaceDAction.getDoubleValue());
 
-      actuatorSpaceJointAction.set(computeActuatorAccelerationFromJointAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), actuatorSpaceAction.getDoubleValue()));
+      actuatorSpaceJointAction.set(computeActuatorAccelerationFromJointAcceleration(kneePitchJoint.getQ(), 0.0, actuatorSpaceAction.getDoubleValue()));
+      //      actuatorSpaceJointAction.set(computeActuatorAccelerationFromJointAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), actuatorSpaceAction.getDoubleValue()));
       return actuatorSpaceJointAction.getDoubleValue();
    }
 
    private double computeSpringSpaceAction()
    {
       double springSpaceKp = legConfigurationGains.hasSpringSpaceKp() ? legConfigurationGains.getSpringSpaceKp() : 0.0;
-      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ? dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getSpringSpaceKd() : 0.0;
+      double springSpaceKd = legConfigurationGains.hasSpringSpaceKd() ?
+            dampingActionScaleFactor.getDoubleValue() * legConfigurationGains.getSpringSpaceKd() :
+            0.0;
 
       springSpacePAction.set(springSpaceKp * legLengthError.getDoubleValue());
       springSpaceDAction.set(springSpaceKd * -currentLegVelocity.getDoubleValue());
       springSpaceAction.set(springSpacePAction.getDoubleValue() + springSpaceDAction.getDoubleValue());
 
-      springSpaceJointAction.set(computeKneeAccelerationFromLegAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), springSpaceAction.getDoubleValue()));
+      //      springSpaceJointAction.set(computeKneeAccelerationFromLegAcceleration(kneePitchJoint.getQ(), kneePitchJoint.getQd(), springSpaceAction.getDoubleValue()));
+      springSpaceJointAction.set(computeKneeAccelerationFromLegAcceleration(kneePitchJoint.getQ(), 0.0, springSpaceAction.getDoubleValue()));
       return springSpaceJointAction.getDoubleValue();
    }
 
@@ -221,16 +229,21 @@ public class LegConfigurationController
       double interiorVelocity = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchVelocity) : -kneePitchVelocity;
       double interiorAcceleration = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchAcceleration) : -kneePitchAcceleration;
 
-      return TriangleTools.computeSideLengthAcceleration(thighLength, shinLength, currentLegLength.getDoubleValue(), currentLegVelocity.getDoubleValue(),
-                                                         interiorAngle, interiorVelocity, interiorAcceleration);
+      return TriangleTools
+            .computeSideLengthAcceleration(thighLength, shinLength, currentLegLength.getDoubleValue(), currentLegVelocity.getDoubleValue(), interiorAngle,
+                                           interiorVelocity, interiorAcceleration);
    }
 
    private double computeKneeAccelerationFromLegAcceleration(double kneePitchAngle, double kneePitchVelocity, double actuatorAcceleration)
    {
+//      double interiorAngle = Math.PI - Math.max(kneePitchAngle, minKneeAngle);
       double interiorAngle = Math.PI - Math.max(Math.max(kneePitchAngle, minKneeAngle), minKneeAngleToAvoidAccelExplosion);
       double interiorVelocity = kneePitchAngle < minKneeAngle ? -Math.max(0.0, kneePitchVelocity) : -kneePitchVelocity;
 
-      return -TriangleTools.computeInteriorAngleAcceleration(thighLength, shinLength, currentLegLength.getDoubleValue(), currentLegVelocity.getDoubleValue(),
-                                                             actuatorAcceleration, interiorAngle, interiorVelocity);
+      double legLength = TriangleTools.computeSideLength(thighLength, shinLength, interiorAngle);
+      double legVelocity = TriangleTools.computeSideLengthVelocity(thighLength, shinLength, interiorAngle, interiorVelocity, legLength);
+
+      return -TriangleTools
+            .computeInteriorAngleAcceleration(thighLength, shinLength, legLength, legVelocity, actuatorAcceleration, interiorAngle, interiorVelocity);
    }
 }
