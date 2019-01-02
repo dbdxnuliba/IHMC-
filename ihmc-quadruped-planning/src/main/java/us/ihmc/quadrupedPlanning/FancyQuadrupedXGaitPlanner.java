@@ -68,50 +68,49 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       plannedSteps.clear();
       for (int i = 0; i < plannedSteps.capacity(); i++)
       {
-         plannedSteps.add();
-         QuadrupedTimedOrientedStep step = plannedSteps.get(plannedSteps.size() - 1);
+         QuadrupedTimedOrientedStep nextStep = plannedSteps.add();
 
          // compute step quadrant
-         RobotQuadrant thisStepQuadrant = lastStepQuadrant.getNextRegularGaitSwingQuadrant();
-         step.setRobotQuadrant(thisStepQuadrant);
+         RobotQuadrant nextStepQuadrant = lastStepQuadrant.getNextRegularGaitSwingQuadrant();
+         nextStep.setRobotQuadrant(nextStepQuadrant);
 
          // compute step timing
-         double thisStepStartTime;
-         double thisStepEndTime;
+         double nextStepStartTime;
+         double nextStepEndTime;
          if (i == 0)
          {
-            thisStepStartTime = timeAtStartOfStep;
-            thisStepEndTime = timeAtStartOfStep + xGaitSettings.getStepDuration();
+            nextStepStartTime = lastStepStartTime;
+            nextStepEndTime = lastStepStartTime + xGaitSettings.getStepDuration();
          }
          else
          {
-            double endPhaseShift = thisStepQuadrant.isQuadrantInHind() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
-            double endTimeShift = xGaitSettings.getEndDoubleSupportDuration() + xGaitSettings.getStepDuration();
-            endTimeShift *= Math.max(Math.min(endPhaseShift, 180.0), 0.0) / 180.0;
-            thisStepStartTime = lastStepStartTime + endTimeShift;
-            thisStepEndTime = thisStepStartTime + optimizeStepDuration(thisStepStartTime, xGaitSettings.getStepDuration());
+            double endPhaseShift = nextStepQuadrant.isQuadrantInHind() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
+            endPhaseShift = MathTools.clamp(endPhaseShift, 0.0, 180.0);
+            double endTimeShift = endPhaseShift / 180.0 * (xGaitSettings.getEndDoubleSupportDuration() + xGaitSettings.getStepDuration());
+            nextStepStartTime = lastStepStartTime + endTimeShift;
+            nextStepEndTime = nextStepStartTime + optimizeStepDuration(nextStepStartTime, xGaitSettings.getStepDuration());
          }
-         step.getTimeInterval().setStartTime(thisStepStartTime);
-         step.getTimeInterval().setEndTime(thisStepEndTime);
+         nextStep.getTimeInterval().setStartTime(nextStepStartTime);
+         nextStep.getTimeInterval().setEndTime(nextStepEndTime);
 
          // compute xGait rectangle pose at end of step
-         extrapolatePose(xGaitRectanglePose, thisStepEndTime);
+         extrapolatePose(xGaitRectanglePose, nextStepEndTime);
 
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
-         step.setStepYaw(xGaitRectanglePose.getYaw());
+         nextStep.setStepYaw(xGaitRectanglePose.getYaw());
 
          // compute step goal position by sampling the corner position of the xGait rectangle at touch down
-         RobotQuadrant robotQuadrant = step.getRobotQuadrant();
+         RobotQuadrant robotQuadrant = nextStep.getRobotQuadrant();
          this.goalPosition.setIncludingFrame(xGaitRectangle.get(robotQuadrant));
-         step.setGoalPosition(this.goalPosition);
-         snapStep(step);
+         nextStep.setGoalPosition(this.goalPosition);
+         snapStep(nextStep);
 
          // compute step ground clearance
-         step.setGroundClearance(xGaitSettings.getStepGroundClearance());
+         nextStep.setGroundClearance(xGaitSettings.getStepGroundClearance());
 
          // update state for next step
-         lastStepStartTime = thisStepStartTime;
-         lastStepQuadrant = thisStepQuadrant;
+         lastStepStartTime = nextStepStartTime;
+         lastStepQuadrant = nextStepQuadrant;
       }
    }
 
@@ -204,27 +203,29 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       }
    }
 
-   private final double stepTimeWeight = 2.0;
-   private final double stepLengthWeight = 2.0;
+   private final double stepTimeWeight = 1.0;
+   private final double stepLengthWeight = 10.0;
 
-   private final double maxStepTime = 1.0;
-   private final double minStepTime = 0.2;
+   private final double maxStepDuration = 1.0;
+   private final double minStepDuration = 0.2;
    private final double nominalLength = 0.15;
 
 
-   private final double timeResolution = 0.05;
+   private final double timeResolution = 0.01;
 
    private final FramePose3D initialPose = new FramePose3D();
    private final FramePose3D finalPose = new FramePose3D();
 
    private double optimizeStepDuration(double initialTime, double nominalDuration)
    {
+      return nominalDuration;
+      /*
       double bestStepCost = Double.POSITIVE_INFINITY;
       extrapolatePose(initialPose, initialTime);
 
-      double duration = minStepTime;
+      double duration = minStepDuration;
 
-      while (duration < maxStepTime)
+      while (duration < maxStepDuration)
       {
          extrapolatePose(finalPose, initialTime + duration);
 
@@ -244,7 +245,8 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
 
       }
 
-      return duration;
+      return duration - timeResolution;
+      */
    }
 
    private double computeTranslationCost(FramePose3DReadOnly initialPose, FramePose3DReadOnly finalPose)
@@ -268,11 +270,11 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       finalPose.setOrientationYawPitchRoll(bodyPathPose.getYaw(), finalPose.getPitch(), finalPose.getRoll());
    }
 
-   private static void computeStepTimeInterval(QuadrupedTimedStep thisStep, QuadrupedTimedStep pastStepOnSameEnd, QuadrupedTimedStep pastStepOnOppositeEnd,
+   private static void computeStepTimeInterval(QuadrupedTimedStep nextStepToPack, QuadrupedTimedStep pastStepOnSameEnd, QuadrupedTimedStep pastStepOnOppositeEnd,
                                         QuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
-      RobotEnd thisStepEnd = thisStep.getRobotQuadrant().getEnd();
-      RobotSide thisStepSide = thisStep.getRobotQuadrant().getSide();
+      RobotQuadrant nextStepQuadrant = nextStepToPack.getRobotQuadrant();
+      RobotSide nextStepSide = nextStepQuadrant.getSide();
       RobotSide pastStepSide = pastStepOnOppositeEnd.getRobotQuadrant().getSide();
 
       double pastStepEndTimeForSameEnd = pastStepOnSameEnd.getTimeInterval().getEndTime();
@@ -281,19 +283,19 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       // Compute support durations and end phase shift.
       double nominalStepDuration = xGaitSettings.getStepDuration();
       double endDoubleSupportDuration = xGaitSettings.getEndDoubleSupportDuration();
-      double endPhaseShift = MathTools.clamp(xGaitSettings.getEndPhaseShift(), 0, 359);
-      if (thisStepEnd == RobotEnd.HIND)
-         endPhaseShift = 360 - endPhaseShift;
-      if (pastStepSide != thisStepSide)
-         endPhaseShift = endPhaseShift - 180;
+      double endPhaseShift = MathTools.clamp(xGaitSettings.getEndPhaseShift(), 0.0, 359.0);
+      if (nextStepQuadrant.isQuadrantInHind())
+         endPhaseShift = 360.0 - endPhaseShift;
+      if (pastStepSide != nextStepSide)
+         endPhaseShift = endPhaseShift - 180.0;
 
       // Compute step time interval. Step duration is scaled in the range (1.0, 1.5) to account for end phase shifts.
-      double thisStepStartTime = pastStepEndTimeForSameEnd + endDoubleSupportDuration;
-      double thisStepEndTime = pastStepEndTimeForOppositeEnd + (nominalStepDuration + endDoubleSupportDuration) * endPhaseShift / 180.0;
-      double thisStepDuration = MathTools.clamp(thisStepEndTime - thisStepStartTime, nominalStepDuration, 1.5 * nominalStepDuration);
+      double nextStepStartTime = pastStepEndTimeForSameEnd + endDoubleSupportDuration;
+      double nextStepEndTime = pastStepEndTimeForOppositeEnd + (nominalStepDuration + endDoubleSupportDuration) * endPhaseShift / 180.0;
+      double nextStepDuration = MathTools.clamp(nextStepEndTime - nextStepStartTime, nominalStepDuration, 1.5 * nominalStepDuration);
 
-      thisStep.getTimeInterval().setStartTime(thisStepStartTime);
-      thisStep.getTimeInterval().setEndTime(thisStepStartTime + thisStepDuration);
+      nextStepToPack.getTimeInterval().setStartTime(nextStepStartTime);
+      nextStepToPack.getTimeInterval().setEndTime(nextStepStartTime + nextStepDuration);
    }
 
    @Override
