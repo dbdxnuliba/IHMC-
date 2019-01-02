@@ -14,7 +14,7 @@ import us.ihmc.quadrupedPlanning.stepStream.QuadrupedPlanarFootstepPlan;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.*;
 
-public class QuadrupedXGaitPlanner
+public class QuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterface
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final double maximumStepDown = 0.2;
@@ -44,6 +44,7 @@ public class QuadrupedXGaitPlanner
       pastSteps.put(RobotEnd.HIND, new QuadrupedTimedStep());
    }
 
+   @Override
    public void computeInitialPlan(QuadrupedPlanarFootstepPlan footstepPlan, RobotQuadrant initialStepQuadrant, double timeAtSoS)
    {
       bodyPathProvider.initialize();
@@ -111,6 +112,7 @@ public class QuadrupedXGaitPlanner
       }
    }
 
+   @Override
    public void computeOnlinePlan(QuadrupedPlanarFootstepPlan footstepPlan, double currentTime)
    {
       // initialize latest step
@@ -229,6 +231,7 @@ public class QuadrupedXGaitPlanner
       thisStep.getTimeInterval().setEndTime(thisStepStartTime + thisStepDuration);
    }
 
+   @Override
    public void setStepSnapper(PointFootSnapper snapper)
    {
       this.snapper = snapper;
