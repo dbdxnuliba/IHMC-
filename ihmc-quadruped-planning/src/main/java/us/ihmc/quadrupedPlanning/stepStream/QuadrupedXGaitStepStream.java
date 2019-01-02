@@ -2,7 +2,9 @@ package us.ihmc.quadrupedPlanning.stepStream;
 
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitPlanner;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitPlanner;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitPlannerInterface;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.bodyPath.QuadrupedPlanarBodyPathProvider;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
@@ -25,7 +27,7 @@ public class QuadrupedXGaitStepStream
    private final Vector3D desiredPlanarVelocity = new Vector3D();
    private final DoubleProvider firstStepDelay;
 
-   private final QuadrupedXGaitPlanner xGaitStepPlanner;
+   private final QuadrupedXGaitPlannerInterface xGaitStepPlanner;
    private final QuadrupedPlanarFootstepPlan footstepPlan;
    private final QuadrupedPlanarBodyPathProvider bodyPathProvider;
 
@@ -35,7 +37,7 @@ public class QuadrupedXGaitStepStream
       this.xGaitSettings = xGaitSettings;
       this.timestamp = timestamp;
       this.bodyPathProvider = bodyPathProvider;
-      this.xGaitStepPlanner = new QuadrupedXGaitPlanner(bodyPathProvider, xGaitSettings);
+      this.xGaitStepPlanner = new FancyQuadrupedXGaitPlanner(bodyPathProvider, xGaitSettings);
       this.footstepPlan = new QuadrupedPlanarFootstepPlan(NUMBER_OF_PREVIEW_STEPS);
       this.firstStepDelay = firstStepDelay;
       minimumStepClearance.set(0.075);
