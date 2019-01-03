@@ -13,20 +13,20 @@ import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.DesiredAccelerationsCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.JointspaceTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.LoadBearingCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SE3TrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SO3TrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.WrenchTrajectoryControllerCommand;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
+import us.ihmc.robotics.contactable.ContactablePlaneBody;
 import us.ihmc.robotics.controllers.pidGains.PID3DGainsReadOnly;
 import us.ihmc.robotics.controllers.pidGains.PIDGainsReadOnly;
-import us.ihmc.robotics.screwTheory.ScrewTools;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.parameters.EnumParameter;
@@ -50,6 +50,7 @@ public class RigidBodyControlManager
    private final RigidBodyTaskspaceControlState taskspaceControlState;
    private final RigidBodyUserControlState userControlState;
    private final RigidBodyLoadBearingControlState loadBearingControlState;
+   private final RigidBodyExternalWrenchManager externalWrenchManager;
 
    private final double[] initialJointPositions;
    private final FramePose3D homePose;
@@ -59,9 +60,10 @@ public class RigidBodyControlManager
    private final InverseDynamicsCommandList inverseDynamicsCommandList = new InverseDynamicsCommandList();
    private final YoBoolean stateSwitched;
 
-   public RigidBodyControlManager(RigidBodyBasics bodyToControl, RigidBodyBasics baseBody, RigidBodyBasics elevator, TObjectDoubleHashMap<String> homeConfiguration,
-                                  Pose3D homePose, Collection<ReferenceFrame> trajectoryFrames, ReferenceFrame controlFrame, ReferenceFrame baseFrame,
-                                  Vector3DReadOnly taskspaceAngularWeight, Vector3DReadOnly taskspaceLinearWeight, PID3DGainsReadOnly taskspaceOrientationGains,
+   public RigidBodyControlManager(RigidBodyBasics bodyToControl, RigidBodyBasics baseBody, RigidBodyBasics elevator,
+                                  TObjectDoubleHashMap<String> homeConfiguration, Pose3D homePose, Collection<ReferenceFrame> trajectoryFrames,
+                                  ReferenceFrame controlFrame, ReferenceFrame baseFrame, Vector3DReadOnly taskspaceAngularWeight,
+                                  Vector3DReadOnly taskspaceLinearWeight, PID3DGainsReadOnly taskspaceOrientationGains,
                                   PID3DGainsReadOnly taskspacePositionGains, ContactablePlaneBody contactableBody, RigidBodyControlMode defaultControlMode,
                                   YoDouble yoTime, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
    {
@@ -84,6 +86,10 @@ public class RigidBodyControlManager
       {
          RigidBodyOrientationController taskspaceControlState = new RigidBodyOrientationController(bodyToControl, baseBody, elevator, trajectoryFrames,
                                                                                                    baseFrame, yoTime, jointControlHelper, parentRegistry);
+         if (taskspaceOrientationGains == null)
+         {
+            throw new RuntimeException("Can not create orientation control manager with null gains for " + bodyName);
+         }
          taskspaceControlState.setGains(taskspaceOrientationGains);
          taskspaceControlState.setWeights(taskspaceAngularWeight);
          this.taskspaceControlState = taskspaceControlState;
@@ -93,19 +99,33 @@ public class RigidBodyControlManager
       {
          RigidBodyPositionController taskspaceControlState = new RigidBodyPositionController(bodyToControl, baseBody, elevator, trajectoryFrames, controlFrame,
                                                                                              baseFrame, yoTime, parentRegistry, graphicsListRegistry);
+         if (taskspacePositionGains == null)
+         {
+            throw new RuntimeException("Can not create position control manager with null gains for " + bodyName);
+         }
          taskspaceControlState.setGains(taskspacePositionGains);
          taskspaceControlState.setWeights(taskspaceLinearWeight);
          this.taskspaceControlState = taskspaceControlState;
          LogTools.info("Creating manager for " + bodyName + " with position controller.");
       }
-      else
+      else if (taskspaceAngularWeight != null && taskspaceLinearWeight != null)
       {
          RigidBodyPoseController taskspaceControlState = new RigidBodyPoseController(bodyToControl, baseBody, elevator, trajectoryFrames, controlFrame,
                                                                                      baseFrame, yoTime, jointControlHelper, graphicsListRegistry, registry);
+         if (taskspaceOrientationGains == null || taskspacePositionGains == null)
+         {
+            System.out.println("Orientation gains exist: " + (taskspaceOrientationGains != null));
+            System.out.println("Position gains exist: " + (taskspacePositionGains != null));
+            throw new RuntimeException("Can not create pose control manager with null gains for " + bodyName);
+         }
          taskspaceControlState.setGains(taskspaceOrientationGains, taskspacePositionGains);
          taskspaceControlState.setWeights(taskspaceAngularWeight, taskspaceLinearWeight);
          this.taskspaceControlState = taskspaceControlState;
          LogTools.info("Creating manager for " + bodyName + " with pose controller.");
+      }
+      else
+      {
+         throw new RuntimeException("No gains or weights for " + bodyName);
       }
 
       userControlState = new RigidBodyUserControlState(bodyName, jointsToControl, yoTime, registry);
@@ -126,6 +146,9 @@ public class RigidBodyControlManager
          this.homePose = new FramePose3D(baseFrame, homePose);
       else
          this.homePose = null;
+
+      externalWrenchManager = new RigidBodyExternalWrenchManager(bodyToControl, baseBody, trajectoryFrames, controlFrame, yoTime, graphicsListRegistry,
+                                                                 registry);
 
       defaultControlMode = defaultControlMode == null ? RigidBodyControlMode.JOINTSPACE : defaultControlMode;
       checkDefaultControlMode(defaultControlMode, this.homePose, bodyName);
@@ -202,6 +225,8 @@ public class RigidBodyControlManager
 
       stateSwitched.set(stateMachine.doTransitions());
       stateMachine.doAction();
+
+      externalWrenchManager.doAction(Double.NaN);
    }
 
    public void handleStopAllTrajectoryCommand(StopAllTrajectoryCommand command)
@@ -209,6 +234,7 @@ public class RigidBodyControlManager
       if (command.isStopAllTrajectory())
       {
          holdCurrentDesired();
+         externalWrenchManager.clear();
       }
    }
 
@@ -293,6 +319,15 @@ public class RigidBodyControlManager
       {
          LogTools.warn(getClass().getSimpleName() + " for " + bodyName + " recieved invalid desired accelerations command.");
          hold();
+      }
+   }
+
+   public void handleWrenchTrajectoryCommand(WrenchTrajectoryControllerCommand command)
+   {
+      if (!externalWrenchManager.handleWrenchTrajectoryCommand(command))
+      {
+         LogTools.warn(getClass().getSimpleName() + " for " + bodyName + " recieved invalid wrench trajectory command.");
+         externalWrenchManager.clear();
       }
    }
 
@@ -441,8 +476,8 @@ public class RigidBodyControlManager
    public void resetJointIntegrators()
    {
       // FIXME
-//      for (int jointIdx = 0; jointIdx < jointsToControl.length; jointIdx++)
-//         jointsToControl[jointIdx].resetIntegrator();
+      //      for (int jointIdx = 0; jointIdx < jointsToControl.length; jointIdx++)
+      //         jointsToControl[jointIdx].resetIntegrator();
    }
 
    private void computeDesiredJointPositions(double[] desiredJointPositionsToPack)
@@ -474,6 +509,7 @@ public class RigidBodyControlManager
    {
       inverseDynamicsCommandList.clear();
       inverseDynamicsCommandList.addCommand(stateMachine.getCurrentState().getInverseDynamicsCommand());
+      inverseDynamicsCommandList.addCommand(externalWrenchManager.getInverseDynamicsCommand());
 
       if (stateSwitched.getBooleanValue())
       {
