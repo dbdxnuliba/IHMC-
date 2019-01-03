@@ -58,14 +58,9 @@ public class QuadrupedTestBehaviors
 
    public static void sitDown(GoalOrientedTestConductor conductor, QuadrupedForceTestYoVariables variables)
    {
-      variables.getUserTrigger().set(HighLevelControllerName.STAND_READY);
-      conductor.addTerminalGoal(YoVariableTestGoal.enumEquals(variables.getControllerState(), HighLevelControllerName.STAND_READY));
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 0.25));
-      conductor.simulate();
-
-      variables.getUserTrigger().set(QuadrupedControllerManager.sitDownStateName);
+      variables.getUserTrigger().set(HighLevelControllerName.EXIT_WALKING);
       conductor.addTerminalGoal(YoVariableTestGoal.enumEquals(variables.getControllerState(), HighLevelControllerName.FREEZE_STATE));
-      conductor.addTimeLimit(variables.getYoTime(), stateCompletionSafetyFactory * variables.getTimeToMoveSittingDown());
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 0.25));
       conductor.simulate();
    }
 
