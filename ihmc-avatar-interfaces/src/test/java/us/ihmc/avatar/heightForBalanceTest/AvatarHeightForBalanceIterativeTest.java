@@ -36,10 +36,10 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private double percentWeight;
    private double delayFractionOfSwing = 0.0;
    private boolean unreasonableFailure;
-   private String fileNamePrefix = "angleAndPercentWeight36TilesStanding24";
+   private String fileNamePrefix = "angleAndPercentWeight72Tiles9";
    private String fileName = fileNamePrefix;
    protected boolean useNormalRobot = false;
-   protected boolean standingPush = true;
+   protected boolean standingPush = false;
    private Integer recursiveIter = 0;
    private Integer numberOfTests = 1;
    protected Vector3D linearMomentumWeight = new Vector3D(0.05,0.05,0.01);
@@ -53,14 +53,14 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       sb.append("PercentWeight");
       sb.append('\n');
 
-      int numberOfDirections = 18;
+      int numberOfDirections = 72;
       double increment;
       int incrementCount;
       double startTime =  System.currentTimeMillis();
 
       for (int i = 0; i < numberOfDirections; i++)
       {
-         angle = i * (180/ numberOfDirections) * Math.PI / 180;
+         angle = i * (360/ numberOfDirections) * Math.PI / 180;
          if (Math.cos(angle) > 0.85)
             percentWeight = 0.4;
          else if (Math.cos(angle) < -0.85)
@@ -71,7 +71,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          {
             percentWeight = 0.05;
          }
-         increment = 0.08;
+         increment = 0.16;
          incrementCount = 0;
          double percentWeightFail = 0.0;
          for (int k = 0; k < 1000; k++)
@@ -98,7 +98,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
             {
                percentWeight = percentWeight - increment;
             }
-            else if (!succes && incrementCount > 2)
+            else if (!succes && incrementCount > 3)
             {
                percentWeight = percentWeight - increment;
                sb.append(angle);
@@ -128,6 +128,51 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       if (recursiveIter == 0)
       {
          fileName = fileNamePrefix + "Normal";
+         useNormalRobot = true;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 1)
+      {
+         fileName = fileNamePrefix + "Half";
+         delayFractionOfSwing = 0.4;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 2)
+      {
+         fileName = fileNamePrefix + "HalfNormal";
+         useNormalRobot = true;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 3)
+      {
+         fileName = fileNamePrefix + "Quart";
+         delayFractionOfSwing = 0.2;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 4)
+      {
+         fileName = fileNamePrefix + "HalfNormal";
+         useNormalRobot = true;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 5)
+      {
+         fileName = fileNamePrefix + "Quart";
+         delayFractionOfSwing = 0.2;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 6)
+      {
+         fileName = fileNamePrefix + "HalfNormal";
          useNormalRobot = true;
          recursiveIter += 1;
          testIterativePush();

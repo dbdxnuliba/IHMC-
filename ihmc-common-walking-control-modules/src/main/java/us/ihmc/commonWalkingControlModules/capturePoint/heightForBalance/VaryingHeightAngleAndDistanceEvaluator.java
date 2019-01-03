@@ -90,35 +90,22 @@ public class VaryingHeightAngleAndDistanceEvaluator
    }
 
    // Determines which strategy to use: angle or distance.
-   public boolean getUseAngleForConditions(FrameConvexPolygon2D supportPolygon, FramePoint2D projectedDesiredCMP, FramePoint2DReadOnly comEndOfSwing2D)
+   public boolean getUseAngleForConditions(FrameVector2D icpError)
    {
       boolean useAngleForConditions;
-      LineSegment2D projectedCMPPolygonEdge = new LineSegment2D();
-      boolean closestEdgeFound = supportPolygon.getClosestEdge(projectedDesiredCMP, projectedCMPPolygonEdge);
-      FramePoint2D closestVertex = new FramePoint2D();
-      supportPolygon.getClosestVertex(projectedDesiredCMP, closestVertex);
+      FrameVector2D walkingDirection = new FrameVector2D();
+      walkingDirection.changeFrame(ReferenceFrame.getWorldFrame());
+      walkingDirection.set(1.0,0.0);
+      double angle = walkingDirection.angle(icpError);
 
-      // FRONT EDGE: Checks if the polygon edge the CoP is projected on is the 'front' one. Hacky, should be in walking direction and not in x.
-      if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), supportPolygon.getMaxX(), 0.04)
-            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMaxX(),0.04))
+      if(Math.abs(angle)<0.20)
       {
-         useAngleForConditions = true;
+         useAngleForConditions=true;
       }
-
-      // CLOSE TO FRONT EDGE: Checks if the projected CoP is close to the 'front' polygon edge. Also hacky.
-      else if (MathTools.epsilonEquals(projectedDesiredCMP.getX(),supportPolygon.getMaxX(),0.02))
+      else if(Math.abs(angle)>Math.PI-0.7)
       {
-         useAngleForConditions = true;
+         useAngleForConditions=true;
       }
-
-      // BACK EDGE:
-      else if (MathTools.epsilonEquals(projectedCMPPolygonEdge.getFirstEndpointX(), supportPolygon.getMinX(), 0.04)
-            && MathTools.epsilonEquals(projectedCMPPolygonEdge.getSecondEndpointX(), supportPolygon.getMinX(),0.04) && closestVertex.distance(projectedDesiredCMP)>0.02)
-      {
-         useAngleForConditions = true;
-      }
-
-      // ELSE: (don't use angle)
       else
       {
          useAngleForConditions = false;

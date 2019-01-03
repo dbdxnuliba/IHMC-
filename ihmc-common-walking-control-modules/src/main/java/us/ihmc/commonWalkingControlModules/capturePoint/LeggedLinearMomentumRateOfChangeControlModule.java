@@ -197,10 +197,10 @@ public abstract class LeggedLinearMomentumRateOfChangeControlModule extends Line
 
 
                double midBound = (previousVertex.getY()+vertex.getY())/2;
-               double cmpy = -3*(yPreviousCoPToVec-capturePoint.getY())+midBound;
+               double cmpy = -3*(desiredCapturePoint.getY()-0.02-capturePoint.getY())+midBound;
                yoCMPY.set(cmpy);
-               cmpy = MathTools.clamp(cmpy,midBound-0.15,midBound+0.15);
-               cmpToModify.set(vertex.getX() - 0.04, cmpy);
+               cmpy = MathTools.clamp(cmpy,midBound-0.07,midBound+0.07);
+               cmpToModify.set(vertex.getX(), cmpy);
             }
          }
       }

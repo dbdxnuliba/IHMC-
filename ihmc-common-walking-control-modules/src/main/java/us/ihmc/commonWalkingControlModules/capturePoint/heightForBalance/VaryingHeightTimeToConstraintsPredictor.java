@@ -5,8 +5,7 @@ import static java.lang.Math.sqrt;
 public class VaryingHeightTimeToConstraintsPredictor
 {
    private final double zMin;
-   private final double vMin;
-   private final double vMax;
+
 
    /**
     * Gives an estimate of the time until the maximum velocity or position constraint is reached, given a predicted constant acceleration and deceleration.
@@ -15,14 +14,12 @@ public class VaryingHeightTimeToConstraintsPredictor
     * IS 0 A GOOD VALUE WHEN NAN?
     *
     * @param zMin
-    * @param vMin
-    * @param vMax
+
     */
-   public VaryingHeightTimeToConstraintsPredictor(double zMin, double vMin, double vMax)
+   public VaryingHeightTimeToConstraintsPredictor(double zMin)
    {
       this.zMin=zMin;
-      this.vMin=vMin;
-      this.vMax=vMax;
+
    }
 
    /**
@@ -67,14 +64,14 @@ public class VaryingHeightTimeToConstraintsPredictor
     * @param dzCurrent
     * @return
     */
-   public double getTMinVelReachedPredicted(double dzCurrent, double aMin)
+   public double getTMinVelReachedPredicted(double dzCurrent, double aMin, double vMin)
    {
       double tMinVelReachedPredicted = (vMin - dzCurrent) / aMin;
       tMinVelReachedPredicted = Math.max(0, tMinVelReachedPredicted);
       if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=0;}
       return tMinVelReachedPredicted;
    }
-   public double getTMaxVelReachedPredicted(double dzCurrent, double aMax)
+   public double getTMaxVelReachedPredicted(double dzCurrent, double aMax, double vMax)
    {
       double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMax;
       tMaxVelReachedPredicted = Math.max(0, tMaxVelReachedPredicted);

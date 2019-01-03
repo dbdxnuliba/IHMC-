@@ -11,15 +11,6 @@ public abstract class HeightForBalanceParameters
       return 0.97;
    }
 
-   public double getMinKneeAngle()
-   {
-      return 0.10;
-   }
-
-   public double getMaxKneeAngle()
-   {
-      return 2.1;
-   }
 
    public double getMaxHeightAccelerationForAngleCase()
    {
@@ -66,30 +57,6 @@ public abstract class HeightForBalanceParameters
       return 0.04;
    }
 
-   public double getMaxVelocityForPrediction()
-   {
-      return 0.7;
-   }
-
-   public double getMinVelocityForPrediction()
-   {
-      return -0.7;
-   }
-
-   public double getSmoothEpsilon()
-   {
-      return 0.015;
-   }
-
-   public double getFractionCMPOfMaxDistanceFromPolygonForHeightControl()
-   {
-      return 0.06;
-   }
-
-   public double getDesiredICPVelocityToConsiderForNonDynamicCase()
-   {
-      return 0.02;
-   }
 
    public double getFractionOfSwingTimeToChangeMaxHeight()
    {
