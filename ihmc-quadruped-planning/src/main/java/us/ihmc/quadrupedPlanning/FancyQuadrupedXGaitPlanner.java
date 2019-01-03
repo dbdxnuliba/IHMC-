@@ -198,9 +198,6 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          double nominalStepEndTime = pastStepEndTimeForOppositeEnd + (nominalStepDuration + nominalEndDoubleSupportDuration) * endPhaseShift / 180.0;
          double thisStepDuration = MathTools.clamp(nominalStepEndTime - nominalStepStartTime, nominalStepDuration, 1.5 * nominalStepDuration);
 
-//         thisStep.getTimeInterval().setStartTime(nominalStepStartTime);
-//         thisStep.getTimeInterval().setEndTime(nominalStepStartTime + thisStepDuration);
-
          if (currentTime > thisTimeInterval.getStartTime())
             thisTimeInterval.shiftInterval(currentTime - thisTimeInterval.getStartTime());
 
