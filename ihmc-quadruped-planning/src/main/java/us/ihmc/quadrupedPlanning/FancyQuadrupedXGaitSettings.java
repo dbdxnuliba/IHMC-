@@ -1,13 +1,22 @@
 package us.ihmc.quadrupedPlanning;
 
-public class FancyQuadrupedXGaitSettings implements QuadrupedXGaitSettingsReadOnly
+public class FancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSettingsReadOnly
 {
    private double stanceLength;
    private double stanceWidth;
    private double stepGroundClearance;
-   private double stepDuration;
-   private double endDoubleSupportDuration;
    private double endPhaseShift;
+
+   private double paceStepDuration;
+   private double crawlStepDuration;
+   private double trotStepDuration;
+
+   private double paceDoubleSupportFraction;
+   private double trotDoubleSupportFraction;
+   private double crawlDoubleSupportFraction;
+
+   private double endDoubleSupportDuration;
+   private boolean useFractionalDoubleSupport;
 
    @Override
    public double getStanceLength()
@@ -22,15 +31,51 @@ public class FancyQuadrupedXGaitSettings implements QuadrupedXGaitSettingsReadOn
    }
 
    @Override
+   public double getEndPhaseShift()
+   {
+      return endPhaseShift;
+   }
+
+   @Override
    public double getStepGroundClearance()
    {
       return stepGroundClearance;
    }
 
    @Override
-   public double getStepDuration()
+   public double getPaceStepDuration()
    {
-      return stepDuration;
+      return paceStepDuration;
+   }
+
+   @Override
+   public double getCrawlStepDuration()
+   {
+      return crawlStepDuration;
+   }
+
+   @Override
+   public double getTrotStepDuration()
+   {
+      return trotStepDuration;
+   }
+
+   @Override
+   public double getPaceDoubleSupportFraction()
+   {
+      return paceDoubleSupportFraction;
+   }
+
+   @Override
+   public double getCrawlDoubleSupportFraction()
+   {
+      return crawlDoubleSupportFraction;
+   }
+
+   @Override
+   public double getTrotDoubleSupportFraction()
+   {
+      return trotDoubleSupportFraction;
    }
 
    @Override
@@ -40,9 +85,9 @@ public class FancyQuadrupedXGaitSettings implements QuadrupedXGaitSettingsReadOn
    }
 
    @Override
-   public double getEndPhaseShift()
+   public boolean useFractionalDoubleSupport()
    {
-      return endPhaseShift;
+      return useFractionalDoubleSupport;
    }
 
    public void setStanceLength(double stanceLength)
@@ -60,28 +105,67 @@ public class FancyQuadrupedXGaitSettings implements QuadrupedXGaitSettingsReadOn
       this.stepGroundClearance = stepGroundClearance;
    }
 
-   public void setStepDuration(double stepDuration)
-   {
-      this.stepDuration = stepDuration;
-   }
-
-   public void setEndDoubleSupportDuration(double sndDoubleSupportDuration)
-   {
-      this.endDoubleSupportDuration = sndDoubleSupportDuration;
-   }
-
    public void setEndPhaseShift(double endPhaseShift)
    {
       this.endPhaseShift = endPhaseShift;
    }
 
-   public void set(QuadrupedXGaitSettingsReadOnly other)
+   public void setPaceStepDuration(double paceStepDuration)
    {
-      stanceLength = other.getStanceLength();
-      stanceWidth = other.getStanceWidth();
-      stepGroundClearance = other.getStepGroundClearance();
-      stepDuration = other.getStepDuration();
-      endDoubleSupportDuration = other.getEndDoubleSupportDuration();
-      endPhaseShift = other.getEndPhaseShift();
+      this.paceStepDuration = paceStepDuration;
+   }
+
+   public void setCrawlStepDuration(double crawlStepDuration)
+   {
+      this.crawlStepDuration = crawlStepDuration;
+   }
+
+   public void setTrotStepDuration(double trotStepDuration)
+   {
+      this.trotStepDuration = trotStepDuration;
+   }
+
+   public void setPaceDoubleSupportFraction(double paceDoubleSupportFraction)
+   {
+      this.paceDoubleSupportFraction = paceDoubleSupportFraction;
+   }
+
+   public void setCrawlDoubleSupportFraction(double crawlDoubleSupportFraction)
+   {
+      this.crawlDoubleSupportFraction = crawlDoubleSupportFraction;
+   }
+
+   public void setTrotDoubleSupportFraction(double trotDoubleSupportFraction)
+   {
+      this.trotDoubleSupportFraction = trotDoubleSupportFraction;
+   }
+
+   public void setEndDoubleSupportDuration(double endDoubleSupportDuration)
+   {
+      this.endDoubleSupportDuration = endDoubleSupportDuration;
+   }
+
+   public void setUseFractionalDoubleSupport(boolean useFractionalDoubleSupport)
+   {
+      this.useFractionalDoubleSupport = useFractionalDoubleSupport;
+   }
+
+   public void set(FancyQuadrupedXGaitSettingsReadOnly other)
+   {
+      setStanceLength(other.getStanceLength());
+      setStanceWidth(other.getStanceWidth());
+      setStepGroundClearance(other.getStepGroundClearance());
+      setEndPhaseShift(other.getEndPhaseShift());
+
+      setPaceStepDuration(other.getPaceStepDuration());
+      setCrawlStepDuration(other.getCrawlStepDuration());
+      setTrotStepDuration(other.getTrotStepDuration());
+
+      setPaceDoubleSupportFraction(other.getPaceDoubleSupportFraction());
+      setTrotDoubleSupportFraction(other.getTrotDoubleSupportFraction());
+      setCrawlDoubleSupportFraction(other.getCrawlDoubleSupportFraction());
+
+      setEndDoubleSupportDuration(other.getEndDoubleSupportDuration());
+      setUseFractionalDoubleSupport(other.useFractionalDoubleSupport());
    }
 }

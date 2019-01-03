@@ -74,7 +74,7 @@ public abstract class QuadrupedXGaitWalkingOverRampsTest implements QuadrupedMul
       stepTeleopManager.getXGaitSettings().setEndDoubleSupportDuration(0.05);
       stepTeleopManager.getXGaitSettings().setStanceLength(1.00);
       stepTeleopManager.getXGaitSettings().setStanceWidth(0.30);
-      stepTeleopManager.getXGaitSettings().setStepDuration(0.35);
+//      stepTeleopManager.getXGaitSettings().setStepDuration(0.35);
       stepTeleopManager.getXGaitSettings().setStepGroundClearance(0.1);
       stepTeleopManager.setDesiredBodyHeight(comHeightForRoughTerrain);
       stepTeleopManager.setStepSnapper((x, y, minZ) -> new Point3D(x, y, groundProfile.heightAt(x, y, 0.0)));

@@ -2,6 +2,7 @@ package us.ihmc.quadrupedRobotics.controller.force;
 
 import org.junit.After;
 import org.junit.Before;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.footstepChooser.DefaultPointFootSnapperParameters;
 import us.ihmc.quadrupedPlanning.footstepChooser.PlanarRegionBasedPointFootSnapper;
@@ -27,6 +28,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
    private QuadrupedTestFactory quadrupedTestFactory;
 
    public abstract QuadrupedXGaitSettingsReadOnly getXGaitSettings();
+   public abstract FancyQuadrupedXGaitSettingsReadOnly getFancyXGaitSettings();
 
    @Before
    public void setup()
@@ -52,7 +54,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       double walkingSpeed = 0.25;
       double minimumXPositionAfterWalking = 2.0;
 
-      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), null, Double.NaN);
+      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), getFancyXGaitSettings(), null, Double.NaN);
    }
 
    public void testWalkingOverSingleStepUp(double desiredBodyHeight) throws IOException
@@ -62,7 +64,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       double walkingSpeed = 0.25;
       double minimumXPositionAfterWalking = 2.0;
 
-      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), null, desiredBodyHeight);
+      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), getFancyXGaitSettings(), null, desiredBodyHeight);
    }
 
    public void testWalkingOverConsecutiveRamps() throws IOException
@@ -72,7 +74,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       double minimumXPositionAfterWalking = 3.0;
       double walkTime = 3.0 * minimumXPositionAfterWalking / walkingSpeed;
 
-      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), null, Double.NaN);
+      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), getFancyXGaitSettings(), null, Double.NaN);
    }
 
    public void testWalkingOverCinderBlockField() throws IOException
@@ -82,7 +84,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       double walkingSpeed = 0.3;
       double minimumXPositionAfterWalking = 8.0;
 
-      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), null, Double.NaN);
+      runWalkingOverTerrain(environment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), getFancyXGaitSettings(), null, Double.NaN);
    }
 
    public void testWalkingUpStaircase() throws IOException
@@ -95,11 +97,12 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       double walkingSpeed = 0.3;
       double minimumXPositionAfterWalking = numberOfSteps * stepLength + 0.5;
 
-      runWalkingOverTerrain(staircaseEnvironment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), null, Double.NaN);
+      runWalkingOverTerrain(staircaseEnvironment, walkTime, walkingSpeed, minimumXPositionAfterWalking, getXGaitSettings(), getFancyXGaitSettings(), null, Double.NaN);
    }
 
    protected void runWalkingOverTerrain(PlanarRegionEnvironmentInterface environment, double walkTime, double walkingSpeed, double minimumXPositionAfterWalking,
-                                      QuadrupedXGaitSettingsReadOnly xGaitSettings, QuadrupedInitialOffsetAndYaw offsetAndYaw, double desiredBodyHeight) throws IOException
+                                        QuadrupedXGaitSettingsReadOnly xGaitSettings, FancyQuadrupedXGaitSettingsReadOnly fancyXGaitSettings,
+                                        QuadrupedInitialOffsetAndYaw offsetAndYaw, double desiredBodyHeight) throws IOException
    {
       SimulationConstructionSetParameters simulationConstructionSetParameters = SimulationConstructionSetParameters.createFromSystemProperties();
       simulationConstructionSetParameters.setUseAutoGroundGraphics(false);
@@ -123,6 +126,7 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
       stepTeleopManager.getXGaitSettings().set(xGaitSettings);
+      stepTeleopManager.getFancyXGaitSettings().set(fancyXGaitSettings);
 
       stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);

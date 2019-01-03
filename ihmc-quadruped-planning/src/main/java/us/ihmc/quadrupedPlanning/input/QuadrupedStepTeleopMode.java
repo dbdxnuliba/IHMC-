@@ -3,7 +3,9 @@ package us.ihmc.quadrupedPlanning.input;
 import net.java.games.input.Event;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
+import us.ihmc.quadrupedPlanning.YoFancyQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.tools.inputDevices.joystick.mapping.XBoxOneMapping;
@@ -34,9 +36,10 @@ public class QuadrupedStepTeleopMode
    private InputValueIntegrator bodyHeight;
 
    public QuadrupedStepTeleopMode(String robotName, Ros2Node ros2Node, double nominalBodyHeight, QuadrupedXGaitSettingsReadOnly xGaitSettings,
-                                  QuadrupedReferenceFrames referenceFrames, double updateDT, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
+                                  FancyQuadrupedXGaitSettingsReadOnly fancyXGaitSettings, QuadrupedReferenceFrames referenceFrames, double updateDT,
+                                  YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
    {
-      this.stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, xGaitSettings, nominalBodyHeight, referenceFrames, graphicsListRegistry, registry);
+      this.stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, xGaitSettings, fancyXGaitSettings, nominalBodyHeight, referenceFrames, graphicsListRegistry, registry);
       this.bodyHeight = new InputValueIntegrator(updateDT, nominalBodyHeight);
 
       xGaitStepDuration[0] = new DoubleParameter("xGaitStepDurationMode0", registry, 0.5);

@@ -60,7 +60,7 @@ public abstract class QuadrupedSpeedTorqueLimitGraphing implements QuadrupedMult
             
             stepTeleopManager.getXGaitSettings().setEndPhaseShift(180.0);
             stepTeleopManager.getXGaitSettings().setStepGroundClearance(0.25);
-            stepTeleopManager.getXGaitSettings().setStepDuration(0.55);
+//            stepTeleopManager.getXGaitSettings().setStepDuration(0.55);
             stepTeleopManager.getXGaitSettings().setEndDoubleSupportDuration(0.0);
             double yaw = 0.05 * Math.cos(variables.getYoTime().getDoubleValue());
             double pitch = 0.1 * Math.sin(variables.getYoTime().getDoubleValue());

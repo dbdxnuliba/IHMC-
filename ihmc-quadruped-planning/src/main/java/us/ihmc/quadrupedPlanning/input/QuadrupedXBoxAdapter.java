@@ -8,6 +8,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedControllerAPIDefinition;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
 import us.ihmc.robotDataLogger.YoVariableServer;
@@ -59,7 +60,7 @@ public class QuadrupedXBoxAdapter implements JoystickEventListener
    private InputValueIntegrator bodyHeight;
 
    public QuadrupedXBoxAdapter(String robotName, Joystick device, FullQuadrupedRobotModel fullRobotModel, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
-                               double nominalBodyHeight)
+                               FancyQuadrupedXGaitSettingsReadOnly defaultFancyXGaitSettings, double nominalBodyHeight)
    {
       this.device = device;
 
@@ -72,8 +73,8 @@ public class QuadrupedXBoxAdapter implements JoystickEventListener
       ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, controllerPubGenerator, s -> robotDataReceiver.receivedPacket(s.takeNextData()));
 
       QuadrupedReferenceFrames referenceFrames = new QuadrupedReferenceFrames(fullRobotModel);
-      this.stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, defaultXGaitSettings, nominalBodyHeight, referenceFrames, DT,
-                                                          graphicsListRegistry, registry);
+      this.stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, defaultXGaitSettings, defaultFancyXGaitSettings, nominalBodyHeight,
+                                                          referenceFrames, DT, graphicsListRegistry, registry);
 
       maxBodyYaw.set(0.15);
       maxBodyPitch.set(0.15);

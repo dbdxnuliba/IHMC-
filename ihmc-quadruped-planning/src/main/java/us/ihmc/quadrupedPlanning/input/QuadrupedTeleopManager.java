@@ -17,11 +17,10 @@ import us.ihmc.quadrupedBasics.QuadrupedSteppingStateEnum;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.*;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.quadrupedCommunication.QuadrupedControllerAPIDefinition;
 import us.ihmc.quadrupedCommunication.QuadrupedMessageTools;
-import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
-import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.bodyPath.QuadrupedBodyPathMultiplexer;
 import us.ihmc.quadrupedPlanning.footstepChooser.PlanarGroundPointFootSnapper;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
@@ -43,6 +42,7 @@ public class QuadrupedTeleopManager
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final QuadrupedXGaitStepStream stepStream;
    private final YoQuadrupedXGaitSettings xGaitSettings;
+   private final YoFancyQuadrupedXGaitSettings fancyXGaitSettings;
    private final YoDouble timestamp = new YoDouble("timestamp", registry);
    private final YoBoolean walking = new YoBoolean("walking", registry);
    private final Ros2Node ros2Node;
@@ -80,24 +80,29 @@ public class QuadrupedTeleopManager
    private IHMCROS2Publisher<QuadrupedBodyTrajectoryMessage> bodyTrajectoryPublisher;
    private IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightPublisher;
 
-   public QuadrupedTeleopManager(String robotName, Ros2Node ros2Node, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings, double initialBodyHeight,
+   public QuadrupedTeleopManager(String robotName, Ros2Node ros2Node, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
+                                 FancyQuadrupedXGaitSettingsReadOnly defaultFancyXGaitSettings, double initialBodyHeight,
                                  QuadrupedReferenceFrames referenceFrames, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
    {
-      this(robotName, ros2Node, defaultXGaitSettings, initialBodyHeight, referenceFrames, 0.01, graphicsListRegistry, parentRegistry);
+      this(robotName, ros2Node, defaultXGaitSettings, defaultFancyXGaitSettings, initialBodyHeight, referenceFrames, 0.01, graphicsListRegistry, parentRegistry);
    }
 
-   public QuadrupedTeleopManager(String robotName, Ros2Node ros2Node, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings, double initialBodyHeight,
+   public QuadrupedTeleopManager(String robotName, Ros2Node ros2Node, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
+                                 FancyQuadrupedXGaitSettingsReadOnly defaultFancyXGaitSettings, double initialBodyHeight,
                                  QuadrupedReferenceFrames referenceFrames, double updateDT, YoGraphicsListRegistry graphicsListRegistry,
                                  YoVariableRegistry parentRegistry)
    {
       this.referenceFrames = referenceFrames;
       this.ros2Node = ros2Node;
       this.xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, null, registry);
+      this.fancyXGaitSettings = new YoFancyQuadrupedXGaitSettings(defaultFancyXGaitSettings, null, registry);
 
       firstStepDelay.set(0.5);
-      this.bodyPathMultiplexer = new QuadrupedBodyPathMultiplexer(robotName, referenceFrames, timestamp, xGaitSettings, ros2Node, firstStepDelay,
-                                                                  graphicsListRegistry, registry);
-      this.stepStream = new QuadrupedXGaitStepStream(xGaitSettings, timestamp, bodyPathMultiplexer, firstStepDelay, registry);
+      YoBoolean useFancyXGait = new YoBoolean("useFancyXGait", registry);
+      useFancyXGait.set(true);
+      this.bodyPathMultiplexer = new QuadrupedBodyPathMultiplexer(robotName, referenceFrames, timestamp, useFancyXGait, xGaitSettings, fancyXGaitSettings, ros2Node,
+                                                                  firstStepDelay, graphicsListRegistry, registry);
+      this.stepStream = new QuadrupedXGaitStepStream(useFancyXGait, xGaitSettings, fancyXGaitSettings, timestamp, bodyPathMultiplexer, firstStepDelay, registry);
 
       desiredVelocityRateLimit.set(10.0);
       limitedDesiredVelocity = new RateLimitedYoFrameVector("limitedTeleopDesiredVelocity", "", registry, desiredVelocityRateLimit, updateDT, desiredVelocity);
@@ -391,6 +396,11 @@ public class QuadrupedTeleopManager
    public YoQuadrupedXGaitSettings getXGaitSettings()
    {
       return xGaitSettings;
+   }
+
+   public YoFancyQuadrupedXGaitSettings getFancyXGaitSettings()
+   {
+      return fancyXGaitSettings;
    }
 
    public void setShiftPlanBasedOnStepAdjustment(boolean shiftPlanBasedOnStepAdjustment)

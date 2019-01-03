@@ -10,6 +10,7 @@ import org.apache.commons.lang3.SystemUtils;
 import us.ihmc.exampleSimulations.genericQuadruped.GenericQuadrupedSimulationFactory;
 import us.ihmc.exampleSimulations.genericQuadruped.model.GenericQuadrupedModelFactory;
 import us.ihmc.exampleSimulations.genericQuadruped.model.GenericQuadrupedPhysicalProperties;
+import us.ihmc.exampleSimulations.genericQuadruped.parameters.GenericQuadrupedFancyXGaitSettings;
 import us.ihmc.exampleSimulations.genericQuadruped.parameters.GenericQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.input.QuadrupedXBoxAdapter;
 import us.ihmc.robotModels.FullQuadrupedRobotModel;
@@ -27,10 +28,12 @@ public class GenericQuadrupedTeleopNode
       FullQuadrupedRobotModel fullRobotModel = modelFactory.createFullRobotModel();
       GenericQuadrupedPhysicalProperties physicalProperties = new GenericQuadrupedPhysicalProperties();
       GenericQuadrupedXGaitSettings xGaitSettings = new GenericQuadrupedXGaitSettings();
+      GenericQuadrupedFancyXGaitSettings fancyXGaitSettings = new GenericQuadrupedFancyXGaitSettings();
 
       String robotName = modelFactory.getRobotDescription().getName();
       Joystick joystick = new Joystick(JoystickModel.XBOX_ONE, 0);
-      QuadrupedXBoxAdapter eventListener = new QuadrupedXBoxAdapter(robotName, joystick, fullRobotModel, xGaitSettings, physicalProperties.getNominalBodyHeight());
+      QuadrupedXBoxAdapter eventListener = new QuadrupedXBoxAdapter(robotName, joystick, fullRobotModel, xGaitSettings, fancyXGaitSettings,
+                                                                    physicalProperties.getNominalBodyHeight());
 
       eventListener.start();
       joystick.addJoystickEventListener(eventListener);

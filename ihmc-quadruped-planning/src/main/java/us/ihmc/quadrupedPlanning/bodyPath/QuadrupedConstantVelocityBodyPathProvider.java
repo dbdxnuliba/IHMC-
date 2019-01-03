@@ -11,6 +11,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedControllerAPIDefinition;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
@@ -28,7 +29,9 @@ public class QuadrupedConstantVelocityBodyPathProvider implements QuadrupedPlana
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
+   private final YoBoolean useFancyXGait;
    private final QuadrupedXGaitSettingsReadOnly xGaitSettings;
+   private final FancyQuadrupedXGaitSettingsReadOnly fancyXGaitSettings;
    private final YoDouble timestamp;
    private final ReferenceFrame supportFrame;
    private final YoBoolean footstepPlanHasBeenComputed = new YoBoolean("footstepPlanHasBeenComputed", registry);
@@ -52,7 +55,8 @@ public class QuadrupedConstantVelocityBodyPathProvider implements QuadrupedPlana
    private final FramePose2D tempPose = new FramePose2D();
    private final QuaternionBasedTransform tempTransform = new QuaternionBasedTransform();
 
-   public QuadrupedConstantVelocityBodyPathProvider(String robotName, QuadrupedReferenceFrames referenceFrames, QuadrupedXGaitSettingsReadOnly xGaitSettings,
+   public QuadrupedConstantVelocityBodyPathProvider(String robotName, QuadrupedReferenceFrames referenceFrames, YoBoolean useFancyXGait,
+                                                    QuadrupedXGaitSettingsReadOnly xGaitSettings, FancyQuadrupedXGaitSettingsReadOnly fancyXGaitSettings,
                                                     DoubleProvider firstStepDelay, YoDouble timestamp, Ros2Node ros2Node, YoVariableRegistry parentRegistry)
    {
       this.supportFrame = referenceFrames.getCenterOfFeetZUpFrameAveragingLowestZHeightsAcrossEnds();
@@ -86,7 +90,9 @@ public class QuadrupedConstantVelocityBodyPathProvider implements QuadrupedPlana
          }
       });
 
+      this.useFancyXGait = useFancyXGait;
       this.xGaitSettings = xGaitSettings;
+      this.fancyXGaitSettings = fancyXGaitSettings;
       this.timestamp = timestamp;
 
       parentRegistry.addChild(registry);
@@ -173,7 +179,8 @@ public class QuadrupedConstantVelocityBodyPathProvider implements QuadrupedPlana
    private void setStartConditionsFromCurrent()
    {
       RigidBodyTransform supportTransform = supportFrame.getTransformToWorldFrame();
-      startTime.set(timestamp.getDoubleValue() + firstStepDelay.getValue() + xGaitSettings.getStepDuration());
+      double stepDuration = useFancyXGait.getValue() ? fancyXGaitSettings.getStepDuration() : xGaitSettings.getStepDuration();
+      startTime.set(timestamp.getDoubleValue() + firstStepDelay.getValue() + stepDuration);
       startYaw.set(supportTransform.getRotationMatrix().getYaw());
       startPoint.set(supportTransform.getTranslationVector());
    }
@@ -192,8 +199,12 @@ public class QuadrupedConstantVelocityBodyPathProvider implements QuadrupedPlana
       {
          RobotQuadrant quadrant = RobotQuadrant.fromByte((byte) latestStatusMessage.getFootstepQuadrant());
          Point3DReadOnly latestMessageSoleDesiredPosition = latestStatusMessage.getDesiredTouchdownPositionInWorld();
-         double halfStanceLength = quadrant.getEnd().negateIfFrontEnd(0.5 * xGaitSettings.getStanceLength());
-         double halfStanceWidth = quadrant.getSide().negateIfLeftSide(0.5 * xGaitSettings.getStanceWidth());
+
+         double stanceLength = useFancyXGait.getValue() ? fancyXGaitSettings.getStanceLength() : xGaitSettings.getStanceLength();
+         double stanceWidth = useFancyXGait.getValue() ? fancyXGaitSettings.getStanceWidth() : xGaitSettings.getStanceWidth();
+
+         double halfStanceLength = quadrant.getEnd().negateIfFrontEnd(0.5 * stanceLength);
+         double halfStanceWidth = quadrant.getSide().negateIfLeftSide(0.5 * stanceWidth);
 
          tempPose.set(halfStanceLength, halfStanceWidth, 0.0);
          tempTransform.setRotationYaw(startYaw.getDoubleValue());

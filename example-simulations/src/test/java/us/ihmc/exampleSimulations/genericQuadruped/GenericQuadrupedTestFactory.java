@@ -100,6 +100,7 @@ public class GenericQuadrupedTestFactory implements QuadrupedTestFactory
       QuadrupedSensorInformation sensorInformation = new GenericQuadrupedSensorInformation();
       StateEstimatorParameters stateEstimatorParameters = new GenericQuadrupedStateEstimatorParameters(false, CONTROL_DT);
       GenericQuadrupedXGaitSettings xGaitSettings = new GenericQuadrupedXGaitSettings();
+      GenericQuadrupedFancyXGaitSettings fancyXGaitSettings = new GenericQuadrupedFancyXGaitSettings();
       GenericQuadrupedHighLevelControllerParameters highLevelControllerParameters = new GenericQuadrupedHighLevelControllerParameters(
             modelFactory.getJointMap());
       GenericQuadrupedSitDownParameters sitDownParameters = new GenericQuadrupedSitDownParameters();
@@ -180,7 +181,8 @@ public class GenericQuadrupedTestFactory implements QuadrupedTestFactory
          Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.INTRAPROCESS, "quadruped_teleop_manager");
 
          graphicsListRegistry = new YoGraphicsListRegistry();
-         stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, xGaitSettings, physicalProperties.getNominalBodyHeight(), referenceFrames, graphicsListRegistry, teleopRegistry);
+         stepTeleopManager = new QuadrupedTeleopManager(robotName, ros2Node, xGaitSettings, fancyXGaitSettings, physicalProperties.getNominalBodyHeight(),
+                                                        referenceFrames, graphicsListRegistry, teleopRegistry);
 
          new DefaultParameterReader().readParametersInRegistry(teleopRegistry);
       }

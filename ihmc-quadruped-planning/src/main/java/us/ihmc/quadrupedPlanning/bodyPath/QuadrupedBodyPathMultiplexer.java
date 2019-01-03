@@ -4,6 +4,7 @@ import controller_msgs.msg.dds.QuadrupedBodyPathPlanMessage;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.FancyQuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -20,11 +21,14 @@ public class QuadrupedBodyPathMultiplexer implements QuadrupedPlanarBodyPathProv
 
    private YoBoolean usingJoystickBasedPath = new YoBoolean("usingJoystickBasedPath", registry);
 
-   public QuadrupedBodyPathMultiplexer(String robotName, QuadrupedReferenceFrames referenceFrames, YoDouble timestamp, QuadrupedXGaitSettingsReadOnly xGaitSettings,
-                                       Ros2Node ros2Node, DoubleProvider firstStepDelay, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
+   public QuadrupedBodyPathMultiplexer(String robotName, QuadrupedReferenceFrames referenceFrames, YoDouble timestamp, YoBoolean useFancyXGait,
+                                       QuadrupedXGaitSettingsReadOnly xGaitSettings, FancyQuadrupedXGaitSettingsReadOnly fancyXGaitSettings,
+                                       Ros2Node ros2Node, DoubleProvider firstStepDelay, YoGraphicsListRegistry graphicsListRegistry,
+                                       YoVariableRegistry parentRegistry)
    {
       waypointBasedPath = new QuadrupedWaypointBasedBodyPathProvider(robotName, referenceFrames, ros2Node, timestamp, graphicsListRegistry, registry);
-      joystickBasedPath = new QuadrupedConstantVelocityBodyPathProvider(robotName, referenceFrames, xGaitSettings, firstStepDelay, timestamp, ros2Node, registry);
+      joystickBasedPath = new QuadrupedConstantVelocityBodyPathProvider(robotName, referenceFrames, useFancyXGait, xGaitSettings, fancyXGaitSettings,
+                                                                        firstStepDelay, timestamp, ros2Node, registry);
       joystickBasedPath.setShiftPlanBasedOnStepAdjustment(true);
 
       parentRegistry.addChild(registry);

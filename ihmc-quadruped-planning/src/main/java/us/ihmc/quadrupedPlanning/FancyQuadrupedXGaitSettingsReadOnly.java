@@ -86,9 +86,7 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
       return InterpolationTools.hermiteInterpolate(initialCondition, finalCondition, alpha);
    }
 
-   /**
-    * Time duration that both hind or both front feet feet are in support (in seconds).
-    */
+   boolean useFractionalDoubleSupport();
    double getEndDoubleSupportDuration();
 
    default boolean epsilonEquals(FancyQuadrupedXGaitSettingsReadOnly other, double epsilon)
@@ -96,9 +94,13 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
       boolean equals = MathTools.epsilonEquals(this.getStanceLength(), other.getStanceLength(), epsilon);
       equals &= MathTools.epsilonEquals(this.getStanceWidth(), other.getStanceWidth(), epsilon);
       equals &= MathTools.epsilonEquals(this.getStepGroundClearance(), other.getStepGroundClearance(), epsilon);
-      equals &= MathTools.epsilonEquals(this.getTrotStepDuration(), other.getTrotStepDuration(), epsilon);
-      equals &= MathTools.epsilonEquals(this.getEndDoubleSupportDuration(), other.getEndDoubleSupportDuration(), epsilon);
       equals &= MathTools.epsilonEquals(this.getEndPhaseShift(), other.getEndPhaseShift(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getPaceStepDuration(), other.getPaceStepDuration(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getCrawlStepDuration(), other.getCrawlStepDuration(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getTrotStepDuration(), other.getTrotStepDuration(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getPaceDoubleSupportFraction(), other.getPaceDoubleSupportFraction(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getCrawlDoubleSupportFraction(), other.getCrawlDoubleSupportFraction(), epsilon);
+      equals &= MathTools.epsilonEquals(this.getTrotDoubleSupportFraction(), other.getTrotDoubleSupportFraction(), epsilon);
       return equals;
    }
 

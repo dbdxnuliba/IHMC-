@@ -20,8 +20,6 @@ import us.ihmc.robotics.time.TimeInterval;
 public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterface
 {
    private static final boolean performStepTimeOptimization = true;
-   private static final boolean useFractionalDoubleSupport = true;
-   private static final double endDoubleSupportDurationFraction = 0.5;
 
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final double maximumStepDown = 0.2;
@@ -32,12 +30,12 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
    private final PoseReferenceFrame xGaitRectangleFrame = new PoseReferenceFrame("xGaitRectangleFrame", worldFrame);
    private final EndDependentList<QuadrupedTimedStep> pastSteps;
 
-   private final QuadrupedXGaitSettingsReadOnly xGaitSettings;
+   private final FancyQuadrupedXGaitSettingsReadOnly xGaitSettings;
    private final QuadrupedPlanarBodyPathProvider bodyPathProvider;
    private final FramePose2D bodyPathPose = new FramePose2D();
    private PointFootSnapper snapper = null;
 
-   public FancyQuadrupedXGaitPlanner(QuadrupedPlanarBodyPathProvider bodyPathProvider, QuadrupedXGaitSettingsReadOnly xGaitSettings)
+   public FancyQuadrupedXGaitPlanner(QuadrupedPlanarBodyPathProvider bodyPathProvider, FancyQuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
       this.bodyPathProvider = bodyPathProvider;
       this.xGaitSettings = xGaitSettings;
@@ -94,16 +92,16 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
 
             double nominalStepDuration = xGaitSettings.getStepDuration();
             double nominalEndTimeShift;
-            if (useFractionalDoubleSupport)
-               nominalEndTimeShift = endPhaseShift / 180.0 * (1.0 + endDoubleSupportDurationFraction) * nominalStepDuration;
+            if (xGaitSettings.useFractionalDoubleSupport())
+               nominalEndTimeShift = endPhaseShift / 180.0 * (1.0 + xGaitSettings.getDoubleSupportFraction()) * nominalStepDuration;
             else
                nominalEndTimeShift = endPhaseShift / 180.0 * (xGaitSettings.getEndDoubleSupportDuration() + nominalStepDuration);
 
             double stepDuration = optimizeStepDuration(lastStepStartTime + nominalEndTimeShift, nominalStepDuration);
 
             double endTimeShift;
-            if (useFractionalDoubleSupport)
-               endTimeShift = endPhaseShift / 180.0 * (1.0 + endDoubleSupportDurationFraction) * stepDuration;
+            if (xGaitSettings.useFractionalDoubleSupport())
+               endTimeShift = endPhaseShift / 180.0 * (1.0 + xGaitSettings.getDoubleSupportFraction()) * stepDuration;
             else
                endTimeShift = endPhaseShift / 180.0 * (xGaitSettings.getEndDoubleSupportDuration() + stepDuration);
 
@@ -180,8 +178,8 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          // Compute support durations and end phase shift.
          double nominalStepDuration = xGaitSettings.getStepDuration();
          double nominalEndDoubleSupportDuration;
-         if (useFractionalDoubleSupport)
-            nominalEndDoubleSupportDuration = endDoubleSupportDurationFraction * nominalStepDuration;
+         if (xGaitSettings.useFractionalDoubleSupport())
+            nominalEndDoubleSupportDuration = xGaitSettings.getDoubleSupportFraction() * nominalStepDuration;
          else
             nominalEndDoubleSupportDuration = xGaitSettings.getEndDoubleSupportDuration();
 
@@ -205,8 +203,8 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          double optimalStepDuration = optimizeStepDuration(nominalStepStartTime, thisStepDuration);
          double durationModification = optimalStepDuration - thisStepDuration;
          double optimalDoubleSupportDurationModifier = 0.0;
-         if (useFractionalDoubleSupport && Math.abs(durationModification) > 0.001)
-            optimalDoubleSupportDurationModifier = endDoubleSupportDurationFraction * (optimalStepDuration - thisStepDuration);
+         if (xGaitSettings.useFractionalDoubleSupport() && Math.abs(durationModification) > 0.001)
+            optimalDoubleSupportDurationModifier = xGaitSettings.getDoubleSupportFraction() * (optimalStepDuration - thisStepDuration);
          double initialTime = nominalStepStartTime + optimalDoubleSupportDurationModifier;
          double endTime = initialTime + optimalStepDuration;
          thisTimeInterval.setStartTime(initialTime);
@@ -252,13 +250,13 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
 
    private final double stepDurationWeight = 0.5;
    private final double doubleSupportDurationWeight = 1.0;
-   private final double stepLengthWeight = 15.0;
+   private final double stepLengthWeight = 10.0;
 
-   private final double maxStepDuration = 1.0;
-   private final double minStepDuration = 0.2;
+   private final double maxStepDuration = 10.0;
+   private final double minStepDuration = 0.15;
    private final double nominalLength = 0.15;
 
-   private final double timeResolution = 0.01;
+   private final double timeResolution = 0.025;
 
    private final FramePose3D initialPose = new FramePose3D();
    private final FramePose3D finalPose = new FramePose3D();
@@ -276,16 +274,16 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          {
             double durationDelta = duration - nominalDuration;
             double modifiedInitialTime = initialTime;
-            if (useFractionalDoubleSupport)
-               modifiedInitialTime += endDoubleSupportDurationFraction * durationDelta;
+            if (xGaitSettings.useFractionalDoubleSupport())
+               modifiedInitialTime += xGaitSettings.getDoubleSupportFraction() * durationDelta;
 
             extrapolatePose(finalPose, modifiedInitialTime + duration);
 
             double translationCost = computeTranslationCost(initialPose, finalPose);
             double swingDurationCost = computeStepDurationCost(nominalDuration, duration);
-            double doubleSupportDurationCost = computeDoubleSupportCost(endDoubleSupportDurationFraction * nominalDuration, endDoubleSupportDurationFraction * duration);
+            double doubleSupportDurationCost = computeDoubleSupportCost(xGaitSettings.getDoubleSupportFraction() * nominalDuration, xGaitSettings.getDoubleSupportFraction() * duration);
             double stepCost = translationCost + swingDurationCost;
-            if (useFractionalDoubleSupport)
+            if (xGaitSettings.useFractionalDoubleSupport())
                stepCost += doubleSupportDurationCost;
 
             if (stepCost < bestStepCost)
