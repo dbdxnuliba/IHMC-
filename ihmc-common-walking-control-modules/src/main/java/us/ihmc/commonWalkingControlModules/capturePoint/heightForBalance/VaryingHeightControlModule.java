@@ -157,6 +157,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private YoDouble yoFracAPred;
    private YoDouble yoCoPProjectedCoMMinDistance;
    private YoDouble yoMinICPError;
+   private YoDouble yoCoMVelocityToStop;
+
 
 
    public VaryingHeightControlModule(double totalMass, HighLevelHumanoidControllerToolbox controllerToolbox, YoVariableRegistry parentRegistry,
@@ -182,6 +184,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       yoFracAPred = new YoDouble(getClass().getSimpleName()+"FractionOfAMaxUsedInPrediction",registry);
       yoCoPProjectedCoMMinDistance = new YoDouble(getClass().getSimpleName()+"CoPtoProjectedCoMOnICPeDistance",registry);
       yoMinICPError = new YoDouble(getClass().getSimpleName()+"MinICPError",registry);
+      yoCoMVelocityToStop = new YoDouble(getClass().getSimpleName()+"CoMVelocityToStop",registry);
 
       yoDesiredHeightAcceleration = new YoDouble("DesiredHeightAccelerationHeightControl", registry);
 
@@ -263,6 +266,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       primaryConditionEvaluator = new VaryingHeightPrimaryConditionEvaluator(yoZMin.getDoubleValue(), yoMinKneeAngle.getDoubleValue(), yoMaxKneeAngle.getDoubleValue());
       timeToConstraintsPredictor = new VaryingHeightTimeToConstraintsPredictor(yoZMin.getDoubleValue(), yoVMin.getDoubleValue(), yoVMax.getDoubleValue());
       secondaryConditionEvaluator = new VaryingHeightSecondaryConditionEvaluator(yoZMin.getDoubleValue(), tForHalfWaySwing, smoothEpsilon, timeToConstraintsPredictor);
+
+      yoCoMVelocityToStop.set(0.01);
    }
 
    public void compute()
@@ -308,13 +313,13 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       }
 
       // For standing push
-      boolean nonDynamicCase = yoCoMEndOfSwing2DNotHacky.distanceFromOrigin()<0.5;
+      boolean nonDynamicCase = true;
 
       // Reset values if state switch occurs, or if standing
       FrameVector2D comVelocity2D = new FrameVector2D();
       comVelocity2D.set(comVelocity3D);
       if (walkingStateSwitch
-            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && icpError.length()<0.02 && comVelocity2D.length()<0.01)
+            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && icpError.length()<0.02 && comVelocity2D.length()<yoCoMVelocityToStop.getDoubleValue())
       {
          heightControlInThisWalkingState = false;
          dsTrajectoryIsGenerated = false;
