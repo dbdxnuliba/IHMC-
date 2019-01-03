@@ -33,7 +33,7 @@ public abstract class HeightForBalanceParameters
 
    public double getFractionOfMaxHeightAccelerationToConsiderInPrediction()
    {
-      return 0.9;
+      return 0.4;
    }
 
    public double getMaxHeightAccelerationForDistanceCase()
@@ -81,15 +81,6 @@ public abstract class HeightForBalanceParameters
       return 0.015;
    }
 
-   public double getFractionCMPOfMaxDistanceFromPolygonForHeightControl()
-   {
-      return 0.06;
-   }
-
-   public double getDesiredICPVelocityToConsiderForNonDynamicCase()
-   {
-      return 0.02;
-   }
 
    public double getFractionOfSwingTimeToChangeMaxHeight()
    {

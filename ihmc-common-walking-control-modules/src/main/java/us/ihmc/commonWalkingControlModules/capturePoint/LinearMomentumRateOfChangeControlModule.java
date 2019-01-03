@@ -365,6 +365,7 @@ public abstract class LinearMomentumRateOfChangeControlModule
       if (linearMomentumRateOfChange.containsNaN())
          throw new RuntimeException("linearMomentumRateOfChange = " + linearMomentumRateOfChange);
 
+      linearMomentumRateOfChange.changeFrame(centerOfMassFrame);
       controlledCoMAcceleration.set(linearMomentumRateOfChange);
       controlledCoMAcceleration.scale(1.0 / totalMass);
 

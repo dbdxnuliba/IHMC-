@@ -35,7 +35,7 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.57
-      percentWeight = 0.60;
+      percentWeight = 0.8;
       super.testPushStanding();
    }
 
