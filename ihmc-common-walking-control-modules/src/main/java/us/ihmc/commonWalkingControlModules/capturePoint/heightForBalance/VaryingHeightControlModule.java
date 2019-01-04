@@ -492,19 +492,6 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
          {
             double alphaAngle = 1.0;
             double alphaDistance = 1.0;
-            if(useThreshold&&MathTools.epsilonEquals(posAlignTresh,Math.abs(errorAngle),0.1))
-            {
-               alphaAngle = (posAlignTresh-Math.abs(errorAngle))/(0.1);
-            }
-            else if(useThreshold&&MathTools.epsilonEquals(negAlignTresh,Math.abs(errorAngle),0.1))
-            {
-               alphaAngle = (Math.abs(errorAngle)-negAlignTresh)/(0.1);
-            }
-
-            if(MathTools.epsilonEquals(copCoMProjDistance,copCoMProjMinDistance, 0.005)&& copCoMProjDistance>copCoMProjMinDistance)
-            {
-               alphaDistance = (copCoMProjDistance-copCoMProjMinDistance)/0.005;
-            }
             yoAlphaAngle.set(alphaAngle);
             yoAlphaDistance.set(alphaDistance);
             desiredHeightAcceleration = alphaAngle*alphaDistance*desiredHeightAcceleration;
