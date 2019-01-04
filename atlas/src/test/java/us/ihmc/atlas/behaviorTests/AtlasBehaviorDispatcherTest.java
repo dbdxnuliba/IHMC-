@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Disabled;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
+@Tag("atlas")
 public class AtlasBehaviorDispatcherTest extends HumanoidBehaviorDispatcherTest
 {
    private final AtlasRobotModel robotModel;
