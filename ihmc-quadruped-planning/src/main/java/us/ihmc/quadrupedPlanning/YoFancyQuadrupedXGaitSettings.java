@@ -39,8 +39,16 @@ public class YoFancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSetting
    private final YoDouble trotDoubleSupportFraction = new YoDouble("trotDoubleSupportFraction", registry);
 
    private final YoDouble endDoubleSupportDuration = new YoDouble("endDoubleSupportDuration", registry);
-
    private final YoBoolean useFractionalDoubleSupport = new YoBoolean("useFractionalDoubleSupport", registry);
+
+   private final YoDouble swingDurationWeight = new YoDouble("swingDurationWeight", registry);
+   private final YoDouble doubleSupportDurationWeight = new YoDouble("doubleSupportDurationWeight", registry);
+   private final YoDouble stepLengthWeight = new YoDouble("stepLengthWeight", registry);
+   private final YoDouble stepWidthWeight = new YoDouble("stepWidthWeight", registry);
+   private final YoDouble nominalStepLength = new YoDouble("nominalStepLength", registry);
+   private final YoDouble nominalStepWidth = new YoDouble("nominalStepWidth", registry);
+   private final YoDouble minimumSwingDuration = new YoDouble("minimumSwingDuration", registry);
+   private final YoDouble maximumSwingDuration = new YoDouble("maximumSwingDuration", registry);
 
    public YoFancyQuadrupedXGaitSettings(FancyQuadrupedXGaitSettingsReadOnly defaultXGaitSettings, GlobalDataProducer globalDataProducer, YoVariableRegistry parentRegistry)
    {
@@ -60,6 +68,15 @@ public class YoFancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSetting
       endDoubleSupportDuration.set(defaultXGaitSettings.getEndDoubleSupportDuration());
 
       useFractionalDoubleSupport.set(defaultXGaitSettings.useFractionalDoubleSupport());
+
+      swingDurationWeight.set(defaultXGaitSettings.getSwingDurationWeight());
+      doubleSupportDurationWeight.set(defaultXGaitSettings.getDoubleSupportDurationWeight());
+      stepLengthWeight.set(defaultXGaitSettings.getStepLengthWeight());
+      stepWidthWeight.set(defaultXGaitSettings.getStepWidthWeight());
+      nominalStepLength.set(defaultXGaitSettings.getNominalStepLength());
+      nominalStepWidth.set(defaultXGaitSettings.getNominalStepWidth());
+      minimumSwingDuration.set(defaultXGaitSettings.getMinimumSwingDuration());
+      maximumSwingDuration.set(defaultXGaitSettings.getMaximumSwingDuration());
 
       parentRegistry.addChild(registry);
    }
@@ -136,6 +153,54 @@ public class YoFancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSetting
       return useFractionalDoubleSupport.getBooleanValue();
    }
 
+   @Override
+   public double getSwingDurationWeight()
+   {
+      return swingDurationWeight.getDoubleValue();
+   }
+
+   @Override
+   public double getDoubleSupportDurationWeight()
+   {
+      return doubleSupportDurationWeight.getDoubleValue();
+   }
+
+   @Override
+   public double getStepLengthWeight()
+   {
+      return stepLengthWeight.getDoubleValue();
+   }
+
+   @Override
+   public double getStepWidthWeight()
+   {
+      return stepWidthWeight.getDoubleValue();
+   }
+
+   @Override
+   public double getNominalStepLength()
+   {
+      return nominalStepLength.getDoubleValue();
+   }
+
+   @Override
+   public double getNominalStepWidth()
+   {
+      return nominalStepWidth.getDoubleValue();
+   }
+
+   @Override
+   public double getMinimumSwingDuration()
+   {
+      return minimumSwingDuration.getDoubleValue();
+   }
+
+   @Override
+   public double getMaximumSwingDuration()
+   {
+      return maximumSwingDuration.getDoubleValue();
+   }
+
    public void setStanceLength(double stanceLength)
    {
       yoStanceLength.set(stanceLength);
@@ -196,6 +261,47 @@ public class YoFancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSetting
       this.useFractionalDoubleSupport.set(useFractionalDoubleSupport);
    }
 
+   public void setSwingDurationWeight(double swingDurationWeight)
+   {
+      this.swingDurationWeight.set(swingDurationWeight);
+   }
+
+   public void setDoubleSupportDurationWeight(double doubleSupportDurationWeight)
+   {
+      this.doubleSupportDurationWeight.set(doubleSupportDurationWeight);
+   }
+
+   public void setStepLengthWeight(double stepLengthWeight)
+   {
+      this.stepLengthWeight.set(stepLengthWeight);
+   }
+
+   public void setStepWidthWeight(double stepWidthWeight)
+   {
+      this.stepWidthWeight.set(stepWidthWeight);
+   }
+
+   public void setNominalStepLength(double nominalStepLength)
+   {
+      this.nominalStepLength.set(nominalStepLength);
+   }
+
+   public void setNominalStepWidth(double nominalStepWidth)
+   {
+      this.nominalStepWidth.set(nominalStepWidth);
+   }
+
+   public void setMinimumSwingDuration(double minimumSwingDuration)
+   {
+      this.minimumSwingDuration.set(minimumSwingDuration);
+   }
+
+   public void setMaximumSwingDuration(double maximumSwingDuration)
+   {
+      this.maximumSwingDuration.set(maximumSwingDuration);
+   }
+
+
    public void set(FancyQuadrupedXGaitSettingsReadOnly other)
    {
       setStanceLength(other.getStanceLength());
@@ -210,5 +316,14 @@ public class YoFancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSetting
       setCrawlDoubleSupportFraction(other.getCrawlDoubleSupportFraction());
       setEndDoubleSupportDuration(other.getEndDoubleSupportDuration());
       setUseFractionalDoubleSupport(other.useFractionalDoubleSupport());
+
+      setSwingDurationWeight(other.getSwingDurationWeight());
+      setDoubleSupportDurationWeight(other.getDoubleSupportDurationWeight());
+      setStepLengthWeight(other.getStepLengthWeight());
+      setStepWidthWeight(other.getStepWidthWeight());
+      setNominalStepLength(other.getNominalStepLength());
+      setNominalStepWidth(other.getNominalStepWidth());
+      setMinimumSwingDuration(other.getMinimumSwingDuration());
+      setMaximumSwingDuration(other.getMaximumSwingDuration());
    }
 }

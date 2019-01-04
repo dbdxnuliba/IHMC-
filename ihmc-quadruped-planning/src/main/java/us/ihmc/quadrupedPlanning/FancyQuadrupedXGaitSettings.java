@@ -18,6 +18,15 @@ public class FancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSettingsR
    private double endDoubleSupportDuration;
    private boolean useFractionalDoubleSupport;
 
+   private double swingDurationWeight;
+   private double doubleSupportDurationWeight;
+   private double stepLengthWeight;
+   private double stepWidthWeight;
+   private double nominalStepLength;
+   private double nominalStepWidth;
+   private double minimumSwingDuration;
+   private double maximumSwingDuration;
+
    @Override
    public double getStanceLength()
    {
@@ -90,6 +99,54 @@ public class FancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSettingsR
       return useFractionalDoubleSupport;
    }
 
+   @Override
+   public double getSwingDurationWeight()
+   {
+      return swingDurationWeight;
+   }
+
+   @Override
+   public double getDoubleSupportDurationWeight()
+   {
+      return doubleSupportDurationWeight;
+   }
+
+   @Override
+   public double getStepLengthWeight()
+   {
+      return stepLengthWeight;
+   }
+
+   @Override
+   public double getStepWidthWeight()
+   {
+      return stepWidthWeight;
+   }
+
+   @Override
+   public double getNominalStepLength()
+   {
+      return nominalStepLength;
+   }
+
+   @Override
+   public double getNominalStepWidth()
+   {
+      return nominalStepWidth;
+   }
+
+   @Override
+   public double getMinimumSwingDuration()
+   {
+      return minimumSwingDuration;
+   }
+
+   @Override
+   public double getMaximumSwingDuration()
+   {
+      return maximumSwingDuration;
+   }
+
    public void setStanceLength(double stanceLength)
    {
       this.stanceLength = stanceLength;
@@ -150,6 +207,46 @@ public class FancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSettingsR
       this.useFractionalDoubleSupport = useFractionalDoubleSupport;
    }
 
+   public void setSwingDurationWeight(double swingDurationWeight)
+   {
+      this.swingDurationWeight = swingDurationWeight;
+   }
+
+   public void setDoubleSupportDurationWeight(double doubleSupportDurationWeight)
+   {
+      this.doubleSupportDurationWeight = doubleSupportDurationWeight;
+   }
+
+   public void setStepLengthWeight(double stepLengthWeight)
+   {
+      this.stepLengthWeight = stepLengthWeight;
+   }
+
+   public void setStepWidthWeight(double stepWidthWeight)
+   {
+      this.stepWidthWeight = stepWidthWeight;
+   }
+
+   public void setNominalStepLength(double nominalStepLength)
+   {
+      this.nominalStepLength = nominalStepLength;
+   }
+
+   public void setNominalStepWidth(double nominalStepWidth)
+   {
+      this.nominalStepWidth = nominalStepWidth;
+   }
+
+   public void setMinimumSwingDuration(double minimumSwingDuration)
+   {
+      this.minimumSwingDuration = minimumSwingDuration;
+   }
+
+   public void setMaximumSwingDuration(double maximumSwingDuration)
+   {
+      this.maximumSwingDuration = maximumSwingDuration;
+   }
+
    public void set(FancyQuadrupedXGaitSettingsReadOnly other)
    {
       setStanceLength(other.getStanceLength());
@@ -167,5 +264,14 @@ public class FancyQuadrupedXGaitSettings implements FancyQuadrupedXGaitSettingsR
 
       setEndDoubleSupportDuration(other.getEndDoubleSupportDuration());
       setUseFractionalDoubleSupport(other.useFractionalDoubleSupport());
+
+      setSwingDurationWeight(other.getSwingDurationWeight());
+      setDoubleSupportDurationWeight(other.getDoubleSupportDurationWeight());
+      setStepLengthWeight(other.getStepLengthWeight());
+      setStepWidthWeight(other.getStepWidthWeight());
+      setNominalStepLength(other.getNominalStepLength());
+      setNominalStepWidth(other.getNominalStepWidth());
+      setMinimumSwingDuration(other.getMinimumSwingDuration());
+      setMaximumSwingDuration(other.getMaximumSwingDuration());
    }
 }

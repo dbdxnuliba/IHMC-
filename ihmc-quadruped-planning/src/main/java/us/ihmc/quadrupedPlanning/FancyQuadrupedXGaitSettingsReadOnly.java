@@ -38,6 +38,25 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
    double getCrawlStepDuration();
    double getTrotStepDuration();
 
+
+
+   double getPaceDoubleSupportFraction();
+   double getCrawlDoubleSupportFraction();
+   double getTrotDoubleSupportFraction();
+
+
+   boolean useFractionalDoubleSupport();
+   double getEndDoubleSupportDuration();
+
+   double getSwingDurationWeight();
+   double getDoubleSupportDurationWeight();
+   double getStepLengthWeight();
+   double getStepWidthWeight();
+   double getNominalStepLength();
+   double getNominalStepWidth();
+   double getMinimumSwingDuration();
+   double getMaximumSwingDuration();
+
    default double getStepDuration()
    {
       double phaseForMath = Math.abs(Math.toRadians(getEndPhaseShift()));
@@ -59,10 +78,6 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
 
       return InterpolationTools.hermiteInterpolate(initialCondition, finalCondition, alpha);
    }
-
-   double getPaceDoubleSupportFraction();
-   double getCrawlDoubleSupportFraction();
-   double getTrotDoubleSupportFraction();
 
    default double getDoubleSupportFraction()
    {
@@ -86,8 +101,6 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
       return InterpolationTools.hermiteInterpolate(initialCondition, finalCondition, alpha);
    }
 
-   boolean useFractionalDoubleSupport();
-   double getEndDoubleSupportDuration();
 
    default boolean epsilonEquals(FancyQuadrupedXGaitSettingsReadOnly other, double epsilon)
    {
@@ -101,6 +114,8 @@ public interface FancyQuadrupedXGaitSettingsReadOnly
       equals &= MathTools.epsilonEquals(this.getPaceDoubleSupportFraction(), other.getPaceDoubleSupportFraction(), epsilon);
       equals &= MathTools.epsilonEquals(this.getCrawlDoubleSupportFraction(), other.getCrawlDoubleSupportFraction(), epsilon);
       equals &= MathTools.epsilonEquals(this.getTrotDoubleSupportFraction(), other.getTrotDoubleSupportFraction(), epsilon);
+      equals &= this.useFractionalDoubleSupport() == other.useFractionalDoubleSupport();
+      equals &= MathTools.epsilonEquals(this.getEndDoubleSupportDuration(), other.getEndDoubleSupportDuration(), epsilon);
       return equals;
    }
 

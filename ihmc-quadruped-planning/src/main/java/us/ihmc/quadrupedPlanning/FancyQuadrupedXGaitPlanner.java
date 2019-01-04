@@ -7,7 +7,6 @@ import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePose3DBasics;
-import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedPlanning.bodyPath.QuadrupedPlanarBodyPathProvider;
@@ -73,21 +72,21 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          QuadrupedTimedOrientedStep nextStep = plannedSteps.add();
 
          // compute step quadrant
-         RobotQuadrant nextStepQuadrant = lastStepQuadrant.getNextRegularGaitSwingQuadrant();
-         nextStep.setRobotQuadrant(nextStepQuadrant);
+         RobotQuadrant thisStepQuadrant = lastStepQuadrant.getNextRegularGaitSwingQuadrant();
+         nextStep.setRobotQuadrant(thisStepQuadrant);
 
          // compute step timing
-         double nextStepStartTime;
-         double nextStepEndTime;
+         double thisStepStartTime;
+         double thisStepEndTime;
          if (i == 0)
          {
-            nextStepStartTime = lastStepStartTime;
-            nextStepEndTime = lastStepStartTime + xGaitSettings.getStepDuration();
+            thisStepStartTime = lastStepStartTime;
+            thisStepEndTime = lastStepStartTime + optimizeStepDuration(thisStepStartTime, xGaitSettings.getStepDuration());
          }
          else
          {
             // If it's in the back, the last step was the opposite diagonal. If it's in the front, the last step was the front same side.
-            double endPhaseShift = nextStepQuadrant.isQuadrantInHind() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
+            double endPhaseShift = thisStepQuadrant.isQuadrantInHind() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
             endPhaseShift = MathTools.clamp(endPhaseShift, 0.0, 180.0);
 
             double nominalStepDuration = xGaitSettings.getStepDuration();
@@ -105,14 +104,14 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
             else
                endTimeShift = endPhaseShift / 180.0 * (xGaitSettings.getEndDoubleSupportDuration() + stepDuration);
 
-            nextStepStartTime = lastStepStartTime + endTimeShift;
-            nextStepEndTime = nextStepStartTime + stepDuration;
+            thisStepStartTime = lastStepStartTime + endTimeShift;
+            thisStepEndTime = thisStepStartTime + stepDuration;
          }
-         nextStep.getTimeInterval().setStartTime(nextStepStartTime);
-         nextStep.getTimeInterval().setEndTime(nextStepEndTime);
+         nextStep.getTimeInterval().setStartTime(thisStepStartTime);
+         nextStep.getTimeInterval().setEndTime(thisStepEndTime);
 
          // compute xGait rectangle pose at end of step
-         extrapolatePose(xGaitRectanglePose, nextStepEndTime);
+         extrapolatePose(xGaitRectanglePose, thisStepEndTime);
 
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
          nextStep.setStepYaw(xGaitRectanglePose.getYaw());
@@ -127,8 +126,8 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          nextStep.setGroundClearance(xGaitSettings.getStepGroundClearance());
 
          // update state for next step
-         lastStepStartTime = nextStepStartTime;
-         lastStepQuadrant = nextStepQuadrant;
+         lastStepStartTime = thisStepStartTime;
+         lastStepQuadrant = thisStepQuadrant;
       }
    }
 
@@ -247,7 +246,6 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
          step.setGoalPosition(snapper.snapStep(goalPosition.getX(), goalPosition.getY(), previousStepZValue - maximumStepDown));
       }
    }
-
    private final double stepDurationWeight = 0.5;
    private final double doubleSupportDurationWeight = 1.0;
    private final double stepLengthWeight = 10.0;
@@ -258,6 +256,7 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
 
    private final double timeResolution = 0.025;
 
+   private final PoseReferenceFrame initialPoseFrame = new PoseReferenceFrame("initialPoseFrame", ReferenceFrame.getWorldFrame());
    private final FramePose3D initialPose = new FramePose3D();
    private final FramePose3D finalPose = new FramePose3D();
 
@@ -267,10 +266,11 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       {
          double bestStepCost = Double.POSITIVE_INFINITY;
          extrapolatePose(initialPose, initialTime);
+         initialPoseFrame.setPoseAndUpdate(initialPose);
 
-         double duration = minStepDuration;
+         double duration = xGaitSettings.getMinimumSwingDuration();
 
-         while (duration < maxStepDuration)
+         while (duration < xGaitSettings.getMaximumSwingDuration())
          {
             double durationDelta = duration - nominalDuration;
             double modifiedInitialTime = initialTime;
@@ -279,7 +279,7 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
 
             extrapolatePose(finalPose, modifiedInitialTime + duration);
 
-            double translationCost = computeTranslationCost(initialPose, finalPose);
+            double translationCost = computeTranslationCost(initialPoseFrame, finalPose);
             double swingDurationCost = computeStepDurationCost(nominalDuration, duration);
             double doubleSupportDurationCost = computeDoubleSupportCost(xGaitSettings.getDoubleSupportFraction() * nominalDuration, xGaitSettings.getDoubleSupportFraction() * duration);
             double stepCost = translationCost + swingDurationCost;
@@ -305,28 +305,40 @@ public class FancyQuadrupedXGaitPlanner implements QuadrupedXGaitPlannerInterfac
       }
    }
 
-   private double computeTranslationCost(FramePose3DReadOnly initialPose, FramePose3DReadOnly finalPose)
+   private double computeTranslationCost(ReferenceFrame initialPoseFrame, FramePose3D finalPose)
    {
-      double stepLength = initialPose.getPositionDistance(finalPose);
-      double deviationFromNominal = stepLength - nominalLength;
-      return stepLengthWeight * MathTools.square(deviationFromNominal);
+      ReferenceFrame originalFrame = finalPose.getReferenceFrame();
+      finalPose.changeFrame(initialPoseFrame);
+      //      double stepLength = initialPose.getPositionDistance(finalPose);
+      double stepLength = finalPose.getX(); // just look at forward distance
+      double stepWidth = finalPose.getY(); // just look at forward distance
+      double lengthDeviationFromNominal = stepLength - xGaitSettings.getNominalStepLength();
+      double widthDeviationFromNominal = stepWidth - xGaitSettings.getNominalStepWidth();
+
+      finalPose.changeFrame(originalFrame);
+
+      double lengthCost = xGaitSettings.getStepLengthWeight() * MathTools.square(lengthDeviationFromNominal);
+      double widthCost = xGaitSettings.getStepWidthWeight() * MathTools.square(widthDeviationFromNominal);
+
+      return lengthCost + widthCost;
    }
 
    private double computeDoubleSupportCost(double nominalDuration, double currentDuration)
    {
       double deviationFromNominal = currentDuration - nominalDuration;
-      return doubleSupportDurationWeight * MathTools.square(deviationFromNominal);
+      return xGaitSettings.getDoubleSupportDurationWeight() * MathTools.square(deviationFromNominal);
    }
 
    private double computeStepDurationCost(double nominalDuration, double currentDuration)
    {
       double deviationFromNominal = currentDuration - nominalDuration;
-      return stepDurationWeight * MathTools.square(deviationFromNominal);
+      return xGaitSettings.getSwingDurationWeight() * MathTools.square(deviationFromNominal);
    }
 
    private void extrapolatePose(FixedFramePose3DBasics finalPose, double time)
    {
       bodyPathProvider.getPlanarPose(time, bodyPathPose);
+      bodyPathPose.checkReferenceFrameMatch(finalPose);
       finalPose.setX(bodyPathPose.getX());
       finalPose.setY(bodyPathPose.getY());
       finalPose.setOrientationYawPitchRoll(bodyPathPose.getYaw(), finalPose.getPitch(), finalPose.getRoll());

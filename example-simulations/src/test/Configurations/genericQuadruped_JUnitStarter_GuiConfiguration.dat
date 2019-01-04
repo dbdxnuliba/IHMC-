@@ -25,7 +25,7 @@
 		</GraphConfig>
 	</Graph>
 	<Graph>
-		<Variables></Variables>
+		<Variables>root.genericQuadruped.TeleopRegistry.QuadrupedTeleopManager.YoQuadrupedXGaitSettings.endPhaseShiftInput</Variables>
 		<GraphConfiguration>
 			<Name>config3</Name>
 			<ScalingMethod>1</ScalingMethod>

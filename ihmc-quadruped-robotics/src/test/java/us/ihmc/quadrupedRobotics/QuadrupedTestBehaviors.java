@@ -92,9 +92,13 @@ public class QuadrupedTestBehaviors
 
       double initialDoubleSupportDuration = stepTeleopManager.getXGaitSettings().getEndDoubleSupportDuration();
       double initialEndPhaseShift = stepTeleopManager.getXGaitSettings().getEndPhaseShift();
+      double initialFancyDoubleSupportDuration = stepTeleopManager.getFancyXGaitSettings().getEndDoubleSupportDuration();
+      double initialFancyEndPhaseShift = stepTeleopManager.getFancyXGaitSettings().getEndPhaseShift();
 
       stepTeleopManager.getXGaitSettings().setEndDoubleSupportDuration(0.1);
       stepTeleopManager.getXGaitSettings().setEndPhaseShift(180.0);
+      stepTeleopManager.getFancyXGaitSettings().setEndDoubleSupportDuration(0.1);
+      stepTeleopManager.getFancyXGaitSettings().setEndPhaseShift(180.0);
       stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.0, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
@@ -109,6 +113,8 @@ public class QuadrupedTestBehaviors
 
       stepTeleopManager.getXGaitSettings().setEndDoubleSupportDuration(initialDoubleSupportDuration);
       stepTeleopManager.getXGaitSettings().setEndPhaseShift(initialEndPhaseShift);
+      stepTeleopManager.getFancyXGaitSettings().setEndDoubleSupportDuration(initialFancyDoubleSupportDuration);
+      stepTeleopManager.getFancyXGaitSettings().setEndPhaseShift(initialFancyEndPhaseShift);
    }
 
    public static void executeBodyPathPlan(GoalOrientedTestConductor conductor, QuadrupedForceTestYoVariables variables, QuadrupedTeleopManager stepTeleopManager, double positionDelta, double yawDelta, EuclideanTrajectoryPointMessage... points)
