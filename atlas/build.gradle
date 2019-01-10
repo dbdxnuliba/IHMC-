@@ -18,6 +18,12 @@ ihmc {
    configurePublications()
 }
 
+def categoryConfig = categories.configure(category)
+categoryConfig.forkEvery = 1
+categoryConfig.maxParallelForks = 1
+categoryConfig.minHeapSizeGB = 6
+categoryConfig.maxHeapSizeGB = 8
+
 mainDependencies {
    compile group: "org.georegression", name: "georegression", version: "0.11"
    compile group: "org.ddogleg", name: "ddogleg", version: "0.7"
