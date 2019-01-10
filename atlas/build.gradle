@@ -18,11 +18,19 @@ ihmc {
    configurePublications()
 }
 
-def categoryConfig = categories.configure(category)
-categoryConfig.forkEvery = 1
-categoryConfig.maxParallelForks = 1
-categoryConfig.minHeapSizeGB = 6
-categoryConfig.maxHeapSizeGB = 8
+if (project.hasProperty("category"))
+{
+   def categoryConfig = categories.configure(category)
+   categoryConfig.forkEvery = 1
+   categoryConfig.maxParallelForks = 1
+   categoryConfig.minHeapSizeGB = 6
+   categoryConfig.maxHeapSizeGB = 8
+}
+def fastConfig = categories.configure("fast")
+fastConfig.forkEvery = 1
+fastConfig.maxParallelForks = 1
+fastConfig.minHeapSizeGB = 6
+fastConfig.maxHeapSizeGB = 8
 
 mainDependencies {
    compile group: "org.georegression", name: "georegression", version: "0.11"
