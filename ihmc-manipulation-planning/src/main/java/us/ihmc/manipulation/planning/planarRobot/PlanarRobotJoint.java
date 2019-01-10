@@ -63,4 +63,9 @@ public class PlanarRobotJoint
    {
       return endTipPoint;
    }
+   
+   public double getEndTipAngle()
+   {
+      return endTipAngle;
+   }
 }
