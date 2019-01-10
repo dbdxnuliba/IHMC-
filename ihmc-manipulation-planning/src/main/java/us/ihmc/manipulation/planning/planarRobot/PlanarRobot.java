@@ -2,20 +2,24 @@ package us.ihmc.manipulation.planning.planarRobot;
 
 import java.util.ArrayList;
 
+import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.euclid.tuple2D.Point2D;
 
 public class PlanarRobot
 {
    private final ArrayList<PlanarRobotJoint> robotJoints;
 
-   //   private final TDoubleArrayList robotTaskSpace;
-   //   private final TDoubleArrayList robotJointConfiguration;
-   //   
-   //   private final ArrayList<PlanarRobotTask> robotTasks;
+   private final TDoubleArrayList robotTaskConfiguration;
+   private final TDoubleArrayList robotJointConfiguration;
+
+   private final ArrayList<PlanarRobotTask> robotTasks;
 
    public PlanarRobot()
    {
       robotJoints = new ArrayList<PlanarRobotJoint>();
+      robotTaskConfiguration = new TDoubleArrayList();
+      robotJointConfiguration = new TDoubleArrayList();
+      robotTasks = new ArrayList<PlanarRobotTask>();
    }
 
    public void addBaseJoint(Point2D basePoint, double linkLength, double jointAngle)
@@ -33,17 +37,26 @@ public class PlanarRobot
 
    public void addTask(PlanarRobotTask taskToAdd)
    {
-
+      robotTasks.add(taskToAdd);
    }
-   
-   public void setJointConfiguration()
-   {
 
+   public void setJointConfiguration(TDoubleArrayList jointConfiguration)
+   {
+      if (jointConfiguration.size() != getJointDimension())
+         System.out.println("the joint configuration has different size with robot joint dimension.");
+      else
+      {
+         robotJointConfiguration.clear();
+         robotJointConfiguration.addAll(jointConfiguration);
+         for (int i = 0; i < getJointDimension(); i++)
+            robotJoints.get(i).setJointAngle(jointConfiguration.get(i));
+      }
+      updateRobot();
    }
 
    public void updateRobot()
    {
-      for(int i=0;i<robotJoints.size();i++)
+      for (int i = 0; i < robotJoints.size(); i++)
          robotJoints.get(i).updateJoint();
    }
 
@@ -54,14 +67,23 @@ public class PlanarRobot
 
    public int getTaskDimension()
    {
-      return 0;
+      return robotTasks.size();
+   }
+
+   public TDoubleArrayList getTaskConfiguration()
+   {
+      robotTaskConfiguration.clear();
+      for (int i = 0; i < getTaskDimension(); i++)
+         robotTaskConfiguration.add(robotTasks.get(i).getTaskConfiguration(robotJointConfiguration));
+
+      return robotTaskConfiguration;
    }
 
    public PlanarRobotJoint getLastJoint()
    {
       return robotJoints.get(robotJoints.size() - 1);
    }
-   
+
    public PlanarRobotJoint getJoint(int i)
    {
       return robotJoints.get(i);
