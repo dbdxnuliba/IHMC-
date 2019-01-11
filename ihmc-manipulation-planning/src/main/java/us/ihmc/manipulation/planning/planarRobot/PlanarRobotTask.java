@@ -18,5 +18,5 @@ public abstract class PlanarRobotTask
       return taskName;
    }
 
-   public abstract double getTaskConfiguration(TDoubleArrayList jointConfiguration);
+   public abstract double getTask(TDoubleArrayList jointConfiguration);
 }

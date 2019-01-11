@@ -53,6 +53,11 @@ public class PlanarRobotJoint
          this.endTipPoint.add(linkLength * Math.cos(endTipAngle), linkLength * Math.sin(endTipAngle));
       }
    }
+   
+   public PlanarRobotJoint getParentJoint()
+   {
+      return parentJoint;
+   }
 
    public Point2D getJointPoint()
    {
@@ -67,5 +72,15 @@ public class PlanarRobotJoint
    public double getEndTipAngle()
    {
       return endTipAngle;
+   }
+   
+   public double getJointAngle()
+   {
+      return jointAngle;
+   }
+   
+   public double getLinkLength()
+   {
+      return linkLength;
    }
 }

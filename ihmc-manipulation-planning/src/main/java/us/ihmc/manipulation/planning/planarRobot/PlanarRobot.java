@@ -22,17 +22,33 @@ public class PlanarRobot
       robotTasks = new ArrayList<PlanarRobotTask>();
    }
 
+   public PlanarRobot(PlanarRobot other)
+   {
+      this();
+
+      for (int i = 0; i < other.getJointDimension(); i++)
+      {
+         PlanarRobotJoint jointToAdd = other.robotJoints.get(i);
+         if (jointToAdd.getParentJoint() == null)
+            addBaseJoint(jointToAdd.getJointPoint(), jointToAdd.getLinkLength(), 0.0);
+         else
+            addJoint(jointToAdd.getLinkLength(), 0.0);
+      }
+   }
+
    public void addBaseJoint(Point2D basePoint, double linkLength, double jointAngle)
    {
       PlanarRobotJoint baseJoint = new PlanarRobotJoint(basePoint, linkLength, jointAngle);
       robotJoints.clear();
       robotJoints.add(baseJoint);
+      robotJointConfiguration.add(jointAngle);
    }
 
    public void addJoint(double linkLength, double jointAngle)
    {
       PlanarRobotJoint joint = new PlanarRobotJoint(getLastJoint(), linkLength, jointAngle);
       robotJoints.add(joint);
+      robotJointConfiguration.add(jointAngle);
    }
 
    public void addTask(PlanarRobotTask taskToAdd)
@@ -42,8 +58,9 @@ public class PlanarRobot
 
    public void setJointConfiguration(TDoubleArrayList jointConfiguration)
    {
-      if (jointConfiguration.size() != getJointDimension())
-         System.out.println("the joint configuration has different size with robot joint dimension.");
+      if (jointConfiguration.size() != robotJointConfiguration.size())
+         System.out.println("the joint configuration has different size with robot joint dimension (" + jointConfiguration.size() + ", "
+               + robotJointConfiguration.size() +").");
       else
       {
          robotJointConfiguration.clear();
@@ -51,6 +68,12 @@ public class PlanarRobot
          for (int i = 0; i < getJointDimension(); i++)
             robotJoints.get(i).setJointAngle(jointConfiguration.get(i));
       }
+      updateRobot();
+   }
+
+   public void setJointConfiguration(int i, double jointAngle)
+   {
+      robotJoints.get(i).setJointAngle(jointAngle);
       updateRobot();
    }
 
@@ -70,13 +93,31 @@ public class PlanarRobot
       return robotTasks.size();
    }
 
+   public TDoubleArrayList getJointConfiguration()
+   {
+      robotJointConfiguration.clear();
+      for (int i = 0; i < robotJoints.size(); i++)
+         robotJointConfiguration.add(robotJoints.get(i).getJointAngle());
+      return robotJointConfiguration;
+   }
+
    public TDoubleArrayList getTaskConfiguration()
    {
       robotTaskConfiguration.clear();
-      for (int i = 0; i < getTaskDimension(); i++)
-         robotTaskConfiguration.add(robotTasks.get(i).getTaskConfiguration(robotJointConfiguration));
+      for (int i = 0; i < robotTasks.size(); i++)
+         robotTaskConfiguration.add(robotTasks.get(i).getTask(robotJointConfiguration));
 
       return robotTaskConfiguration;
+   }
+
+   public double getTask(int i)
+   {
+      return robotTasks.get(i).getTask(robotJointConfiguration);
+   }
+
+   public String getTaskName(int i)
+   {
+      return robotTasks.get(i).getTaskName();
    }
 
    public PlanarRobotJoint getLastJoint()
