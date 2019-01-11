@@ -1,25 +1,27 @@
 package us.ihmc.manipulation.planning.planarRobot.tenJointsSimulation;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.commons.Conversions;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.log.LogTools;
 import us.ihmc.manipulation.planning.planarRobot.PlanarRobot;
+import us.ihmc.manipulation.planning.planarRobot.PlanarRobotInverseKinematicsSolver;
 import us.ihmc.manipulation.planning.planarRobot.PlanarRobotTask;
 import us.ihmc.manipulation.planning.planarRobot.PlanarRobotVisualizer;
 
 public class TenJointsSimulation
 {
+   private static final int numberOfJoints = 10;
    private final PlanarRobot robot;
    private final PlanarRobotVisualizer visualizer;
+   private final PlanarRobotInverseKinematicsSolver ikSolver;
 
    public TenJointsSimulation()
    {
       robot = new PlanarRobot();
 
-      int numberOfJoints = 9;
-
       robot.addBaseJoint(new Point2D(), 1.0, Math.PI * 10 / 180);
-
-      for (int i = 0; i < numberOfJoints; i++)
+      for (int i = 0; i < numberOfJoints - 1; i++)
          robot.addJoint(1.0, Math.PI * 10 / 180);
 
       robot.updateRobot();
@@ -28,15 +30,43 @@ public class TenJointsSimulation
       visualizer.open("initial configuration", robot.getJointConfiguration());
 
       defineTasks();
-      
+      ikSolver = new PlanarRobotInverseKinematicsSolver(robot);
+
       TDoubleArrayList taskConfigurationOne = robot.getTaskConfiguration();
       for (int i = 0; i < taskConfigurationOne.size(); i++)
-         System.out.println("" + taskConfigurationOne.get(i));
+         System.out.println("" + i + " " + taskConfigurationOne.get(i));
+   }
+
+   public void testInverseKinematics()
+   {
+      TDoubleArrayList desiredTask = new TDoubleArrayList();
+      desiredTask.add(5.0);
+      desiredTask.add(5.0);
+      desiredTask.add(0.0);
+
+      TDoubleArrayList initialConfiguration = new TDoubleArrayList();
+      initialConfiguration.addAll(robot.getJointConfiguration());
+
+      ikSolver.setInitialConfiguration(initialConfiguration);
+      ikSolver.setDesiredTaskConfiguration(desiredTask);
+      
+      long start = System.nanoTime();
+      
+      ikSolver.solve();
+      
+      long end = System.nanoTime();
+      
+      LogTools.info("computing time is " + Conversions.nanosecondsToSeconds(end - start));
+
+      visualizer.open("ik test solution", ikSolver.getSolution());
    }
 
    public static void main(String[] args)
    {
       TenJointsSimulation test = new TenJointsSimulation();
+
+      test.testInverseKinematics();
+      
 
       System.out.println("all tests are completed");
    }

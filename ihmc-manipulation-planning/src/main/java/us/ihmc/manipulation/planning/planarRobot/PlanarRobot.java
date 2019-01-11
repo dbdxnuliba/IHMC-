@@ -34,6 +34,7 @@ public class PlanarRobot
          else
             addJoint(jointToAdd.getLinkLength(), 0.0);
       }
+      robotTasks.addAll(other.robotTasks);
    }
 
    public void addBaseJoint(Point2D basePoint, double linkLength, double jointAngle)
