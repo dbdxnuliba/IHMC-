@@ -52,7 +52,7 @@ public class TenJointsSimulation
       
       long start = System.nanoTime();
       
-      ikSolver.solve();
+      LogTools.info(""+ikSolver.solve());
       
       long end = System.nanoTime();
       

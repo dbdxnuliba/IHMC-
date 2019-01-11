@@ -8,10 +8,13 @@ import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 
 public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInterface
 {
-   private static final int maximumNumberOfIteration = 20;
+   private static final int maximumNumberOfIteration = 100;
    private static final double perturbedJoint = 0.002;
    private static final double minimalDampedCoefficient = 0.0001;
    private static final double residualDampedCoefficient = 1;
+
+   private static final double solutionQualityThreshold = 0.0001;
+   private static final double solutionQualityRegressionThreshold = 0.0001;
 
    private final PlanarRobot robot;
 
@@ -29,6 +32,8 @@ public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInte
 
    private final DenseMatrix64F jacobianMatrix;
    private final DenseMatrix64F jacobianTransposeMatrix;
+
+   private double previousErrorSquare = 0;
 
    public PlanarRobotInverseKinematicsSolver(PlanarRobot robot)
    {
@@ -51,8 +56,12 @@ public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInte
    @Override
    public boolean solve()
    {
+      int numberOfIteration = 0;
+      previousErrorSquare = 100.0;
       for (int i = 0; i < maximumNumberOfIteration; i++)
       {
+         numberOfIteration = i;
+
          // get current task space.
          currentTaskSpace.clear();
          robot.setJointConfiguration(currentJointSpace);
@@ -63,6 +72,12 @@ public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInte
          // add break statement if error is small enough not to need finding new solution.
          for (int j = 0; j < taskDimension; j++)
             taskErrorSpace.set(j, 0, desiredTaskSpace.get(j) - currentTaskSpace.get(j));
+
+         double errorSquare = getErrorSquare();
+         if (errorSquare < solutionQualityThreshold)
+            if (errorSquare - previousErrorSquare < solutionQualityRegressionThreshold)
+               break;
+         previousErrorSquare = errorSquare;
 
          // get jacobian matrix.
          for (int j = 0; j < jointDimension; j++)
@@ -96,15 +111,10 @@ public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInte
          NativeCommonOps.mult(jacobianTransposeMatrix, jacobianMatrix, hessian);
 
          // add damped
-         double errorSquare = 0;
-         for (int j = 0; j < taskDimension; j++)
-            errorSquare = errorSquare + taskErrorSpace.get(j, 0) * taskErrorSpace.get(j, 0);
          double dampedCoefficient = errorSquare * residualDampedCoefficient + minimalDampedCoefficient;
          DenseMatrix64F dampedHessian = new DenseMatrix64F(hessian);
          for (int j = 0; j < jointDimension; j++)
             dampedHessian.add(j, j, dampedCoefficient);
-
-         LogTools.info("" + i + " errorSquare " + errorSquare);
 
          // get inverse of hessian.
          DenseMatrix64F inverseHessian = new DenseMatrix64F(jointDimension, jointDimension);
@@ -116,12 +126,18 @@ public class PlanarRobotInverseKinematicsSolver implements InverseKinematicsInte
 
          // append on current joint space to get new joint space.
          for (int j = 0; j < jointDimension; j++)
-         {
             currentJointSpace.set(j, currentJointSpace.get(j) + deltaJointSpace.get(j));
-         }
       }
 
-      return true;
+      return numberOfIteration < maximumNumberOfIteration - 1;
+   }
+
+   private double getErrorSquare()
+   {
+      double errorSquare = 0;
+      for (int i = 0; i < taskDimension; i++)
+         errorSquare = errorSquare + taskErrorSpace.get(i, 0) * taskErrorSpace.get(i, 0);
+      return errorSquare;
    }
 
    @Override
