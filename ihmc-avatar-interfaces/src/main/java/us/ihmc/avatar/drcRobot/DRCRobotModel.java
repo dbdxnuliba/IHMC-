@@ -6,6 +6,7 @@ import us.ihmc.avatar.SimulatedLowLevelOutputWriter;
 import us.ihmc.avatar.drcRobot.shapeContactSettings.DRCRobotModelShapeCollisionSettings;
 import us.ihmc.avatar.handControl.packetsAndConsumers.HandModel;
 import us.ihmc.avatar.initialSetup.DRCRobotInitialSetup;
+import us.ihmc.avatar.networkProcessor.footstepProcessingToolboxModule.FootstepProcessingParameters;
 import us.ihmc.avatar.ros.DRCROSPPSTimestampOffsetProvider;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
 import us.ihmc.commonWalkingControlModules.configurations.HighLevelControllerParameters;
@@ -126,6 +127,11 @@ public interface DRCRobotModel extends SimulatedFullHumanoidRobotModelFactory, W
    public HighLevelControllerParameters getHighLevelControllerParameters();
    
    public default DRCRobotModelShapeCollisionSettings getShapeCollisionSettings()
+   {
+      return null;
+   }
+
+   default FootstepProcessingParameters getFootstepProcessingParameters()
    {
       return null;
    }

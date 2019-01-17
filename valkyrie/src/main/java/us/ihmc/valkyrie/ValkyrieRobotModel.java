@@ -16,6 +16,7 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.drcRobot.shapeContactSettings.DRCRobotModelShapeCollisionSettings;
 import us.ihmc.avatar.initialSetup.DRCRobotInitialSetup;
+import us.ihmc.avatar.networkProcessor.footstepProcessingToolboxModule.FootstepProcessingParameters;
 import us.ihmc.avatar.networkProcessor.time.DRCROSAlwaysZeroOffsetPPSTimestampOffsetProvider;
 import us.ihmc.avatar.ros.DRCROSPPSTimestampOffsetProvider;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
@@ -61,18 +62,7 @@ import us.ihmc.valkyrie.configuration.ValkyrieConfigurationRoot;
 import us.ihmc.valkyrie.configuration.YamlWithIncludesLoader;
 import us.ihmc.valkyrie.fingers.SimulatedValkyrieFingerController;
 import us.ihmc.valkyrie.fingers.ValkyrieHandModel;
-import us.ihmc.valkyrie.parameters.ValkyrieCapturePointPlannerParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieCollisionBoxProvider;
-import us.ihmc.valkyrie.parameters.ValkyrieContactPointParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieFootstepPlannerParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieFootstepPlanningParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieJointMap;
-import us.ihmc.valkyrie.parameters.ValkyriePlanarRegionFootstepPlannerParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieSensorInformation;
-import us.ihmc.valkyrie.parameters.ValkyrieSliderBoardParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieStateEstimatorParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieUIParameters;
-import us.ihmc.valkyrie.parameters.ValkyrieWalkingControllerParameters;
+import us.ihmc.valkyrie.parameters.*;
 import us.ihmc.valkyrie.sensors.ValkyrieSensorSuiteManager;
 import us.ihmc.valkyrieRosControl.ValkyrieRosControlController;
 import us.ihmc.wholeBodyController.FootContactPoints;
@@ -647,5 +637,11 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
    public ValkyrieCalibrationParameters getCalibrationParameters()
    {
       return calibrationParameters;
+   }
+
+   @Override
+   public FootstepProcessingParameters getFootstepProcessingParameters()
+   {
+      return new ValkyrieFootstepProcessorParameters();
    }
 }

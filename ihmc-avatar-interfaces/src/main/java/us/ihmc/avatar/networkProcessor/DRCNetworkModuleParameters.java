@@ -39,6 +39,7 @@ public class DRCNetworkModuleParameters
    private boolean filterControllerInputMessages;
    private boolean enableJoystickBasedStepping;
    private boolean useBipedalSupportPlanarRegionPublisher;
+   private boolean useFootstepProcessorToolbox;
 
    private LocalObjectCommunicator simulatedSensorCommunicator;
 
@@ -131,6 +132,11 @@ public class DRCNetworkModuleParameters
       return useBipedalSupportPlanarRegionPublisher;
    }
 
+   public boolean isFootstepProcessorEnabled()
+   {
+      return useFootstepProcessorToolbox;
+   }
+
    public boolean isHeightQuadTreeToolboxEnabled()
    {
       return useHeightQuadTreeToolbox;
@@ -220,6 +226,11 @@ public class DRCNetworkModuleParameters
       usePerceptionModule = b;
       if (b)
          useController = true;
+   }
+
+   public void enableFootstepProcessorToolbox(boolean useFootstepProcessorToolbox)
+   {
+      this.useFootstepProcessorToolbox = useFootstepProcessorToolbox;
    }
 
    public void enableRobotEnvironmentAwerenessModule(boolean enable)

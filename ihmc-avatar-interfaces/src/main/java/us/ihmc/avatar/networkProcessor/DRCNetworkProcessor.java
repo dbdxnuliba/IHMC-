@@ -5,6 +5,7 @@ import java.io.IOException;
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.footstepPlanning.MultiStageFootstepPlanningModule;
+import us.ihmc.avatar.networkProcessor.footstepProcessingToolboxModule.FootstepProcessingToolboxModule;
 import us.ihmc.avatar.networkProcessor.kinematicsPlanningToolboxModule.KinematicsPlanningToolboxModule;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.networkProcessor.modules.RosModule;
@@ -43,6 +44,7 @@ public class DRCNetworkProcessor
       tryToStartModule(() -> setupKinematicsToolboxModule(robotModel, params));
       tryToStartModule(() -> setupKinematicsPlanningToolboxModule(robotModel, params));
       tryToStartModule(() -> setupFootstepPlanningToolboxModule(robotModel, params));
+      tryToStartModule(() -> setupFootstepProcessingModule(robotModel, params));
       tryToStartModule(() -> addTextToSpeechEngine(params));
       tryToStartModule(() -> setupHeightQuadTreeToolboxModule(robotModel, params));
       tryToStartModule(() -> setupRobotEnvironmentAwerenessModule(params));
@@ -83,7 +85,7 @@ public class DRCNetworkProcessor
       new KinematicsPlanningToolboxModule(robotModel, false);
    }
 
-   private void setupFootstepPlanningToolboxModule(DRCRobotModel robotModel, DRCNetworkModuleParameters params) throws IOException
+   private void setupFootstepPlanningToolboxModule(DRCRobotModel robotModel, DRCNetworkModuleParameters params)
    {
       if (!params.isFootstepPlanningToolboxEnabled())
          return;
@@ -91,7 +93,14 @@ public class DRCNetworkProcessor
       new MultiStageFootstepPlanningModule(robotModel, null, params.isFootstepPlanningToolboxVisualizerEnabled());
    }
 
-   private void setupMocapModule(DRCRobotModel robotModel, DRCNetworkModuleParameters params) throws IOException
+   private void setupFootstepProcessingModule(DRCRobotModel robotModel, DRCNetworkModuleParameters params) throws IOException
+   {
+      if (!params.isFootstepPlanningToolboxEnabled() || robotModel.getFootstepProcessingParameters() == null)
+         return;
+      new FootstepProcessingToolboxModule(robotModel);
+   }
+
+   private void setupMocapModule(DRCRobotModel robotModel, DRCNetworkModuleParameters params)
    {
       if (params.isMocapModuleEnabled())
       {
