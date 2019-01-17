@@ -1,0 +1,45 @@
+#ifndef __controller_msgs__msg__FootstepProcessingRequestMessage__idl__
+#define __controller_msgs__msg__FootstepProcessingRequestMessage__idl__
+
+#include "controller_msgs/msg/./FootstepDataListMessage_.idl"
+#include "geometry_msgs/msg/./Point_.idl"
+#include "geometry_msgs/msg/./Quaternion_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * This message is part of the IHMC footstep processing toolbox API
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::FootstepProcessingRequestMessage_")
+      struct FootstepProcessingRequestMessage
+      {
+        /**
+         * Footstep list containing steps to be mutated
+         */
+        controller_msgs::msg::dds::FootstepDataListMessage footstep_data_list_message;
+        /**
+         * Specifies the position of the initial left stance foot (sole frame) in world frame.
+         */
+        geometry_msgs::msg::dds::Point left_foot_location;
+        /**
+         * Specifies the orientation of the initial left stance foot (sole frame) in world frame.
+         */
+        geometry_msgs::msg::dds::Quaternion left_foot_orientation;
+        /**
+         * Specifies the position of the initial right stance foot (sole frame) in world frame.
+         */
+        geometry_msgs::msg::dds::Point right_foot_location;
+        /**
+         * Specifies the orientation of the initial right stance foot (sole frame) in world frame.
+         */
+        geometry_msgs::msg::dds::Quaternion right_foot_orientation;
+      };
+    };
+  };
+};
+
+#endif
