@@ -370,7 +370,7 @@ public class SCSVisualizer implements YoVariablesUpdatedListener, ExitActionList
       
    }
 
-   public static void main(String[] args)
+   public static void main(String[] args) throws Exception
    {
       SCSVisualizer visualizer = new SCSVisualizer(32169, true);
       visualizer.setShowOverheadView(false);

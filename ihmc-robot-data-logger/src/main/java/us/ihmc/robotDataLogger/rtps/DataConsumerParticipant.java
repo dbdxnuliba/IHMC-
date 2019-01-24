@@ -1,6 +1,7 @@
 package us.ihmc.robotDataLogger.rtps;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -10,7 +11,7 @@ import us.ihmc.pubsub.DomainFactory;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.pubsub.TopicDataType;
 import us.ihmc.pubsub.attributes.DurabilityKind;
-import us.ihmc.pubsub.attributes.ParticipantAttributes;
+import us.ihmc.pubsub.attributes.Locator;
 import us.ihmc.pubsub.attributes.ReliabilityKind;
 import us.ihmc.pubsub.attributes.SubscriberAttributes;
 import us.ihmc.pubsub.common.DiscoveryStatus;
@@ -33,6 +34,10 @@ import us.ihmc.robotDataLogger.handshake.IDLYoVariableHandshakeParser;
 import us.ihmc.robotDataLogger.listeners.ClearLogListener;
 import us.ihmc.robotDataLogger.listeners.LogAnnouncementListener;
 import us.ihmc.robotDataLogger.listeners.TimestampListener;
+import us.ihmc.rtps.impl.fastRTPS.FastRTPS;
+import us.ihmc.rtps.impl.fastRTPS.FastRTPSParticipantAttributes;
+import us.ihmc.rtps.impl.fastRTPS.LocatorList_t;
+import us.ihmc.rtps.impl.fastRTPS.Locator_t;
 
 /**
  * This class implements all communication for a data consumer inside a DDS logging network
@@ -50,6 +55,8 @@ public class DataConsumerParticipant
    private final LinkedHashMap<GuidPrefix, Announcement> announcements = new LinkedHashMap<>();
 
    private DataConsumerSession session;
+   
+   private final LocatorList_t initialPeerList = new LocatorList_t();
 
    private class LeaveListener implements ParticipantListener
    {
@@ -138,16 +145,69 @@ public class DataConsumerParticipant
       return newAnnouncement;
    }
 
+   public static void convertToCPPLocator(Locator in, Locator_t out)
+   {
+      out.setKind(1);
+      for (int i = 0; i < 16; i++)
+      {
+         FastRTPS.setLocatorOctet(out, i, in.getOctet(i));
+      }
+   }
+
+
+   
    /**
     * Constructor 
     * 
     * @param name for this log consumer participant
     * @throws IOException if no connection to the network is possibile
     */
-   public DataConsumerParticipant(String name) throws IOException
+   public DataConsumerParticipant(String name, InetAddress... initialPeers) throws IOException
    {
       domain.setLogLevel(LogLevel.ERROR);
-      ParticipantAttributes att = domain.createParticipantAttributes(LogParticipantSettings.domain, name);
+      FastRTPSParticipantAttributes att = (FastRTPSParticipantAttributes) domain.createParticipantAttributes(LogParticipantSettings.domain, name);
+      
+      
+      
+      if(initialPeers != null)
+      {
+         for(InetAddress address : initialPeers)
+         {
+            byte[] addr = address.getAddress();
+            if(addr.length == 4)
+            {
+               Locator_t locator_t = new Locator_t();
+               locator_t.setKind(1);
+               for (int i = 12; i < 16; i++)
+               {
+                  FastRTPS.setLocatorOctet(locator_t, i, addr[i-12]);
+               }
+
+               initialPeerList.push_back(locator_t);
+            }
+            else
+            {
+               throw new RuntimeException("Unknown address");
+            }
+         }
+         
+         // Add a multicast locator port
+         if(!initialPeerList.empty())
+         {
+            long multicastPort = (int) att.rtps().getPort().getMulticastPort(LogParticipantSettings.domain);
+            Locator_t multiCastLocator = new Locator_t();
+            multiCastLocator.setKind(1);
+            multiCastLocator.set_IP4_address((byte) 239, (byte) 255, (byte) 0, (byte) 1);
+            multiCastLocator.setPort(multicastPort);
+            initialPeerList.push_back(multiCastLocator);
+         }
+
+         att.rtps().getBuiltin().setInitialPeersList(initialPeerList);;
+      }
+      
+
+      
+      
       participant = domain.createParticipant(att, new LeaveListener());
    }
 
@@ -310,7 +370,8 @@ public class DataConsumerParticipant
          throw new IOException("Participant has been removed from the domain. Cannot create a new session");
       }
       
-      session = new DataConsumerSession(domain, announcement, parser, yoVariableClient, variableChangedProducer, timeStampListener,
+      
+      session = new DataConsumerSession(domain, participant, announcement, parser, yoVariableClient, variableChangedProducer, timeStampListener,
                                         clearLogListener, rtpsDebugRegistry);
       return session;
    }
