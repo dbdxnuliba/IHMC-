@@ -30,9 +30,9 @@ public class PointMean extends Point3D
    {
       sampleSize += updateSize;
       double nInv = (double) updateSize / (double) sampleSize;
-      this.setX(this.getX() + (x - this.getX()) * nInv);
-      this.setY(this.getY() + (y - this.getY()) * nInv);
-      this.setZ(this.getZ() + (z - this.getZ()) * nInv);
+      this.addX((x - this.getX()) * nInv);
+      this.addY((y - this.getY()) * nInv);
+      this.addZ((z - this.getZ()) * nInv);
    }
 
    public void clear()
