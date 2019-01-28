@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
 
 public class NavigableRegionsManagerTest
 {
-   private static final boolean visualize = true;
+   private static final boolean visualize = false;
    private static final double epsilon = 1e-4;
    private static final long timeout = 30000 * 100;
 
@@ -533,11 +533,87 @@ public class NavigableRegionsManagerTest
 
    @Test(timeout = timeout)
    @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   public void testFlatGroundBetweenBoxInMiddle()
+   public void testFlatGroundAroundBoxInMiddle()
    {
       VisibilityGraphsParameters parameters = createVisibilityGraphParametersForTest();
 
       PlanarRegionsList planarRegionsList = new PlanarRegionsList(createFlatGroundWithBoxInMiddleEnvironment());
+
+      // test aligned with the edge of the wall, requiring slight offset
+      Point3D start = new Point3D(-15.0, 0.0, 0.0);
+      Point3D goal = new Point3D(-5.0, 0.0, 0.0);
+
+      NavigableRegionsManager navigableRegionsManager = new NavigableRegionsManager(parameters, planarRegionsList.getPlanarRegionsAsList(), new ObstacleAndCliffAvoidanceProcessor(parameters));
+      navigableRegionsManager.setPlanarRegions(planarRegionsList.getPlanarRegionsAsList());
+
+      List<Point3DReadOnly> path = navigableRegionsManager.calculateBodyPath(start, goal);
+
+      if (visualize)
+      {
+         visualize(path, planarRegionsList, start, goal);
+      }
+
+      checkPath(path, start, goal, parameters, planarRegionsList, navigableRegionsManager.getNavigableRegionsList());
+   }
+
+   @Test(timeout = timeout)
+   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   public void testFlatGroundAroundBoxInMiddleNextToOtherRegion()
+   {
+      VisibilityGraphsParameters parameters = createVisibilityGraphParametersForTest();
+
+      PlanarRegionsList planarRegionsList = new PlanarRegionsList(createFlatGroundWithBoxInMiddleEnvironment());
+
+      // set up ground plane, 20 x 10
+      Point2D groundPlanePointA = new Point2D(10.0, -1.5);
+      Point2D groundPlanePointB = new Point2D(10.0, 1.5);
+      Point2D groundPlanePointC = new Point2D(-10.0, 1.5);
+      Point2D groundPlanePointD = new Point2D(-10.0, -1.5);
+
+      RigidBodyTransform groundTransform = new RigidBodyTransform();
+      groundTransform.setTranslation(-10.0, 6.5, 0.0);
+      PlanarRegion otherGroundPlaneRegion = new PlanarRegion(groundTransform, new ConvexPolygon2D(
+            Vertex2DSupplier.asVertex2DSupplier(groundPlanePointA, groundPlanePointB, groundPlanePointC, groundPlanePointD)));
+
+      planarRegionsList.addPlanarRegion(otherGroundPlaneRegion);
+
+      // test aligned with the edge of the wall, requiring slight offset
+      Point3D start = new Point3D(-15.0, 0.0, 0.0);
+      Point3D goal = new Point3D(-5.0, 0.0, 0.0);
+
+      NavigableRegionsManager navigableRegionsManager = new NavigableRegionsManager(parameters, planarRegionsList.getPlanarRegionsAsList(), new ObstacleAndCliffAvoidanceProcessor(parameters));
+      navigableRegionsManager.setPlanarRegions(planarRegionsList.getPlanarRegionsAsList());
+
+      List<Point3DReadOnly> path = navigableRegionsManager.calculateBodyPath(start, goal);
+
+      if (visualize)
+      {
+         visualize(path, planarRegionsList, start, goal);
+      }
+
+      checkPath(path, start, goal, parameters, planarRegionsList, navigableRegionsManager.getNavigableRegionsList());
+   }
+
+   @Test(timeout = timeout)
+   @ContinuousIntegrationTest(estimatedDuration = 0.0)
+   public void testFlatGroundAroundBoxInMiddleNextToOtherRegionWithGapBetween()
+   {
+      VisibilityGraphsParameters parameters = createVisibilityGraphParametersForTest();
+
+      PlanarRegionsList planarRegionsList = new PlanarRegionsList(createFlatGroundWithBoxInMiddleEnvironment());
+
+      // set up ground plane, 20 x 10
+      Point2D groundPlanePointA = new Point2D(10.0, -1.5);
+      Point2D groundPlanePointB = new Point2D(10.0, 1.5);
+      Point2D groundPlanePointC = new Point2D(-10.0, 1.5);
+      Point2D groundPlanePointD = new Point2D(-10.0, -1.5);
+
+      RigidBodyTransform groundTransform = new RigidBodyTransform();
+      groundTransform.setTranslation(-10.0, 6.7, 0.0);
+      PlanarRegion otherGroundPlaneRegion = new PlanarRegion(groundTransform, new ConvexPolygon2D(
+            Vertex2DSupplier.asVertex2DSupplier(groundPlanePointA, groundPlanePointB, groundPlanePointC, groundPlanePointD)));
+
+      planarRegionsList.addPlanarRegion(otherGroundPlaneRegion);
 
       // test aligned with the edge of the wall, requiring slight offset
       Point3D start = new Point3D(-15.0, 0.0, 0.0);
@@ -572,6 +648,9 @@ public class NavigableRegionsManagerTest
       for (Point3DReadOnly point : path)
       {
          assertFalse(point.containsNaN());
+         assertTrue(Double.isFinite(point.getX()));
+         assertTrue(Double.isFinite(point.getY()));
+         assertTrue(Double.isFinite(point.getZ()));
       }
 
       WaypointDefinedBodyPathPlanner calculatedPath = new WaypointDefinedBodyPathPlanner();
