@@ -187,7 +187,7 @@ hold on;
 angle = [angles(72) angles(1)];
 weight = [weights(72) weights(1)];
 polarplot(angle,weight);
-rlim([0 0.6])
+
 
 angles = table2array(angleAndPercentWeight72Tiles10Normal(:,1));
 weights = table2array(angleAndPercentWeight72Tiles10Normal(:,2))*f;
@@ -248,7 +248,6 @@ angle = [angles(72) angles(1)];
 weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
-rlim([0 0.6])
 
 angles = table2array(angleAndPercentWeight72Tiles1001Normal(:,1));
 weights = table2array(angleAndPercentWeight72Tiles1001Normal(:,2))*f;
@@ -307,7 +306,6 @@ hold on;
 angle = [angles(72) angles(1)];
 weight = [weights(72) weights(1)];
 polarplot(angle,weight);
-rlim([0 0.6])
 
 angles = table2array(angleAndPercentWeight72Tiles10QuartNormal(:,1));
 weights = table2array(angleAndPercentWeight72Tiles10QuartNormal(:,2))*f;
@@ -330,7 +328,7 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
 angles = table2array(angleAndPercentWeight72Tiles10AngQuartNormal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10AngQuartNormal(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10AngQuartNormal(:,2));
 
 wav = mean(weights)
 
@@ -351,62 +349,62 @@ opts.Color = 'CMYK';
 opts.Resolution = 10000000;
 exportfig(gcf,'roundSSAng02.eps', opts)
         %%
-    set(groot,'defaulttextinterpreter','latex');  
-set(groot, 'defaultAxesTickLabelInterpreter','latex');  
-set(groot, 'defaultLegendInterpreter','latex');
-figure;
-angles = table2array(angleAndPercentWeight72Tiles1003(:,1));
-weights = table2array(angleAndPercentWeight72Tiles1003(:,2))*f;
-
-wNav = mean(weights)
-
-polarplot(angles,weights);
-hold on;
-angle = [angles(72) angles(1)];
-weight = [weights(72) weights(1)];
-polarplot(angle,weight);
-
-angles = table2array(angleAndPercentWeight72Tiles1003Normal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles1003Normal(:,2))*f;
-
-wav = mean(weights)
-
-polarplot(angles,weights);
-angle = [angles(72) angles(1)];
-weight = [weights(72) weights(1)];
-polarplot(angle,weight);
-rlim([0 0.6])
-angles = table2array(angleAndPercentWeight72Tiles10Ang03(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10Ang03(:,2))*f;
-
-wav = mean(weights)
-
-polarplot(angles,weights);
-angle = [angles(72) angles(1)];
-weight = [weights(72) weights(1)];
-polarplot(angle,weight);
-
-angles = table2array(angleAndPercentWeight72Tiles10AngNormal1(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10AngNormal1(:,2))*f;
-
-wav = mean(weights)
-
-polarplot(angles,weights);
-angle = [angles(72) angles(1)];
-weight = [weights(72) weights(1)];
-polarplot(angle,weight);
-
-ax = gca;
-ax.ThetaTickMode = 'manual';
-ax.ThetaTick = [0:20:340];
-ax.ThetaMinorGrid = 'on';
-
-ax.RMinorGrid = 'on';
-
-opts.Format = 'eps';
-opts.Color = 'CMYK';
-opts.Resolution = 10000000;
-exportfig(gcf,'roundSSAng03.eps', opts)
+%     set(groot,'defaulttextinterpreter','latex');  
+% set(groot, 'defaultAxesTickLabelInterpreter','latex');  
+% set(groot, 'defaultLegendInterpreter','latex');
+% figure;
+% angles = table2array(angleAndPercentWeight72Tiles1003(:,1));
+% weights = table2array(angleAndPercentWeight72Tiles1003(:,2));
+% 
+% wNav = mean(weights)
+% 
+% polarplot(angles,weights);
+% hold on;
+% angle = [angles(72) angles(1)];
+% weight = [weights(72) weights(1)];
+% polarplot(angle,weight);
+% 
+% angles = table2array(angleAndPercentWeight72Tiles1003Normal(:,1));
+% weights = table2array(angleAndPercentWeight72Tiles1003Normal(:,2));
+% 
+% wav = mean(weights)
+% 
+% polarplot(angles,weights);
+% angle = [angles(72) angles(1)];
+% weight = [weights(72) weights(1)];
+% polarplot(angle,weight);
+% 
+% angles = table2array(angleAndPercentWeight72Tiles10Ang03(:,1));
+% weights = table2array(angleAndPercentWeight72Tiles10Ang03(:,2));
+% 
+% wav = mean(weights)
+% 
+% polarplot(angles,weights);
+% angle = [angles(72) angles(1)];
+% weight = [weights(72) weights(1)];
+% polarplot(angle,weight);
+% 
+% angles = table2array(angleAndPercentWeight72Tiles10Ang03Normal(:,1));
+% weights = table2array(angleAndPercentWeight72Tiles10Ang03Normal(:,2));
+% 
+% wav = mean(weights)
+% 
+% polarplot(angles,weights);
+% angle = [angles(72) angles(1)];
+% weight = [weights(72) weights(1)];
+% polarplot(angle,weight);
+% 
+% ax = gca;
+% ax.ThetaTickMode = 'manual';
+% ax.ThetaTick = [0:20:340];
+% ax.ThetaMinorGrid = 'on';
+% 
+% ax.RMinorGrid = 'on';
+% 
+% opts.Format = 'eps';
+% opts.Color = 'CMYK';
+% opts.Resolution = 10000000;
+% exportfig(gcf,'roundSSAng03.eps', opts)
 
         %%
     set(groot,'defaulttextinterpreter','latex');  
@@ -414,7 +412,7 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 figure;
 angles = table2array(angleAndPercentWeight72Tiles10Half(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10Half(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10Half(:,2));
 
 wNav = mean(weights)
 
@@ -423,10 +421,9 @@ hold on;
 angle = [angles(72) angles(1)];
 weight = [weights(72) weights(1)];
 polarplot(angle,weight);
-rlim([0 0.6])
 
 angles = table2array(angleAndPercentWeight72Tiles10HalfNormal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10HalfNormal(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10HalfNormal(:,2));
 
 wav = mean(weights)
 
@@ -436,7 +433,7 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
 angles = table2array(angleAndPercentWeight72Tiles10AngHalf(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10AngHalf(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10AngHalf(:,2));
 
 wav = mean(weights)
 
@@ -446,7 +443,7 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
 angles = table2array(angleAndPercentWeight72Tiles10AngHalfNormal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10AngHalfNormal(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10AngHalfNormal(:,2));
 
 wav = mean(weights)
 
@@ -473,7 +470,7 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 figure;
 angles = table2array(angleAndPercentWeight72Tiles1005(:,1));
-weights = table2array(angleAndPercentWeight72Tiles1005(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles1005(:,2));
 
 wNav = mean(weights)
 
@@ -482,10 +479,9 @@ hold on;
 angle = [angles(72) angles(1)];
 weight = [weights(72) weights(1)];
 polarplot(angle,weight);
-rlim([0 0.6])
 
 angles = table2array(angleAndPercentWeight72Tiles1005Normal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles1005Normal(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles1005Normal(:,2));
 
 wav = mean(weights)
 
@@ -495,7 +491,7 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
 angles = table2array(angleAndPercentWeight72Tiles10Ang05(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10Ang05(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10Ang05(:,2));
 
 wav = mean(weights)
 
@@ -505,7 +501,7 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight);
 
 angles = table2array(angleAndPercentWeight72Tiles10Ang05Normal(:,1));
-weights = table2array(angleAndPercentWeight72Tiles10Ang05Normal(:,2))*f;
+weights = table2array(angleAndPercentWeight72Tiles10Ang05Normal(:,2));
 
 wav = mean(weights)
 

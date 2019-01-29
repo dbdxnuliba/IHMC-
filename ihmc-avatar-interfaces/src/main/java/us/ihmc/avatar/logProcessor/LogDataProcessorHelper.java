@@ -71,6 +71,7 @@ public class LogDataProcessorHelper
    public LogDataProcessorHelper(DRCRobotModel model, SimulationConstructionSet scs, FloatingRootJointRobot sdfRobot)
    {
       this.scs = scs;
+      scs.setupVarGroup("ModifiedMomRate",new String[]{"modifiedAchievedMomentumRateLinearX","modifiedAchievedMomentumRateLinearY","modifiedAchievedMomentumRateLinearZ"});
       fullRobotModel = model.createFullRobotModel();
       referenceFrames = new HumanoidReferenceFrames(fullRobotModel);
       sensorReader = new SDFPerfectSimulatedSensorReader(sdfRobot, fullRobotModel, referenceFrames);

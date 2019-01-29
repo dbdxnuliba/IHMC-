@@ -5,6 +5,7 @@ import java.io.IOException;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.logProcessor.DRCLogProcessor;
+import us.ihmc.avatar.logProcessor.LogDataAchievedMomentumRateCalculator;
 import us.ihmc.avatar.logProcessor.LogDataProcessorFunction;
 import us.ihmc.avatar.logProcessor.LogDataProcessorHelper;
 import us.ihmc.valkyrie.ValkyrieRobotModel;
@@ -15,7 +16,12 @@ public class ValkyrieDiagnosticLogProcessor extends DRCLogProcessor
    {
       super();
       LogDataProcessorHelper logDataProcessorHelper = createLogDataProcessorHelper();
-      LogDataProcessorFunction logDataProcessor = new DiagnosticLogProcessorFunction(logDataProcessorHelper);
+      //LogDataProcessorFunction logDataProcessor = new DiagnosticLogProcessorFunction(logDataProcessorHelper);
+
+      LogDataAchievedMomentumRateCalculator logDataProcessor = new LogDataAchievedMomentumRateCalculator(logDataProcessorHelper);
+
+
+
       setLogDataProcessor(logDataProcessor);
       startLogger();
    }

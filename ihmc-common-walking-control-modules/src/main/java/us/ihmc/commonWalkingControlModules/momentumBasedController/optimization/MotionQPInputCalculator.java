@@ -621,7 +621,12 @@ public class MotionQPInputCalculator
 
    public SpatialForceReadOnly computeCentroidalMomentumRateFromSolution(DenseMatrix64F jointAccelerations)
    {
-      centroidalMomentumRateCalculator.getMomentumRate(jointAccelerations, momentumRate);
+//      centroidalMomentumRateCalculator.getMomentumRate(jointAccelerations, momentumRate);
+
+      DenseMatrix64F momentumMatrix = new DenseMatrix64F(6, 1);
+      CommonOps.mult(getCentroidalMomentumMatrix(), jointAccelerations, momentumMatrix);
+      CommonOps.addEquals(momentumMatrix, centroidalMomentumRateCalculator.getBiasSpatialForceMatrix());
+      momentumRate.setIncludingFrame(centerOfMassFrame, momentumMatrix);
       return momentumRate;
    }
 

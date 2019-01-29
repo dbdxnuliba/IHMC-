@@ -5,6 +5,7 @@ import controller_msgs.msg.dds.FootstepDataMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
+import us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance.VaryingHeightPrimaryConditionEnum;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FootControlModule.ConstraintType;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.states.WalkingStateEnum;
 import us.ihmc.commons.MathTools;
@@ -34,15 +35,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private boolean succes;
    private double angle;
    private double percentWeight;
-   private double delayFractionOfSwing = 0.0;
+   private double delayFractionOfSwing = 0.3;
    private boolean unreasonableFailure;
-   private String fileNamePrefix = "angleAndPercentWeight72Tiles9";
+   private String fileNamePrefix = "angleAndPercentWeight72Tiles10AngNormal";
    private String fileName = fileNamePrefix;
-   protected boolean useNormalRobot = false;
+   protected boolean useNormalRobot = true;
    protected boolean standingPush = false;
    private Integer recursiveIter = 0;
-   private Integer numberOfTests = 1;
    protected Vector3D linearMomentumWeight = new Vector3D(0.05,0.05,0.01);
+   private String action;
+   private Integer actionIndex;
 
    public void testIterativePush() throws Exception
    {
@@ -56,7 +58,6 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       int numberOfDirections = 72;
       double increment;
       int incrementCount;
-      double startTime =  System.currentTimeMillis();
 
       for (int i = 0; i < numberOfDirections; i++)
       {
@@ -104,13 +105,12 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
                sb.append(angle);
                sb.append(',');
                sb.append(percentWeight);
+               sb.append(',');
+               sb.append(actionIndex);
+               sb.append(',');
+               sb.append(action);
                sb.append('\n');
                pw.write(sb.toString());
-               double endTime = System.currentTimeMillis();
-               double averageTimePerCycle = 3600000* (endTime - startTime) / (i + 1);
-               Integer testsRemaining = numberOfTests - (recursiveIter + 1);
-               double timeEstimate = (testsRemaining * numberOfDirections + (numberOfDirections - (i + 1))) * averageTimePerCycle;
-               LogTools.info("Remaining Time Estimate = " + timeEstimate + " Hour.");
                break;
             }
             else if (!succes)
@@ -124,7 +124,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       }
       pw.close();
       Assert.assertTrue(true);
-
+      /*
       if (recursiveIter == 0)
       {
          fileName = fileNamePrefix + "Normal";
@@ -157,26 +157,59 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
       }
       else if (recursiveIter == 4)
       {
-         fileName = fileNamePrefix + "HalfNormal";
+         fileName = fileNamePrefix + "QuartNormal";
          useNormalRobot = true;
          recursiveIter += 1;
          testIterativePush();
       }
       else if (recursiveIter == 5)
       {
-         fileName = fileNamePrefix + "Quart";
-         delayFractionOfSwing = 0.2;
+         fileName = fileNamePrefix + "05";
+         delayFractionOfSwing = 0.5;
          useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
       else if (recursiveIter == 6)
       {
-         fileName = fileNamePrefix + "HalfNormal";
+         fileName = fileNamePrefix + "05Normal";
          useNormalRobot = true;
          recursiveIter += 1;
          testIterativePush();
       }
+      else if (recursiveIter == 7)
+      {
+         fileName = fileNamePrefix + "01";
+         delayFractionOfSwing = 0.1;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 8)
+      {
+         fileName = fileNamePrefix + "01Normal";
+         useNormalRobot = true;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 9)
+      {
+         fileName = fileNamePrefix + "03";
+         delayFractionOfSwing = 0.3;
+         useNormalRobot = false;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      else if (recursiveIter == 10)
+      {
+         fileName = fileNamePrefix + "03Normal";
+         useNormalRobot = true;
+         recursiveIter += 1;
+         testIterativePush();
+      }
+      */
+
+
       /*
       else if(recursiveIter==1)
       {
@@ -373,7 +406,22 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
 
       try
       {
-         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions(duration + 4.0);
+         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions( 0.5+delay+0.3*swingTime);
+      }
+      catch (Exception e)
+      {
+         LogTools.info(e.getMessage());
+         succes = false;
+      }
+
+      YoEnum<VaryingHeightPrimaryConditionEnum> actionEnum = (YoEnum) drcSimulationTestHelper1.getSimulationConstructionSet().getVariable("varyingHeightCondition");
+      action = actionEnum.getStringValue();
+      actionIndex=actionEnum.getOrdinal();
+      double t = scs.getTime();
+
+      try
+      {
+         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions(duration + 3.5);
       }
       catch (Exception e)
       {
@@ -471,7 +519,22 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
 
       try
       {
-         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions(duration + 4.0);
+         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions( 0.5);
+      }
+      catch (Exception e)
+      {
+         LogTools.info(e.getMessage());
+         succes = false;
+      }
+
+      YoEnum<VaryingHeightPrimaryConditionEnum> actionEnum = (YoEnum) drcSimulationTestHelper1.getSimulationConstructionSet().getVariable("varyingHeightCondition");
+      action = actionEnum.getStringValue();
+      actionIndex=actionEnum.getOrdinal();
+      double t = scs.getTime();
+
+      try
+      {
+         succes = drcSimulationTestHelper1.simulateAndBlockAndCatchExceptions(duration + 3.5);
       }
       catch (Exception e)
       {

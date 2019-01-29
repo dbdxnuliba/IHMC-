@@ -54,7 +54,8 @@ public abstract class DRCLogProcessor
       YoGraphicsListRegistry yoGraphicsListRegistry = logDataProcessor.getYoGraphicsListRegistry();
       if (yoGraphicsListRegistry != null)
       {
-         yoGraphicsListRegistry.addArtifactListsToPlotter(plotter);
+         if (plotter != null)
+            yoGraphicsListRegistry.addArtifactListsToPlotter(plotter);
          scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
       }
 

@@ -370,15 +370,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
             break;
          case ALIGNED_POS: computePositiveAlignment();
             break;
-         case PREPARE_NEG:
-            if(yoTimeInState.getDoubleValue()<0.4*walkingControllerParameters.getDefaultSwingTime())
-            {
-               computePrepare();
-            }
-            else
-            {
-               desiredHeightAcceleration=linearMomentumRateOfChangeFromLIP.getZ()/totalMass;
-            }
+         case PREPARE_NEG: computePrepare();
             break;
          }
 
@@ -506,7 +498,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       {
          desiredHeightAcceleration = aMaxCtrl;
       }
-      else if(z+0.5*Math.signum(dz)*dz*dz/-aMinPredicted>zMax && !secondDone && dz>0)
+      else if(!secondDone && dz>0)
       {
          desiredHeightAcceleration = aMinCtrl;
          firstDone=true;

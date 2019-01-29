@@ -5,5 +5,5 @@ package us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance;
  */
 public enum VaryingHeightPrimaryConditionEnum
 {
-   ALIGNED_POS, DEFAULT, PREPARE_NEG
+   DEFAULT, ALIGNED_POS,PREPARE_NEG
 }

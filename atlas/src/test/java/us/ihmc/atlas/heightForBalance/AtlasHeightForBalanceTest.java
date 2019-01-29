@@ -26,17 +26,14 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    private final boolean useNormalRobotModel = true;
    private final double privilegedAngleWhenStraight = 1.177;
 
-   /**
-    *  Almost all tests do better in maximum recoverable push than the 'normal' configuration, except for two tests, which seem to have
-    *  a similar problem.
-    */
+
    @Override
    @ContinuousIntegrationTest(estimatedDuration = 20.0)
    @Test(timeout = 300000)
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.57
-      percentWeight = 0.206;
+      percentWeight = 0.52;//0.217;//0.212;//0.233;//0.241;//0.218;//.206;//0.221;  7%
       super.testPushStanding();
    }
 

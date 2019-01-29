@@ -186,7 +186,7 @@ public class LogVisualizer
       SimulationOverheadPlotterFactory simulationOverheadPlotterFactory = scs.createSimulationOverheadPlotterFactory();
       simulationOverheadPlotterFactory.setShowOnStart(showOverheadView);
       simulationOverheadPlotterFactory.addYoGraphicsListRegistries(yoGraphicsListRegistry);
-      simulationOverheadPlotterFactory.createOverheadPlotter();
+      plotter = simulationOverheadPlotterFactory.createOverheadPlotter();
       scs.getRootRegistry().addChild(parser.getRootRegistry());
       scs.setParameterRootPath(parser.getRootRegistry());
       scs.setGroundVisible(false);
@@ -280,7 +280,10 @@ public class LogVisualizer
 
    public Plotter getPlotter()
    {
-      return plotter.getPlotter();
+      if (plotter == null)
+         return  null;
+      else
+         return plotter.getPlotter();
    }
 
    public void run()

@@ -150,7 +150,13 @@ public abstract class AvatarHeightForBalanceTestSetup
                                                                                  "pelvisErrorRotationVectorX","pelvisErrorRotationVectorY","pelvisErrorRotationVectorZ",
                                                                                  "perfectCMPX","perfectCMPY","desiredCMPX","desiredCMPY","achievedCMPX","achievedCMPY", "realActualCMPX", "realActualCMPY",
                                                                                  "CenterOfPressureX","CenterOfPressureY","centerOfMassX","centerOfMassY","centerOfMassZ",
-                                                                                 "capturePointX","capturePointY","desiredICPX","desiredICPY"});
+                                                                                 "capturePointX","capturePointY","desiredICPX","desiredICPY","controllerIsInDoubleSupport"});
+
+      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("HeightForBalanceVarsWalk",
+                                                                           new String[]{"desiredMomentumRateLinearZ","centerOfMassZ","controllerIsInDoubleSupport","zMaxHeightCtrl"});
+      drcSimulationTestHelper.getSimulationConstructionSet().setupVarGroup("JointAccelerationCheckVars", new String[]{"qdd_leftAnklePitch","qdd_qp_leftAnklePitch",
+            "qdd_rightAnklePitch","qdd_qp_rightAnklePitch","qdd_leftKneePitch","qdd_qp_leftKneePitch","qdd_rightKneePitch","qdd_qp_rightKneePitch","qdd_leftHipPitch","qdd_qp_leftHipPitch",
+            "qdd_rightHipPitch","qdd_qp_rightHipPitch","qdd_torsoPitch","qdd_qp_torsoPitch"});
       FullHumanoidRobotModel fullRobotModel = getRobotModel().createFullRobotModel();
       totalMass = fullRobotModel.getTotalMass();
 
