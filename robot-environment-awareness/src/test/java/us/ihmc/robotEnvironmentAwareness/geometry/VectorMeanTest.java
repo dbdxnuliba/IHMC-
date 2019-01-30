@@ -15,7 +15,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
 import us.ihmc.robotics.random.RandomGeometry;
 
-public class VectorMeanTest 
+public class VectorMeanTest
 {
 	private static final int NUMBER_OF_ITERATIONS = 10000;
 	private static final double EPS = 1.0e-12;
@@ -23,15 +23,15 @@ public class VectorMeanTest
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
 	@Test
-	public final void testWithVectorMean() 
+	public final void testWithVectorMean()
 	{
 		VectorMean meanVector = new VectorMean();
 		Vector3D randomVector = new Vector3D();
 		Vector3D sum = new Vector3D();
-		
+
 		meanVector.clear();
 
-		for (int i = 0; i < NUMBER_OF_ITERATIONS; i++) 
+		for (int i = 0; i < NUMBER_OF_ITERATIONS; i++)
 		{
 			randomVector = RandomGeometry.nextVector3D(random, 1);
 			meanVector.update(randomVector);
@@ -39,36 +39,35 @@ public class VectorMeanTest
 		}
 
 		sum.scale(1.0 / NUMBER_OF_ITERATIONS);
-		
+
 		assertEquals(meanVector.getX(), sum.getX(), EPS);
 		assertEquals(meanVector.getY(), sum.getY(), EPS);
 		assertEquals(meanVector.getZ(), sum.getZ(), EPS);
-		assertEquals(meanVector.getNumberOfSamples(), NUMBER_OF_ITERATIONS); 
-		
+		assertEquals(meanVector.getNumberOfSamples(), NUMBER_OF_ITERATIONS);
+
 	}
-	
+
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
 	@Test
-	public final void testWithTuple3DBasics() 
+	public final void testWithTuple3DBasics()
 	{
 		VectorMean meanVector = new VectorMean();
 		Vector3D randomVector = new Vector3D();
 		Vector3D sum = new Vector3D();
-		
 
-		for (int i = 0; i < NUMBER_OF_ITERATIONS; i++) 
+		for (int i = 0; i < NUMBER_OF_ITERATIONS; i++)
 		{
 			randomVector = RandomGeometry.nextVector3D(random, 1);
-			meanVector.update((Tuple3DBasics)randomVector, 1);
+			meanVector.update((Tuple3DBasics) randomVector, 1);
 			sum.add(randomVector);
 		}
 
 		sum.scale(1.0 / NUMBER_OF_ITERATIONS);
-				
+
 		assertEquals(meanVector.getX(), sum.getX(), EPS);
 		assertEquals(meanVector.getY(), sum.getY(), EPS);
 		assertEquals(meanVector.getZ(), sum.getZ(), EPS);
-		assertEquals(meanVector.getNumberOfSamples(), NUMBER_OF_ITERATIONS); 
+		assertEquals(meanVector.getNumberOfSamples(), NUMBER_OF_ITERATIONS);
 
 		meanVector.clear();
 		assertEquals(meanVector.getX(), 0, EPS);

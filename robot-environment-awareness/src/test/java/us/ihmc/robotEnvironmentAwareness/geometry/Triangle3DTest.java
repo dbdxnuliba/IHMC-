@@ -22,8 +22,7 @@ import us.ihmc.euclid.transform.interfaces.Transform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 
-
-public class Triangle3DTest 
+public class Triangle3DTest
 {
 	private static final int NUMBER_OF_ITERATIONS = 10000;
 	private static final double EPS = 1.0e-15;
@@ -31,57 +30,57 @@ public class Triangle3DTest
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
 	@Test
-	
-	// Tests Triangle3D creation, setters(), applyTransform(), applyInverseTransform() and geometricallyEqual()	
 
-	public final void testTriangle3D() 
+	// Tests Triangle3D creation, setters(), applyTransform(),
+	// applyInverseTransform() and geometricallyEqual()
+
+	public final void testTriangle3D()
 	{
-		for (int iter = 0; iter < NUMBER_OF_ITERATIONS; iter++) 
+		for (int iter = 0; iter < NUMBER_OF_ITERATIONS; iter++)
 		{
 			Triangle3D randomTriangle = new Triangle3D();
 			Triangle3D referenceTriangle = new Triangle3D();
 			Vector3D[] randomVector = new Vector3D[3];
 			RigidBodyTransform transform = new RigidBodyTransform();
-			
+
 			randomTriangle.setToNaN();
 			assertTrue(randomTriangle.containsNaN());
 			assertFalse(randomTriangle.geometricallyEquals(referenceTriangle, EPS));
-			
+
 			randomTriangle.setToZero();
-			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));			
-			
-			for(int i=0; i<3; i++) 			
+			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));
+
+			for (int i = 0; i < 3; i++)
 				randomVector[i] = RandomGeometry.nextVector3D(random);
-						
-			randomTriangle.set(randomVector[0], randomVector[1], randomVector[2]);	
-			referenceTriangle.set(randomTriangle);;
-			
+
+			randomTriangle.set(randomVector[0], randomVector[1], randomVector[2]);
+			referenceTriangle.set(randomTriangle);
+
 			// Now construct a random transform to manipulate the random triangle...
 			double roll = (random.nextDouble() - 0.5) * Math.PI * 2.0;
 			double pitch = (random.nextDouble() - 0.5) * Math.PI * 2.0;
 			double yaw = (random.nextDouble() - 0.5) * Math.PI * 2.0;
-			double x = random.nextDouble() - 0.5; 
-			double y = random.nextDouble() - 0.5; 
-			double z = random.nextDouble() - 0.5; 
-			
+			double x = random.nextDouble() - 0.5;
+			double y = random.nextDouble() - 0.5;
+			double z = random.nextDouble() - 0.5;
+
 			transform.appendRollRotation(roll);
 			transform.appendPitchRotation(pitch);
 			transform.appendYawRotation(yaw);
-			transform.appendTranslation(x,y,z);
-					
+			transform.appendTranslation(x, y, z);
+
 			randomTriangle.applyTransform(transform);
 			randomTriangle.applyInverseTransform(transform);
-						
-			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));			
-			assertFalse(randomTriangle.geometricallyEquals(new Triangle3D(), EPS));		
-			
+
+			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));
+			assertFalse(randomTriangle.geometricallyEquals(new Triangle3D(), EPS));
+
 			referenceTriangle.set(randomTriangle.getB(), randomTriangle.getC(), randomTriangle.getA());
-			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));			
+			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));
 
 			referenceTriangle.set(randomTriangle.getC(), randomTriangle.getA(), randomTriangle.getB());
-			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));			
-			
-			
+			assertTrue(randomTriangle.geometricallyEquals(referenceTriangle, EPS));
+
 		}
 	}
 }
