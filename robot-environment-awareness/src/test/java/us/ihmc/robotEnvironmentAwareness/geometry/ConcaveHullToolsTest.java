@@ -55,7 +55,7 @@ import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 
 public class ConcaveHullToolsTest
 {
-	private static boolean VISUALIZE = true;
+	private static boolean VISUALIZE = false;
 
 	private Messager messager;
 	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
