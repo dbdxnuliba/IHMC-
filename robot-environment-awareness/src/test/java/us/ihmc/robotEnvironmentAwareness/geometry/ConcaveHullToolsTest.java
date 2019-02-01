@@ -221,14 +221,30 @@ public class ConcaveHullToolsTest
 			ThreadTools.sleep(100);
 
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult().getConcaveHullCollection();
-		// System.out.println("\nconcaveHullCollection: " +
-		// concaveHullCollection.getConcaveHulls());
+		//System.out.println("\nconcaveHullCollection: " + concaveHullCollection.getConcaveHulls());
 
-		int numberOfConcaveHulls = concaveHullCollection.getNumberOfConcaveHulls();
+		int numberOfHulls = concaveHullCollection.getNumberOfConcaveHulls();
 
-		System.out.printf("numberOfConcaveHulls = %d ", numberOfConcaveHulls);
+		System.out.printf("numberOfHulls = %d ", numberOfHulls);
 
-		assertEquals(numberOfConcaveHulls, 2);
+		assertEquals(numberOfHulls, 2);
+		
+		int i=0; 
+		for(ConcaveHull hull : concaveHullCollection)
+		{	
+			int num = hull.getNumberOfVertices();
+			if(i==0) {
+				System.out.printf("\nHull %d should be Concave, number of vertices = %d", i, num);
+				assert(hull.isHullConvex() == false);
+				assert(num==26);				
+			}
+			if(i==1) {
+				System.out.printf("\nHull %d should be Convex, number of vertices = %d", i, num);
+				assert(hull.isHullConvex() == true);			
+				assert(num==4);				
+			}
+			i++;
+		}
 
 		messager = new SharedMemoryMessager(PolygonizerVisualizerUI.getMessagerAPI());
 		messager.startMessager();
