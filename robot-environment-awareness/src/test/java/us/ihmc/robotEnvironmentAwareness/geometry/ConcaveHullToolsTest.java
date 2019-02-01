@@ -196,6 +196,7 @@ public class ConcaveHullToolsTest
 
 	}
 
+
 	@Test(timeout = 30000)
 	public void testPointCloudWithSurroundingLineConstraints() throws Exception
 	{
@@ -228,20 +229,22 @@ public class ConcaveHullToolsTest
 		System.out.printf("numberOfHulls = %d ", numberOfHulls);
 
 		assertEquals(numberOfHulls, 2);
-		
-		int i=0; 
-		for(ConcaveHull hull : concaveHullCollection)
-		{	
+
+		int i = 0;
+		for (ConcaveHull hull : concaveHullCollection)
+		{
 			int num = hull.getNumberOfVertices();
-			if(i==0) {
-				System.out.printf("\nHull %d should be Concave, number of vertices = %d", i, num);
-				assert(hull.isHullConvex() == false);
-				assert(num==26);				
+			if (i == 0)
+			{
+				System.out.printf("\nHull %d is Concave, number of vertices = %d", i, num);
+				assert (hull.isHullConvex() == false);
+				assert (num == 26);
 			}
-			if(i==1) {
-				System.out.printf("\nHull %d should be Convex, number of vertices = %d", i, num);
-				assert(hull.isHullConvex() == true);			
-				assert(num==4);				
+			if (i == 1)
+			{
+				System.out.printf("\nHull %d is Convex, number of vertices = %d", i, num);
+				assert (hull.isHullConvex() == true);
+				assert (num == 4);
 			}
 			i++;
 		}
