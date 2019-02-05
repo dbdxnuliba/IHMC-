@@ -350,7 +350,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       Pose3D homeChestPoseInPelvisZUpFrame = new Pose3D();
       if (runningOnRealRobot)
       {
-         homeChestPoseInPelvisZUpFrame.appendPitchRotation(Math.toRadians(10.0));
+//         homeChestPoseInPelvisZUpFrame.appendPitchRotation(Math.toRadians(10.0));
       }
       bodyHomeConfiguration.put(jointMap.getChestName(), homeChestPoseInPelvisZUpFrame);
 
