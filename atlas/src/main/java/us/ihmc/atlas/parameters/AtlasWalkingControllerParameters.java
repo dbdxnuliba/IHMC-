@@ -80,7 +80,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       angularMomentumModifierParameters = new ICPAngularMomentumModifierParameters();
 
       minimumHeightAboveGround = jointMap.getModelScale() * (0.625 + 0.08);
-      nominalHeightAboveGround = jointMap.getModelScale() * (0.705 + 0.01);
+      nominalHeightAboveGround = jointMap.getModelScale() * (0.705 + 0.06);
       maximumHeightAboveGround = jointMap.getModelScale() * (0.845 + 0.08);
 
       runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
