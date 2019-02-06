@@ -30,7 +30,7 @@ public class REAGeometryToolsTest
 
 	@SuppressWarnings("deprecation")
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testREAGeometryTools()
 	{
 		double[] newMin1 = {0, 0, 0}, newMax1 = {1, 1, 1}, newMin2 = {1, 1, 1}, newMax2 = {2, 2, 2};
