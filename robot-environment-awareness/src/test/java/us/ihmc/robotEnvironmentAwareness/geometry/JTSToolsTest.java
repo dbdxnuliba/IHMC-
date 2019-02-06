@@ -13,27 +13,71 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
+import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeTriangle;
 import com.vividsolutions.jts.triangulate.quadedge.Vertex;
 
 import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
+import us.ihmc.euclid.geometry.interfaces.LineSegment3DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryRandomTools;
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory.ConcaveHullFactoryResult;
+import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory.ConcaveHullVariables;
 import us.ihmc.robotics.geometry.PlanarRegion;
 
 public class JTSToolsTest
 {
 	private static final int ITERATIONS = 1000;
+
+	@Test(timeout = 30000)
+	public void testExtractionMethods()
+	{
+		Random random = new Random(4234234);
+
+		ConcaveHullFactoryResult concaveHullFactoryResult = new ConcaveHullFactoryResult();
+		ConcaveHullVariables concaveHullVariables = new ConcaveHullVariables();
+		RigidBodyTransform transformToWorld = new RigidBodyTransform();
+
+		List<Point3D> borderVerticesInWorld1 = JTSTools.extractBorderVerticesInWorld(concaveHullFactoryResult, transformToWorld);
+		List<LineSegment3D> borderEdgesInWorld2 = JTSTools.extractBorderEdgesInWorld(concaveHullVariables, transformToWorld);
+		List<LineSegment3D> borderEdgesInWorld3 = JTSTools.extractBorderEdgesInWorld(concaveHullFactoryResult, transformToWorld);
+		List<LineSegment3D> orderedBorderEdgesInWorld1 = JTSTools.extractOrderedBorderEdgesInWorld(concaveHullVariables, transformToWorld);
+		List<LineSegment3D> orderedBorderEdgesInWorld2 = JTSTools.extractOrderedBorderEdgesInWorld(concaveHullFactoryResult, transformToWorld);
+		List<Triangle3D> borderTrianglesInWorld = JTSTools.extractBorderTrianglesInWorld(concaveHullFactoryResult, transformToWorld);
+		List<Triangle3D> allTrianglesInWorld = JTSTools.extractAllTrianglesInWorld(concaveHullFactoryResult, transformToWorld);
+		List<LineSegment3D> constraintEdges = JTSTools.extractConstraintEdges(concaveHullFactoryResult, transformToWorld);
+
+		//Coordinate coordinates[] = new Coordinate() ;	
+		//coordinates = point2DsToCoordinates(points);
+	}
+
+	//public static Triangle3D quadEdgeTriangleToTriangle(QuadEdgeTriangle quadEdgeTriangle)
+	//{
+	//   return new Triangle3D(vertexToPoint3D(quadEdgeTriangle.getVertex(0)), vertexToPoint3D(quadEdgeTriangle.getVertex(1)),
+	//                         vertexToPoint3D(quadEdgeTriangle.getVertex(2)));
+	//}
+	//
+	//public static List<Triangle3D> quadEdgeTrianglesToTriangles(Collection<QuadEdgeTriangle> quadEdgeTriangles)
+	//{
+	//   return quadEdgeTriangles.stream().map(JTSTools::quadEdgeTriangleToTriangle).collect(Collectors.toList());
+	//}
+
+	//public static Point3D pointToPoint3D(Point point)
+	//{
+	//   return coordinateToPoint3D(point.getCoordinate());
+	//}
 
 	@Test(timeout = 30000)
 	public void testQuadEdgeAlgebra()
@@ -57,6 +101,9 @@ public class JTSToolsTest
 
 		List<LineSegment2D> listLineSegment2D = JTSTools.quadEdgesToLineSegment2Ds(quadEdges);
 		List<LineSegment3D> listLineSegment3D = JTSTools.quadEdgesToLineSegment3Ds(quadEdges);
+
+		//QuadEdgeTriangle quadEdgeTriangle = new QuadEdgeTriangle();
+		//quadEdgeTriangleToTriangle(quadEdgeTriangle);
 	}
 
 	@Test(timeout = 30000)
@@ -77,6 +124,10 @@ public class JTSToolsTest
 
 			actualPoint2D = JTSTools.vertexToPoint2D(new Vertex(coordinate));
 			actualPoint3D = JTSTools.vertexToPoint3D(new Vertex(coordinate));
+
+			@SuppressWarnings("deprecation")
+			Point point = new Point(coordinate, null, 1);
+			Point3D p = JTSTools.pointToPoint3D(point);
 		}
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -106,6 +157,13 @@ public class JTSToolsTest
 
 			assertEquals(lineSegment2D.getFirstEndpoint(), JTSTools.pointToPoint2D(lineString.getStartPoint()));
 			assertEquals(lineSegment2D.getSecondEndpoint(), JTSTools.pointToPoint2D(lineString.getEndPoint()));
+
+			//			LineSegment3D lineSegment3D = EuclidGeometryRandomTools.nextLineSegment3D(random);
+			//			lineString = JTSTools.lineSegment3DToLineString(lineSegment3D);
+
+			//			assertEquals(lineSegment3D.getFirstEndpoint(), JTSTools.pointToPoint3D(lineString.getStartPoint()));
+			//			assertEquals(lineSegment3D.getSecondEndpoint(), JTSTools.pointToPoint3D(lineString.getEndPoint()));
+
 		}
 	}
 
