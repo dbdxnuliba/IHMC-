@@ -56,6 +56,7 @@ import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 public class ConcaveHullToolsTest
 {
 	private static boolean VISUALIZE = false;
+	private static final double EPS = 1.0e-5;
 
 	private Messager messager;
 	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
@@ -169,18 +170,12 @@ public class ConcaveHullToolsTest
 		pointcloud3D.add(new Point3D(0.002870327, 0.616778357, 0));
 		pointcloud3D.add(new Point3D(0.617144914, 0.949016321, 0));
 
-		pointcloud3D.add(new Point3D(0.5, -0.1, 0.0));
-		pointcloud3D.add(new Point3D(1.4, 1.0, 0.0));
-		pointcloud3D.add(new Point3D(1.5, 1.0, 0.0));
-		pointcloud3D.add(new Point3D(1.4, 0.10, 0.0));
-		// System.out.println("\npointcloud: " + pointcloud.toString());
-
 		lineConstraints3D = new ArrayList<>();
 		lineConstraints3D.add(new LineSegment3D(0.0, -0.5, 0.0, 0.0, 0.5, 0.0));
 		lineConstraints3D.add(new LineSegment3D(2.0, -0.5, 0.0, 2.0, 0.5, 0.0));
 		lineConstraints3D.add(new LineSegment3D(0.0, 0.5, 0.0, 2.0, 0.5, 0.0));
 		lineConstraints3D.add(new LineSegment3D(0.0, -0.5, 0.0, 2.0, -0.5, 0.0));
-		// System.out.println("\nlineConstraints: " + lineConstraints.toString());
+		// System.out.println("ConcaveHullToolsTest: lineConstraints: " + lineConstraints.toString());
 
 		pointcloud2D = new ArrayList<>();
 		for (Point3D i : pointcloud3D)
@@ -196,7 +191,6 @@ public class ConcaveHullToolsTest
 
 	}
 
-
 	@Test(timeout = 30000)
 	public void testPointCloudWithSurroundingLineConstraints() throws Exception
 	{
@@ -204,17 +198,17 @@ public class ConcaveHullToolsTest
 
 		PlanarRegionSegmentationRawData data = new PlanarRegionSegmentationRawData(1, Axis.Z, new Point3D(), pointcloud3D);
 		data.addIntersections(lineConstraints3D);
-		// System.out.println("\ndata: " + data.toString());
+		// System.out.println("ConcaveHullToolsTest: data: " + data.toString());
 
 		ConcaveHullFactoryParameters parameters = new ConcaveHullFactoryParameters();
 		parameters.setTriangulationTolerance(1.0e-5);
 		parameters.setEdgeLengthThreshold(0.15);
-		// System.out.println("\nparameters: " + parameters.toString());
+		// System.out.println("ConcaveHullToolsTest: parameters: " + parameters.toString());
 
 		messager.submitMessage(Polygonizer.PolygonizerParameters, parameters);
 
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
-		// System.out.println("output: " + output.get().toString());
+		// System.out.println("ConcaveHullToolsTest: output: " + output.get().toString());
 
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(data));
 
@@ -222,36 +216,58 @@ public class ConcaveHullToolsTest
 			ThreadTools.sleep(100);
 
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult().getConcaveHullCollection();
-		//System.out.println("\nconcaveHullCollection: " + concaveHullCollection.getConcaveHulls());
+		//System.out.println("ConcaveHullToolsTest: concaveHullCollection: " + concaveHullCollection.getConcaveHulls());
 
 		int numberOfHulls = concaveHullCollection.getNumberOfConcaveHulls();
 
-		System.out.printf("numberOfHulls = %d ", numberOfHulls);
+		//System.out.printf("ConcaveHullToolsTest: numberOfHulls = %d ", numberOfHulls);
 
 		assertEquals(numberOfHulls, 2);
 
-		int i = 0;
+		int hullCount = 0;
+		ConcaveHull concaveHull = null; 
+		ConcaveHull convexHull = null;
+		ConcaveHullPocket pocket = null;
+		
 		for (ConcaveHull hull : concaveHullCollection)
 		{
 			int num = hull.getNumberOfVertices();
-			if (i == 0)
-			{
-				System.out.printf("\nHull %d is Concave, number of vertices = %d", i, num);
-				assert (hull.isHullConvex() == false);
-				assert (num == 26);
-			}
-			if (i == 1)
-			{
-				System.out.printf("\nHull %d is Convex, number of vertices = %d", i, num);
-				assert (hull.isHullConvex() == true);
-				assert (num == 4);
-			}
-			i++;
-		}
+			//System.out.printf("\nConcaveHullToolsTest: Hull %d is %s, number of vertices = %d", hullCount, hull.isHullConvex() ? "Convex" : "Concave", num);
 
-		messager = new SharedMemoryMessager(PolygonizerVisualizerUI.getMessagerAPI());
-		messager.startMessager();
-		new PolygonizerManager(messager);
+			if (hullCount == 0)
+			{
+				assert (hull.isHullConvex() == false);
+				assert (num == 24);				
+				concaveHull = hull;								
+			}
+			if (hullCount == 1)
+			{
+				assert (hull.isHullConvex() == true);
+				assert (num == 4);				
+				convexHull = hull;								
+			}
+			hullCount++;
+		}
+		
+		pocket = convexHull.findFirstConcaveHullPocket();
+		assert(pocket == null);
+		
+		pocket = concaveHull.findFirstConcaveHullPocket();
+		assert(pocket != null);
+		assertEquals(pocket.getMaxDepth(), 0.42956, EPS);
+		
+		int vertex=0;
+		do
+		{
+			pocket = concaveHull.computeConcaveHullPocket(vertex);
+			if( pocket != null)
+			{
+				assert(vertex==2);
+				System.out.printf("ConcaveHullToolsTest: pocket at vertex %d depth is %f", vertex, pocket.getMaxDepth());
+			}
+			vertex++;
+		} while(pocket == null);
+		assertEquals(pocket.getMaxDepth(), 0.42956, EPS);		
 	}
 
 	@Before
