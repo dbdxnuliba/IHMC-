@@ -96,32 +96,32 @@ public class PlanarRegionPolygonizerTest {
 		}
 	}
 
-	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
-			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters) {
-		PlanarRegionsList ret = null;
-		return ret;
-	}
-
-	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
-			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-			PlanarRegionSegmentationDataExporter dataExporter) {
-		PlanarRegionsList ret = null;
-		return ret;
-	}
-
-	private List<PlanarRegion> createPlanarRegions(List<PlanarRegionSegmentationRawData> rawData,
-			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-			PlanarRegionSegmentationDataExporter dataExporter) {
-		List<PlanarRegion> ret = null;
-		return ret;
-	}
-
-	private List<PlanarRegion> createPlanarRegion(PlanarRegionSegmentationRawData rawData,
-			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-			PlanarRegionSegmentationDataExporter dataExporter) {
-		List<PlanarRegion> ret = null;
-		return ret;
-	}
+//	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
+//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters) {
+//		PlanarRegionsList ret = null;
+//		return ret;
+//	}
+//
+//	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
+//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
+//			PlanarRegionSegmentationDataExporter dataExporter) {
+//		PlanarRegionsList ret = null;
+//		return ret;
+//	}
+//
+//	private List<PlanarRegion> createPlanarRegions(List<PlanarRegionSegmentationRawData> rawData,
+//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
+//			PlanarRegionSegmentationDataExporter dataExporter) {
+//		List<PlanarRegion> ret = null;
+//		return ret;
+//	}
+//
+//	private List<PlanarRegion> createPlanarRegion(PlanarRegionSegmentationRawData rawData,
+//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
+//			PlanarRegionSegmentationDataExporter dataExporter) {
+//		List<PlanarRegion> ret = null;
+//		return ret;
+//	}
 
 	List<PlanarRegionSegmentationRawData> rawDataList = new ArrayList();
 	PlanarRegionSegmentationRawData rawData = null;
@@ -130,7 +130,7 @@ public class PlanarRegionPolygonizerTest {
 	PlanarRegionSegmentationDataExporter dataExporter = null;
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testPlanarRegionPolygonizer() {
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
@@ -154,10 +154,10 @@ public class PlanarRegionPolygonizerTest {
 		// PlanarRegionSegmentationRawData
 		rawData = new PlanarRegionSegmentationRawData(1, Axis.Z, new Point3D(), pointcloud);
 		rawData.addIntersections(lineConstraints);
-		System.out.println("\nrawData: " + rawData.toString());
+		System.out.println("PlanarRegionPolygonizerTest: rawData: " + rawData.toString());
 
 		rawDataList.add(rawData);
-		System.out.println("\nrawDataList: " + rawDataList.toString());
+		System.out.println("PlanarRegionPolygonizerTest: rawDataList: " + rawDataList.toString());
 
 		concaveHullFactoryParameters = new ConcaveHullFactoryParameters();
 		concaveHullFactoryParameters.setTriangulationTolerance(1.0e-5);
@@ -174,7 +174,7 @@ public class PlanarRegionPolygonizerTest {
 		// polygonizerParameters, dataExporter);
 
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
-		// System.out.println("output: " + output.get().toString());
+		// System.out.println("PlanarRegionPolygonizerTest: output: " + output.get().toString());
 
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(rawData));
 
@@ -183,13 +183,13 @@ public class PlanarRegionPolygonizerTest {
 
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult()
 				.getConcaveHullCollection();
-		System.out.println("\nconcaveHullCollection: " + concaveHullCollection.getConcaveHulls().toString());
+		System.out.println("PlanarRegionPolygonizerTest: concaveHullCollection: " + concaveHullCollection.getConcaveHulls().toString());
 
 		assertEquals(1, concaveHullCollection.getNumberOfConcaveHulls());
 
 		Object[] hull = concaveHullCollection.getConcaveHulls().toArray();
 		//for (int i = 0; i < hull.length; i++)
-		//	System.out.println("\nhull[" + i + "]: " + hull[i].toString());
+		//	System.out.println("PlanarRegionPolygonizerTest: hull[" + i + "]: " + hull[i].toString());
 		
 		//ConcaveHullPocket  chp =  findFirstConcaveHullPocket(concaveHullVertices);
 
