@@ -10,10 +10,12 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
 {
    public java.lang.StringBuilder camerasToCapture_;
    public boolean publicBroadcast_;
+   public java.lang.StringBuilder initialPeers_;
 
    public LoggerConfiguration()
    {
       camerasToCapture_ = new java.lang.StringBuilder(255);
+      initialPeers_ = new java.lang.StringBuilder(255);
    }
 
    public LoggerConfiguration(LoggerConfiguration other)
@@ -28,6 +30,9 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
       camerasToCapture_.append(other.camerasToCapture_);
 
       publicBroadcast_ = other.publicBroadcast_;
+
+      initialPeers_.setLength(0);
+      initialPeers_.append(other.initialPeers_);
 
    }
 
@@ -55,6 +60,21 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
       return publicBroadcast_;
    }
 
+   public void setInitialPeers(java.lang.String initialPeers)
+   {
+      initialPeers_.setLength(0);
+      initialPeers_.append(initialPeers);
+   }
+
+   public java.lang.String getInitialPeersAsString()
+   {
+      return getInitialPeers().toString();
+   }
+   public java.lang.StringBuilder getInitialPeers()
+   {
+      return initialPeers_;
+   }
+
 
    public static Supplier<LoggerConfigurationPubSubType> getPubSubType()
    {
@@ -77,6 +97,8 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.publicBroadcast_, other.publicBroadcast_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.initialPeers_, other.initialPeers_, epsilon)) return false;
+
 
       return true;
    }
@@ -94,6 +116,8 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
 
       if(this.publicBroadcast_ != otherMyClass.publicBroadcast_) return false;
 
+      if (!us.ihmc.idl.IDLTools.equals(this.initialPeers_, otherMyClass.initialPeers_)) return false;
+
 
       return true;
    }
@@ -107,7 +131,9 @@ public class LoggerConfiguration extends Packet<LoggerConfiguration> implements 
       builder.append("camerasToCapture=");
       builder.append(this.camerasToCapture_);      builder.append(", ");
       builder.append("publicBroadcast=");
-      builder.append(this.publicBroadcast_);
+      builder.append(this.publicBroadcast_);      builder.append(", ");
+      builder.append("initialPeers=");
+      builder.append(this.initialPeers_);
       builder.append("}");
       return builder.toString();
    }

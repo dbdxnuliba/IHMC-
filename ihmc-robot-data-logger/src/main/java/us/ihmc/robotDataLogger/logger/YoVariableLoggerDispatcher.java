@@ -5,8 +5,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.martiansoftware.jsap.JSAPException;
 
-import us.ihmc.commons.PrintTools;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotDataLogger.Announcement;
+import us.ihmc.robotDataLogger.LoggerConfigurationLoader;
 import us.ihmc.robotDataLogger.listeners.LogAnnouncementListener;
 import us.ihmc.robotDataLogger.rtps.DataConsumerParticipant;
 
@@ -21,7 +22,16 @@ public class YoVariableLoggerDispatcher implements LogAnnouncementListener
 
       System.out.println("Starting YoVariableLoggerDispatcher");
       
-      participant = new DataConsumerParticipant("YoVariableLoggerDispatcher");
+      try
+      {
+         LoggerConfigurationLoader configurationLoader = new LoggerConfigurationLoader(true);
+         participant = new DataConsumerParticipant("YoVariableLoggerDispatcher", configurationLoader.getInitialPeers());
+      }
+      catch (IOException e)
+      {
+         throw new RuntimeException(e);
+      }
+
       participant.listenForAnnouncements(this);
       System.out.println("Client started, waiting for announcements");
       
@@ -38,7 +48,7 @@ public class YoVariableLoggerDispatcher implements LogAnnouncementListener
                try
                {
                   new YoVariableLogger(announcement, options);
-                  PrintTools.info("Logging session started");
+                  LogTools.info("Logging session started");
                }
                catch (Exception e)
                {

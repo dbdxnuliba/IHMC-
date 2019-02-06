@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import us.ihmc.pubsub.Domain;
@@ -162,14 +163,14 @@ public class DataConsumerParticipant
     * @param name for this log consumer participant
     * @throws IOException if no connection to the network is possibile
     */
-   public DataConsumerParticipant(String name, InetAddress... initialPeers) throws IOException
+   public DataConsumerParticipant(String name, List<InetAddress> initialPeers) throws IOException
    {
       domain.setLogLevel(LogLevel.ERROR);
       FastRTPSParticipantAttributes att = (FastRTPSParticipantAttributes) domain.createParticipantAttributes(LogParticipantSettings.domain, name);
       
       
-      
-      if(initialPeers != null)
+      // Add initial peers passed in and default multicast address as list of initial peers  
+      if(initialPeers != null && !initialPeers.isEmpty())
       {
          for(InetAddress address : initialPeers)
          {
@@ -183,6 +184,7 @@ public class DataConsumerParticipant
                   FastRTPS.setLocatorOctet(locator_t, i, addr[i-12]);
                }
 
+               System.out.println("Adding " + address.getHostAddress() + " to initial peers");
                initialPeerList.push_back(locator_t);
             }
             else

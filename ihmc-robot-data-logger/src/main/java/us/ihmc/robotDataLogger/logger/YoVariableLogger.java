@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import us.ihmc.robotDataLogger.Announcement;
+import us.ihmc.robotDataLogger.LoggerConfigurationLoader;
 import us.ihmc.robotDataLogger.YoVariableClient;
 import us.ihmc.robotDataLogger.rtps.DataConsumerParticipant;
 
@@ -19,7 +20,8 @@ public class YoVariableLogger
 
    public YoVariableLogger(Announcement request, YoVariableLoggerOptions options) throws IOException
    {
-      DataConsumerParticipant participant = new DataConsumerParticipant(request.getName() + "Logger");
+      LoggerConfigurationLoader configurationLoader = new LoggerConfigurationLoader(true);
+      DataConsumerParticipant participant = new DataConsumerParticipant(request.getName() + "Logger", configurationLoader.getInitialPeers());
       DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
       Calendar calendar = Calendar.getInstance();
       String timestamp = dateFormat.format(calendar.getTime());

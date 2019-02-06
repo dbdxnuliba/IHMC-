@@ -43,6 +43,7 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
 
       return current_alignment - initial_alignment;
    }
@@ -61,6 +62,8 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getInitialPeers().length() + 1;
+
 
       return current_alignment - initial_alignment;
    }
@@ -73,6 +76,10 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
 
       cdr.write_type_7(data.getPublicBroadcast());
 
+      if(data.getInitialPeers().length() <= 255)
+      cdr.write_type_d(data.getInitialPeers());else
+          throw new RuntimeException("initialPeers field exceeds the maximum length");
+
    }
 
    public static void read(us.ihmc.robotDataLogger.LoggerConfiguration data, us.ihmc.idl.CDR cdr)
@@ -80,6 +87,7 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
       cdr.read_type_d(data.getCamerasToCapture());	
       data.setPublicBroadcast(cdr.read_type_7());
       	
+      cdr.read_type_d(data.getInitialPeers());	
 
    }
 
@@ -88,6 +96,7 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
    {
       ser.write_type_d("camerasToCapture", data.getCamerasToCapture());
       ser.write_type_7("publicBroadcast", data.getPublicBroadcast());
+      ser.write_type_d("initialPeers", data.getInitialPeers());
    }
 
    @Override
@@ -95,6 +104,7 @@ public class LoggerConfigurationPubSubType implements us.ihmc.pubsub.TopicDataTy
    {
       ser.read_type_d("camerasToCapture", data.getCamerasToCapture());
       data.setPublicBroadcast(ser.read_type_7("publicBroadcast"));
+      ser.read_type_d("initialPeers", data.getInitialPeers());
    }
 
    public static void staticCopy(us.ihmc.robotDataLogger.LoggerConfiguration src, us.ihmc.robotDataLogger.LoggerConfiguration dest)

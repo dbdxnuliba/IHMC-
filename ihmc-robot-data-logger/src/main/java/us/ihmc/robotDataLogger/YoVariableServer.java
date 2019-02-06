@@ -72,7 +72,7 @@ public class YoVariableServer implements RobotVisualizer, TickAndUpdatable, Vari
       LoggerConfigurationLoader config;
       try
       {
-         config = new LoggerConfigurationLoader();
+         config = new LoggerConfigurationLoader(false);
       }
       catch (IOException e1)
       {

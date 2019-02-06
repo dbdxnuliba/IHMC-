@@ -1,7 +1,6 @@
 package us.ihmc.robotDataLogger;
 
 import java.io.IOException;
-import java.net.InetAddress;
 
 import us.ihmc.robotDataLogger.rtps.DataConsumerParticipant;
 import us.ihmc.robotDataLogger.rtps.LogProducerDisplay;
@@ -12,34 +11,19 @@ public class YoVariableClient
    private final LogProducerDisplay.LogSessionFilter[] sessionFilters;
    private final DataConsumerParticipant dataConsumerParticipant;
 
-
-   public YoVariableClient(YoVariablesUpdatedListener listener)
-   {
-      this(listener, null, null);
-   }
-   
-   public YoVariableClient(YoVariablesUpdatedListener listener, LogProducerDisplay.LogSessionFilter... filters)
-   {
-      this(listener, filters, null);
-   }
-   
+  
    /**
     * Start a new client while allowing the user to select a desired logging session
     * 
     * @param listener
     * @param filters
-    */
-   public YoVariableClient(YoVariablesUpdatedListener listener, InetAddress... initialPeers)
-   {
-      this(listener, null, initialPeers);
-   }
-   
-   private YoVariableClient(YoVariablesUpdatedListener listener, LogProducerDisplay.LogSessionFilter[] filters, InetAddress[] initialPeers)
+    */   
+   public YoVariableClient(YoVariablesUpdatedListener listener, LogProducerDisplay.LogSessionFilter... filters)
    {
       try
       {
-         
-         this.dataConsumerParticipant = new DataConsumerParticipant("YoVariableClient", initialPeers);
+         LoggerConfigurationLoader configurationLoader = new LoggerConfigurationLoader(true);
+         this.dataConsumerParticipant = new DataConsumerParticipant("YoVariableClient", configurationLoader.getInitialPeers());
       }
       catch (IOException e)
       {

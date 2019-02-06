@@ -5,6 +5,7 @@ module robotDataLogger{
 	{
 		string camerasToCapture;
 		boolean publicBroadcast;
+		string initialPeers;
 	};
 };
 };

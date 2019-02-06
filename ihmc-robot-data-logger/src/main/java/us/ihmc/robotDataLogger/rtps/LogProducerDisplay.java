@@ -14,7 +14,7 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import us.ihmc.commons.PrintTools;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotDataLogger.Announcement;
 import us.ihmc.robotDataLogger.listeners.LogAnnouncementListener;
 
@@ -189,7 +189,7 @@ public class LogProducerDisplay extends JFrame
             @Override
             public void run()
             {
-               PrintTools.info(description.getNameAsString() + " came online");
+               LogTools.info(description.getNameAsString() + " came online");
                model.addRow(new Object[] { name, hostname, sessionId });
 
             }
@@ -228,10 +228,5 @@ public class LogProducerDisplay extends JFrame
    public interface LogSessionFilter
    {
       boolean shouldAddToDisplay(Announcement description);
-   }
-
-   public static void main(String[] args) throws IOException
-   {
-      System.out.println(getAnnounceRequest(new DataConsumerParticipant("Test")));
    }
 }
