@@ -24,7 +24,7 @@ public class PointMeanTest
 	Random random = new Random();
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testVectorMean()
 	{
 		Point3D p = new Point3D();
@@ -51,7 +51,7 @@ public class PointMeanTest
 	}
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testWithTuple3DBasics()
 	{
 		Point3D p = new Point3D();
