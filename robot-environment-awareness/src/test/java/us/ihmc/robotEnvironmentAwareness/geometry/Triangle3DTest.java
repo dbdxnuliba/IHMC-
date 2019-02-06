@@ -29,7 +29,7 @@ public class Triangle3DTest
 	Random random = new Random();
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 
 	// Tests Triangle3D creation, setters(), applyTransform(),
 	// applyInverseTransform() and geometricallyEqual()
