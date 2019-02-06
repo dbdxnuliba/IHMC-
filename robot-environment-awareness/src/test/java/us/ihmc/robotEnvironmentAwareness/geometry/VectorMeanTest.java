@@ -22,7 +22,7 @@ public class VectorMeanTest
 	Random random = new Random();
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testWithVectorMean()
 	{
 		VectorMean meanVector = new VectorMean();
@@ -48,7 +48,7 @@ public class VectorMeanTest
 	}
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test
+	@Test(timeout = 30000)
 	public final void testWithTuple3DBasics()
 	{
 		VectorMean meanVector = new VectorMean();
