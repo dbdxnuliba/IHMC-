@@ -1,18 +1,21 @@
 package us.ihmc.atlas.heightForBalance;
 
-import afu.org.checkerframework.checker.oigj.qual.O;
-import us.ihmc.avatar.heightForBalanceTest.AvatarHeightForBalanceTest;
-
 import org.junit.Test;
+
 import us.ihmc.atlas.AtlasJointMap;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
-import us.ihmc.atlas.parameters.*;
-import us.ihmc.atlas.straightLegWalking.AtlasStraightLegWalkingTest.*;
+import us.ihmc.atlas.parameters.AtlasContactPointParameters;
+import us.ihmc.atlas.parameters.AtlasICPOptimizationParameters;
+import us.ihmc.atlas.parameters.AtlasLegConfigurationParameters;
+import us.ihmc.atlas.parameters.AtlasMomentumOptimizationSettings;
+import us.ihmc.atlas.parameters.AtlasWalkingControllerParameters;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
+import us.ihmc.avatar.heightForBalanceTest.AvatarHeightForBalanceTest;
 import us.ihmc.commonWalkingControlModules.capturePoint.optimization.ICPOptimizationParameters;
-import us.ihmc.commonWalkingControlModules.configurations.*;
+import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
+import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
@@ -35,7 +38,7 @@ public class AtlasHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.57
-      percentWeight = 0.223;//0.235;//0.21;//0.223;
+      percentWeight = 0.17;//0.235;//0.21;//0.223;
       super.testPushStanding();
    }
 

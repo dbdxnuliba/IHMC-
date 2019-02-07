@@ -1,11 +1,21 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.heightForBalance;
 
+import static java.lang.Math.cos;
+
+import java.awt.Color;
+
 import org.ejml.data.DenseMatrix64F;
+
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commons.MathTools;
-import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DBasics;
+import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
+import us.ihmc.euclid.referenceFrame.FrameLine2D;
+import us.ihmc.euclid.referenceFrame.FramePoint2D;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameVector2D;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -20,10 +30,6 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
-
-import java.awt.*;
-
-import static java.lang.Math.*;
 
 public class VaryingHeightControlModule implements VaryingHeightControlModuleInterface
 {
@@ -158,6 +164,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    private YoDouble yoCoPProjectedCoMMinDistance;
    private YoDouble yoMinICPError;
    private YoDouble yoCoMVelocityToStop;
+   private YoDouble yoICPErrorToStop;
 
 
 
@@ -185,7 +192,8 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       yoCoPProjectedCoMMinDistance = new YoDouble(getClass().getSimpleName()+"CoPtoProjectedCoMOnICPeDistance",registry);
       yoMinICPError = new YoDouble(getClass().getSimpleName()+"MinICPError",registry);
       yoCoMVelocityToStop = new YoDouble(getClass().getSimpleName()+"CoMVelocityToStop",registry);
-
+      yoICPErrorToStop=new YoDouble(getClass().getSimpleName()+"ICPErrorToStop",registry);
+      
       yoDesiredHeightAcceleration = new YoDouble("DesiredHeightAccelerationHeightControl", registry);
 
       // error angle, error angle end of swing and error angle direction
@@ -261,15 +269,17 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       yoFracAPred.set(walkingControllerParameters.getHeightForBalanceParameters().getFractionOfMaxHeightAccelerationToConsiderInPrediction());
       yoCoPProjectedCoMMinDistance.set(walkingControllerParameters.getHeightForBalanceParameters().getMinimumCoPCoMProjectedICPeDistanceToControl());
       yoMinICPError.set(0.03);
+      yoICPErrorToStop.set(0.015);
 
       angleAndDistanceEvaluator = new VaryingHeightAngleAndDistanceEvaluator();
       primaryConditionEvaluator = new VaryingHeightPrimaryConditionEvaluator(yoZMin.getDoubleValue(), yoMinKneeAngle.getDoubleValue(), yoMaxKneeAngle.getDoubleValue());
       timeToConstraintsPredictor = new VaryingHeightTimeToConstraintsPredictor(yoZMin.getDoubleValue(), yoVMin.getDoubleValue(), yoVMax.getDoubleValue());
       secondaryConditionEvaluator = new VaryingHeightSecondaryConditionEvaluator(yoZMin.getDoubleValue(), tForHalfWaySwing, smoothEpsilon, timeToConstraintsPredictor);
 
-      yoCoMVelocityToStop.set(0.01);
+      yoCoMVelocityToStop.set(0.005);
    }
 
+   @Override
    public void compute()
    {
       vMax = yoVMax.getDoubleValue();
@@ -319,7 +329,7 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       FrameVector2D comVelocity2D = new FrameVector2D();
       comVelocity2D.set(comVelocity3D);
       if (walkingStateSwitch
-            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && icpError.length()<0.02 && comVelocity2D.length()<yoCoMVelocityToStop.getDoubleValue())
+            || nonDynamicCase && secondaryConditionPreviousTick == VaryingHeightSecondaryConditionEnum.HOLD && icpError.length()<yoICPErrorToStop.getDoubleValue() && comVelocity2D.length()<yoCoMVelocityToStop.getDoubleValue())
       {
          heightControlInThisWalkingState = false;
          dsTrajectoryIsGenerated = false;
@@ -629,33 +639,39 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
       return  ddzCircle;
    }
+   @Override
    public FrameVector3D getModifiedLinearMomentumRateOfChange()
    {
       return modifiedLinearMomentumRateOfChange;
    }
 
+   @Override
    public void setSupportPolygon(FrameConvexPolygon2D supportPolygon)
    {
       this.supportPolygon.setIncludingFrame(supportPolygon);
       this.supportPolygon.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
    }
 
+   @Override
    public void setDesiredCMP(FramePoint2D desiredCMP)
    {
       this.desiredCMPtoProject.setIncludingFrame(desiredCMP);
    }
 
+   @Override
    public void setICPError(FrameVector2D icpError)
    {
       this.icpError.setIncludingFrame(icpError);
    }
 
+   @Override
    public void setCoM(FramePoint3D CoM)
    {
       this.com2DtoProject.setIncludingFrame(CoM);
       this.com3D.setIncludingFrame(CoM);
    }
 
+   @Override
    public void setCoMEndOfSTep(FramePoint3D coMEndOfSTep)
    {
       yoCoMEndOfSwing2DNotHacky.set(coMEndOfSTep);
@@ -663,16 +679,19 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
 
    }
 
+   @Override
    public void setLinearMomentumRateOfChangeFromLIP(FrameVector3D linearMomentumRateOfChangeFromLIP)
    {
       this.linearMomentumRateOfChangeFromLIP.setIncludingFrame(linearMomentumRateOfChangeFromLIP);
    }
 
+   @Override
    public void setSupportSide(RobotSide supportSide)
    {
       this.supportSide = supportSide;
    }
 
+   @Override
    public void setIsInDoubleSupport(boolean isInDoubleSupport)
    {
       if (this.isInDoubleSupport == isInDoubleSupport)
@@ -689,27 +708,32 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
       yoWalkingStateSwitch.set(walkingStateSwitch);
    }
 
+   @Override
    public void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity)
    {
       desiredICPVelocity.setIncludingFrame(desiredCapturePointVelocity);
       desiredICPVelocity.changeFrame(ReferenceFrame.getWorldFrame());
    }
 
+   @Override
    public VaryingHeightPrimaryConditionEnum getPrimaryCondition()
    {
       return primaryConditionYoEnum.getEnumValue();
    }
 
+   @Override
    public double getTimeToSwitch()
    {
       return yoTimeToSwitch.getDoubleValue();
    }
 
+   @Override
    public double getTimeRemaining()
    {
       return yoTimeRemaining.getDoubleValue();
    }
 
+   @Override
    public double getErrorAngleEndOfSwing()
    {
       return copCoMICPeAngleFinal.getDoubleValue();
