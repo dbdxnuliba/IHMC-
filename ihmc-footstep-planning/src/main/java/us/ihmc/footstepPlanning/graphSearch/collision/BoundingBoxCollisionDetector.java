@@ -41,7 +41,7 @@ class BoundingBoxCollisionDetector
       this.parameters = parameters;
    }
 
-   public void setPlanarRegionsList(PlanarRegionsList planarRegions)
+   void setPlanarRegionsList(PlanarRegionsList planarRegions)
    {
       planarRegionPolytopes.clear();
       this.planarRegionsList = planarRegions;
@@ -66,7 +66,7 @@ class BoundingBoxCollisionDetector
       }
    }
 
-   public void setBoxPose(double bodyPoseX, double bodyPoseY, double bodyPoseZ, double bodyPoseYaw)
+   void setBoxPose(double bodyPoseX, double bodyPoseY, double bodyPoseZ, double bodyPoseYaw)
    {
       this.bodyPoseX = bodyPoseX;
       this.bodyPoseY = bodyPoseY;
@@ -74,7 +74,7 @@ class BoundingBoxCollisionDetector
       this.bodyPoseYaw = bodyPoseYaw;
    }
 
-   public BodyCollisionData checkForCollision()
+   BodyCollisionData checkForCollision()
    {
       checkInputs();
 
@@ -94,7 +94,7 @@ class BoundingBoxCollisionDetector
 
                if(collisionDetector.arePolytopesColliding(planarRegionPolytope, bodyBoxPolytope, tempPoint1, tempPoint2))
                {
-                  collisionData.setCollisionDetected(true);
+                  collisionData.setCollisionDetected();
                   break;
                }
                else
@@ -122,16 +122,11 @@ class BoundingBoxCollisionDetector
       double min = Double.POSITIVE_INFINITY;
       for (int i = 0; i < values.length; i++)
       {
-         if(Double.isNaN(values[i]) || values[i] < 0.0)
-            continue;
          if(values[i] > 0.0)
             min = Math.min(min, values[i]);
       }
 
-      if(Double.isInfinite(min))
-         return Double.NaN;
-      else
-         return min;
+      return min;
    }
    
    private void setBoundingBoxPosition()

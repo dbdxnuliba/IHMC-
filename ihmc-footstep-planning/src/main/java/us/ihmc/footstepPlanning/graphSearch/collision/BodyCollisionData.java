@@ -8,27 +8,28 @@ public class BodyCollisionData
    private boolean collisionDetected = false;
 
    /**
-    * Distance of closest detected point to bounding box if no collision was detected
+    * Distance of closest detected point to bounding box
     */
-   private double distanceFromBoundingBox = Double.NaN;
+   private double distanceFromBoundingBox = Double.POSITIVE_INFINITY;
 
-   public boolean isCollisionDetected()
-   {
-      return collisionDetected;
-   }
-
-   public void setDistanceFromBoundingBox(double distanceFromBoundingBox)
+   void setDistanceFromBoundingBox(double distanceFromBoundingBox)
    {
       this.distanceFromBoundingBox = distanceFromBoundingBox;
    }
 
-   public void setCollisionDetected(boolean collisionDetected)
+   void setCollisionDetected()
    {
-      this.collisionDetected = collisionDetected;
+      this.collisionDetected = true;
+      this.distanceFromBoundingBox = 0.0;
    }
 
    public double getDistanceFromBoundingBox()
    {
       return distanceFromBoundingBox;
+   }
+
+   public boolean isCollisionDetected()
+   {
+      return collisionDetected;
    }
 }

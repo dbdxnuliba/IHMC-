@@ -1,5 +1,8 @@
 package us.ihmc.footstepPlanning.graphSearch.collision;
 
+import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNodeTools;
 import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -11,6 +14,7 @@ public class FootstepNodeBodyCollisionDetector
    private final BoundingBoxCollisionDetector collisionDetector;
    private final FootstepPlannerParameters parameters;
    private final HashMap<LatticeNode, BodyCollisionData> collisionDataHolder = new HashMap<>();
+   private final RigidBodyTransform transform = new RigidBodyTransform();
 
    public FootstepNodeBodyCollisionDetector(FootstepPlannerParameters parameters)
    {
@@ -25,20 +29,23 @@ public class FootstepNodeBodyCollisionDetector
       collisionDataHolder.clear();
    }
 
-   public BodyCollisionData checkForCollision(LatticeNode node, double snappedNodeHeight)
+   public BodyCollisionData checkForCollision(FootstepNode footstepNode, double snappedNodeHeight)
    {
-      if (collisionDataHolder.containsKey(node))
+      FootstepNodeTools.getNodeTransform(footstepNode, transform);
+      double tx = parameters.getBodyBoxBaseX();
+      double ty = footstepNode.getRobotSide().negateIfLeftSide(parameters.getBodyBoxBaseY());
+      transform.appendTranslation(tx, ty, snappedNodeHeight);
+      LatticeNode latticeNode = new LatticeNode(transform.getTranslationX(), transform.getTranslationY(), footstepNode.getYaw());
+
+      if (collisionDataHolder.containsKey(latticeNode))
       {
-         return collisionDataHolder.get(node);
+         return collisionDataHolder.get(latticeNode);
       }
       else
       {
-         double offsetX = parameters.getBodyBoxBaseX() * Math.cos(node.getYaw()) - parameters.getBodyBoxBaseY() * Math.sin(node.getYaw());
-         double offsetY = parameters.getBodyBoxBaseX() * Math.sin(node.getYaw()) + parameters.getBodyBoxBaseY() * Math.cos(node.getYaw());
-
-         collisionDetector.setBoxPose(offsetX + node.getX(), offsetY + node.getY(), snappedNodeHeight + parameters.getBodyBoxBaseZ(), node.getYaw());
+         collisionDetector.setBoxPose(transform.getTranslationX(), transform.getTranslationY(), transform.getTranslationZ() + parameters.getBodyBoxBaseZ(), footstepNode.getYaw());
          BodyCollisionData collisionData = collisionDetector.checkForCollision();
-         collisionDataHolder.put(node, collisionData);
+         collisionDataHolder.put(latticeNode, collisionData);
          return collisionData;
       }
    }

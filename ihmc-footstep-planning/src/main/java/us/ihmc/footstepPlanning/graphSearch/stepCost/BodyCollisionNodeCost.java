@@ -40,19 +40,20 @@ public class BodyCollisionNodeCost implements FootstepCost
          return 0.0;
 
       double height = snapTransform.getTranslationZ();
-      BodyCollisionData collisionData = collisionDetector.checkForCollision(endNode.getLatticeNode(), height);
+      BodyCollisionData collisionData = collisionDetector.checkForCollision(endNode, height);
 
       if(collisionData.isCollisionDetected())
       {
-         return 0.0;
+         return 100.0;
       }
-      else if(Double.isNaN(collisionData.getDistanceFromBoundingBox()))
+      else if(Double.isInfinite(collisionData.getDistanceFromBoundingBox()))
       {
          return 0.0;
       }
       else
       {
-         return costParameters.getBoundingBoxCost() * (1.0 - collisionData.getDistanceFromBoundingBox() / costParameters.getMaximum2dDistanceFromBoundingBoxToPenalize());
+         return costParameters.getBoundingBoxCost() * (1.0 - collisionData.getDistanceFromBoundingBox() / costParameters
+               .getMaximum2dDistanceFromBoundingBoxToPenalize());
       }
    }
 }
