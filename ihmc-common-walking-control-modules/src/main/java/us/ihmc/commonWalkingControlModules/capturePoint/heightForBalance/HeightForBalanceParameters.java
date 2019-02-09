@@ -44,7 +44,7 @@ public abstract class HeightForBalanceParameters
 
    public double getAnglePositiveAlignmentThresholdFromStart()
    {
-      return 0.8;
+      return 0.85;
    }
 
    public double getAngleNegativeAlignmentThreshold()

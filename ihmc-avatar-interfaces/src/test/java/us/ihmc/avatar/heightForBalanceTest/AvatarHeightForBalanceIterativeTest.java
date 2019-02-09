@@ -35,9 +35,9 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
    private boolean succes;
    private double angle;
    private double percentWeight;
-   private double delayFractionOfSwing = 0.3;
+   private double delayFractionOfSwing = 0.0;
    private boolean unreasonableFailure;
-   private String fileNamePrefix = "angleAndPercentWeight72Tiles10AngNormal";
+   private String fileNamePrefix = "roundPushPos085AngNormal";
    private String fileName = fileNamePrefix;
    protected boolean useNormalRobot = true;
    protected boolean standingPush = false;
@@ -132,14 +132,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
-      else if (recursiveIter == 1)
+      */
+      if (recursiveIter == 0)
       {
          fileName = fileNamePrefix + "Half";
          delayFractionOfSwing = 0.4;
-         useNormalRobot = false;
+        // useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if (recursiveIter == 2)
       {
          fileName = fileNamePrefix + "HalfNormal";
@@ -147,14 +149,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
-      else if (recursiveIter == 3)
+      */
+      else if (recursiveIter == 1)
       {
          fileName = fileNamePrefix + "Quart";
          delayFractionOfSwing = 0.2;
-         useNormalRobot = false;
+        // useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if (recursiveIter == 4)
       {
          fileName = fileNamePrefix + "QuartNormal";
@@ -162,14 +166,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
-      else if (recursiveIter == 5)
+      */
+      else if (recursiveIter == 2)
       {
          fileName = fileNamePrefix + "05";
          delayFractionOfSwing = 0.5;
-         useNormalRobot = false;
+         //useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if (recursiveIter == 6)
       {
          fileName = fileNamePrefix + "05Normal";
@@ -177,14 +183,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
-      else if (recursiveIter == 7)
+      */
+      else if (recursiveIter == 3)
       {
          fileName = fileNamePrefix + "01";
          delayFractionOfSwing = 0.1;
-         useNormalRobot = false;
+        //useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if (recursiveIter == 8)
       {
          fileName = fileNamePrefix + "01Normal";
@@ -192,14 +200,16 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          recursiveIter += 1;
          testIterativePush();
       }
-      else if (recursiveIter == 9)
+      */
+      else if (recursiveIter == 4)
       {
          fileName = fileNamePrefix + "03";
          delayFractionOfSwing = 0.3;
-         useNormalRobot = false;
+         //useNormalRobot = false;
          recursiveIter += 1;
          testIterativePush();
       }
+      /*
       else if (recursiveIter == 10)
       {
          fileName = fileNamePrefix + "03Normal";
@@ -208,6 +218,7 @@ public abstract class AvatarHeightForBalanceIterativeTest extends AvatarHeightFo
          testIterativePush();
       }
       */
+
 
 
       /*

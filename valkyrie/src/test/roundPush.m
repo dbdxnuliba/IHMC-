@@ -538,8 +538,9 @@ exportfig(gcf,'roundSSAng05.eps', opts)
 set(groot, 'defaultAxesTickLabelInterpreter','latex');  
 set(groot, 'defaultLegendInterpreter','latex');
 figure;
-angles = table2array(roundPushNormal(:,1));
-weights = table2array(roundPushNormal(:,2))*f;
+
+angles = table2array(roundPushPos085Ang(:,1));
+weights = table2array(roundPushPos085Ang(:,2))*f;
 
 wNav = mean(weights)
 
@@ -550,9 +551,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPush(:,1));
-weights = table2array(roundPush(:,2))*f;
-actions = table2array(roundPush(:,3));
+angles = table2array(roundPushPos085(:,1));
+weights = table2array(roundPushPos085(:,2))*f;
+actions = table2array(roundPushPos085(:,3));
 
 wav = mean(weights)
 
@@ -596,9 +597,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPush01(:,1));
-weights = table2array(roundPush01(:,2))*f;
-actions = table2array(roundPush01(:,3));
+angles = table2array(roundPushPos08501(:,1));
+weights = table2array(roundPushPos08501(:,2))*f;
+actions = table2array(roundPushPos08501(:,3));
 
 wav = mean(weights)
 
@@ -641,9 +642,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPushQuart(:,1));
-weights = table2array(roundPushQuart(:,2))*f;
-actions = table2array(roundPushQuart(:,3));
+angles = table2array(roundPushPos085Quart(:,1));
+weights = table2array(roundPushPos085Quart(:,2))*f;
+actions = table2array(roundPushPos085Quart(:,3));
 
 wav = mean(weights)
 
@@ -686,9 +687,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPush03(:,1));
-weights = table2array(roundPush03(:,2))*f;
-actions = table2array(roundPush03(:,3));
+angles = table2array(roundPushPos08503(:,1));
+weights = table2array(roundPushPos08503(:,2))*f;
+actions = table2array(roundPushPos08503(:,3));
 
 wav = mean(weights)
 
@@ -731,9 +732,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPushHalf(:,1));
-weights = table2array(roundPushHalf(:,2))*f;
-actions = table2array(roundPushHalf(:,3));
+angles = table2array(roundPushPos085Half(:,1));
+weights = table2array(roundPushPos085Half(:,2))*f;
+actions = table2array(roundPushPos085Half(:,3));
 
 wav = mean(weights)
 
@@ -764,8 +765,8 @@ exportfig(gcf,'roundSSAction04.eps', opts)
 set(groot, 'defaultAxesTickLabelInterpreter','latex');  
 set(groot, 'defaultLegendInterpreter','latex');
 figure;
-angles = table2array(roundPush05Normal(:,1));
-weights = table2array(roundPush05Normal(:,2))*f;
+angles = table2array(roundPushPos085Ang05(:,1));
+weights = table2array(roundPushPos085Ang05(:,2))*f;
 
 wNav = mean(weights)
 
@@ -776,9 +777,9 @@ weight = [weights(72) weights(1)];
 polarplot(angle,weight,'Color','r');
 rlim([0 0.5])
 
-angles = table2array(roundPush05(:,1));
-weights = table2array(roundPush05(:,2))*f;
-actions = table2array(roundPush05(:,3));
+angles = table2array(roundPushPos08505(:,1));
+weights = table2array(roundPushPos08505(:,2))*f;
+actions = table2array(roundPushPos08505(:,3));
 
 wav = mean(weights)
 
