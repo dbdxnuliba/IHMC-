@@ -122,12 +122,7 @@ public class PolygonizerToolsTest
 	PolygonizerParameters polygonizerParameters = new PolygonizerParameters();
 	PlanarRegionSegmentationDataExporter dataExporter = null;
 
-	
-//	public class Orientation3D implements Orientation3DReadOnly {
-//	    public void Eat(String food_name) {
-//	        System.out.printf(food_name);
-//	    }
-	
+		
 
 	@Test(timeout = 30000)
 	public void testToPointsInPlaneVector()
@@ -217,6 +212,7 @@ public class PolygonizerToolsTest
 		System.out.println("testToLineSegmentInPlaneOreintation3D: lineSegmentInPlane = " + lineSegmentInPlane);
 	}
 
+	
 	@Test(timeout = 30000)
 	public void testToPointInPlane()
 	{
@@ -232,6 +228,7 @@ public class PolygonizerToolsTest
 		System.out.println("testToPointInPlane: pointInPlane = " + pointInPlane);
 	}
 
+	
 	@Test(timeout = 30000)
 	public void testToPointsInWorldVector3D()
 	{
@@ -243,6 +240,7 @@ public class PolygonizerToolsTest
 		//public static List<Point3D> toPointsInWorld(List<? extends Point2DReadOnly> pointsInPlane, Point3DReadOnly planeOrigin, Vector3DReadOnly planeNormal)
 		System.out.println("testToPointsInWorldVector3D: pointsInWorld = " + pointsInWorld.size());
 	}
+	
 
 	@Test(timeout = 30000)
 	public void testToPointsInWorldOrientation3D()
@@ -256,6 +254,7 @@ public class PolygonizerToolsTest
 		//                                            Orientation3DReadOnly planeOrientation) 
 		System.out.println("testToPointsInWorldOrientation3D: pointsInWorld = " + pointsInWorld.size());
 	}
+	
 
 	@Test(timeout = 30000)
 	public void testToPointInWorldOrientation3D()
@@ -268,6 +267,7 @@ public class PolygonizerToolsTest
 		//public static Point3D toPointInWorld(Point2DReadOnly point2dReadOnly, Point3DReadOnly planeOrigin, Orientation3DReadOnly planeOrientation)
 		System.out.println("testToPointInWorldOrientation3D: pointInWorld = " + pointInWorld);
 	}
+	
 
 	@Test(timeout = 30000)
 	public void testToLineSegmentsInWorldVector3D()
@@ -282,6 +282,7 @@ public class PolygonizerToolsTest
 		System.out.println("testToLineSegmentsInWorldVector3D: lineSegmentsInWorld = " + lineSegmentsInWorld.size());
 	}
 
+	
 	@Test(timeout = 30000)
 	public void testtoLineSegmentsInWorldOrientation3D()
 	{
@@ -295,6 +296,7 @@ public class PolygonizerToolsTest
 		System.out.println("testtoLineSegmentsInWorldOrientation3D: lineSegmentsInWorld  = " + lineSegmentsInWorld.size());
 	}
 
+	
 	@Test(timeout = 30000)
 	public void testToLineSegmentInWorld()
 	{
@@ -306,6 +308,7 @@ public class PolygonizerToolsTest
 		System.out.println("testToLineSegmentInWorld: lineSegmentsInWorld  = " + lineSegmentInWorld);
 	}
 
+	
 	@Test(timeout = 30000)
 	public void tesToLineSegmentInWorld()
 	{
@@ -317,6 +320,7 @@ public class PolygonizerToolsTest
 		//                                                Orientation3DReadOnly planeOrientation) 
 		System.out.println("tesToLineSegmentInWorld: lineSegmentInWorld  = " + lineSegmentInWorld);
 	}
+	
 
 	@Test(timeout = 30000)
 	public void tesToPointInWorld()
@@ -330,6 +334,7 @@ public class PolygonizerToolsTest
 		System.out.println("tesToPointInWorld: pointInWorld = " + pointInWorld);
 	}
 
+	
 	@Test(timeout = 30000)
 	public void testGetQuaternionFromZUpToVector()
 	{
@@ -338,6 +343,7 @@ public class PolygonizerToolsTest
 		//public static Quaternion getQuaternionFromZUpToVector(Vector3DReadOnly normal)
 		System.out.println("testGetQuaternionFromZUpToVector: quaternionFromZUpToVector  = " + quaternionFromZUpToVector);
 	}
+	
 
 	@Test(timeout = 30000)
 	public void testComputeEllipsoidVolumeRadii()
@@ -347,6 +353,7 @@ public class PolygonizerToolsTest
 		//public static double computeEllipsoidVolume(Vector3DReadOnly radii)
 		System.out.println("testComputeEllipsoidVolumeRadii: ellipsoidVolume = " + ellipsoidVolume);
 	}
+	
 
 	@Test(timeout = 30000)
 	public void testComputeEllipsoidVolumeXYZ()
@@ -358,6 +365,7 @@ public class PolygonizerToolsTest
 		//public static double computeEllipsoidVolume(double xRadius, double yRadius, double zRadius)
 		System.out.println("testComputeEllipsoidVolumeXYZ: ellipsoidVolume = " + ellipsoidVolume);
 	}
+	
 
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
 	@Test(timeout = 30000)
