@@ -69,27 +69,27 @@ public class ConcaveHullToolsTest
 	private Messager messager;
 	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
 
-	private List<Point2D> pointcloud2D = null;
-	private List<LineSegment2D> lineConstraints2D = null;
-	private List<Point3D> pointcloud3D = null;
-	private List<LineSegment3D> lineConstraints3D = null;
+	private static List<Point2D> pointcloud2D = null;
+	private static List<LineSegment2D> lineConstraints2D = null;
+	private static List<Point3D> pointcloud3D = null;
+	private static List<LineSegment3D> lineConstraints3D = null;
 
-	public List<Point2D> getPointcloud2D()
+	public static List<Point2D> getPointcloud2D()
 	{
 		return pointcloud2D;
 	}
 
-	public List<LineSegment2D> getLineConstraints2D()
+	public static List<LineSegment2D> getLineConstraints2D()
 	{
 		return lineConstraints2D;
 	}
 
-	public List<Point3D> getPointcloud3D()
+	public static List<Point3D> getPointcloud3D()
 	{
 		return pointcloud3D;
 	}
 
-	public List<LineSegment3D> getLineConstraints3D()
+	public static List<LineSegment3D> getLineConstraints3D()
 	{
 		return lineConstraints3D;
 	}
