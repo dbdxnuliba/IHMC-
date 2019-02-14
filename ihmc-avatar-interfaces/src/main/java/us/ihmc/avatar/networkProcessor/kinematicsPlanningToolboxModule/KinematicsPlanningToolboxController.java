@@ -40,6 +40,7 @@ import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToo
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsPlanningToolboxOutputConverter;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFactory;
+import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
@@ -86,13 +87,14 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final YoDouble totalComputationTime;
 
    private final SolutionQualityConvergenceDetector solutionQualityConvergenceDetector;
+   DRCRobotModel drcRobotModel;
 
    public KinematicsPlanningToolboxController(DRCRobotModel drcRobotModel, FullHumanoidRobotModel fullRobotModel, CommandInputManager commandInputManager,
                                               StatusMessageOutputManager statusOutputManager, YoGraphicsListRegistry yoGraphicsListRegistry,
                                               YoVariableRegistry parentRegistry)
    {
       super(statusOutputManager, parentRegistry);
-
+      this.drcRobotModel = drcRobotModel;
       this.desiredFullRobotModel = fullRobotModel;
 
       solution = HumanoidMessageTools.createKinematicsPlanningToolboxOutputStatus();
@@ -261,6 +263,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
             }
             currentPose.set(nextDesiredPose);
             ikRigidBodyPoses.add(nextDesiredPose);
+
          }
 
          // re-create ik rigid body messages with the interpolated way points.
@@ -413,7 +416,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
          if (!appendRobotConfigurationOnToolboxSolution() || indexOfCurrentKeyFrame.getIntegerValue() == getNumberOfKeyFrames())
          {
             isDone.set(true);
-            if(solution.getPlanId() == KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT)
+            if (solution.getPlanId() == KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT)
             {
                reportMessage(solution);
                return;
@@ -453,7 +456,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       return isDone.getBooleanValue();
    }
-   
+
    private void convertWholeBodyTrajectoryMessage()
    {
       WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage = new WholeBodyTrajectoryMessage();
@@ -468,7 +471,11 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       if (solutionQualityConvergenceDetector.isValid())
       {
          solution.setSolutionQuality(solution.getSolutionQuality() + ikController.getSolution().getSolutionQuality());
-         solution.getRobotConfigurations().add().set(new KinematicsToolboxOutputStatus(ikController.getSolution()));
+         KinematicsToolboxOutputStatus keyFrame = new KinematicsToolboxOutputStatus(ikController.getSolution());
+         solution.getRobotConfigurations().add().set(keyFrame);
+
+         KinematicsToolboxOutputConverter converter = new KinematicsToolboxOutputConverter(drcRobotModel);
+         converter.updateFullRobotModel(keyFrame);
 
          return true;
       }
@@ -540,7 +547,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       // TODO : look into output status (solution).
       // TODO : implement.
-      return true;
+      return false;
    }
 
    private int getNumberOfKeyFrames()
