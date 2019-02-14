@@ -22,4 +22,5 @@ testDependencies {
 
 visualizersDependencies {
     compile ihmc.sourceSetProject("main")
+    compile group: "us.ihmc", name: "ihmc-path-planning-data-sets", version: "source"
 }
