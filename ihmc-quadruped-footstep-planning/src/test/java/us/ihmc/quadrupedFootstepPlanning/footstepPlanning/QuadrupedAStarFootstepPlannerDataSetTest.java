@@ -34,13 +34,12 @@ public class QuadrupedAStarFootstepPlannerDataSetTest extends FootstepPlannerDat
       super.testDatasetsWithoutOcclusion();
    }
 
-   public static void main(String[] args) throws Exception
+   public static void main(String[] args)
    {
       QuadrupedAStarFootstepPlannerDataSetTest test = new QuadrupedAStarFootstepPlannerDataSetTest();
-      String prefix = "unitTestDataSets/test/";
       VISUALIZE = true;
       test.setup();
-      test.runAssertionsOnDataset(dataset -> test.runAssertions(dataset), prefix + "20171215_214730_CinderBlockField");
+      test.runAssertionsOnDataset(dataset -> test.runAssertions(dataset), "20171215_214730_CinderBlockField");
       ThreadTools.sleepForever();
       test.tearDown();
 
