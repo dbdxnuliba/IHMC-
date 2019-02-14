@@ -22,6 +22,7 @@ import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolbox
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxHelper;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
@@ -43,9 +44,15 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFa
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
+import us.ihmc.robotics.partNames.ArmJointName;
+import us.ihmc.robotics.partNames.LimbName;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -125,7 +132,6 @@ public class KinematicsPlanningToolboxController extends ToolboxController
 
       SolutionQualityConvergenceSettings optimizationSettings = new KinematicsPlanningToolboxOptimizationSettings();
       solutionQualityConvergenceDetector = new SolutionQualityConvergenceDetector(optimizationSettings, parentRegistry);
-
    }
 
    @Override
@@ -547,6 +553,33 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       // TODO : look into output status (solution).
       // TODO : implement.
+      SideDependentList<ArrayList<JointBasics>> sideDependentArmJoints = new SideDependentList<ArrayList<JointBasics>>();
+      SideDependentList<ArrayList<JointBasics>> sideDependentLegJoints = new SideDependentList<ArrayList<JointBasics>>();
+      for(RobotSide robotSide:RobotSide.values)
+      {
+         sideDependentArmJoints.put(robotSide, new ArrayList<JointBasics>());
+         sideDependentLegJoints.put(robotSide, new ArrayList<JointBasics>());
+      }
+      
+      for(RobotSide robotSide:RobotSide.values)
+      {
+         JointBasics armJoint = desiredFullRobotModel.getHand(robotSide).getParentJoint();
+         while(armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
+         {
+            PrintTools.info(""+armJoint.getName());
+            sideDependentArmJoints.get(robotSide).add(armJoint);
+            armJoint = armJoint.getPredecessor().getParentJoint();
+         }
+         
+         JointBasics legJoint = desiredFullRobotModel.getFoot(robotSide).getParentJoint();
+         while(legJoint.getPredecessor() != desiredFullRobotModel.getElevator())
+         {
+            PrintTools.info(""+legJoint.getName());
+            sideDependentLegJoints.get(robotSide).add(legJoint);
+            legJoint = legJoint.getPredecessor().getParentJoint();
+         }
+      }
+      
       return false;
    }
 
