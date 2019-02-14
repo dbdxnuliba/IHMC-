@@ -413,15 +413,23 @@ public class KinematicsPlanningToolboxController extends ToolboxController
          if (!appendRobotConfigurationOnToolboxSolution() || indexOfCurrentKeyFrame.getIntegerValue() == getNumberOfKeyFrames())
          {
             isDone.set(true);
+            if(solution.getPlanId() == KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT)
+            {
+               reportMessage(solution);
+               return;
+            }
+
+            if (isVelocityLimitExceeded())
+               solution.setPlanId(KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_VELOCITY_LIMIT);
+            else
+               solution.setPlanId(KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_OPTIMAL_SOLUTION);
+
             solution.setDestination(PacketDestination.BEHAVIOR_MODULE.ordinal());
-            WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage = new WholeBodyTrajectoryMessage();
-            wholeBodyTrajectoryMessage.setDestination(PacketDestination.CONTROLLER.ordinal());
-            outputConverter.setMessageToCreate(wholeBodyTrajectoryMessage);
-            outputConverter.computeWholeBodyTrajectoryMessage(solution);
-            solution.getSuggestedControllerMessage().set(wholeBodyTrajectoryMessage);
+            convertWholeBodyTrajectoryMessage();
 
             if (DEBUG)
-               System.out.println("total computation time is " + solutionQualityConvergenceDetector.getComputationTime());
+               System.out.println("total computation time is " + solutionQualityConvergenceDetector.getComputationTime() + " " + solution.getPlanId());
+
             reportMessage(solution);
          }
          else
@@ -445,6 +453,15 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       return isDone.getBooleanValue();
    }
+   
+   private void convertWholeBodyTrajectoryMessage()
+   {
+      WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage = new WholeBodyTrajectoryMessage();
+      wholeBodyTrajectoryMessage.setDestination(PacketDestination.CONTROLLER.ordinal());
+      outputConverter.setMessageToCreate(wholeBodyTrajectoryMessage);
+      outputConverter.computeWholeBodyTrajectoryMessage(solution);
+      solution.getSuggestedControllerMessage().set(wholeBodyTrajectoryMessage);
+   }
 
    private boolean appendRobotConfigurationOnToolboxSolution()
    {
@@ -457,6 +474,8 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       }
       else
       {
+         // TODO : put planning result.
+         solution.setPlanId(KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT);
          solution.setSolutionQuality(-1);
          return false;
       }
@@ -514,6 +533,13 @@ public class KinematicsPlanningToolboxController extends ToolboxController
          if (!EuclidCoreTools.epsilonEquals(wayPointTimes.get(i), keyFrameTimes.get(i), keyFrameTimeEpsilon))
             return false;
 
+      return true;
+   }
+
+   private boolean isVelocityLimitExceeded()
+   {
+      // TODO : look into output status (solution).
+      // TODO : implement.
       return true;
    }
 
