@@ -41,9 +41,7 @@ mainDependencies {
    compile "org.ros.rosjava_messages:geometry_msgs:1.11.9"
    compile "org.boofcv:recognition:0.24.1"
 
-   compile group: "us.ihmc", name: "euclid", version: "0.11.0"
    compile group: "us.ihmc", name: "ihmc-yovariables", version: "0.3.7"
-   compile group: "us.ihmc", name: "ihmc-commons", version: "0.25.1"
    compile group: "us.ihmc", name: "ihmc-jmonkey-engine-toolkit", version: "0.12.5"
    compile group: "us.ihmc", name: "simulation-construction-set", version: "0.12.9"
    compile group: "us.ihmc", name: "ihmc-graphics-description", version: "0.12.9"
@@ -51,26 +49,32 @@ mainDependencies {
    compile group: "us.ihmc", name: "ihmc-javafx-toolkit", version: "0.12.7"
    compile group: "us.ihmc", name: "ihmc-humanoid-behaviors", version: "source"
    compile group: "us.ihmc", name: "ihmc-mocap", version: "source"
-   compile group: "us.ihmc", name: "ihmc-common-walking-control-modules", version: "source"
-   compile group: "us.ihmc", name: "ihmc-avatar-interfaces", version: "source"
    compile group: "us.ihmc", name: "ihmc-humanoid-robotics", version: "source"
    compile group: "us.ihmc", name: "ihmc-communication", version: "source"
    compile group: "us.ihmc", name: "ihmc-java-toolkit", version: "source"
    compile group: "us.ihmc", name: "ihmc-perception", version: "source"
-   compile group: "us.ihmc", name: "ihmc-robotics-toolkit", version: "source"
    compile group: "us.ihmc", name: "ihmc-ros-tools", version: "source"
-   compile group: "us.ihmc", name: "ihmc-whole-body-controller", version: "source"
    compile group: "us.ihmc", name: "ihmc-robot-data-logger", version: "source"
-   compile group: "us.ihmc", name: "robotiq-hand-drivers", version: "source"
-   compile group: "us.ihmc", name: "ihmc-model-file-loader", version: "source"
    compile group: "us.ihmc", name: "ihmc-sensor-processing", version: "source"
-   compile group: "us.ihmc", name: "simulation-construction-set-tools", version: "source"
    compile group: "us.ihmc", name: "ihmc-robot-models", version: "source"
    compile group: "us.ihmc", name: "ihmc-simulation-toolkit", version: "source"
    compile group: "us.ihmc", name: "ihmc-robot-data-visualizer", version: "source"
    compile group: "us.ihmc", name: "ihmc-manipulation-planning", version: "source"
    compile group: "us.ihmc", name: "ihmc-parameter-tuner", version: "source"
    compile group: "us.ihmc", name: "ihmc-footstep-planning-visualizers", version: "source"
+
+   compile ihmc.sourceSetProject("model")
+}
+
+modelDependencies {
+   compile group: "us.ihmc", name: "robotiq-hand-drivers", version: "source"
+   compile group: "us.ihmc", name: "ihmc-footstep-planning", version: "source"
+   compile group: "us.ihmc", name: "ihmc-robotics-toolkit", version: "source"
+   compile group: "us.ihmc", name: "ihmc-avatar-interfaces", version: "source"
+   compile group: "us.ihmc", name: "ihmc-model-file-loader", version: "source"
+   compile group: "us.ihmc", name: "ihmc-whole-body-controller", version: "source"
+   compile group: "us.ihmc", name: "ihmc-common-walking-control-modules", version: "source"
+   compile group: "us.ihmc", name: "simulation-construction-set-tools", version: "source"
 }
 
 testDependencies {
