@@ -30,7 +30,7 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    public void testPushStanding() throws Exception
    {
       // No-height max recoverable percentWeight: 0.88
-      percentWeight =0.184;//0.180;//0.201;//0.184;
+      percentWeight =0.201;//0.180;//0.201;//0.184;
       super.testPushStanding();
    }
 
@@ -39,9 +39,9 @@ public class ValkyrieHeightForBalanceTest extends AvatarHeightForBalanceTest
    @Test(timeout = 10000000)
    public void testPushAngle() throws Exception
    {
-      angle = 0.0;
+      angle = 180.0;
       angle = angle *Math.PI/180;
-      percentWeight = 0.52;
+      percentWeight = 1.05;
       super.testPushAngle();
    }
 

@@ -68,7 +68,7 @@ public abstract class AvatarHeightForBalanceTest extends AvatarHeightForBalanceT
       //angle=angle*Math.PI/180;
       FootstepDataListMessage footsteps = createForwardWalkingFootstepMessage();
       footsteps.setAreFootstepsAdjustable(false);
-      setupAndRunTest(footsteps, true, false);
+      setupAndRunTest(footsteps, true, true);
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0);
 
       // push timing:
