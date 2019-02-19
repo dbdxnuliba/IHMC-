@@ -16,9 +16,11 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
+
 public class PolygonizerTools
 {
-   public static List<Point2D> toPointsInPlane(List<? extends Point3DReadOnly> pointsToTransform, Point3DReadOnly planeOrigin, Vector3DReadOnly planeNormal)
+	
+	public static List<Point2D> toPointsInPlane(List<? extends Point3DReadOnly> pointsToTransform, Point3DReadOnly planeOrigin, Vector3DReadOnly planeNormal)
    {
       return toPointsInPlane(pointsToTransform, planeOrigin, getQuaternionFromZUpToVector(planeNormal));
    }

@@ -54,5 +54,5 @@ testDependencies {
    compile group: "org.jfree", name: "jcommon", version: "1.0.21"
 
    compile group: "us.ihmc", name: "ihmc-ci-core-api", version: "0.18.0"
-   compile group: "us.ihmc", name: "ihmc-commons-testing", version: "0.24.0"
+   compile group: "us.ihmc", name: "ihmc-commons-testing", version: "0.25.3"
 }

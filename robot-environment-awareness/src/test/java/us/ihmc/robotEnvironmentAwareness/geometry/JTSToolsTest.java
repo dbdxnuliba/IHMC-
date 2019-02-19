@@ -1,6 +1,7 @@
 package us.ihmc.robotEnvironmentAwareness.geometry;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,19 +14,15 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeTriangle;
 import com.vividsolutions.jts.triangulate.quadedge.Vertex;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
-import us.ihmc.euclid.geometry.interfaces.LineSegment3DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryRandomTools;
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -35,15 +32,20 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory.ConcaveHullFactoryResult;
 import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory.ConcaveHullVariables;
-import us.ihmc.robotics.geometry.PlanarRegion;
 
-public class JTSToolsTest
+public class JTSToolsTest extends ConcaveHullTestBasics
 {
+	public JTSToolsTest()
+	{
+		VISUALIZE = false;
+	}
+
 	private static final int ITERATIONS = 1000;
 
 	@Test(timeout = 30000)
 	public void testExtractionMethods()
 	{
+		initializeBasics();
 		Random random = new Random(4234234);
 
 		ConcaveHullFactoryResult concaveHullFactoryResult = new ConcaveHullFactoryResult();
@@ -82,6 +84,7 @@ public class JTSToolsTest
 	@Test(timeout = 30000)
 	public void testQuadEdgeAlgebra()
 	{
+		initializeBasics();
 		Random random = new Random(4234234);
 		Vertex expectedVertex2D_v0 = new Vertex(random.nextDouble(), random.nextDouble());
 		Vertex expectedVertex2D_v1 = new Vertex(random.nextDouble(), random.nextDouble());
@@ -109,6 +112,7 @@ public class JTSToolsTest
 	@Test(timeout = 30000)
 	public void testPointConversions()
 	{
+		initializeBasics();
 		Random random = new Random(4234234);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -148,6 +152,7 @@ public class JTSToolsTest
 	@Test(timeout = 30000)
 	public void testLineStringConversion() throws Exception
 	{
+		initializeBasics();
 		Random random = new Random(2423423);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -170,6 +175,7 @@ public class JTSToolsTest
 	@Test(timeout = 30000)
 	public void testMultiString() throws Exception
 	{
+		initializeBasics();
 		Random random = new Random(43543);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -258,5 +264,10 @@ public class JTSToolsTest
 				assertEquals("Vertex: " + j, expectedPoint, JTSTools.pointToPoint2D(actualPoint));
 			}
 		}
+	}
+	
+	public static void main(String[] args)
+	{
+		
 	}
 }

@@ -37,6 +37,7 @@ import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullPocket;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullPruningFilteringTools;
+import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullTestBasics;
 import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.Polygonizer;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerManager;
@@ -46,82 +47,13 @@ import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionSegmentationDataExpor
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 
-public class PlanarRegionPolygonizerTest {
-	private static boolean VISUALIZE = false;
-
-	private Messager messager;
-	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
-
-	@Before
-	public void setup() throws Exception {
-		uiIsGoingDown.setFalse();
-
-		if (VISUALIZE) {
-			SharedMemoryJavaFXMessager jfxMessager = new SharedMemoryJavaFXMessager(
-					PolygonizerVisualizerUI.getMessagerAPI());
-			messager = jfxMessager;
-			createVisualizer(jfxMessager);
-		} else {
-			messager = new SharedMemoryMessager(PolygonizerVisualizerUI.getMessagerAPI());
-			messager.startMessager();
-			new PolygonizerManager(messager);
-		}
+public class PlanarRegionPolygonizerTest extends ConcaveHullTestBasics
+{
+	public PlanarRegionPolygonizerTest()
+	{
+		VISUALIZE = false;
 	}
 
-	@SuppressWarnings("restriction")
-	private void createVisualizer(JavaFXMessager messager) {
-		AtomicReference<PolygonizerVisualizerUI> ui = new AtomicReference<>(null);
-
-		PlatformImpl.startup(() -> {
-			try {
-				Stage primaryStage = new Stage();
-				primaryStage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, event -> uiIsGoingDown.setTrue());
-
-				ui.set(new PolygonizerVisualizerUI(messager, primaryStage));
-				ui.get().show();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-
-		while (ui.get() == null)
-			ThreadTools.sleep(200);
-	}
-
-	@After
-	public void tearDown() {
-		if (VISUALIZE) {
-			while (!uiIsGoingDown.booleanValue())
-				ThreadTools.sleep(100);
-		}
-	}
-
-//	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
-//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters) {
-//		PlanarRegionsList ret = null;
-//		return ret;
-//	}
-//
-//	public PlanarRegionsList createPlanarRegionsList(List<PlanarRegionSegmentationRawData> rawData,
-//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-//			PlanarRegionSegmentationDataExporter dataExporter) {
-//		PlanarRegionsList ret = null;
-//		return ret;
-//	}
-//
-//	private List<PlanarRegion> createPlanarRegions(List<PlanarRegionSegmentationRawData> rawData,
-//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-//			PlanarRegionSegmentationDataExporter dataExporter) {
-//		List<PlanarRegion> ret = null;
-//		return ret;
-//	}
-//
-//	private List<PlanarRegion> createPlanarRegion(PlanarRegionSegmentationRawData rawData,
-//			ConcaveHullFactoryParameters concaveHullFactoryParameters, PolygonizerParameters polygonizerParameters,
-//			PlanarRegionSegmentationDataExporter dataExporter) {
-//		List<PlanarRegion> ret = null;
-//		return ret;
-//	}
 
 	List<PlanarRegionSegmentationRawData> rawDataList = new ArrayList();
 	PlanarRegionSegmentationRawData rawData = null;
@@ -132,6 +64,7 @@ public class PlanarRegionPolygonizerTest {
 	@ContinuousIntegrationTest(estimatedDuration = 0.1)
 	@Test(timeout = 30000)
 	public final void testPlanarRegionPolygonizer() {
+		initializeBasics();
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));

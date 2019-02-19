@@ -6,29 +6,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.sun.javafx.application.PlatformImpl;
-
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.axisAngle.AxisAngle;
-import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.geometry.interfaces.LineSegment2DReadOnly;
 import us.ihmc.euclid.geometry.interfaces.LineSegment3DReadOnly;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
-import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -36,88 +26,19 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
-import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
-import us.ihmc.log.LogTools;
-import us.ihmc.messager.Messager;
-import us.ihmc.messager.SharedMemoryMessager;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHull;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullCollection;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullPocket;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullPruningFilteringTools;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullToolsTest;
-import us.ihmc.robotEnvironmentAwareness.geometry.SimpleConcaveHullFactory;
+import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullTestBasics;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.Polygonizer;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerManager;
-import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.Polygonizer.Output;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionSegmentationDataExporter;
-import us.ihmc.robotics.geometry.PlanarRegion;
-import us.ihmc.robotics.geometry.PlanarRegionsList;
 
-public class PolygonizerToolsTest
+public class PolygonizerToolsTest extends ConcaveHullTestBasics
 {
-	private static boolean VISUALIZE = false;
-	private static final double EPS = 1.0e-5;
-
-	private Messager messager;
-	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
-
-	private ConcaveHullToolsTest concaveHullToolsTest  = new ConcaveHullToolsTest();
-	
-	@Before
-	public void setup() throws Exception
+	public PolygonizerToolsTest()
 	{
-		uiIsGoingDown.setFalse();
-
-		if (VISUALIZE)
-		{
-			SharedMemoryJavaFXMessager jfxMessager = new SharedMemoryJavaFXMessager(PolygonizerVisualizerUI.getMessagerAPI());
-			messager = jfxMessager;
-			createVisualizer(jfxMessager);
-		}
-		else
-		{
-			messager = new SharedMemoryMessager(PolygonizerVisualizerUI.getMessagerAPI());
-			messager.startMessager();
-			new PolygonizerManager(messager);
-		}
-	}
-
-	@SuppressWarnings("restriction")
-	private void createVisualizer(JavaFXMessager messager)
-	{
-		AtomicReference<PolygonizerVisualizerUI> ui = new AtomicReference<>(null);
-
-		PlatformImpl.startup(() -> {
-			try
-			{
-				Stage primaryStage = new Stage();
-				primaryStage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, event -> uiIsGoingDown.setTrue());
-
-				ui.set(new PolygonizerVisualizerUI(messager, primaryStage));
-				ui.get().show();
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		});
-
-		while (ui.get() == null)
-			ThreadTools.sleep(200);
-	}
-
-	@After
-	public void tearDown()
-	{
-		if (VISUALIZE)
-		{
-			while (!uiIsGoingDown.booleanValue())
-				ThreadTools.sleep(100);
-		}
+		VISUALIZE = false;
 	}
 
 	List<PlanarRegionSegmentationRawData> rawDataList = new ArrayList();
@@ -129,7 +50,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointsInPlaneVector()
 	{
-		List<? extends Point3DReadOnly> pointsToTransform = concaveHullToolsTest.getPointcloud3D();
+		initializeBasics();
+		List<? extends Point3DReadOnly> pointsToTransform = getPointcloud3D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
 
@@ -150,7 +72,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointsInPlaneOrientation()
 	{
-		List<? extends Point3DReadOnly> pointsToTransform = concaveHullToolsTest.getPointcloud3D();
+		initializeBasics();
+		List<? extends Point3DReadOnly> pointsToTransform = getPointcloud3D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
 
@@ -170,6 +93,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointInPlaneOrientation()
 	{
+		initializeBasics();
 		Point3DReadOnly pointToTransform = new Point3D(1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -191,7 +115,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentsInPlaneVector3D()
 	{
-		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = concaveHullToolsTest.getLineConstraints3D();
+		initializeBasics();
+		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = getLineConstraints3D();
 		Point3DReadOnly planeOrigin = new Point3D(0.0, 0.0, 0.0);
 		Vector3DReadOnly planeNormal = new Vector3D(0.0, 1.0, 0.0);
 
@@ -212,7 +137,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentsInPlaneOrientation()
 	{
-		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = concaveHullToolsTest.getLineConstraints3D();
+		initializeBasics();
+		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = getLineConstraints3D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Orientation3DReadOnly planeOrientation = new AxisAngle();
 
@@ -241,6 +167,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentInPlaneVector3D()
 	{
+		initializeBasics();
 		LineSegment3DReadOnly lineSegmentToTransform = new LineSegment3D(0, 0, 0, 1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
@@ -265,6 +192,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentInPlaneOreintation3D()
 	{
+		initializeBasics();
 		LineSegment3DReadOnly lineSegmentToTransform = new LineSegment3D(0, 0, 0, 1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -275,8 +203,8 @@ public class PolygonizerToolsTest
 
 			assertEquals(lineSegmentInPlane.getFirstEndpointX(), 0.0, EPS);
 			assertEquals(lineSegmentInPlane.getFirstEndpointY(), 0.0, EPS);
-			assertEquals(lineSegmentInPlane.getSecondEndpointX(), 1.0, EPS);
-			assertEquals(lineSegmentInPlane.getSecondEndpointY(), -1.0, EPS);
+			assertEquals(lineSegmentInPlane.getSecondEndpointX(), -1.0, EPS);
+			assertEquals(lineSegmentInPlane.getSecondEndpointY(), 1.0, EPS);
 			//System.out.println("testToLineSegmentInPlaneOreintation3D: lineSegmentInPlane = " + lineSegmentInPlane);
 		}
 		catch (Exception e)
@@ -289,6 +217,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointInPlane()
 	{
+		initializeBasics();
 		double xToTransform = 1;
 		double yToTransform = 1;
 		double zToTransform = 1;
@@ -313,7 +242,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointsInWorldVector3D()
 	{
-		List<? extends Point2DReadOnly> pointsInPlane = concaveHullToolsTest.getPointcloud2D();
+		initializeBasics();
+		List<? extends Point2DReadOnly> pointsInPlane = getPointcloud2D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
 
@@ -334,7 +264,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointsInWorldOrientation3D()
 	{
-		List<? extends Point2DReadOnly> pointsInPlane = concaveHullToolsTest.getPointcloud2D();
+		initializeBasics();
+		List<? extends Point2DReadOnly> pointsInPlane = getPointcloud2D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Orientation3DReadOnly planeOrientation = new AxisAngle();
 
@@ -355,6 +286,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointInWorldOrientation3D()
 	{
+		initializeBasics();
 		Point2DReadOnly point2dReadOnly = new Point2D(1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -379,7 +311,8 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentsInWorldVector3D()
 	{
-		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = concaveHullToolsTest.getLineConstraints2D();
+		initializeBasics();
+		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = getLineConstraints2D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Vector3DReadOnly planeNormal = new Vector3D();
 
@@ -397,10 +330,11 @@ public class PolygonizerToolsTest
 
 	}
 
-	@Test(timeout = 300000)
+	@Test(timeout = 30000)
 	public void testtoLineSegmentsInWorldOrientation3D()
 	{
-		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = concaveHullToolsTest.getLineConstraints2D();
+		initializeBasics();
+		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = getLineConstraints2D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI/2, 0);
 
@@ -419,8 +353,9 @@ public class PolygonizerToolsTest
 	}
 
 	@Test(timeout = 30000)
-	public void testToLineSegmentInWorldVecto3D()
+	public void testToLineSegmentInWorldVector3D()
 	{
+		initializeBasics();
 		LineSegment2DReadOnly lineSegmentToTransform = new LineSegment2D(0, 0, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D();
 		Vector3DReadOnly planeNormal = new Vector3D();
@@ -432,10 +367,10 @@ public class PolygonizerToolsTest
 			assertEquals(lineSegmentInWorld.getFirstEndpointX(), 0.0, EPS);
 			assertEquals(lineSegmentInWorld.getFirstEndpointY(), 0.0, EPS);
 			assertEquals(lineSegmentInWorld.getFirstEndpointZ(), 0.0, EPS);
-			assertEquals(lineSegmentInWorld.getSecondEndpointX(), 0.0, EPS);
-			assertEquals(lineSegmentInWorld.getSecondEndpointY(), 1.0, EPS);
-			assertEquals(lineSegmentInWorld.getSecondEndpointZ(), -1.0, EPS);
-			System.out.println("testToLineSegmentInWorldVector3D: lineSegmentsInWorld  = " + lineSegmentInWorld);
+			assertEquals(lineSegmentInWorld.getSecondEndpointX(), 1.0, EPS);
+			assertEquals(lineSegmentInWorld.getSecondEndpointY(), -1.0, EPS);
+			assertEquals(lineSegmentInWorld.getSecondEndpointZ(), 0.0, EPS);
+			//System.out.println("testToLineSegmentInWorldVector3D: lineSegmentsInWorld  = " + lineSegmentInWorld);
 		}
 		catch (Exception e)
 		{
@@ -447,6 +382,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToLineSegmentInWorldOrientation3D()
 	{
+		initializeBasics();
 		LineSegment2DReadOnly lineSegmentToTransform = new LineSegment2D(0, 0, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -473,6 +409,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testToPointInWorld()
 	{
+		initializeBasics();
 		double xToTransform = 1;
 		double yToTransform = 1;
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
@@ -497,6 +434,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testGetQuaternionFromZUpToVector()
 	{
+		initializeBasics();
 		Vector3DReadOnly normal = new Vector3D(0, 1, 0);
 
 		try
@@ -519,6 +457,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testComputeEllipsoidVolumeRadii()
 	{
+		initializeBasics();
 		Vector3DReadOnly radii = new Vector3D(1, 1, 1);
 
 		try
@@ -538,6 +477,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public void testComputeEllipsoidVolumeXYZ()
 	{
+		initializeBasics();
 		double xRadius = 1;
 		double yRadius = 1;
 		double zRadius = 1;
@@ -560,6 +500,7 @@ public class PolygonizerToolsTest
 	@Test(timeout = 30000)
 	public final void testPlanarRegionPolygonizer()
 	{
+		initializeBasics();
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));

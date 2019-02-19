@@ -50,68 +50,19 @@ import us.ihmc.robotEnvironmentAwareness.polygonizer.Polygonizer.Output;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerManager;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 
-public class SimpleConcaveHullFactoryTest
+public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 {
-	private static boolean VISUALIZE = false;
-
-	private Messager messager;
-	private MutableBoolean uiIsGoingDown = new MutableBoolean(false);
-
-	@Before
-	public void setup() throws Exception
+	public SimpleConcaveHullFactoryTest()
 	{
-		uiIsGoingDown.setFalse();
-
-		if (VISUALIZE)
-		{
-			SharedMemoryJavaFXMessager jfxMessager = new SharedMemoryJavaFXMessager(PolygonizerVisualizerUI.getMessagerAPI());
-			messager = jfxMessager;
-			createVisualizer(jfxMessager);
-		}
-		else
-		{
-			messager = new SharedMemoryMessager(PolygonizerVisualizerUI.getMessagerAPI());
-			messager.startMessager();
-			new PolygonizerManager(messager);
-		}
+		VISUALIZE = false;
 	}
-
-	private void createVisualizer(JavaFXMessager messager)
-	{
-		AtomicReference<PolygonizerVisualizerUI> ui = new AtomicReference<>(null);
-
-		PlatformImpl.startup(() -> {
-			try
-			{
-				Stage primaryStage = new Stage();
-				primaryStage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, event -> uiIsGoingDown.setTrue());
-
-				ui.set(new PolygonizerVisualizerUI(messager, primaryStage));
-				ui.get().show();
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		});
-
-		while (ui.get() == null)
-			ThreadTools.sleep(200);
-	}
-
-	@After
-	public void tearDown()
-	{
-		if (VISUALIZE)
-		{
-			while (!uiIsGoingDown.booleanValue())
-				ThreadTools.sleep(100);
-		}
-	}
+	
 
 	@Test(timeout = 30000)
 	public void testSimplePointcloudFormingASquare()
 	{
+		initializeBasics();
+		
 		List<Point2D> expectedHull = new ArrayList<>();
 		List<Point3D> pointcloud = new ArrayList<>();
 
@@ -170,6 +121,8 @@ public class SimpleConcaveHullFactoryTest
 	@Test(timeout = 30000)
 	public void testRandomCircleBasedConvexPointCloud()
 	{
+		initializeBasics();
+		
 		Random random = new Random(5435);
 		List<Point2D> expectedHull = EuclidGeometryRandomTools.nextCircleBasedConvexPolygon2D(random, 0.0, 0.08, 100);
 
@@ -207,6 +160,8 @@ public class SimpleConcaveHullFactoryTest
 	@Test(timeout = 30000)
 	public void testPointCloudWithSurroundingLineConstraints()
 	{
+		initializeBasics();
+		
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));
@@ -240,6 +195,8 @@ public class SimpleConcaveHullFactoryTest
 	@Test(timeout = 30000)
 	public void testSomeLineConstraints()
 	{
+		initializeBasics();
+		
 		List<Point3D> pointcloud = new ArrayList<>();
 
 		double xOffset = 0.4;
@@ -280,6 +237,8 @@ public class SimpleConcaveHullFactoryTest
 	@Test(timeout = 30000)
 	public void testOverlappingLineConstraints()
 	{
+		initializeBasics();
+		
 		Random random = new Random(34543);
 		List<Point3D> pointcloud = new ArrayList<>();
 
