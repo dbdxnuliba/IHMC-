@@ -1,7 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -9,27 +8,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import us.ihmc.robotics.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CMPGeneration.CMPTrajectory;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CMPGeneration.ReferenceCMPTrajectoryGenerator;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.CoPPointsInFoot;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.CoPTrajectoryPoint;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.ICPGeneration.ReferenceICPTrajectoryGenerator;
 import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.controllers.Updatable;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.footstepGenerator.FootstepTestHelper;
 import us.ihmc.commons.Epsilons;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -53,9 +48,9 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.footstep.FootSpoof;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
-import us.ihmc.robotics.math.trajectories.FrameTrajectory3D;
 import us.ihmc.robotics.math.trajectories.Trajectory;
 import us.ihmc.robotics.math.trajectories.Trajectory3D;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.YoFrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.referenceFrames.MidFootZUpGroundFrame;
 import us.ihmc.robotics.referenceFrames.ZUpFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -70,7 +65,6 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFramePoint3D;
 import us.ihmc.yoVariables.variable.YoFramePoseUsingYawPitchRoll;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class SmoothCMPBasedICPPlannerTest
 {
    private static final String testClassName = "UltimateSmoothCMPBasedICPPlannerTest";
@@ -185,7 +179,7 @@ public class SmoothCMPBasedICPPlannerTest
 
    private int numberOfFootstepsForTest;
 
-   @Before
+   @BeforeEach
    public void setupTest()
    {
       this.newTestStartDiscontinuity = true;
@@ -354,7 +348,7 @@ public class SmoothCMPBasedICPPlannerTest
       copTrack = new BagOfBalls(numberOfTrackBalls, trackBallSize, "CoPTrack", new YoAppearanceRGBColor(copPointsColor, 0.0), registry, graphicsListRegistry);
    }
 
-   @After
+   @AfterEach
    public void cleanUpTest()
    {
       if (keepSCSUp)
@@ -367,8 +361,7 @@ public class SmoothCMPBasedICPPlannerTest
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.9)
-   @Test(timeout = 30000)
+   @Test
    public void testForDiscontinuitiesWithoutAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -377,8 +370,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(true, false, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.8)
-   @Test(timeout = 30000)
+   @Test
    public void testForDiscontinuitiesWithAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -387,8 +379,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(true, false, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.0)
-   @Test(timeout = 3000000)
+   @Test
    public void testForPlanningConsistencyWithoutAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -397,8 +388,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(false, true, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.5)
-   @Test(timeout = 30000)
+   @Test
    public void testForPlanningConsistencyWithAngularMomentum()
    {
       numberOfFootstepsForTest = 10;
@@ -408,8 +398,7 @@ public class SmoothCMPBasedICPPlannerTest
       simulate(false, true, true);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 1.5)
-   @Test(timeout = 30000)
+   @Test
    public void testForPlanningConsistencyWithAndWithoutContinuousReplanning()
    {
       numberOfFootstepsForTest = 10;
@@ -501,8 +490,7 @@ public class SmoothCMPBasedICPPlannerTest
    {
       newTestStartConsistency = true;
       copWaypointsFromPreviousPlan = new ArrayList<>();
-      CoPPointsInFoot copPointsInFoot = new CoPPointsInFoot(testClassName, 0, new ReferenceFrame[] {worldFrame, feet.get(RobotSide.LEFT).getSoleFrame(),
-            feet.get(RobotSide.RIGHT).getSoleFrame()}, registry);
+      CoPPointsInFoot copPointsInFoot = new CoPPointsInFoot(testClassName, 0, registry);
       copWaypointsFromPreviousPlan.add(copPointsInFoot);
 
       icpCornerPointsFromPreviousPlan = new RecyclingArrayList<>(FramePoint3D::new);
@@ -510,8 +498,7 @@ public class SmoothCMPBasedICPPlannerTest
 
       for (int i = 0; i < numberOfFootstepsToTestForConsistency; i++)
       {
-         copPointsInFoot = new CoPPointsInFoot(testClassName, i + 1, new ReferenceFrame[] {worldFrame, feet.get(RobotSide.LEFT).getSoleFrame(),
-               feet.get(RobotSide.RIGHT).getSoleFrame()}, registry);
+         copPointsInFoot = new CoPPointsInFoot(testClassName, i + 1, registry);
          copWaypointsFromPreviousPlan.add(copPointsInFoot);
       }
    }
@@ -1041,8 +1028,8 @@ public class SmoothCMPBasedICPPlannerTest
 
          for (int j = 0; j < pointsInFoot1.getNumberOfCoPPoints(); j++)
          {
-            CoPTrajectoryPoint coPTrajectoryPoint1 = pointsInFoot1.get(j);
-            CoPTrajectoryPoint coPTrajectoryPoint2 = pointsInFoot2.get(j);
+            YoFrameEuclideanTrajectoryPoint coPTrajectoryPoint1 = pointsInFoot1.get(j);
+            YoFrameEuclideanTrajectoryPoint coPTrajectoryPoint2 = pointsInFoot2.get(j);
             Assert.assertTrue(coPTrajectoryPoint1.epsilonEquals(coPTrajectoryPoint2, epsilon));
          }
       }
@@ -1225,7 +1212,7 @@ public class SmoothCMPBasedICPPlannerTest
       return comVelocity.epsilonEquals(comVelocityFromDynamics, epsilon);
    }
 
-   private static void assertTrajectoryPointEquals(String prefix, CoPTrajectoryPoint expected, CoPTrajectoryPoint actual, double epsilon)
+   private static void assertTrajectoryPointEquals(String prefix, YoFrameEuclideanTrajectoryPoint expected, YoFrameEuclideanTrajectoryPoint actual, double epsilon)
    {
       Assert.assertEquals(prefix, expected.getTime(), actual.getTime(), epsilon);
       EuclidCoreTestTools.assertPoint3DGeometricallyEquals(prefix, expected.getPosition(), actual.getPosition(), epsilon);

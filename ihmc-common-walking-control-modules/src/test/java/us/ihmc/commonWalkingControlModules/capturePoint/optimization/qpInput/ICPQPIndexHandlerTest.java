@@ -1,32 +1,29 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.optimization.qpInput;
 
-import org.junit.Assert;
-import org.junit.Test;
-import us.ihmc.commonWalkingControlModules.capturePoint.optimization.qpInput.ICPQPIndexHandler;
-import us.ihmc.commons.MutationTestFacilitator;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import us.ihmc.robotics.Assert;
+import org.junit.jupiter.api.Test;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
+import us.ihmc.commons.MutationTestFacilitator;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+
 public class ICPQPIndexHandlerTest
 {
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testRegisterFootstep()
    {
-      ICPQPIndexHandler indexHandler = new ICPQPIndexHandler();
+      ICPQPIndexHandler indexHandler = new ICPQPIndexHandler(new YoVariableRegistry("dummy"));
       indexHandler.registerFootstep();
 
       Assert.assertTrue(indexHandler.useStepAdjustment());
       Assert.assertEquals(1, indexHandler.getNumberOfFootstepsToConsider());
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testSizing()
    {
-      ICPQPIndexHandler indexHandler = new ICPQPIndexHandler();
+      ICPQPIndexHandler indexHandler = new ICPQPIndexHandler(new YoVariableRegistry("dummy"));
 
       Assert.assertEquals(0, indexHandler.getCoPFeedbackIndex());
       Assert.assertFalse(indexHandler.hasCMPFeedbackTask());

@@ -1,8 +1,6 @@
 package us.ihmc.avatar.controllerAPI;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -10,9 +8,9 @@ import java.util.Random;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.HandTrajectoryMessage;
 import controller_msgs.msg.dds.SE3TrajectoryPointMessage;
@@ -33,7 +31,8 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -63,16 +62,15 @@ import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.geometry.SpiralBasedAlgorithm;
 import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.math.frames.YoFrameVariableNameTools;
-import us.ihmc.robotics.math.trajectories.waypoints.EuclideanTrajectoryPointCalculator;
-import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
-import us.ihmc.robotics.math.trajectories.waypoints.FrameSE3TrajectoryPoint;
-import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsOrientationTrajectoryGenerator;
-import us.ihmc.robotics.math.trajectories.waypoints.MultipleWaypointsPositionTrajectoryGenerator;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleSE3TrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.generators.EuclideanTrajectoryPointCalculator;
+import us.ihmc.robotics.math.trajectories.generators.MultipleWaypointsOrientationTrajectoryGenerator;
+import us.ihmc.robotics.math.trajectories.generators.MultipleWaypointsPositionTrajectoryGenerator;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameEuclideanTrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameSE3TrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.SE3TrajectoryPoint;
 import us.ihmc.robotics.random.RandomGeometry;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.robotics.screwTheory.ScrewTools;
 import us.ihmc.sensorProcessing.frames.CommonReferenceFrameIds;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
@@ -84,6 +82,7 @@ import us.ihmc.tools.MemoryTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+@Tag("controller-api-2")
 public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTestInterface
 {
    protected static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
@@ -102,8 +101,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
     */
    public abstract double getLegLength();
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 32.6)
-   @Test(timeout = 160000)
+   @Test
    public void testSingleTrajectoryPoint() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -178,8 +176,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       drcSimulationTestHelper.createVideo(getSimpleRobotName(), 2);
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 37.0)
-   @Test(timeout = 180000)
+   @Test
    public void testCustomControlFrame() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -257,8 +254,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       // TODO: add assert to make sure the hand did not move significantly.
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 31.8)
-   @Test(timeout = 160000)
+   @Test
    public void testMultipleTrajectoryPoints() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -330,7 +326,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
             Quaternion desiredOrientation = new Quaternion(tempOrientation);
             Vector3D desiredAngularVelocity = new Vector3D();
 
-            double time = trajectoryPoints.get(i).get(desiredPosition, desiredLinearVelocity);
+            trajectoryPoints.get(i).get(desiredPosition, desiredLinearVelocity);
+            double time = trajectoryPoints.get(i).getTime();
 
             Graphics3DObject sphere = new Graphics3DObject();
             sphere.translate(desiredPosition);
@@ -373,8 +370,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
             framePoint.set(point.getTime(), point.getPosition(), point.getOrientation(), point.getLinearVelocity(), point.getAngularVelocity());
             framePoint.changeFrame(chestFrame);
 
-            SimpleSE3TrajectoryPoint controllerTrajectoryPoint = findTrajectoryPoint(handName, trajectoryPointIndex, scs);
-            SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+            SE3TrajectoryPoint controllerTrajectoryPoint = findTrajectoryPoint(handName, trajectoryPointIndex, scs);
+            SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
             framePoint.get(expectedTrajectoryPoint);
 
             assertEquals(expectedTrajectoryPoint.getTime(), controllerTrajectoryPoint.getTime(), EPSILON_FOR_DESIREDS);
@@ -392,8 +389,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
          FrameSE3TrajectoryPoint framePoint = lastTrajectoryPoints.get(robotSide);
          framePoint.changeFrame(worldFrame);
 
-         SimpleSE3TrajectoryPoint controllerTrajectoryPoint = findCurrentDesiredTrajectoryPoint(handName, scs);
-         SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+         SE3TrajectoryPoint controllerTrajectoryPoint = findCurrentDesiredTrajectoryPoint(handName, scs);
+         SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
          framePoint.get(expectedTrajectoryPoint);
 
          controllerTrajectoryPoint.setTime(expectedTrajectoryPoint.getTime());
@@ -403,8 +400,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       drcSimulationTestHelper.createVideo(getSimpleRobotName(), 2);
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 15.8)
-   @Test(timeout = 79000)
+   @Test
    public void testMessageWithTooManyTrajectoryPoints() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -472,8 +468,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       }
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 51.8)
-   @Test(timeout = 260000)
+   @Test
    public void testQueuedMessages() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -564,7 +559,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
             Quaternion desiredOrientation = new Quaternion(tempOrientation);
             Vector3D desiredAngularVelocity = new Vector3D();
 
-            double time = trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+            trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+            double time = trajectoryPoints.get(calculatorIndex).getTime();
 
             Graphics3DObject sphere = new Graphics3DObject();
             sphere.translate(desiredPosition);
@@ -612,8 +608,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
          {
             FrameSE3TrajectoryPoint framePoint = handTrajectoryPoints.removeFirst();
 
-            SimpleSE3TrajectoryPoint controllerTrajectoryPoint = findTrajectoryPoint(handName, trajectoryPointIndex, scs);
-            SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+            SE3TrajectoryPoint controllerTrajectoryPoint = findTrajectoryPoint(handName, trajectoryPointIndex, scs);
+            SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
             framePoint.get(expectedTrajectoryPoint);
             assertEquals(expectedTrajectoryPoint.getTime(), controllerTrajectoryPoint.getTime(), EPSILON_FOR_DESIREDS);
             assertTrue(expectedTrajectoryPoint.epsilonEquals(controllerTrajectoryPoint, 0.01));
@@ -664,8 +660,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       drcSimulationTestHelper.createVideo(getSimpleRobotName(), 2);
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 19.3)
-   @Test(timeout = 97000)
+   @Test
    public void testQueueWithWrongPreviousId() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -759,7 +754,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
                Quaternion desiredOrientation = new Quaternion(tempOrientation);
                Vector3D desiredAngularVelocity = new Vector3D();
 
-               double time = trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+               trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+               double time = trajectoryPoints.get(calculatorIndex).getTime();
 
                Graphics3DObject sphere = new Graphics3DObject();
                sphere.translate(desiredPosition);
@@ -788,8 +784,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       }
    }
 
-   @ContinuousIntegrationAnnotations.ContinuousIntegrationTest(estimatedDuration = 26.3)
-   @Test(timeout = 130000)
+   @Test
    public void testQueueStoppedWithOverrideMessage() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -877,7 +872,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
                Quaternion desiredOrientation = new Quaternion(tempOrientation);
                Vector3D desiredAngularVelocity = new Vector3D();
 
-               double time = trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+               trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+               double time = trajectoryPoints.get(calculatorIndex).getTime();
 
                Graphics3DObject sphere = new Graphics3DObject();
                sphere.translate(desiredPosition);
@@ -940,8 +936,8 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
          desiredPose.changeFrame(worldFrame);
 
          String handName = fullRobotModel.getHand(robotSide).getName();
-         SimpleSE3TrajectoryPoint controllerTrajectoryPoint = findCurrentDesiredTrajectoryPoint(handName, scs);
-         SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+         SE3TrajectoryPoint controllerTrajectoryPoint = findCurrentDesiredTrajectoryPoint(handName, scs);
+         SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
          expectedTrajectoryPoint.setPosition(desiredPose.getPosition());
          expectedTrajectoryPoint.setOrientation(desiredPose.getOrientation());
 
@@ -1082,7 +1078,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       return ((YoInteger) scs.getVariable(bodyName + "TaskspaceControlModule", bodyName + "TaskspaceNumberOfPoints")).getIntegerValue();
    }
 
-   public static SimpleSE3TrajectoryPoint findTrajectoryPoint(String bodyName, int trajectoryPointIndex, SimulationConstructionSet scs)
+   public static SE3TrajectoryPoint findTrajectoryPoint(String bodyName, int trajectoryPointIndex, SimulationConstructionSet scs)
    {
       String positionTrajectoryName = bodyName + MultipleWaypointsPositionTrajectoryGenerator.class.getSimpleName();
       String orientationTrajectoryName = bodyName + MultipleWaypointsOrientationTrajectoryGenerator.class.getSimpleName();
@@ -1095,7 +1091,7 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       String linearVelocityName = bodyName + "LinearVelocity";
       String angularVelocityName = bodyName + "AngularVelocity";
 
-      SimpleSE3TrajectoryPoint simpleSE3TrajectoryPoint = new SimpleSE3TrajectoryPoint();
+      SE3TrajectoryPoint simpleSE3TrajectoryPoint = new SE3TrajectoryPoint();
       simpleSE3TrajectoryPoint.setTime(scs.getVariable(positionTrajectoryName, timeName + suffix).getValueAsDouble());
       simpleSE3TrajectoryPoint.setPosition(findPoint3d(positionTrajectoryName, positionName, suffix, scs));
       simpleSE3TrajectoryPoint.setOrientation(findQuat4d(orientationTrajectoryName, orientationName, suffix, scs));
@@ -1104,15 +1100,15 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       return simpleSE3TrajectoryPoint;
    }
 
-   public static SimpleSE3TrajectoryPoint findLastTrajectoryPoint(String bodyName, SimulationConstructionSet scs)
+   public static SE3TrajectoryPoint findLastTrajectoryPoint(String bodyName, SimulationConstructionSet scs)
    {
       int numberOfWaypoints = findNumberOfWaypoints(bodyName, scs);
       return findTrajectoryPoint(bodyName, numberOfWaypoints - 1, scs);
    }
 
-   public static SimpleSE3TrajectoryPoint findCurrentDesiredTrajectoryPoint(String bodyName, SimulationConstructionSet scs)
+   public static SE3TrajectoryPoint findCurrentDesiredTrajectoryPoint(String bodyName, SimulationConstructionSet scs)
    {
-      SimpleSE3TrajectoryPoint simpleSE3TrajectoryPoint = new SimpleSE3TrajectoryPoint();
+      SE3TrajectoryPoint simpleSE3TrajectoryPoint = new SE3TrajectoryPoint();
       simpleSE3TrajectoryPoint.setPosition(findControllerDesiredPosition(bodyName, scs));
       simpleSE3TrajectoryPoint.setOrientation(findControllerDesiredOrientation(bodyName, scs));
       simpleSE3TrajectoryPoint.setLinearVelocity(findControllerDesiredLinearVelocity(bodyName, scs));
@@ -1208,13 +1204,13 @@ public abstract class EndToEndHandTrajectoryMessageTest implements MultiRobotTes
       return tuple2d;
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())

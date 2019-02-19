@@ -1,12 +1,19 @@
 package us.ihmc.robotDataLogger;
 
 import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
+import us.ihmc.commons.MathTools;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotDataLogger.handshake.IDLYoVariableHandshakeParser;
 import us.ihmc.robotDataLogger.handshake.LogHandshake;
-import us.ihmc.robotDataLogger.rtps.DataConsumerParticipant;
-import us.ihmc.robotDataLogger.rtps.RTPSDebugRegistry;
-import us.ihmc.robotDataLogger.rtps.VariableChangedProducer;
+import us.ihmc.robotDataLogger.interfaces.DataConsumer;
+import us.ihmc.robotDataLogger.interfaces.VariableChangedProducer;
+import us.ihmc.robotDataLogger.util.DebugRegistry;
+import us.ihmc.robotDataLogger.websocket.client.WebsocketDataConsumer;
+import us.ihmc.robotDataLogger.websocket.client.discovery.HTTPDataServerConnection;
+import us.ihmc.robotDataLogger.websocket.command.DataServerCommand;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 /**
@@ -15,27 +22,27 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
  * This is a general client for a logging sessions. A listener can be attached to provide desired functionality.
  * 
  * @author jesper
- *
  */
 public class YoVariableClientImplementation implements YoVariableClientInterface
 {
    private String serverName;
 
-   //DDS
-   private final DataConsumerParticipant dataConsumerParticipant;
    private final VariableChangedProducer variableChangedProducer;
 
+   // Command executor
+   private final Executor commandExecutor = Executors.newSingleThreadExecutor();
+   
    // Callback
    private final YoVariablesUpdatedListener yoVariablesUpdatedListener;
 
    // Internal values
    private final IDLYoVariableHandshakeParser handshakeParser;
-   private final RTPSDebugRegistry debugRegistry = new RTPSDebugRegistry();
-   private Announcement handshakeAnnouncement;
+   private final DebugRegistry debugRegistry = new DebugRegistry();
+   
+   private DataConsumer dataConsumer;
 
-   YoVariableClientImplementation(DataConsumerParticipant participant, final YoVariablesUpdatedListener yoVariablesUpdatedListener)
+   YoVariableClientImplementation(final YoVariablesUpdatedListener yoVariablesUpdatedListener)
    {
-      this.dataConsumerParticipant = participant;
       this.yoVariablesUpdatedListener = yoVariablesUpdatedListener;
       if (yoVariablesUpdatedListener.changesVariables())
       {
@@ -63,8 +70,7 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
     */
    public void connectionClosed()
    {
-      System.out.println("Disconnected, closing client.");
-      dataConsumerParticipant.disconnectSession();
+      LogTools.info("Disconnected, closing client.");
       yoVariablesUpdatedListener.disconnected();
    }
    
@@ -74,20 +80,23 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
     * This can only be called once for a client. To restart, use reconnect()
     * 
     * @param timeout
-    * @param announcement
+    * @param connection
     * @throws IOException
     */
-   public synchronized void start(int timeout, Announcement announcement) throws IOException
+   public synchronized void start(int timeout, HTTPDataServerConnection connection) throws IOException
    {
-      this.serverName = announcement.getNameAsString();
-
-      if (handshakeAnnouncement != null)
+      if (dataConsumer != null)
       {
          throw new RuntimeException("Client already started");
       }
       
-      System.out.println("Requesting handshake");
-      Handshake handshake = dataConsumerParticipant.getHandshake(announcement, timeout);
+      Announcement announcement = connection.getAnnouncement();
+      
+      this.dataConsumer = new WebsocketDataConsumer(connection, timeout);      
+      this.serverName = connection.getAnnouncement().getNameAsString();
+      
+      LogTools.info("Requesting handshake");
+      Handshake handshake = dataConsumer.getHandshake();
 
       handshakeParser.parseFrom(handshake);
 
@@ -96,28 +105,27 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
       if (announcement.getModelFileDescription().getHasModel())
       {
          logHandshake.setModelName(announcement.getModelFileDescription().getNameAsString());
-         System.out.println("Requesting model file");
-         logHandshake.setModel(dataConsumerParticipant.getModelFile(announcement, timeout));
+         LogTools.info("Requesting model file");
+         logHandshake.setModel(dataConsumer.getModelFile());
          logHandshake.setModelLoaderClass(announcement.getModelFileDescription().getModelLoaderClassAsString());
          logHandshake.setResourceDirectories(announcement.getModelFileDescription().getResourceDirectories().toStringArray());
          if (announcement.getModelFileDescription().getHasResourceZip())
          {
-            System.out.println("Requesting resource bundle");
-            logHandshake.setResourceZip(dataConsumerParticipant.getResourceZip(announcement, timeout));
+            LogTools.info("Requesting resource bundle");
+            logHandshake.setResourceZip(dataConsumer.getResourceZip());
          }
-         System.out.println("Received model");
+         LogTools.info("Received model");
 
       }
 
       if(variableChangedProducer != null)
       {
-         variableChangedProducer.startVariableChangedProducers(handshakeParser.getYoVariablesList());
+         variableChangedProducer.startVariableChangedProducers(handshakeParser.getYoVariablesList(), dataConsumer);
       }
       yoVariablesUpdatedListener.start(this, logHandshake, handshakeParser);
 
-      handshakeAnnouncement = announcement;
       
-      connectToSession(announcement);
+      connectToSession();
    }
    
    /**
@@ -128,17 +136,17 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
     * @param announcement
     * @throws IOException
     */
-   void connectToSession(Announcement announcement) throws IOException
+   void connectToSession() throws IOException
    {
-      if(dataConsumerParticipant.isSessionActive())
+      if(dataConsumer.isSessionActive())
       {
          throw new RuntimeException("Client already connected");
       }
-      if(!dataConsumerParticipant.isConnectedToDomain())
+      if(dataConsumer.isClosed())
       {
-         throw new RuntimeException("Client has closed completly");
+         throw new RuntimeException("Client has closed completely");
       }
-      dataConsumerParticipant.createSession(announcement, handshakeParser, this, variableChangedProducer, yoVariablesUpdatedListener, yoVariablesUpdatedListener, debugRegistry);
+      dataConsumer.startSession(handshakeParser, this, variableChangedProducer, yoVariablesUpdatedListener, yoVariablesUpdatedListener, debugRegistry);
    }
 
    /**
@@ -149,10 +157,13 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
    @Override
    public synchronized void stop()
    {
-      dataConsumerParticipant.remove();
+      if(dataConsumer == null)
+      {
+         throw new RuntimeException("Session not started");
+      }
+      dataConsumer.close();
    }
-   
-   
+
    /**
     * Broadcast a clear log request for the current session
     * 
@@ -163,7 +174,7 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
    {
       try
       {
-         dataConsumerParticipant.sendClearLogRequest();
+         dataConsumer.sendCommand(DataServerCommand.CLEAR_LOG, 0);
       }
       catch (IOException e)
       {
@@ -194,27 +205,74 @@ public class YoVariableClientImplementation implements YoVariableClientInterface
    @Override
    public void disconnect()
    {
-      dataConsumerParticipant.disconnectSession();
+      dataConsumer.disconnectSession();
    }
 
    @Override
    public synchronized boolean reconnect() throws IOException
    {
-      Announcement newAnnouncement = dataConsumerParticipant.getReconnectableSession(handshakeAnnouncement);
-      if(newAnnouncement == null)
+      if(dataConsumer == null)
       {
-         return false;
+         throw new RuntimeException("Session not started");
       }
-      else
-      {
-         connectToSession(newAnnouncement);
-         return true;
-      }
+      
+      debugRegistry.reset();
+      return dataConsumer.reconnect();
+      
+      
+//      Announcement newAnnouncement = dataConsumerParticipant.getReconnectableSession(handshakeAnnouncement);
+//      if(newAnnouncement == null)
+//      {
+//         return false;
+//      }
+//      else
+//      {
+//         connectToSession(newAnnouncement);
+//         return true;
+//      }
    }
 
+   public void receivedCommand(DataServerCommand command, int argument)
+   {
+      commandExecutor.execute(() -> yoVariablesUpdatedListener.receivedCommand(command, argument));
+   }
+   
    public void connected()
    {
       yoVariablesUpdatedListener.connected();
    }
 
+   @Override
+   public void setVariableUpdateRate(int updateRate)
+   {
+      updateRate = MathTools.clamp(updateRate, 0, 99999);
+      
+      try
+      {
+         dataConsumer.sendCommand(DataServerCommand.LIMIT_RATE, updateRate);
+      }
+      catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+   }
+
+   @Override
+   public boolean isConnected()
+   {
+      return dataConsumer.isSessionActive();
+   }
+
+   @Override
+   public void sendCommand(DataServerCommand command, int argument)
+   {
+      try
+      {
+         dataConsumer.sendCommand(command, argument);
+      }
+      catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+   }
 }

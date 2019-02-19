@@ -1,7 +1,6 @@
 package us.ihmc.humanoidRobotics.communication.packets;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +37,6 @@ import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.FootstepPathPlanPacket;
 import controller_msgs.msg.dds.FootstepPlanRequestPacket;
-import controller_msgs.msg.dds.FootstepPlanningRequestPacket;
 import controller_msgs.msg.dds.FootstepStatusMessage;
 import controller_msgs.msg.dds.FrameInformation;
 import controller_msgs.msg.dds.GoHomeMessage;
@@ -132,7 +130,6 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.euclid.tuple4D.Quaternion32;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.euclid.utils.NameBasedHashCodeTools;
 import us.ihmc.humanoidRobotics.communication.kinematicsPlanningToolboxAPI.KinematicsPlanningToolboxMessageFactory;
@@ -158,9 +155,9 @@ import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.kinematics.TimeStampedTransform3D;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleTrajectoryPoint1D;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleTrajectoryPoint1DList;
-import us.ihmc.robotics.math.trajectories.waypoints.interfaces.OneDoFTrajectoryPointInterface;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.OneDoFTrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.interfaces.OneDoFTrajectoryPointBasics;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.lists.OneDoFTrajectoryPointList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
 import us.ihmc.robotics.trajectories.TrajectoryType;
@@ -243,7 +240,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which arm is performing the trajectory.
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
@@ -260,7 +257,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points using the specified qp weights.
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which arm is performing the trajectory.
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
@@ -279,7 +276,7 @@ public class HumanoidMessageTools
    /**
     * Create a message using the given joint trajectory points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which arm is performing the trajectory.
     * @param jointTrajectory1DListMessages joint trajectory points to be executed.
     */
@@ -296,7 +293,7 @@ public class HumanoidMessageTools
     * only allocates memory for the trajectories, you need to call
     * {@link #setTrajectory1DMessage(int, OneDoFJointTrajectoryMessage)} for each joint afterwards.
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which arm is performing the trajectory.
     */
    public static ArmTrajectoryMessage createArmTrajectoryMessage(RobotSide robotSide)
@@ -318,7 +315,7 @@ public class HumanoidMessageTools
     * Use this constructor to execute a straight line trajectory in taskspace. The chest is used as
     * the base for the control. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which hand is performing the trajectory.
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredPosition desired hand position expressed in world frame.
@@ -337,7 +334,7 @@ public class HumanoidMessageTools
     * Use this constructor to execute a straight line trajectory in taskspace. The chest is used as
     * the base for the control. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which hand is performing the trajectory.
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredPosition desired hand position expressed in world frame.
@@ -386,7 +383,7 @@ public class HumanoidMessageTools
    /**
     * Create a message to request one end-effector to switch to load bearing. Set the id of the
     * message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide refers to the side of the end-effector if necessary.
     */
    public static FootLoadBearingMessage createFootLoadBearingMessage(RobotSide robotSide, LoadBearingRequest request)
@@ -601,10 +598,15 @@ public class HumanoidMessageTools
       return message;
    }
 
+   public static PelvisTrajectoryMessage createPelvisTrajectoryMessage(double trajectoryTime, Pose3DReadOnly desiredPose)
+   {
+      return createPelvisTrajectoryMessage(trajectoryTime, desiredPose.getPosition(), desiredPose.getOrientation());
+   }
+
    /**
     * Use this constructor to execute a straight line trajectory in taskspace. Set the id of the
     * message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredPosition desired pelvis position expressed in world frame.
     * @param desiredOrientation desired pelvis orientation expressed in world frame.
@@ -681,7 +683,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
     *           number of joints.
@@ -696,7 +698,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
     *           number of joints.
@@ -713,7 +715,7 @@ public class HumanoidMessageTools
    /**
     * Create a message using the given joint trajectory points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param jointTrajectory1DListMessages joint trajectory points to be executed.
     */
    public static NeckTrajectoryMessage createNeckTrajectoryMessage(OneDoFJointTrajectoryMessage[] jointTrajectory1DListMessages)
@@ -726,7 +728,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to execute a simple interpolation towards the given endpoint. Set the id
     * of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredOrientation desired pelvis orientation expressed in world frame.
     */
@@ -783,7 +785,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to execute a simple interpolation in taskspace to the desired
     * orientation.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired orientation.
     * @param desiredOrientation desired chest orientation expressed in World.
     */
@@ -798,7 +800,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to execute a simple interpolation in taskspace to the desired
     * orientation.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired orientation.
     * @param desiredOrientation desired chest orientation expressed the supplied frame.
     */
@@ -830,7 +832,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to execute a simple interpolation in taskspace to the desired
     * orientation. Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired orientation.
     * @param desiredOrientation desired head orientation expressed in world frame.
     */
@@ -844,7 +846,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to execute a simple interpolation in taskspace to the desired
     * orientation. Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired orientation.
     * @param desiredOrientation desired head orientation expressed in world frame.
     */
@@ -858,7 +860,7 @@ public class HumanoidMessageTools
 
    /**
     * set a single point
-    * 
+    *
     * @param trajectoryTime the duration of the trajectory
     * @param desiredPosition the desired end position
     * @param trajectoryReferenceFrameId the frame id the trajectory will be executed in
@@ -875,7 +877,7 @@ public class HumanoidMessageTools
 
    /**
     * set a single point
-    * 
+    *
     * @param trajectoryTime the duration of the trajectory
     * @param desiredPosition the desired end position
     * @param trajectoryReferenceFrame the frame the trajectory will be executed in
@@ -897,7 +899,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end point. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired height.
     * @param desiredHeight desired pelvis height expressed in data frame
     * @param trajectoryReferenceFrame the frame in which the height will be executed
@@ -920,7 +922,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end point. The trajectory and data frame are
     * set to world frame Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired height.
     * @param desiredHeight desired pelvis height expressed in world frame.
     */
@@ -1129,7 +1131,7 @@ public class HumanoidMessageTools
       return message;
    }
 
-   public static TrajectoryPoint1DMessage createTrajectoryPoint1DMessage(OneDoFTrajectoryPointInterface<?> trajectoryPoint)
+   public static TrajectoryPoint1DMessage createTrajectoryPoint1DMessage(OneDoFTrajectoryPointBasics trajectoryPoint)
    {
       TrajectoryPoint1DMessage message = new TrajectoryPoint1DMessage();
       message.setTime(trajectoryPoint.getTime());
@@ -1174,7 +1176,7 @@ public class HumanoidMessageTools
    /**
     *
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param footstepDataList
     * @param defaultSwingDuration
     * @param defaultTransferDuration
@@ -1189,7 +1191,7 @@ public class HumanoidMessageTools
    /**
     *
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param footstepDataList
     * @param defaultSwingDuration
     * @param defaultTransferDuration
@@ -1212,7 +1214,7 @@ public class HumanoidMessageTools
     *
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}. Set execution mode to
     * OVERRIDE
-    * 
+    *
     * @param defaultSwingDuration
     * @param defaultTransferDuration
     */
@@ -1225,7 +1227,7 @@ public class HumanoidMessageTools
     *
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}. Set execution mode to
     * OVERRIDE
-    * 
+    *
     * @param defaultSwingDuration
     * @param defaultTransferDuration
     * @param finalTransferDuration
@@ -1243,7 +1245,7 @@ public class HumanoidMessageTools
    /**
     * Creates a message with the desired grasp to be performed. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide refers to which hand will perform the grasp.
     * @param handDesiredConfiguration refers to the desired grasp.
     */
@@ -1286,9 +1288,9 @@ public class HumanoidMessageTools
    }
 
    /**
-    * 
+    *
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param pause
     */
    public static PauseWalkingMessage createPauseWalkingMessage(boolean pause)
@@ -1338,7 +1340,7 @@ public class HumanoidMessageTools
 
    /**
     * Constructor that sets the desired accelerations in this message to the provided values
-    * 
+    *
     * @param desiredJointAccelerations
     */
    public static SpineDesiredAccelerationsMessage createSpineDesiredAccelerationsMessage(double[] desiredJointAccelerations)
@@ -1351,7 +1353,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
     *           number of controlled joints.
@@ -1367,7 +1369,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points using the specified qp weights.
     * Set the id of the message to {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredJointPositions desired joint positions. The array length should be equal to the
     *           number of controlled joints.
@@ -1396,7 +1398,7 @@ public class HumanoidMessageTools
    /**
     * Create a message using the given joint trajectory points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param oneDoFJointTrajectoryMessages joint trajectory points to be executed.
     */
    public static JointspaceTrajectoryMessage createJointspaceTrajectoryMessage(OneDoFJointTrajectoryMessage[] oneDoFJointTrajectoryMessages)
@@ -1421,14 +1423,14 @@ public class HumanoidMessageTools
       return message;
    }
 
-   public static OneDoFJointTrajectoryMessage createOneDoFJointTrajectoryMessage(SimpleTrajectoryPoint1DList trajectoryData)
+   public static OneDoFJointTrajectoryMessage createOneDoFJointTrajectoryMessage(OneDoFTrajectoryPointList trajectoryData)
    {
       OneDoFJointTrajectoryMessage message = new OneDoFJointTrajectoryMessage();
       int numberOfPoints = trajectoryData.getNumberOfTrajectoryPoints();
 
       for (int i = 0; i < numberOfPoints; i++)
       {
-         SimpleTrajectoryPoint1D trajectoryPoint = trajectoryData.getTrajectoryPoint(i);
+         OneDoFTrajectoryPoint trajectoryPoint = trajectoryData.getTrajectoryPoint(i);
          message.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage(trajectoryPoint));
       }
       return message;
@@ -1436,7 +1438,7 @@ public class HumanoidMessageTools
 
    /**
     * Use this constructor to go straight to the given end point.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired position.
     * @param desiredPosition desired end point position.
     */
@@ -1449,7 +1451,7 @@ public class HumanoidMessageTools
 
    /**
     * Use this constructor to go straight to the given end point.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired position.
     * @param desiredPosition desired end point position.
     * @param weight the weight for the qp
@@ -1519,7 +1521,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param jointDesireds desired joint positions. The array length should be equal to the number
     *           of joints.
@@ -1534,7 +1536,7 @@ public class HumanoidMessageTools
    /**
     * Use this constructor to go straight to the given end points. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param jointDesireds desired joint positions. The array length should be equal to the number
     *           of joints.
@@ -1648,30 +1650,31 @@ public class HumanoidMessageTools
       return message;
    }
 
-   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3DReadOnly location, QuaternionReadOnly orientation)
+   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Pose3DReadOnly pose)
    {
-      return createFootstepDataMessage(robotSide, new Point3D(location), new Quaternion(orientation), null);
+      return createFootstepDataMessage(robotSide, pose.getPosition(), pose.getOrientation());
    }
 
-   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3D location, Quaternion orientation)
+   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3DReadOnly location, QuaternionReadOnly orientation)
    {
       return createFootstepDataMessage(robotSide, location, orientation, null);
    }
 
-   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3D location, Quaternion orientation,
-                                                               ArrayList<Point2D> predictedContactPoints)
+   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3DReadOnly location, QuaternionReadOnly orientation,
+                                                               List<? extends Point2DReadOnly> predictedContactPoints)
    {
       return createFootstepDataMessage(robotSide, location, orientation, predictedContactPoints, TrajectoryType.DEFAULT, 0.0);
    }
 
-   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3D location, Quaternion orientation, TrajectoryType trajectoryType,
-                                                               double swingHeight)
+   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3DReadOnly location, QuaternionReadOnly orientation,
+                                                               TrajectoryType trajectoryType, double swingHeight)
    {
       return createFootstepDataMessage(robotSide, location, orientation, null, trajectoryType, swingHeight);
    }
 
-   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3D location, Quaternion orientation,
-                                                               List<Point2D> predictedContactPoints, TrajectoryType trajectoryType, double swingHeight)
+   public static FootstepDataMessage createFootstepDataMessage(RobotSide robotSide, Point3DReadOnly location, QuaternionReadOnly orientation,
+                                                               List<? extends Point2DReadOnly> predictedContactPoints, TrajectoryType trajectoryType,
+                                                               double swingHeight)
    {
       FootstepDataMessage message = new FootstepDataMessage();
       message.setRobotSide(robotSide.toByte());
@@ -1737,7 +1740,7 @@ public class HumanoidMessageTools
          message.getKeyFramePoses().add().set(keyFramePoses.get(i));
       }
       KinematicsPlanningToolboxMessageFactory.setDefaultAllowableDisplacement(message, keyFrameTimes.size());
-      
+
       return message;
    }
 
@@ -1787,7 +1790,7 @@ public class HumanoidMessageTools
       KinematicsPlanningToolboxOutputStatus message = new KinematicsPlanningToolboxOutputStatus();
       return message;
    }
-   
+
    public static PlanOffsetStatus createPlanOffsetStatus(Vector3DReadOnly offsetVector)
    {
       PlanOffsetStatus message = new PlanOffsetStatus();
@@ -1797,7 +1800,7 @@ public class HumanoidMessageTools
 
    /**
     * set the class you want to clear
-    * 
+    *
     * @param clazz the class you want to clear
     */
    public static ClearDelayQueueMessage createClearDelayQueueMessage(Class<? extends Packet<?>> clazz)
@@ -1843,7 +1846,7 @@ public class HumanoidMessageTools
     * Use this constructor to execute a straight line trajectory in taskspace. The chest is used as
     * the base for the control. Set the id of the message to
     * {@link Packet#VALID_MESSAGE_DEFAULT_ID}.
-    * 
+    *
     * @param robotSide is used to define which foot is performing the trajectory.
     * @param trajectoryTime how long it takes to reach the desired pose.
     * @param desiredPosition desired foot position expressed in world frame.

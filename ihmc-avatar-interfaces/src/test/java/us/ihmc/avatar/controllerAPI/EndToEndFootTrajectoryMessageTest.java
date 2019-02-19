@@ -1,8 +1,7 @@
 package us.ihmc.avatar.controllerAPI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
+
 import static us.ihmc.avatar.controllerAPI.EndToEndHandTrajectoryMessageTest.findQuat4d;
 import static us.ihmc.avatar.controllerAPI.EndToEndHandTrajectoryMessageTest.findVector3d;
 
@@ -11,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.FootLoadBearingMessage;
 import controller_msgs.msg.dds.FootTrajectoryMessage;
@@ -31,7 +30,8 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -48,10 +48,10 @@ import us.ihmc.humanoidRobotics.communication.packets.walking.LoadBearingRequest
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
-import us.ihmc.robotics.math.trajectories.waypoints.EuclideanTrajectoryPointCalculator;
-import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoint;
-import us.ihmc.robotics.math.trajectories.waypoints.FrameSE3TrajectoryPoint;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleSE3TrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.generators.EuclideanTrajectoryPointCalculator;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameEuclideanTrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameSE3TrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.SE3TrajectoryPoint;
 import us.ihmc.robotics.random.RandomGeometry;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
@@ -62,6 +62,7 @@ import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestin
 import us.ihmc.tools.MemoryTools;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
+@Tag("controller-api")
 public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTestInterface
 {
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
@@ -168,8 +169,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
 
    //Picks up a foot, moves that foot to a position, and puts it down. Done using both sides
-   @ContinuousIntegrationTest(estimatedDuration = 41.5)
-   @Test(timeout = 30000)
+   @Test
    public void testSingleWaypoint() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -207,8 +207,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //Picks up a foot and puts it down. Done using both sides
-   @ContinuousIntegrationTest(estimatedDuration = 56.6)
-   @Test(timeout = 280000)
+   @Test
    public void testPickUpAndPutDown() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -241,8 +240,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
 
 
    //picks up a foot, moves it around in a ribbon shape, then puts the foot down, Done using both sides
-   @ContinuousIntegrationTest(estimatedDuration = 85.4)
-   @Test(timeout = 430000)
+   @Test
    public void testMultipleTrajectoryPoints() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -297,8 +295,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          {
             FrameSE3TrajectoryPoint framePoint = frameSE3TrajectoryPoints.removeFirst();
 
-            SimpleSE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findTrajectoryPoint(footName, trajectoryPointIndex, scs);
-            SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+            SE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findTrajectoryPoint(footName, trajectoryPointIndex, scs);
+            SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
             framePoint.get(expectedTrajectoryPoint);
 
             assertEquals(expectedTrajectoryPoint.getTime(), controllerTrajectoryPoint.getTime(), EPSILON_FOR_DESIREDS);
@@ -308,8 +306,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime + firstTrajectoryPointTime);
          assertTrue(success);
 
-         SimpleSE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findCurrentDesiredTrajectoryPoint(footName, scs);
-         SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+         SE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findCurrentDesiredTrajectoryPoint(footName, scs);
+         SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
          lastFramePoint.get(expectedTrajectoryPoint);
 
          controllerTrajectoryPoint.setTime(expectedTrajectoryPoint.getTime());
@@ -323,8 +321,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //moves each foot to a single position using a custom control point
-   @ContinuousIntegrationTest(estimatedDuration = 24.4)
-   @Test(timeout = 120000)
+   @Test
    public void testCustomControlPoint() throws SimulationExceededMaximumTimeException
    {
       DRCRobotModel robotModel = getRobotModel();
@@ -382,8 +379,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //picks up the left foot, moves the foot around a sphere (ribbons yawed around the circle center)
-   @ContinuousIntegrationTest(estimatedDuration = 72.6)
-   @Test(timeout = 360000)
+   @Test
    public void testQueuedMessages() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -440,8 +436,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
          {
             FrameSE3TrajectoryPoint framePoint = footTrajectoryPoints.removeFirst();
 
-            SimpleSE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findTrajectoryPoint(footName, trajectoryPointIndex, scs);
-            SimpleSE3TrajectoryPoint expectedTrajectoryPoint = new SimpleSE3TrajectoryPoint();
+            SE3TrajectoryPoint controllerTrajectoryPoint = EndToEndHandTrajectoryMessageTest.findTrajectoryPoint(footName, trajectoryPointIndex, scs);
+            SE3TrajectoryPoint expectedTrajectoryPoint = new SE3TrajectoryPoint();
             framePoint.get(expectedTrajectoryPoint);
             assertEquals(expectedTrajectoryPoint.getTime(), controllerTrajectoryPoint.getTime(), EPSILON_FOR_DESIREDS);
             assertTrue(expectedTrajectoryPoint.epsilonEquals(controllerTrajectoryPoint, 0.01));
@@ -511,7 +507,8 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
             Quaternion desiredOrientation = new Quaternion();
             Vector3D desiredAngularVelocity = new Vector3D();
 
-            double time = trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+            trajectoryPoints.get(calculatorIndex).get(desiredPosition, desiredLinearVelocity);
+            double time = trajectoryPoints.get(calculatorIndex).getTime();
 
             Graphics3DObject sphere = new Graphics3DObject();
             sphere.translate(desiredPosition);
@@ -539,8 +536,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //picks the foot up, sends queued messages, the last with the wrong previous queued message ID. (Should see sysout about this) Checks that the number of waypoints is cleared, then puts the foot back on the ground. Done for both sides
-   @ContinuousIntegrationTest(estimatedDuration = 32.1)
-   @Test(timeout = 30000)
+   @Test
    public void testQueueWithWrongPreviousId() throws SimulationExceededMaximumTimeException
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -647,8 +643,7 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
    }
 
    //Picks a foot up, Sends queued messages, then sends a single point to test overriding the queue. Done for both feet
-   @ContinuousIntegrationTest(estimatedDuration = 72.6)
-   @Test(timeout = 360000)
+   @Test
    public void testQueueStoppedWithOverrideMessage() throws SimulationExceededMaximumTimeException
    {
       Random random = new Random(564574L);
@@ -695,13 +690,13 @@ public abstract class EndToEndFootTrajectoryMessageTest implements MultiRobotTes
       }
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())

@@ -1,7 +1,11 @@
 package us.ihmc.robotEnvironmentAwareness.geometry;
 
+<<<<<<< HEAD
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+=======
+import static us.ihmc.robotics.Assert.*;
+>>>>>>> refs/remotes/origin/develop
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,7 +15,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
@@ -40,7 +44,14 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		VISUALIZE = false;
 	}
 
+<<<<<<< HEAD
 	private static final int ITERATIONS = 1000;
+=======
+   @Test
+   public void testPointConversions()
+   {
+      Random random = new Random(4234234);
+>>>>>>> refs/remotes/origin/develop
 
 	@Test(timeout = 30000)
 	public void testExtractionMethods()
@@ -81,6 +92,7 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 	//   return coordinateToPoint3D(point.getCoordinate());
 	//}
 
+<<<<<<< HEAD
 	@Test(timeout = 30000)
 	public void testQuadEdgeAlgebra()
 	{
@@ -88,6 +100,12 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		Random random = new Random(4234234);
 		Vertex expectedVertex2D_v0 = new Vertex(random.nextDouble(), random.nextDouble());
 		Vertex expectedVertex2D_v1 = new Vertex(random.nextDouble(), random.nextDouble());
+=======
+   @Test
+   public void testLineStringConversion() throws Exception
+   {
+      Random random = new Random(2423423);
+>>>>>>> refs/remotes/origin/develop
 
 		Vertex expectedVertex3D_v0 = new Vertex(random.nextDouble(), random.nextDouble(), random.nextDouble());
 		Vertex expectedVertex3D_v1 = new Vertex(random.nextDouble(), random.nextDouble(), random.nextDouble());
@@ -95,8 +113,15 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		QuadEdge quadEdge2D = QuadEdge.makeEdge(expectedVertex2D_v0, expectedVertex2D_v1);
 		QuadEdge quadEdge3D = QuadEdge.makeEdge(expectedVertex3D_v0, expectedVertex3D_v1);
 
+<<<<<<< HEAD
 		LineSegment2D lineSegment2D = JTSTools.quadEdgeToLineSegment2D(quadEdge2D);
 		LineSegment3D lineSegment3D = JTSTools.quadEdgeToLineSegment3D(quadEdge3D);
+=======
+   @Test
+   public void testMultiString() throws Exception
+   {
+      Random random = new Random(43543);
+>>>>>>> refs/remotes/origin/develop
 
 		Collection<QuadEdge> quadEdges = new ArrayList<QuadEdge>();
 		quadEdges.add(quadEdge2D);

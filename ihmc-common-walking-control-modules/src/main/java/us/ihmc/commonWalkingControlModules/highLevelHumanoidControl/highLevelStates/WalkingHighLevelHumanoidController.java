@@ -2,7 +2,6 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,8 +112,6 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
    private final WalkingFailureDetectionControlModule failureDetectionControlModule;
 
-   private final YoBoolean hasICPPlannerBeenInitializedAtStart = new YoBoolean("hasICPPlannerBeenInitializedAtStart", registry);
-
    private final YoBoolean enablePushRecoveryOnFailure = new YoBoolean("enablePushRecoveryOnFailure", registry);
 
    private final YoBoolean allowUpperBodyMotionDuringLocomotion = new YoBoolean("allowUpperBodyMotionDuringLocomotion", registry);
@@ -159,21 +156,20 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       unloadFraction = walkingControllerParameters.enforceSmoothFootUnloading() ? new DoubleParameter("unloadFraction", registry, 0.5) : null;
 
-      Collection<ReferenceFrame> trajectoryFrames = controllerToolbox.getTrajectoryFrames();
       ReferenceFrame pelvisZUpFrame = controllerToolbox.getPelvisZUpFrame();
 
       ReferenceFrame chestBodyFrame = null;
       if (chest != null)
       {
          chestBodyFrame = chest.getBodyFixedFrame();
-         RigidBodyControlManager chestManager = managerFactory.getOrCreateRigidBodyManager(chest, pelvis, chestBodyFrame, pelvisZUpFrame, trajectoryFrames);
+         RigidBodyControlManager chestManager = managerFactory.getOrCreateRigidBodyManager(chest, pelvis, chestBodyFrame, pelvisZUpFrame);
          bodyManagers.add(chestManager);
       }
 
       if (head != null)
       {
          ReferenceFrame headBodyFrame = head.getBodyFixedFrame();
-         RigidBodyControlManager headManager = managerFactory.getOrCreateRigidBodyManager(head, chest, headBodyFrame, chestBodyFrame, trajectoryFrames);
+         RigidBodyControlManager headManager = managerFactory.getOrCreateRigidBodyManager(head, chest, headBodyFrame, chestBodyFrame);
          bodyManagers.add(headManager);
       }
 
@@ -181,7 +177,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       {
          RigidBodyBasics hand = fullRobotModel.getHand(robotSide);
          ReferenceFrame handControlFrame = fullRobotModel.getHandControlFrame(robotSide);
-         RigidBodyControlManager handManager = managerFactory.getOrCreateRigidBodyManager(hand, chest, handControlFrame, chestBodyFrame, trajectoryFrames);
+         RigidBodyControlManager handManager = managerFactory.getOrCreateRigidBodyManager(hand, chest, handControlFrame, chestBodyFrame);
          bodyManagers.add(handManager);
       }
 
@@ -229,7 +225,9 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       String[] jointNamesRestrictiveLimits = walkingControllerParameters.getJointsWithRestrictiveLimits();
       JointLimitParameters limitParameters = walkingControllerParameters.getJointLimitParametersForJointsWithRestictiveLimits();
-      OneDoFJointBasics[] jointsWithRestrictiveLimit = MultiBodySystemTools.filterJoints(ScrewTools.findJointsWithNames(allOneDoFjoints, jointNamesRestrictiveLimits), OneDoFJointBasics.class);
+      OneDoFJointBasics[] jointsWithRestrictiveLimit = MultiBodySystemTools.filterJoints(ScrewTools.findJointsWithNames(allOneDoFjoints,
+                                                                                                                        jointNamesRestrictiveLimits),
+                                                                                         OneDoFJointBasics.class);
       for (OneDoFJointBasics joint : jointsWithRestrictiveLimit)
       {
          if (limitParameters == null)
@@ -287,8 +285,8 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       {
          WalkingStateEnum stateEnum = WalkingStateEnum.getFlamingoTransferState(transferToSide);
          TransferToFlamingoStanceState transferState = new TransferToFlamingoStanceState(stateEnum, walkingControllerParameters, walkingMessageHandler,
-                                                                                         controllerToolbox, managerFactory, failureDetectionControlModule,
-                                                                                         null, rhoMin, registry);
+                                                                                         controllerToolbox, managerFactory, failureDetectionControlModule, null,
+                                                                                         rhoMin, registry);
          flamingoTransferStates.put(transferToSide, transferState);
          factory.addState(stateEnum, transferState);
       }
@@ -447,6 +445,15 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
          controllerToolbox.setDesiredCenterOfPressure(feet.get(robotSide), footDesiredCoPs.get(robotSide));
       }
 
+      stateMachine.resetToInitialState();
+
+      initializeManagers();
+
+      commandConsumer.avoidManipulationAbortForDuration(RigidBodyControlManager.INITIAL_GO_HOME_TIME);
+   }
+
+   private void initializeManagers()
+   {
       balanceManager.disablePelvisXYControl();
 
       double stepTime = walkingMessageHandler.getDefaultStepTime();
@@ -464,13 +471,29 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       feetManager.initialize();
       comHeightManager.initialize();
       feetManager.resetHeightCorrectionParametersForSingularityAvoidance();
-      //      requestICPPlannerToHoldCurrent(); // Not sure if we want to do this. Might cause robot to fall. Might just be better to recenter ICP whenever switching to walking.
+   }
 
-      // Need to reset it so the planner will be initialized even when restarting the walking controller.
-      hasICPPlannerBeenInitializedAtStart.set(false);
-      stateMachine.resetToInitialState();
+   /**
+    * Request the controller to set all its desireds to match the current configuration of the robot.
+    * <p>
+    * Calling that method right after {@link #initialize()} will cause the controller to maintain the
+    * current robot configuration.
+    * </p>
+    */
+   public void requestImmediateTransitionToStandingAndHoldCurrent()
+   {
+      stateMachine.performTransition(WalkingStateEnum.STANDING);
 
-      commandConsumer.avoidManipulationAbortForDuration(RigidBodyControlManager.INITIAL_GO_HOME_TIME);
+      for (int managerIdx = 0; managerIdx < bodyManagers.size(); managerIdx++)
+      {
+         RigidBodyControlManager bodyManager = bodyManagers.get(managerIdx);
+         if (bodyManager != null)
+            bodyManager.hold();
+      }
+
+      pelvisOrientationManager.setToHoldCurrentInWorldFrame();
+      comHeightManager.initializeDesiredHeightToCurrent();
+      balanceManager.requestICPPlannerToHoldCurrentCoM();
    }
 
    private void initializeContacts()
@@ -479,6 +502,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       for (RobotSide robotSide : RobotSide.values)
       {
+         controllerToolbox.resetFootPlaneContactPoint(robotSide);
          feetManager.setFlatFootContactState(robotSide);
       }
    }
@@ -555,6 +579,8 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       }
 
       statusOutputManager.reportStatusMessage(balanceManager.updateAndReturnCapturabilityBasedStatus());
+
+      balanceManager.endTick();
    }
 
    private void handleChangeInContactState()

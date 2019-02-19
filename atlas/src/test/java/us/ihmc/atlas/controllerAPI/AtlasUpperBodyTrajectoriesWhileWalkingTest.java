@@ -1,14 +1,14 @@
 package us.ihmc.atlas.controllerAPI;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.ArmTrajectoryMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
@@ -25,8 +25,8 @@ import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Vector2D;
@@ -39,9 +39,9 @@ import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleTrajectoryPoint1D;
-import us.ihmc.robotics.math.trajectories.waypoints.SimpleTrajectoryPoint1DList;
-import us.ihmc.robotics.math.trajectories.waypoints.TrajectoryPoint1DCalculator;
+import us.ihmc.robotics.math.trajectories.generators.OneDoFTrajectoryPointCalculator;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.OneDoFTrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.lists.OneDoFTrajectoryPointList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.ScrewTools;
@@ -65,8 +65,7 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
 
    protected DRCSimulationTestHelper drcSimulationTestHelper;
 
-   @ContinuousIntegrationTest(categoriesOverride = IntegrationCategory.FAST, estimatedDuration = 157.4)
-   @Test(timeout = 790000)
+   @Test
    public void testWalkingWithRandomArmTrajectoryMovements() throws Exception
    {
       Random random = new Random(564654L);
@@ -90,8 +89,7 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
       assertTrue(success);
    }
 
-   @ContinuousIntegrationTest(categoriesOverride = IntegrationCategory.FAST, estimatedDuration = 168.3)
-   @Test(timeout = 840000)
+   @Test
    public void testWalkingWithArmsHoldingInFeetFrame() throws Exception
    {
       Random random = new Random(564654L);
@@ -168,7 +166,7 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
             }
             id++;
 
-            TrajectoryPoint1DCalculator trajectoryPoint1DCalculator = new TrajectoryPoint1DCalculator();
+            OneDoFTrajectoryPointCalculator trajectoryPoint1DCalculator = new OneDoFTrajectoryPointCalculator();
 
             for (int jointIndex = 0; jointIndex < numberOfJoints; jointIndex++)
             {
@@ -185,11 +183,11 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
 
                trajectoryPoint1DCalculator.computeTrajectoryPointTimes(timePerWaypoint, trajectoryTime);
                trajectoryPoint1DCalculator.computeTrajectoryPointVelocities(true);
-               SimpleTrajectoryPoint1DList trajectoryData = trajectoryPoint1DCalculator.getTrajectoryData();
+               OneDoFTrajectoryPointList trajectoryData = trajectoryPoint1DCalculator.getTrajectoryData();
 
                for (int trajectoryPointIndex = 0; trajectoryPointIndex < numberOfTrajectoryPoints; trajectoryPointIndex++)
                {
-                  SimpleTrajectoryPoint1D trajectoryPoint = trajectoryData.getTrajectoryPoint(trajectoryPointIndex);
+                  OneDoFTrajectoryPoint trajectoryPoint = trajectoryData.getTrajectoryPoint(trajectoryPointIndex);
                   jointTrajectoryMessage.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage(trajectoryPoint.getTime(), trajectoryPoint.getPosition(),
                                                                                                                         trajectoryPoint.getVelocity()));
                }
@@ -226,13 +224,13 @@ public class AtlasUpperBodyTrajectoriesWhileWalkingTest
       return timeToCompleteWalking;
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())
