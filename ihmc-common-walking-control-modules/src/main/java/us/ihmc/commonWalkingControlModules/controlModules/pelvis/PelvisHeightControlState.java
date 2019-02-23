@@ -15,7 +15,6 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.EuclideanTrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisHeightTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
@@ -103,7 +102,6 @@ public class PelvisHeightControlState implements PelvisAndCenterOfMassHeightCont
       baseFrame = elevator.getBodyFixedFrame();
 
       YoDouble yoTime = controllerToolbox.getYoTime();
-      YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
       DoubleProvider proportionalGain = () -> symmetric3DGains.getProportionalGains()[2];
       DoubleProvider derivativeGain = () -> symmetric3DGains.getDerivativeGains()[2];
@@ -111,7 +109,7 @@ public class PelvisHeightControlState implements PelvisAndCenterOfMassHeightCont
                                                                             derivativeGain, () -> 0.0, registry);
       yoControlFrame = new YoSE3OffsetFrame(pelvis.getName() + "HeightBodyFixedControlFrame", pelvis.getBodyFixedFrame(), registry);
 
-      positionController = new RigidBodyPositionController(pelvis, elevator, elevator, pelvisFrame, baseFrame, yoTime, registry, graphicsListRegistry);
+      positionController = new RigidBodyPositionController(pelvis, elevator, elevator, pelvisFrame, baseFrame, yoTime, registry, null);
 
       defaultHeight = new DoubleParameter(getClass().getSimpleName() + "DefaultHeight", registry);
       minHeight = new DoubleParameter(getClass().getSimpleName() + "MinHeight", registry, 0.0);
