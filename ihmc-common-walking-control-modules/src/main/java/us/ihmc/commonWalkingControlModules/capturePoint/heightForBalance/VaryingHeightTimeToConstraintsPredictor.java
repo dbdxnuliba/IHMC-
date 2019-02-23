@@ -6,28 +6,12 @@ public class VaryingHeightTimeToConstraintsPredictor
 {
    private final double zMin;
 
-
-   /**
-    * Gives an estimate of the time until the maximum velocity or position constraint is reached, given a predicted constant acceleration and deceleration.
-    * Those are a predefined fraction of the min/max acceleration for the controller.
-    *
-    * IS 0 A GOOD VALUE WHEN NAN?
-    *
-    * @param zMin
-
-    */
    public VaryingHeightTimeToConstraintsPredictor(double zMin)
    {
       this.zMin=zMin;
 
    }
 
-   /**
-    * Predicted time to minimum position, future velocity incorporated
-    * @param zCurrent current height
-    * @param dzCurrent current height velocity
-    * @return
-    */
    public double getTMinPosReachedPredicted(double zCurrent, double dzCurrent, double aMinPredicted, double aMaxPredicted)
    {
       double zMinForPrediction = 1.03 * zMin;
@@ -40,13 +24,6 @@ public class VaryingHeightTimeToConstraintsPredictor
       return tMinPosReachedPredicted;
    }
 
-   /**
-    * Predicted time to maximum position, future velocity incorporated
-    * @param zCurrent
-    * @param dzCurrent
-    * @param zMax Max height, changes halfway swing
-    * @return
-    */
    public double getTMaxPosReachedPredicted(double zCurrent, double dzCurrent, double zMax, double aMinPredicted, double aMaxPredicted)
    {
       double zMaxForPrediction = zMax;
@@ -59,11 +36,6 @@ public class VaryingHeightTimeToConstraintsPredictor
       return tMaxPosReachedPredicted;
    }
 
-   /**
-    * Predicted time to minimum velocity
-    * @param dzCurrent
-    * @return
-    */
    public double getTMinVelReachedPredicted(double dzCurrent, double aMin, double vMin)
    {
       double tMinVelReachedPredicted = (vMin - dzCurrent) / aMin;

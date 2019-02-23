@@ -20,8 +20,6 @@ public class VaryingHeightAngleAndDistanceEvaluator
       boolean distancePosAlignment=(MathTools.sign(copCoMVec.getY()) == MathTools.sign(icpError.getY()));
       return distancePosAlignment;
    }
-
-   // Currently NOT USED, meant to determine if the distance is becoming larger or smaller
    public boolean getDistanceImproves(FrameVector2D centerOfMassVelocity2D, FrameVector2D icpError)
    {
       double distanceImprovingAngle = icpError.angle(centerOfMassVelocity2D);
@@ -37,7 +35,6 @@ public class VaryingHeightAngleAndDistanceEvaluator
       return distanceImproves;
    }
 
-   // determines the dynamics of the angle
    public boolean getAngleGrows(double errorAngle, FrameVector2D centerOfMassVelocity2D, FramePoint2D projectedDesiredCMP, FramePoint3D com3D)
    {
       FrameVector2D copCoMVec = new FrameVector2D();

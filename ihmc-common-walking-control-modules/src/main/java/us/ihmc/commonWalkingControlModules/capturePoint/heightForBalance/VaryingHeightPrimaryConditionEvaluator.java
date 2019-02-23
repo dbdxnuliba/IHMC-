@@ -28,12 +28,11 @@ public class VaryingHeightPrimaryConditionEvaluator
                                                                               boolean nonDynamicCase, double copCoMProjMinDistance)
    {
 
-      // ALIGNED_POS (errorAngle or distance based)
-      if((useAngleForConditions&&(errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment))&&copCoMProjDistance>copCoMProjMinDistance  )  // alignment ICPe and 'pendulum' positive force
+      if((useAngleForConditions&&(errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment))&&copCoMProjDistance>copCoMProjMinDistance  )
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
       }
-      else if (useAngleForConditions && copCoMProjDistanceEndOfSwing>copCoMProjMinDistance && (errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh ))      // preparing for future angle
+      else if (useAngleForConditions && copCoMProjDistanceEndOfSwing>copCoMProjMinDistance && (errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh ))
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_NEG;
       }
