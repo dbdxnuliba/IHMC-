@@ -335,10 +335,9 @@ public class PelvisHeightControlState implements PelvisAndCenterOfMassHeightCont
       }
    }
 
-   private final FramePoint3D controlPosition = new FramePoint3D();
+   private final FramePoint3D desiredPosition = new FramePoint3D();
+   private final FrameVector3D desiredVelocity = new FrameVector3D();
    private final FrameVector3D feedForwardLinearAcceleration = new FrameVector3D();
-   private final FrameVector3D currentLinearVelocity = new FrameVector3D();
-   private final Twist twist = new Twist();
 
    /**
     * returns the point feedback command for the z height of the pelvis
@@ -348,11 +347,22 @@ public class PelvisHeightControlState implements PelvisAndCenterOfMassHeightCont
    {
       PointFeedbackControlCommand feedbackCommand = positionController.getFeedbackControlCommand();
 
+      desiredPosition.setIncludingFrame(feedbackCommand.getDesiredPosition());
+      desiredVelocity.setIncludingFrame(feedbackCommand.getDesiredLinearVelocity());
+      feedForwardLinearAcceleration.setIncludingFrame(feedbackCommand.getFeedForwardLinearAction());
+      controlPosition.setIncludingFrame(feedbackCommand.getBodyFixedPointToControl());
+
       // TODO: for some reason this is needed to avoid robot-blow up. It should be selected out by the selection matrix!
-      feedbackCommand.getFeedForwardActionIncludingFrame(feedForwardLinearAcceleration);
       feedForwardLinearAcceleration.setX(0.0);
       feedForwardLinearAcceleration.setY(0.0);
+      controlPosition.changeFrame(ReferenceFrame.getWorldFrame());
+      desiredPosition.setX(controlPosition.getX());
+      desiredPosition.setY(controlPosition.getY());
+      desiredVelocity.setX(0.0);
+      desiredVelocity.setY(0.0);
+
       feedbackCommand.setFeedForwardAction(feedForwardLinearAcceleration);
+      feedbackCommand.set(desiredPosition, desiredVelocity);
 
       temp3DSelection.clearSelection();
       temp3DSelection.setSelectionFrame(ReferenceFrame.getWorldFrame());
@@ -361,6 +371,10 @@ public class PelvisHeightControlState implements PelvisAndCenterOfMassHeightCont
 
       return feedbackCommand;
    }
+
+   private final FramePoint3D controlPosition = new FramePoint3D();
+   private final FrameVector3D currentLinearVelocity = new FrameVector3D();
+   private final Twist twist = new Twist();
 
    @Override
    public double computeDesiredCoMHeightAcceleration(FrameVector2D desiredICPVelocity, boolean isInDoubleSupport, double omega0, boolean isRecoveringFromPush,
