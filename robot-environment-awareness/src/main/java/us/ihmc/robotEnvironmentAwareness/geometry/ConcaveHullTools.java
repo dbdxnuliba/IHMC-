@@ -41,14 +41,18 @@ public class ConcaveHullTools
       Point2DReadOnly c = concaveHullVertices.get(vertexNextIndex);
 
       int currentIndex = next(vertexNextIndex, concaveHullVertices);
-
       while (currentIndex != vertexPreviousIndex)
       {
-         if (EuclidGeometryTools.isPoint2DInsideTriangleABC(concaveHullVertices.get(currentIndex), a, b, c))
-            return true;
+      	if (EuclidGeometryTools.triangleArea(a, b, c) > Double.MIN_VALUE) 
+      	{
+     		   if (EuclidGeometryTools.isPoint2DInsideTriangleABC(concaveHullVertices.get(currentIndex), a, b, c))
+      		{
+      			return true;
+      		}
+      		 
+      	}     	
          currentIndex = next(currentIndex, concaveHullVertices);
       }
-
       return false;
    }
 
