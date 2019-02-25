@@ -16,10 +16,6 @@ public class VaryingHeightPrimaryConditionEvaluator
       primaryConditionEnum = VaryingHeightPrimaryConditionEnum.DEFAULT;
    }
 
-   /**
-    * Primary condition: 2 Constraints (min/max, based on height energy) and the phases (Pos/neg alignment, prepare). Phase changes can only occur in the order
-    * that the angle direction (angleGrows) is pointing at.
-    */
    public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double errorAngle, double errorAngleEndOfSwing, double negAlignTresh,
                                                                               double posAlignTresh, boolean useAngleForConditions, boolean distancePosAlignment,
                                                                               double copCoMProjDistance, double copCoMProjDistanceEndOfSwing,

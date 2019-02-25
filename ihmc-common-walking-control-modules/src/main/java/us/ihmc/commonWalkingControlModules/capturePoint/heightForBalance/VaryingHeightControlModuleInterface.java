@@ -29,10 +29,4 @@ public interface VaryingHeightControlModuleInterface
    void setDesiredCapturePointVelocity(FrameVector2D desiredCapturePointVelocity);
 
    VaryingHeightPrimaryConditionEnum getPrimaryCondition();
-
-   double getTimeToSwitch();
-
-   double getTimeRemaining();
-
-   double getErrorAngleEndOfSwing();
 }

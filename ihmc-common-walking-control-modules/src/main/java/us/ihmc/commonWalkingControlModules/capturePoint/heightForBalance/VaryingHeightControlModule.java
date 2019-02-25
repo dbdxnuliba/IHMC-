@@ -593,19 +593,4 @@ public class VaryingHeightControlModule implements VaryingHeightControlModuleInt
    {
       return primaryConditionYoEnum.getEnumValue();
    }
-
-   public double getTimeToSwitch()
-   {
-      return yoTimeToSwitch.getDoubleValue();
-   }
-
-   public double getTimeRemaining()
-   {
-      return yoTimeRemaining.getDoubleValue();
-   }
-
-   public double getErrorAngleEndOfSwing()
-   {
-      return copCoMICPeAngleFinal.getDoubleValue();
-   }
 }
