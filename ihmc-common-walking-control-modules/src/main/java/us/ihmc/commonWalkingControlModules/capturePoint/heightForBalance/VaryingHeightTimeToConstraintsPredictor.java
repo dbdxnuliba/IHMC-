@@ -8,7 +8,7 @@ public class VaryingHeightTimeToConstraintsPredictor
 
    public VaryingHeightTimeToConstraintsPredictor(double zMin)
    {
-      this.zMin=zMin;
+      this.zMin = zMin;
 
    }
 
@@ -20,7 +20,10 @@ public class VaryingHeightTimeToConstraintsPredictor
       double c = zCurrent - zMinForPrediction - 0.5 * dzCurrent * dzCurrent / aMaxPredicted;
       double tMinPosReachedPredicted = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
       tMinPosReachedPredicted = Math.max(0, tMinPosReachedPredicted);
-      if(Double.isNaN(tMinPosReachedPredicted)){tMinPosReachedPredicted=0;}
+      if (Double.isNaN(tMinPosReachedPredicted))
+      {
+         tMinPosReachedPredicted = 0;
+      }
       return tMinPosReachedPredicted;
    }
 
@@ -32,7 +35,10 @@ public class VaryingHeightTimeToConstraintsPredictor
       double c = zCurrent - zMaxForPrediction + 0.5 * dzCurrent * dzCurrent / -aMinPredicted;
       double tMaxPosReachedPredicted = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
       tMaxPosReachedPredicted = Math.max(0, tMaxPosReachedPredicted);
-      if(Double.isNaN(tMaxPosReachedPredicted)){tMaxPosReachedPredicted=0;}
+      if (Double.isNaN(tMaxPosReachedPredicted))
+      {
+         tMaxPosReachedPredicted = 0;
+      }
       return tMaxPosReachedPredicted;
    }
 
@@ -40,14 +46,21 @@ public class VaryingHeightTimeToConstraintsPredictor
    {
       double tMinVelReachedPredicted = (vMin - dzCurrent) / aMin;
       tMinVelReachedPredicted = Math.max(0, tMinVelReachedPredicted);
-      if(Double.isNaN(tMinVelReachedPredicted)){tMinVelReachedPredicted=0;}
+      if (Double.isNaN(tMinVelReachedPredicted))
+      {
+         tMinVelReachedPredicted = 0;
+      }
       return tMinVelReachedPredicted;
    }
+
    public double getTMaxVelReachedPredicted(double dzCurrent, double aMax, double vMax)
    {
       double tMaxVelReachedPredicted = (vMax - dzCurrent) / aMax;
       tMaxVelReachedPredicted = Math.max(0, tMaxVelReachedPredicted);
-      if(Double.isNaN(tMaxVelReachedPredicted)){tMaxVelReachedPredicted=0;}
+      if (Double.isNaN(tMaxVelReachedPredicted))
+      {
+         tMaxVelReachedPredicted = 0;
+      }
       return tMaxVelReachedPredicted;
    }
 

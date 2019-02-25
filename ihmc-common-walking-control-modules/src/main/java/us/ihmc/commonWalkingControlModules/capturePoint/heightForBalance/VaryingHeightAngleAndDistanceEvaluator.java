@@ -17,9 +17,10 @@ public class VaryingHeightAngleAndDistanceEvaluator
       FrameVector2D copCoMVec = new FrameVector2D();
       copCoMVec.setIncludingFrame(com3D);
       copCoMVec.sub(projectedCMP);
-      boolean distancePosAlignment=(MathTools.sign(copCoMVec.getY()) == MathTools.sign(icpError.getY()));
+      boolean distancePosAlignment = (MathTools.sign(copCoMVec.getY()) == MathTools.sign(icpError.getY()));
       return distancePosAlignment;
    }
+
    public boolean getDistanceImproves(FrameVector2D centerOfMassVelocity2D, FrameVector2D icpError)
    {
       double distanceImprovingAngle = icpError.angle(centerOfMassVelocity2D);
@@ -75,7 +76,7 @@ public class VaryingHeightAngleAndDistanceEvaluator
    }
 
    // error angle end of swing
-   public double getErrorAngleEndOfSwing(FramePoint2DReadOnly com2DEndOfSwing, FramePoint2D projectedDesiredCMP, FrameVector2D icpError )
+   public double getErrorAngleEndOfSwing(FramePoint2DReadOnly com2DEndOfSwing, FramePoint2D projectedDesiredCMP, FrameVector2D icpError)
    {
       double errorAngleEndOfSwing;
       FrameVector2D copCoMEndOfSwingVec = new FrameVector2D();
@@ -92,21 +93,21 @@ public class VaryingHeightAngleAndDistanceEvaluator
       boolean useAngleForConditions;
       FrameVector2D walkingDirection = new FrameVector2D();
       walkingDirection.changeFrame(ReferenceFrame.getWorldFrame());
-      walkingDirection.set(1.0,0.0);
+      walkingDirection.set(1.0, 0.0);
       double angle = walkingDirection.angle(icpError);
 
-      if(Math.abs(angle)<0.20)
+      if (Math.abs(angle) < 0.20)
       {
-         useAngleForConditions=true;
+         useAngleForConditions = true;
       }
-      else if(Math.abs(angle)>Math.PI-0.7)
+      else if (Math.abs(angle) > Math.PI - 0.7)
       {
-         useAngleForConditions=true;
+         useAngleForConditions = true;
       }
       else
       {
          useAngleForConditions = false;
       }
-      return  useAngleForConditions;
+      return useAngleForConditions;
    }
 }

@@ -11,7 +11,6 @@ public abstract class HeightForBalanceParameters
       return 0.97;
    }
 
-
    public double getMaxHeightAccelerationForAngleCase()
    {
       return 5;
@@ -56,7 +55,6 @@ public abstract class HeightForBalanceParameters
    {
       return 0.04;
    }
-
 
    public double getFractionOfSwingTimeToChangeMaxHeight()
    {

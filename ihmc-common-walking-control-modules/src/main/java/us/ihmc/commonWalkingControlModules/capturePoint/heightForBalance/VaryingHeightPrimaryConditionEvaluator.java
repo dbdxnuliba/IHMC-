@@ -11,9 +11,7 @@ public class VaryingHeightPrimaryConditionEvaluator
 
    public VaryingHeightPrimaryConditionEvaluator(double zMin)
    {
-      this.zMin=zMin;
-
-
+      this.zMin = zMin;
 
       primaryConditionEnum = VaryingHeightPrimaryConditionEnum.DEFAULT;
    }
@@ -22,17 +20,19 @@ public class VaryingHeightPrimaryConditionEvaluator
     * Primary condition: 2 Constraints (min/max, based on height energy) and the phases (Pos/neg alignment, prepare). Phase changes can only occur in the order
     * that the angle direction (angleGrows) is pointing at.
     */
-   public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double errorAngle, double errorAngleEndOfSwing,
-                                                                              double negAlignTresh, double posAlignTresh, boolean useAngleForConditions,
-                                                                              boolean distancePosAlignment, double copCoMProjDistance, double copCoMProjDistanceEndOfSwing,
+   public VaryingHeightPrimaryConditionEnum computeAndGetPrimaryConditionEnum(double errorAngle, double errorAngleEndOfSwing, double negAlignTresh,
+                                                                              double posAlignTresh, boolean useAngleForConditions, boolean distancePosAlignment,
+                                                                              double copCoMProjDistance, double copCoMProjDistanceEndOfSwing,
                                                                               boolean nonDynamicCase, double copCoMProjMinDistance)
    {
 
-      if((useAngleForConditions&&(errorAngle<posAlignTresh && errorAngle>-posAlignTresh) ||(!useAngleForConditions && distancePosAlignment))&&copCoMProjDistance>copCoMProjMinDistance  )
+      if ((useAngleForConditions && (errorAngle < posAlignTresh && errorAngle > -posAlignTresh) || (!useAngleForConditions && distancePosAlignment))
+            && copCoMProjDistance > copCoMProjMinDistance)
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.ALIGNED_POS;
       }
-      else if (useAngleForConditions && copCoMProjDistanceEndOfSwing>copCoMProjMinDistance && (errorAngleEndOfSwing<posAlignTresh && errorAngleEndOfSwing>-posAlignTresh ))
+      else if (useAngleForConditions && copCoMProjDistanceEndOfSwing > copCoMProjMinDistance && (errorAngleEndOfSwing < posAlignTresh
+            && errorAngleEndOfSwing > -posAlignTresh))
       {
          primaryConditionEnum = VaryingHeightPrimaryConditionEnum.PREPARE_NEG;
       }
