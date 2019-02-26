@@ -45,7 +45,9 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputCon
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
+import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
@@ -67,6 +69,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final AtomicReference<RobotConfigurationData> latestRobotConfigurationDataReference = new AtomicReference<>(null);
    private final AtomicReference<CapturabilityBasedStatus> latestCapturabilityBasedStatusReference = new AtomicReference<>(null);
 
+   private final DRCRobotModel drcRobotModel;
    private final FullHumanoidRobotModel desiredFullRobotModel;
    private final CommandInputManager commandInputManager;
 
@@ -94,7 +97,6 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final YoDouble totalComputationTime;
 
    private final SolutionQualityConvergenceDetector solutionQualityConvergenceDetector;
-   DRCRobotModel drcRobotModel;
 
    public KinematicsPlanningToolboxController(DRCRobotModel drcRobotModel, FullHumanoidRobotModel fullRobotModel, CommandInputManager commandInputManager,
                                               StatusMessageOutputManager statusOutputManager, YoGraphicsListRegistry yoGraphicsListRegistry,
@@ -555,31 +557,75 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       // TODO : implement.
       SideDependentList<ArrayList<JointBasics>> sideDependentArmJoints = new SideDependentList<ArrayList<JointBasics>>();
       SideDependentList<ArrayList<JointBasics>> sideDependentLegJoints = new SideDependentList<ArrayList<JointBasics>>();
-      for(RobotSide robotSide:RobotSide.values)
+      for (RobotSide robotSide : RobotSide.values)
       {
          sideDependentArmJoints.put(robotSide, new ArrayList<JointBasics>());
          sideDependentLegJoints.put(robotSide, new ArrayList<JointBasics>());
       }
-      
-      for(RobotSide robotSide:RobotSide.values)
+
+      for (RobotSide robotSide : RobotSide.values)
       {
          JointBasics armJoint = desiredFullRobotModel.getHand(robotSide).getParentJoint();
-         while(armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
+         while (armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
          {
-            PrintTools.info(""+armJoint.getName());
+            //PrintTools.info("" + armJoint.getName());
             sideDependentArmJoints.get(robotSide).add(armJoint);
             armJoint = armJoint.getPredecessor().getParentJoint();
          }
-         
+
          JointBasics legJoint = desiredFullRobotModel.getFoot(robotSide).getParentJoint();
-         while(legJoint.getPredecessor() != desiredFullRobotModel.getElevator())
+         while (legJoint.getPredecessor() != desiredFullRobotModel.getElevator())
          {
-            PrintTools.info(""+legJoint.getName());
+            //PrintTools.info("" + legJoint.getName());
             sideDependentLegJoints.get(robotSide).add(legJoint);
             legJoint = legJoint.getPredecessor().getParentJoint();
          }
       }
+
+      int numberOfConfigurations = solution.getRobotConfigurations().size();
+      for (int i = 0; i < numberOfConfigurations; i++)
+      {
+         FloatingJointBasics rootJoint = desiredFullRobotModel.getRootJoint();
+         OneDoFJointBasics[] joints = FullRobotModelUtils.getAllJointsExcludingHands(desiredFullRobotModel);
+         
+         KinematicsToolboxOutputStatus frame = solution.getRobotConfigurations().get(i);
+         MessageTools.unpackDesiredJointState(frame, rootJoint, joints);
+         
+         for(int j=0;j<joints.length;j++)
+         {
+            //PrintTools.info(""+i+" "+joints[j].getName()+" "+joints[j].getVelocityLimitLower()+" "+ joints[j].getVelocityLimitUpper()+" "+joints[j].getQ());
+         }
+      }
+
+      for (int i = 0; i < numberOfConfigurations - 1; i++)
+      {
+         double timeDiff = solution.getKeyFrameTimes().get(i+1) - solution.getKeyFrameTimes().get(i);
+         
+         FullHumanoidRobotModel robotModelForCurrentFrame = drcRobotModel.createFullRobotModel();
+         FullHumanoidRobotModel robotModelForNextFrame = drcRobotModel.createFullRobotModel();
+         
+         FloatingJointBasics rootJointForCurrentFrame = robotModelForCurrentFrame.getRootJoint();
+         FloatingJointBasics rootJointForNextFrame = robotModelForNextFrame.getRootJoint();
+         OneDoFJointBasics[] jointsForCurrentFrame = FullRobotModelUtils.getAllJointsExcludingHands(robotModelForCurrentFrame);
+         OneDoFJointBasics[] jointsForNextFrame = FullRobotModelUtils.getAllJointsExcludingHands(robotModelForNextFrame);
+         
+         KinematicsToolboxOutputStatus currentFrame = solution.getRobotConfigurations().get(i);
+         KinematicsToolboxOutputStatus nextFrame = solution.getRobotConfigurations().get(i+1);
+         MessageTools.unpackDesiredJointState(currentFrame, rootJointForCurrentFrame, jointsForCurrentFrame);
+         MessageTools.unpackDesiredJointState(nextFrame, rootJointForNextFrame, jointsForNextFrame);
+         
+         for(int j=0;j<jointsForCurrentFrame.length;j++)
+         {
+            PrintTools.info(""+i+" "+jointsForCurrentFrame[j].getName()+" "+jointsForCurrentFrame[j].getVelocityLimitLower()+" "+ jointsForCurrentFrame[j].getVelocityLimitUpper()+" "+jointsForCurrentFrame[j].getQ());
+            double jointDiff = jointsForNextFrame[j].getQ() - jointsForCurrentFrame[j].getQ();
+            PrintTools.info("joint q "+jointsForCurrentFrame[j].getQ() +" "+ jointsForNextFrame[j].getQ());
+            PrintTools.info("joint velocity "+jointDiff / timeDiff);
+         }
+      }
       
+
+      
+
       return false;
    }
 

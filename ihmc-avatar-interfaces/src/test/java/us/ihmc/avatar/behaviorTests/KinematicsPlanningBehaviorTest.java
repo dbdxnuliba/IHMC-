@@ -64,7 +64,8 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
    @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
-      if (true)
+      //if (simulationTestingParameters.getKeepSCSUp())
+         if(true)
       {
          ThreadTools.sleepForever();
       }
@@ -396,7 +397,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       drcBehaviorTestHelper.dispatchBehavior(behavior);
       
       int planningResult = behavior.getPlanningResult();
-      int expectedPlanningResult = KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT;
+      int expectedPlanningResult = KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_VELOCITY_LIMIT;
 
       PrintTools.info(" " + planningResult + " " + expectedPlanningResult);
       success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(behavior.getTrajectoryTime() + 1.0);
