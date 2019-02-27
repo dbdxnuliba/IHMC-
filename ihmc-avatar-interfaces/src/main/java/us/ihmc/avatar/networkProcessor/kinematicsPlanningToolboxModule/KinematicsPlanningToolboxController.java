@@ -44,17 +44,11 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFa
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
-import us.ihmc.mecano.frames.MovingReferenceFrame;
-import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
-import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
-import us.ihmc.robotics.partNames.ArmJointName;
-import us.ihmc.robotics.partNames.LimbName;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -72,6 +66,9 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final DRCRobotModel drcRobotModel;
    private final FullHumanoidRobotModel desiredFullRobotModel;
    private final CommandInputManager commandInputManager;
+
+   private final List<String> armJointNames = new ArrayList<String>();
+   private final Map<String, Double> jointVelocityLimitMap;
 
    private final KinematicsPlanningToolboxOutputStatus solution;
    private final KinematicsPlanningToolboxOutputConverter outputConverter;
@@ -105,6 +102,23 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       super(statusOutputManager, parentRegistry);
       this.drcRobotModel = drcRobotModel;
       this.desiredFullRobotModel = fullRobotModel;
+      jointVelocityLimitMap = new HashMap<>();
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         // TODO : put proper value from DRCRobotModel.
+         // TODO : DRCRobotModel will have heuristic value.
+         JointBasics armJoint = desiredFullRobotModel.getHand(robotSide).getParentJoint();
+         while (armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
+         {
+            String armJointName = armJoint.getName();
+            if (armJointName.contains(robotSide.getLowerCaseName()))
+            {
+               armJointNames.add(armJointName);
+               jointVelocityLimitMap.put(armJointName, Math.abs(desiredFullRobotModel.getOneDoFJointByName(armJointName).getVelocityLimitLower()));
+            }
+            armJoint = armJoint.getPredecessor().getParentJoint();
+         }
+      }
 
       solution = HumanoidMessageTools.createKinematicsPlanningToolboxOutputStatus();
       solution.setDestination(-1);
@@ -555,76 +569,37 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       // TODO : look into output status (solution).
       // TODO : implement.
-      SideDependentList<ArrayList<JointBasics>> sideDependentArmJoints = new SideDependentList<ArrayList<JointBasics>>();
-      SideDependentList<ArrayList<JointBasics>> sideDependentLegJoints = new SideDependentList<ArrayList<JointBasics>>();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         sideDependentArmJoints.put(robotSide, new ArrayList<JointBasics>());
-         sideDependentLegJoints.put(robotSide, new ArrayList<JointBasics>());
-      }
-
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         JointBasics armJoint = desiredFullRobotModel.getHand(robotSide).getParentJoint();
-         while (armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
-         {
-            //PrintTools.info("" + armJoint.getName());
-            sideDependentArmJoints.get(robotSide).add(armJoint);
-            armJoint = armJoint.getPredecessor().getParentJoint();
-         }
-
-         JointBasics legJoint = desiredFullRobotModel.getFoot(robotSide).getParentJoint();
-         while (legJoint.getPredecessor() != desiredFullRobotModel.getElevator())
-         {
-            //PrintTools.info("" + legJoint.getName());
-            sideDependentLegJoints.get(robotSide).add(legJoint);
-            legJoint = legJoint.getPredecessor().getParentJoint();
-         }
-      }
-
       int numberOfConfigurations = solution.getRobotConfigurations().size();
-      for (int i = 0; i < numberOfConfigurations; i++)
-      {
-         FloatingJointBasics rootJoint = desiredFullRobotModel.getRootJoint();
-         OneDoFJointBasics[] joints = FullRobotModelUtils.getAllJointsExcludingHands(desiredFullRobotModel);
-         
-         KinematicsToolboxOutputStatus frame = solution.getRobotConfigurations().get(i);
-         MessageTools.unpackDesiredJointState(frame, rootJoint, joints);
-         
-         for(int j=0;j<joints.length;j++)
-         {
-            //PrintTools.info(""+i+" "+joints[j].getName()+" "+joints[j].getVelocityLimitLower()+" "+ joints[j].getVelocityLimitUpper()+" "+joints[j].getQ());
-         }
-      }
 
       for (int i = 0; i < numberOfConfigurations - 1; i++)
       {
-         double timeDiff = solution.getKeyFrameTimes().get(i+1) - solution.getKeyFrameTimes().get(i);
-         
-         FullHumanoidRobotModel robotModelForCurrentFrame = drcRobotModel.createFullRobotModel();
-         FullHumanoidRobotModel robotModelForNextFrame = drcRobotModel.createFullRobotModel();
-         
-         FloatingJointBasics rootJointForCurrentFrame = robotModelForCurrentFrame.getRootJoint();
-         FloatingJointBasics rootJointForNextFrame = robotModelForNextFrame.getRootJoint();
-         OneDoFJointBasics[] jointsForCurrentFrame = FullRobotModelUtils.getAllJointsExcludingHands(robotModelForCurrentFrame);
-         OneDoFJointBasics[] jointsForNextFrame = FullRobotModelUtils.getAllJointsExcludingHands(robotModelForNextFrame);
-         
-         KinematicsToolboxOutputStatus currentFrame = solution.getRobotConfigurations().get(i);
-         KinematicsToolboxOutputStatus nextFrame = solution.getRobotConfigurations().get(i+1);
-         MessageTools.unpackDesiredJointState(currentFrame, rootJointForCurrentFrame, jointsForCurrentFrame);
-         MessageTools.unpackDesiredJointState(nextFrame, rootJointForNextFrame, jointsForNextFrame);
-         
-         for(int j=0;j<jointsForCurrentFrame.length;j++)
-         {
-            PrintTools.info(""+i+" "+jointsForCurrentFrame[j].getName()+" "+jointsForCurrentFrame[j].getVelocityLimitLower()+" "+ jointsForCurrentFrame[j].getVelocityLimitUpper()+" "+jointsForCurrentFrame[j].getQ());
-            double jointDiff = jointsForNextFrame[j].getQ() - jointsForCurrentFrame[j].getQ();
-            PrintTools.info("joint q "+jointsForCurrentFrame[j].getQ() +" "+ jointsForNextFrame[j].getQ());
-            PrintTools.info("joint velocity "+jointDiff / timeDiff);
-         }
-      }
-      
+         double timeDiff = solution.getKeyFrameTimes().get(i + 1) - solution.getKeyFrameTimes().get(i);
 
-      
+         if (isJointLimitExceededBetweenKeyFrames(solution.getRobotConfigurations().get(i), solution.getRobotConfigurations().get(i + 1), timeDiff))
+            return true;
+      }
+
+      return false;
+   }
+
+   private boolean isJointLimitExceededBetweenKeyFrames(KinematicsToolboxOutputStatus currentFrame, KinematicsToolboxOutputStatus nextFrame, double timeDiff)
+   {
+      KinematicsToolboxOutputConverter converterForCurrentFrame = new KinematicsToolboxOutputConverter(drcRobotModel);
+      KinematicsToolboxOutputConverter converterForNextFrame = new KinematicsToolboxOutputConverter(drcRobotModel);
+
+      converterForCurrentFrame.updateFullRobotModel(currentFrame);
+      converterForNextFrame.updateFullRobotModel(nextFrame);
+
+      for (int i = 0; i < armJointNames.size(); i++)
+      {
+         String armjointName = armJointNames.get(i);
+         double currentFrameQ = converterForCurrentFrame.getFullRobotModel().getOneDoFJointByName(armjointName).getQ();
+         double nextFrameQ = converterForNextFrame.getFullRobotModel().getOneDoFJointByName(armjointName).getQ();
+         double jointDiff = Math.abs(nextFrameQ - currentFrameQ);
+         PrintTools.info("" + armjointName + " " + jointDiff / timeDiff + " " + jointVelocityLimitMap.get(armjointName));
+         if (jointDiff / timeDiff > jointVelocityLimitMap.get(armjointName))
+            return true;
+      }
 
       return false;
    }

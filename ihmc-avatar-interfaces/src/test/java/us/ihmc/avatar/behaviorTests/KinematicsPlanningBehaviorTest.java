@@ -34,7 +34,6 @@ import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.KinematicsPlanningBehavior;
-import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -65,7 +64,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
    public void destroySimulationAndRecycleMemory()
    {
       //if (simulationTestingParameters.getKeepSCSUp())
-         if(true)
+      if (true)
       {
          ThreadTools.sleepForever();
       }
@@ -265,7 +264,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
 
       RobotSide robotSide = RobotSide.RIGHT;
       ReferenceFrame bodyFixedFrame = sdfFullRobotModel.getHand(robotSide).getBodyFixedFrame();
-      
+
       FramePose3D initialPose = new FramePose3D(bodyFixedFrame);
       initialPose.changeFrame(ReferenceFrame.getWorldFrame());
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(initialPose));
@@ -282,8 +281,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       FramePose3D desiredPoseThree = new FramePose3D(bodyFixedFrame, desiredPoseInHandFrame);
       desiredPoseInHandFrame.appendTranslation(0.0, 0.0, 1.0);
       FramePose3D desiredPoseBad = new FramePose3D(bodyFixedFrame, desiredPoseInHandFrame);
-      
-      
+
       desiredPoseOne.changeFrame(ReferenceFrame.getWorldFrame());
       desiredPoseTwo.changeFrame(ReferenceFrame.getWorldFrame());
       desiredPoseThree.changeFrame(ReferenceFrame.getWorldFrame());
@@ -292,7 +290,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseTwo));
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseThree));
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseBad));
-      
+
       keyFrameTimes.add(1.0);
       keyFrameTimes.add(2.0);
       keyFrameTimes.add(3.0);
@@ -308,7 +306,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       drcBehaviorTestHelper.updateRobotModel();
 
       drcBehaviorTestHelper.dispatchBehavior(behavior);
-      
+
       int planningResult = behavior.getPlanningResult();
       int expectedPlanningResult = KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_POSITION_LIMIT;
 
@@ -318,7 +316,6 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
 
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
-   
 
    @Test
    public void testLastKeyFrameBadVelocityPlanning() throws SimulationExceededMaximumTimeException, IOException
@@ -341,7 +338,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
 
       setUpCamera(startingLocation.getStartingLocationOffset().getAdditionalOffset());
 
-      boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(2.5);
+      boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(3.0);
       assertTrue(success);
 
       drcBehaviorTestHelper.updateRobotModel();
@@ -352,7 +349,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
 
       RobotSide robotSide = RobotSide.RIGHT;
       ReferenceFrame bodyFixedFrame = sdfFullRobotModel.getHand(robotSide).getBodyFixedFrame();
-      
+
       FramePose3D initialPose = new FramePose3D(bodyFixedFrame);
       initialPose.changeFrame(ReferenceFrame.getWorldFrame());
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(initialPose));
@@ -369,8 +366,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       FramePose3D desiredPoseThree = new FramePose3D(bodyFixedFrame, desiredPoseInHandFrame);
       desiredPoseInHandFrame.appendTranslation(0.0, 0.0, 0.05);
       FramePose3D desiredPoseBad = new FramePose3D(bodyFixedFrame, desiredPoseInHandFrame);
-      
-      
+
       desiredPoseOne.changeFrame(ReferenceFrame.getWorldFrame());
       desiredPoseTwo.changeFrame(ReferenceFrame.getWorldFrame());
       desiredPoseThree.changeFrame(ReferenceFrame.getWorldFrame());
@@ -379,7 +375,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseTwo));
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseThree));
       drcBehaviorTestHelper.getSimulationConstructionSet().addStaticLinkGraphics(createEndEffectorKeyFrameVisualization(desiredPoseBad));
-      
+
       keyFrameTimes.add(1.0);
       keyFrameTimes.add(2.0);
       keyFrameTimes.add(3.0);
@@ -395,17 +391,18 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
       drcBehaviorTestHelper.updateRobotModel();
 
       drcBehaviorTestHelper.dispatchBehavior(behavior);
-      
+
+      success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(behavior.getTrajectoryTime() + 1.0);
+
       int planningResult = behavior.getPlanningResult();
       int expectedPlanningResult = KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_EXCEED_JOINT_VELOCITY_LIMIT;
 
       PrintTools.info(" " + planningResult + " " + expectedPlanningResult);
-      success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(behavior.getTrajectoryTime() + 1.0);
+
       assertTrue(planningResult == expectedPlanningResult);
 
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
-   
 
    private void defineDesiredFramePoseToDoorKnob(ValkyrieEODObstacleCourseEnvironment envrionment)
    {

@@ -2,7 +2,6 @@ package us.ihmc.humanoidBehaviors.behaviors.primitives;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.KinematicsPlanningToolboxCenterOfMassMessage;
 import controller_msgs.msg.dds.KinematicsPlanningToolboxOutputStatus;
@@ -44,7 +43,6 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    private final TDoubleArrayList keyFrameTimes;
    private final List<KinematicsPlanningToolboxRigidBodyMessage> rigidBodyMessages;
 
-   private final AtomicReference<KinematicsPlanningToolboxOutputStatus> solution = new AtomicReference<KinematicsPlanningToolboxOutputStatus>();
    private final ConcurrentListeningQueue<KinematicsPlanningToolboxOutputStatus> toolboxOutputQueue = new ConcurrentListeningQueue<>(40);
 
    private final IHMCROS2Publisher<ToolboxStateMessage> toolboxStatePublisher;
@@ -166,7 +164,6 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
       if (toolboxOutputQueue.isNewPacketAvailable())
       {
          KinematicsPlanningToolboxOutputStatus solution = toolboxOutputQueue.poll();
-         this.solution.set(solution);
          planningResult = solution.getPlanId();
          numberOfValidKeyFrames = solution.getRobotConfigurations().size();
 
@@ -262,11 +259,6 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    public int getNumberOfValidKeyFrames()
    {
       return numberOfValidKeyFrames;
-   }
-
-   public KinematicsPlanningToolboxOutputStatus getSolution()
-   {
-      return solution.get();
    }
 
    private void deactivateKinematicsToolboxModule()
