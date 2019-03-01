@@ -44,7 +44,9 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFa
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
+import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
+import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
@@ -88,6 +90,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final TDoubleArrayList keyFrameTimes;
 
    private final HumanoidKinematicsToolboxController ikController;
+   private final KinematicsToolboxOutputStatus initialRobotConfiguration;
    private final CommandInputManager ikCommandInputManager = new CommandInputManager(getClass().getSimpleName(), KinematicsToolboxModule.supportedCommands());
 
    private final YoInteger indexOfCurrentKeyFrame;
@@ -105,8 +108,6 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       jointVelocityLimitMap = new HashMap<>();
       for (RobotSide robotSide : RobotSide.values)
       {
-         // TODO : put proper value from DRCRobotModel.
-         // TODO : DRCRobotModel will have heuristic value.
          JointBasics armJoint = desiredFullRobotModel.getHand(robotSide).getParentJoint();
          while (armJoint.getPredecessor() != desiredFullRobotModel.getElevator())
          {
@@ -142,6 +143,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
       ikCommandInputManager.registerConversionHelper(new KinematicsToolboxCommandConverter(desiredFullRobotModel));
       ikController = new HumanoidKinematicsToolboxController(ikCommandInputManager, statusOutputManager, fullRobotModel, yoGraphicsListRegistry,
                                                              parentRegistry);
+      initialRobotConfiguration = MessageTools.createKinematicsToolboxOutputStatus(ikController.getDesiredOneDoFJoint());
 
       indexOfCurrentKeyFrame = new YoInteger("indexOfCurrentKeyFrame", parentRegistry);
       totalComputationTime = new YoDouble("totalComputationTime", parentRegistry);
@@ -537,9 +539,10 @@ public class KinematicsPlanningToolboxController extends ToolboxController
          return false;
       }
 
-      KinematicsToolboxHelper.setRobotStateFromRobotConfigurationData(currentRobotConfiguration, getDesiredFullRobotModel().getRootJoint(),
-                                                                      FullRobotModelUtils.getAllJointsExcludingHands(getDesiredFullRobotModel()));
-
+      FloatingJointBasics rootJoint = getDesiredFullRobotModel().getRootJoint();
+      OneDoFJointBasics[] allJointsExcludingHands = FullRobotModelUtils.getAllJointsExcludingHands(getDesiredFullRobotModel());
+      KinematicsToolboxHelper.setRobotStateFromRobotConfigurationData(currentRobotConfiguration, rootJoint, allJointsExcludingHands);
+      MessageTools.packDesiredJointState(initialRobotConfiguration, rootJoint, allJointsExcludingHands);
       ikController.updateRobotConfigurationData(currentRobotConfiguration);
 
       CapturabilityBasedStatus capturabilityBasedStatus = latestCapturabilityBasedStatusReference.get();
@@ -567,16 +570,23 @@ public class KinematicsPlanningToolboxController extends ToolboxController
 
    private boolean isVelocityLimitExceeded()
    {
-      // TODO : look into output status (solution).
-      // TODO : implement.
       int numberOfConfigurations = solution.getRobotConfigurations().size();
 
-      for (int i = 0; i < numberOfConfigurations - 1; i++)
+      KinematicsToolboxOutputStatus currentFrame = initialRobotConfiguration;
+      double currentKeyFrameTime = 0.0;
+      for (int i = 0; i < numberOfConfigurations; i++)
       {
-         double timeDiff = solution.getKeyFrameTimes().get(i + 1) - solution.getKeyFrameTimes().get(i);
+         KinematicsToolboxOutputStatus nextFrame = solution.getRobotConfigurations().get(i);
+         double nextKeyFrameTime = solution.getKeyFrameTimes().get(i);
+         double timeDiff = solution.getKeyFrameTimes().get(i) - currentKeyFrameTime;
 
-         if (isJointLimitExceededBetweenKeyFrames(solution.getRobotConfigurations().get(i), solution.getRobotConfigurations().get(i + 1), timeDiff))
+         // TODO : save trajectory parameters for each key frames.
+         PrintTools.info("" + timeDiff);
+         if (isJointLimitExceededBetweenKeyFrames(currentFrame, nextFrame, timeDiff))
             return true;
+
+         currentFrame = nextFrame;
+         currentKeyFrameTime = nextKeyFrameTime;
       }
 
       return false;
