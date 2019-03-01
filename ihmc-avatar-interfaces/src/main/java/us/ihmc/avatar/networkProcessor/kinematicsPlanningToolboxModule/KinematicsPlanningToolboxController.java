@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.fest.swing.util.Pair;
+
 import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.KinematicsPlanningToolboxOutputStatus;
 import controller_msgs.msg.dds.KinematicsToolboxCenterOfMassMessage;
@@ -22,7 +24,6 @@ import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolbox
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxHelper;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
@@ -70,7 +71,9 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final CommandInputManager commandInputManager;
 
    private final List<String> armJointNames = new ArrayList<String>();
-   private final Map<String, Double> jointVelocityLimitMap;
+   private final Map<String, Pair<Double, Double>> jointVelocityLimitMap;
+   private final KeyFrameBasedTrajectoryGenerator keyFrameBasedTrajectoryGenerator;
+   private final static double searchingTimeTickForVelocityBound = 0.05;
 
    private final KinematicsPlanningToolboxOutputStatus solution;
    private final KinematicsPlanningToolboxOutputConverter outputConverter;
@@ -115,11 +118,15 @@ public class KinematicsPlanningToolboxController extends ToolboxController
             if (armJointName.contains(robotSide.getLowerCaseName()))
             {
                armJointNames.add(armJointName);
-               jointVelocityLimitMap.put(armJointName, Math.abs(desiredFullRobotModel.getOneDoFJointByName(armJointName).getVelocityLimitLower()));
+               OneDoFJointBasics oneDoFJointByName = desiredFullRobotModel.getOneDoFJointByName(armJointName);
+               Pair<Double, Double> velocityLimit = new Pair<Double, Double>(oneDoFJointByName.getVelocityLimitLower(),
+                                                                             oneDoFJointByName.getVelocityLimitUpper());
+               jointVelocityLimitMap.put(armJointName, velocityLimit);
             }
             armJoint = armJoint.getPredecessor().getParentJoint();
          }
       }
+      keyFrameBasedTrajectoryGenerator = new KeyFrameBasedTrajectoryGenerator(drcRobotModel, armJointNames);
 
       solution = HumanoidMessageTools.createKinematicsPlanningToolboxOutputStatus();
       solution.setDestination(-1);
@@ -570,44 +577,16 @@ public class KinematicsPlanningToolboxController extends ToolboxController
 
    private boolean isVelocityLimitExceeded()
    {
-      int numberOfConfigurations = solution.getRobotConfigurations().size();
+      keyFrameBasedTrajectoryGenerator.addInitialConfiguration(initialRobotConfiguration);
+      keyFrameBasedTrajectoryGenerator.addKeyFrames(solution.getRobotConfigurations(), solution.getKeyFrameTimes());
+      keyFrameBasedTrajectoryGenerator.compute(searchingTimeTickForVelocityBound);
 
-      KinematicsToolboxOutputStatus currentFrame = initialRobotConfiguration;
-      double currentKeyFrameTime = 0.0;
-      for (int i = 0; i < numberOfConfigurations; i++)
+      for (String armJointName : armJointNames)
       {
-         KinematicsToolboxOutputStatus nextFrame = solution.getRobotConfigurations().get(i);
-         double nextKeyFrameTime = solution.getKeyFrameTimes().get(i);
-         double timeDiff = solution.getKeyFrameTimes().get(i) - currentKeyFrameTime;
-
-         // TODO : save trajectory parameters for each key frames.
-         PrintTools.info("" + timeDiff);
-         if (isJointLimitExceededBetweenKeyFrames(currentFrame, nextFrame, timeDiff))
-            return true;
-
-         currentFrame = nextFrame;
-         currentKeyFrameTime = nextKeyFrameTime;
-      }
-
-      return false;
-   }
-
-   private boolean isJointLimitExceededBetweenKeyFrames(KinematicsToolboxOutputStatus currentFrame, KinematicsToolboxOutputStatus nextFrame, double timeDiff)
-   {
-      KinematicsToolboxOutputConverter converterForCurrentFrame = new KinematicsToolboxOutputConverter(drcRobotModel);
-      KinematicsToolboxOutputConverter converterForNextFrame = new KinematicsToolboxOutputConverter(drcRobotModel);
-
-      converterForCurrentFrame.updateFullRobotModel(currentFrame);
-      converterForNextFrame.updateFullRobotModel(nextFrame);
-
-      for (int i = 0; i < armJointNames.size(); i++)
-      {
-         String armjointName = armJointNames.get(i);
-         double currentFrameQ = converterForCurrentFrame.getFullRobotModel().getOneDoFJointByName(armjointName).getQ();
-         double nextFrameQ = converterForNextFrame.getFullRobotModel().getOneDoFJointByName(armjointName).getQ();
-         double jointDiff = Math.abs(nextFrameQ - currentFrameQ);
-         PrintTools.info("" + armjointName + " " + jointDiff / timeDiff + " " + jointVelocityLimitMap.get(armjointName));
-         if (jointDiff / timeDiff > jointVelocityLimitMap.get(armjointName))
+         double jointVelocityLowerBound = keyFrameBasedTrajectoryGenerator.getJointVelocityLowerBound(armJointName);
+         double jointVelocityUpperBound = keyFrameBasedTrajectoryGenerator.getJointVelocityUpperBound(armJointName);
+         Pair<Double, Double> velocityLimit = jointVelocityLimitMap.get(armJointName);
+         if (velocityLimit.i > jointVelocityLowerBound || velocityLimit.ii < jointVelocityUpperBound)
             return true;
       }
 

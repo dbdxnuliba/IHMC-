@@ -63,8 +63,7 @@ public abstract class KinematicsPlanningBehaviorTest implements MultiRobotTestIn
    @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
-      //if (simulationTestingParameters.getKeepSCSUp())
-      if (true)
+      if (simulationTestingParameters.getKeepSCSUp())
       {
          ThreadTools.sleepForever();
       }
