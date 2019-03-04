@@ -4,13 +4,9 @@ import static org.junit.Assert.*;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
 import us.ihmc.robotics.random.RandomGeometry;
@@ -19,12 +15,11 @@ public class VectorMeanTest
 {
 	private static final int NUMBER_OF_ITERATIONS = 10000;
 	private static final double EPS = 1.0e-12;
-	Random random = new Random();
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
+	@Test
 	public final void testWithVectorMean()
 	{
+		Random random = new Random();
 		VectorMean meanVector = new VectorMean();
 		Vector3D randomVector = new Vector3D();
 		Vector3D sum = new Vector3D();
@@ -47,10 +42,10 @@ public class VectorMeanTest
 
 	}
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
+	@Test
 	public final void testWithTuple3DBasics()
 	{
+		Random random = new Random();
 		VectorMean meanVector = new VectorMean();
 		Vector3D randomVector = new Vector3D();
 		Vector3D sum = new Vector3D();
@@ -73,6 +68,11 @@ public class VectorMeanTest
 		assertEquals(meanVector.getX(), 0, EPS);
 		assertEquals(meanVector.getY(), 0, EPS);
 		assertEquals(meanVector.getZ(), 0, EPS);
+	}
+	
+	public static void main(String[] args)
+	{
+		MutationTestFacilitator.facilitateMutationTestForClass(VectorMeanTest.class, VectorMeanTest.class);
 	}
 
 }
