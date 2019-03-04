@@ -11,7 +11,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import us.ihmc.commons.MutationTestFacilitator;
 
-@TestMethodOrder(OrderAnnotation.class)
+
 public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 {
 	private static final boolean DEBUG = true;
