@@ -234,7 +234,8 @@ public class ConcaveHullTestBasics
 		//	System.out.printf("%3.5f ", y[i]);
 
 		double highestY = Double.MIN_VALUE;
-		double lowestY = Double.MAX_VALUE;
+		double lowestY1 = Double.MAX_VALUE;
+		double lowestY2 = Double.MAX_VALUE;
 		Point3D leftLowerCornerPoint = new Point3D();
 		Point3D rightLowerCornerPoint = new Point3D();
 
@@ -245,13 +246,15 @@ public class ConcaveHullTestBasics
 			sombrero3D.add(new Point3D(x[i], y[i], 0));
 			if (y[i] > highestY)
 				highestY = y[i];
-			if (y[i] < lowestY)
-				lowestY = y[i];
+			if (y[i] < lowestY1)
+				lowestY1 = y[i];
+			if (y[i] < lowestY2 && y[i] > lowestY1)
+				lowestY2 = y[i];
 		}
 		sombrero3D.add(rightLowerCornerPoint);
 
-		leftLowerCornerPoint.set(x[0], lowestY - 1, 0);
-		rightLowerCornerPoint.set(x[xlen - 1], lowestY - 1, 0);
+		leftLowerCornerPoint.set(x[0], lowestY1 - 1, 0);
+		rightLowerCornerPoint.set(x[xlen - 1], lowestY1 - 1, 0);
 
 		sombrero = new ArrayList<>();
 		for (Point3D i : sombrero3D)
@@ -260,13 +263,21 @@ public class ConcaveHullTestBasics
 		// Locate the maximum and the two minimums between the corners
 		for (int i = 1; i < xlen; i++)
 		{
-			Point2D pt = sombrero.get(i);
-			if (pt.getY() == highestY)
-				max = i;
-			if (pt.getY() == lowestY && min1 == -1)
-				min1 = i;
-			else if (pt.getY() == lowestY && min2 == -1)
-				min2 = i;
+			if (y[i] == highestY)
+				max = i+1;
+			
+			if(min1 == -1) 
+			{
+				if (Math.abs(y[i] - lowestY1) < EPS)
+					min1 = i+1;
+			}
+			else if(min2 == -1)
+			{
+				if (Math.abs(y[i] - lowestY2) < EPS)
+					min2 = i+1;				
+			}
+				
+				
 		}
 
 		//System.out.println("\n"+sombrero2D);
