@@ -2,6 +2,14 @@ package us.ihmc.robotEnvironmentAwareness.geometry;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Assert;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
 import static us.ihmc.commons.lists.ListWrappingIndexTools.next;
 import static us.ihmc.commons.lists.ListWrappingIndexTools.removeAllExclusive;
 import static us.ihmc.commons.lists.ListWrappingIndexTools.subListInclusive;
@@ -18,9 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
 
 import com.sun.javafx.application.PlatformImpl;
 import com.vividsolutions.jts.geom.MultiPoint;
@@ -28,6 +34,7 @@ import com.vividsolutions.jts.geom.MultiPoint;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -74,10 +81,10 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 	private ConcaveHull convexHull = null;
 	private ConcaveHullPocket pocket = null;
 
-	@Test(timeout = 30000)
+	@Test
 	public void recursiveApproximateDecompositionConcaveHullCollectionn() throws Exception
 	{
-		initializeBasics();
+		initializeBaseClass();
 		ConcaveHullCollection concaveHullCollection = new ConcaveHullCollection();
 		double depthThreshold = 0;
 		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
@@ -86,7 +93,7 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		//		  public static void recursiveApproximateDecomposition(ConcaveHullCollection concaveHullCollection, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
 	}
 
-//	@Test(timeout = 30000)
+//	@Test
 //	public void recursiveApproximateDecompositionConcaveHull() throws Exception
 //	{
 //		initializeBasics();
@@ -99,10 +106,10 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 //
 //	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void recursiveApproximateDecompositionPoint2DList() throws Exception
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends Point2DReadOnly> concaveHullVertices = new ArrayList<>();
 		double depthThreshold = 0;
 		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
@@ -111,7 +118,7 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		//   public static void recursiveApproximateDecomposition(List<? extends Point2DReadOnly> concaveHullVertices, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
 	}
 
-//	@Test(timeout = 30000)
+//	@Test
 //	public void recursiveApproximateDecompositionInternal() throws Exception
 //	{
 // 	initializeBasics();
@@ -124,11 +131,11 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 //	}
 	
 	
-	@Test(timeout = 30000)
+	@Test
 	public void testRecursiveApproximateDecompositionInternal() throws Exception
 	{
 
-		initializeBasics();
+		initializeBaseClass();
 		MultiPoint multiPoint = SimpleConcaveHullFactory.filterAndCreateMultiPoint(getPointcloud2D(), getLineConstraints2D(), .001);
 
 		PlanarRegionSegmentationRawData data = new PlanarRegionSegmentationRawData(1, Axis.Z, new Point3D(), pointcloud3D);
@@ -217,7 +224,7 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		{
 			planarRegion.getConcaveHull();
 
-			if (planarRegion.getNumberOfConvexPolygons() > 0)
+			if (planarRegion.getNumberOfConvexPolygons() == 0)
 				return;
 
 			CustomPlanarRegionHandler.performConvexDecompositionIfNeeded(planarRegion);
@@ -242,5 +249,11 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 	//public static void recursiveApproximateDecomposition(ConcaveHull concaveHull, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
 	//public static void recursiveApproximateDecomposition(List<? extends Point2DReadOnly> concaveHullVertices, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
 	//private static void recursiveApproximateDecompositionInternal(List<Point2DReadOnly> concaveHullVertices, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
+
+	
+	public static void main(String[] args)
+	{
+		MutationTestFacilitator.facilitateMutationTestForClass(ConcaveHullDecompositionTest.class, ConcaveHullDecompositionTest.class);
+	}
 
 }
