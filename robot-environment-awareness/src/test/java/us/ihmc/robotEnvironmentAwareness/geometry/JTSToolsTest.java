@@ -1,11 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.geometry;
 
-<<<<<<< HEAD
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-=======
 import static us.ihmc.robotics.Assert.*;
->>>>>>> refs/remotes/origin/develop
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +19,7 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
 import com.vividsolutions.jts.triangulate.quadedge.Vertex;
 
+import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
@@ -44,19 +40,12 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		VISUALIZE = false;
 	}
 
-<<<<<<< HEAD
-	private static final int ITERATIONS = 1000;
-=======
-   @Test
-   public void testPointConversions()
-   {
-      Random random = new Random(4234234);
->>>>>>> refs/remotes/origin/develop
+	//private static final int ITERATIONS = 1000;
 
-	@Test(timeout = 30000)
+	@Test
 	public void testExtractionMethods()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Random random = new Random(4234234);
 
 		ConcaveHullFactoryResult concaveHullFactoryResult = new ConcaveHullFactoryResult();
@@ -92,37 +81,22 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 	//   return coordinateToPoint3D(point.getCoordinate());
 	//}
 
-<<<<<<< HEAD
-	@Test(timeout = 30000)
+
+	@Test
 	public void testQuadEdgeAlgebra()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Random random = new Random(4234234);
 		Vertex expectedVertex2D_v0 = new Vertex(random.nextDouble(), random.nextDouble());
 		Vertex expectedVertex2D_v1 = new Vertex(random.nextDouble(), random.nextDouble());
-=======
-   @Test
-   public void testLineStringConversion() throws Exception
-   {
-      Random random = new Random(2423423);
->>>>>>> refs/remotes/origin/develop
-
 		Vertex expectedVertex3D_v0 = new Vertex(random.nextDouble(), random.nextDouble(), random.nextDouble());
 		Vertex expectedVertex3D_v1 = new Vertex(random.nextDouble(), random.nextDouble(), random.nextDouble());
 
 		QuadEdge quadEdge2D = QuadEdge.makeEdge(expectedVertex2D_v0, expectedVertex2D_v1);
 		QuadEdge quadEdge3D = QuadEdge.makeEdge(expectedVertex3D_v0, expectedVertex3D_v1);
 
-<<<<<<< HEAD
 		LineSegment2D lineSegment2D = JTSTools.quadEdgeToLineSegment2D(quadEdge2D);
 		LineSegment3D lineSegment3D = JTSTools.quadEdgeToLineSegment3D(quadEdge3D);
-=======
-   @Test
-   public void testMultiString() throws Exception
-   {
-      Random random = new Random(43543);
->>>>>>> refs/remotes/origin/develop
-
 		Collection<QuadEdge> quadEdges = new ArrayList<QuadEdge>();
 		quadEdges.add(quadEdge2D);
 		quadEdges.add(quadEdge3D);
@@ -134,10 +108,10 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		//quadEdgeTriangleToTriangle(quadEdgeTriangle);
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testPointConversions()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Random random = new Random(4234234);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -174,10 +148,10 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
-	public void testLineStringConversion() throws Exception
+	@Test
+	public void testLineStringConversion()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Random random = new Random(2423423);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -197,10 +171,10 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
-	public void testMultiString() throws Exception
+	@Test
+	public void testMultiString()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Random random = new Random(43543);
 
 		for (int i = 0; i < ITERATIONS; i++)
@@ -293,6 +267,6 @@ public class JTSToolsTest extends ConcaveHullTestBasics
 	
 	public static void main(String[] args)
 	{
-		
+		MutationTestFacilitator.facilitateMutationTestForClass(JTSToolsTest.class, JTSToolsTest.class);
 	}
 }
