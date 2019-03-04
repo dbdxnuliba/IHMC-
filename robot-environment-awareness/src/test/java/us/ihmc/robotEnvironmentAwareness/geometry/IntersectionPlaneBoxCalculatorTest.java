@@ -13,13 +13,13 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.random.RandomGeometry;
 
-public class IntersectionPlaneBoxCalculatorTest
+public class IntersectionPlaneBoxCalculatorTest extends ConcaveHullTestBasics
 {
-   private static final int NUMBER_OF_ITERATIONS = 10000;
+   //private static final int NUMBER_OF_ITERATIONS = 10000;
    private static final double EPS = 1.0e-7;
 
    @Test
-   public void testRandomNormals() throws Exception
+   public void testRandomNormals()
    {
       Random random = new Random(3424L);
 
@@ -27,7 +27,7 @@ public class IntersectionPlaneBoxCalculatorTest
       Point3D cubeCenter = new Point3D();
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
 
-      for (int i = 0; i < NUMBER_OF_ITERATIONS; i++)
+      for (int i = 0; i < ITERATIONS; i++)
       {
          Point3D pointOnPlane = cubeCenter;
          Vector3D planeNormal = RandomGeometry.nextVector3D(random, 1.0);
@@ -56,7 +56,7 @@ public class IntersectionPlaneBoxCalculatorTest
    }
 
    @Test
-   public void testRandomNormalsAndPointOnPlane() throws Exception
+   public void testRandomNormalsAndPointOnPlane()
    {
       Random random = new Random(34424L);
 
@@ -64,7 +64,7 @@ public class IntersectionPlaneBoxCalculatorTest
       Point3D cubeCenter = new Point3D();
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
 
-      for (int i = 0; i < NUMBER_OF_ITERATIONS; i++)
+      for (int i = 0; i < ITERATIONS; i++)
       {
          Point3D pointOnPlane = RandomGeometry.nextPoint3D(random, 0.5, 0.5, 0.5);
          Vector3D planeNormal = RandomGeometry.nextVector3D(random, 1.0);
@@ -93,14 +93,14 @@ public class IntersectionPlaneBoxCalculatorTest
    }
 
    @Test
-   public void testRandomNormalsPointOnPlaneAndCubeCenters() throws Exception
+   public void testRandomNormalsPointOnPlaneAndCubeCenters()
    {
       Random random = new Random(3424L);
 
       double cubeSize = 1.0;
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
 
-      for (int i = 0; i < NUMBER_OF_ITERATIONS; i++)
+      for (int i = 0; i < ITERATIONS; i++)
       {
          Point3D cubeCenter = RandomGeometry.nextPoint3D(random, 10.0, 10.0, 10.0);
          Point3D pointOnPlane = RandomGeometry.nextPoint3D(random, 0.5, 0.5, 0.5);
@@ -137,7 +137,7 @@ public class IntersectionPlaneBoxCalculatorTest
    }
 
    @Test
-   public void testBug1() throws Exception
+   public void testBug1()
    {
       double cubeSize = 0.1;
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
@@ -170,7 +170,7 @@ public class IntersectionPlaneBoxCalculatorTest
    }
 
    @Test
-   public void testBug2() throws Exception
+   public void testBug2()
    {
       double cubeSize = 0.1;
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
@@ -203,7 +203,7 @@ public class IntersectionPlaneBoxCalculatorTest
    }
 
    @Test
-   public void testBug3() throws Exception
+   public void testBug3()
    {
       double cubeSize = 0.1;
       IntersectionPlaneBoxCalculator calculator = new IntersectionPlaneBoxCalculator();
