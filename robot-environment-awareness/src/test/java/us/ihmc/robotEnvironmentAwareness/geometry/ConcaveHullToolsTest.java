@@ -149,7 +149,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		List<? extends Point2DReadOnly> concaveHullVertices = sombrero;
 		double perimeter = ConcaveHullTools.computePerimeter(concaveHullVertices);
 
-		assertEquals(perimeter, 43.776519, EPS); // value for createMexicanHat(-5, 5, 15);
+		assertEquals(perimeter, 23.805245, EPS); // value for createMexicanHat(-5, 5, 51);
 		if (DEBUG)
 			System.out.printf("\ntestComputePerimeter: %f", perimeter);
 	}
@@ -207,26 +207,24 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		for (int i = 0; i < vertices.size(); i++)
 		{
 			boolean concaveHullPocket = ConcaveHullTools.computeConcaveHullPocket(i, pocketToPack, vertices);
-			//System.out.printf("\ntestComputeConcaveHullPocket: i = %d %d %d ", i, min1, min2);
+			//if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: i = %d %d %d ", i, min1, min2);
 			if (i == min1)
 			{
 				assert (concaveHullPocket == true);
 				assert (pocketToPack.getDeepestVertexIndex() == 18);
-				assertEquals(pocketToPack.getDeepestVertex().getX(), 1.666667, EPS);
-				assertEquals(pocketToPack.getDeepestVertex().getY(), -0.384479, EPS);
-				assert (pocketToPack.getEndBridgeIndex() == 52);
-				assertEquals(pocketToPack.getEndBridgeVertex().getX(), 15.0, EPS);
-				assertEquals(pocketToPack.getEndBridgeVertex().getY(), 0, EPS);
+				assertEquals(pocketToPack.getDeepestVertex().getX(), -1.600000, EPS);
+				assertEquals(pocketToPack.getDeepestVertex().getY(), -0.376192, EPS);
+				assert (pocketToPack.getEndBridgeIndex() == 26);
+				assertEquals(pocketToPack.getEndBridgeVertex().getX(), 0.0, EPS);
+				assertEquals(pocketToPack.getEndBridgeVertex().getY(), 0.867325, EPS);
 
-				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: found min1 at %d", pocketToPack.getDeepestVertexIndex());
-				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: deepestVertex =  %f %f", pocketToPack.getDeepestVertex().getX(), pocketToPack.getDeepestVertex().getY());
-				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex at %d", pocketToPack.getEndBridgeIndex());
-				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex =  %f %f", pocketToPack.getEndBridgeVertex().getX(), pocketToPack.getEndBridgeVertex().getY());
+//				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: found min1 at %d", pocketToPack.getDeepestVertexIndex());
+//				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: deepestVertex =  %f %f", pocketToPack.getDeepestVertex().getX(), pocketToPack.getDeepestVertex().getY());
+//				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex at %d", pocketToPack.getEndBridgeIndex());
+//				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex =  %f %f", pocketToPack.getEndBridgeVertex().getX(), pocketToPack.getEndBridgeVertex().getY());
 			}
-			assert(min2 == -1);
 		}
 
-		//public static boolean computeConcaveHullPocket(int concaveVertexIndex, ConcaveHullPocket pocketToPack, List<? extends Point2DReadOnly> concaveHullVertices)
 		if (DEBUG) System.out.printf("\ntestComputeConcaveHullPocket");
 	}
 
@@ -275,8 +273,8 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		assert (firstConcaveHullPocketInefficient != null);
 		if (firstConcaveHullPocketInefficient != null)
 		{
-			assert (firstConcaveHullPocketInefficient.getDeepestVertexIndex() == 10);
-			assertEquals(firstConcaveHullPocketInefficient.getMaxDepth(), 0.9209397755013917, EPS);
+			assert (firstConcaveHullPocketInefficient.getDeepestVertexIndex() == 18);
+			assertEquals(firstConcaveHullPocketInefficient.getMaxDepth(), 0.9517329, EPS);
 			if (DEBUG)
 				System.out.print("\ntestFirstConcaveHullPocketInefficient: DeepestVertexIndex, MaxDepth = "
 				      + firstConcaveHullPocketInefficient.getDeepestVertexIndex() + ", " + firstConcaveHullPocketInefficient.getMaxDepth());
@@ -306,7 +304,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 
 		if (sombreroInitialized)
 		{
-			int[] bitMap = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+			int[] bitMap = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 			int n = sombrero.size();
 			String str = String.format("int[%d] bitMap = {", n);
 

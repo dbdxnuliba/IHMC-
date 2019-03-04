@@ -200,7 +200,7 @@ public class ConcaveHullTestBasics
 		for (LineSegment3D i : lineConstraints3D)
 			lineConstraints2D.add(new LineSegment2D(i.getFirstEndpointX(), i.getFirstEndpointY(), i.getSecondEndpointX(), i.getSecondEndpointY()));
 
-		sombreroInitialized = createSombrero(-5, 15, 51);  //createSombrero(-5, 5, 15);
+		sombreroInitialized = createSombrero(-5.0, 5.0, 51);  //createSombrero(-5, 5, 15);
 		
 		sombreroCollection = new ConcaveHullCollection();
 		sombreroCollection.add(sombrero);
@@ -244,41 +244,47 @@ public class ConcaveHullTestBasics
 		for (int i = 0; i < xlen; i++)
 		{
 			sombrero3D.add(new Point3D(x[i], y[i], 0));
-			if (y[i] > highestY)
-				highestY = y[i];
-			if (y[i] < lowestY1)
-				lowestY1 = y[i];
-			if (y[i] < lowestY2 && y[i] > lowestY1)
-				lowestY2 = y[i];
 		}
 		sombrero3D.add(rightLowerCornerPoint);
+
+		// locate the peak
+		for (int i = 0; i < xlen; i++)
+		{	
+			if (y[i] > highestY)
+			{
+				highestY = y[i];
+				max = i;
+			}
+		}
+		
+			
+		// find the first minimum
+		for (int i = 0; i < max; i++)
+		{
+			if (y[i] < lowestY1)
+			{
+				lowestY1 = y[i];
+				min1 = i;
+			}
+		}
+		
+		// find the second minimum
+		for (int i = max; i <xlen; i++)
+		{
+			if (y[i] < lowestY2)
+			{
+				lowestY2 = y[i];
+				min2 = i;
+			}
+		}
+//		System.out.printf("\n max, min1, min2  = %d %e %d %e %d %e " , max, y[max], min1, y[min1], min2, y[min2] );
 
 		leftLowerCornerPoint.set(x[0], lowestY1 - 1, 0);
 		rightLowerCornerPoint.set(x[xlen - 1], lowestY1 - 1, 0);
 
 		sombrero = new ArrayList<>();
 		for (Point3D i : sombrero3D)
-			sombrero.add(new Point2D(i.getX(), i.getY()));
-
-		// Locate the maximum and the two minimums between the corners
-		for (int i = 1; i < xlen; i++)
-		{
-			if (y[i] == highestY)
-				max = i+1;
-			
-			if(min1 == -1) 
-			{
-				if (Math.abs(y[i] - lowestY1) < EPS)
-					min1 = i+1;
-			}
-			else if(min2 == -1)
-			{
-				if (Math.abs(y[i] - lowestY2) < EPS)
-					min2 = i+1;				
-			}
-				
-				
-		}
+			sombrero.add(new Point2D(i.getX(), i.getY()));				
 
 		//System.out.println("\n"+sombrero2D);
 		return true;
@@ -300,10 +306,12 @@ public class ConcaveHullTestBasics
 		if (n < 1)
 			return null;
 
-		double[] x = new double[n + 1];
-		x[0] = lb;
-		for (int i = 1; i <= n; i++)
-			x[i] = lb + i * (ub - lb) / n;
+		double[] x = new double[n];
+		for (int i=0; i < n; i++)
+		{
+			x[i] = lb + i * (ub - lb) / (n-1);
+			//System.out.printf("\n %d %e ", i, x[i]);
+		}
 		return x;
 	}
 
@@ -312,7 +320,10 @@ public class ConcaveHullTestBasics
 		int n = x.length;
 		double[] psi = new double[n];
 		for (int i = 0; i < n; i++)
+		{
 			psi[i] = (1 - Math.pow(x[i], 2)) * 2 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x[i], 2.0) / 2);
+			//System.out.printf("\n %d %e ", i, psi[i]);
+		}
 		return psi;
 	}
 
