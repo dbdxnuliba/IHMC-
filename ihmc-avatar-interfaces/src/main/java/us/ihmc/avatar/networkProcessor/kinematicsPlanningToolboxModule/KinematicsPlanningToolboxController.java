@@ -73,7 +73,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final List<String> armJointNames = new ArrayList<String>();
    private final Map<String, Pair<Double, Double>> jointVelocityLimitMap;
    private final KeyFrameBasedTrajectoryGenerator keyFrameBasedTrajectoryGenerator;
-   private final static double searchingTimeTickForVelocityBound = 0.05;
+   private final static double searchingTimeTickForVelocityBound = 0.002;
 
    private final KinematicsPlanningToolboxOutputStatus solution;
    private final KinematicsPlanningToolboxOutputConverter outputConverter;

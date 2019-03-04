@@ -1,5 +1,8 @@
 package us.ihmc.avatar.networkProcessor.kinematicsPlanningToolboxModule;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +32,8 @@ public class KeyFrameBasedTrajectoryGenerator
    private final KinematicsToolboxOutputConverter converter;
 
    private final Map<String, Pair<Double, Double>> jointNameToVelocityBoundMap = new HashMap<>();
+
+   private final boolean DEBUG_TRAJECTORY_PREVIEW = false;
 
    public KeyFrameBasedTrajectoryGenerator(DRCRobotModel drcRobotModel, List<String> jointNamesToGenerate)
    {
@@ -67,6 +72,65 @@ public class KeyFrameBasedTrajectoryGenerator
          Pair<Double, Double> minMaxVelocity = new Pair<Double, Double>(velocities.min(), velocities.max());
          jointNameToVelocityBoundMap.put(jointName, minMaxVelocity);
       }
+
+      if (DEBUG_TRAJECTORY_PREVIEW)
+      {
+         FileWriter positionFW, velocityFW;
+         try
+         {
+            positionFW = new FileWriter(new File(this.getClass().getSimpleName() + "_position.csv"));
+            velocityFW = new FileWriter(new File(this.getClass().getSimpleName() + "_velocity.csv"));
+
+            positionFW.write(String.format("time"));
+            velocityFW.write(String.format("time"));
+            for (String jointName : jointNames)
+            {
+               positionFW.write(String.format("\t%s", jointName));
+               velocityFW.write(String.format("\t%s", jointName));
+            }
+            positionFW.write(System.lineSeparator());
+            velocityFW.write(System.lineSeparator());
+
+            double time = 0.0;
+            for (int i = 0; i < numberOfTicks; i++)
+            {
+               int indexOfTrajectory = 0;
+               for (int j = keyFrameTimes.size() - 1; j > 0; j--)
+               {
+                  if (keyFrameTimes.get(j) < time)
+                  {
+                     indexOfTrajectory = j;
+                     break;
+                  }
+               }
+
+               positionFW.write(String.format("%.4f (%d)", time, indexOfTrajectory));
+               velocityFW.write(String.format("%.4f (%d)", time, indexOfTrajectory));
+               for (String jointName : jointNames)
+               {
+                  Trajectory trajectory = jointNameToTrajectoriesMap.get(jointName).get(indexOfTrajectory);
+                  trajectory.compute(time);
+
+                  positionFW.write(String.format("\t%.4f", trajectory.getPosition()));
+                  velocityFW.write(String.format("\t%.4f", trajectory.getVelocity()));
+               }
+
+               positionFW.write(System.lineSeparator());
+               velocityFW.write(System.lineSeparator());
+               time += searchingTimeTick;
+            }
+
+            positionFW.close();
+            velocityFW.close();
+         }
+         catch (IOException ex)
+         {
+            ex.printStackTrace();
+         }
+
+         LogTools.info("done");
+      }
+
    }
 
    public void addInitialConfiguration(KinematicsToolboxOutputStatus initialConfiguration)
@@ -102,15 +166,17 @@ public class KeyFrameBasedTrajectoryGenerator
             converter.updateFullRobotModel(keyFrame);
             double point = converter.getFullRobotModel().getOneDoFJointByName(jointName).getQ();
             points.add(point);
+            LogTools.info("pos " + jointName + " " + point);
          }
 
          TDoubleArrayList velocities = new TDoubleArrayList();
          velocities.add(0.0);
          for (int j = 1; j < points.size() - 1; j++)
          {
-            double diff = points.get(j + 1) - points.get(j - 1);
+            double diff = points.get(j + 1) - points.get(j);
             double timeDiff = keyFrameTimes.get(j + 1) - keyFrameTimes.get(j);
             velocities.add(diff / timeDiff);
+            LogTools.info("vel " + jointName + " " + (diff / timeDiff));
          }
          velocities.add(0.0);
 
@@ -119,6 +185,8 @@ public class KeyFrameBasedTrajectoryGenerator
          {
             Trajectory cubic = new Trajectory(4);
             cubic.setCubic(keyFrameTimes.get(j), keyFrameTimes.get(j + 1), points.get(j), velocities.get(j), points.get(j + 1), velocities.get(j + 1));
+            LogTools.info("cubic input " + keyFrameTimes.get(j) + " " + keyFrameTimes.get(j + 1) + " " + points.get(j) + " " + velocities.get(j) + " "
+                  + points.get(j + 1) + " " + velocities.get(j + 1));
             trajectories.add(cubic);
          }
          jointNameToTrajectoriesMap.put(jointName, trajectories);
