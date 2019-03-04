@@ -22,6 +22,7 @@ import com.sun.javafx.application.PlatformImpl;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -57,23 +58,16 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 	}
 	
 
-	@Test(timeout = 30000)
+	@Test
 	public void testSimplePointcloudFormingASquare()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		
 		List<Point2D> expectedHull = new ArrayList<>();
 		List<Point3D> pointcloud = new ArrayList<>();
 
-<<<<<<< HEAD
 		double xOffset = 0.4;
 		double yOffset = 0.0;
-=======
-   @BeforeEach
-   public void setup() throws Exception
-   {
-      uiIsGoingDown.setFalse();
->>>>>>> refs/remotes/origin/develop
 
 		double size = 0.1;
 		double density = 0.005;
@@ -102,31 +96,11 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(data));
 
-<<<<<<< HEAD
 		while (output.get() == null)
 			ThreadTools.sleep(100);
-=======
-   @AfterEach
-   public void tearDown()
-   {
-      if (VISUALIZE)
-      {
-         while (!uiIsGoingDown.booleanValue())
-            ThreadTools.sleep(100);
-      }
-   }
->>>>>>> refs/remotes/origin/develop
 
-<<<<<<< HEAD
 		assertEquals(1, output.get().size());
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult().getConcaveHullCollection();
-=======
-   @Test
-   public void testSimplePointcloudFormingASquare()
-   {
-      List<Point2D> expectedHull = new ArrayList<>();
-      List<Point3D> pointcloud = new ArrayList<>();
->>>>>>> refs/remotes/origin/develop
 
 		assertEquals(1, concaveHullCollection.getNumberOfConcaveHulls());
 		ConcaveHull concaveHull = new ArrayList<>(concaveHullCollection.getConcaveHulls()).get(0);
@@ -144,10 +118,10 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testRandomCircleBasedConvexPointCloud()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		
 		Random random = new Random(5435);
 		List<Point2D> expectedHull = EuclidGeometryRandomTools.nextCircleBasedConvexPolygon2D(random, 0.0, 0.08, 100);
@@ -183,24 +157,17 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		}
 	}
 
-<<<<<<< HEAD
-	@Test(timeout = 30000)
+
+	@Test
 	public void testPointCloudWithSurroundingLineConstraints()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));
 		pointcloud.add(new Point3D(1.5, 0.1, 0.0));
 		pointcloud.add(new Point3D(1.5, -0.1, 0.0));
-=======
-   @Test
-   public void testRandomCircleBasedConvexPointCloud()
-   {
-      Random random = new Random(5435);
-      List<Point2D> expectedHull = EuclidGeometryRandomTools.nextCircleBasedConvexPolygon2D(random, 0.0, 0.08, 100);
->>>>>>> refs/remotes/origin/develop
 
 		List<LineSegment3D> lineConstraints = new ArrayList<>();
 		lineConstraints.add(new LineSegment3D(0.0, -0.5, 0.0, 0.0, 0.5, 0.0));
@@ -226,26 +193,15 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		assertEquals(1, concaveHullCollection.getNumberOfConcaveHulls());
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testSomeLineConstraints()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		
 		List<Point3D> pointcloud = new ArrayList<>();
 
-<<<<<<< HEAD
 		double xOffset = 0.4;
 		double yOffset = 0.0;
-=======
-   @Test
-   public void testPointCloudWithSurroundingLineConstraints()
-   {
-      List<Point3D> pointcloud = new ArrayList<>();
-      pointcloud.add(new Point3D(0.5, -0.1, 0.0));
-      pointcloud.add(new Point3D(0.5, 0.1, 0.0));
-      pointcloud.add(new Point3D(1.5, 0.1, 0.0));
-      pointcloud.add(new Point3D(1.5, -0.1, 0.0));
->>>>>>> refs/remotes/origin/develop
 
 		double size = 0.1;
 		double density = 0.005;
@@ -272,24 +228,17 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(data));
 
-<<<<<<< HEAD
 		while (output.get() == null)
 			ThreadTools.sleep(100);
-=======
-   @Test
-   public void testSomeLineConstraints()
-   {
-      List<Point3D> pointcloud = new ArrayList<>();
->>>>>>> refs/remotes/origin/develop
 
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult().getConcaveHullCollection();
 		assertEquals(1, concaveHullCollection.getNumberOfConcaveHulls());
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testOverlappingLineConstraints()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		
 		Random random = new Random(34543);
 		List<Point3D> pointcloud = new ArrayList<>();
@@ -321,16 +270,8 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		data.addIntersections(polygon1);
 		data.addIntersections(polygon2);
 
-<<<<<<< HEAD
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(data));
-=======
-   @Test
-   public void testOverlappingLineConstraints()
-   {
-      Random random = new Random(34543);
-      List<Point3D> pointcloud = new ArrayList<>();
->>>>>>> refs/remotes/origin/develop
 
 		while (output.get() == null)
 			ThreadTools.sleep(100);
@@ -373,4 +314,11 @@ public class SimpleConcaveHullFactoryTest extends ConcaveHullTestBasics
 		next.interpolate(convexPolygon2D.getCentroid(), intersectionWithRay[0], alpha);
 		return next;
 	}
+	
+	public static void main(String[] args)
+	{
+		MutationTestFacilitator.facilitateMutationTestForClass(SimpleConcaveHullFactoryTest.class, SimpleConcaveHullFactoryTest.class);
+	}
+
+
 }
