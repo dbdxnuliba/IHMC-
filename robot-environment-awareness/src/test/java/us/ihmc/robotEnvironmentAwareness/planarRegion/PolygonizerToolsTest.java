@@ -7,11 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.LineSegment2D;
@@ -47,10 +45,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 	PolygonizerParameters polygonizerParameters = new PolygonizerParameters();
 	PlanarRegionSegmentationDataExporter dataExporter = null;
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointsInPlaneVector()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends Point3DReadOnly> pointsToTransform = getPointcloud3D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
@@ -69,10 +67,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointsInPlaneOrientation()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends Point3DReadOnly> pointsToTransform = getPointcloud3D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -90,10 +88,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointInPlaneOrientation()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Point3DReadOnly pointToTransform = new Point3D(1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -112,10 +110,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentsInPlaneVector3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = getLineConstraints3D();
 		Point3DReadOnly planeOrigin = new Point3D(0.0, 0.0, 0.0);
 		Vector3DReadOnly planeNormal = new Vector3D(0.0, 1.0, 0.0);
@@ -134,10 +132,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentsInPlaneOrientation()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends LineSegment3DReadOnly> lineSegmentsToTransform = getLineConstraints3D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Orientation3DReadOnly planeOrientation = new AxisAngle();
@@ -164,10 +162,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 		}
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentInPlaneVector3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		LineSegment3DReadOnly lineSegmentToTransform = new LineSegment3D(0, 0, 0, 1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
@@ -189,10 +187,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentInPlaneOreintation3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		LineSegment3DReadOnly lineSegmentToTransform = new LineSegment3D(0, 0, 0, 1, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -214,10 +212,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointInPlane()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		double xToTransform = 1;
 		double yToTransform = 1;
 		double zToTransform = 1;
@@ -239,10 +237,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointsInWorldVector3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends Point2DReadOnly> pointsInPlane = getPointcloud2D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Vector3DReadOnly planeNormal = new Vector3D(0, 1, 0);
@@ -261,10 +259,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointsInWorldOrientation3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends Point2DReadOnly> pointsInPlane = getPointcloud2D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Orientation3DReadOnly planeOrientation = new AxisAngle();
@@ -283,10 +281,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointInWorldOrientation3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Point2DReadOnly point2dReadOnly = new Point2D(1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -308,10 +306,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentsInWorldVector3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = getLineConstraints2D();
 		Point3DReadOnly planeOrigin = new Point3D();
 		Vector3DReadOnly planeNormal = new Vector3D();
@@ -330,10 +328,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testtoLineSegmentsInWorldOrientation3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<? extends LineSegment2DReadOnly> lineSegmentsToTransform = getLineConstraints2D();
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI/2, 0);
@@ -352,10 +350,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentInWorldVector3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		LineSegment2DReadOnly lineSegmentToTransform = new LineSegment2D(0, 0, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D();
 		Vector3DReadOnly planeNormal = new Vector3D();
@@ -379,10 +377,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToLineSegmentInWorldOrientation3D()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		LineSegment2DReadOnly lineSegmentToTransform = new LineSegment2D(0, 0, 1, 1);
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
 		Orientation3DReadOnly planeOrientation = new AxisAngle(0, Math.PI / 2, 0);
@@ -406,10 +404,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testToPointInWorld()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		double xToTransform = 1;
 		double yToTransform = 1;
 		Point3DReadOnly planeOrigin = new Point3D(0, 0, 0);
@@ -431,10 +429,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testGetQuaternionFromZUpToVector()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Vector3DReadOnly normal = new Vector3D(0, 1, 0);
 
 		try
@@ -454,10 +452,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testComputeEllipsoidVolumeRadii()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		Vector3DReadOnly radii = new Vector3D(1, 1, 1);
 
 		try
@@ -474,10 +472,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@Test(timeout = 30000)
+	@Test
 	public void testComputeEllipsoidVolumeXYZ()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		double xRadius = 1;
 		double yRadius = 1;
 		double zRadius = 1;
@@ -496,11 +494,10 @@ public class PolygonizerToolsTest extends ConcaveHullTestBasics
 
 	}
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
+	@Test
 	public final void testPlanarRegionPolygonizer()
 	{
-		initializeBasics();
+		initializeBaseClass();
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));
