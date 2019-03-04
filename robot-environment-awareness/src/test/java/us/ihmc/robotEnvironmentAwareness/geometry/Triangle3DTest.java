@@ -6,37 +6,31 @@ import java.util.Random;
 
 import javax.vecmath.Tuple3d;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.random.RandomGeometry;
-
+import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.euclid.interfaces.GeometryObject;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.transform.interfaces.Transform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 
-public class Triangle3DTest
+public class Triangle3DTest extends ConcaveHullTestBasics
 {
-	private static final int NUMBER_OF_ITERATIONS = 10000;
+	//private static final int ITERATIONS = 10000;
 	private static final double EPS = 1.0e-15;
 	Random random = new Random();
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
 
 	// Tests Triangle3D creation, setters(), applyTransform(),
 	// applyInverseTransform() and geometricallyEqual()
 
+	@Test
 	public final void testTriangle3D()
 	{
-		for (int iter = 0; iter < NUMBER_OF_ITERATIONS; iter++)
+		for (int iter = 0; iter < ITERATIONS; iter++)
 		{
 			Triangle3D randomTriangle = new Triangle3D();
 			Triangle3D referenceTriangle = new Triangle3D();
@@ -83,4 +77,11 @@ public class Triangle3DTest
 
 		}
 	}
+	
+	public static void main(String[] args)
+	{
+		MutationTestFacilitator.facilitateMutationTestForClass(Triangle3DTest.class, Triangle3DTest.class);
+	}
+
+
 }
