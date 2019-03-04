@@ -9,16 +9,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.sun.javafx.application.PlatformImpl;
 
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment2D;
@@ -61,10 +58,10 @@ public class PlanarRegionPolygonizerTest extends ConcaveHullTestBasics
 	PolygonizerParameters polygonizerParameters = new PolygonizerParameters();
 	PlanarRegionSegmentationDataExporter dataExporter = null;
 
-	@ContinuousIntegrationTest(estimatedDuration = 0.1)
-	@Test(timeout = 30000)
-	public final void testPlanarRegionPolygonizer() {
-		initializeBasics();
+	@Test
+	public final void testPlanarRegionPolygonizer()
+	{
+		initializeBaseClass();
 		List<Point3D> pointcloud = new ArrayList<>();
 		pointcloud.add(new Point3D(0.5, -0.1, 0.0));
 		pointcloud.add(new Point3D(0.5, 0.1, 0.0));
