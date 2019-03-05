@@ -56,7 +56,7 @@ public class KeyFrameBasedTrajectoryGenerator
    {
       initializeTrajectoryGenerator();
       computeOptimizedVelocity();
-      computeMaximumVelocity(searchingTimeTick);
+      computeVelocityBound(searchingTimeTick);
 
       if (DEBUG_TRAJECTORY_PREVIEW)
          saveJointPositionAndVelocity(searchingTimeTick);
@@ -119,7 +119,7 @@ public class KeyFrameBasedTrajectoryGenerator
       }
    }
 
-   private void computeMaximumVelocity(double searchingTimeTick)
+   private void computeVelocityBound(double searchingTimeTick)
    {
       int numberOfTicks = (int) (keyFrameTimes.get(keyFrameTimes.size() - 1) / searchingTimeTick);
       for (String jointName : jointNames)

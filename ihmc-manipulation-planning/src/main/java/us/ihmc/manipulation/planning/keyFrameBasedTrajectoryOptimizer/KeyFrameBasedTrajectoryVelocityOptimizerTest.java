@@ -1,3 +1,4 @@
+package us.ihmc.manipulation.planning.keyFrameBasedTrajectoryOptimizer;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
