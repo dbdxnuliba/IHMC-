@@ -10,6 +10,7 @@ import us.ihmc.log.LogTools;
 import us.ihmc.manipulation.planning.gradientDescent.GradientDescentModule;
 import us.ihmc.manipulation.planning.gradientDescent.SingleQueryFunction;
 import us.ihmc.robotics.math.trajectories.Trajectory;
+import us.ihmc.robotics.math.trajectories.generators.TrajectoryPointOptimizer;
 
 public class KeyFrameBasedTrajectoryVelocityOptimizerTest
 {
@@ -38,12 +39,84 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       initialVelocities.addAll(initial);
       initialVelocities.add(0.0);
       List<Trajectory> originalTrajectories = calculateTrajectories(times, positions, initialVelocities);
-      saveJointPositionAndVelocity("initialTrajectory", originalTrajectories, velocitOptimizerDT);
+      saveJointPositionAndVelocity("initialTrajectory", originalTrajectories, times, velocitOptimizerDT);
       
       runOptimizer(OptimizationType.Velocity, initial);
       runOptimizer(OptimizationType.Acceleration, initial);
       runOptimizer(OptimizationType.Jerk, initial);
       runOptimizer(OptimizationType.KineticEnergy, initial);
+      
+      runTrajectoryPointOptimizer();
+   }
+   
+   private void runTrajectoryPointOptimizer()
+   {
+      TrajectoryPointOptimizer trajectoryPointOptimizer = new TrajectoryPointOptimizer(1);
+
+      ArrayList<TDoubleArrayList> wayPointSets = new ArrayList<>();
+      for (int i = 1; i < positions.size() - 1; i++)
+      {
+         TDoubleArrayList waypoint = new TDoubleArrayList();
+         waypoint.add(positions.get(i));
+         wayPointSets.add(waypoint);
+      }
+      
+      TDoubleArrayList times = new TDoubleArrayList();
+      for (int i = 1; i < this.times.size() - 1; i++)
+      {
+         times.add(this.times.get(i));
+      }
+
+      TDoubleArrayList startPosition = new TDoubleArrayList();
+      startPosition.add(positions.get(0));
+      TDoubleArrayList startVelocity = new TDoubleArrayList();
+      startVelocity.add(0.0);
+      TDoubleArrayList targetPosition = new TDoubleArrayList();
+      targetPosition.add(positions.get(positions.size() - 1));
+      TDoubleArrayList targetVelocity = new TDoubleArrayList();
+      targetVelocity.add(0.0);
+
+      trajectoryPointOptimizer.setEndPoints(startPosition, startVelocity, targetPosition, targetVelocity);
+      trajectoryPointOptimizer.setWaypoints(wayPointSets);
+      
+      boolean optimizeTimes = false;
+      if (optimizeTimes)
+      {
+         trajectoryPointOptimizer.compute(2000);
+      }
+      else
+      {
+         trajectoryPointOptimizer.computeForFixedTime(times);
+      }
+
+      TDoubleArrayList velocities = new TDoubleArrayList();
+      TDoubleArrayList velocityToPack = new TDoubleArrayList();
+      velocities.add(0.0);
+      for (int i = 1; i < positions.size() - 1; i++)
+      {
+         trajectoryPointOptimizer.getWaypointVelocity(velocityToPack, i - 1);
+         velocities.add(velocityToPack.get(0));
+      }
+      velocities.add(0.0);
+      
+      List<Trajectory> optimalTrajectories;
+      if (optimizeTimes)
+      {
+         TDoubleArrayList optimizedTimes = new TDoubleArrayList();
+         optimizedTimes.add(0.0);
+         for (int i = 1; i < positions.size() - 1; i++)
+         {
+            optimizedTimes.add(trajectoryPointOptimizer.getWaypointTime(i - 1));
+         }
+         optimizedTimes.add(1.0);
+         optimalTrajectories = calculateTrajectories(optimizedTimes, positions, velocities);
+         saveJointPositionAndVelocity("trajectoryPointOptimizer_timeAdjusted", optimalTrajectories, optimizedTimes, velocitOptimizerDT);
+      }
+      else
+      {
+         optimalTrajectories = calculateTrajectories(this.times, positions, velocities);
+         saveJointPositionAndVelocity("trajectoryPointOptimizer_timeFixed", optimalTrajectories, this.times, velocitOptimizerDT);
+      }
    }
 
    private void runOptimizer(OptimizationType optimizationType, TDoubleArrayList initial)
@@ -64,7 +137,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       finalVelocities.addAll(optimalSolution);
       finalVelocities.add(0.0);
       List<Trajectory> optimalTrajectories = calculateTrajectories(times, positions, finalVelocities);
-      saveJointPositionAndVelocity("optimalTrajectory_" + optimizationType.toString(), optimalTrajectories, velocitOptimizerDT);
+      saveJointPositionAndVelocity("optimalTrajectory_" + optimizationType.toString(), optimalTrajectories, times, velocitOptimizerDT);
 
       System.out.println("optimal " + optimizationType.toString() + optimizer.getOptimalQuery());
    }
@@ -86,7 +159,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
          double kineticEnergy = 0.0;
          for (int i = 1; i < numberOfTicks; i++)
          {
-            int indexOfTrajectory = findTrajectoryIndex(time);
+            int indexOfTrajectory = findTrajectoryIndex(times, time);
             TDoubleArrayList velocities = new TDoubleArrayList();
             velocities.add(0.0);
             velocities.addAll(values);
@@ -96,7 +169,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
             trajectory.compute(time);
 
             double previousTime = time - velocitOptimizerDT;
-            int indexOfTrajectoryForPreviousTick = findTrajectoryIndex(previousTime);
+            int indexOfTrajectoryForPreviousTick = findTrajectoryIndex(times, previousTime);
             Trajectory trajectoryForPreviousTick = trajectories.get(indexOfTrajectoryForPreviousTick);
             trajectoryForPreviousTick.compute(previousTime);
 
@@ -130,13 +203,13 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       positions.add(1.0);
 
       times.add(0.0);
+      times.add(0.2);
+      times.add(0.4);
+      times.add(0.95);
       times.add(1.0);
-      times.add(2.0);
-      times.add(3.5);
-      times.add(5.0);
    }
 
-   private int findTrajectoryIndex(double time)
+   private static int findTrajectoryIndex(TDoubleArrayList times, double time)
    {
       int indexOfTrajectory = 0;
       for (int j = times.size() - 1; j > 0; j--)
@@ -150,7 +223,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       return indexOfTrajectory;
    }
 
-   private List<Trajectory> calculateTrajectories(TDoubleArrayList times, TDoubleArrayList positions, TDoubleArrayList velocities)
+   private static List<Trajectory> calculateTrajectories(TDoubleArrayList times, TDoubleArrayList positions, TDoubleArrayList velocities)
    {
       List<Trajectory> trajectories = new ArrayList<Trajectory>();
 
@@ -173,7 +246,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       return velocities;
    }
 
-   private void saveJointPositionAndVelocity(String namePrefix, List<Trajectory> trajectories, double timeTick)
+   private static void saveJointPositionAndVelocity(String namePrefix, List<Trajectory> trajectories, TDoubleArrayList times, double timeTick)
    {
       int numberOfTicks = (int) (times.get(times.size() - 1) / timeTick);
       FileWriter positionFW;
@@ -187,7 +260,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
          double time = 0.0;
          for (int i = 0; i < numberOfTicks; i++)
          {
-            int indexOfTrajectory = findTrajectoryIndex(time);
+            int indexOfTrajectory = findTrajectoryIndex(times, time);
 
             positionFW.write(String.format("%.4f (%d)", time, indexOfTrajectory));
             Trajectory trajectory = trajectories.get(indexOfTrajectory);
