@@ -19,6 +19,7 @@ import us.ihmc.robotics.math.trajectories.Trajectory;
 
 public class KeyFrameBasedTrajectoryGenerator
 {
+   private static final OptimizationType optimizationType = OptimizationType.Jerk;
    /*
     * keyFrames includes initial configuration. keyFrameTimes includes 0.0 (s)
     * for initial configuration.
@@ -35,6 +36,13 @@ public class KeyFrameBasedTrajectoryGenerator
 
    private final boolean DEBUG_TRAJECTORY_PREVIEW = false;
 
+   private static final double velocitOptimizerDT = 0.001;
+   
+   private enum OptimizationType
+   {
+      Velocity, Acceleration, Jerk, KineticEnergy, GEORGE
+   }
+   
    public KeyFrameBasedTrajectoryGenerator(DRCRobotModel drcRobotModel, List<String> jointNamesToGenerate)
    {
       converter = new KinematicsToolboxOutputConverter(drcRobotModel);
@@ -77,6 +85,7 @@ public class KeyFrameBasedTrajectoryGenerator
       keyFrameTimes.clear();
    }
 
+   // TODO : start with all zero would be fine when we use GradientDescentModule.
    private void initializeTrajectoryGenerator()
    {
       for (String jointName : jointNames)
@@ -119,15 +128,7 @@ public class KeyFrameBasedTrajectoryGenerator
          TDoubleArrayList velocities = new TDoubleArrayList();
          for (int i = 0; i < numberOfTicks; i++)
          {
-            int indexOfTrajectory = 0;
-            for (int j = keyFrameTimes.size() - 1; j > 0; j--)
-            {
-               if (keyFrameTimes.get(j) < time)
-               {
-                  indexOfTrajectory = j;
-                  break;
-               }
-            }
+            int indexOfTrajectory = findTrajectoryIndex(time);
             Trajectory trajectory = jointNameToTrajectoriesMap.get(jointName).get(indexOfTrajectory);
             trajectory.compute(time);
             velocities.add(trajectory.getVelocity());
@@ -161,15 +162,7 @@ public class KeyFrameBasedTrajectoryGenerator
          double time = 0.0;
          for (int i = 0; i < numberOfTicks; i++)
          {
-            int indexOfTrajectory = 0;
-            for (int j = keyFrameTimes.size() - 1; j > 0; j--)
-            {
-               if (keyFrameTimes.get(j) < time)
-               {
-                  indexOfTrajectory = j;
-                  break;
-               }
-            }
+            int indexOfTrajectory = findTrajectoryIndex(time);
 
             positionFW.write(String.format("%.4f (%d)", time, indexOfTrajectory));
             velocityFW.write(String.format("%.4f (%d)", time, indexOfTrajectory));
@@ -200,7 +193,27 @@ public class KeyFrameBasedTrajectoryGenerator
 
    private void computeOptimizedVelocity()
    {
+      String jointName = jointNames.get(9); // rightForearmYaw
+      //LogTools.info(jointName + "initial kinetic energer is " + computeKineticEnergy(jointName));
 
+      
+      
+
+      //LogTools.info(jointName + "final kinetic energer is " + computeKineticEnergy(jointName));
+   }
+
+   private int findTrajectoryIndex(double time)
+   {
+      int indexOfTrajectory = 0;
+      for (int j = keyFrameTimes.size() - 1; j > 0; j--)
+      {
+         if (keyFrameTimes.get(j) < time)
+         {
+            indexOfTrajectory = j;
+            break;
+         }
+      }
+      return indexOfTrajectory;
    }
 
    public double getJointVelocityUpperBound(String jointName)
