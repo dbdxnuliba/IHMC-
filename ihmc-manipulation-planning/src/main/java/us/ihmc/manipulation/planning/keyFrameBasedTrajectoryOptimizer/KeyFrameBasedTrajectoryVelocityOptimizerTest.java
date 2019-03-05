@@ -1,4 +1,5 @@
 package us.ihmc.manipulation.planning.keyFrameBasedTrajectoryOptimizer;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
 
    private enum OptimizationType
    {
-      Velocity, Acceleration, Jerk, KineticEnergy
+      Velocity, Acceleration, Jerk, KineticEnergy, AcccelerationSquare
    }
 
    public KeyFrameBasedTrajectoryVelocityOptimizerTest()
@@ -40,15 +41,16 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       initialVelocities.add(0.0);
       List<Trajectory> originalTrajectories = calculateTrajectories(times, positions, initialVelocities);
       saveJointPositionAndVelocity("initialTrajectory", originalTrajectories, times, velocitOptimizerDT);
-      
+
       runOptimizer(OptimizationType.Velocity, initial);
       runOptimizer(OptimizationType.Acceleration, initial);
       runOptimizer(OptimizationType.Jerk, initial);
       runOptimizer(OptimizationType.KineticEnergy, initial);
-      
+      runOptimizer(OptimizationType.AcccelerationSquare, initial);
+
       runTrajectoryPointOptimizer();
    }
-   
+
    private void runTrajectoryPointOptimizer()
    {
       TrajectoryPointOptimizer trajectoryPointOptimizer = new TrajectoryPointOptimizer(1);
@@ -60,11 +62,12 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
          waypoint.add(positions.get(i));
          wayPointSets.add(waypoint);
       }
-      
+
       TDoubleArrayList times = new TDoubleArrayList();
+      double totalTime = this.times.get(this.times.size() - 1);
       for (int i = 1; i < this.times.size() - 1; i++)
       {
-         times.add(this.times.get(i));
+         times.add(this.times.get(i) / totalTime);
       }
 
       TDoubleArrayList startPosition = new TDoubleArrayList();
@@ -78,7 +81,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
 
       trajectoryPointOptimizer.setEndPoints(startPosition, startVelocity, targetPosition, targetVelocity);
       trajectoryPointOptimizer.setWaypoints(wayPointSets);
-      
+
       boolean optimizeTimes = false;
       if (optimizeTimes)
       {
@@ -95,10 +98,10 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       for (int i = 1; i < positions.size() - 1; i++)
       {
          trajectoryPointOptimizer.getWaypointVelocity(velocityToPack, i - 1);
-         velocities.add(velocityToPack.get(0));
+         velocities.add(velocityToPack.get(0) / totalTime);
       }
       velocities.add(0.0);
-      
+
       List<Trajectory> optimalTrajectories;
       if (optimizeTimes)
       {
@@ -109,6 +112,9 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
             optimizedTimes.add(trajectoryPointOptimizer.getWaypointTime(i - 1));
          }
          optimizedTimes.add(1.0);
+         for (int i = 0; i < optimizedTimes.size(); i++)
+            optimizedTimes.set(i, optimizedTimes.get(i) * totalTime);
+
          optimalTrajectories = calculateTrajectories(optimizedTimes, positions, velocities);
          saveJointPositionAndVelocity("trajectoryPointOptimizer_timeAdjusted", optimalTrajectories, optimizedTimes, velocitOptimizerDT);
       }
@@ -124,7 +130,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       SingleQueryFunction function = new EvaluationFunction(optimizationType);
       GradientDescentModule optimizer = new GradientDescentModule(function, initial);
       optimizer.setMaximumIterations(100);
-      
+
       LogTools.info("initial " + optimizationType.toString() + function.getQuery(initial));
 
       System.out.println("iteration is " + optimizer.run());
@@ -187,6 +193,9 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
             case KineticEnergy:
                kineticEnergy += trajectory.getVelocity() * trajectory.getVelocity() * velocitOptimizerDT;
                break;
+            case AcccelerationSquare:
+               kineticEnergy += trajectory.getAcceleration() * trajectory.getAcceleration() * velocitOptimizerDT;
+               break;
             }
             time += velocitOptimizerDT;
          }
@@ -206,7 +215,7 @@ public class KeyFrameBasedTrajectoryVelocityOptimizerTest
       times.add(0.2);
       times.add(0.4);
       times.add(0.95);
-      times.add(1.0);
+      times.add(2.0);
    }
 
    private static int findTrajectoryIndex(TDoubleArrayList times, double time)
