@@ -1,4 +1,4 @@
-package us.ihmc.quadrupedRobotics.estimator;
+package us.ihmc.robotics.geometry;
 
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.graphicsDescription.Graphics3DObject;
@@ -44,7 +44,10 @@ public class GroundPlaneEstimator
     */
    public double getPitch()
    {
-      return getPitch(0);
+      // reproducing for speed
+      groundPlane.getNormal(groundPlaneNormal);
+      return Math.atan2(groundPlaneNormal.getX(), groundPlaneNormal.getZ());
+//      return getPitch(0.0);
    }
 
    /**
@@ -52,7 +55,10 @@ public class GroundPlaneEstimator
     */
    public double getRoll()
    {
-      return getRoll(0);
+      // reproducing for speed
+      groundPlane.getNormal(groundPlaneNormal);
+      return Math.atan2(-groundPlaneNormal.getY(), groundPlaneNormal.getZ());
+//      return getRoll(0.0);
    }
 
    /**
