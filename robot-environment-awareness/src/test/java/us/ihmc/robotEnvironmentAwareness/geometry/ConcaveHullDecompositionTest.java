@@ -72,6 +72,9 @@ import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 
 public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 {
+	private static final boolean DEBUG = true;
+	private static final double EPS = 1.0e-6;
+
 	public ConcaveHullDecompositionTest()
 	{
 		VISUALIZE = false;
@@ -82,53 +85,81 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 	private ConcaveHullPocket pocket = null;
 
 	@Test
-	public void recursiveApproximateDecompositionConcaveHullCollectionn() throws Exception
+	public void recursiveApproximateDecompositionConcaveHullCollectionn()
 	{
 		initializeBaseClass();
-		ConcaveHullCollection concaveHullCollection = new ConcaveHullCollection();
+		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroCollection, depth1, convexPolygonsToPack);
+
+		int numberOfHulls = convexPolygonsToPack.size();		
+		assert(1 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollectionn(depth1): %d\n", numberOfHulls);
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroCollection, depth2, convexPolygonsToPack);
+
+		numberOfHulls = convexPolygonsToPack.size();		
+		assert(2 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollectionn(depth2): %d\n", numberOfHulls);
+}
+
+	@Test
+	public void recursiveApproximateDecompositionConcaveHull()
+	{
+		initializeBaseClass();
 		double depthThreshold = 0;
 		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
 
-		ConcaveHullDecomposition.recursiveApproximateDecomposition(concaveHullCollection, depthThreshold, convexPolygonsToPack);
-		//		  public static void recursiveApproximateDecomposition(ConcaveHullCollection concaveHullCollection, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
-	}
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth1, convexPolygonsToPack);
 
-//	@Test
-//	public void recursiveApproximateDecompositionConcaveHull() throws Exception
-//	{
-//		initializeBasics();
-//		ConcaveHull concaveHull = new ConcaveHull(concaveHull);
-//		double depthThreshold = 0;
-//		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
-//
-//		ConcaveHullDecomposition.recursiveApproximateDecomposition(concaveHull, depthThreshold, convexPolygonsToPack);
-//		//   public static void recursiveApproximateDecomposition(ConcaveHull concaveHull, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
-//
-//	}
+		int numberOfHulls = convexPolygonsToPack.size();		
+		assert(1 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHull(depth1): %d\n", numberOfHulls);
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
+
+		numberOfHulls = convexPolygonsToPack.size();		
+		assert(2 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHull(depth2): %d\n", numberOfHulls);
+	}
 
 	@Test
 	public void recursiveApproximateDecompositionPoint2DList() throws Exception
 	{
 		initializeBaseClass();
-		List<? extends Point2DReadOnly> concaveHullVertices = new ArrayList<>();
-		double depthThreshold = 0;
 		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
 
-		ConcaveHullDecomposition.recursiveApproximateDecomposition(concaveHullVertices, depthThreshold, convexPolygonsToPack);
-		//   public static void recursiveApproximateDecomposition(List<? extends Point2DReadOnly> concaveHullVertices, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
-	}
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombrero, depth1, convexPolygonsToPack);
 
-//	@Test
-//	public void recursiveApproximateDecompositionInternal() throws Exception
-//	{
-// 	initializeBasics();
-//		List<? extends Point2DReadOnly> concaveHullVertices = new ArrayList<>();
-//		double depthThreshold = 0;
-//		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
-//
-//		ConcaveHullDecomposition.recursiveApproximateDecomposition(concaveHullVertices, depthThreshold, convexPolygonsToPack);
-//	//   private static void recursiveApproximateDecompositionInternal(List<Point2DReadOnly> concaveHullVertices, double depthThreshold, List<ConvexPolygon2D> convexPolygonsToPack)
-//	}
+		int numberOfHulls = convexPolygonsToPack.size();		
+		assert(1 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionPoint2DList: %d\n", numberOfHulls);
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
+
+		numberOfHulls = convexPolygonsToPack.size();		
+		assert(2 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionPoint2DList(depth2): %d\n", numberOfHulls);
+}
+
+	@Test
+	public void recursiveApproximateDecompositionInternal() throws Exception
+	{
+		initializeBaseClass();
+		List<ConvexPolygon2D> convexPolygonsToPack = new ArrayList<>();
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombrero, depth1, convexPolygonsToPack);
+
+		int numberOfHulls = convexPolygonsToPack.size();		
+		assert(1 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionInternal: %d\n", numberOfHulls);
+
+		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
+
+		numberOfHulls = convexPolygonsToPack.size();		
+		assert(2 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionInternal(depth2): %d\n", numberOfHulls);
+	}
 	
 	
 	@Test
@@ -140,17 +171,14 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 
 		PlanarRegionSegmentationRawData data = new PlanarRegionSegmentationRawData(1, Axis.Z, new Point3D(), pointcloud3D);
 		data.addIntersections(lineConstraints3D);
-		// System.out.println("ConcaveHullDecompositionTest: data: " + data.toString());
-
+	
 		ConcaveHullFactoryParameters parameters = new ConcaveHullFactoryParameters();
 		parameters.setTriangulationTolerance(1.0e-5);
 		parameters.setEdgeLengthThreshold(0.15);
-		// System.out.println("ConcaveHullDecompositionTest: parameters: " + parameters.toString());
-
+	
 		messager.submitMessage(Polygonizer.PolygonizerParameters, parameters);
 
 		AtomicReference<List<Output>> output = messager.createInput(Polygonizer.PolygonizerOutput, null);
-		// System.out.println("ConcaveHullDecompositionTest: output: " + output.get().toString());
 
 		messager.submitMessage(PolygonizerManager.PlanarRegionSemgentationData, Collections.singletonList(data));
 
@@ -158,11 +186,10 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 			ThreadTools.sleep(100);
 
 		ConcaveHullCollection concaveHullCollection = output.get().get(0).getConcaveHullFactoryResult().getConcaveHullCollection();
-		//System.out.println("ConcaveHullDecompositionTest: concaveHullCollection: " + concaveHullCollection.getConcaveHulls());
 
 		int numberOfHulls = concaveHullCollection.getNumberOfConcaveHulls();
 
-		//System.out.printf("ConcaveHullDecompositionTest: numberOfHulls = %d ", numberOfHulls);
+		if(DEBUG) System.out.printf("\nConcaveHullDecompositionTest: numberOfHulls = %d ", numberOfHulls);
 
 		assertEquals(numberOfHulls, 2);
 
@@ -175,7 +202,7 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		for (ConcaveHull hull : concaveHullCollection)
 		{
 			int num = hull.getNumberOfVertices();
-			//System.out.printf("\nConcaveHullTDecompositionTest: Hull %d is %s, number of vertices = %d", hullCount, hull.isHullConvex() ? "Convex" : "Concave", num);
+			if(DEBUG) System.out.printf("\nConcaveHullTDecompositionTest: Hull %d is %s, number of vertices = %d", hullCount, hull.isHullConvex() ? "Convex" : "Concave", num);
 
 			if (hullCount == 0)
 			{
@@ -206,7 +233,7 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 			if (pocket != null)
 			{
 				assert (vertex == 2);
-				//System.out.printf("ConcaveHullDecompositionTest: pocket at vertex %d depth is %f", vertex, pocket.getMaxDepth());
+				if(DEBUG) System.out.printf("\nConcaveHullDecompositionTest: pocket at vertex %d depth is %f\n", vertex, pocket.getMaxDepth());
 			}
 			vertex++;
 		}
