@@ -16,10 +16,10 @@ import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.math.trajectories.Trajectory;
+import us.ihmc.robotics.math.trajectories.generators.TrajectoryPointOptimizer;
 
 public class KeyFrameBasedTrajectoryGenerator
 {
-   private static final OptimizationType optimizationType = OptimizationType.Jerk;
    /*
     * keyFrames includes initial configuration. keyFrameTimes includes 0.0 (s)
     * for initial configuration.
@@ -27,24 +27,22 @@ public class KeyFrameBasedTrajectoryGenerator
    private final List<KinematicsToolboxOutputStatus> keyFrames = new ArrayList<KinematicsToolboxOutputStatus>();
    private final TDoubleArrayList keyFrameTimes = new TDoubleArrayList();
 
+   private final TrajectoryPointOptimizer trajectoryPointOptimizer;
+
    private final List<String> jointNames = new ArrayList<String>();
    private final Map<String, List<Trajectory>> jointNameToTrajectoriesMap = new HashMap<>();
+   private final Map<String, Pair<Double, Double>> jointNameToVelocityBoundMap = new HashMap<>();
+   private final Map<String, TDoubleArrayList> jointNameToPositionsMap = new HashMap<>();
+   private final Map<String, TDoubleArrayList> jointNameToVelocitiesMap = new HashMap<>();
 
    private final KinematicsToolboxOutputConverter converter;
 
-   private final Map<String, Pair<Double, Double>> jointNameToVelocityBoundMap = new HashMap<>();
+   private final boolean SAVE_TRAJECTORY_DATA = false;
 
-   private final boolean DEBUG_TRAJECTORY_PREVIEW = false;
-
-   private static final double velocitOptimizerDT = 0.001;
-   
-   private enum OptimizationType
-   {
-      Velocity, Acceleration, Jerk, KineticEnergy, GEORGE
-   }
-   
    public KeyFrameBasedTrajectoryGenerator(DRCRobotModel drcRobotModel, List<String> jointNamesToGenerate)
    {
+      LogTools.info("dimension is " + jointNamesToGenerate.size());
+      trajectoryPointOptimizer = new TrajectoryPointOptimizer(jointNamesToGenerate.size());
       converter = new KinematicsToolboxOutputConverter(drcRobotModel);
       jointNames.addAll(jointNamesToGenerate);
 
@@ -52,14 +50,37 @@ public class KeyFrameBasedTrajectoryGenerator
          jointNameToTrajectoriesMap.put(jointName, new ArrayList<Trajectory>());
    }
 
-   public void compute(double searchingTimeTick)
+   public void computeOptimizingKeyFrameTimes()
    {
-      initializeTrajectoryGenerator();
-      computeOptimizedVelocity();
-      computeVelocityBound(searchingTimeTick);
+      // TODO : Don't forget! multiply last key frame time to recover from normalized time.
+   }
 
-      if (DEBUG_TRAJECTORY_PREVIEW)
-         saveJointPositionAndVelocity(searchingTimeTick);
+   public void compute()
+   {
+      // normalize key frame times.
+      double lastKeyFrameTime = keyFrameTimes.get(keyFrameTimes.size() - 1);
+      TDoubleArrayList normalizedKeyFrameTimes = new TDoubleArrayList();
+      for (int i = 1; i < keyFrameTimes.size() - 1; i++)
+         normalizedKeyFrameTimes.add(keyFrameTimes.get(i) / lastKeyFrameTime);
+
+      // compute.
+      trajectoryPointOptimizer.computeForFixedTime(normalizedKeyFrameTimes);
+
+      // save optimized joint velocities on map.
+      for (String jointName : jointNames)
+         jointNameToVelocitiesMap.get(jointName).add(0.0);
+
+      TDoubleArrayList velocityToPack = new TDoubleArrayList();
+      for (int i = 1; i < keyFrames.size() - 1; i++)
+      {
+         trajectoryPointOptimizer.getWaypointVelocity(velocityToPack, i - 1);
+         for (int j = 0; j < jointNames.size(); j++)
+         {
+            jointNameToVelocitiesMap.get(jointNames.get(j)).add(velocityToPack.get(j) / lastKeyFrameTime);
+         }
+      }
+      for (String jointName : jointNames)
+         jointNameToVelocitiesMap.get(jointName).add(0.0);
    }
 
    public void addInitialConfiguration(KinematicsToolboxOutputStatus initialConfiguration)
@@ -85,42 +106,62 @@ public class KeyFrameBasedTrajectoryGenerator
       keyFrameTimes.clear();
    }
 
-   // TODO : start with all zero would be fine when we use GradientDescentModule.
-   private void initializeTrajectoryGenerator()
+   public void initializeTrajectoryGenerator()
    {
+      ArrayList<TDoubleArrayList> wayPointSets = new ArrayList<>();
+      for (int i = 1; i < keyFrames.size() - 1; i++)
+      {
+         TDoubleArrayList wayPointsForAKeyFrameTime = new TDoubleArrayList();
+         for (String jointName : jointNames)
+         {
+            KinematicsToolboxOutputStatus keyFrame = keyFrames.get(i);
+            converter.updateFullRobotModel(keyFrame);
+            double wayPoint = converter.getFullRobotModel().getOneDoFJointByName(jointName).getQ();
+            wayPointsForAKeyFrameTime.add(wayPoint);
+         }
+         wayPointSets.add(wayPointsForAKeyFrameTime);
+      }
+
+      TDoubleArrayList firstWayPoints = new TDoubleArrayList();
+      TDoubleArrayList lastWayPoints = new TDoubleArrayList();
+      TDoubleArrayList firstWayPointVelocities = new TDoubleArrayList();
+      TDoubleArrayList lastWayPointVelocities = new TDoubleArrayList();
       for (String jointName : jointNames)
       {
-         TDoubleArrayList points = new TDoubleArrayList();
-         for (KinematicsToolboxOutputStatus keyFrame : keyFrames)
-         {
-            converter.updateFullRobotModel(keyFrame);
-            double point = converter.getFullRobotModel().getOneDoFJointByName(jointName).getQ();
-            points.add(point);
-         }
+         KinematicsToolboxOutputStatus firstKeyFrame = keyFrames.get(0);
+         converter.updateFullRobotModel(firstKeyFrame);
+         double firstWayPoint = converter.getFullRobotModel().getOneDoFJointByName(jointName).getQ();
+         firstWayPoints.add(firstWayPoint);
 
-         TDoubleArrayList velocities = new TDoubleArrayList();
-         velocities.add(0.0);
-         for (int j = 1; j < points.size() - 1; j++)
-         {
-            double diff = points.get(j + 1) - points.get(j);
-            double timeDiff = keyFrameTimes.get(j + 1) - keyFrameTimes.get(j);
-            velocities.add(diff / timeDiff);
-         }
-         velocities.add(0.0);
+         KinematicsToolboxOutputStatus lastKeyFrame = keyFrames.get(keyFrames.size() - 1);
+         converter.updateFullRobotModel(lastKeyFrame);
+         double lastWayPoint = converter.getFullRobotModel().getOneDoFJointByName(jointName).getQ();
+         lastWayPoints.add(lastWayPoint);
 
-         List<Trajectory> trajectories = new ArrayList<Trajectory>();
-         for (int j = 0; j < points.size() - 1; j++)
-         {
-            Trajectory cubic = new Trajectory(4);
-            cubic.setCubic(keyFrameTimes.get(j), keyFrameTimes.get(j + 1), points.get(j), velocities.get(j), points.get(j + 1), velocities.get(j + 1));
-            trajectories.add(cubic);
-         }
-         jointNameToTrajectoriesMap.put(jointName, trajectories);
+         firstWayPointVelocities.add(0.0);
+         lastWayPointVelocities.add(0.0);
+      }
+
+      trajectoryPointOptimizer.setEndPoints(firstWayPoints, firstWayPointVelocities, lastWayPoints, lastWayPointVelocities);
+      trajectoryPointOptimizer.setWaypoints(wayPointSets);
+      LogTools.info("initializeTrajectoryGenerator");
+
+      for (int i = 0; i < jointNames.size(); i++)
+      {
+         TDoubleArrayList jointPositions = new TDoubleArrayList();
+         jointPositions.add(firstWayPoints.get(i));
+         for (int j = 0; j < wayPointSets.size(); j++)
+            jointPositions.add(wayPointSets.get(j).get(i));
+         jointPositions.add(lastWayPoints.get(i));
+
+         jointNameToPositionsMap.put(jointNames.get(i), jointPositions);
+         jointNameToVelocitiesMap.put(jointNames.get(i), new TDoubleArrayList());
       }
    }
 
-   private void computeVelocityBound(double searchingTimeTick)
+   public void computeVelocityBound(double searchingTimeTick)
    {
+      computeOptimizedTrajectories();
       int numberOfTicks = (int) (keyFrameTimes.get(keyFrameTimes.size() - 1) / searchingTimeTick);
       for (String jointName : jointNames)
       {
@@ -136,7 +177,27 @@ public class KeyFrameBasedTrajectoryGenerator
             time += searchingTimeTick;
          }
          Pair<Double, Double> minMaxVelocity = new Pair<Double, Double>(velocities.min(), velocities.max());
+         LogTools.info(jointName + " " + velocities.min() + " " + velocities.max());
          jointNameToVelocityBoundMap.put(jointName, minMaxVelocity);
+      }
+      if (SAVE_TRAJECTORY_DATA)
+         saveJointPositionAndVelocity(searchingTimeTick);
+   }
+
+   private void computeOptimizedTrajectories()
+   {
+      for (String jointName : jointNames)
+      {
+         TDoubleArrayList positions = jointNameToPositionsMap.get(jointName);
+         TDoubleArrayList velocities = jointNameToVelocitiesMap.get(jointName);
+         List<Trajectory> trajectories = new ArrayList<Trajectory>();
+         for (int i = 0; i < keyFrameTimes.size() - 1; i++)
+         {
+            Trajectory cubic = new Trajectory(4);
+            cubic.setCubic(keyFrameTimes.get(i), keyFrameTimes.get(i + 1), positions.get(i), velocities.get(i), positions.get(i + 1), velocities.get(i + 1));
+            trajectories.add(cubic);
+         }
+         jointNameToTrajectoriesMap.put(jointName, trajectories);
       }
    }
 
@@ -189,17 +250,6 @@ public class KeyFrameBasedTrajectoryGenerator
       }
 
       LogTools.info("done");
-   }
-
-   private void computeOptimizedVelocity()
-   {
-      String jointName = jointNames.get(9); // rightForearmYaw
-      //LogTools.info(jointName + "initial kinetic energer is " + computeKineticEnergy(jointName));
-
-      
-      
-
-      //LogTools.info(jointName + "final kinetic energer is " + computeKineticEnergy(jointName));
    }
 
    private int findTrajectoryIndex(double time)

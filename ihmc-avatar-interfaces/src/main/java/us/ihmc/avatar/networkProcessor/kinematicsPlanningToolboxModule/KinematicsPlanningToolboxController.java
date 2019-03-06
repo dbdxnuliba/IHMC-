@@ -73,7 +73,8 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final List<String> armJointNames = new ArrayList<String>();
    private final Map<String, Pair<Double, Double>> jointVelocityLimitMap;
    private final KeyFrameBasedTrajectoryGenerator keyFrameBasedTrajectoryGenerator;
-   private final static double searchingTimeTickForVelocityBound = 0.002;
+   private static final double searchingTimeTickForVelocityBound = 0.002;
+   private static final boolean useKeyFrameTimeOptimizerIfJointVelocityExceedLimits = false;
 
    private final KinematicsPlanningToolboxOutputStatus solution;
    private final KinematicsPlanningToolboxOutputConverter outputConverter;
@@ -89,7 +90,7 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    private final List<KinematicsToolboxCenterOfMassMessage> ikCenterOfMassMessages;
    private final AtomicReference<KinematicsToolboxConfigurationMessage> ikConfigurationMessage;
 
-   private final static double keyFrameTimeEpsilon = 0.01;
+   private static final double keyFrameTimeEpsilon = 0.01;
    private final TDoubleArrayList keyFrameTimes;
 
    private final HumanoidKinematicsToolboxController ikController;
@@ -579,8 +580,11 @@ public class KinematicsPlanningToolboxController extends ToolboxController
    {
       keyFrameBasedTrajectoryGenerator.addInitialConfiguration(initialRobotConfiguration);
       keyFrameBasedTrajectoryGenerator.addKeyFrames(solution.getRobotConfigurations(), solution.getKeyFrameTimes());
-      keyFrameBasedTrajectoryGenerator.compute(searchingTimeTickForVelocityBound);
-
+      keyFrameBasedTrajectoryGenerator.initializeTrajectoryGenerator();
+      keyFrameBasedTrajectoryGenerator.compute();
+      keyFrameBasedTrajectoryGenerator.computeVelocityBound(searchingTimeTickForVelocityBound);
+      
+      // TODO : when any joint exceed its velocity limit, optimize key frame times if useKeyFrameTimeOptimizerIfJointVelocityExceedLimits is true.
       for (String armJointName : armJointNames)
       {
          double jointVelocityLowerBound = keyFrameBasedTrajectoryGenerator.getJointVelocityLowerBound(armJointName);
