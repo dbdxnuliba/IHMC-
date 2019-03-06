@@ -223,6 +223,23 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 //				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex at %d", pocketToPack.getEndBridgeIndex());
 //				if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex =  %f %f", pocketToPack.getEndBridgeVertex().getX(), pocketToPack.getEndBridgeVertex().getY());
 			}
+			
+			if (i == min2)
+         {
+            assert (concaveHullPocket == true);
+            assert (pocketToPack.getDeepestVertexIndex() == 34);
+            assertEquals(pocketToPack.getDeepestVertex().getX(), 1.600000, EPS);
+            assertEquals(pocketToPack.getDeepestVertex().getY(), -0.376192, EPS);
+            assert (pocketToPack.getEndBridgeIndex() == 51);
+            assertEquals(pocketToPack.getEndBridgeVertex().getX(), 5.0, EPS);
+            assertEquals(pocketToPack.getEndBridgeVertex().getY(), -0.000078, EPS);
+
+//          if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: found min2 at %d", pocketToPack.getDeepestVertexIndex());
+//          if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: deepestVertex =  %f %f", pocketToPack.getDeepestVertex().getX(), pocketToPack.getDeepestVertex().getY());
+//          if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex at %d", pocketToPack.getEndBridgeIndex());
+//          if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: endBridgeVertex =  %f %f", pocketToPack.getEndBridgeVertex().getX(), pocketToPack.getEndBridgeVertex().getY());
+         }
+			
 		}
 
 		if (DEBUG) System.out.printf("\ntestComputeConcaveHullPocket");
