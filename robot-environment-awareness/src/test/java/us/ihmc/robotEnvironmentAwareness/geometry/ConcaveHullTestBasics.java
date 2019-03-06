@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.vecmath.Point2d;
+
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.After;
 import org.junit.Before;
@@ -218,7 +221,10 @@ public class ConcaveHullTestBasics
 	protected static List<Point3D> sombrero3D = null;
 	protected static List<LineSegment3D> sombreroConstraints3D = null;
 	protected int max, min1, min2;
-
+	
+	protected Point2D hatMax = new Point2D(), hatMin1 = new Point2D(), hatMin2 = new Point2D();
+	protected double depth1, depth2;
+	
 	public boolean createSombrero(double lb, double ub, int n)
 	{
 		max = -1;
@@ -238,13 +244,6 @@ public class ConcaveHullTestBasics
 		Point3D leftLowerCornerPoint = new Point3D();
 		Point3D rightLowerCornerPoint = new Point3D();
 
-		sombrero3D = new ArrayList<>();
-		sombrero3D.add(leftLowerCornerPoint);
-		for (int i = 0; i < xlen; i++)
-		{
-			sombrero3D.add(new Point3D(x[i], y[i], 0));
-		}
-		sombrero3D.add(rightLowerCornerPoint);
 
 		// locate the peak
 		for (int i = 0; i < xlen; i++)
@@ -275,11 +274,33 @@ public class ConcaveHullTestBasics
 				min2 = i;
 			}
 		}
+		
+		y[min2] += 10 * EPS;			//Raise min2 a little
+		
+		hatMax.set(x[max],y[max]); 
+		hatMin1.set(x[min1],y[min1]); 
+		hatMin2.set(x[min2],y[min2]);
+		
+		double dx = hatMax.getX()- hatMin1.getX();
+		double dy = hatMax.getY()- hatMin1.getY();
+		depth1 = Math.sqrt( dx*dx + dy-dy);
+		dx = hatMax.getX()- hatMin1.getX();
+		dy = hatMax.getY()- hatMin1.getY();
+		depth2 = Math.sqrt( dx*dx + dy-dy);
+		
 		//		System.out.printf("\n max, min1, min2  = %d %e %d %e %d %e " , max, y[max], min1, y[min1], min2, y[min2] );
 
 		leftLowerCornerPoint.set(x[0], lowestY1 - 1, 0);
 		rightLowerCornerPoint.set(x[xlen - 1], lowestY1 - 1, 0);
 
+		sombrero3D = new ArrayList<>();
+		sombrero3D.add(leftLowerCornerPoint);
+		for (int i = 0; i < xlen; i++)
+		{
+			sombrero3D.add(new Point3D(x[i], y[i], 0));
+		}
+		sombrero3D.add(rightLowerCornerPoint);
+		
 		sombrero = new ArrayList<>();
 		for (Point3D i : sombrero3D)
 			sombrero.add(new Point2D(i.getX(), i.getY()));
