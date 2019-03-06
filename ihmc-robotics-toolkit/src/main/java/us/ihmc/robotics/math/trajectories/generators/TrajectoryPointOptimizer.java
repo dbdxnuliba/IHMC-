@@ -40,7 +40,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public class TrajectoryPointOptimizer
 {
-   public static final int maxWaypoints = 12;
+   public static final int maxWaypoints = 20;
    public static final int maxIterations = 20;
 
    private static final double regularizationWeight = 1E-10;
@@ -246,7 +246,6 @@ public class TrajectoryPointOptimizer
       int intervals = nWaypoints.getIntegerValue() + 1;
       this.intervals.set(intervals);
       intervalTimes.reshape(intervals, 1);
-
       if (waypointTimes.size() != nWaypoints.getValue())
       {
          throw new RuntimeException("Unexpected number of waypoint times. Need " + nWaypoints.getValue() + ", got " + waypointTimes.size() + ".");
