@@ -32,7 +32,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double shallowAngleThreshold = 0, peakAngleThreshold = .1;
 			int result = ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAngles(shallowAngleThreshold, peakAngleThreshold, sombreroCollection);			
-			assert (result == 20); // should be 20 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
+			assert (result == 13); // should be 13 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAnglesHullCollectionTest = " + result);			
 		}
 		else {
@@ -48,7 +48,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double shallowAngleThreshold = 0, peakAngleThreshold = .1;
 			int result = ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAngles(shallowAngleThreshold, peakAngleThreshold, sombreroHull);
-			assert (result == 20); // should be 20 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
+			assert (result == 13); // should be 13 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAnglesHullTest(), result  = " + result);
 		}
 		else {
@@ -64,7 +64,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double shallowAngleThreshold = 0, peakAngleThreshold = .1;
 			int result = ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAngles(shallowAngleThreshold, peakAngleThreshold, sombrero);
-			assert (result == 20); // should be 20 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
+			assert (result == 13); // should be 13 if createSombrero(-5, 5, 51) and peakAngleThreshold = .1
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutPeaksAndShallowAnglesHullVerticesTest(), result = " + result);
 		}
 		else {
@@ -80,7 +80,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double percentageThreshold = 0.0067;
 			int result = ConcaveHullPruningFilteringTools.filterOutShallowVertices(percentageThreshold, sombrero);
-			assert (result == 46);  // should be 46 if createSombrero(-5, 5, 51) and percentageThreshold = 0.0067
+			assert (result == 40);  // should be 40 if createSombrero(-5, 5, 51) and percentageThreshold = 0.0067
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutShallowHullVerticesTest(), result = " + result);
 		}
 		else {
@@ -96,7 +96,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 		double percentageThreshold = .0335;
 		int result = ConcaveHullPruningFilteringTools.filterOutGroupsOfShallowVertices(percentageThreshold, sombrero);
-		assert (result == 51);  // should be 51 if createSombrero(-5, 5, 51) and percentageThreshold = 0.0335
+		assert (result == 0);  // should be 0 if createSombrero(-5, 5, 51) and percentageThreshold = 0.0335
 		if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutGroupsOfShallowHullVerticesTest(), result = " + result);
 		}
 		else {
@@ -110,9 +110,9 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		initializeBaseClass();
 		if (sombreroInitialized)
 		{
-			double areaThreshold = 1e-30;  //*Double.MIN_NORMAL;
+			double areaThreshold = 1e-4;  //*Double.MIN_NORMAL;
 			int result = ConcaveHullPruningFilteringTools.filterOutSmallTriangles(areaThreshold, sombrero);
-			assert (result == 5);  // should be 5 if createSombrero(-5, 5, 51) and areaThreshold = 1e-30
+			assert (result == 2);  // should be 2 if createSombrero(-5, 5, 51) and areaThreshold = 1e-30
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutSmallTrianglesHullVerticesTest(), result = " + result);
 		}
 		else {
@@ -126,9 +126,9 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		initializeBaseClass();
 		if (sombreroInitialized)
 		{
-			double depthThreshold = 0.925;  //*(max-min1);  //100*Double.MIN_NORMAL;
+			double depthThreshold = .954;  //*(max-min1);  //100*Double.MIN_NORMAL;
 			int result = ConcaveHullPruningFilteringTools.flattenShallowPockets(depthThreshold, sombrero);
-			assert (result == 12);  // should be 12 if createSombrero(-5, 5, 51) and depthThreshold = 0.925;
+			assert (result == 24);  // should be 24 if createSombrero(-5, 5, 51) and depthThreshold = 0.925;
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.flattenShallowPocketsHullVerticesTest()(), result = " + result);
 		}
 		else {
@@ -144,7 +144,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double lengthThreshold = 2;
 			int result = ConcaveHullPruningFilteringTools.filterOutShortEdges(lengthThreshold, sombreroCollection);
-			assert (result == 44); // should be 44 if createSombrero(-5, 5, 51) and lengthThreshold = 2
+			assert (result == 42); // should be 42 if createSombrero(-5, 5, 51) and lengthThreshold = 2
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutShortEdgesHullCollectionTest(), result = " + result);
 		}
 		else {
@@ -160,7 +160,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 		{
 			double lengthThreshold = 2;
 			int result = ConcaveHullPruningFilteringTools.filterOutShortEdges(lengthThreshold, sombreroHull);
-			assert (result == 44); // should be 44 if createSombrero(-5, 5, 51) and lengthThreshold = 2
+			assert (result == 42); // should be 44 if createSombrero(-5, 5, 51) and lengthThreshold = 2
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutShortEdgesHullTest(), result = " + result);
 		}
 		else {
@@ -177,7 +177,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 			double lengthThreshold = 2;
 
 			int result = ConcaveHullPruningFilteringTools.filterOutShortEdges(lengthThreshold, sombrero);
-			assert (result == 44); // should be 44 if createSombrero(-5, 5, 51) and lengthThreshold = 2
+			assert (result == 42); // should be 42 if createSombrero(-5, 5, 51) and lengthThreshold = 2
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterOutShortEdgesHullVerticesTest(), result = " + result);
 		}
 		else {
@@ -194,7 +194,7 @@ public class ConcaveHullPruningFilteringToolsTest extends ConcaveHullTestBasics
 			double threshold = 2;
 
 			int result = ConcaveHullPruningFilteringTools.filterByRay(threshold, sombrero);
-			assert (result == 43);  // should be 43 if createSombrero(-5, 5, 51) and threshold = 2
+			assert (result == 35);  // should be 35 if createSombrero(-5, 5, 51) and threshold = 2
 			if(DEBUG) System.out.println("ConcaveHullPruningFilteringTools.filterByRayHullVerticesTest()(), result = " + result);
 		}
 		else {
