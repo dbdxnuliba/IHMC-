@@ -93,14 +93,14 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroCollection, depth1, convexPolygonsToPack);
 
 		int numberOfHulls = convexPolygonsToPack.size();		
-		assert(1 == numberOfHulls);
-		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollectionn(depth1): %d\n", numberOfHulls);
+		assert(2 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollection(depth1): %d\n", numberOfHulls);
 
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroCollection, depth2, convexPolygonsToPack);
 
 		numberOfHulls = convexPolygonsToPack.size();		
-		assert(2 == numberOfHulls);
-		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollectionn(depth2): %d\n", numberOfHulls);
+		assert(4 == numberOfHulls);
+		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHullCollection(depth2): %d\n", numberOfHulls);
 }
 
 	@Test
@@ -113,13 +113,13 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth1, convexPolygonsToPack);
 
 		int numberOfHulls = convexPolygonsToPack.size();		
-		assert(1 == numberOfHulls);
+		assert(2 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHull(depth1): %d\n", numberOfHulls);
 
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
 
 		numberOfHulls = convexPolygonsToPack.size();		
-		assert(2 == numberOfHulls);
+		assert(4 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionConcaveHull(depth2): %d\n", numberOfHulls);
 	}
 
@@ -132,13 +132,13 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombrero, depth1, convexPolygonsToPack);
 
 		int numberOfHulls = convexPolygonsToPack.size();		
-		assert(1 == numberOfHulls);
+		assert(2 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionPoint2DList: %d\n", numberOfHulls);
 
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
 
 		numberOfHulls = convexPolygonsToPack.size();		
-		assert(2 == numberOfHulls);
+		assert(4 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionPoint2DList(depth2): %d\n", numberOfHulls);
 }
 
@@ -151,13 +151,13 @@ public class ConcaveHullDecompositionTest extends ConcaveHullTestBasics
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombrero, depth1, convexPolygonsToPack);
 
 		int numberOfHulls = convexPolygonsToPack.size();		
-		assert(1 == numberOfHulls);
+		assert(2 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionInternal: %d\n", numberOfHulls);
 
 		ConcaveHullDecomposition.recursiveApproximateDecomposition(sombreroHull, depth2, convexPolygonsToPack);
 
 		numberOfHulls = convexPolygonsToPack.size();		
-		assert(2 == numberOfHulls);
+		assert(4 == numberOfHulls);
 		if(DEBUG) System.out.printf("recursiveApproximateDecompositionInternal(depth2): %d\n", numberOfHulls);
 	}
 	

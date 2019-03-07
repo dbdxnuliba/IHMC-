@@ -35,6 +35,7 @@ import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerManager;
 import us.ihmc.robotEnvironmentAwareness.polygonizer.PolygonizerVisualizerUI;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionDataImporter;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
+import us.ihmc.robotics.random.RandomGeometry;
 
 public class ConcaveHullTestBasics
 {
@@ -224,6 +225,11 @@ public class ConcaveHullTestBasics
 	
 	protected Point2D hatMax = new Point2D(), hatMin1 = new Point2D(), hatMin2 = new Point2D();
 	protected double depth1, depth2;
+	Point3D leftLowerCornerPoint;
+	Point3D rightLowerCornerPoint;
+	double[] x;
+	double[] y;
+	int xlen;
 	
 	public boolean createSombrero(double lb, double ub, int n)
 	{
@@ -231,9 +237,9 @@ public class ConcaveHullTestBasics
 		min1 = -1;
 		min2 = -1;
 
-		double[] x = linspace(lb, ub, n);
-		double[] y = sombrero(x);
-		int xlen = x.length;
+		x = linspace(lb, ub, n);
+		y = sombrero(x);
+		xlen = x.length;
 
 		//for(int i=0; i<xlen; i++)
 		//	System.out.printf("%3.5f ", y[i]);
@@ -241,8 +247,8 @@ public class ConcaveHullTestBasics
 		double highestY = Double.MIN_VALUE;
 		double lowestY1 = Double.MAX_VALUE;
 		double lowestY2 = Double.MAX_VALUE;
-		Point3D leftLowerCornerPoint = new Point3D();
-		Point3D rightLowerCornerPoint = new Point3D();
+		leftLowerCornerPoint = new Point3D();
+		rightLowerCornerPoint = new Point3D();
 
 
 		// locate the peak
@@ -292,7 +298,7 @@ public class ConcaveHullTestBasics
 
 		leftLowerCornerPoint.set(x[0], lowestY1 - 1, 0);
 		rightLowerCornerPoint.set(x[xlen - 1], lowestY1 - 1, 0);
-
+		
 		sombrero3D = new ArrayList<>();
 		sombrero3D.add(leftLowerCornerPoint);
 		for (int i = 0; i < xlen; i++)
@@ -305,6 +311,9 @@ public class ConcaveHullTestBasics
 		for (Point3D i : sombrero3D)
 			sombrero.add(new Point2D(i.getX(), i.getY()));
 
+		
+		fillSombreroWithRandomPoint2D();
+		
 		//System.out.println("\n"+sombrero2D);
 		return true;
 	}
@@ -344,6 +353,35 @@ public class ConcaveHullTestBasics
 			//System.out.printf("\n %d %e ", i, psi[i]);
 		}
 		return psi;
+	}
+	
+	protected Point2D calculateNextRandomPtInSombrero(Random randomX, Random randomY)
+	{
+			
+		Point2D result = new Point2D(); 		
+		double x,y,ymin,ymax;
+		x = randomX.nextDouble();
+		ymin = leftLowerCornerPoint.getY();
+		ymax = (1 - Math.pow(x, 2)) * 2 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x, 2.0) / 2);
+		randomY.doubles(ymin, ymax);
+		y = randomY.nextDouble();	
+		result.set(x,y);
+		return result;
+	}
+	
+
+	protected void fillSombreroWithRandomPoint2D()
+	{
+		Random randomX = new Random(0);
+		Random randomY = new Random(0);
+		randomX.doubles(leftLowerCornerPoint.getX(), rightLowerCornerPoint.getX());
+
+		
+		for(int i=0; i<30; i++) 
+		{
+			Point2D nextRandomPoint2D = calculateNextRandomPtInSombrero(randomX, randomY);
+			sombrero.add( nextRandomPoint2D );
+		}
 	}
 
 	@BeforeEach
