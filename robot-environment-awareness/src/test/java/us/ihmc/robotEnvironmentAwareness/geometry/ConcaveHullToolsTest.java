@@ -149,7 +149,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		List<? extends Point2DReadOnly> concaveHullVertices = sombrero;
 		double perimeter = ConcaveHullTools.computePerimeter(concaveHullVertices);
 
-		assertEquals(perimeter, 23.805245, EPS); // value for createMexicanHat(-5, 5, 51);
+		assertEquals(perimeter, 23.805225, EPS); // value for createMexicanHat(-5, 5, 51);
 		if (DEBUG)
 			System.out.printf("\ntestComputePerimeter: %f", perimeter);
 	}
