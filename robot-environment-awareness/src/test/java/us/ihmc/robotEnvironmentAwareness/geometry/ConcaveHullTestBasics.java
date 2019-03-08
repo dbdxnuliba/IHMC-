@@ -204,7 +204,7 @@ public class ConcaveHullTestBasics
 		for (LineSegment3D i : lineConstraints3D)
 			lineConstraints2D.add(new LineSegment2D(i.getFirstEndpointX(), i.getFirstEndpointY(), i.getSecondEndpointX(), i.getSecondEndpointY()));
 
-		sombreroInitialized = createSombrero(-5.0, 5.0, 51); //createSombrero(-5, 5, 15);
+		sombreroInitialized = createSombrero(-5.0, 5.0, 51); 
 
 		sombreroCollection = new ConcaveHullCollection();
 		sombreroCollection.add(sombrero);
@@ -314,7 +314,12 @@ public class ConcaveHullTestBasics
 		
 		fillSombreroWithRandomPoint2D();
 		
-		//System.out.println("\n"+sombrero2D);
+//		for (Point2D i : sombrero)
+//			System.out.println(i.getX() + ", " + i.getY());
+//		System.out.println("\nEND");
+
+		
+//		System.out.println("\n"+sombrero2D);
 		return true;
 	}
 
@@ -356,15 +361,18 @@ public class ConcaveHullTestBasics
 	}
 	
 	protected Point2D calculateNextRandomPtInSombrero(Random randomX, Random randomY)
-	{
-			
+	{			
 		Point2D result = new Point2D(); 		
-		double x,y,ymin,ymax;
-		x = randomX.nextDouble();
+		double x,y,r,range,xmin,xmax,ymin,ymax;
+		
+		xmin = leftLowerCornerPoint.getX();
+		xmax = rightLowerCornerPoint.getX();
+		x = xmin + (xmax-xmin)*randomX.nextDouble();
 		ymin = leftLowerCornerPoint.getY();
-		ymax = (1 - Math.pow(x, 2)) * 2 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x, 2.0) / 2);
-		randomY.doubles(ymin, ymax);
-		y = randomY.nextDouble();	
+		ymax = (1.0 - Math.pow(x, 2.0)) * 2.0 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x, 2.0) / 2.0);
+		range = ymax - ymin;				
+		r = randomY.nextDouble();
+		y = ymin +range*r; 
 		result.set(x,y);
 		return result;
 	}
@@ -374,10 +382,7 @@ public class ConcaveHullTestBasics
 	{
 		Random randomX = new Random(0);
 		Random randomY = new Random(0);
-		randomX.doubles(leftLowerCornerPoint.getX(), rightLowerCornerPoint.getX());
-
-		
-		for(int i=0; i<30; i++) 
+		for(int i=0; i<300; i++) 
 		{
 			Point2D nextRandomPoint2D = calculateNextRandomPtInSombrero(randomX, randomY);
 			sombrero.add( nextRandomPoint2D );

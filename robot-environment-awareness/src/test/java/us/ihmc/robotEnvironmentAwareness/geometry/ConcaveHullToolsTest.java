@@ -149,7 +149,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		List<? extends Point2DReadOnly> concaveHullVertices = sombrero;
 		double perimeter = ConcaveHullTools.computePerimeter(concaveHullVertices);
 
-		assertEquals(perimeter, 35.961888, EPS); // value for createMexicanHat(-5, 5, 51);
+		assertEquals(perimeter, 992.217367, EPS); // value for createMexicanHat(-5, 5, 51);
 		if (DEBUG)
 			System.out.printf("\ntestComputePerimeter: %f", perimeter);
 	}
@@ -227,12 +227,12 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 			if (i == min2)
          {
             assert (concaveHullPocket == true);
-            assert (pocketToPack.getDeepestVertexIndex() == 52);
-            assertEquals(pocketToPack.getDeepestVertex().getX(), 5.000000, EPS);
-            assertEquals(pocketToPack.getDeepestVertex().getY(), -1.384479, EPS);
-            assert (pocketToPack.getEndBridgeIndex() == 73);
-            assertEquals(pocketToPack.getEndBridgeVertex().getX(), 0.990723, EPS);
-            assertEquals(pocketToPack.getEndBridgeVertex().getY(), 0.990723, EPS);
+            assert (pocketToPack.getDeepestVertexIndex() == 34);
+            assertEquals(pocketToPack.getDeepestVertex().getX(), 1.600000, EPS);
+            assertEquals(pocketToPack.getDeepestVertex().getY(), -0.376192, EPS);
+            assert (pocketToPack.getEndBridgeIndex() == 51);
+            assertEquals(pocketToPack.getEndBridgeVertex().getX(), 5.000000, EPS);
+            assertEquals(pocketToPack.getEndBridgeVertex().getY(), -0.000078, EPS);
 
           if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: found min2 at %d", pocketToPack.getDeepestVertexIndex());
           if(DEBUG) System.out.printf("\ntestComputeConcaveHullPocket: deepestVertex =  %f %f", pocketToPack.getDeepestVertex().getX(), pocketToPack.getDeepestVertex().getY());
@@ -321,9 +321,10 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 
 		if (sombreroInitialized)
 		{
-			int[] bitMap = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,1,0,1,0,0,1,1,1,1,0,0,1,0,0,1,0,1,0,0,1,0,1,0,1,0,1};
-			int n = sombrero.size();
-			String str = String.format("int[%d] bitMap = {", n);
+			int[] bitMap = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0};
+			
+         int n = sombrero.size();
+         String str = String.format("int[%d] bitMap = {", n);
 
 			for (int i = 0; i < n; i++)
 			{
@@ -372,7 +373,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 
 		if (sombreroInitialized)
 		{
-			int[] bitMap = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,1,1,1,1,5,1,1,1,1,1,1,1,0,2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,1,0,0,1,0,1,1,0,1,0,1,1,0,1,0,0,0,1,1};
+			int[] bitMap = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,1,1,1,1,5,1,1,1,1,1,1,1,0,2,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,1,0,1,1,1,1,0,1,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,1,1,0,1,1,0,1,0,0,1,1,1,0,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,0,0,1,1,0,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,0,1,1,0,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1,1,0,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,1,1,1,1,1,1,1,0,1,0,0,0,1,1,1,1,0,0,1,0,0,1,1,1,1,1,1,1,0,1,1,1};
 			List<? extends Point2DReadOnly> concaveHullVertices = sombrero;
 
 			int n = concaveHullVertices.size();
@@ -434,7 +435,7 @@ public class ConcaveHullToolsTest extends ConcaveHullTestBasics
 		int vertexIndex = 0;
 		List<? extends Point2DReadOnly> concaveHullVertices = sombrero;
 		double angleFromPreviousEdgeToNextEdge = ConcaveHullTools.getAngleFromPreviousEdgeToNextEdge(vertexIndex, concaveHullVertices);
-		assertEquals(angleFromPreviousEdgeToNextEdge, -1.851865, EPS);
+		assertEquals(angleFromPreviousEdgeToNextEdge, -1.707571, EPS);
 
 		if (DEBUG)
 			System.out.printf("\ntestGetAngleFromPreviousEdgeToNextEdge: %f", angleFromPreviousEdgeToNextEdge);
