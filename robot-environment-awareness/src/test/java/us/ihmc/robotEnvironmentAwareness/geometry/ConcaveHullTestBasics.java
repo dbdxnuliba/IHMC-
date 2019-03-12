@@ -320,13 +320,25 @@ public class ConcaveHullTestBasics
 			sombrero.add(new Point2D(i.getX(), i.getY()));
 
 		fillSombreroWithRandomPoints();
-
-		//printRow2D(sombrero, "\nX=[");
-
+		
 		// Print data to paste into Matlab, plot with scatter3(X,Z,Y,1);
-		printRow3D(sombrero3D, "\nX=[");
-		printRow3D(sombrero3D, "\nY=[");
-		printRow3D(sombrero3D, "\nZ=[");
+		//printRow3D(sombrero3D, "\nX=[");
+		//printRow3D(sombrero3D, "\nY=[");
+		//printRow3D(sombrero3D, "\nZ=[");
+
+		double k=5;
+		Point3D C = new Point3D(-10.0, 5.0, 5.0);                     //%1xD  D dimensional Camera viewpoint.
+		double param = 2.3;                            //%param - parameter for the algorithm. Indirectly sets the radius.
+		Point3D[] p = new Point3D[sombrero3D.size()];
+		for(int i=0; i< sombrero3D.size(); i++)
+			p[i] = sombrero3D.get(i);
+		
+		List<Point3D> visible3D = hiddenPointRemoval( p, C, param );
+
+
+		printRow3D(visible3D, "\nX=[");
+		printRow3D(visible3D, "\nY=[");
+		printRow3D(visible3D, "\nZ=[");
 
 		//		System.out.println("\n"+sombrero2D);
 		return true;
@@ -353,7 +365,8 @@ public class ConcaveHullTestBasics
 	{
 		double val = 0.0;
 		System.out.printf(tag);
-		for (int i = 0; i < list.size(); i++)
+		int n = list.size();
+		for (int i = 0; i < n; i++)
 		{
 			if (tag.startsWith("\nX"))
 				val = list.get(i).getX();
@@ -362,10 +375,11 @@ public class ConcaveHullTestBasics
 			if (tag.startsWith("\nZ"))
 				val = list.get(i).getZ();
 			System.out.printf("%3.3f", val);
-			if (i < list.size() - 1)
+			if (i < n - 1)
 				System.out.printf(",");
+			else
+				System.out.printf("];");
 		}
-		System.out.printf("];");
 	}
 
 	/*
@@ -527,8 +541,7 @@ public class ConcaveHullTestBasics
 	{
 //		p = p-repmat(C,[numPts 1]);												%Move C to the origin  
 
-		int n = p.length;
-		
+		int n = p.length;		
 		for( int i=0; i<n; i++)
 			p[i].set(p[i].getX()-C.getX(), p[i].getY()-C.getY(), p[i].getZ()-C.getZ());
 			
@@ -554,28 +567,31 @@ public class ConcaveHullTestBasics
 		Point3d[] P = new Point3d[n];
 		for(int i=0; i<n; i++)
 		{
-			double r = R[i] - normp[i];
-			double s = (1-2*r)/normp[i];
-			P[i].set(s*p[i].getX(), s*p[i].getY(), s*p[i].getZ());
+			double norm = normp[i];
+			double r = 2*(R[i] - norm);
+			double s = (1+r)/norm;  //s = (1-2*(R[i] - norm))/norm; = 
+			P[i] = new Point3d(s*p[i].getX(), s*p[i].getY(), s*p[i].getZ());
 		}
 		
 //		visiblePtInds = unique(convhulln([P;zeros(1,dim)]));              %convex hull
 
-		QuickHull3D qhull3d = new QuickHull3D();
-		qhull3d.build(P);		
-		int[] indices = qhull3d.getVertexPointIndices();
+// http://box2d.org/files/GDC2014/DirkGregorius_ImplementingQuickHull.pdf
+		
+		QuickHull3D qhull = new QuickHull3D();  //https://www.cs.ubc.ca/~lloyd/java/quickhull3d.html
+		qhull.build(P);		
+		int[] indices = qhull.getVertexPointIndices();
 
-		List<Integer> indicesList = new ArrayList<Integer>();
-		for(int i=0; i<P.length; i++)
-			indicesList.add(indices[i]);
+		List<Integer> listOfIndices = new ArrayList<Integer>();
+		for(int i=0; i<indices.length; i++)
+			listOfIndices.add(indices[i]);
 			
-		Collections.sort(indicesList);
+		Collections.sort(listOfIndices);
 		
 		List<Integer> visiblePtInds = new ArrayList<Integer>();
 		int lastIndex = -1;
-		for(int i=0; i<indicesList.size(); i++)
+		for(int i=0; i<listOfIndices.size(); i++)
 		{
-			int index = indicesList.get(i);
+			int index = listOfIndices.get(i);
 			if(index != lastIndex)
 				visiblePtInds.add(index);
 			lastIndex = index;
@@ -592,7 +608,7 @@ List<Point3D> hiddenPointRemoval( Point3D[] p, Point3D C, double param )
 	List<Point3D> list = new ArrayList<Point3D>();
 	List<Integer> vp = HPR(p, C, param);
 	for(int i=0; i<vp.size(); i++)		
-		list.add(p[i]);
+		list.add(p[vp.get(i)]);
 	return list;
 }
 		
