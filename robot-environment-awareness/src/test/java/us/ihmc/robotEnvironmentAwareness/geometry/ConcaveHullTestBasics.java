@@ -1,5 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.geometry;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -219,6 +220,10 @@ public class ConcaveHullTestBasics
 		sombreroHull = new ConcaveHull(sombrero);
 
 		baseClassInitialized = true;
+
+		// File projectDirectory = new File(new File("").getAbsolutePath());
+		// File matlabDirectory = new File(projectDirectory, "/HPR/Matlab");
+
 		return baseClassInitialized;
 	}
 
@@ -320,21 +325,19 @@ public class ConcaveHullTestBasics
 			sombrero.add(new Point2D(i.getX(), i.getY()));
 
 		fillSombreroWithRandomPoints();
-		
+
 		// Print data to paste into Matlab, plot with scatter3(X,Z,Y,1);
 		//printRow3D(sombrero3D, "\nX=[");
 		//printRow3D(sombrero3D, "\nY=[");
 		//printRow3D(sombrero3D, "\nZ=[");
 
-		double k=5;
-		Point3D C = new Point3D(-10.0, 5.0, 5.0);                     //%1xD  D dimensional Camera viewpoint.
-		double param = 2.3;                            //%param - parameter for the algorithm. Indirectly sets the radius.
+		Point3D C = new Point3D(-10.0, 5.0, 5.0); //%1xD  D dimensional Camera viewpoint.
 		Point3D[] p = new Point3D[sombrero3D.size()];
-		for(int i=0; i< sombrero3D.size(); i++)
+		for (int i = 0; i < sombrero3D.size(); i++)
 			p[i] = sombrero3D.get(i);
-		
-		List<Point3D> visible3D = hiddenPointRemoval( p, C, param );
 
+		double param = 2.3; //%param - parameter for the algorithm. Indirectly sets the radius.
+		List<Point3D> visible3D = hiddenPointRemoval(p, C, param);
 
 		printRow3D(visible3D, "\nX=[");
 		printRow3D(visible3D, "\nY=[");
@@ -360,7 +363,7 @@ public class ConcaveHullTestBasics
 		}
 		System.out.printf("];");
 	}
-	
+
 	void printRow3D(List<Point3D> list, String tag)
 	{
 		double val = 0.0;
@@ -409,23 +412,30 @@ public class ConcaveHullTestBasics
 
 	double rickerWavelet(double x)
 	{
-		double y = 0.1*(1.0 - Math.pow(x, 2.0)) * 2.0 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x, 2.0) / 2.0);
+		double y = 0.1 * (1.0 - Math.pow(x, 2.0)) * 2.0 / (Math.sqrt(3.0) * Math.pow(Math.PI, 0.25)) * Math.exp(-Math.pow(x, 2.0) / 2.0);
 		return y;
 	}
 
 	double staircaseFunction(double x)
 	{
-		double y=0.0;		
-		if(x > -2) y= 0.0;
-		if(x > -1) y= .25;
-		if(x > 0)  y= .5;
-		if(x > 1) y= .75;
-		if(x > 2) y= 1;
-		if(x > 3) y= .5;
-		if(x > 4) y= 0.0;
+		double y = 0.0;
+		if (x > -2)
+			y = 0.0;
+		if (x > -1)
+			y = .25;
+		if (x > 0)
+			y = .5;
+		if (x > 1)
+			y = .75;
+		if (x > 2)
+			y = 1;
+		if (x > 3)
+			y = .5;
+		if (x > 4)
+			y = 0.0;
 		return y;
 	}
-	
+
 	double[] sombrero(double[] x)
 	{
 		int n = x.length;
@@ -465,14 +475,14 @@ public class ConcaveHullTestBasics
 		x = xmin + (xmax - xmin) * randomX.nextDouble();
 		//fx = rickerWavelet(x);
 		fx = staircaseFunction(x);
-		y = fx - 2.5*Math.abs(ymin) * randomX.nextDouble();
+		y = fx - 2.5 * Math.abs(ymin) * randomX.nextDouble();
 		z = 1.0 * (randomX.nextDouble() - 0.5);
 		result.set(x, y, z);
 		return result;
 	}
 
 	int npoints = 30000;
-	
+
 	protected void fillSombreroWithRandomPoints()
 	{
 		Random randomX = new Random(0);
@@ -483,135 +493,90 @@ public class ConcaveHullTestBasics
 			sombrero3D.add(nextRandomPoint3D);
 		}
 	}
-	
-//	function A = repmata(v, m, n)
-//			A = ones(m,1) * v;
-//			end
 
-	
-//	% HPR - Using HPR ("Hidden Point Removal) method, approximates a visible subset of points 
-//	% as viewed from a given viewpoint.
-//	% Usage:
-//	% visiblePtInds=HPR(p,C,param)
-//	%
-//	% Input:
-//	% p - NxD D dimensional point cloud.
-//	% C - 1xD D dimensional viewpoint.
-//	% param - parameter for the algorithm. Indirectly sets the radius.
-//	%
-//	% Output:
-//	% visiblePtInds - indices of p that are visible from C.
-//	%
-//	% This code was written by Sagi Katz
-//	% sagikatz@tx.technion.ac.il
-//	% Technion, 2006.
-//	% For more information, see "Direct Visibility of Point Sets", Katz S., Tal
-//	% A. and Basri R., SIGGRAPH 2007, ACM Transactions on Graphics, Volume 26, Issue 3, August 2007.
-//	%
-//	% This method is patent pending.
-//
-//	function visiblePtInds = HPR(p,C,param)
-//	dim = size(p,2);
-//	numPts = size(p,1);
-//	p = p-repmat(C,[numPts 1]);                                       %Move C to the origin
-//	normp = sqrt(dot(p,p,2));                                         %Calculate ||p||
-//	R = repmat(max(normp)*(10^param),[numPts 1]);                     %Sphere radius
-//	P = p+2*repmat(R-normp,[1 dim]).*p./repmat(normp,[1 dim]);        %Spherical flipping
-//	visiblePtInds = unique(convhulln([P;zeros(1,dim)]));              %convex hull
-//	visiblePtInds(visiblePtInds==numPts+1) = [];
-//	end
+	//	function visiblePtInds = HPR(p,C,param)
+	//	dim = size(p,2);
+	//	numPts = size(p,1);
+	//	p = p-repmat(C,[numPts 1]);                                       %Move C to the origin
+	//	normp = sqrt(dot(p,p,2));                                         %Calculate ||p||
+	//	R = repmat(max(normp)*(10^param),[numPts 1]);                     %Sphere radius
+	//	P = p+2*repmat(R-normp,[1 dim]).*p./repmat(normp,[1 dim]);        %Spherical flipping
+	//	visiblePtInds = unique(convhulln([P;zeros(1,dim)]));              %convex hull
+	//	visiblePtInds(visiblePtInds==numPts+1) = [];
+	//	end
 
-//		% Resources:
-//		% https://www.mathworks.com/matlabcentral/fileexchange/16581-hidden-point-removal
-//		% https://www.isprs-ann-photogramm-remote-sens-spatial-inf-sci.net/II-5/9/2014/isprsannals-II-5-9-2014.pdf
-//		% http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/robustPointVisibility/paper_docs/VisibilityOfNoisyPointCloud_small.pdf
-//		% http://www.cloudcompare.org/
-//
-//		p = [X; Y; Z]';                         %NxD D dimensional point cloud.                    
-//		k=5;
-//		Camera = [-10,k,k];                     %1xD  D dimensional Camera viewpoint.
-//		param = 2.3;                            %param - parameter for the algorithm. Indirectly sets the radius.
-//		vp = HPR(p,Camera,param);               %visiblePtInds - indices of p that are visible from C.
-//		Xvp = X(vp);
-//		Yvp = Y(vp);
-//		Zvp = Z(vp);
-	
-	
-	List<Integer> HPR(Point3D[] p, Point3D C, double param )
+	//		% Resources:
+	//		% https://www.mathworks.com/matlabcentral/fileexchange/16581-hidden-point-removal
+	//		% https://www.isprs-ann-photogramm-remote-sens-spatial-inf-sci.net/II-5/9/2014/isprsannals-II-5-9-2014.pdf
+	//		% http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/robustPointVisibility/paper_docs/VisibilityOfNoisyPointCloud_small.pdf
+	//		% http://www.cloudcompare.org/
+
+	List<Integer> HPR(Point3D[] p, Point3D C, double param)
 	{
-//		p = p-repmat(C,[numPts 1]);												%Move C to the origin  
+		//		p = p-repmat(C,[numPts 1]);											%Move C to the origin  
 
-		int n = p.length;		
-		for( int i=0; i<n; i++)
-			p[i].set(p[i].getX()-C.getX(), p[i].getY()-C.getY(), p[i].getZ()-C.getZ());
-			
-//		normp = sqrt(dot(p,p,2));                                         %Calculate ||p||		
+		int n = p.length;
+		for (int i = 0; i < n; i++)
+			p[i].set(p[i].getX() - C.getX(), p[i].getY() - C.getY(), p[i].getZ() - C.getZ());
+
+		//		normp = sqrt(dot(p,p,2));                                   %Calculate ||p||		
 
 		double[] normp = new double[n];
 		double maxNormp = 0;
-		for(int i=0; i<n; i++)  // sqrt of sum of p(i)*p(i) by rows, there's only one row
+		for (int i = 0; i < n; i++) // sqrt of sum of p(i)*p(i) by rows, there's only one row
 		{
-			normp[i] = Math.sqrt(p[i].getX()*p[i].getX() + p[i].getY()*p[i].getY() + p[i].getZ()*p[i].getZ() );
+			double x = p[i].getX(), y = p[i].getY(), z = p[i].getZ();
+			normp[i] = Math.sqrt(x * x + y * y + z * z);
 			if (normp[i] > maxNormp)
 				maxNormp = normp[i];
 		}
-		
-//		R = repmat(max(normp)*(10^param),[numPts 1]);                     %Sphere radius
 
-		double[] R = new double[n];
-		for(int i=0; i<n; i++)
-			R[i] = maxNormp*Math.pow(10, param);
-	
-//		P = p+2*repmat(R-normp,[1 dim]).*p./repmat(normp,[1 dim]);        %Spherical flipping
-
+		//		R = repmat(max(normp)*(10^param),[numPts 1]);                %Sphere radius
+		//		P = p+2*repmat(R-normp,[1 dim]).*p./repmat(normp,[1 dim]);   %Spherical flipping
+		double R[] = new double[n];
 		Point3d[] P = new Point3d[n];
-		for(int i=0; i<n; i++)
+		for (int i = 0; i < n; i++)
 		{
-			double norm = normp[i];
-			double r = 2*(R[i] - norm);
-			double s = (1+r)/norm;  //s = (1-2*(R[i] - norm))/norm; = 
-			P[i] = new Point3d(s*p[i].getX(), s*p[i].getY(), s*p[i].getZ());
+			R[i] = maxNormp * Math.pow(10, param);
+			double r = 2 * (R[i] - normp[i]);
+			double s = (1 + r) / normp[i];
+			P[i] = new Point3d(s * p[i].getX(), s * p[i].getY(), s * p[i].getZ());
 		}
-		
-//		visiblePtInds = unique(convhulln([P;zeros(1,dim)]));              %convex hull
 
-// http://box2d.org/files/GDC2014/DirkGregorius_ImplementingQuickHull.pdf
-		
-		QuickHull3D qhull = new QuickHull3D();  //https://www.cs.ubc.ca/~lloyd/java/quickhull3d.html
-		qhull.build(P);		
-		int[] indices = qhull.getVertexPointIndices();
+		// http://box2d.org/files/GDC2014/DirkGregorius_ImplementingQuickHull.pdf
+		QuickHull3D qhull = new QuickHull3D(); //https://www.cs.ubc.ca/~lloyd/java/quickhull3d.html
+		qhull.build(P);
 
 		List<Integer> listOfIndices = new ArrayList<Integer>();
-		for(int i=0; i<indices.length; i++)
+		int[] indices = qhull.getVertexPointIndices();
+		for (int i = 0; i < indices.length; i++)
 			listOfIndices.add(indices[i]);
-			
-		Collections.sort(listOfIndices);
-		
+
+		// sort may not be necessary but assures uniqueness step works right...
+		Collections.sort(listOfIndices);  
+
 		List<Integer> visiblePtInds = new ArrayList<Integer>();
 		int lastIndex = -1;
-		for(int i=0; i<listOfIndices.size(); i++)
+
+		//		visiblePtInds = unique(convhulln([P;zeros(1,dim)]));           %convex hull
+		for (int i = 0; i < listOfIndices.size(); i++)
 		{
 			int index = listOfIndices.get(i);
-			if(index != lastIndex)
+			if (index != lastIndex)
 				visiblePtInds.add(index);
 			lastIndex = index;
 		}
-		
-//		visiblePtInds(visiblePtInds==numPts+1) = [];   // ??????????????
-		
 		return visiblePtInds;
 	}
-	
-	
-List<Point3D> hiddenPointRemoval( Point3D[] p, Point3D C, double param )
-{
-	List<Point3D> list = new ArrayList<Point3D>();
-	List<Integer> vp = HPR(p, C, param);
-	for(int i=0; i<vp.size(); i++)		
-		list.add(p[vp.get(i)]);
-	return list;
-}
-		
+
+	List<Point3D> hiddenPointRemoval(Point3D[] p, Point3D C, double param)
+	{
+		List<Point3D> list = new ArrayList<Point3D>();
+		List<Integer> vp = HPR(p, C, param);
+		for (int i = 0; i < vp.size(); i++)
+			list.add(p[vp.get(i)]);
+		return list;
+	}
 
 	@BeforeEach
 	public void setup() throws Exception
