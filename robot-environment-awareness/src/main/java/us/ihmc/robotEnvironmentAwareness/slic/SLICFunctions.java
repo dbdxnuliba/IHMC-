@@ -159,6 +159,7 @@ public final class SLICFunctions
          {
             seedsX[n] = storeind % width;
             seedsY[n] = storeind / width;
+
             seedsL[n] = m_lvec[storeind];
             seedsA[n] = m_avec[storeind];
             seedsB[n] = m_bvec[storeind];
@@ -171,14 +172,14 @@ public final class SLICFunctions
    {
       int n = 0;
 
-      int xstrips = (int) ((0.5 + (double) width) / ((double) stepSize));
-      int ystrips = (int) ((0.5 + (double) height) / ((double) stepSize));
+      int xstrips = (int) (0.5 + (double) (width) / (double) (stepSize));
+      int ystrips = (int) (0.5 + (double) (height) / (double) (stepSize));
 
       int xerr = width - stepSize * xstrips;
       int yerr = height - stepSize * ystrips;
 
-      double xerrperstrip = (double) xerr / (double) xstrips;
-      double yerrperstrip = (double) yerr / (double) ystrips;
+      double xerrperstrip = (double) (xerr) / (double) (xstrips);
+      double yerrperstrip = (double) (yerr) / (double) (ystrips);
 
       int xoff = stepSize / 2;
       int yoff = stepSize / 2;
@@ -201,146 +202,194 @@ public final class SLICFunctions
       }
 
       if (perturbseeds)
+      {
          perturbSeeds(seedsL, seedsA, seedsB, seedsX, seedsY, width, height, edgeMagnitude);
+      }
+      //      int size = width * height;
+      //      double step = Math.sqrt((double) size / (double) stepSize);
+      //      int xoff = (int) (step / 2);
+      //      int yoff = (int) (step / 2);
+      //      int xevenoff = (int) (step / 2);
+      //      int xoddoff = 0;
+      //
+      //      int n = 0;
+      //      for (int y = 0; y < height; y++)
+      //      {
+      //         int Y = (int) (y * step + yoff);
+      //         if (Y > height - 1)
+      //         {
+      //            break;
+      //         }
+      //
+      //         for (int x = 0; x < width; x++)
+      //         {
+      //            int X = (int) (x * step + xoff);
+      //            if (y % 2 == 0)
+      //            {
+      //               X += xevenoff;
+      //            }
+      //            else
+      //            {
+      //               X += xoddoff;
+      //            }
+      //            if (X > width - 1)
+      //            {
+      //               break;
+      //            }
+      //
+      //            int i = Y * width + X;
+      //
+      //            seedsL[n] = m_lvec[i];
+      //            seedsA[n] = m_avec[i];
+      //            seedsB[n] = m_bvec[i];
+      //            seedsX[n] = X;
+      //            seedsY[n] = Y;
+      //            n++;
+      //         }
+      //      }
+      //
+      //      if (perturbseeds)
+      //      {
+      //         perturbSeeds(seedsL, seedsA, seedsB, seedsX, seedsY, width, height, edgeMagnitude);
+      //      }
    }
-   //
-   //   public static void performSuperpixelSLIC(double[] seedsL, double[] seedsA, double[] seedsB, double[] seedsX, double[] seedsY, int width, int height,
-   //                                            int[] kLabels, int stepSize, double[] edgeMagnitude, double m)
-   //   {
-   //      int size = width * height;
-   //      int numk = seedsL.length;
-   //      int offset = stepSize;
-   //
-   //      double[] clustersize = new double[numk];
-   //      double[] inv = new double[numk]; //to store 1/clustersize[k] values
-   //
-   //      double[] sigmal = new double[numk];
-   //      double[] sigmaa = new double[numk];
-   //      double[] sigmab = new double[numk];
-   //      double[] sigmax = new double[numk];
-   //      double[] sigmay = new double[numk];
-   //      double[] distvec = new double[size];
-   //
-   //      for (int i_ = 0; i_ < numk; i_++)
-   //      {
-   //         clustersize[i_] = 0;
-   //         inv[i_] = 0;
-   //         sigmal[i_] = 0;
-   //         sigmaa[i_] = 0;
-   //         sigmab[i_] = 0;
-   //         sigmax[i_] = 0;
-   //         sigmay[i_] = 0;
-   //
-   //      }
-   //      for (int i_ = 0; i_ < distvec.length; i_++)
-   //      {
-   //         distvec[i_] = Double.MAX_VALUE;
-   //      }
-   //
-   //      double invwt = 1.0 / ((stepSize / m) * (m));
-   //
-   //      int x1, y1, x2, y2;
-   //      double l, a, b;
-   //      double dist;
-   //      double distxy;
-   //      for (int itr = 0; itr < 10; itr++)
-   //      {
-   //         for (int i_ = 0; i_ < distvec.length; i_++)
-   //         {
-   //            distvec[i_] = Double.MAX_VALUE;
-   //         }
-   //         for (int n = 0; n < numk; n++)
-   //         {
-   //            y1 = (int) Math.max(0, seedsY[n] - offset);
-   //            y2 = (int) Math.min(height, seedsY[n] + offset);
-   //            x1 = (int) Math.max(0, seedsX[n] - offset);
-   //            x2 = (int) Math.min(width, seedsX[n] + offset);
-   //
-   //            for (int y = y1; y < y2; y++)
-   //            {
-   //               for (int x = x1; x < x2; x++)
-   //               {
-   //                  int i = y * width + x;
-   //
-   //                  l = m_lvec[i];
-   //                  a = m_avec[i];
-   //                  b = m_bvec[i];
-   //
-   //                  dist = (l - seedsL[n]) * (l - seedsL[n]) + (a - seedsA[n]) * (a - seedsA[n]) + (b - seedsB[n]) * (b - seedsB[n]);
-   //
-   //                  distxy = (x - seedsX[n]) * (x - seedsX[n]) + (y - seedsY[n]) * (y - seedsY[n]);
-   //
-   //                  //------------------------------------------------------------------------
-   //                  dist += distxy * invwt;//dist = sqrt(dist) + sqrt(distxy*invwt);//this is more exact
-   //                  //------------------------------------------------------------------------
-   //
-   //                  if (dist < distvec[i])
-   //                  {
-   //                     distvec[i] = dist;
-   //                     kLabels[i] = n;
-   //                  }
-   //               }
-   //            }
-   //         }
-   //         //-----------------------------------------------------------------
-   //         // Recalculate the centroid and store in the seed values
-   //         //-----------------------------------------------------------------
-   //         //instead of reassigning memory on each iteration, just reset.
-   //
-   //         for (int i_ = 0; i_ < numk; i_++)
-   //         {
-   //            clustersize[i_] = 0;
-   //            sigmal[i_] = 0;
-   //            sigmaa[i_] = 0;
-   //            sigmab[i_] = 0;
-   //            sigmax[i_] = 0;
-   //            sigmay[i_] = 0;
-   //         }
-   //
-   //         //------------------------------------
-   //         //edgesum.assign(numk, 0);
-   //         //------------------------------------
-   //
-   //         int ind = 0;
-   //         for (int r = 0; r < height; r++)
-   //         {
-   //            for (int c = 0; c < width; c++)
-   //            {
-   //               sigmal[kLabels[ind]] += m_lvec[ind];
-   //               sigmaa[kLabels[ind]] += m_avec[ind];
-   //               sigmab[kLabels[ind]] += m_bvec[ind];
-   //               sigmax[kLabels[ind]] += c;
-   //               sigmay[kLabels[ind]] += r;
-   //               //------------------------------------
-   //               //edgesum[klabels[ind]] += edgemag[ind];
-   //               //------------------------------------
-   //               clustersize[kLabels[ind]] += 1.0;
-   //               ind++;
-   //            }
-   //         }
-   //
-   //         for (int k = 0; k < numk; k++)
-   //         {
-   //            if (clustersize[k] <= 0)
-   //            {
-   //               clustersize[k] = 1;
-   //            }
-   //            inv[k] = 1.0 / clustersize[k];//computing inverse now to multiply, than divide later
-   //         }
-   //
-   //         for (int k = 0; k < numk; k++)
-   //         {
-   //            seedsL[k] = sigmal[k] * inv[k];
-   //            seedsA[k] = sigmaa[k] * inv[k];
-   //            seedsB[k] = sigmab[k] * inv[k];
-   //            seedsX[k] = sigmax[k] * inv[k];
-   //            seedsY[k] = sigmay[k] * inv[k];
-   //            //------------------------------------
-   //            //edgesum[k] *= inv[k];
-   //            //------------------------------------
-   //         }
-   //      }
-   //   }
+
+   private static void performSuperpixelSLIC(double[] seedsL, double[] seedsA, double[] seedsB, double[] seedsX, double[] seedsY, int width, int height,
+                                             int[] kLabels, int stepSize, double[] edgeMagnitude, double m)
+   {
+      int size = width * height;
+      int numk = seedsL.length;
+      int offset = stepSize;
+
+      double[] clustersize = new double[numk];
+      double[] inv = new double[numk]; //to store 1/clustersize[k] values
+
+      double[] sigmal = new double[numk];
+      double[] sigmaa = new double[numk];
+      double[] sigmab = new double[numk];
+      double[] sigmax = new double[numk];
+      double[] sigmay = new double[numk];
+      double[] distvec = new double[size];
+
+      for (int i = 0; i < numk; i++)
+      {
+         clustersize[i] = 0;
+         inv[i] = 0;
+         sigmal[i] = 0;
+         sigmaa[i] = 0;
+         sigmab[i] = 0;
+         sigmax[i] = 0;
+         sigmay[i] = 0;
+
+      }
+      for (int i = 0; i < distvec.length; i++)
+         distvec[i] = Double.MAX_VALUE;
+
+      double invwt = 1.0 / ((stepSize / m) * (stepSize / m));
+
+      int x1, y1, x2, y2;
+      double l, a, b;
+      double dist;
+      double distxy;
+      for (int itr = 0; itr < 10; itr++)
+      {
+         for (int i = 0; i < distvec.length; i++)
+         {
+            distvec[i] = Double.MAX_VALUE;
+         }
+         for (int n = 0; n < numk; n++)
+         {
+            y1 = (int) Math.max(0, seedsY[n] - offset);
+            y2 = (int) Math.min(height, seedsY[n] + offset);
+            x1 = (int) Math.max(0, seedsX[n] - offset);
+            x2 = (int) Math.min(width, seedsX[n] + offset);
+
+            for (int y = y1; y < y2; y++)
+            {
+               for (int x = x1; x < x2; x++)
+               {
+                  int i = y * width + x;
+
+                  l = m_lvec[i];
+                  a = m_avec[i];
+                  b = m_bvec[i];
+
+                  dist = (l - seedsL[n]) * (l - seedsL[n]) + (a - seedsA[n]) * (a - seedsA[n]) + (b - seedsB[n]) * (b - seedsB[n]);
+
+                  distxy = (x - seedsX[n]) * (x - seedsX[n]) + (y - seedsY[n]) * (y - seedsY[n]);
+
+                  //------------------------------------------------------------------------
+                  //dist += distxy * invwt;
+                  dist = Math.sqrt(dist) + Math.sqrt(distxy * invwt);//this is more exact
+                  //------------------------------------------------------------------------
+
+                  if (dist < distvec[i])
+                  {
+                     distvec[i] = dist;
+                     kLabels[i] = n;
+                  }
+               }
+            }
+         }
+         //-----------------------------------------------------------------
+         // Recalculate the centroid and store in the seed values
+         //-----------------------------------------------------------------
+         //instead of reassigning memory on each iteration, just reset.
+
+         for (int i = 0; i < numk; i++)
+         {
+            clustersize[i] = 0;
+            sigmal[i] = 0;
+            sigmaa[i] = 0;
+            sigmab[i] = 0;
+            sigmax[i] = 0;
+            sigmay[i] = 0;
+         }
+
+         //------------------------------------
+         //edgesum.assign(numk, 0);
+         //------------------------------------
+
+         int ind = 0;
+         for (int r = 0; r < height; r++)
+         {
+            for (int c = 0; c < width; c++)
+            {
+               sigmal[kLabels[ind]] += m_lvec[ind];
+               sigmaa[kLabels[ind]] += m_avec[ind];
+               sigmab[kLabels[ind]] += m_bvec[ind];
+               sigmax[kLabels[ind]] += c;
+               sigmay[kLabels[ind]] += r;
+               //------------------------------------
+               //edgesum[klabels[ind]] += edgemag[ind];
+               //------------------------------------
+               clustersize[kLabels[ind]] += 1.0;
+               ind++;
+            }
+         }
+
+         for (int k = 0; k < numk; k++)
+         {
+            if (clustersize[k] <= 0)
+            {
+               clustersize[k] = 1;
+            }
+            inv[k] = 1.0 / clustersize[k];//computing inverse now to multiply, than divide later
+         }
+
+         for (int k = 0; k < numk; k++)
+         {
+            seedsL[k] = sigmal[k] * inv[k];
+            seedsA[k] = sigmaa[k] * inv[k];
+            seedsB[k] = sigmab[k] * inv[k];
+            seedsX[k] = sigmax[k] * inv[k];
+            seedsY[k] = sigmay[k] * inv[k];
+            //------------------------------------
+            //edgesum[k] *= inv[k];
+            //------------------------------------
+         }
+      }
+   }
 
    private static void getLABXYSeedsForGivenK(double[] seedsL, double[] seedsA, double[] seedsB, double[] seedsX, double[] seedsY, int width, int height, int k,
                                               boolean perturbSeeds, double[] edgeMagnitude)
@@ -503,7 +552,6 @@ public final class SLICFunctions
 
          for (int j = 0; j < size; j++)
          {
-            int temp = kLabels[j];
             assert (kLabels[j] >= 0);
             sigmal[kLabels[j]] += m_lvec[j];
             sigmaa[kLabels[j]] += m_avec[j];
@@ -536,7 +584,7 @@ public final class SLICFunctions
       }
    }
 
-   private static int enforceLabelConnectivity(int[] intputLabels, int width, int height, int[] newLabels, int numberOfLabels, int k)
+   private static int enforceLabelConnectivity(int[] intputLabels, int width, int height, int[] newLabels, int k)
    {
       int size = width * height;
       for (int i = 0; i < size; i++)
@@ -631,15 +679,13 @@ public final class SLICFunctions
             i++;
          }
       }
-      numberOfLabels = lab;
-      return numberOfLabels;
+      return lab;
    }
 
    public static void performSLICOForGivenK(int[] imgBuffer, int width, int height, int[] kLabels, int numberOfLabels, int k, double m)
    {
       int size = width * height;
       for (int s = 0; s < size; s++)
-         //kLabels[s] = -1;
          kLabels[s] = 0;
 
       double[] kseedsl = new double[size];
@@ -669,29 +715,120 @@ public final class SLICFunctions
          }
       }
 
-      System.out.println("# convertRGB2LAB is done ");
-
       boolean perturbseeds = true;
 
       if (perturbseeds)
          detectLABEdges(m_lvec, m_avec, m_bvec, width, height, edgemag);
-      System.out.println("# detectLABEdges is done ");
 
       getLABXYSeedsForGivenK(kseedsl, kseedsa, kseedsb, kseedsx, kseedsy, width, height, k, perturbseeds, edgemag);
-      System.out.println("# getLABXYSeedsForGivenStepSize is done ");
 
       int stepSize = (int) (Math.sqrt((double) (size) / (double) (k)) + 2); //adding a small value in the even the STEP size is too small.
       performSuperPixelSegmentationVariableSAndM(kseedsl, kseedsa, kseedsb, kseedsx, kseedsy, width, height, kLabels, stepSize, 10);
-      System.out.println("# performSuperPixelSegmentationVariableSAndM is done ");
-
-      numberOfLabels = kseedsl.length;
 
       int[] nlabels = new int[size];
-      enforceLabelConnectivity(kLabels, width, height, nlabels, numberOfLabels, k);
-      System.out.println("# enforceLabelConnectivity is done ");
+      for (int s = 0; s < size; s++)
+         nlabels[s] = -1;
+
+      numberOfLabels = enforceLabelConnectivity(kLabels, width, height, nlabels, k);
+      System.out.println("# enforceLabelConnectivity is done " + numberOfLabels);
 
       for (int i = 0; i < size; i++)
          kLabels[i] = nlabels[i];
+   }
+
+   public static void performSLICForGivenK(int[] imgBuffer, int width, int height, int[] kLabels, int numberOfLabels, int k, double m, boolean useLABSpace)
+   {
+      int size = width * height;
+      for (int s = 0; s < size; s++)
+         kLabels[s] = 0;
+
+      double[] edgemag = new double[size];
+      for (int i = 0; i < size; i++)
+         edgemag[i] = 0;
+
+      m_lvec = new double[size];
+      m_avec = new double[size];
+      m_bvec = new double[size];
+
+      if (useLABSpace)
+      {
+         convertRGB2LAB(imgBuffer, width, height, m_lvec, m_avec, m_bvec);
+      }
+      else
+      {
+         for (int i = 0; i < size; i++)
+         {
+            m_lvec[i] = imgBuffer[i] >> 16 & 0xff;
+            m_avec[i] = imgBuffer[i] >> 8 & 0xff;
+            m_bvec[i] = imgBuffer[i] & 0xff;
+         }
+      }
+      boolean perturbseeds = true;
+
+      if (perturbseeds)
+         detectLABEdges(m_lvec, m_avec, m_bvec, width, height, edgemag);
+
+      int stepSize = (int) (Math.sqrt((double) (size) / (double) (k)) + 2.0);//adding a small value in the even the STEP size is too small.
+
+      int css = coundSeedSizeForGivenStepSize(stepSize, width, height);
+      double[] kseedsl = new double[css];
+      double[] kseedsa = new double[css];
+      double[] kseedsb = new double[css];
+      double[] kseedsx = new double[css];
+      double[] kseedsy = new double[css];
+
+      getLABXYSeedsForGivenStepSize(kseedsl, kseedsa, kseedsb, kseedsx, kseedsy, width, height, stepSize, perturbseeds, edgemag);
+      performSuperpixelSLIC(kseedsl, kseedsa, kseedsb, kseedsx, kseedsy, width, height, kLabels, stepSize, edgemag, m);
+
+      int[] nlabels = new int[size];
+      for (int s = 0; s < size; s++)
+         nlabels[s] = -1;
+
+      numberOfLabels = enforceLabelConnectivity(kLabels, width, height, nlabels, k);
+      System.out.println("# enforceLabelConnectivity is done " + numberOfLabels);
+
+      for (int i = 0; i < size; i++)
+         kLabels[i] = nlabels[i];
+   }
+
+   private static int coundSeedSizeForGivenStepSize(int stepSize, int width, int height)
+   {
+      int numseeds = 0;
+
+      int xstrips = (int) (0.5 + (double) (width) / (double) (stepSize));
+      int ystrips = (int) (0.5 + (double) (height) / (double) (stepSize));
+
+      numseeds = xstrips * ystrips;
+      return numseeds;
+   }
+
+   private static int countSeedSize(int K, int width, int height)
+   {
+      int sz = width * height;
+      double step = Math.sqrt((double) sz / (double) K);
+      int xoff = (int) (step / 2);
+      int yoff = (int) (step / 2);
+
+      int n = 0;
+      for (int y = 0; y < height; y++)
+      {
+         int Y = (int) (y * step + yoff);
+         if (Y > height - 1)
+         {
+            break;
+         }
+
+         for (int x = 0; x < width; x++)
+         {
+            int X = (int) (x * step + xoff);
+            if (X > width - 1)
+            {
+               break;
+            }
+            n++;
+         }
+      }
+      return n;
    }
 
    public static void drawContoursAroundSegments(int[] imgBuffer, int[] kLabels, int width, int height, int contourColor)
