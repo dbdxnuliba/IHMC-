@@ -29,7 +29,8 @@ public class SLICFunctionsTest
             argbImage.setRGB(i, j, originalImage.getRGB(i, j));
       showImage(argbImage, "argb");
 
-      int k = 256;
+      //int k = 256;
+      int k = 2000;
       int[] imgBuff = new int[width * height];
 
       int imageBuffIndex = 0;
@@ -42,7 +43,7 @@ public class SLICFunctionsTest
          }
       }
 
-      SLICFactory factory = new SLICFactory(imgBuff, width, height, k);
+      SLICCalculator factory = new SLICCalculator(imgBuff, width, height, k);
       factory.compute();
       int[] segmentedImageBuffer = factory.getSegmentedImageBuffer();
 
@@ -131,6 +132,15 @@ public class SLICFunctionsTest
 
    public static void main(String[] args) throws IOException
    {
+      int width = 100;
+      int height = 50;
+      int index = 333;
+      
+      int y = index/width;
+      int x = index - y * width;
+      System.out.println("x "+x);
+      System.out.println("y "+y);
+      
       //SLICFunctionsTest test = new SLICFunctionsTest();
       SLICFunctionsTest test = new SLICFunctionsTest(1);
    }

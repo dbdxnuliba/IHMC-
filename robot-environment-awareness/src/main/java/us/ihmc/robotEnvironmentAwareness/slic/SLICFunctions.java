@@ -84,14 +84,14 @@ public final class SLICFunctions
       labToPack[2] = 200.0 * (fy - fz);
    }
 
-   private static void convertRGB2LAB(int[] imgBuffer, int width, int height, double[] lBufferToPack, double[] aBufferToPack, double[] bBufferToPack)
+   public static void convertRGB2LAB(int[] imgBuffer, int width, int height, double[] lBufferToPack, double[] aBufferToPack, double[] bBufferToPack)
    {
       int size = width * height;
       double[] labVal = new double[3];
 
-      lBufferToPack = new double[size];
-      aBufferToPack = new double[size];
-      bBufferToPack = new double[size];
+//      lBufferToPack = new double[size];
+//      aBufferToPack = new double[size];
+//      bBufferToPack = new double[size];
 
       int r, g, b;
       for (int j = 0; j < size; j++)
