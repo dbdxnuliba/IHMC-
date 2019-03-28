@@ -254,6 +254,7 @@ public class QuadrupedSimulationFactory
       footSwitchFactory.setYoVariableRegistry(factoryRegistry);
       footSwitchFactory.setFootSwitchType(footSwitchType.get());
       footSwitchFactory.setKneeTouchdownThresholds(kneeTorqueTouchdownDetectionThreshold.get());
+      footSwitchFactory.setUseKneeTorqueTouchdown(false);
 
       footSwitches = footSwitchFactory.createFootSwitches();
    }
