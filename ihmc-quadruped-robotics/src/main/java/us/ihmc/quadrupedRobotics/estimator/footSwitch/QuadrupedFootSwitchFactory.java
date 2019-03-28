@@ -58,26 +58,18 @@ public class QuadrupedFootSwitchFactory
       DoubleParameter estimatedWrenchWeight = new DoubleParameter("estimatedWrenchAverageWeight", registry, 1.0);
       DoubleParameter desiredWrenchWeight = new DoubleParameter("desiredWrenchAverageWeight", registry, 0.0);
 
-
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
          List<JointTorqueProvider> estimatedJointTorqueProviders = new ArrayList<>();
-         for (OneDoFJointBasics oneDoFJointBasics : fullRobotModel.get().getLegJointsList(robotQuadrant))
-            estimatedJointTorqueProviders.add(new JointTorqueProvider()
-            {
-               @Override
-               public double getTorque()
-               {
-                  return oneDoFJointBasics.getTau();
-               }
-            });
-
          List<JointTorqueProvider> desiredJointTorqueProviders = new ArrayList<>();
+
          for (OneDoFJointBasics oneDoFJointBasics : fullRobotModel.get().getLegJointsList(robotQuadrant))
+         {
+            estimatedJointTorqueProviders.add(oneDoFJointBasics::getTau);
             desiredJointTorqueProviders.add(new JointDesiredOutputTorqueProvider(jointDesiredOutputList.get().getJointDesiredOutput(oneDoFJointBasics)));
+         }
 
          ContactablePlaneBody contactableFoot = footContactableBodies.get().get(robotQuadrant);
-
 
          JointTorqueBasedWrenchCalculator estimatedTorqueBasedWrenchCalculator = new JointTorqueBasedWrenchCalculator(robotQuadrant.getShortName() + "estimated", fullRobotModel.get(), robotQuadrant,
                                                                                                                       contactableFoot.getSoleFrame(),
