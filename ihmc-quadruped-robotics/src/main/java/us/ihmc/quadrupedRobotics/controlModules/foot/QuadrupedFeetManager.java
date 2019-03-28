@@ -32,13 +32,12 @@ public class QuadrupedFeetManager
 
    private final QuadrantDependentList<QuadrupedFootControlModule> footControlModules = new QuadrantDependentList<>();
    private final QuadrupedControllerToolbox toolbox;
-   private final BooleanParameter useTimeForSupportTrigger = new BooleanParameter("useTimeForSupportTrigger", registry);
 
    public QuadrupedFeetManager(QuadrupedControllerToolbox toolbox, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
    {
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         footControlModules.set(robotQuadrant, new QuadrupedFootControlModule(robotQuadrant, toolbox, useTimeForSupportTrigger, graphicsListRegistry, registry));
+         footControlModules.set(robotQuadrant, new QuadrupedFootControlModule(robotQuadrant, toolbox, graphicsListRegistry, registry));
       }
 
       this.toolbox = toolbox;

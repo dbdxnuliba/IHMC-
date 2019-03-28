@@ -4,6 +4,7 @@ import us.ihmc.commonWalkingControlModules.sensors.footSwitch.SettableFootSwitch
 import us.ihmc.commonWalkingControlModules.touchdownDetector.*;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.quadrupedRobotics.estimator.footSwitch.JointTorqueBasedWrenchCalculator.JointTorqueProvider;
@@ -57,6 +58,7 @@ public class QuadrupedFootSwitchFactory
 
       DoubleParameter estimatedWrenchWeight = new DoubleParameter("estimatedWrenchAverageWeight", registry, 1.0);
       DoubleParameter desiredWrenchWeight = new DoubleParameter("desiredWrenchAverageWeight", registry, 0.0);
+      DoubleParameter taskspaceSoleVelocityThreshold = new DoubleParameter("taskspaceSoleVelocityThreshold", registry, 0.1);
 
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
@@ -98,6 +100,10 @@ public class QuadrupedFootSwitchFactory
 
          ForceBasedTouchDownDetection estimatedForceBasedTouchDownDetection = new ForceBasedTouchDownDetection(weightedAverageWrenchCalculator, robotQuadrant, registry);
          footSwitch.addTouchdownDetector(estimatedForceBasedTouchDownDetection);
+
+         MovingReferenceFrame soleFrame = fullRobotModel.get().getSoleFrame(robotQuadrant);
+         TaskspaceVelocityTouchDownVerifier soleVelocityTouchdownDetection = new TaskspaceVelocityTouchDownVerifier(soleFrame, robotQuadrant, taskspaceSoleVelocityThreshold, registry);
+         footSwitch.addTouchdownDetector(soleVelocityTouchdownDetection);
 
          footSwitches.set(robotQuadrant, footSwitch);
       }

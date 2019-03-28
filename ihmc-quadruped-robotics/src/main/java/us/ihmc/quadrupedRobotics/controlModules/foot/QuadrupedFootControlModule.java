@@ -53,7 +53,9 @@ public class QuadrupedFootControlModule
    private final QuadrupedSwingState swingState;
    private final QuadrupedSupportState supportState;
 
-   public QuadrupedFootControlModule(RobotQuadrant robotQuadrant, QuadrupedControllerToolbox controllerToolbox, BooleanProvider useTimeForSupportTrigger, YoGraphicsListRegistry graphicsListRegistry,
+   private static final boolean triggerSupportFromSwingTime = false;
+
+   public QuadrupedFootControlModule(RobotQuadrant robotQuadrant, QuadrupedControllerToolbox controllerToolbox, YoGraphicsListRegistry graphicsListRegistry,
                                      YoVariableRegistry parentRegistry)
    {
       // control variables
@@ -74,7 +76,7 @@ public class QuadrupedFootControlModule
       factory.addState(QuadrupedFootStates.MOVE_VIA_WAYPOINTS, moveViaWaypointsState);
 
       factory.addTransition(FootEvent.TIMEOUT, QuadrupedFootStates.SUPPORT, QuadrupedFootStates.SWING);
-      if(useTimeForSupportTrigger.getValue())
+      if(triggerSupportFromSwingTime)
          factory.addTransition(FootEvent.TIMEOUT, QuadrupedFootStates.SWING, QuadrupedFootStates.SUPPORT);
 
       factory.addTransition(FootEvent.LOADED, QuadrupedFootStates.SWING, QuadrupedFootStates.SUPPORT);
