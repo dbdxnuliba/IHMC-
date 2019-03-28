@@ -124,7 +124,7 @@ public class QuadrupedControllerToolbox
          String name = contactableFoot.getSoleFrame().getName();
          YoPlaneContactState planeContactState = new YoPlaneContactState(name, rigidBody, contactableFoot.getSoleFrame(),
                                                                          contactableFoot.getContactPoints2d(), coefficientOfFriction, registry);
-         YoEnum<ContactState> contactState = new YoEnum<>(name, registry, ContactState.class);
+         YoEnum<ContactState> contactState = new YoEnum<>(robotQuadrant.getShortName() + "_ContactState", registry, ContactState.class);
 
 
          footContactStates.put(robotQuadrant, planeContactState);
