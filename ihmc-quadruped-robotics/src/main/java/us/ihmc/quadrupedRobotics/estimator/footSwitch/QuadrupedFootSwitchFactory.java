@@ -7,6 +7,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
+import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.quadrupedRobotics.estimator.footSwitch.JointTorqueBasedWrenchCalculator.JointTorqueProvider;
 import us.ihmc.robotModels.FullQuadrupedRobotModel;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
@@ -58,7 +59,7 @@ public class QuadrupedFootSwitchFactory
 
       DoubleParameter estimatedWrenchWeight = new DoubleParameter("estimatedWrenchAverageWeight", registry, 1.0);
       DoubleParameter desiredWrenchWeight = new DoubleParameter("desiredWrenchAverageWeight", registry, 0.0);
-      DoubleParameter taskspaceSoleVelocityThreshold = new DoubleParameter("taskspaceSoleVelocityThreshold", registry, 0.1);
+      DoubleParameter taskspaceSoleVelocityThreshold = new DoubleParameter("taskspaceSoleVelocityThreshold", registry, 0.8);
 
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {

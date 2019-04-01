@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.touchdownDetector;
 
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.spatial.Twist;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -9,9 +10,6 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
-/**
- *
- */
 public class TaskspaceVelocityTouchDownVerifier implements TouchdownDetector
 {
    private final String name = getClass().getSimpleName();
@@ -19,7 +17,7 @@ public class TaskspaceVelocityTouchDownVerifier implements TouchdownDetector
 
    private final YoBoolean touchdownDetected;
    private final DoubleProvider soleVelocityThreshold;
-   private final Twist soleTwist = new Twist();
+   private final Twist soleTwist;
    private final YoFrameVector3D soleVelocity;
    private final MovingReferenceFrame soleFrame;
 
@@ -31,6 +29,7 @@ public class TaskspaceVelocityTouchDownVerifier implements TouchdownDetector
       this.soleFrame = soleFrame;
       this.soleVelocityThreshold = soleVelocityThreshold;
 
+      this.soleTwist = new Twist(soleFrame, ReferenceFrame.getWorldFrame(), ReferenceFrame.getWorldFrame());
       this.touchdownDetected = new YoBoolean(prefix + "SoleVelocityTouchdownDetected", registry);
       this.soleVelocity = new YoFrameVector3D(prefix + "SoleVelocity", ReferenceFrame.getWorldFrame(), registry);
 
@@ -46,7 +45,7 @@ public class TaskspaceVelocityTouchDownVerifier implements TouchdownDetector
    @Override
    public void update()
    {
-      soleFrame.getTwistOfFrame(soleTwist);
+      soleFrame.getTwistRelativeToOther(ReferenceFrame.getWorldFrame(), soleTwist);
       soleTwist.changeFrame(ReferenceFrame.getWorldFrame());
       soleVelocity.set(soleTwist.getLinearPart());
       touchdownDetected.set(soleVelocity.length() < soleVelocityThreshold.getValue());
