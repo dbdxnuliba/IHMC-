@@ -286,6 +286,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
 
       stepMessageHandler.shiftPlanBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
+      stepMessageHandler.onTouchDown(thisStepQuadrant);
 
       balanceManager.completedStep(thisStepQuadrant);
 

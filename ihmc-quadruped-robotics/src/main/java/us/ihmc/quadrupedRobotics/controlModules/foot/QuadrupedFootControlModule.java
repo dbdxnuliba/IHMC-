@@ -43,11 +43,11 @@ public class QuadrupedFootControlModule
    private final QuadrupedMoveViaWaypointsState moveViaWaypointsState;
    private final EventTrigger eventTrigger;
    private final StateMachine<QuadrupedFootStates, QuadrupedFootState> footStateMachine;
+   private final YoBoolean isFirstStep;
 
    // window after support is triggered by touchdown but before step time is up to make sure swing isn't triggered again
    // TODO find a better solution. could be done by indexing steps
    private static final double supportToSwingGlitchWindow = 0.15;
-   private final YoBoolean isFirstStep;
 
    private final QuadrupedSwingState swingState;
    private final QuadrupedSupportState supportState;

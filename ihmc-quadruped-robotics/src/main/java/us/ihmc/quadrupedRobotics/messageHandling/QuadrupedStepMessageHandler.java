@@ -1,5 +1,6 @@
 package us.ihmc.quadrupedRobotics.messageHandling;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.commons.lists.RecyclingArrayList;
@@ -13,7 +14,6 @@ import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -38,6 +38,7 @@ public class QuadrupedStepMessageHandler
    private final ArrayList<YoQuadrupedTimedStep> activeSteps = new ArrayList<>();
    private final YoDouble robotTimestamp;
    private final DoubleParameter haltTransitionDurationParameter = new DoubleParameter("haltTransitionDuration", registry, 0.0);
+   private final QuadrantDependentList<MutableBoolean> touchdownTrigger = new QuadrantDependentList<>(MutableBoolean::new);
    private final YoPreallocatedList<YoQuadrupedTimedStep> receivedStepSequence;
 
    private final YoDouble haltTime = new YoDouble("haltTime", registry);
@@ -67,7 +68,6 @@ public class QuadrupedStepMessageHandler
 
    public void process()
    {
-      TimeIntervalTools.removeEndTimesLessThan(robotTimestamp.getDoubleValue(), receivedStepSequence);
       if (haltFlag.getBooleanValue())
          pruneHaltedSteps();
 
@@ -165,6 +165,11 @@ public class QuadrupedStepMessageHandler
             .getDoubleValue();
    }
 
+   public void onTouchDown(RobotQuadrant quadrant)
+   {
+      touchdownTrigger.get(quadrant).setTrue();
+   }
+
    private final FramePoint3D tempStep = new FramePoint3D();
 
    public void shiftPlanBasedOnStepAdjustment(FrameVector3DReadOnly stepAdjustment)
@@ -200,6 +205,21 @@ public class QuadrupedStepMessageHandler
 
    private void updateActiveSteps()
    {
+      // remove steps with a triggered touchdown
+      for(RobotQuadrant quadrant : RobotQuadrant.values)
+      {
+         if(touchdownTrigger.get(quadrant).isTrue())
+         {
+            int index = getIndexOfFirstStep(quadrant);
+            if(index != -1)
+            {
+               receivedStepSequence.remove(index);
+            }
+
+            touchdownTrigger.get(quadrant).setFalse();
+         }
+      }
+
       activeSteps.clear();
 
       for (int i = 0; i < receivedStepSequence.size(); i++)
@@ -208,11 +228,30 @@ public class QuadrupedStepMessageHandler
          double startTime = receivedStepSequence.get(i).getTimeInterval().getStartTime();
          double endTime = receivedStepSequence.get(i).getTimeInterval().getEndTime();
 
-         if (MathTools.intervalContains(currentTime, startTime, endTime))
+         // add all steps by start time
+         if (currentTime >= startTime)
          {
             activeSteps.add(receivedStepSequence.get(i));
          }
+
+         // extend timing of steps with expired end time
+         if (currentTime >= endTime)
+         {
+            receivedStepSequence.get(i).getTimeInterval().setEndTime(currentTime + 1e-3);
+         }
       }
+   }
+
+   // returns index of first received step in given quadrant
+   private int getIndexOfFirstStep(RobotQuadrant quadrant)
+   {
+      for (int i = 0; i < receivedStepSequence.size(); i++)
+      {
+         if(receivedStepSequence.get(i).getRobotQuadrant() == quadrant)
+            return i;
+      }
+
+      return -1;
    }
 
    public QuadrupedTimedStep getNextStep()

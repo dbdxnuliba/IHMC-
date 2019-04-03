@@ -17,7 +17,6 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
@@ -35,11 +34,7 @@ import us.ihmc.robotics.trajectories.providers.CurrentRigidBodyStateProvider;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoFramePoint3D;
-import us.ihmc.yoVariables.variable.YoFrameVector3D;
+import us.ihmc.yoVariables.variable.*;
 
 public class QuadrupedSwingState extends QuadrupedFootState
 {
@@ -96,6 +91,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
 
    private final DoubleParameter minHeightDifferenceForObstacleClearance;
    private final DoubleParameter minPhaseThroughSwingForContact;
+   private final BooleanParameter triggerSupportFromTime;
 
    private final DoubleParameter percentPastSwingForDone;
    private final YoBoolean isSwingPastDone;
@@ -153,6 +149,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
       touchdownAcceleration = new FrameParameterVector3D(namePrefix + "TouchdownAcceleration", ReferenceFrame.getWorldFrame(), defaultTouchdownVelocity,
                                                          registry);
 
+      triggerSupportFromTime = new BooleanParameter(namePrefix + "TriggerSupportFromTime", registry, true);
       isSwingSpeedUpEnabled = new BooleanParameter(namePrefix + "IsSwingSpeedUpEnabled", registry, false);
       minSwingTimeForDisturbanceRecovery = new DoubleParameter(namePrefix + "MinSwingTimeForDisturbanceRecovery", registry, 0.2);
       minRequiredSpeedUpFactor = new DoubleParameter(namePrefix + "MinRequiredSpeedUpFactor", registry, 1.05);
@@ -508,7 +505,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
    public QuadrupedFootControlModule.FootEvent fireEvent(double timeInState)
    {
       QuadrupedFootControlModule.FootEvent eventToReturn = null;
-      if (isSwingPastDone.getBooleanValue())
+      if (triggerSupportFromTime.getValue() && isSwingPastDone.getBooleanValue())
          eventToReturn = QuadrupedFootControlModule.FootEvent.TIMEOUT;
       if (touchdownTrigger.getBooleanValue())
          eventToReturn = QuadrupedFootControlModule.FootEvent.LOADED;
