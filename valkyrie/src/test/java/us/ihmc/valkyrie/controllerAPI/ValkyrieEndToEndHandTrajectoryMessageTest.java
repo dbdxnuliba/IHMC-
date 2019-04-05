@@ -1,8 +1,8 @@
 package us.ihmc.valkyrie.controllerAPI;
 
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.HandTrajectoryMessage;
 import controller_msgs.msg.dds.SE3TrajectoryMessage;
@@ -12,10 +12,8 @@ import us.ihmc.avatar.controllerAPI.EndToEndHandTrajectoryMessageTest;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
@@ -25,6 +23,7 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.robotics.math.trajectories.generators.EuclideanTrajectoryPointCalculator;
 import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameEuclideanTrajectoryPoint;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.lists.FrameEuclideanTrajectoryPointList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.SelectionMatrix3D;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
@@ -40,71 +39,62 @@ public class ValkyrieEndToEndHandTrajectoryMessageTest extends EndToEndHandTraje
    private final ValkyrieRobotModel robotModel = new ValkyrieRobotModel(RobotTarget.SCS, false);
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 46.3)
-   @Test(timeout = 230000)
+   @Test
    public void testCustomControlFrame() throws SimulationExceededMaximumTimeException
    {
       super.testCustomControlFrame();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 15.7)
-   @Test(timeout = 79000)
+   @Test
    public void testMessageWithTooManyTrajectoryPoints() throws Exception
    {
       super.testMessageWithTooManyTrajectoryPoints();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 36.8)
-   @Test(timeout = 180000)
+   @Test
    public void testMultipleTrajectoryPoints() throws Exception
    {
       super.testMultipleTrajectoryPoints();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 65.8)
-   @Test(timeout = 330000)
+   @Test
    public void testQueuedMessages() throws Exception
    {
       super.testQueuedMessages();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 31.2)
-   @Test(timeout = 160000)
+   @Test
    public void testQueueStoppedWithOverrideMessage() throws Exception
    {
       super.testQueueStoppedWithOverrideMessage();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 17.1)
-   @Test(timeout = 86000)
+   @Test
    public void testQueueWithWrongPreviousId() throws Exception
    {
       super.testQueueWithWrongPreviousId();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 42.0)
-   @Test(timeout = 210000)
+   @Test
    public void testSingleTrajectoryPoint() throws Exception
    {
       super.testSingleTrajectoryPoint();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 43.9)
-   @Test(timeout = 220000)
+   @Test
    public void testStopAllTrajectory() throws Exception
    {
       super.testStopAllTrajectory();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 40.0)
-   @Test(timeout = 300000)
+   @Test
    public void testWrenchTrajectoryMessage() throws Exception
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
@@ -120,19 +110,21 @@ public class ValkyrieEndToEndHandTrajectoryMessageTest extends EndToEndHandTraje
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(2.0);
       assertTrue(success);
 
+      double firstTrajectoryTime = 1.0;
       EuclideanTrajectoryPointCalculator calculator = new EuclideanTrajectoryPointCalculator();
-      calculator.appendTrajectoryPoint(1.0, new Point3D(0.25, 0.0, 1.05));
-      calculator.appendTrajectoryPoint(1.5, new Point3D(0.4, 0.0, 0.95));
-      calculator.appendTrajectoryPoint(1.75, new Point3D(0.5, 0.0, 0.85));
-      calculator.appendTrajectoryPoint(2.0, new Point3D(0.6, 0.0, 0.95));
-      calculator.appendTrajectoryPoint(2.5, new Point3D(0.6, 0.0, 1.25));
-      calculator.appendTrajectoryPoint(3.5, new Point3D(0.25, 0.0, 1.05));
-      calculator.computeTrajectoryPointVelocities(true);
-      RecyclingArrayList<FrameEuclideanTrajectoryPoint> trajectoryPoints = calculator.getTrajectoryPoints();
+      calculator.appendTrajectoryPoint(0.0, new Point3D(0.25, 0.0, 1.05));
+      calculator.appendTrajectoryPoint(0.5, new Point3D(0.4, 0.0, 0.95));
+      calculator.appendTrajectoryPoint(0.75, new Point3D(0.5, 0.0, 0.85));
+      calculator.appendTrajectoryPoint(1.0, new Point3D(0.6, 0.0, 0.95));
+      calculator.appendTrajectoryPoint(1.5, new Point3D(0.6, 0.0, 1.25));
+      calculator.appendTrajectoryPoint(2.5, new Point3D(0.25, 0.0, 1.05));
+      calculator.compute(2.5);
+      FrameEuclideanTrajectoryPointList trajectoryPoints = calculator.getTrajectoryPoints();
       SE3TrajectoryMessage se3TrajectoryMessage = new SE3TrajectoryMessage();
-      for (FrameEuclideanTrajectoryPoint trajectoryPoint : trajectoryPoints)
+      for (int i=0;i<trajectoryPoints.getNumberOfTrajectoryPoints();i++)
       {
-         double time = trajectoryPoint.getTime();
+         FrameEuclideanTrajectoryPoint trajectoryPoint = trajectoryPoints.getTrajectoryPoint(i);
+         double time = trajectoryPoint.getTime() + firstTrajectoryTime;
          Point3DReadOnly position = trajectoryPoint.getPositionCopy();
          Vector3DReadOnly linearVelocity = trajectoryPoint.getLinearVelocityCopy();
          se3TrajectoryMessage.getTaskspaceTrajectoryPoints().add()

@@ -12,6 +12,8 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DBasics;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVertex2DSupplier;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Vector3D;
@@ -20,6 +22,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.log.LogTools;
 import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.spatial.Twist;
@@ -110,9 +113,12 @@ public class PelvisKinematicsBasedLinearStateCalculator
 
    private final FramePoint2DBasics[] intersectionPoints = new FramePoint2DBasics[] {new FramePoint2D(), new FramePoint2D()};
 
-   public PelvisKinematicsBasedLinearStateCalculator(FullInverseDynamicsStructure inverseDynamicsStructure, Map<RigidBodyBasics, ? extends ContactablePlaneBody> feetContactablePlaneBodies,
-         Map<RigidBodyBasics, FootSwitchInterface> footSwitches, CenterOfPressureDataHolder centerOfPressureDataHolderFromController, double estimatorDT,
-         StateEstimatorParameters stateEstimatorParameters, YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry parentRegistry)
+   public PelvisKinematicsBasedLinearStateCalculator(FullInverseDynamicsStructure inverseDynamicsStructure,
+                                                     Map<RigidBodyBasics, ? extends ContactablePlaneBody> feetContactablePlaneBodies,
+                                                     Map<RigidBodyBasics, FootSwitchInterface> footSwitches,
+                                                     CenterOfPressureDataHolder centerOfPressureDataHolderFromController, double estimatorDT,
+                                                     StateEstimatorParameters stateEstimatorParameters, YoGraphicsListRegistry yoGraphicsListRegistry,
+                                                     YoVariableRegistry parentRegistry)
    {
       this.rootJoint = inverseDynamicsStructure.getRootJoint();
       this.rootJointFrame = rootJoint.getFrameAfterJoint();
@@ -143,7 +149,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
          String namePrefix = foot.getName();
 
          DoubleProvider alphaFoot = () -> AlphaFilteredYoVariable.computeAlphaGivenBreakFrequencyProperly(footToRootJointPositionBreakFrequency.getValue(), estimatorDT);
-         AlphaFilteredYoFrameVector footToRootJointPosition = AlphaFilteredYoFrameVector.createAlphaFilteredYoFrameVector(namePrefix + "FootToRootJointPosition", "", registry, alphaFoot, worldFrame);
+         AlphaFilteredYoFrameVector footToRootJointPosition = new AlphaFilteredYoFrameVector(namePrefix + "FootToRootJointPosition", "", registry, alphaFoot, worldFrame);
          footToRootJointPositions.put(foot, footToRootJointPosition);
 
          YoFramePoint3D rootJointPosition = new YoFramePoint3D(namePrefix + "BasedRootJointPosition", worldFrame, registry);
@@ -162,7 +168,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
          copsRawInFootFrame.put(foot, copRawInFootFrame);
 
          DoubleProvider alphaCop = () -> AlphaFilteredYoVariable.computeAlphaGivenBreakFrequencyProperly(copFilterBreakFrequency.getValue(), estimatorDT);
-         AlphaFilteredYoFramePoint2d copFilteredInFootFrame = AlphaFilteredYoFramePoint2d.createAlphaFilteredYoFramePoint2d(namePrefix + "CoPFilteredInFootFrame", "", registry, alphaCop, copRawInFootFrame);
+         AlphaFilteredYoFramePoint2d copFilteredInFootFrame = new AlphaFilteredYoFramePoint2d(namePrefix + "CoPFilteredInFootFrame", "", registry, alphaCop, copRawInFootFrame);
          copFilteredInFootFrame.update(0.0, 0.0);
          copsFilteredInFootFrame.put(foot, copFilteredInFootFrame);
 
@@ -177,6 +183,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
          ReferenceFrame copFrame = new ReferenceFrame("copFrame", soleFrame)
          {
             private final Vector3D copOffset = new Vector3D();
+
             @Override
             protected void updateTransformToParent(RigidBodyTransform transformToParent)
             {
@@ -205,11 +212,6 @@ public class PelvisKinematicsBasedLinearStateCalculator
       }
 
       parentRegistry.addChild(registry);
-   }
-
-   private void reset()
-   {
-      rootJointPosition.setToZero();
    }
 
    /**
@@ -259,7 +261,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
     * @param swingingFoot a foot in swing
     * @param pelvisPosition the current pelvis position
     */
-   private void updateUntrustedFootPosition(RigidBodyBasics swingingFoot, FramePoint3D pelvisPosition)
+   private void updateUntrustedFootPosition(RigidBodyBasics swingingFoot, FramePoint3DReadOnly pelvisPosition)
    {
       YoFramePoint3D footPositionInWorld = footPositionsInWorld.get(swingingFoot);
       footPositionInWorld.set(pelvisPosition);
@@ -326,7 +328,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
 
                   if (intersections == 0)
                   {
-                     System.out.println("In " + getClass().getSimpleName() + ": Found no solution for the CoP projection.");
+                     LogTools.info("Found no solution for the CoP projection.");
                      tempCoP2d.setToZero(footFrame);
                   }
                   else
@@ -334,10 +336,8 @@ public class PelvisKinematicsBasedLinearStateCalculator
                      tempCoP2d.set(intersectionPoints[0]);
 
                      if (intersections == 2)
-                        System.out.println("In " + getClass().getSimpleName() + ": Found two solutions for the CoP projection.");
+                        LogTools.info("Found two solutions for the CoP projection.");
                   }
-
-
                }
                else // If foot barely loaded and actual CoP outside, then don't update the raw CoP right below
                {
@@ -367,12 +367,10 @@ public class PelvisKinematicsBasedLinearStateCalculator
     */
    private void correctFootPositionsUsingCoP(RigidBodyBasics plantedFoot)
    {
-      if (!useControllerDesiredCoP.getValue())
+      if (!trustCoPAsNonSlippingContactPoint.getValue())
          return;
 
-      AlphaFilteredYoFramePoint2d copFilteredInFootFrame = copsFilteredInFootFrame.get(plantedFoot);
-      tempCoPOffset.setIncludingFrame(copFilteredInFootFrame.getReferenceFrame(), copFilteredInFootFrame.getX(), copFilteredInFootFrame.getY(), 0.0);
-
+      tempCoPOffset.setIncludingFrame(copsFilteredInFootFrame.get(plantedFoot), 0.0);
       tempCoPOffset.changeFrame(worldFrame);
 
       YoFramePoint3D footPositionInWorld = footPositionsInWorld.get(plantedFoot);
@@ -385,7 +383,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
     */
    public void updateKinematics()
    {
-      reset();
+      rootJointPosition.setToZero();
       updateKinematicsNewTwist();
 
       for (int i = 0; i < feetRigidBodies.size(); i++)
@@ -437,7 +435,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
       }
    }
 
-   public void updateFeetPositionsWhenTrustingIMUOnly(FramePoint3D pelvisPosition)
+   public void updateFeetPositionsWhenTrustingIMUOnly(FramePoint3DReadOnly pelvisPosition)
    {
       for (int i = 0; i < feetRigidBodies.size(); i++)
       {
@@ -446,7 +444,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
       }
    }
 
-   public void estimatePelvisLinearState(List<RigidBodyBasics> trustedFeet, List<RigidBodyBasics> unTrustedFeet, FramePoint3D pelvisPosition)
+   public void estimatePelvisLinearState(List<RigidBodyBasics> trustedFeet, List<RigidBodyBasics> unTrustedFeet, FramePoint3DReadOnly pelvisPosition)
    {
       if (!kinematicsIsUpToDate.getBooleanValue())
          throw new RuntimeException("Leg kinematics needs to be updated before trying to estimate the pelvis position/linear velocity.");
@@ -459,7 +457,7 @@ public class PelvisKinematicsBasedLinearStateCalculator
          }
       }
 
-      for(int i = 0; i < trustedFeet.size(); i++)
+      for (int i = 0; i < trustedFeet.size(); i++)
       {
          RigidBodyBasics trustedFoot = trustedFeet.get(i);
          updateCoPPosition(trustedFoot);
@@ -471,14 +469,14 @@ public class PelvisKinematicsBasedLinearStateCalculator
 
       if (correctTrustedFeetPositions.getValue())
       {
-         for(int i = 0; i < trustedFeet.size(); i++)
+         for (int i = 0; i < trustedFeet.size(); i++)
          {
             RigidBodyBasics trustedFoot = trustedFeet.get(i);
             updateTrustedFootPosition(trustedFoot);
          }
       }
 
-      for(int i = 0; i < unTrustedFeet.size(); i++)
+      for (int i = 0; i < unTrustedFeet.size(); i++)
       {
          RigidBodyBasics unTrustedFoot = unTrustedFeet.get(i);
          updateUntrustedFootPosition(unTrustedFoot, pelvisPosition);
@@ -487,9 +485,23 @@ public class PelvisKinematicsBasedLinearStateCalculator
       kinematicsIsUpToDate.set(false);
    }
 
-   public void setPelvisPosition(FramePoint3D pelvisPosition)
+   public void setPelvisPosition(FramePoint3DReadOnly pelvisPosition)
    {
       rootJointPosition.set(pelvisPosition);
+   }
+
+   public void setPelvisLinearVelocity(FrameVector3DReadOnly pelvisLinearVelocity)
+   {
+      rootJointLinearVelocityBacklashKinematics.reset();
+      rootJointLinearVelocityBacklashKinematics.set(pelvisLinearVelocity);
+      rootJointLinearVelocityNewTwist.set(pelvisLinearVelocity);
+   }
+
+   public void setPelvisLinearVelocityToZero()
+   {
+      rootJointLinearVelocityBacklashKinematics.reset();
+      rootJointLinearVelocityBacklashKinematics.setToZero();
+      rootJointLinearVelocityNewTwist.setToZero();
    }
 
    public void getRootJointPositionAndVelocity(FramePoint3D positionToPack, FrameVector3D linearVelocityToPack)

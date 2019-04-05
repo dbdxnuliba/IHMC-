@@ -1,8 +1,9 @@
 package us.ihmc.footstepPlanning.ui.components;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.ihmc.footstepPlanning.FootstepPlanningTestTools;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerCostParameters;
 
 import java.util.Random;
 
@@ -10,7 +11,7 @@ public class SettableFootstepPlannerCostParametersTest
 {
    private final static int iters = 10;
 
-   @Test(timeout = 30000)
+   @Test
    public void test()
    {
       Random random = new Random(1738L);

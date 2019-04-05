@@ -9,6 +9,7 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 
 public class KinematicsToolboxConfigurationCommand implements Command<KinematicsToolboxConfigurationCommand, KinematicsToolboxConfigurationMessage>
 {
+   private long sequenceId;
    private boolean hasPrivilegedRootJointPosition = false;
    private final Point3D privilegedRootJointPosition = new Point3D();
    private boolean hasPrivilegedRootJointOrientation = false;
@@ -18,18 +19,26 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
    private final TIntArrayList jointHashCodes = new TIntArrayList();
    private final TFloatArrayList privilegedJointAngles = new TFloatArrayList();
 
+   private double privilegedWeight = -1.0;
+   private double privilegedGain = -1.0;
+
    @Override
    public void clear()
    {
+      sequenceId = 0;
       hasPrivilegedRootJointPosition = false;
       privilegedRootJointPosition.setToNaN();
       hasPrivilegedRootJointOrientation = false;
       privilegedRootJointOrientation.setToNaN();
+      privilegedWeight = -1.0;
+      privilegedGain = -1.0;
    }
 
    @Override
    public void set(KinematicsToolboxConfigurationCommand other)
    {
+      sequenceId = other.sequenceId;
+
       hasPrivilegedRootJointPosition = other.hasPrivilegedRootJointPosition;
       if (hasPrivilegedRootJointPosition)
          privilegedRootJointPosition.set(other.getPrivilegedRootJointPosition());
@@ -51,11 +60,15 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
          jointHashCodes.addAll(other.getJointHashCodes());
          privilegedJointAngles.addAll(other.getPrivilegedJointAngles());
       }
+
+      privilegedWeight = other.privilegedWeight;
+      privilegedGain = other.privilegedGain;
    }
 
    @Override
    public void setFromMessage(KinematicsToolboxConfigurationMessage message)
    {
+      sequenceId = message.getSequenceId();
       hasPrivilegedRootJointPosition = message.getPrivilegedRootJointPosition() != null;
       if (hasPrivilegedRootJointPosition)
          privilegedRootJointPosition.set(message.getPrivilegedRootJointPosition());
@@ -80,6 +93,9 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
          jointHashCodes.addAll(messageHashCodes);
          privilegedJointAngles.addAll(messageJointAngles);
       }
+
+      privilegedWeight = message.getPrivilegedWeight();
+      privilegedGain = message.getPrivilegedGain();
    }
 
    public boolean hasPrivilegedRootJointPosition()
@@ -117,6 +133,16 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
       return privilegedJointAngles;
    }
 
+   public double getPrivilegedWeight()
+   {
+      return privilegedWeight;
+   }
+
+   public double getPrivilegedGain()
+   {
+      return privilegedGain;
+   }
+
    @Override
    public Class<KinematicsToolboxConfigurationMessage> getMessageClass()
    {
@@ -127,5 +153,11 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
    public boolean isCommandValid()
    {
       return true;
+   }
+
+   @Override
+   public long getSequenceId()
+   {
+      return sequenceId;
    }
 }

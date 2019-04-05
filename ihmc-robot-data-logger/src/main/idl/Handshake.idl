@@ -28,7 +28,7 @@ module robotDataLogger{
 		Unloaded,
 		Default,
 		Loaded
-	}
+	};
 	
 	struct YoVariableDefinition
 	{
@@ -70,13 +70,18 @@ module robotDataLogger{
 		AppearanceDefinitionMessage appearance;
 		string listName;
 	};
-	
+
+	struct ReferenceFrameInformation
+	{
+		sequence<unsigned long, 4096> frameIndices;
+		sequence<string, 4096> frameNames;
+	};
+
 	struct EnumType
 	{
 		string name;
 		sequence<string, 255> enumValues;
 	};
-	
 	
 	struct Summary{
 	   	boolean createSummary;
@@ -93,6 +98,7 @@ module robotDataLogger{
 		sequence<GraphicObjectMessage, 2048> graphicObjects;
 		sequence<GraphicObjectMessage, 2048> artifacts;
 		sequence<EnumType, 1024> enumTypes;
+		ReferenceFrameInformation referenceFrameInformation;
 		Summary summary;
 	};
 

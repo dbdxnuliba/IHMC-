@@ -208,8 +208,7 @@ public class ControllerPelvisOrientationManager implements PelvisOrientationCont
       desiredPelvisAngularVelocity.add(tempAngularVelocity);
       desiredPelvisAngularAcceleration.add(tempAngularAcceleration);
 
-      orientationFeedbackControlCommand.set(desiredPelvisOrientationWithOffset, desiredPelvisAngularVelocity);
-      orientationFeedbackControlCommand.setFeedForwardAction(desiredPelvisAngularAcceleration);
+      orientationFeedbackControlCommand.setInverseDynamics(desiredPelvisOrientationWithOffset, desiredPelvisAngularVelocity, desiredPelvisAngularAcceleration);
       orientationFeedbackControlCommand.setWeightsForSolver(tempWeight);
       orientationFeedbackControlCommand.setGains(gains);
       orientationFeedbackControlCommand.setSelectionMatrix(selectionMatrix);
@@ -219,15 +218,27 @@ public class ControllerPelvisOrientationManager implements PelvisOrientationCont
    public void goToHomeFromCurrentDesired(double trajectoryTime)
    {
       initialPelvisOrientationOffsetTime.set(yoTime.getDoubleValue());
-      pelvisOrientationOffsetTrajectoryGenerator.setTrajectoryTime(trajectoryTime);
 
       pelvisOrientationOffsetTrajectoryGenerator.getOrientation(tempOrientation);
 
       tempOrientation.changeFrame(desiredPelvisFrame);
       pelvisOrientationOffsetTrajectoryGenerator.setInitialOrientation(tempOrientation);
-
       tempOrientation.setToZero(desiredPelvisFrame);
       pelvisOrientationOffsetTrajectoryGenerator.setFinalOrientation(tempOrientation);
+      pelvisOrientationOffsetTrajectoryGenerator.setTrajectoryTime(trajectoryTime);
+      pelvisOrientationOffsetTrajectoryGenerator.initialize();
+   }
+
+   public void goToHomeFromOffset(FrameQuaternionReadOnly offset, double trajectoryTime)
+   {
+      initialPelvisOrientationOffsetTime.set(yoTime.getDoubleValue());
+
+      tempOrientation.setIncludingFrame(offset);
+      tempOrientation.changeFrame(desiredPelvisFrame);
+      pelvisOrientationOffsetTrajectoryGenerator.setInitialOrientation(tempOrientation);
+      tempOrientation.setToZero(desiredPelvisFrame);
+      pelvisOrientationOffsetTrajectoryGenerator.setFinalOrientation(tempOrientation);
+      pelvisOrientationOffsetTrajectoryGenerator.setTrajectoryTime(trajectoryTime);
       pelvisOrientationOffsetTrajectoryGenerator.initialize();
    }
 

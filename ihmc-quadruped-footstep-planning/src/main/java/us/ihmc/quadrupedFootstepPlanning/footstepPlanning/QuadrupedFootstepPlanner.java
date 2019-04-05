@@ -13,15 +13,26 @@ public interface QuadrupedFootstepPlanner
 
    void setPlanarRegionsList(PlanarRegionsList planarRegionsList);
 
-   void setInitialBodyPose(FramePose3DReadOnly bodyPose);
+   void setStart(QuadrupedFootstepPlannerStart start);
 
    void setGoal(QuadrupedFootstepPlannerGoal goal);
 
-   void initialize();
+   void setTimeout(double timeout);
 
-   void plan();
+   FootstepPlanningResult plan();
 
-   void update();
+   void cancelPlanning();
 
-   List<? extends QuadrupedTimedStep> getSteps();
+   FootstepPlan getPlan();
+
+   default void setPlanningHorizonLength(double planningHorizon)
+   {
+   }
+
+   default double getPlanningHorizonLength()
+   {
+      return Double.POSITIVE_INFINITY;
+   }
+
+   double getPlanningDuration();
 }

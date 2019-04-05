@@ -1,18 +1,31 @@
 package us.ihmc.atlas.straightLegWalking;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import us.ihmc.atlas.AtlasJointMap;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
-import us.ihmc.atlas.parameters.*;
+import us.ihmc.atlas.parameters.AtlasContactPointParameters;
+import us.ihmc.atlas.parameters.AtlasLegConfigurationParameters;
+import us.ihmc.atlas.parameters.AtlasMomentumOptimizationSettings;
+import us.ihmc.atlas.parameters.AtlasPhysicalProperties;
+import us.ihmc.atlas.parameters.AtlasSmoothCMPPlannerParameters;
+import us.ihmc.atlas.parameters.AtlasSteppingParameters;
+import us.ihmc.atlas.parameters.AtlasSwingTrajectoryParameters;
+import us.ihmc.atlas.parameters.AtlasToeOffParameters;
+import us.ihmc.atlas.parameters.AtlasWalkingControllerParameters;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.straightLegWalking.AvatarStraightLegWalkingTest;
-import us.ihmc.commonWalkingControlModules.configurations.*;
+import us.ihmc.commonWalkingControlModules.configurations.ICPWithTimeFreezingPlannerParameters;
+import us.ihmc.commonWalkingControlModules.configurations.LeapOfFaithParameters;
+import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
+import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
+import us.ihmc.commonWalkingControlModules.configurations.SwingTrajectoryParameters;
+import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationGains;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
 public class AtlasStraightLegWalkingTest extends AvatarStraightLegWalkingTest
@@ -20,63 +33,59 @@ public class AtlasStraightLegWalkingTest extends AvatarStraightLegWalkingTest
    private final AtlasRobotModel atlasRobotModel = new MyAtlasRobotModel();
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 300000)
+   @Test
    public void testForwardWalking() throws SimulationExceededMaximumTimeException
    {
       super.testForwardWalking();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 400000)
+   @Test
    public void testSlowerWalking() throws SimulationExceededMaximumTimeException
    {
       super.testSlowerWalking();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 200000000)
+   @Test
    public void testWalkingOverCinderBlockField() throws Exception
    {
       super.testWalkingOverCinderBlockField();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 167.7)
-   @Test(timeout = 520000)
+   @Test
    public void testWalkingOverStairs() throws Exception
    {
       super.testWalkingOverStairs();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
+   @Disabled
+   @Test
    public void testDropOffsWhileWalking() throws SimulationExceededMaximumTimeException
    {
       super.testDropOffsWhileWalking();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration =  140, categoriesOverride = {IntegrationCategory.FAST})
-   @Test(timeout = 680000)
+   @Override
+   @Test
    public void testSteppingDown() throws SimulationExceededMaximumTimeException
    {
       super.testSteppingDown();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
+   @Disabled
+   @Test
    public void testSteppingDownEveryTime() throws Exception
    {
       super.testSteppingDownEveryTime();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration =  167.7, categoriesOverride = {IntegrationCategory.EXCLUDE})
-   @Test(timeout = 200000)
+   @Disabled
+   @Test
    public void testRandomHeightField() throws Exception
    {
       super.testRandomHeightField();
@@ -146,7 +155,7 @@ public class AtlasStraightLegWalkingTest extends AvatarStraightLegWalkingTest
       }
 
       @Override
-      public boolean controlHeightWithMomentum()
+      public boolean enableHeightFeedbackControl()
       {
          return false;
       }

@@ -1,10 +1,9 @@
 package us.ihmc.quadrupedPlanning.stepStream;
 
-import org.junit.After;
-import org.junit.Test;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -12,6 +11,7 @@ import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.stepStream.QuadrupedXGaitPlanner;
 import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedPlanarBodyPathProvider;
@@ -22,19 +22,17 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
-@ContinuousIntegrationPlan(categories = IntegrationCategory.FAST)
 public class QuadrupedXGaitPlannerTest
 {
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 300000)
+   @Test
    public void testInitialForwardVelocityPlan()
    {
       ForwardMotionBodyPathProvider bodyPathProvider = new ForwardMotionBodyPathProvider();
@@ -42,8 +40,9 @@ public class QuadrupedXGaitPlannerTest
       xGaitSettings.setStanceLength(1.0);
       xGaitSettings.setStanceWidth(0.25);
       xGaitSettings.setStepGroundClearance(0.1);
-      xGaitSettings.setStepDuration(0.25);
-      xGaitSettings.setEndDoubleSupportDuration(0);
+      xGaitSettings.setQuadrupedSpeed(QuadrupedSpeed.FAST);
+      xGaitSettings.getAmbleFastTimings().setStepDuration(0.25);
+      xGaitSettings.getAmbleFastTimings().setEndDoubleSupportDuration(0.0);
       xGaitSettings.setEndPhaseShift(90);
       QuadrupedXGaitPlanner xGaitPlanner = new QuadrupedXGaitPlanner(bodyPathProvider, xGaitSettings);
 
@@ -99,8 +98,7 @@ public class QuadrupedXGaitPlannerTest
       }
    }
 
-      @ContinuousIntegrationTest(estimatedDuration = 0.0)
-      @Test(timeout=300000)
+      @Test
       public void testOnlineForwardVelocityPlan()
       {
          ForwardMotionBodyPathProvider bodyPathProvider = new ForwardMotionBodyPathProvider();
@@ -108,8 +106,9 @@ public class QuadrupedXGaitPlannerTest
          xGaitSettings.setStanceLength(1.0);
          xGaitSettings.setStanceWidth(0.25);
          xGaitSettings.setStepGroundClearance(0.1);
-         xGaitSettings.setStepDuration(0.25);
-         xGaitSettings.setEndDoubleSupportDuration(0);
+         xGaitSettings.setQuadrupedSpeed(QuadrupedSpeed.FAST);
+         xGaitSettings.getAmbleFastTimings().setStepDuration(0.25);
+         xGaitSettings.getAmbleFastTimings().setEndDoubleSupportDuration(0);
          xGaitSettings.setEndPhaseShift(90);
          QuadrupedXGaitPlanner xGaitPlanner = new QuadrupedXGaitPlanner(bodyPathProvider, xGaitSettings);
          xGaitPlanner.setStepSnapper((x, y, minZ) -> new Point3D(x, y, 0.0));

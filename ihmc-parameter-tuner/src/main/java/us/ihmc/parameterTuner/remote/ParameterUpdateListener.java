@@ -15,6 +15,7 @@ import us.ihmc.robotDataLogger.YoVariableClientInterface;
 import us.ihmc.robotDataLogger.YoVariablesUpdatedListener;
 import us.ihmc.robotDataLogger.handshake.LogHandshake;
 import us.ihmc.robotDataLogger.handshake.YoVariableHandshakeParser;
+import us.ihmc.robotDataLogger.websocket.command.DataServerCommand;
 import us.ihmc.yoVariables.listener.ParameterChangedListener;
 import us.ihmc.yoVariables.parameters.YoParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -28,6 +29,7 @@ import us.ihmc.yoVariables.variable.YoVariableType;
 public class ParameterUpdateListener implements YoVariablesUpdatedListener
 {
    private YoVariableClientInterface yoVariableClientInterface;
+   private YoVariableRegistry yoRootRegistry;
 
    private final AtomicReference<List<GuiRegistry>> guiRegistriesCopy = new AtomicReference<>(null);
 
@@ -39,15 +41,13 @@ public class ParameterUpdateListener implements YoVariablesUpdatedListener
 
    private boolean isUpdatingYoVariables = false;
 
+   private final List<ConnectionListener> connectionListeners = new ArrayList<>();
+
    @Override
    public void receivedTimestampOnly(long timestamp)
    {
    }
 
-   @Override
-   public void clearLog(String guid)
-   {
-   }
 
    public void exitActionPerformed()
    {
@@ -78,7 +78,7 @@ public class ParameterUpdateListener implements YoVariablesUpdatedListener
    public void start(YoVariableClientInterface yoVariableClientInterface, LogHandshake handshake, YoVariableHandshakeParser handshakeParser)
    {
       this.yoVariableClientInterface = yoVariableClientInterface;
-      YoVariableRegistry yoRootRegistry = handshakeParser.getRootRegistry();
+      yoRootRegistry = handshakeParser.getRootRegistry();
 
       yoRootRegistry.getAllParameters().stream().forEach(parameter -> {
          parameter.addParameterChangedListener(new ParameterChangedListener()
@@ -101,26 +101,12 @@ public class ParameterUpdateListener implements YoVariablesUpdatedListener
 
       guiParametersByYoName.clear();
       yoVariablesByGuiName.clear();
-
-      List<GuiRegistry> registriesCopy = new ArrayList<>();
-      ArrayList<YoVariableRegistry> yoRegistries = yoRootRegistry.getChildren();
-      yoRegistries.stream().forEach(yoRegistry -> {
-         GuiRegistry guiRegistry = new GuiRegistry(yoRegistry.getName(), null);
-         createGuiRegistryRecursive(guiRegistry, yoRegistry);
-         registriesCopy.add(guiRegistry.createFullCopy());
-      });
-      this.guiRegistriesCopy.set(registriesCopy);
    }
 
    @Override
    public void disconnected()
    {
-   }
-
-   @Override
-   public int getDisplayOneInNPackets()
-   {
-      return 0;
+      connectionListeners.forEach(l -> l.conectionStatusChanged(false));
    }
 
    @Override
@@ -145,6 +131,18 @@ public class ParameterUpdateListener implements YoVariablesUpdatedListener
    @Override
    public void connected()
    {
+      List<GuiRegistry> registriesCopy = new ArrayList<>();
+      ArrayList<YoVariableRegistry> yoRegistries = yoRootRegistry.getChildren();
+      yoRegistries.stream().forEach(yoRegistry -> {
+         GuiRegistry guiRegistry = new GuiRegistry(yoRegistry.getName(), null);
+         createGuiRegistryRecursive(guiRegistry, yoRegistry);
+         registriesCopy.add(guiRegistry.createFullCopy());
+      });
+      guiRegistriesCopy.set(registriesCopy);
+
+      userChangedParameters.clear();
+
+      connectionListeners.forEach(l -> l.conectionStatusChanged(true));
    }
 
    private void createGuiRegistryRecursive(GuiRegistry guiRegistry, YoVariableRegistry yoRegistry)
@@ -311,5 +309,15 @@ public class ParameterUpdateListener implements YoVariablesUpdatedListener
    private static String getUniqueName(YoParameter<?> yoParameter)
    {
       return yoParameter.getNameSpace() + "." + yoParameter.getName();
+   }
+
+   @Override
+   public void receivedCommand(DataServerCommand command, int argument)
+   {
+   }
+
+   public void addConnectionListener(ConnectionListener connectionListener)
+   {
+      connectionListeners.add(connectionListener);
    }
 }

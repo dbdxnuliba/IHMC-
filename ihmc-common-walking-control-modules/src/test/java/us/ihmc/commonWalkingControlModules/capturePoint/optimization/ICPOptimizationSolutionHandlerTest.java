@@ -1,19 +1,16 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.optimization;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGains;
 import us.ihmc.commonWalkingControlModules.capturePoint.ICPControlGainsReadOnly;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -30,7 +27,6 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 import us.ihmc.yoVariables.variable.YoFramePose3D;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class ICPOptimizationSolutionHandlerTest
 {
    private YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -39,7 +35,7 @@ public class ICPOptimizationSolutionHandlerTest
    private ICPOptimizationSolutionHandler solutionHandler;
    private ICPOptimizationQPSolver solver;
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
@@ -85,8 +81,7 @@ public class ICPOptimizationSolutionHandlerTest
       return referenceLocation;
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testWellWithinDeadband()
    {
       double scale = 0.2;
@@ -94,8 +89,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testALittleWithinDeadband()
    {
       double scale = 0.9;
@@ -103,8 +97,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testJustWithinDeadband()
    {
       double scale = 0.99;
@@ -112,8 +105,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testRightOnDeadband()
    {
       double scale = 1.0;
@@ -121,8 +113,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testJustOutsideDeadband()
    {
       double scale = 1.01;
@@ -130,8 +121,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testALittleOutsideDeadband()
    {
       double scale = 1.05;
@@ -139,8 +129,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testWellOutsideDeadband()
    {
       double scale = 1.5;
@@ -148,8 +137,7 @@ public class ICPOptimizationSolutionHandlerTest
       runDeadbandTest(scale, deadbandSize);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testWithinDeadbandResolution()
    {
       double scale = 1.1;
@@ -179,7 +167,7 @@ public class ICPOptimizationSolutionHandlerTest
       FramePoint2D perfectCMP = new FramePoint2D(ReferenceFrame.getWorldFrame(), -0.1, 0.0);
       assertTrue(solver.compute(currentICPError, perfectCMP));
 
-      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep,  solver);
+      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep.getFootstepPose(),  solver);
       FrameVector2D copFeedback = new FrameVector2D();
       solver.getCoPFeedbackDifference(copFeedback);
 
@@ -210,7 +198,7 @@ public class ICPOptimizationSolutionHandlerTest
 
       solver.compute(currentICPError, perfectCMP);
 
-      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep, solver);
+      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep.getFootstepPose(), solver);
 
       // new solution should be clipped to the same value
       expectedUnclippedSolution = new FramePoint2D(referenceFootstepPosition);
@@ -234,8 +222,7 @@ public class ICPOptimizationSolutionHandlerTest
       assertEquals(0.0, solutionHandler.getFootstepAdjustment().length(), 1e-3);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testOutsideDeadbandResolution()
    {
       double scale = 1.1;
@@ -265,7 +252,7 @@ public class ICPOptimizationSolutionHandlerTest
       FramePoint2D perfectCMP = new FramePoint2D(ReferenceFrame.getWorldFrame(), -0.1, 0.0);
       assertTrue(solver.compute(currentICPError, perfectCMP));
 
-      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep, solver);
+      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep.getFootstepPose(), solver);
       FrameVector2D copFeedback = new FrameVector2D();
       solver.getCoPFeedbackDifference(copFeedback);
 
@@ -296,7 +283,7 @@ public class ICPOptimizationSolutionHandlerTest
 
       solver.compute(currentICPError, perfectCMP);
 
-      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep, solver);
+      solutionHandler.extractFootstepSolution(foostepSolution, unclippedFootstepSolution, upcomingFootstep.getFootstepPose(), solver);
 
       // new solution should be clipped to the same value
       expectedUnclippedSolution = new FramePoint2D(referenceFootstepPosition);
@@ -349,7 +336,7 @@ public class ICPOptimizationSolutionHandlerTest
       FramePoint2D perfectCMP = new FramePoint2D(ReferenceFrame.getWorldFrame(), -0.1, 0.0);
       solver.compute(currentICPError, perfectCMP);
 
-      solutionHandler.extractFootstepSolution(footstepSolution, unclippedFootstepSolution, upcomingFootstep, solver);
+      solutionHandler.extractFootstepSolution(footstepSolution, unclippedFootstepSolution, upcomingFootstep.getFootstepPose(), solver);
       FrameVector2D copFeedback = new FrameVector2D();
       solver.getCoPFeedbackDifference(copFeedback);
 

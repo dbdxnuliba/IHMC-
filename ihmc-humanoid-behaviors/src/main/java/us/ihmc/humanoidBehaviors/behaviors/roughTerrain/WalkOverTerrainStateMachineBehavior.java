@@ -8,7 +8,7 @@ import controller_msgs.msg.dds.FootstepPlanningToolboxOutputStatus;
 import controller_msgs.msg.dds.FootstepStatusMessage;
 import controller_msgs.msg.dds.HeadTrajectoryMessage;
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
-import controller_msgs.msg.dds.RequestPlanarRegionsListMessage;
+import controller_msgs.msg.dds.REAStateRequestMessage;
 import controller_msgs.msg.dds.ToolboxStateMessage;
 import controller_msgs.msg.dds.WalkOverTerrainGoalPacket;
 import controller_msgs.msg.dds.WalkingStatusMessage;
@@ -16,7 +16,6 @@ import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.communication.packets.PacketDestination;
-import us.ihmc.communication.packets.PlanarRegionsRequestType;
 import us.ihmc.communication.packets.ToolboxState;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
@@ -77,18 +76,29 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
    private final IHMCROS2Publisher<FootstepDataListMessage> footstepPublisher;
    private final IHMCROS2Publisher<ToolboxStateMessage> toolboxStatePublisher;
    private final IHMCROS2Publisher<FootstepPlanningRequestPacket> planningRequestPublisher;
-   private final IHMCROS2Publisher<RequestPlanarRegionsListMessage> planarRegionsRequestPublisher;
+   private final IHMCROS2Publisher<REAStateRequestMessage> reaStateRequestPublisher;
    private final IHMCROS2Publisher<HeadTrajectoryMessage> headTrajectoryPublisher;
+   
+   private final AtomicReference<WalkingStatusMessage> walkingStatus = new AtomicReference<>();
+
 
    public WalkOverTerrainStateMachineBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, WholeBodyControllerParameters wholeBodyControllerParameters,
                                               HumanoidReferenceFrames referenceFrames)
    {
       super(robotName, ros2Node);
 
-      createBehaviorInputSubscriber(FootstepPlanningToolboxOutputStatus.class, plannerResult::set);
+      //createBehaviorInputSubscriber(FootstepPlanningToolboxOutputStatus.class, plannerResult::set);
+      
+      
+      createSubscriber(FootstepPlanningToolboxOutputStatus.class, footstepPlanningToolboxPubGenerator, plannerResult::set);
+
+      
+      
       createBehaviorInputSubscriber(WalkOverTerrainGoalPacket.class,
                                     (packet) -> goalPose.set(new FramePose3D(ReferenceFrame.getWorldFrame(), packet.getPosition(), packet.getOrientation())));
       createSubscriber(PlanarRegionsListMessage.class, REACommunicationProperties.publisherTopicNameGenerator, planarRegions::set);
+      
+      
 
       waitState = new WaitState(yoTime);
       planFromDoubleSupportState = new PlanFromDoubleSupportState();
@@ -104,7 +114,7 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
       headTrajectoryPublisher = createPublisherForController(HeadTrajectoryMessage.class);
       toolboxStatePublisher = createPublisher(ToolboxStateMessage.class, footstepPlanningToolboxSubGenerator);
       planningRequestPublisher = createPublisher(FootstepPlanningRequestPacket.class, footstepPlanningToolboxSubGenerator);
-      planarRegionsRequestPublisher = createPublisher(RequestPlanarRegionsListMessage.class, REACommunicationProperties.subscriberTopicNameGenerator);
+      reaStateRequestPublisher = createPublisher(REAStateRequestMessage.class, REACommunicationProperties.subscriberTopicNameGenerator);
 
       stateMachine = setupStateMachine(yoTime);
    }
@@ -134,7 +144,11 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
    @Override
    public void onBehaviorEntered()
    {
-      sendTextToSpeechPacket("Starting walk over terrain behavior");
+      sendTextToSpeechPacket("Entered walk over terrain behavior");
+      goalPose.set(null);
+      walkingStatus.set(null);
+      stateMachine.resetToInitialState();
+
    }
 
    @Override
@@ -166,7 +180,7 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
 
    }
 
-   @Override
+  // @Override
    public boolean isDone()
    {
       FramePose3D goalPoseInMidFeetZUpFrame = new FramePose3D(goalPose.get());
@@ -232,9 +246,9 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
 
       private void clearPlanarRegionsList()
       {
-         RequestPlanarRegionsListMessage requestPlanarRegionsListMessage = MessageTools.createRequestPlanarRegionsListMessage(PlanarRegionsRequestType.CLEAR);
-         requestPlanarRegionsListMessage.setDestination(PacketDestination.REA_MODULE.ordinal());
-         planarRegionsRequestPublisher.publish(requestPlanarRegionsListMessage);
+         REAStateRequestMessage clearRequest = new REAStateRequestMessage();
+         clearRequest.setRequestClear(true);
+         reaStateRequestPublisher.publish(clearRequest);
       }
 
       @Override
@@ -274,26 +288,31 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
 
             planningRequestHasBeenSent.set(true);
          }
+         
+         FootstepPlanningToolboxOutputStatus plannerResult = WalkOverTerrainStateMachineBehavior.this.plannerResult.get();
       }
 
       @Override
       public void onEntry()
       {
          planningRequestHasBeenSent.set(false);
+         sendTextToSpeechPacket("Starting PlanFromDoubleSupportState state");
+
       }
 
       @Override
       public void onExit()
       {
          sendFootstepPlan();
-         PrintTools.info("transitioning to walking");
+         sendTextToSpeechPacket("transitioning from planning to walking");
       }
+      
+      
    }
 
    class PlanFromSingleSupportState implements State
    {
       private final AtomicReference<FootstepStatusMessage> footstepStatus = new AtomicReference<>();
-      private final AtomicReference<WalkingStatusMessage> walkingStatus = new AtomicReference<>();
 
       private final FramePose3D touchdownPose = new FramePose3D();
       private final YoEnum<RobotSide> swingSide = YoEnum.create("swingSide", RobotSide.class, registry);
@@ -321,6 +340,8 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
          }
 
          FootstepPlanningToolboxOutputStatus plannerResult = WalkOverTerrainStateMachineBehavior.this.plannerResult.get();
+         
+         
          if (plannerResult != null && FootstepPlanningResult.fromByte(plannerResult.getFootstepPlanningResult()).validForExecution())
          {
             sendFootstepPlan();
@@ -330,6 +351,8 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
       @Override
       public void onEntry()
       {
+         sendTextToSpeechPacket("Starting PlanFromSingleSupportState state");
+
       }
 
       @Override
@@ -344,6 +367,11 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
       }
    }
 
+   public void setGoalPose(FramePose3D newGoalPose)
+   {
+      goalPose.set(newGoalPose);  
+   }
+   
    private boolean goalHasBeenSet()
    {
       return goalPose.get() != null;
@@ -378,6 +406,6 @@ public class WalkOverTerrainStateMachineBehavior extends AbstractBehavior
 
    private void sendTextToSpeechPacket(String text)
    {
-      publishTextToSpeack(text);
+      publishTextToSpeech(text);
    }
 }

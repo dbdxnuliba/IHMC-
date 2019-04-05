@@ -166,8 +166,8 @@ public class WholeBodyControllerCore
          if (inverseDynamicsSolver != null)
          {
             if (reinitializationRequested)
-               inverseDynamicsSolver.reinitialize();
-            feedbackController.submitFeedbackControlCommandList(controllerCoreCommand.getFeedbackControlCommandList());
+               inverseDynamicsSolver.initialize();
+            feedbackController.submitFeedbackControlCommandList(currentMode.getValue(), controllerCoreCommand.getFeedbackControlCommandList());
             inverseDynamicsSolver.submitInverseDynamicsCommandList(controllerCoreCommand.getInverseDynamicsCommandList());
          }
          else
@@ -178,7 +178,7 @@ public class WholeBodyControllerCore
       case INVERSE_KINEMATICS:
          if (inverseKinematicsSolver != null)
          {
-            feedbackController.submitFeedbackControlCommandList(controllerCoreCommand.getFeedbackControlCommandList());
+            feedbackController.submitFeedbackControlCommandList(currentMode.getValue(), controllerCoreCommand.getFeedbackControlCommandList());
             inverseKinematicsSolver.submitInverseKinematicsCommandList(controllerCoreCommand.getInverseKinematicsCommandList());
          }
          else
@@ -189,7 +189,7 @@ public class WholeBodyControllerCore
       case VIRTUAL_MODEL:
          if (virtualModelControlSolver != null)
          {
-            feedbackController.submitFeedbackControlCommandList(controllerCoreCommand.getFeedbackControlCommandList());
+            feedbackController.submitFeedbackControlCommandList(currentMode.getValue(), controllerCoreCommand.getFeedbackControlCommandList());
             virtualModelControlSolver.submitVirtualModelControlCommandList(controllerCoreCommand.getVirtualModelControlCommandList());
          }
          else
@@ -261,7 +261,7 @@ public class WholeBodyControllerCore
       jointDesiredOutputList.completeWith(inverseDynamicsOutput);
       if (rootJointDesiredConfigurationData != null)
          rootJointDesiredConfigurationData.completeWith(inverseDynamicsOutputForRootJoint);
-      controllerCoreOutput.setAndMatchFrameLinearMomentumRate(inverseDynamicsSolver.getAchievedMomentumRateLinear());
+      controllerCoreOutput.setLinearMomentumRate(inverseDynamicsSolver.getAchievedMomentumRateLinear());
    }
 
    private void doInverseKinematics()
@@ -290,7 +290,7 @@ public class WholeBodyControllerCore
       jointDesiredOutputList.completeWith(virtualModelControlOutput);
       if (rootJointDesiredConfigurationData != null)
          rootJointDesiredConfigurationData.completeWith(virtualModelControlOutputForRootJoint);
-      controllerCoreOutput.setAndMatchFrameLinearMomentumRate(virtualModelControlSolver.getAchievedMomentumRateLinear());
+      controllerCoreOutput.setLinearMomentumRate(virtualModelControlSolver.getAchievedMomentumRateLinear());
    }
 
    private void doNothing()

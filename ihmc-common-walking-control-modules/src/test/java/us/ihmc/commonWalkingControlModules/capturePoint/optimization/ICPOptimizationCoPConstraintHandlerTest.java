@@ -1,8 +1,7 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.optimization;
 
 import static org.fest.assertions.Fail.fail;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,15 +9,14 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.MatrixFeatures;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.PolygonWiggler;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.referenceFrame.FrameConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -35,7 +33,6 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class ICPOptimizationCoPConstraintHandlerTest
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
@@ -46,14 +43,13 @@ public class ICPOptimizationCoPConstraintHandlerTest
    private final SideDependentList<FramePose3D> footPosesAtTouchdown = new SideDependentList<>(new FramePose3D(), new FramePose3D());
    private final SideDependentList<ReferenceFrame> ankleFrames = new SideDependentList<>();
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testDoubleSupportWithBipedSupportPolygonsAndAngularMomentum()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -109,8 +105,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
       assertTrue(MatrixFeatures.isEquals(cmpBin, solver.getCMPLocationConstraint().bineq, 1e-7));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testSingleSupportWithBipedSupportPolygonsAndAngularMomentum()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -211,8 +206,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
       assertTrue(MatrixFeatures.isEquals(cmpBin, solver.getCMPLocationConstraint().bineq, 1e-7));
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testDoubleSupportWithBipedSupportPolygonsNoAngularMomentum()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -262,8 +256,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
       assertEquals(CommonOps.elementSum(solver.getCMPLocationConstraint().bineq), 0.0, 1e-7);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testSingleSupportWithBipedSupportPolygonsNoAngularMomentum()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
@@ -384,6 +377,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
    private BipedSupportPolygons setupBipedSupportPolygons(SideDependentList<FootSpoof> contactableFeet, YoVariableRegistry registry)
    {
       SideDependentList<ReferenceFrame> ankleZUpFrames = new SideDependentList<>();
+      SideDependentList<ReferenceFrame> soleFrames = new SideDependentList<>();
       SideDependentList<YoPlaneContactState> contactStates = new SideDependentList<>();
 
       for (RobotSide robotSide : RobotSide.values)
@@ -396,6 +390,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
          String sidePrefix = robotSide.getCamelCaseNameForStartOfExpression();
          RigidBodyBasics foot = contactableFoot.getRigidBody();
          ReferenceFrame soleFrame = contactableFoot.getSoleFrame();
+         soleFrames.put(robotSide, soleFrame);
          List<FramePoint2D> contactFramePoints = contactableFoot.getContactPoints2d();
          double coefficientOfFriction = contactableFoot.getCoefficientOfFriction();
          YoPlaneContactState yoPlaneContactState = new YoPlaneContactState(sidePrefix + "Foot", foot, soleFrame, contactFramePoints, coefficientOfFriction, registry);
@@ -406,7 +401,7 @@ public class ICPOptimizationCoPConstraintHandlerTest
       ReferenceFrame midFeetZUpFrame = new MidFrameZUpFrame("midFeetZupFrame", worldFrame, ankleZUpFrames.get(RobotSide.LEFT), ankleZUpFrames.get(RobotSide.RIGHT));
       midFeetZUpFrame.update();
 
-      BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(midFeetZUpFrame, ankleZUpFrames, registry, null);
+      BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(midFeetZUpFrame, ankleZUpFrames, soleFrames, registry, null);
       bipedSupportPolygons.updateUsingContactStates(contactStates);
 
       return bipedSupportPolygons;

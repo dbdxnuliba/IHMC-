@@ -1,17 +1,14 @@
 package us.ihmc.commonWalkingControlModules.capturePoint;
 
-import static org.junit.Assert.*;
+import static us.ihmc.robotics.Assert.assertEquals;
 
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationPlan;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
-import us.ihmc.continuousIntegration.IntegrationCategory;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -24,32 +21,28 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.referenceFrames.TranslationReferenceFrame;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
 
-@ContinuousIntegrationPlan(categories = {IntegrationCategory.FAST})
 public class ICPControlPlaneTest
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       ReferenceFrameTools.clearWorldFrameTree();
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testProjectPointForwardAndLeftOntoPlane()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
-      YoDouble omega = new YoDouble("omega", registry);
       double gravity = 9.81;
 
       ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(0.1, 0.1, 1.0);
       double planeHeightInCoMFrame = -1.0; //
 
-      ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-      omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+      ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+      icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
 
       // test plane height
@@ -243,20 +236,18 @@ public class ICPControlPlaneTest
     * filled up with NaNs, now the test fails as it should have always been.
     * </p>
     */
-   @Ignore
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Disabled
+   @Test
    public void testProjectPointForwardAndLeftOntoPlaneEdgeCase()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
-      YoDouble omega = new YoDouble("omega", registry);
       double gravity = 9.81;
 
       ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(0.1, 0.1, 1.0);
       double planeHeightInCoMFrame = -1.0; //
 
-      ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-      omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+      ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+      icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
 
       // test plane height
@@ -282,8 +273,7 @@ public class ICPControlPlaneTest
       expectedProjectedPoint.checkReferenceFrameMatch(projectedPoint);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test
    public void testRandomProjectOntoPlane()
    {
       Random random = new Random(12345);
@@ -291,7 +281,6 @@ public class ICPControlPlaneTest
       for (int iter = 0; iter < 1000; iter++)
       {
          YoVariableRegistry registry = new YoVariableRegistry("robert");
-         YoDouble omega = new YoDouble("omega", registry);
          double gravity = 9.81;
 
          double xCoMPosition = RandomNumbers.nextDouble(random, 10.0);
@@ -300,8 +289,8 @@ public class ICPControlPlaneTest
          ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(xCoMPosition, yCoMPosition, zCoMPosition);
          double planeHeightInCoMFrame = RandomNumbers.nextDouble(random, -5.0, 0.001);
 
-         ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-         omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+         ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+         icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
          // test plane height
          assertEquals("iteration " + iter, planeHeightInCoMFrame, icpControlPlane.getControlPlaneHeight(), 1e-10);
@@ -327,19 +316,17 @@ public class ICPControlPlaneTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testProjectPointForwardAndLeftFromPlaneOntoSurface()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
-      YoDouble omega = new YoDouble("omega", registry);
       double gravity = 9.81;
 
       ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(0.1, 0.1, 1.0);
       double planeHeightInCoMFrame = -1.0; //
 
-      ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-      omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+      ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+      icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
 
       // test plane height
@@ -523,8 +510,7 @@ public class ICPControlPlaneTest
       EuclidCoreTestTools.assertTuple3DEquals(expectedProjectedPoint, projectedPoint, 1e-10);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.3)
-   @Test(timeout = 30000)
+   @Test
    public void testRandomProjectOntoSurface()
    {
       Random random = new Random(12345);
@@ -532,7 +518,6 @@ public class ICPControlPlaneTest
       for (int iter = 0; iter < 1000; iter++)
       {
          YoVariableRegistry registry = new YoVariableRegistry("robert");
-         YoDouble omega = new YoDouble("omega", registry);
          double gravity = 9.81;
 
          double xCoMPosition = RandomNumbers.nextDouble(random, 10.0);
@@ -541,8 +526,8 @@ public class ICPControlPlaneTest
          ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(xCoMPosition, yCoMPosition, zCoMPosition);
          double planeHeightInCoMFrame = RandomNumbers.nextDouble(random, -5.0, 0.001);
 
-         ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-         omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+         ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+         icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
          // test plane height
          assertEquals("iteration " + iter, planeHeightInCoMFrame, icpControlPlane.getControlPlaneHeight(), 1e-10);
@@ -569,19 +554,17 @@ public class ICPControlPlaneTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testProjectPlanarRegionMostBasic()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
-      YoDouble omega = new YoDouble("omega", registry);
       double gravity = 9.81;
 
       ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(0.0, 0.0, 1.0);
       double planeHeightInCoMFrame = -1.0; //
 
-      ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-      omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+      ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+      icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
       TranslationReferenceFrame referenceFrame = new TranslationReferenceFrame("test", worldFrame);
       referenceFrame.updateTranslation(new Vector3D(0.0, 0.0, 0.1));
@@ -624,19 +607,17 @@ public class ICPControlPlaneTest
       EuclidCoreTestTools.assertTuple2DEquals(predictedProjectPoint4, projectedConvexPolygon.getVertex(3), 1e-10);
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 0.0)
-   @Test(timeout = 30000)
+   @Test
    public void testProjectPlanarRegion()
    {
       YoVariableRegistry registry = new YoVariableRegistry("robert");
-      YoDouble omega = new YoDouble("omega", registry);
       double gravity = 9.81;
 
       ReferenceFrame centerOfMassFrame = createCenterOfMassFrame(0.1, 0.1, 1.0);
       double planeHeightInCoMFrame = -1.0; //
 
-      ICPControlPlane icpControlPlane = new ICPControlPlane(omega, centerOfMassFrame, gravity, registry);
-      omega.set(Math.sqrt(-gravity / planeHeightInCoMFrame));
+      ICPControlPlane icpControlPlane = new ICPControlPlane(centerOfMassFrame, gravity, registry);
+      icpControlPlane.setOmega0(Math.sqrt(-gravity / planeHeightInCoMFrame));
 
       TranslationReferenceFrame referenceFrame = new TranslationReferenceFrame("test", worldFrame);
       referenceFrame.updateTranslation(new Vector3D(0.0, 0.0, 0.1));

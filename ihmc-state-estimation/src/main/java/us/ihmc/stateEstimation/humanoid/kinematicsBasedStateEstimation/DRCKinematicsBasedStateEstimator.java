@@ -9,14 +9,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import gnu.trove.map.TObjectDoubleMap;
 import us.ihmc.commonWalkingControlModules.visualizer.EstimatedFromTorquesWrenchVisualizer;
 import us.ihmc.commons.Conversions;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicReferenceFrame;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.sensing.StateEstimatorMode;
 import us.ihmc.humanoidRobotics.communication.subscribers.PelvisPoseCorrectionCommunicatorInterface;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
+import us.ihmc.log.LogTools;
+import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
+import us.ihmc.mecano.yoVariables.spatial.YoFixedFrameTwist;
 import us.ihmc.robotics.contactable.ContactablePlaneBody;
 import us.ihmc.robotics.sensors.CenterOfMassDataHolder;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
@@ -70,7 +72,12 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
 
    private final JointTorqueFromForceSensorVisualizer jointTorqueFromForceSensorVisualizer;
 
+   private final List<FootSwitchInterface> footSwitchList;
+
    private final YoBoolean reinitializeStateEstimator = new YoBoolean("reinitializeStateEstimator", registry);
+
+   private final FloatingJointBasics rootJoint;
+   private final YoFixedFrameTwist yoRootTwist;
 
    public DRCKinematicsBasedStateEstimator(FullInverseDynamicsStructure inverseDynamicsStructure, StateEstimatorParameters stateEstimatorParameters,
                                            SensorOutputMapReadOnly sensorOutputMapReadOnly, CenterOfMassDataHolder estimatorCenterOfMassDataHolderToUpdate,
@@ -82,6 +89,7 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
    {
       estimatorDT = stateEstimatorParameters.getEstimatorDT();
       this.sensorOutputMapReadOnly = sensorOutputMapReadOnly;
+      this.footSwitchList = new ArrayList<>(footSwitches.values());
 
       usePelvisCorrector = new YoBoolean("useExternalPelvisCorrector", registry);
       usePelvisCorrector.set(true);
@@ -132,7 +140,7 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
       }
       else
       {
-         PrintTools.warn(this, "No IMUs, setting up with: " + ConstantPelvisRotationalStateUpdater.class.getSimpleName(), true);
+         LogTools.warn("No IMUs, setting up with: " + ConstantPelvisRotationalStateUpdater.class.getSimpleName(), true);
          pelvisRotationalStateUpdater = new ConstantPelvisRotationalStateUpdater(inverseDynamicsStructure, registry);
       }
 
@@ -186,6 +194,10 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
       {
          estimatedWrenchVisualizer = null;
       }
+
+      rootJoint = inverseDynamicsStructure.getRootJoint();
+      yoRootTwist = new YoFixedFrameTwist("RootTwist", rootJoint.getFrameAfterJoint(), rootJoint.getFrameBeforeJoint(), rootJoint.getFrameAfterJoint(),
+                                          registry);
    }
 
    private void setupYoGraphics(YoGraphicsListRegistry yoGraphicsListRegistry, List<? extends IMUSensorReadOnly> imuProcessedOutputs)
@@ -207,10 +219,7 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
       jointStateUpdater.initialize();
       if (pelvisRotationalStateUpdater != null)
       {
-         if (operatingMode.getEnumValue() == StateEstimatorMode.FROZEN)
-            pelvisRotationalStateUpdater.initializeForFrozenState();
-         else
-            pelvisRotationalStateUpdater.initialize();
+         pelvisRotationalStateUpdater.initialize();
       }
       pelvisLinearStateUpdater.initialize();
 
@@ -227,6 +236,9 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
       }
       yoTime.set(Conversions.nanosecondsToSeconds(sensorOutputMapReadOnly.getTimestamp()));
 
+      for (int i = 0; i < footSwitchList.size(); i++)
+         footSwitchList.get(i).updateMeasurement();
+
       if (fusedIMUSensor != null)
          fusedIMUSensor.update();
 
@@ -236,29 +248,26 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
       }
 
       jointStateUpdater.updateJointState();
+      if (pelvisRotationalStateUpdater != null)
+      {
+         pelvisRotationalStateUpdater.updateRootJointOrientationAndAngularVelocity();
+      }
 
       switch (operatingMode.getEnumValue())
       {
       case FROZEN:
-         if (pelvisRotationalStateUpdater != null)
-         {
-            pelvisRotationalStateUpdater.updateForFrozenState();
-         }
          pelvisLinearStateUpdater.updateForFrozenState();
          break;
-
       case NORMAL:
       default:
-         if (pelvisRotationalStateUpdater != null)
-         {
-            pelvisRotationalStateUpdater.updateRootJointOrientationAndAngularVelocity();
-         }
          pelvisLinearStateUpdater.updateRootJointPositionAndLinearVelocity();
-
-         List<RigidBodyBasics> trustedFeet = pelvisLinearStateUpdater.getCurrentListOfTrustedFeet();
-         imuBiasStateEstimator.compute(trustedFeet);
          break;
       }
+
+      yoRootTwist.setMatchingFrame(rootJoint.getJointTwist());
+
+      List<RigidBodyBasics> trustedFeet = pelvisLinearStateUpdater.getCurrentListOfTrustedFeet();
+      imuBiasStateEstimator.compute(trustedFeet);
 
       if (usePelvisCorrector.getBooleanValue() && pelvisPoseHistoryCorrection != null)
       {
@@ -290,6 +299,7 @@ public class DRCKinematicsBasedStateEstimator implements StateEstimatorControlle
    public void initializeEstimator(RigidBodyTransform rootJointTransform, TObjectDoubleMap<String> jointPositions)
    {
       pelvisLinearStateUpdater.initializeRootJointPosition(rootJointTransform.getTranslationVector());
+      reinitializeStateEstimator.set(true);
       // Do nothing for the orientation since the IMU is trusted
    }
 

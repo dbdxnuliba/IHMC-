@@ -3,6 +3,7 @@ package us.ihmc.quadrupedRobotics.simulation;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import us.ihmc.commonWalkingControlModules.configurations.HighLevelControllerParameters;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ContactableBodiesFactory;
@@ -20,12 +21,12 @@ import us.ihmc.jMonkeyEngineToolkit.GroundProfile3D;
 import us.ihmc.jMonkeyEngineToolkit.camera.CameraConfiguration;
 import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
+import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedControllerAPIDefinition;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControlMode;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerManager;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedSimulationController;
-import us.ihmc.quadrupedRobotics.estimator.SimulatedQuadrupedFootSwitchFactory;
-import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedRobotics.estimator.footSwitch.QuadrupedFootSwitchFactory;
 import us.ihmc.quadrupedRobotics.estimator.sensorProcessing.simulatedSensors.SDFQuadrupedPerfectSimulatedSensor;
 import us.ihmc.quadrupedRobotics.estimator.stateEstimator.QuadrupedSensorInformation;
 import us.ihmc.quadrupedRobotics.estimator.stateEstimator.QuadrupedSensorReaderWrapper;
@@ -51,6 +52,7 @@ import us.ihmc.robotics.sensors.ContactSensorHolder;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.robotics.sensors.ForceSensorDefinition;
 import us.ihmc.robotics.sensors.IMUDefinition;
+import us.ihmc.robotics.stateMachine.core.StateChangedListener;
 import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.sensorProcessing.communication.producers.DRCPoseCommunicator;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
@@ -74,7 +76,6 @@ import us.ihmc.simulationconstructionset.UnreasonableAccelerationException;
 import us.ihmc.simulationconstructionset.ViewportConfiguration;
 import us.ihmc.simulationconstructionset.gui.tools.SimulationOverheadPlotterFactory;
 import us.ihmc.simulationconstructionset.util.LinearGroundContactModel;
-import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.simulationconstructionset.util.ground.AlternatingSlopesGroundProfile;
 import us.ihmc.simulationconstructionset.util.ground.FlatGroundProfile;
 import us.ihmc.simulationconstructionset.util.ground.RollingGroundProfile;
@@ -86,7 +87,6 @@ import us.ihmc.systemIdentification.frictionId.simulators.SimulatedFrictionContr
 import us.ihmc.tools.factories.FactoryTools;
 import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.tools.factories.RequiredFactoryField;
-import us.ihmc.util.PeriodicNonRealtimeThreadSchedulerFactory;
 import us.ihmc.wholeBodyController.parameters.ParameterLoaderHelper;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
@@ -246,9 +246,10 @@ public class QuadrupedSimulationFactory
 
    private void createFootSwitches()
    {
-      SimulatedQuadrupedFootSwitchFactory footSwitchFactory = new SimulatedQuadrupedFootSwitchFactory();
+      QuadrupedFootSwitchFactory footSwitchFactory = new QuadrupedFootSwitchFactory();
       footSwitchFactory.setFootContactableBodies(contactableFeet);
       footSwitchFactory.setFullRobotModel(fullRobotModel.get());
+      footSwitchFactory.setJointDesiredOutputList(jointDesiredOutputList.get());
       footSwitchFactory.setGravity(gravity.get());
       footSwitchFactory.setSimulatedRobot(sdfRobot.get());
       footSwitchFactory.setYoVariableRegistry(factoryRegistry);
@@ -276,6 +277,13 @@ public class QuadrupedSimulationFactory
          stateEstimatorFactory.setCenterOfMassDataHolder(centerOfMassDataHolder);
          stateEstimatorFactory.setYoGraphicsListRegistry(yoGraphicsListRegistry);
          stateEstimator = stateEstimatorFactory.createStateEstimator();
+
+         FloatingRootJointRobot simulationRobot = sdfRobot.get();
+         StateChangedListener<HighLevelControllerName> reinilizator = QuadrupedSimulationFactory.createSimulationStateEstimatorReinilizator(HighLevelControllerName.STAND_READY,
+                                                                                                                                                stateEstimator,
+                                                                                                                                                () -> simulationRobot.getRootJoint()
+                                                                                                                                                                     .getJointTransform3D());
+         controllerManager.registerHighLevelStateChangedListener(reinilizator);
          factoryRegistry.addChild(stateEstimator.getYoVariableRegistry());
       }
       else
@@ -288,7 +296,7 @@ public class QuadrupedSimulationFactory
    {
       if (createYoVariableServer.get())
       {
-         yoVariableServer = new YoVariableServer(getClass(), new PeriodicNonRealtimeThreadSchedulerFactory(), null, LogSettings.SIMULATION, controlDT.get());
+         yoVariableServer = new YoVariableServer(getClass(), null, LogSettings.SIMULATION, controlDT.get());
       }
    }
 
@@ -318,12 +326,6 @@ public class QuadrupedSimulationFactory
       }
 
       controllerManager = new QuadrupedControllerManager(runtimeEnvironment, physicalProperties.get(), initialForceControlState.get(), null);
-
-
-      if(useStateEstimator.get())
-      {
-         controllerManager.setStateEstimatorModeSubscriber(stateEstimator);
-      }
    }
 
    private void createPoseCommunicator()
@@ -497,9 +499,9 @@ public class QuadrupedSimulationFactory
       createContactableFeet();
       createContactablePlaneBodies();
       createFootSwitches();
-      createStateEstimator();
       createRealtimeRos2Node();
       createControllerManager();
+      createStateEstimator();
       createControllerNetworkSubscriber();
       createPoseCommunicator();
       setupYoVariableServer();
@@ -805,5 +807,39 @@ public class QuadrupedSimulationFactory
       {
          realtimeRos2Node.destroy();
       }
+   }
+
+   /**
+    * <b>For simulation only!</b>
+    * <p>
+    * Creates a listener to be attached to the controller. The listener will trigger when the
+    * controller state machine enters {@code controllerStateTrigger} for the first time. When
+    * triggering, the state estimator position estimation is reinilization to the actual one using the
+    * given supplier.
+    * </p>
+    * 
+    * @param controllerStateTrigger the enum value that should trigger the reinitialization.
+    * @param stateEstimator the instance of the state estimator to be automatically reinitialized.
+    * @param actualRootJointTransformSupplier the supplier of the root joint transofmr of the simulated robot.
+    * @return the reinitializator.
+    */
+   public static StateChangedListener<HighLevelControllerName> createSimulationStateEstimatorReinilizator(HighLevelControllerName controllerStateTrigger,
+                                                                                                          StateEstimatorController stateEstimator,
+                                                                                                          Supplier<RigidBodyTransform> actualRootJointTransformSupplier)
+   {
+      return new StateChangedListener<HighLevelControllerName>()
+      {
+         private boolean reinitilizeEstimator = true;
+   
+         @Override
+         public void stateChanged(HighLevelControllerName from, HighLevelControllerName to)
+         {
+            if (reinitilizeEstimator && to == controllerStateTrigger)
+            {
+               stateEstimator.initializeEstimator(actualRootJointTransformSupplier.get());
+               reinitilizeEstimator = false;
+            }
+         }
+      };
    }
 }

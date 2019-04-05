@@ -34,6 +34,8 @@ import us.ihmc.humanoidBehaviors.behaviors.examples.ExampleComplexBehaviorStateM
 import us.ihmc.humanoidBehaviors.behaviors.fiducialLocation.FollowFiducialBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.goalLocation.LocateGoalBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.AtlasPrimitiveActions;
+import us.ihmc.humanoidBehaviors.behaviors.primitives.BasicTimingBehavior;
+import us.ihmc.humanoidBehaviors.behaviors.primitives.WalkToLocationPlannedBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.roughTerrain.CollaborativeBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.roughTerrain.WalkOverTerrainStateMachineBehavior;
 import us.ihmc.humanoidBehaviors.dispatcher.BehaviorControlModeSubscriber;
@@ -56,8 +58,6 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.sensors.ForceSensorDataHolder;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.sensorProcessing.parameters.DRCRobotSensorInformation;
-import us.ihmc.util.PeriodicNonRealtimeThreadSchedulerFactory;
-import us.ihmc.util.PeriodicThreadSchedulerFactory;
 import us.ihmc.wholeBodyController.WholeBodyControllerParameters;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -100,8 +100,7 @@ public class IHMCHumanoidBehaviorManager
 
       if (startYoVariableServer)
       {
-         PeriodicThreadSchedulerFactory scheduler = new PeriodicNonRealtimeThreadSchedulerFactory();
-         yoVariableServer = new YoVariableServer(getClass(), scheduler, modelProvider, LogSettings.BEHAVIOR, BEHAVIOR_YO_VARIABLE_SERVER_DT);
+         yoVariableServer = new YoVariableServer(getClass(), modelProvider, LogSettings.BEHAVIOR, BEHAVIOR_YO_VARIABLE_SERVER_DT);
       }
 
       FullHumanoidRobotModel fullRobotModel = robotModelFactory.createFullRobotModel();
@@ -236,6 +235,8 @@ public class IHMCHumanoidBehaviorManager
                                                                 wholeBodyControllerParameters, atlasPrimitiveActions));
 
       dispatcher.addBehavior(HumanoidBehaviorType.RESET_ROBOT, new ResetRobotBehavior(robotName, ros2Node, yoTime));
+      
+      dispatcher.addBehavior(HumanoidBehaviorType.BASIC_TIMER_BEHAVIOR, new BasicTimingBehavior(robotName, ros2Node));
 
       dispatcher.addBehavior(HumanoidBehaviorType.TURN_VALVE,
                              new TurnValveBehaviorStateMachine(robotName, ros2Node, yoTime, yoDoubleSupport, fullRobotModel, referenceFrames,
@@ -299,6 +300,9 @@ public class IHMCHumanoidBehaviorManager
 
       WalkToGoalBehavior walkToGoalBehavior = new WalkToGoalBehavior(robotName, ros2Node, referenceFrames, walkingControllerParameters, yoTime);
       dispatcher.addBehavior(HumanoidBehaviorType.WALK_TO_GOAL, walkToGoalBehavior);
+      
+      WalkToLocationPlannedBehavior walkToLocationBehavior = new WalkToLocationPlannedBehavior(robotName, ros2Node, fullRobotModel, referenceFrames, walkingControllerParameters, yoTime);
+      dispatcher.addBehavior(HumanoidBehaviorType.WALK_TO_LOCATION, walkToLocationBehavior);
 
       RepeatedlyWalkFootstepListBehavior repeatedlyWalkFootstepListBehavior = new RepeatedlyWalkFootstepListBehavior(robotName, ros2Node, referenceFrames,
                                                                                                                      registry);

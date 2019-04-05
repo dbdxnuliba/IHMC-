@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import us.ihmc.parameterTuner.guiElements.tuners.Tuner;
 import us.ihmc.robotics.sliderboard.Sliderboard;
@@ -38,12 +39,18 @@ public class TuningTabManager
       });
       saveTab.setOnAction(event -> {
          TuningTab selectedTab = (TuningTab) tabPane.getSelectionModel().getSelectedItem();
-         tabSaver.saveTab(selectedTab);
+         if (selectedTab != null)
+         {
+            tabSaver.saveTab(selectedTab);
+         }
       });
       loadTab.setOnAction(event -> {
          TuningTab newTab = tabSaver.loadTab(tabPane, tunerMap);
-         newTab.setSliderboard(sliderboard);
-         updateMenuItems();
+         if (newTab != null)
+         {
+            newTab.setSliderboard(sliderboard);
+            updateMenuItems();
+         }
       });
 
       ContextMenu tabContextMenu = new ContextMenu();
@@ -52,6 +59,8 @@ public class TuningTabManager
       tabContextMenu.getItems().add(saveTab);
       tabContextMenu.getItems().add(closeTab);
       tabPane.setContextMenu(tabContextMenu);
+
+      updateMenuItems();
    }
 
    private void createNewTab(TabPane tabPane)
@@ -90,7 +99,15 @@ public class TuningTabManager
       this.tunerMap = tunerMap;
       tabPane.getTabs().clear();
       tabSaver.loadDefaultTabs(tabPane, tunerMap);
-      tabPane.getTabs().forEach(tab -> ((TuningTab) tab).setSliderboard(sliderboard));
+      tabPane.getTabs().forEach(tab -> {
+         ((TuningTab) tab).setSliderboard(sliderboard);
+         ((TuningTab) tab).hide();
+      });
+      if (!tabPane.getSelectionModel().isEmpty())
+      {
+         tabPane.getSelectionModel().select(0);
+         ((TuningTab) tabPane.getSelectionModel().getSelectedItem()).updateView();
+      }
       updateMenuItems();
    }
 

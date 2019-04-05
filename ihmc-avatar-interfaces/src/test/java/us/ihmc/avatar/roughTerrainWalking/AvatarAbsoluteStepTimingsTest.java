@@ -1,41 +1,38 @@
 package us.ihmc.avatar.roughTerrainWalking;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.assertEquals;
+import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
-import us.ihmc.commonWalkingControlModules.capturePoint.ContinuousCMPBasedICPPlanner;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.SmoothCMPBasedICPPlanner;
-import us.ihmc.commonWalkingControlModules.configurations.ContinuousCMPICPPlannerParameters;
-import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.WalkingHighLevelHumanoidController;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.states.WalkingStateEnum;
 import us.ihmc.commons.MathTools;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionMode;
 import us.ihmc.communication.packets.ExecutionTiming;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.log.LogTools;
+import us.ihmc.robotics.Assert;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
@@ -53,6 +50,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoVariable;
 
+@Tag("humanoid-rough-terrain")
 public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInterface
 {
    protected final static SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
@@ -60,8 +58,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
 
    private static final double swingStartTimeEpsilon = 0.005;
 
-   @ContinuousIntegrationTest(estimatedDuration = 142.2)
-   @Test(timeout = 900000)
+   @Test
    public void testTakingStepsWithAbsoluteTimings() throws SimulationExceededMaximumTimeException
    {
       String className = getClass().getSimpleName();
@@ -129,7 +126,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
          footstepData.setTouchdownDuration(touchdownTime);
 
          takeOffTime += previousSwingTime + footstepData.getTransferDuration();
-         PrintTools.info(stepIndex + ": " + takeOffTime);
+         LogTools.info(stepIndex + ": " + takeOffTime);
 
          previousSwingTime = footstepData.getSwingDuration();
 
@@ -209,7 +206,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
             boolean success = MathTools.epsilonEquals(expectedStartTimeOfNextStep, time, swingStartTimeEpsilon);
             if (!success)
             {
-               PrintTools.error(stepCount + " expected: " + expectedStartTimeOfNextStep + " but was: " + time);
+               LogTools.error(stepCount + " expected: " + expectedStartTimeOfNextStep + " but was: " + time);
             }
 
             assertEquals(failMessage, expectedStartTimeOfNextStep, time, swingStartTimeEpsilon);
@@ -257,8 +254,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
 
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 22.0)
-   @Test(timeout = 110000)
+   @Test
    public void testMinimumTransferTimeIsRespected() throws SimulationExceededMaximumTimeException
    {
       String className = getClass().getSimpleName();
@@ -355,11 +351,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
 
    private void checkTransferTimes(SimulationConstructionSet scs, double minimumTransferTime)
    {
-      YoDouble firstTransferTime = null;
-      if (getRobotModel().getCapturePointPlannerParameters() instanceof SmoothCMPPlannerParameters)
-         firstTransferTime = getDoubleYoVariable(scs, "icpPlannerTransferDuration0", SmoothCMPBasedICPPlanner.class.getSimpleName());
-      else if (getRobotModel().getCapturePointPlannerParameters() instanceof ContinuousCMPICPPlannerParameters)
-         firstTransferTime = getDoubleYoVariable(scs, "icpPlannerTransferDuration0", ContinuousCMPBasedICPPlanner.class.getSimpleName());
+      YoDouble firstTransferTime = getDoubleYoVariable(scs, "icpPlannerTransferDuration0", SmoothCMPBasedICPPlanner.class.getSimpleName());
       assertTrue("Executing transfer that is faster then allowed.", firstTransferTime.getDoubleValue() >= minimumTransferTime);
    }
 
@@ -394,7 +386,7 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
       {
          SteppingParameters steppingParameters = getRobotModel().getWalkingControllerParameters().getSteppingParameters();
          double flatArea = steppingParameters.getDefaultStepLength() * 0.5;
-         double maxElevation = steppingParameters.getMinSwingHeightFromStanceFoot() * 0.25;
+         double maxElevation = steppingParameters.getDefaultSwingHeightFromStanceFoot() * 0.25;
 
          terrain = new CombinedTerrainObject3D(getClass().getSimpleName());
          terrain.addBox(-0.5 - flatArea / 2.0, -1.0, flatArea / 2.0, 1.0, -0.01, 0.0);
@@ -437,13 +429,13 @@ public abstract class AvatarAbsoluteStepTimingsTest implements MultiRobotTestInt
 
    }
 
-   @Before
+   @BeforeEach
    public void showMemoryUsageBeforeTest()
    {
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   @After
+   @AfterEach
    public void destroySimulationAndRecycleMemory()
    {
       if (simulationTestingParameters.getKeepSCSUp())

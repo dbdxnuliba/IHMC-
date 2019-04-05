@@ -1,23 +1,22 @@
 package us.ihmc.simulationConstructionSetTools.util.ground;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Random;
-
-import org.junit.Test;
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import us.ihmc.commons.RandomNumbers;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.geometry.BoundingBox3D;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.tools.EuclidCoreRandomTools;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.geometry.PlanarRegion;
-import us.ihmc.simulationConstructionSetTools.util.ground.PlanarRegionTerrainObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import static us.ihmc.robotics.Assert.*;
 
 /**
  * @author Doug Stephen <a href="mailto:dstephen@ihmc.us">(dstephen@ihmc.us)</a>
@@ -26,8 +25,7 @@ public class PlanarRegionTerrainObjectTest
 {
    private static final double DEFAULT_ALLOWABLE_PENETRATION_THICKNESS = 1e5;
 
-   @ContinuousIntegrationTest(estimatedDuration = 5.0)
-   @Test(timeout = 30000)
+   @Test
    public void testHeightAt() throws Exception
    {
       Random random = new Random(1776L);
@@ -58,14 +56,13 @@ public class PlanarRegionTerrainObjectTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 4.2)
-   @Test(timeout = 30000)
-   public void testHeightAndNormalAt() throws Exception
+   @Test
+   public void testHeightAndNormalAt()
    {
       Random random = new Random(1776L);
 
       Vector3D terrainObjectNormalToPack = new Vector3D();
-      Vector3D planarRegionNormalToPack = new Vector3D();
+      Vector3D expectedTerrainNormal = new Vector3D();
       Vector3D standardGroundNormal = new Vector3D(0.0, 0.0, 1.0);
 
       for (int i = 0; i < 100000; i++)
@@ -83,12 +80,17 @@ public class PlanarRegionTerrainObjectTest
 
          double planarRegionZAtXY = planarRegion.getPlaneZGivenXY(randomXCoord, randomYCoord);
          double heightAt = terrainObject.heightAndNormalAt(randomXCoord, randomYCoord, randomZCoord, terrainObjectNormalToPack);
-         planarRegion.getNormal(planarRegionNormalToPack);
+
+         planarRegion.getNormal(expectedTerrainNormal);
+         if(planarRegion.getNormal().getZ() < 0.0)
+         {
+            expectedTerrainNormal.negate();
+         }
 
          if (planarRegion.isPointInsideByProjectionOntoXYPlane(randomXCoord, randomYCoord))
          {
             assertEquals(planarRegionZAtXY, heightAt, 1e-10);
-            EuclidCoreTestTools.assertTuple3DEquals("Normals are not equal!", terrainObjectNormalToPack, planarRegionNormalToPack, 1e-10);
+            EuclidCoreTestTools.assertTuple3DEquals("Normals are not equal!", terrainObjectNormalToPack, expectedTerrainNormal, 1e-10);
          }
          else
          {
@@ -98,8 +100,7 @@ public class PlanarRegionTerrainObjectTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 4.5)
-   @Test(timeout = 30000)
+   @Test
    public void testGetBoundingBox() throws Exception
    {
       Random random = new Random(1776L);
@@ -141,8 +142,7 @@ public class PlanarRegionTerrainObjectTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 4.9)
-   @Test(timeout = 30000)
+   @Test
    public void testIsClose() throws Exception
    {
       Random random = new Random(1776L);
@@ -171,8 +171,7 @@ public class PlanarRegionTerrainObjectTest
       }
    }
 
-   @ContinuousIntegrationTest(estimatedDuration = 4.4)
-   @Test(timeout = 30000)
+   @Test
    public void testCheckIfInside() throws Exception
    {
       Random random = new Random(1776L);
@@ -223,6 +222,80 @@ public class PlanarRegionTerrainObjectTest
          else
          {
             assertFalse(terrainObject.checkIfInside(randomXCoord, randomYCoord, randomZCoord, null, null));
+         }
+      }
+   }
+
+   @Test
+   public void testCheckIfInsideAlongBoxEdges()
+   {
+      Random random = new Random(38923L);
+
+      for (int i = 0; i < 10000; i++)
+      {
+         RigidBodyTransform transform = EuclidCoreRandomTools.nextRigidBodyTransform(random);
+
+         double boxWidth = EuclidCoreRandomTools.nextDouble(random, 2.0, 5.0);
+         double allowablePenetrationThickness = EuclidCoreRandomTools.nextDouble(random, 1e-3, 1e-1);
+
+         ConvexPolygon2D polygon = new ConvexPolygon2D();
+         polygon.addVertex(0.5 * boxWidth, 0.5 * boxWidth);
+         polygon.addVertex(0.5 * boxWidth, -0.5 * boxWidth);
+         polygon.addVertex(-0.5 * boxWidth, 0.5 * boxWidth);
+         polygon.addVertex(-0.5 * boxWidth, -0.5 * boxWidth);
+         polygon.update();
+
+         PlanarRegion planarRegion = new PlanarRegion(transform, polygon);
+         PlanarRegionTerrainObject terrainObject = new PlanarRegionTerrainObject(planarRegion, allowablePenetrationThickness);
+         double epsilon = 1e-7;
+
+         // points that should be inside
+         List<Point3D> insidePoints = new ArrayList<>();
+         insidePoints.add(new Point3D(0.0, 0.0, - epsilon));
+         insidePoints.add(new Point3D(-0.5 * boxWidth + epsilon, 0.0, - epsilon));
+         insidePoints.add(new Point3D(-0.5 * boxWidth + epsilon, 0.5 * boxWidth - epsilon, - epsilon));
+         insidePoints.add(new Point3D(0.0, 0.0, - allowablePenetrationThickness + epsilon));
+         insidePoints.add(new Point3D(0.5 * boxWidth - epsilon, 0.5 * boxWidth - epsilon, - allowablePenetrationThickness + epsilon));
+         insidePoints.add(new Point3D(-0.5 * boxWidth + epsilon, 0.5 * boxWidth - epsilon, - allowablePenetrationThickness + epsilon));
+
+         // points that should be outside
+         List<Point3D> outsidePoints = new ArrayList<>();
+         outsidePoints.add(new Point3D(0.0, 0.0,  epsilon));
+         outsidePoints.add(new Point3D(-0.5 * boxWidth - epsilon, 0.0, - epsilon));
+         outsidePoints.add(new Point3D(-0.5 * boxWidth + epsilon, 0.5 * boxWidth + epsilon, - epsilon));
+         outsidePoints.add(new Point3D(0.0, 0.0, - allowablePenetrationThickness - epsilon));
+         outsidePoints.add(new Point3D(0.5 * boxWidth + epsilon, 0.5 * boxWidth - epsilon, - allowablePenetrationThickness + epsilon));
+         outsidePoints.add(new Point3D(-0.5 * boxWidth + epsilon, 0.5 * boxWidth - epsilon, - allowablePenetrationThickness - epsilon));
+         outsidePoints.add(new Point3D(3.0 * boxWidth, 3.0 * boxWidth, 5.0 * allowablePenetrationThickness));
+
+         boolean regionFacesDown = planarRegion.getNormal().getZ() < 0.0;
+         for (Point3D point : insidePoints)
+         {
+            Vector3D expectedNormal = planarRegion.getNormal();
+
+            if(regionFacesDown)
+            {
+               point.setZ(-point.getZ());
+               expectedNormal.negate();
+            }
+
+            point.applyTransform(transform);
+
+            Vector3D normal = new Vector3D();
+            boolean isInside = terrainObject.checkIfInside(point.getX(), point.getY(), point.getZ(), new Point3D(), normal);
+            
+            Assertions.assertTrue(isInside);
+            Assertions.assertTrue(expectedNormal.epsilonEquals(normal, epsilon));
+         }
+
+         for (Point3D point : outsidePoints)
+         {
+            if(regionFacesDown)
+               point.setZ(-point.getZ());
+
+            point.applyTransform(transform);
+            terrainObject.checkIfInside(point.getX(), point.getY(), point.getZ(), new Point3D(), new Vector3D());
+            Assertions.assertFalse(terrainObject.checkIfInside(point.getX(), point.getY(), point.getZ(), new Point3D(), new Vector3D()));
          }
       }
    }

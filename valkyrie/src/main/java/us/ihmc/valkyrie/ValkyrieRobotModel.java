@@ -61,7 +61,6 @@ import us.ihmc.valkyrie.configuration.ValkyrieConfigurationRoot;
 import us.ihmc.valkyrie.configuration.YamlWithIncludesLoader;
 import us.ihmc.valkyrie.fingers.SimulatedValkyrieFingerController;
 import us.ihmc.valkyrie.fingers.ValkyrieHandModel;
-import us.ihmc.valkyrie.parameters.ValkyrieCapturePointPlannerParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieCollisionBoxProvider;
 import us.ihmc.valkyrie.parameters.ValkyrieContactPointParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieFootstepPlannerParameters;
@@ -70,6 +69,7 @@ import us.ihmc.valkyrie.parameters.ValkyrieJointMap;
 import us.ihmc.valkyrie.parameters.ValkyriePlanarRegionFootstepPlannerParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieSensorInformation;
 import us.ihmc.valkyrie.parameters.ValkyrieSliderBoardParameters;
+import us.ihmc.valkyrie.parameters.ValkyrieSmoothCMPPlannerParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieStateEstimatorParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieUIParameters;
 import us.ihmc.valkyrie.parameters.ValkyrieWalkingControllerParameters;
@@ -101,6 +101,7 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
 
    private boolean useShapeCollision = false;
    private final boolean useOBJGraphics;
+   private final double transparency;
 
    private final String[] resourceDirectories;
    {
@@ -143,6 +144,11 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
 
    public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints, boolean useShapeCollision, boolean useOBJGraphics)
    {
+      this(target, headless, model, simulationContactPoints, useShapeCollision, useOBJGraphics, Double.NaN);
+   }
+
+   public ValkyrieRobotModel(RobotTarget target, boolean headless, String model, FootContactPoints<RobotSide> simulationContactPoints, boolean useShapeCollision, boolean useOBJGraphics, double transparency)
+   {
       this.target = target;
       this.useOBJGraphics = useOBJGraphics;
       jointMap = new ValkyrieJointMap();
@@ -176,15 +182,16 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
       }
 
       this.loader = DRCRobotSDFLoader.loadDRCRobot(getResourceDirectories(), sdf, this);
+      this.transparency = transparency;
 
       for (String forceSensorNames : ValkyrieSensorInformation.forceSensorNames)
       {
          RigidBodyTransform transform = new RigidBodyTransform();
-         if (forceSensorNames.equals("leftAnkleRoll") && target != RobotTarget.GAZEBO)
+         if (forceSensorNames.equals("leftAnkleRoll"))
          {
             transform.set(ValkyrieSensorInformation.transformFromSixAxisMeasurementToAnkleZUpFrames.get(RobotSide.LEFT));
          }
-         else if (forceSensorNames.equals("rightAnkleRoll") && target != RobotTarget.GAZEBO)
+         else if (forceSensorNames.equals("rightAnkleRoll"))
          {
             transform.set(ValkyrieSensorInformation.transformFromSixAxisMeasurementToAnkleZUpFrames.get(RobotSide.RIGHT));
          }
@@ -205,7 +212,7 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
       }
 
       planarRegionFootstepPlanningParameters = new ValkyriePlanarRegionFootstepPlannerParameters();
-      capturePointPlannerParameters = new ValkyrieCapturePointPlannerParameters(target);
+      capturePointPlannerParameters = new ValkyrieSmoothCMPPlannerParameters();
       walkingControllerParameters = new ValkyrieWalkingControllerParameters(jointMap, target);
       stateEstimatorParamaters = new ValkyrieStateEstimatorParameters(target, getEstimatorDT(), sensorInformation, jointMap);
       collisionMeshDefinitionDataHolder = new ValkyrieCollisionMeshDefinitionDataHolder(jointMap);
@@ -224,14 +231,14 @@ public class ValkyrieRobotModel implements DRCRobotModel, SDFDescriptionMutator
 
       if (useShapeCollision)
       {
-         robotDescription = descriptionLoader.loadRobotDescriptionFromSDF(generalizedSDFRobotModel, jointMap, useShapeCollision);
+         robotDescription = descriptionLoader.loadRobotDescriptionFromSDF(generalizedSDFRobotModel, jointMap, null, false, transparency);
          collisionMeshDefinitionDataHolder.setVisible(false);
 
          robotDescription.addCollisionMeshDefinitionData(collisionMeshDefinitionDataHolder);
       }
       else
       {
-         robotDescription = descriptionLoader.loadRobotDescriptionFromSDF(generalizedSDFRobotModel, jointMap, getContactPointParameters(), useCollisionMeshes);
+         robotDescription = descriptionLoader.loadRobotDescriptionFromSDF(generalizedSDFRobotModel, jointMap, getContactPointParameters(), useCollisionMeshes, transparency);
       }
 
       return robotDescription;

@@ -4,6 +4,7 @@ import java.util.List;
 
 import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.SE3TrajectoryPointMessage;
+import org.apache.commons.lang3.mutable.MutableDouble;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -22,6 +23,7 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
+   private long sequenceId;
    private RobotSide robotSide;
    private TrajectoryType trajectoryType = TrajectoryType.DEFAULT;
    private double swingHeight = 0.0;
@@ -30,6 +32,7 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
 
    private final RecyclingArrayList<Point2D> predictedContactPoints = new RecyclingArrayList<>(4, Point2D.class);
 
+   private final RecyclingArrayList<MutableDouble> customWaypointProportions = new RecyclingArrayList<>(2, MutableDouble.class);
    private final RecyclingArrayList<FramePoint3D> customPositionWaypoints = new RecyclingArrayList<>(2, FramePoint3D.class);
    private final RecyclingArrayList<FrameSE3TrajectoryPoint> swingTrajectory = new RecyclingArrayList<>(Footstep.maxNumberOfSwingWaypoints,
                                                                                                         FrameSE3TrajectoryPoint.class);
@@ -54,12 +57,14 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
    @Override
    public void clear()
    {
+      sequenceId = 0;
       robotSide = null;
       trajectoryType = TrajectoryType.DEFAULT;
       swingHeight = 0.0;
       position.set(0.0, 0.0, 0.0);
       orientation.set(0.0, 0.0, 0.0, 1.0);
       predictedContactPoints.clear();
+      customWaypointProportions.clear();
       customPositionWaypoints.clear();
       swingTrajectory.clear();
 
@@ -71,12 +76,23 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
    @Override
    public void setFromMessage(FootstepDataMessage message)
    {
+      sequenceId = message.getSequenceId();
       robotSide = RobotSide.fromByte(message.getRobotSide());
       trajectoryType = TrajectoryType.fromByte(message.getTrajectoryType());
       swingHeight = message.getSwingHeight();
       swingTrajectoryBlendDuration = message.getSwingTrajectoryBlendDuration();
       position.setIncludingFrame(worldFrame, message.getLocation());
       orientation.setIncludingFrame(worldFrame, message.getOrientation());
+
+      us.ihmc.idl.IDLSequence.Double messageWaypointProportions = message.getCustomWaypointProportions();
+      customWaypointProportions.clear();
+      if (messageWaypointProportions != null && messageWaypointProportions.size() == 2)
+      {
+         for (int i = 0; i < messageWaypointProportions.size(); i++)
+         {
+            customWaypointProportions.add().setValue(messageWaypointProportions.get(i));
+         }
+      }
 
       List<Point3D> originalPositionWaypointList = message.getCustomPositionWaypoints();
       customPositionWaypoints.clear();
@@ -118,12 +134,18 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
    @Override
    public void set(FootstepDataCommand other)
    {
+      sequenceId = other.sequenceId;
       robotSide = other.robotSide;
       trajectoryType = other.trajectoryType;
       swingHeight = other.swingHeight;
       swingTrajectoryBlendDuration = other.swingTrajectoryBlendDuration;
       position.setIncludingFrame(other.position);
       orientation.setIncludingFrame(other.orientation);
+
+      RecyclingArrayList<MutableDouble> otherWaypointProportions = other.customWaypointProportions;
+      customWaypointProportions.clear();
+      for (int i = 0; i < otherWaypointProportions.size(); i++)
+         customWaypointProportions.add().setValue(otherWaypointProportions.get(i));
 
       RecyclingArrayList<FramePoint3D> otherWaypointList = other.customPositionWaypoints;
       customPositionWaypoints.clear();
@@ -198,6 +220,11 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
    public ReferenceFrame getTrajectoryFrame()
    {
       return trajectoryFrame;
+   }
+
+   public RecyclingArrayList<MutableDouble> getCustomWaypointProportions()
+   {
+      return customWaypointProportions;
    }
 
    public RecyclingArrayList<FramePoint3D> getCustomPositionWaypoints()
@@ -314,5 +341,11 @@ public class FootstepDataCommand implements Command<FootstepDataCommand, Footste
    public boolean isDelayedExecutionSupported()
    {
       return true;
+   }
+
+   @Override
+   public long getSequenceId()
+   {
+      return sequenceId;
    }
 }

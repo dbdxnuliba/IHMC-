@@ -12,8 +12,8 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsBasics;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
-import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedWaypointBasedBodyPathProvider;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
 import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedBodyPathPlan;
@@ -32,7 +32,7 @@ public class QuadrupedXGaitStepCalculator
    private final YoDouble minimumStepClearance = new YoDouble("minimumStepClearance", registry);
    private final YoDouble timestamp;
 
-   private final YoQuadrupedXGaitSettings xGaitSettings;
+   private final QuadrupedXGaitSettingsBasics xGaitSettings;
    private final Vector3D desiredPlanarVelocity = new Vector3D();
    private final DoubleProvider firstStepDelay;
 
@@ -56,7 +56,7 @@ public class QuadrupedXGaitStepCalculator
 
    private final RecyclingArrayList<QuadrupedTimedOrientedStep> completeStepSequence = new RecyclingArrayList<>(QuadrupedTimedOrientedStep::new);
 
-   public QuadrupedXGaitStepCalculator(YoQuadrupedXGaitSettings xGaitSettings, YoDouble timestamp, QuadrupedReferenceFrames referenceFrames,
+   public QuadrupedXGaitStepCalculator(QuadrupedXGaitSettingsBasics xGaitSettings, YoDouble timestamp, QuadrupedReferenceFrames referenceFrames,
                                        DoubleProvider firstStepDelay, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
    {
       this.xGaitSettings = xGaitSettings;
@@ -141,7 +141,7 @@ public class QuadrupedXGaitStepCalculator
       computeOnlinePlan(currentTime);
    }
 
-   public List<? extends QuadrupedTimedStep> getSteps()
+   public List<QuadrupedTimedOrientedStep> getSteps()
    {
       return getCompleteStepSequence(timestamp.getDoubleValue());
    }
@@ -353,16 +353,14 @@ public class QuadrupedXGaitStepCalculator
       {
          if (currentSteps.get(robotEnd).getTimeInterval().getEndTime() >= currentTime)
          {
-            completeStepSequence.add();
-            completeStepSequence.get(completeStepSequence.size() - 1).set(currentSteps.get(robotEnd));
+            completeStepSequence.add().set(currentSteps.get(robotEnd));
          }
       }
       for (int i = 0; i < stepPlan.size(); i++)
       {
          if (stepPlan.get(i).getTimeInterval().getEndTime() >= currentTime)
          {
-            completeStepSequence.add();
-            completeStepSequence.get(completeStepSequence.size() - 1).set(stepPlan.get(i));
+            completeStepSequence.add().set(stepPlan.get(i));
          }
       }
 

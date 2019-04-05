@@ -5,9 +5,9 @@ import java.util.List;
 
 import org.ejml.data.DenseMatrix64F;
 import org.jcodec.common.Assert;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import controller_msgs.msg.dds.ArmTrajectoryMessage;
 import controller_msgs.msg.dds.ChestTrajectoryMessage;
@@ -43,7 +43,6 @@ import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
@@ -72,7 +71,6 @@ import us.ihmc.robotics.contactable.ContactablePlaneBody;
 import us.ihmc.robotics.geometry.RotationTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.robotics.screwTheory.ScrewTools;
 import us.ihmc.robotics.screwTheory.TotalMassCalculator;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.sensorProcessing.frames.ReferenceFrameHashCodeResolver;
@@ -156,8 +154,7 @@ public class WalkingControllerTest
 
    private static final double maxDriftRate = 0.2;
 
-   @ContinuousIntegrationTest(estimatedDuration = 17.4)
-   @Test(timeout = 87000)
+   @Test
    public void testForGarbage()
    {
       walkingController.initialize();
@@ -467,9 +464,9 @@ public class WalkingControllerTest
       updatableFootSwitches = TestFootSwitch.createFootSwitches(feet, totalRobotWeight, referenceFrames.getSoleZUpFrames());
       SideDependentList<FootSwitchInterface> footSwitches = new SideDependentList<>(updatableFootSwitches);
 
-      HighLevelHumanoidControllerToolbox controllerToolbox = new HighLevelHumanoidControllerToolbox(fullRobotModel, referenceFrames, footSwitches, null, null,
-                                                                                                    yoTime, gravityZ, omega0, feet, controlDT, null,
-                                                                                                    contactableBodies, yoGraphicsListRegistry);
+      HighLevelHumanoidControllerToolbox controllerToolbox = new HighLevelHumanoidControllerToolbox(fullRobotModel, referenceFrames, footSwitches, null, yoTime,
+                                                                                                    gravityZ, omega0, feet, controlDT, null, contactableBodies,
+                                                                                                    yoGraphicsListRegistry);
       registry.addChild(controllerToolbox.getYoVariableRegistry());
 
       double defaultTransferTime = walkingControllerParameters.getDefaultTransferTime();
@@ -491,7 +488,7 @@ public class WalkingControllerTest
    }
 
    @SuppressWarnings("unchecked")
-   @Before
+   @BeforeEach
    public void setupTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
@@ -570,7 +567,7 @@ public class WalkingControllerTest
       referenceFrames.updateFrames();
    }
 
-   @After
+   @AfterEach
    public void tearDown()
    {
       if (showSCS)

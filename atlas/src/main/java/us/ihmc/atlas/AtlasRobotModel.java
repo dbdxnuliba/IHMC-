@@ -8,7 +8,6 @@ import com.jme3.math.Transform;
 import us.ihmc.atlas.initialSetup.AtlasSimInitialSetup;
 import us.ihmc.atlas.parameters.AtlasCollisionMeshDefinitionDataHolder;
 import us.ihmc.atlas.parameters.AtlasContactPointParameters;
-import us.ihmc.atlas.parameters.AtlasContinuousCMPPlannerParameters;
 import us.ihmc.atlas.parameters.AtlasFootstepPlannerParameters;
 import us.ihmc.atlas.parameters.AtlasFootstepPlanningParameters;
 import us.ihmc.atlas.parameters.AtlasHighLevelControllerParameters;
@@ -89,8 +88,6 @@ public class AtlasRobotModel implements DRCRobotModel, SDFDescriptionMutator
    private final static double DESIRED_ATLAS_HEIGHT = 0.66;
    private final static double DESIRED_ATLAS_WEIGHT = 15;
 
-   private static final boolean USE_SMOOTH_CMP_PLANNER = true;
-
    private final double HARDSTOP_RESTRICTION_ANGLE = Math.toRadians(5.0);
 
    private final AtlasRobotVersion selectedVersion;
@@ -121,6 +118,16 @@ public class AtlasRobotModel implements DRCRobotModel, SDFDescriptionMutator
    private boolean useShapeCollision = false;
 
    private final RobotDescription robotDescription;
+
+   public AtlasRobotModel(AtlasRobotVersion atlasVersion)
+   {
+      this(atlasVersion, RobotTarget.SCS);
+   }
+
+   public AtlasRobotModel(AtlasRobotVersion atlasVersion, RobotTarget target)
+   {
+      this(atlasVersion, target, false);
+   }
 
    public AtlasRobotModel(AtlasRobotVersion atlasVersion, RobotTarget target, boolean headless)
    {
@@ -181,10 +188,7 @@ public class AtlasRobotModel implements DRCRobotModel, SDFDescriptionMutator
 
       boolean runningOnRealRobot = target == RobotTarget.REAL_ROBOT;
 
-      if (USE_SMOOTH_CMP_PLANNER)
-         capturePointPlannerParameters = new AtlasSmoothCMPPlannerParameters(atlasPhysicalProperties);
-      else
-         capturePointPlannerParameters = new AtlasContinuousCMPPlannerParameters(atlasPhysicalProperties);
+      capturePointPlannerParameters = new AtlasSmoothCMPPlannerParameters(atlasPhysicalProperties);
 
       planarRegionFootstepPlannerParameters = new AtlasPlanarRegionFootstepPlannerParameters();
 

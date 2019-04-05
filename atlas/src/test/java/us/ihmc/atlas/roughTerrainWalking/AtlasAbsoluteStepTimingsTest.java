@@ -1,37 +1,36 @@
 package us.ihmc.atlas.roughTerrainWalking;
 
-import org.junit.Test;
+import java.io.InputStream;
+
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.roughTerrainWalking.AvatarAbsoluteStepTimingsTest;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import us.ihmc.robotics.Assert;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
 public class AtlasAbsoluteStepTimingsTest extends AvatarAbsoluteStepTimingsTest
 {
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 142.2)
-   @Test(timeout = 900000)
+   @Test
    public void testTakingStepsWithAbsoluteTimings() throws SimulationExceededMaximumTimeException
    {
       super.testTakingStepsWithAbsoluteTimings();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 22.0)
-   @Test(timeout = 110000)
+   @Test
    public void testMinimumTransferTimeIsRespected() throws SimulationExceededMaximumTimeException
    {
       super.testMinimumTransferTimeIsRespected();
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 20.0)
-   @Test(timeout = 200000)
+   @Test
    public void testPausingWalkDuringLongTransfers() throws SimulationExceededMaximumTimeException
    {
       super.testPausingWalkDuringLongTransfers();
@@ -40,7 +39,16 @@ public class AtlasAbsoluteStepTimingsTest extends AvatarAbsoluteStepTimingsTest
    @Override
    public DRCRobotModel getRobotModel()
    {
-      return new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+      return new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false)
+      {
+         @Override
+         public InputStream getParameterOverwrites()
+         {
+            InputStream overwrites = AvatarAbsoluteStepTimingsTest.class.getResourceAsStream("/absolute_step_timing_test.xml");
+            Assert.assertNotNull(overwrites);
+            return overwrites;
+         }
+      };
    }
 
    @Override

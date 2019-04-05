@@ -2,12 +2,11 @@ package us.ihmc.valkyrie.behaviorTests;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import us.ihmc.avatar.behaviorTests.KinematicsPlanningBehaviorTest;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.valkyrie.ValkyrieRobotModel;
@@ -29,10 +28,16 @@ public class ValkyrieKinematicsPlanningBehaviorTest extends KinematicsPlanningBe
    }
 
    @Override
-   @ContinuousIntegrationTest(estimatedDuration = 30.0)
-   @Test(timeout = 150000)
+   @Test
    public void testReachToDoorKnob() throws SimulationExceededMaximumTimeException, IOException
    {
       super.testReachToDoorKnob();
+   }
+
+   @Override
+   @Test
+   public void testSingleKeyFrameInput() throws SimulationExceededMaximumTimeException, IOException
+   {
+      super.testSingleKeyFrameInput();
    }
 }

@@ -1,6 +1,5 @@
 package us.ihmc.quadrupedPlanning.stepStream;
 
-import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -11,7 +10,6 @@ import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedPlanarBodyPathProvider;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
-import us.ihmc.quadrupedPlanning.stepStream.QuadrupedPlanarFootstepPlan;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.*;
 
@@ -73,21 +71,18 @@ public class QuadrupedXGaitPlanner
          step.setRobotQuadrant(thisStepQuadrant);
 
          // compute step timing
-         double thisStepStartTime;
-         double thisStepEndTime;
+         double endTimeShift;
          if (i == 0)
          {
-            thisStepStartTime = timeAtSoS;
-            thisStepEndTime = timeAtSoS + xGaitSettings.getStepDuration();
+            endTimeShift = 0.0;
          }
          else
          {
-            double endPhaseShift = thisStepQuadrant.isQuadrantInHind() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
-            double endTimeShift = xGaitSettings.getEndDoubleSupportDuration() + xGaitSettings.getStepDuration();
-            endTimeShift *= Math.max(Math.min(endPhaseShift, 180.0), 0.0) / 180.0;
-            thisStepStartTime = lastStepStartTime + endTimeShift;
-            thisStepEndTime = thisStepStartTime + xGaitSettings.getStepDuration();
+            endTimeShift = QuadrupedXGaitTools.computeTimeDeltaBetweenSteps(lastStepQuadrant, xGaitSettings);
          }
+         double thisStepStartTime = lastStepStartTime + endTimeShift;
+         double thisStepEndTime = thisStepStartTime + xGaitSettings.getStepDuration();
+
          step.getTimeInterval().setStartTime(thisStepStartTime);
          step.getTimeInterval().setEndTime(thisStepEndTime);
 
@@ -147,7 +142,7 @@ public class QuadrupedXGaitPlanner
          QuadrupedTimedStep pastStepOnOppositeEnd = pastSteps.get(thisStepEnd.getOppositeEnd());
 
          thisStep.setRobotQuadrant(pastStepOnSameEnd.getRobotQuadrant().getAcrossBodyQuadrant());
-         computeStepTimeInterval(thisStep, pastStepOnSameEnd, pastStepOnOppositeEnd, xGaitSettings);
+         QuadrupedXGaitTools.computeStepTimeInterval(thisStep, pastStepOnSameEnd, pastStepOnOppositeEnd, xGaitSettings);
          if (currentTime > thisStep.getTimeInterval().getStartTime())
             thisStep.getTimeInterval().shiftInterval(currentTime - thisStep.getTimeInterval().getStartTime());
 
@@ -200,34 +195,6 @@ public class QuadrupedXGaitPlanner
       finalPose.setX(bodyPathPose.getX());
       finalPose.setY(bodyPathPose.getY());
       finalPose.setOrientationYawPitchRoll(bodyPathPose.getYaw(), finalPose.getPitch(), finalPose.getRoll());
-   }
-
-   private void computeStepTimeInterval(QuadrupedTimedStep thisStep, QuadrupedTimedStep pastStepOnSameEnd, QuadrupedTimedStep pastStepOnOppositeEnd,
-                                        QuadrupedXGaitSettingsReadOnly xGaitSettings)
-   {
-      RobotEnd thisStepEnd = thisStep.getRobotQuadrant().getEnd();
-      RobotSide thisStepSide = thisStep.getRobotQuadrant().getSide();
-      RobotSide pastStepSide = pastStepOnOppositeEnd.getRobotQuadrant().getSide();
-
-      double pastStepEndTimeForSameEnd = pastStepOnSameEnd.getTimeInterval().getEndTime();
-      double pastStepEndTimeForOppositeEnd = pastStepOnOppositeEnd.getTimeInterval().getEndTime();
-
-      // Compute support durations and end phase shift.
-      double nominalStepDuration = xGaitSettings.getStepDuration();
-      double endDoubleSupportDuration = xGaitSettings.getEndDoubleSupportDuration();
-      double endPhaseShift = MathTools.clamp(xGaitSettings.getEndPhaseShift(), 0, 359);
-      if (thisStepEnd == RobotEnd.HIND)
-         endPhaseShift = 360 - endPhaseShift;
-      if (pastStepSide != thisStepSide)
-         endPhaseShift = endPhaseShift - 180;
-
-      // Compute step time interval. Step duration is scaled in the range (1.0, 1.5) to account for end phase shifts.
-      double thisStepStartTime = pastStepEndTimeForSameEnd + endDoubleSupportDuration;
-      double thisStepEndTime = pastStepEndTimeForOppositeEnd + (nominalStepDuration + endDoubleSupportDuration) * endPhaseShift / 180.0;
-      double thisStepDuration = MathTools.clamp(thisStepEndTime - thisStepStartTime, nominalStepDuration, 1.5 * nominalStepDuration);
-
-      thisStep.getTimeInterval().setStartTime(thisStepStartTime);
-      thisStep.getTimeInterval().setEndTime(thisStepStartTime + thisStepDuration);
    }
 
    public void setStepSnapper(PointFootSnapper snapper)

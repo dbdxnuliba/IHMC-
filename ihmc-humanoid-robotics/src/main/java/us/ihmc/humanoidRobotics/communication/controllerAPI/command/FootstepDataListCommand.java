@@ -11,6 +11,7 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 
 public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCommand, FootstepDataListMessage>
 {
+   private long sequenceId;
    private double defaultSwingDuration;
    private double defaultTransferDuration;
    private double finalTransferDuration;
@@ -21,8 +22,10 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
    private boolean trustHeightOfFootsteps = true;
    /** If {@code false} the controller can adjust the footsteps. */
    private boolean areFootstepsAdjustable = false;
-   /** If {@code true} the controller will adjust upcoming footsteps with the location error of previous steps. */
+   /** If {@code true} the controller will adjust the x and y coordinates of the upcoming footsteps with the location error of previous steps. */
    private boolean offsetFootstepsWithExecutionError = false;
+   /** If {@code true} the controller will adjust the z coordinate of the upcoming footsteps with the location error of previous steps. */
+   private boolean offsetFootstepsHeightWithExecutionError = false;
 
    public FootstepDataListCommand()
    {
@@ -32,6 +35,7 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
    @Override
    public void clear()
    {
+      sequenceId = 0;
       defaultSwingDuration = 0.0;
       defaultTransferDuration = 0.0;
       finalTransferDuration = 0.0;
@@ -44,6 +48,7 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
    {
       clear();
 
+      sequenceId = message.getSequenceId();
       defaultSwingDuration = message.getDefaultSwingDuration();
       defaultTransferDuration = message.getDefaultTransferDuration();
       finalTransferDuration = message.getFinalTransferDuration();
@@ -51,6 +56,7 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
       trustHeightOfFootsteps = message.getTrustHeightOfFootsteps();
       areFootstepsAdjustable = message.getAreFootstepsAdjustable();
       offsetFootstepsWithExecutionError = message.getOffsetFootstepsWithExecutionError();
+      offsetFootstepsHeightWithExecutionError = message.getOffsetFootstepsHeightWithExecutionError();
       List<FootstepDataMessage> dataList = message.getFootstepDataList();
       ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
       if (dataList != null)
@@ -66,6 +72,7 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
    {
       clear();
 
+      sequenceId = other.sequenceId;
       defaultSwingDuration = other.defaultSwingDuration;
       defaultTransferDuration = other.defaultTransferDuration;
       finalTransferDuration = other.finalTransferDuration;
@@ -74,6 +81,7 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
       trustHeightOfFootsteps = other.trustHeightOfFootsteps;
       areFootstepsAdjustable = other.areFootstepsAdjustable;
       offsetFootstepsWithExecutionError = other.offsetFootstepsWithExecutionError;
+      offsetFootstepsHeightWithExecutionError = other.offsetFootstepsHeightWithExecutionError;
       RecyclingArrayList<FootstepDataCommand> otherFootsteps = other.getFootsteps();
       if (otherFootsteps != null)
       {
@@ -170,11 +178,22 @@ public class FootstepDataListCommand extends QueueableCommand<FootstepDataListCo
       return offsetFootstepsWithExecutionError;
    }
 
+   public boolean isOffsetFootstepsHeightWithExecutionError()
+   {
+      return offsetFootstepsHeightWithExecutionError;
+   }
+
    @Override
    public void addTimeOffset(double timeOffset)
    {
       // Not needed for footsteps since timing is defined in durations inside the command rather then
       // absolute trajectory point times.
       throw new RuntimeException("This method should not be used with footstep lists.");
+   }
+
+   @Override
+   public long getSequenceId()
+   {
+      return sequenceId;
    }
 }

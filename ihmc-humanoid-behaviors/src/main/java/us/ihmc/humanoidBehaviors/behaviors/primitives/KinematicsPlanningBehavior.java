@@ -11,20 +11,18 @@ import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.communication.packets.PacketDestination;
 import us.ihmc.communication.packets.ToolboxState;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.humanoidBehaviors.behaviors.AbstractBehavior;
 import us.ihmc.humanoidBehaviors.communication.ConcurrentListeningQueue;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.humanoidRobotics.communication.packets.KinematicsPlanningToolboxOutputConverter;
 import us.ihmc.idl.IDLSequence.Double;
+import us.ihmc.log.LogTools;
+import us.ihmc.mecano.algorithms.CenterOfMassCalculator;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
@@ -34,7 +32,6 @@ import us.ihmc.ros2.Ros2Node;
 
 public class KinematicsPlanningBehavior extends AbstractBehavior
 {
-   // TODO : hold hand!
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private static final double defaultRigidBodyWeight = 20.0;
@@ -45,7 +42,6 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    private final TDoubleArrayList keyFrameTimes;
    private final List<KinematicsPlanningToolboxRigidBodyMessage> rigidBodyMessages;
 
-   private final KinematicsPlanningToolboxOutputConverter outputConverter;
    private final ConcurrentListeningQueue<KinematicsPlanningToolboxOutputStatus> toolboxOutputQueue = new ConcurrentListeningQueue<>(40);
 
    private final IHMCROS2Publisher<ToolboxStateMessage> toolboxStatePublisher;
@@ -54,6 +50,8 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    private final IHMCROS2Publisher<WholeBodyTrajectoryMessage> wholeBodyTrajectoryPublisher;
 
    private double trajectoryTime = 0.0;
+   private int planningResult = -1;
+   private int numberOfValidKeyFrames = -1;
 
    public KinematicsPlanningBehavior(String robotName, Ros2Node ros2Node, FullHumanoidRobotModelFactory fullRobotModelFactory,
                                      FullHumanoidRobotModel fullRobotModel)
@@ -64,8 +62,6 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
 
       keyFrameTimes = new TDoubleArrayList();
       rigidBodyMessages = new ArrayList<KinematicsPlanningToolboxRigidBodyMessage>();
-
-      outputConverter = new KinematicsPlanningToolboxOutputConverter(fullRobotModelFactory);
 
       createSubscriber(KinematicsPlanningToolboxOutputStatus.class, kinematicsPlanningToolboxPubGenerator, toolboxOutputQueue::put);
       toolboxStatePublisher = createPublisher(ToolboxStateMessage.class, kinematicsPlanningToolboxSubGenerator);
@@ -78,6 +74,8 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    {
       keyFrameTimes.clear();
       rigidBodyMessages.clear();
+      planningResult = -1;
+      numberOfValidKeyFrames = -1;
    }
 
    public void setKeyFrameTimes(double trajectoryTime, int numberOfKeyFrames)
@@ -165,22 +163,21 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
       if (toolboxOutputQueue.isNewPacketAvailable())
       {
          KinematicsPlanningToolboxOutputStatus solution = toolboxOutputQueue.poll();
+         planningResult = solution.getPlanId();
+         numberOfValidKeyFrames = solution.getRobotConfigurations().size();
 
          Double keyFrameTimes = solution.getKeyFrameTimes();
-
-         if (keyFrameTimes.size() != solution.getKeyFrameTimes().size())
-            throw new RuntimeException("size of key frames are not matched : (given) " + keyFrameTimes.size() + ", (output) "
-                  + solution.getKeyFrameTimes().size());
-         if (solution.getSolutionQuality() < 0)
-            throw new RuntimeException("a key frame can not be accepted.");
-
          trajectoryTime = keyFrameTimes.get(keyFrameTimes.size() - 1);
 
-         WholeBodyTrajectoryMessage message = new WholeBodyTrajectoryMessage();
-         message.setDestination(PacketDestination.CONTROLLER.ordinal());
-         outputConverter.setMessageToCreate(message);
-         outputConverter.computeWholeBodyTrajectoryMessage(solution);
-         wholeBodyTrajectoryPublisher.publish(message);
+         if (planningResult == KinematicsPlanningToolboxOutputStatus.KINEMATICS_PLANNING_RESULT_OPTIMAL_SOLUTION)
+         {
+            wholeBodyTrajectoryPublisher.publish(solution.getSuggestedControllerMessage());
+         }
+         else
+         {
+            LogTools.warn("planning result is not good. " + planningResult);
+         }
+
          deactivateKinematicsToolboxModule();
       }
    }
@@ -206,11 +203,12 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
          rigidBodyMessagePublisher.publish(message);
       }
 
-      Vector3DReadOnly translationVector = fullRobotModel.getRootBody().getBodyFixedFrame().getTransformToWorldFrame().getTranslationVector();
+      CenterOfMassCalculator calculator = new CenterOfMassCalculator(fullRobotModel.getRootBody(), worldFrame);
+      calculator.reset();
 
       List<Point3DReadOnly> desiredCOMPoints = new ArrayList<Point3DReadOnly>();
       for (int i = 0; i < keyFrameTimes.size(); i++)
-         desiredCOMPoints.add(new Point3D(translationVector));
+         desiredCOMPoints.add(calculator.getCenterOfMass());
 
       KinematicsPlanningToolboxCenterOfMassMessage comMessage = HumanoidMessageTools.createKinematicsPlanningToolboxCenterOfMassMessage(keyFrameTimes,
                                                                                                                                         desiredCOMPoints);
@@ -218,6 +216,7 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
       selectionMatrix.selectZAxis(false);
       comMessage.getSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(selectionMatrix));
       comMessage.getWeights().set(MessageTools.createWeightMatrix3DMessage(defaultCOMWeight));
+
       comMessagePublisher.publish(comMessage);
 
       System.out.println("published");
@@ -251,6 +250,16 @@ public class KinematicsPlanningBehavior extends AbstractBehavior
    public boolean isDone()
    {
       return false;
+   }
+
+   public int getPlanningResult()
+   {
+      return planningResult;
+   }
+
+   public int getNumberOfValidKeyFrames()
+   {
+      return numberOfValidKeyFrames;
    }
 
    private void deactivateKinematicsToolboxModule()
