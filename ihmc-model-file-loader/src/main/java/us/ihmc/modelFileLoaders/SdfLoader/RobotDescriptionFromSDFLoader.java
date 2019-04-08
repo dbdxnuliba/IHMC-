@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 
@@ -69,6 +71,7 @@ public class RobotDescriptionFromSDFLoader
 
    public RobotDescriptionFromSDFLoader()
    {
+      Logger.getLogger("").setLevel(Level.SEVERE);
    }
 
    public RobotDescription loadRobotDescriptionFromSDF(GeneralizedSDFRobotModel generalizedSDFRobotModel, JointNameMap jointNameMap, boolean useShapeCollision)
