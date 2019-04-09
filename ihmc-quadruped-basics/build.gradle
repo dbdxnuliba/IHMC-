@@ -27,6 +27,8 @@ mainDependencies {
 }
 
 testDependencies {
+   compile ihmc.sourceSetProject("visualizers")
+
    compile group: "com.google.caliper", name: "caliper", version: "1.0-beta-2"
 
    compile group: "us.ihmc", name: "simulation-construction-set-tools-test", version: "source"

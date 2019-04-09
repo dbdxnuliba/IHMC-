@@ -1,3 +1,5 @@
+package us.ihmc.quadrupedBasics.heightMap;
+
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.messager.MessagerAPIFactory;
 import us.ihmc.messager.MessagerAPIFactory.*;

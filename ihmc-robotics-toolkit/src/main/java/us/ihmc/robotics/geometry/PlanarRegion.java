@@ -466,6 +466,22 @@ public class PlanarRegion
    /**
     * Computes the distance of the point to the region projected onto the world xy-plane.
     *
+    * @param pointInWorld query coordinates in the world.
+    * @return distance to this region. If 0.0, point is in the region.
+    */
+   public double distanceToPointInWorldByProjectionOntoXYPlane(Point3DReadOnly pointInWorld)
+   {
+      Point3D localPoint = new Point3D();
+      fromWorldToLocalTransform.transform(pointInWorld, localPoint);
+
+      return distanceToPointByProjectionOntoXYPlane(localPoint.getX(), localPoint.getY());
+   }
+
+
+
+   /**
+    * Computes the distance of the point to the region projected onto the world xy-plane.
+    *
     * @param point2d query coordinates.
     * @return distance to this region. If 0.0, point is in the region.
     */

@@ -1,3 +1,5 @@
+package us.ihmc.quadrupedBasics.heightMap;
+
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -9,7 +11,7 @@ import us.ihmc.javaFXToolkit.scenes.View3DFactory;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.viewers.PlanarRegionViewer;
 
 
-public class HeightMapEstimatorUI
+public class HeightMapEstimatorVisualizer
 {
    private final JavaFXMessager messager;
    private final Stage primaryStage;
@@ -22,7 +24,7 @@ public class HeightMapEstimatorUI
    private HeightMapEstimatorController heightMapEstimatorController;
 
 
-   public HeightMapEstimatorUI(Stage primaryStage, JavaFXMessager messager) throws Exception
+   public HeightMapEstimatorVisualizer(Stage primaryStage, JavaFXMessager messager) throws Exception
    {
       this.primaryStage = primaryStage;
       this.messager = messager;
@@ -82,8 +84,8 @@ public class HeightMapEstimatorUI
    }
 
 
-   public static HeightMapEstimatorUI createMessagerUI(Stage primaryStage, JavaFXMessager messager) throws Exception
+   public static HeightMapEstimatorVisualizer createMessagerUI(Stage primaryStage, JavaFXMessager messager) throws Exception
    {
-      return new HeightMapEstimatorUI(primaryStage, messager);
+      return new HeightMapEstimatorVisualizer(primaryStage, messager);
    }
 }
