@@ -82,7 +82,7 @@ public class DRCEstimatorThread implements MultiThreadedRobotControlElement
    /** Set this to true to create and run, but not use the EKF estimator */
    private static final boolean CREATE_EKF_ESTIMATOR = false;
    /** Set this to true to use the EKF estimator */
-   private static final boolean USE_EKF_ESTIMATOR = false;
+   private static final boolean USE_EKF_ESTIMATOR = true;
 
    private final YoVariableRegistry estimatorRegistry = new YoVariableRegistry("DRCEstimatorThread");
    private final RobotVisualizer robotVisualizer;
