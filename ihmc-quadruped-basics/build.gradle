@@ -6,7 +6,7 @@ plugins {
 
 ihmc {
    loadProductProperties("../product.properties")
-   
+
    configureDependencyResolution()
    configurePublications()
 }
@@ -30,4 +30,10 @@ testDependencies {
    compile group: "com.google.caliper", name: "caliper", version: "1.0-beta-2"
 
    compile group: "us.ihmc", name: "simulation-construction-set-tools-test", version: "source"
+}
+
+visualizersDependencies {
+   compile ihmc.sourceSetProject("main")
+
+   compile group: "us.ihmc", name: "ihmc-path-planning-visualizers", version: "source"
 }
