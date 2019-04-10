@@ -54,6 +54,7 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
 
          System.out.println("received " + width + " " + height);
          System.out.println(image.getStep() + " " + image.getEncoding());
+         System.out.println(image.getHeader() + " " + image.getIsBigendian() + " " + image.getData().arrayOffset());
 
          ImageMessage message = new ImageMessage();
          BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -62,19 +63,18 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
          message.setWidth(width);
 
          ChannelBuffer data = image.getData();
-
-         int dataIndex = 0;
+         byte[] array = data.array();
+         int dataIndex = data.arrayOffset();
          for (int i = 0; i < height; i++)
          {
             for (int j = 0; j < width; j++)
             {
-               int b = data.getByte(dataIndex) + 128;
+               int b = array[dataIndex];
                dataIndex++;
-               int g = data.getByte(dataIndex) + 128;
+               int g = array[dataIndex];
                dataIndex++;
-               int r = data.getByte(dataIndex) + 128;
+               int r = array[dataIndex];
                dataIndex++;
-               //System.out.println(r+" "+g+" "+b);
 
                int rgbColor = convertBGR2RGB(b, g, r);
                message.getRgbdata().add(rgbColor);
@@ -99,19 +99,8 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
 
    private static int convertBGR2RGB(int b, int g, int r)
    {
-      int rgb = r;
-      rgb = rgb << 8 + g;
-      rgb = rgb << 8 + b;
+      int rgb = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
       return rgb;
-   }
-
-   private static int convertBGR2RGB(int bgr)
-   {
-      int r = bgr >> 0 & 0xFF;
-      int g = bgr >> 8 & 0xFF;
-      int b = bgr >> 16 & 0xFF;
-
-      return convertBGR2RGB(b, g, r);
    }
 
    public static void main(String[] args) throws URISyntaxException, IOException
