@@ -3,6 +3,7 @@ package us.ihmc.robotEnvironmentAwareness.ui.graphicsBuilders;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import boofcv.alg.geo.PerspectiveOps;
 import controller_msgs.msg.dds.LidarScanMessage;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
@@ -71,14 +72,44 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
       Point3D32 scanPoint = new Point3D32();
       meshBuilder.clear();
       int numberOfScanPoints = message.getScan().size() / 3;
+      
       for (int i = 0; i < numberOfScanPoints; i++)
       {
          double alpha = i / (double) numberOfScanPoints;
          Color color = Color.hsb(alpha * 240.0, 1.0, 1.0);
 
          MessageTools.unpackScanPoint(message, i, scanPoint);
+         
+         // K
+         double fx = 601.5020141601562;
+         double fy = 602.0339965820312;
+         double cx = 520.92041015625;
+         double cy = 273.5399169921875;
+         
+//         // P
+//         double fx = 601.5020141601562;
+//         double fy = 602.0339965820312;
+//         double cx = 520.92041015625;
+//         double cy = 273.5399169921875;
+         
+         double cameraX = -scanPoint.getY();
+         double cameraY = -scanPoint.getZ();
+         double cameraZ = scanPoint.getX();
+         
+         double normX = cameraX / cameraZ;
+         double normY = cameraY / cameraZ;
 
-         meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(SCAN_POINT_SIZE), scanPoint, color);
+         int width = 1024;
+         int height = 544;
+         int u = (int) (fx * normX + cx);
+         int v = (int) (fy * normY + cy);
+
+         boolean inImage = false;
+         if (u >= 0 && u < width)
+            if (v >= 0 && v < height)
+               inImage = true;
+         if (inImage)
+            meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(SCAN_POINT_SIZE), scanPoint, color);
       }
 
       MeshView scanMeshView = new MeshView(meshBuilder.generateMesh());
