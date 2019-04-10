@@ -1,10 +1,17 @@
 package us.ihmc.robotEnvironmentAwareness.hardware;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Scanner;
 
-import controller_msgs.msg.dds.LidarScanMessage;
+import javax.imageio.ImageIO;
+
+import org.jboss.netty.buffer.ChannelBuffer;
+
+import controller_msgs.msg.dds.ImageMessage;
 import sensor_msgs.Image;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
@@ -15,25 +22,96 @@ import us.ihmc.utilities.ros.subscriber.AbstractRosTopicSubscriber;
 
 public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
 {
-   private final Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "lidarScanPublisherNode");
+   private final Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "imagePublisherNode");
 
-   private final IHMCROS2Publisher<LidarScanMessage> lidarScanPublisher;
-   
+   private final IHMCROS2Publisher<ImageMessage> imagePublisher;
+
+   private final Scanner commandScanner;
+   private static final String commandToReceiveNewImage = "s";
+   private int savingIndex = 0;
+
    public MultisenseImageReceiver() throws URISyntaxException, IOException
    {
       super(Image._TYPE);
+      commandScanner = new Scanner(System.in);
       URI masterURI = new URI("http://10.6.192.14:11311");
       RosMainNode rosMainNode = new RosMainNode(masterURI, "ImagePublisher", true);
       rosMainNode.attachSubscriber("/multisense/left/image_rect_color", this);
       rosMainNode.execute();
-      
-      lidarScanPublisher = ROS2Tools.createPublisher(ros2Node, LidarScanMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+
+      imagePublisher = ROS2Tools.createPublisher(ros2Node, ImageMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
    }
 
    @Override
    public void onNewMessage(Image image)
    {
-      System.out.println("received "+image.getWidth()+" "+image.getHeight());
+      String command = commandScanner.next();
+
+      if (command.contains(commandToReceiveNewImage))
+      {
+         int width = image.getWidth();
+         int height = image.getHeight();
+
+         System.out.println("received " + width + " " + height);
+         System.out.println(image.getStep() + " " + image.getEncoding());
+
+         ImageMessage message = new ImageMessage();
+         BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+         message.setHeight(height);
+         message.setWidth(width);
+
+         ChannelBuffer data = image.getData();
+
+         int dataIndex = 0;
+         for (int i = 0; i < height; i++)
+         {
+            for (int j = 0; j < width; j++)
+            {
+               int b = data.getByte(dataIndex) + 128;
+               dataIndex++;
+               int g = data.getByte(dataIndex) + 128;
+               dataIndex++;
+               int r = data.getByte(dataIndex) + 128;
+               dataIndex++;
+               //System.out.println(r+" "+g+" "+b);
+
+               int rgbColor = convertBGR2RGB(b, g, r);
+               message.getRgbdata().add(rgbColor);
+               bufferedImage.setRGB(j, i, rgbColor);
+            }
+         }
+
+         imagePublisher.publish(message);
+
+         File outputfile = new File("image_" + savingIndex + ".png");
+         try
+         {
+            ImageIO.write(bufferedImage, "png", outputfile);
+         }
+         catch (IOException e)
+         {
+            e.printStackTrace();
+         }
+         savingIndex++;
+      }
+   }
+
+   private static int convertBGR2RGB(int b, int g, int r)
+   {
+      int rgb = r;
+      rgb = rgb << 8 + g;
+      rgb = rgb << 8 + b;
+      return rgb;
+   }
+
+   private static int convertBGR2RGB(int bgr)
+   {
+      int r = bgr >> 0 & 0xFF;
+      int g = bgr >> 8 & 0xFF;
+      int b = bgr >> 16 & 0xFF;
+
+      return convertBGR2RGB(b, g, r);
    }
 
    public static void main(String[] args) throws URISyntaxException, IOException
