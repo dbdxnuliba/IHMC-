@@ -1,8 +1,14 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
+
+import java.io.FileInputStream;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
@@ -22,20 +28,27 @@ public class LidarImageFusionProcessorUI
       FXMLLoader loader = new FXMLLoader();
       loader.setController(this);
       loader.setLocation(getClass().getResource(getClass().getSimpleName() + ".fxml"));
-      System.out.println(loader.getLocation());
-      System.out.println(getClass().getSimpleName());
       mainPane = loader.load();
 
-      // Client
       this.messager = messager;
       messager.startMessager();
 
       View3DFactory view3dFactory = View3DFactory.createSubscene();
       view3dFactory.addCameraController(true);
       view3dFactory.addWorldCoordinateSystem(0.3);
+      
+      String imageLocation = "../../../../ihmc.jpg";
+      FileInputStream fis = new FileInputStream(imageLocation);
+      
+      ImageView imagePane = new ImageView();
+      Image sampleImage = new Image(fis);
+      imagePane.setImage(sampleImage);
+      
+      GridPane centerPane = new GridPane();
+      centerPane.getChildren().add(imagePane);
+      
+      mainPane.setRight(centerPane);
       mainPane.setCenter(view3dFactory.getSubSceneWrappedInsidePane());
-
-      //view3dFactory.addNodeToView(reaMeshViewer.getRoot());
 
       primaryStage.setTitle(getClass().getSimpleName());
       primaryStage.setMaximized(true);
