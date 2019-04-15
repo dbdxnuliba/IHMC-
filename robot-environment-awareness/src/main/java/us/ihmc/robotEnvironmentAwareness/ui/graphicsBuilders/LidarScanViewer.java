@@ -108,6 +108,9 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
          if (u >= 0 && u < width)
             if (v >= 0 && v < height)
                inImage = true;
+         
+         inImage = true;
+         
          if (inImage)
             meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(SCAN_POINT_SIZE), scanPoint, color);
       }

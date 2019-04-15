@@ -6,34 +6,35 @@ import javafx.stage.Stage;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.pubsub.DomainFactory;
 import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionAPI;
-import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionProcessorModule;
+import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionProcessorCommunicationModule;
 import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionProcessorUI;
 
 public class LidarImageFusionProcessorLauncher extends Application
 {
    private SharedMemoryJavaFXMessager messager;
-   
+
    private LidarImageFusionProcessorUI ui;
-   private LidarImageFusionProcessorModule module;
+   private LidarImageFusionProcessorCommunicationModule module;
 
    @Override
    public void start(Stage primaryStage) throws Exception
    {
       messager = new SharedMemoryJavaFXMessager(LidarImageFusionAPI.API);
-      messager.startMessager();
-      
+
       ui = LidarImageFusionProcessorUI.creatIntraprocessUI(messager, primaryStage);
-      module = LidarImageFusionProcessorModule.createIntraprocessModule(messager, DomainFactory.PubSubImplementation.FAST_RTPS);
+      module = LidarImageFusionProcessorCommunicationModule.createIntraprocessModule(DomainFactory.PubSubImplementation.FAST_RTPS);
 
       ui.show();
+      module.start();
    }
 
    @Override
    public void stop() throws Exception
    {
       messager.closeMessager();
-      
+
       ui.stop();
+      module.stop();
 
       Platform.exit();
    }
