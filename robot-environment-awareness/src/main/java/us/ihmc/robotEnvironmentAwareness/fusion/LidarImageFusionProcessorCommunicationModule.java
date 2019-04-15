@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion;
 
 import java.io.IOException;
 
+import controller_msgs.msg.dds.ImageMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import us.ihmc.communication.ROS2Tools;
@@ -24,16 +25,17 @@ public class LidarImageFusionProcessorCommunicationModule
    private final Ros2Node ros2Node;
    private final REAModuleStateReporter moduleStateReporter;
 
-   private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager messager)
+   private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager kryoMessager, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
       this.ros2Node = ros2Node;
 
-      moduleStateReporter = new REAModuleStateReporter(messager);
+      moduleStateReporter = new REAModuleStateReporter(kryoMessager);
 
       ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
+      ROS2Tools.createCallbackSubscription(ros2Node, ImageMessage.class, "/ihmc/image", this::dispatchImageMessage);
    }
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
@@ -46,6 +48,13 @@ public class LidarImageFusionProcessorCommunicationModule
    {
       StereoVisionPointCloudMessage message = subscriber.takeNextData();
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
+   }
+
+   private void dispatchImageMessage(Subscriber<ImageMessage> subscriber)
+   {
+      ImageMessage message = subscriber.takeNextData();
+      if (messager.isMessagerOpen())
+         messager.submitMessage(LidarImageFusionAPI.ImageState, new ImageMessage(message));
    }
 
    public void start() throws IOException
@@ -61,14 +70,14 @@ public class LidarImageFusionProcessorCommunicationModule
       ros2Node.destroy();
    }
 
-   public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(DomainFactory.PubSubImplementation implementation) throws IOException
+   public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(SharedMemoryJavaFXMessager messager, DomainFactory.PubSubImplementation implementation) throws IOException
    {
-      KryoMessager messager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
+      KryoMessager kryoMessager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
                                                               REACommunicationProperties.getPrivateNetClassList());
-      messager.setAllowSelfSubmit(true);
-      messager.startMessager();
+      kryoMessager.setAllowSelfSubmit(true);
+      kryoMessager.startMessager();
 
       Ros2Node ros2Node = ROS2Tools.createRos2Node(implementation, "ihmc_lidar_image_fusion_ui");
-      return new LidarImageFusionProcessorCommunicationModule(ros2Node, messager);
+      return new LidarImageFusionProcessorCommunicationModule(ros2Node, kryoMessager, messager);
    }
 }

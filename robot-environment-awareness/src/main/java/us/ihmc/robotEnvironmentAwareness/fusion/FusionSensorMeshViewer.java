@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javafx.animation.AnimationTimer;
 import javafx.scene.Group;
@@ -63,8 +64,6 @@ public class FusionSensorMeshViewer
          else
             sleep();
       });
-      
-      reaMessager.notifyModuleMessagerStateListeners();
    }
 
    public void start()
@@ -90,7 +89,4 @@ public class FusionSensorMeshViewer
    {
       return root;
    }
-
-
-
 }

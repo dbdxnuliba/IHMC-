@@ -20,6 +20,8 @@ import us.ihmc.robotEnvironmentAwareness.communication.KryoMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
+import us.ihmc.robotEnvironmentAwareness.fusion.controller.ImageProcessingAnchorPaneController;
+import us.ihmc.robotEnvironmentAwareness.fusion.controller.ObjectDetectionAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.PointCloudAnchorPaneController;
 
 public class LidarImageFusionProcessorUI
@@ -31,11 +33,18 @@ public class LidarImageFusionProcessorUI
    private final Stage primaryStage;
 
    private final FusionSensorMeshViewer meshViewer;
+   private final FusionSensorImageViewer imageViewer;
 
    private static final String UI_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAUIConfiguration.txt";
 
    @FXML
    private PointCloudAnchorPaneController pointCloudAnchorPaneController;
+   
+   @FXML
+   private ImageProcessingAnchorPaneController imageProcessingAnchorPaneController;
+   
+   @FXML
+   private ObjectDetectionAnchorPaneController objectDetectionAnchorPaneController;
 
    private LidarImageFusionProcessorUI(SharedMemoryJavaFXMessager messager, REAUIMessager reaMessager, Stage primaryStage) throws Exception
    {
@@ -47,6 +56,7 @@ public class LidarImageFusionProcessorUI
       mainPane = loader.load();
 
       meshViewer = new FusionSensorMeshViewer(reaMessager);
+      imageViewer = new FusionSensorImageViewer(messager);
 
       initializeControllers(reaMessager);
 
@@ -90,6 +100,8 @@ public class LidarImageFusionProcessorUI
    public void show()
    {
       primaryStage.show();
+      
+      imageViewer.start();
    }
 
    public void stop()
@@ -123,5 +135,8 @@ public class LidarImageFusionProcessorUI
       pointCloudAnchorPaneController.setConfigurationFile(configurationFile);
       pointCloudAnchorPaneController.attachREAMessager(reaMessager);
       pointCloudAnchorPaneController.bindControls();
+      
+      imageProcessingAnchorPaneController.initialize(messager);
+      objectDetectionAnchorPaneController.initialize(messager);
    }
 }

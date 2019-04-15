@@ -26,6 +26,7 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
 
    private final IHMCROS2Publisher<ImageMessage> imagePublisher;
 
+   private final boolean publishingAllImages = true;
    private final Scanner commandScanner;
    private static final String commandToReceiveNewImage = "s";
    private int savingIndex = 0;
@@ -40,21 +41,16 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
       rosMainNode.execute();
 
       imagePublisher = ROS2Tools.createPublisher(ros2Node, ImageMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+      System.out.println(ROS2Tools.getDefaultTopicNameGenerator().generateTopicName(ImageMessage.class));
    }
 
    @Override
    public void onNewMessage(Image image)
    {
-      String command = commandScanner.next();
-
-      if (command.contains(commandToReceiveNewImage))
+      if (publishingAllImages)
       {
          int width = image.getWidth();
          int height = image.getHeight();
-
-         System.out.println("received " + width + " " + height);
-         System.out.println(image.getStep() + " " + image.getEncoding());
-         System.out.println(image.getHeader() + " " + image.getIsBigendian() + " " + image.getData().arrayOffset());
 
          ImageMessage message = new ImageMessage();
          BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -83,17 +79,59 @@ public class MultisenseImageReceiver extends AbstractRosTopicSubscriber<Image>
          }
 
          imagePublisher.publish(message);
+      }
+      else
+      {
+         String command = commandScanner.next();
 
-         File outputfile = new File("image_" + savingIndex + ".png");
-         try
+         if (command.contains(commandToReceiveNewImage))
          {
-            ImageIO.write(bufferedImage, "png", outputfile);
+            int width = image.getWidth();
+            int height = image.getHeight();
+
+            System.out.println("received " + width + " " + height);
+            System.out.println(image.getStep() + " " + image.getEncoding());
+            System.out.println(image.getHeader() + " " + image.getIsBigendian() + " " + image.getData().arrayOffset());
+
+            ImageMessage message = new ImageMessage();
+            BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+            message.setHeight(height);
+            message.setWidth(width);
+
+            ChannelBuffer data = image.getData();
+            byte[] array = data.array();
+            int dataIndex = data.arrayOffset();
+            for (int i = 0; i < height; i++)
+            {
+               for (int j = 0; j < width; j++)
+               {
+                  int b = array[dataIndex];
+                  dataIndex++;
+                  int g = array[dataIndex];
+                  dataIndex++;
+                  int r = array[dataIndex];
+                  dataIndex++;
+
+                  int rgbColor = convertBGR2RGB(b, g, r);
+                  message.getRgbdata().add(rgbColor);
+                  bufferedImage.setRGB(j, i, rgbColor);
+               }
+            }
+
+            imagePublisher.publish(message);
+
+            File outputfile = new File("image_" + savingIndex + ".png");
+            try
+            {
+               ImageIO.write(bufferedImage, "png", outputfile);
+            }
+            catch (IOException e)
+            {
+               e.printStackTrace();
+            }
+            savingIndex++;
          }
-         catch (IOException e)
-         {
-            e.printStackTrace();
-         }
-         savingIndex++;
       }
    }
 

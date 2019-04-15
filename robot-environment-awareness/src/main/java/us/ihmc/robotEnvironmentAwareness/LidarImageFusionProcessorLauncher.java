@@ -20,9 +20,10 @@ public class LidarImageFusionProcessorLauncher extends Application
    public void start(Stage primaryStage) throws Exception
    {
       messager = new SharedMemoryJavaFXMessager(LidarImageFusionAPI.API);
+      messager.startMessager();
 
       ui = LidarImageFusionProcessorUI.creatIntraprocessUI(messager, primaryStage);
-      module = LidarImageFusionProcessorCommunicationModule.createIntraprocessModule(DomainFactory.PubSubImplementation.FAST_RTPS);
+      module = LidarImageFusionProcessorCommunicationModule.createIntraprocessModule(messager, DomainFactory.PubSubImplementation.FAST_RTPS);
 
       ui.show();
       module.start();
