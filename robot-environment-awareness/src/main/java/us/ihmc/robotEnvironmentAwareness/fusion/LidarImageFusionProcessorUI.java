@@ -55,9 +55,6 @@ public class LidarImageFusionProcessorUI
       loader.setLocation(getClass().getResource(getClass().getSimpleName() + ".fxml"));
       mainPane = loader.load();
 
-      meshViewer = new FusionSensorMeshViewer(reaMessager);
-      imageViewer = new FusionSensorImageViewer(messager);
-
       initializeControllers(reaMessager);
 
       View3DFactory view3dFactory = View3DFactory.createSubscene();
@@ -77,6 +74,9 @@ public class LidarImageFusionProcessorUI
       mainPane.setRight(centerPane);
       mainPane.setCenter(view3dFactory.getSubSceneWrappedInsidePane());
 
+      meshViewer = new FusionSensorMeshViewer(reaMessager);
+      imageViewer = new FusionSensorImageViewer(messager, imagePane);
+      
       view3dFactory.addNodeToView(meshViewer.getRoot());
 
       primaryStage.setTitle(getClass().getSimpleName());

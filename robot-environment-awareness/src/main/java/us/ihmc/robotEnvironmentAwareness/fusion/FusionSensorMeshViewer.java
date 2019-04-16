@@ -57,13 +57,13 @@ public class FusionSensorMeshViewer
             stereoVisionPointCloudViewer.render();
          }
       };
-      
-      reaMessager.registerModuleMessagerStateListener(isMessagerOpen -> {
-         if (isMessagerOpen)
-            start();
-         else
-            sleep();
-      });
+      start();
+//      reaMessager.registerModuleMessagerStateListener(isMessagerOpen -> {
+//         if (isMessagerOpen)
+//            start();
+//         else
+//            sleep();
+//      });
    }
 
    public void start()
