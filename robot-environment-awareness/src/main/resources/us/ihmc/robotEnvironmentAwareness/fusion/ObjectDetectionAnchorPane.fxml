@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.robotEnvironmentAwareness.fusion.controller.ObjectDetectionAnchorPaneController">
-	<!-- TODO Add Nodes -->
+<AnchorPane prefHeight="166.0" prefWidth="240.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.robotEnvironmentAwareness.fusion.controller.ObjectDetectionAnchorPaneController">
+   <children>
+      <Button layoutX="48.0" layoutY="51.0" mnemonicParsing="false" text="Button" />
+   </children>
 </AnchorPane>
-
