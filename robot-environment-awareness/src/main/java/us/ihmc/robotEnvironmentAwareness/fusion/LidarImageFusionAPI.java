@@ -1,6 +1,7 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
 import controller_msgs.msg.dds.ImageMessage;
+import sensor_msgs.msg.dds.RegionOfInterest;
 import us.ihmc.messager.MessagerAPIFactory;
 import us.ihmc.messager.MessagerAPIFactory.Category;
 import us.ihmc.messager.MessagerAPIFactory.CategoryTheme;
@@ -17,16 +18,25 @@ public class LidarImageFusionAPI
 
    private static final CategoryTheme Module = apiFactory.createCategoryTheme("Module");
    private static final CategoryTheme UI = apiFactory.createCategoryTheme("UserInterface");
+   private static final CategoryTheme ObjectDetection = apiFactory.createCategoryTheme("ObjectDetection");
 
    private static final Category ModuleCategory = Root.child(Module);
-   private static final Category UICategory = ModuleCategory.child(UI);
+   private static final Category UICategory = Root.child(UI);
+   private static final Category ObjectDetectionCategory = Root.child(ObjectDetection);
 
    private static final CategoryTheme Image = apiFactory.createCategoryTheme("Image");
-   private static final CategoryTheme ObjectDetection = apiFactory.createCategoryTheme("ObjectDetection");
+
+   private static final CategoryTheme Door = apiFactory.createCategoryTheme("Door");
+   private static final CategoryTheme DoorHandle = apiFactory.createCategoryTheme("DoorHandle");
+   private static final CategoryTheme Cup = apiFactory.createCategoryTheme("Cup");
+   private static final CategoryTheme Human = apiFactory.createCategoryTheme("Human");
 
    private static final TypedTopicTheme<Boolean> SnapShot = apiFactory.createTypedTopicTheme("SnapShot");
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
    private static final TypedTopicTheme<Boolean> Clear = apiFactory.createTypedTopicTheme("Clear");
+   private static final TypedTopicTheme<Boolean> Request = apiFactory.createTypedTopicTheme("Request");
+   private static final TypedTopicTheme<RegionOfInterest> ROI = apiFactory.createTypedTopicTheme("ROI");
+   // TODO : segmented point cloud data.
 
    private static final TopicTheme Data = apiFactory.createTopicTheme("Data");
 
@@ -35,6 +45,16 @@ public class LidarImageFusionAPI
    public static final Topic<Boolean> ImageViewClear = UICategory.child(Image).topic(Clear);
 
    public static final Topic<ImageMessage> ImageState = ModuleCategory.child(Image).topic(Data);
+
+   public static final Topic<Boolean> RequestDoorDetection = ObjectDetectionCategory.child(Door).topic(Request);
+   public static final Topic<Boolean> RequestDoorHandleDetection = ObjectDetectionCategory.child(DoorHandle).topic(Request);
+   public static final Topic<Boolean> RequestCupDetection = ObjectDetectionCategory.child(Cup).topic(Request);
+   public static final Topic<Boolean> RequestHumanDetection = ObjectDetectionCategory.child(Human).topic(Request);
+
+   public static final Topic<RegionOfInterest> DoorROI = ObjectDetectionCategory.child(Door).topic(ROI);
+   public static final Topic<RegionOfInterest> DoorHandleROI = ObjectDetectionCategory.child(DoorHandle).topic(ROI);
+   public static final Topic<RegionOfInterest> CupROI = ObjectDetectionCategory.child(Cup).topic(ROI);
+   public static final Topic<RegionOfInterest> HumanROI = ObjectDetectionCategory.child(Human).topic(ROI);
 
    public static final MessagerAPI API = apiFactory.getAPIAndCloseFactory();
 }
