@@ -1,6 +1,7 @@
 package us.ihmc.robotEnvironmentAwareness.ui.controller;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory;
@@ -18,6 +19,11 @@ public class PointCloudAnchorPaneController extends REABasicUIController
    private ToggleButton enableStereoButton;
    @FXML
    private Spinner<Integer> sizeOfPointCloudSpinner;
+   @FXML
+   private Button clearLidarButton;
+   @FXML
+   private Button clearStereoButton;
+   
 
    private static final int maximumSizeOfPointCloud = 200000;
    private static final int minimumSizeOfPointCloud = 10000;

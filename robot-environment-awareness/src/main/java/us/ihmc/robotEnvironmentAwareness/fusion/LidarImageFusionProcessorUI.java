@@ -10,7 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import us.ihmc.communication.util.NetworkPorts;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
@@ -34,7 +34,9 @@ public class LidarImageFusionProcessorUI
 
    private final FusionSensorMeshViewer meshViewer;
    private final FusionSensorImageViewer imageViewer;
-
+   
+   public static final int imageStreamingWidth = 512;
+   
    private static final String UI_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAUIConfiguration.txt";
 
    @FXML
@@ -64,18 +66,19 @@ public class LidarImageFusionProcessorUI
       String imageLocation = "../../../../ihmc.jpg";
       FileInputStream fis = new FileInputStream(imageLocation);
 
-      ImageView imagePane = new ImageView();
+      ImageView imageView = new ImageView();
       Image sampleImage = new Image(fis);
-      imagePane.setImage(sampleImage);
+      imageView.setImage(sampleImage);
+      imageView.setFitWidth(imageStreamingWidth);
+      imageView.setPreserveRatio(true);
+      
+      VBox imageViewPane = new VBox();
 
-      GridPane centerPane = new GridPane();
-      centerPane.getChildren().add(imagePane);
-
-      mainPane.setRight(centerPane);
+      mainPane.setRight(imageViewPane);
       mainPane.setCenter(view3dFactory.getSubSceneWrappedInsidePane());
 
       meshViewer = new FusionSensorMeshViewer(reaMessager);
-      imageViewer = new FusionSensorImageViewer(messager, imagePane);
+      imageViewer = new FusionSensorImageViewer(messager, imageViewPane);
       
       view3dFactory.addNodeToView(meshViewer.getRoot());
 
@@ -100,7 +103,6 @@ public class LidarImageFusionProcessorUI
    public void show()
    {
       primaryStage.show();
-      
       imageViewer.start();
    }
 

@@ -3,9 +3,6 @@ package us.ihmc.robotEnvironmentAwareness.fusion;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.ImageMessage;
@@ -13,56 +10,52 @@ import javafx.animation.AnimationTimer;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
-import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
-import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
 
-public class FusionSensorImageViewer implements Runnable
+public class FusionSensorImageViewer
 {
-   private static final int HIGH_PACE_UPDATE_PERIOD = 100;
-
    private JavaFXMessager messager;
-   private final AnimationTimer imageAnimation;
 
-   protected final AtomicReference<ImageMessage> newImageMessageToView;
+   private final VBox imageViewPane = new VBox();
+   private final ImageView streamingView = new ImageView();
+
+   private final AtomicReference<ImageMessage> newImageMessageToView;
+   private final AtomicReference<BufferedImage> recentBufferedImage;
+
    private final AtomicReference<Boolean> enableStreaming;
    private final AtomicReference<Boolean> snapshot;
+   private final AtomicReference<Boolean> clearImages;
 
-   protected final AtomicReference<ImageView> imgaveToView = new AtomicReference<>(null);
+   private final List<BufferedImage> imagesToView = new ArrayList<>();
 
-   private final List<ScheduledFuture<?>> meshBuilderScheduledFutures = new ArrayList<>();
-   private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(2, getClass(), ExceptionHandling.CANCEL_AND_REPORT);
+   private final AnimationTimer imageStreamer;
 
-   private final ImageView imageView;
-
-   public FusionSensorImageViewer(SharedMemoryJavaFXMessager messager, ImageView imageView)
+   public FusionSensorImageViewer(SharedMemoryJavaFXMessager messager, Pane imagePane)
    {
       this.messager = messager;
-      this.imageView = imageView;
+      streamingView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingWidth);
+      streamingView.setPreserveRatio(true);
+      imagePane.getChildren().add(streamingView);
+      imagePane.getChildren().add(imageViewPane);
 
       enableStreaming = messager.createInput(LidarImageFusionAPI.EnableStreaming, false);
       snapshot = messager.createInput(LidarImageFusionAPI.ImageSnapShot, false);
+      clearImages = messager.createInput(LidarImageFusionAPI.ImageViewClear, false);
 
       newImageMessageToView = messager.createInput(LidarImageFusionAPI.ImageState);
+      recentBufferedImage = new AtomicReference<BufferedImage>(null);
 
-      imageAnimation = new AnimationTimer()
+      imageStreamer = new AnimationTimer()
       {
          @Override
          public void handle(long now)
          {
-            if (snapshot.getAndSet(false))
-               System.out.println("take snap shot!!");
+            update();
          }
       };
-
-      messager.registerMessagerStateListener(isMessagerOpen -> {
-         if (isMessagerOpen)
-            start();
-         else
-            sleep();
-      });
-
    }
 
    private void unpackImage(ImageMessage imageMessage)
@@ -71,32 +64,52 @@ public class FusionSensorImageViewer implements Runnable
          return;
 
       BufferedImage bufferedImage = convertImageMessageToBufferedImage(imageMessage);
-      Image image = SwingFXUtils.toFXImage(bufferedImage, null);
-      imageView.setImage(image);
+      recentBufferedImage.set(bufferedImage);
+      Image streamingImage = SwingFXUtils.toFXImage(bufferedImage, null);
+      streamingView.setImage(streamingImage);
    }
 
-   @Override
-   public void run()
+   public void update()
    {
       if (!enableStreaming.get())
          return;
+
+      if (clearImages.getAndSet(false))
+         clearImageView();
 
       if (newImageMessageToView.get() == null)
          return;
 
       unpackImage(newImageMessageToView.getAndSet(null));
+
+      if (snapshot.getAndSet(false))
+      {
+         if (recentBufferedImage.get() != null)
+         {
+            imagesToView.add(recentBufferedImage.getAndSet(null));
+         }
+      }
+
+      imageViewPane.getChildren().clear();
+      for (BufferedImage bufferedImage : imagesToView)
+      {
+         Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+         ImageView imageView = new ImageView();
+         imageView.setImage(image);
+         imageView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingWidth);
+         imageView.setPreserveRatio(true);
+         imageViewPane.getChildren().add(imageView);
+      }
    }
 
    public void start()
    {
-      imageAnimation.start();
-
-      meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(this, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
+      imageStreamer.start();
    }
 
-   public void sleep()
+   public void clearImageView()
    {
-      imageAnimation.stop();
+      imagesToView.clear();
    }
 
    public static BufferedImage convertImageMessageToBufferedImage(ImageMessage imageMessage)
