@@ -34,6 +34,7 @@ public class LidarImageFusionProcessorUI
 
    private final FusionSensorMeshViewer meshViewer;
    private final FusionSensorImageViewer imageViewer;
+   private final FusionObjectDetector objectDetector;
 
    private static final String UI_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAUIConfiguration.txt";
 
@@ -57,14 +58,14 @@ public class LidarImageFusionProcessorUI
 
       meshViewer = new FusionSensorMeshViewer(reaMessager);
       imageViewer = new FusionSensorImageViewer(messager);
-
+      objectDetector = new FusionObjectDetector(messager);
       initializeControllers(reaMessager);
 
       View3DFactory view3dFactory = View3DFactory.createSubscene();
       view3dFactory.addCameraController(true);
       view3dFactory.addWorldCoordinateSystem(0.3);
 
-      String imageLocation = "../../../../ihmc.jpg";
+      String imageLocation = "C:\\repos\\repository-group\\ihmc-open-robotics-software\\robot-environment-awareness\\src\\main\\java\\us\\ihmc\\robotEnvironmentAwareness\\ihmc.jpg";
       FileInputStream fis = new FileInputStream(imageLocation);
 
       ImageView imagePane = new ImageView();
@@ -102,6 +103,8 @@ public class LidarImageFusionProcessorUI
       primaryStage.show();
       
       imageViewer.start();
+      
+      objectDetector.start();
    }
 
    public void stop()

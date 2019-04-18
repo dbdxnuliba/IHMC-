@@ -58,6 +58,7 @@ public class FusionSensorMeshViewer
          }
       };
       
+      start();
       reaMessager.registerModuleMessagerStateListener(isMessagerOpen -> {
          if (isMessagerOpen)
             start();

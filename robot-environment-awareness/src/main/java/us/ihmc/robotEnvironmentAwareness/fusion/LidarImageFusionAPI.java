@@ -1,6 +1,9 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
+import org.jcodec.common.IntArrayList;
+
 import controller_msgs.msg.dds.ImageMessage;
+import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.messager.MessagerAPIFactory;
 import us.ihmc.messager.MessagerAPIFactory.Category;
 import us.ihmc.messager.MessagerAPIFactory.CategoryTheme;
@@ -23,14 +26,21 @@ public class LidarImageFusionAPI
    
    private static final CategoryTheme Image = apiFactory.createCategoryTheme("Image");
    private static final CategoryTheme ObjectDetection = apiFactory.createCategoryTheme("ObjectDetection");
+   private static final CategoryTheme Door = apiFactory.createCategoryTheme("Door");
    
    private static final TypedTopicTheme<Boolean> SnapShot = apiFactory.createTypedTopicTheme("SnapShot");
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
+   private static final TypedTopicTheme<Boolean> Detect = apiFactory.createTypedTopicTheme("Detect");
    
    private static final TopicTheme Data = apiFactory.createTopicTheme("Data");
+   private static final TopicTheme ROI = apiFactory.createTopicTheme("ROI");
    
    public static final Topic<Boolean> ImageSnapShot = UICategory.child(Image).topic(SnapShot);
    public static final Topic<Boolean> EnableStreaming = UICategory.child(Image).topic(Enable);
+   public static final Topic<Boolean> EnableObjectDetection = UICategory.child(ObjectDetection).topic(Enable);
+   public static final Topic<Boolean> DetectDoor = UICategory.child(ObjectDetection).child(Door).topic(Detect);
+   
+   public static final Topic<IntArrayList> doorROI = ModuleCategory.child(ObjectDetection).child(Door).topic(ROI);
    
    public static final Topic<ImageMessage> ImageState = ModuleCategory.child(Image).topic(Data);
    
