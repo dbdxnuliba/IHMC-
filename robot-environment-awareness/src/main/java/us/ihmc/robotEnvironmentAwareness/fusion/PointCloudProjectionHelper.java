@@ -6,6 +6,14 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 
 public class PointCloudProjectionHelper
 {
+   public static IntrinsicParameters multisenseIntrinsicParameters = new IntrinsicParameters();
+   public PointCloudProjectionHelper()
+   {
+      multisenseIntrinsicParameters.setFx(601.5020141601562);
+      multisenseIntrinsicParameters.setFy(602.0339965820312);
+      multisenseIntrinsicParameters.setCx(520.92041015625);
+      multisenseIntrinsicParameters.setCy(273.5399169921875);
+   }
    /**
     * This method is to pack a pixel value (u, v) that is a point projected onto image.
     * The author recommends to use parameter set of K which placed in `CameraInfo` of Multisense.
