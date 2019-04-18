@@ -12,13 +12,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 
 public class FusionSensorImageViewer
 {
-   private JavaFXMessager messager;
-
    private final VBox imageViewPane = new VBox();
    private final ImageView streamingView = new ImageView();
 
@@ -35,8 +32,7 @@ public class FusionSensorImageViewer
 
    public FusionSensorImageViewer(SharedMemoryJavaFXMessager messager, Pane imagePane)
    {
-      this.messager = messager;
-      streamingView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingWidth);
+      streamingView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingImageFixedWidth);
       streamingView.setPreserveRatio(true);
       imagePane.getChildren().add(streamingView);
       imagePane.getChildren().add(imageViewPane);
@@ -96,7 +92,7 @@ public class FusionSensorImageViewer
          Image image = SwingFXUtils.toFXImage(bufferedImage, null);
          ImageView imageView = new ImageView();
          imageView.setImage(image);
-         imageView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingWidth);
+         imageView.setFitWidth(LidarImageFusionProcessorUI.imageStreamingImageFixedWidth);
          imageView.setPreserveRatio(true);
          imageViewPane.getChildren().add(imageView);
       }

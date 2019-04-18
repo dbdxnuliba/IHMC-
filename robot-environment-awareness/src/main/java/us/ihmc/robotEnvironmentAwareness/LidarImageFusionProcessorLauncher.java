@@ -9,6 +9,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionProcessorCommunicationModule;
 import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionProcessorUI;
 
+//TODO : rename.
 public class LidarImageFusionProcessorLauncher extends Application
 {
    private SharedMemoryJavaFXMessager messager;

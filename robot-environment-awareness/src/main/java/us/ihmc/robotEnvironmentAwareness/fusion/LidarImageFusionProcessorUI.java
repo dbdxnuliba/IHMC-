@@ -35,7 +35,7 @@ public class LidarImageFusionProcessorUI
    private final FusionSensorMeshViewer meshViewer;
    private final FusionSensorImageViewer imageViewer;
    
-   public static final int imageStreamingWidth = 512;
+   public static final int imageStreamingImageFixedWidth = 512;
    
    private static final String UI_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAUIConfiguration.txt";
 
@@ -63,17 +63,7 @@ public class LidarImageFusionProcessorUI
       view3dFactory.addCameraController(true);
       view3dFactory.addWorldCoordinateSystem(0.3);
 
-      String imageLocation = "../../../../ihmc.jpg";
-      FileInputStream fis = new FileInputStream(imageLocation);
-
-      ImageView imageView = new ImageView();
-      Image sampleImage = new Image(fis);
-      imageView.setImage(sampleImage);
-      imageView.setFitWidth(imageStreamingWidth);
-      imageView.setPreserveRatio(true);
-      
       VBox imageViewPane = new VBox();
-
       mainPane.setRight(imageViewPane);
       mainPane.setCenter(view3dFactory.getSubSceneWrappedInsidePane());
 
