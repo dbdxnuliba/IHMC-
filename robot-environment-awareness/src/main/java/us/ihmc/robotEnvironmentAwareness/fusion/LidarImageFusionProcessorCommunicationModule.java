@@ -1,6 +1,9 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.ImageMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
@@ -15,6 +18,8 @@ import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.robotEnvironmentAwareness.communication.KryoMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
+import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.FusionSensorObjectDetectionManager;
+import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.updaters.REAModuleStateReporter;
 import us.ihmc.ros2.Ros2Node;
 
@@ -24,19 +29,51 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private final Ros2Node ros2Node;
    private final REAModuleStateReporter moduleStateReporter;
+   
+   private static final int THREAD_PERIOD_MILLISECONDS = 200;
+   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
+   
+   private final FusionSensorObjectDetectionManager objectDetectionModule;
+   private final AtomicReference<List<ObjectType>> selectedObjecTypes;
 
-   private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager kryoMessager, SharedMemoryJavaFXMessager messager)
+   private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
       this.ros2Node = ros2Node;
 
-      moduleStateReporter = new REAModuleStateReporter(kryoMessager);
+      moduleStateReporter = new REAModuleStateReporter(reaMessager);
 
       ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, ImageMessage.class, "/ihmc/image", this::dispatchImageMessage);
+      
+      objectDetectionModule = new FusionSensorObjectDetectionManager(ros2Node);
+      
+      messager.registerTopicListener(LidarImageFusionAPI.RequestSocketConnection, (content) -> connectWithObjectDetectionModule());
+      messager.registerTopicListener(LidarImageFusionAPI.RequestObjectDetection, (content) -> requestObjectDetection());
+      selectedObjecTypes = messager.createInput(LidarImageFusionAPI.SelectedObjecTypes, new ArrayList<ObjectType>());
    }
+   
+   private void connectWithObjectDetectionModule()
+   {
+      System.out.println("connectWithObjectDetectionModule");
+      // TODO : connect socket.
+   }
+   
+   private void requestObjectDetection()
+   {
+      System.out.println("requestObjectDetection");
+      for(ObjectType type : selectedObjecTypes.get())
+      {
+         System.out.println(type.toString());
+      }
+      // TODO : get recent image and send it to server here.
+   }
+   
+   // TODO : waiting roi results from server.
+   // TODO : the result should be a list of roi.
+   // TODO : and calculate object parameters.
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
    {
