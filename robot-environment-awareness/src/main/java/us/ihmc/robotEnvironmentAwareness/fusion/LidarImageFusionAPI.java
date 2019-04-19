@@ -37,7 +37,6 @@ public class LidarImageFusionAPI
    
    public static final Topic<Boolean> ImageSnapShot = UICategory.child(Image).topic(SnapShot);
    public static final Topic<Boolean> EnableStreaming = UICategory.child(Image).topic(Enable);
-   public static final Topic<Boolean> EnableObjectDetection = UICategory.child(ObjectDetection).topic(Enable);
    public static final Topic<Boolean> DetectDoor = UICategory.child(ObjectDetection).child(Door).topic(Detect);
    
    public static final Topic<IntArrayList> doorROI = ModuleCategory.child(ObjectDetection).child(Door).topic(ROI);

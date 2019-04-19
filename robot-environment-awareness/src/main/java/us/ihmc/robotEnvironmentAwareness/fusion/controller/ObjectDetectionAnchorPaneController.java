@@ -27,6 +27,5 @@ public class ObjectDetectionAnchorPaneController
             messager.submitMessage(LidarImageFusionAPI.DetectDoor, true);
          }
       });
-      messager.bindBidirectional(LidarImageFusionAPI.EnableObjectDetection, enableObjectDetectionButton.selectedProperty(), false);
    }
 }

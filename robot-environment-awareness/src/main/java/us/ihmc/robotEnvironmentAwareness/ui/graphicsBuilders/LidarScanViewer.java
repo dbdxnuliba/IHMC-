@@ -79,18 +79,12 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
          Color color = Color.hsb(alpha * 240.0, 1.0, 1.0);
 
          MessageTools.unpackScanPoint(message, i, scanPoint);
-         
+         //inho-------
          // K
          double fx = 601.5020141601562;
          double fy = 602.0339965820312;
          double cx = 520.92041015625;
          double cy = 273.5399169921875;
-         
-//         // P
-//         double fx = 601.5020141601562;
-//         double fy = 602.0339965820312;
-//         double cx = 520.92041015625;
-//         double cy = 273.5399169921875;
          
          double cameraX = -scanPoint.getY();
          double cameraY = -scanPoint.getZ();
@@ -109,9 +103,9 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
             if (v >= 0 && v < height)
                inImage = true;
          
-         inImage = true;
+         //inImage = true;
          
-         if (inImage)
+         if (inImage)//inho-------
             meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(SCAN_POINT_SIZE), scanPoint, color);
       }
 
