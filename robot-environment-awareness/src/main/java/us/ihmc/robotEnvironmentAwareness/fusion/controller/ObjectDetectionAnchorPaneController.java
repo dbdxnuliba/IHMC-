@@ -23,7 +23,6 @@ public class ObjectDetectionAnchorPaneController
          @Override
          public void handle(ActionEvent event)
          {
-            System.out.println("ObjectDetectionAnchorPaneController true");
             messager.submitMessage(LidarImageFusionAPI.DetectDoor, true);
          }
       });
