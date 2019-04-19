@@ -1,5 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +30,12 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private final Ros2Node ros2Node;
    private final REAModuleStateReporter moduleStateReporter;
-   
-   private static final int THREAD_PERIOD_MILLISECONDS = 200;
-   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
-   
+
+   //   private static final int THREAD_PERIOD_MILLISECONDS = 200;
+   //   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
+
+   private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
+
    private final FusionSensorObjectDetectionManager objectDetectionModule;
    private final AtomicReference<List<ObjectType>> selectedObjecTypes;
 
@@ -47,30 +50,34 @@ public class LidarImageFusionProcessorCommunicationModule
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, ImageMessage.class, "/ihmc/image", this::dispatchImageMessage);
-      
+
       objectDetectionModule = new FusionSensorObjectDetectionManager(ros2Node);
-      
+
       messager.registerTopicListener(LidarImageFusionAPI.RequestSocketConnection, (content) -> connectWithObjectDetectionModule());
       messager.registerTopicListener(LidarImageFusionAPI.RequestObjectDetection, (content) -> requestObjectDetection());
       selectedObjecTypes = messager.createInput(LidarImageFusionAPI.SelectedObjecTypes, new ArrayList<ObjectType>());
    }
-   
+
    private void connectWithObjectDetectionModule()
    {
       System.out.println("connectWithObjectDetectionModule");
       // TODO : connect socket.
    }
-   
+
    private void requestObjectDetection()
    {
       System.out.println("requestObjectDetection");
-      for(ObjectType type : selectedObjecTypes.get())
+      
+      BufferedImage imageToSend = latestBufferedImage.getAndSet(null);
+      System.out.println("imageToSend "+imageToSend.getWidth() +" "+imageToSend.getHeight());
+      
+      for (ObjectType type : selectedObjecTypes.get())
       {
          System.out.println(type.toString());
       }
       // TODO : get recent image and send it to server here.
    }
-   
+
    // TODO : waiting roi results from server.
    // TODO : the result should be a list of roi.
    // TODO : and calculate object parameters.
@@ -85,6 +92,7 @@ public class LidarImageFusionProcessorCommunicationModule
    {
       StereoVisionPointCloudMessage message = subscriber.takeNextData();
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
+      objectDetectionModule.updateLatestStereoVisionPointCloudMessage(message);
    }
 
    private void dispatchImageMessage(Subscriber<ImageMessage> subscriber)
@@ -92,6 +100,8 @@ public class LidarImageFusionProcessorCommunicationModule
       ImageMessage message = subscriber.takeNextData();
       if (messager.isMessagerOpen())
          messager.submitMessage(LidarImageFusionAPI.ImageState, new ImageMessage(message));
+
+      latestBufferedImage.set(FusionSensorImageViewer.convertImageMessageToBufferedImage(message));
    }
 
    public void start() throws IOException
@@ -107,10 +117,12 @@ public class LidarImageFusionProcessorCommunicationModule
       ros2Node.destroy();
    }
 
-   public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(SharedMemoryJavaFXMessager messager, DomainFactory.PubSubImplementation implementation) throws IOException
+   public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(SharedMemoryJavaFXMessager messager,
+                                                                                       DomainFactory.PubSubImplementation implementation)
+         throws IOException
    {
       KryoMessager kryoMessager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
-                                                              REACommunicationProperties.getPrivateNetClassList());
+                                                                  REACommunicationProperties.getPrivateNetClassList());
       kryoMessager.setAllowSelfSubmit(true);
       kryoMessager.startMessager();
 
