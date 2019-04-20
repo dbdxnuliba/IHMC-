@@ -14,6 +14,14 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
    public void calculateAndPackResult()
    {
       // TODO : pack result on newPacket.
-
+      int size = pointCloudToCalculate.size();
+      double xtotal = 0 , ytotal = 0, ztotal = 0;
+      for (int i = 0; i < size; i++)
+      {
+         xtotal+= pointCloudToCalculate.get(i).getX();
+         ytotal+= pointCloudToCalculate.get(i).getY();
+         ztotal+= pointCloudToCalculate.get(i).getZ();
+      }
+      System.out.println("door center " +xtotal/size +" "+ ytotal/size +" "+ztotal/size);
    }
 }

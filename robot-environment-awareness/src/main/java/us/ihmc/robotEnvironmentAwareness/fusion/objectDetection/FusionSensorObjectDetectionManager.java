@@ -33,12 +33,12 @@ public class FusionSensorObjectDetectionManager
       latestStereoVisionPointCloudMessage.set(message);
    }
 
-   public void computeAndPublish(ObjectType objectType, StereoVisionPointCloudMessage sourceMessage, RegionOfInterest roi)
+   public void computeAndPublish(ObjectType objectType, RegionOfInterest roi)
    {
       long startTime = System.nanoTime();
-      objectTypeToCalculatorMap.get(objectType).getPointCloudInROI(sourceMessage, roi);
+      objectTypeToCalculatorMap.get(objectType).getPointCloudInROI(latestStereoVisionPointCloudMessage.getAndSet(null), roi);
       objectTypeToCalculatorMap.get(objectType).calculateAndPackResult();
-      objectTypeToCalculatorMap.get(objectType).publish();
+      //objectTypeToCalculatorMap.get(objectType).publish();
 
       long computingTime = System.nanoTime() - startTime;
       System.out.println("computing time is " + Conversions.nanosecondsToMicroseconds(computingTime));
