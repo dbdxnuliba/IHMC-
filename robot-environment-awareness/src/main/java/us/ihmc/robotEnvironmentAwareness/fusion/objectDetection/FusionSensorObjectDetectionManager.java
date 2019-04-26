@@ -37,7 +37,7 @@ public class FusionSensorObjectDetectionManager
    {
       long startTime = System.nanoTime();
       objectTypeToCalculatorMap.get(objectType).getPointCloudInROI(latestStereoVisionPointCloudMessage.getAndSet(null), roi);
-      objectTypeToCalculatorMap.get(objectType).calculateAndPackResult();
+      //objectTypeToCalculatorMap.get(objectType).calculateAndPackResult();
       //objectTypeToCalculatorMap.get(objectType).publish();
 
       long computingTime = System.nanoTime() - startTime;

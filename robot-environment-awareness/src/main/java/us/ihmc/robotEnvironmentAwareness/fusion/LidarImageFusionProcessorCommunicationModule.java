@@ -7,8 +7,9 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -34,7 +35,6 @@ import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.FusionSensorObjectDetectionManager;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.updaters.REAModuleStateReporter;
-import us.ihmc.robotics.controllers.AbstractPIDController;
 import us.ihmc.ros2.Ros2Node;
 
 public class LidarImageFusionProcessorCommunicationModule
@@ -45,6 +45,8 @@ public class LidarImageFusionProcessorCommunicationModule
    private final REAModuleStateReporter moduleStateReporter;
 
    private Socket socketForObjectDetector;
+   private List<RegionOfInterest> detectedROIs;
+   private int numOfObjDetected;
    private static final String socketHostIPAddress = "127.0.0.1";
    private static final int socketPort = 65535;
 
@@ -85,7 +87,7 @@ public class LidarImageFusionProcessorCommunicationModule
       {
          socketForObjectDetector = new Socket(socketHostIPAddress, socketPort);
       }
-      catch (UnknownHostException e)
+      catch (UnknownHostException | ConnectException e)
       {
          e.printStackTrace();
       }
@@ -93,6 +95,7 @@ public class LidarImageFusionProcessorCommunicationModule
       {
          e.printStackTrace();
       }
+
    }
 
    private void requestObjectDetection()
@@ -108,53 +111,113 @@ public class LidarImageFusionProcessorCommunicationModule
          System.out.println(type.toString());
       }
       // TODO : send it to server here.
-      int numberOfObjectToDetect = selectedObjecTypes.get().size();
-      if (numberOfObjectToDetect != 0)
-      {
-         List<RegionOfInterest> detectedROIs = new ArrayList<>();
-         try
-         {
-            DataBuffer dataBuffer = imageToSend.getData().getDataBuffer();
-            int[] imageInts = ((DataBufferInt) dataBuffer).getData();
-            ByteBuffer byteBuffer = ByteBuffer.allocate(imageInts.length * 4);
-            IntBuffer intBuffer = byteBuffer.asIntBuffer();
-            intBuffer.put(imageInts);
-            byte[] imageBytes = byteBuffer.array();
-            System.out.println(imageBytes.length);
-
-            OutputStream outputStream = socketForObjectDetector.getOutputStream();
-            DataOutputStream dos = new DataOutputStream(outputStream);
-            if(dos == null)
-               System.out.println("hey null!");
-            dos.write(imageBytes);
-            
-            BufferedReader br = new BufferedReader(new InputStreamReader(socketForObjectDetector.getInputStream()));
-           /**
-            * result = [xmin xmax ymin ymax] 
-            */
-            int[] result = Arrays.stream(br.readLine().split(",")).mapToInt(Integer::parseInt).toArray();
-            LogTools.info("aaaaaaaaaaaaaaaaaaaaaa");
-            System.out.println(Arrays.toString(result));
-            RegionOfInterest roi = new RegionOfInterest();
-            roi.setXOffset(result[0]);
-            roi.setYOffset(result[2]);
-            roi.setHeight(result[3] - result[2]);
-            roi.setWidth(result[1] - result[0]);
-            detectedROIs.add(roi);
-         }
-         catch (IOException e)
-         {
-            e.printStackTrace();
-         }
-         objectDetectionManager.computeAndPublish(ObjectType.Door, detectedROIs.get(0));
-      }
-      
+      detectedROIs = sendImgAndGetRois(imageToSend);
+      numOfObjDetected = detectedROIs.size();
+      objectDetectionManager.computeAndPublish(ObjectType.Door, detectedROIs.get(0));
    }
 
-   // TODO : waiting roi results from server.
-   // TODO : the result should be a list of roi.
-   // TODO : and calculate object parameters.
+/////////////////////////////////Abstraction////////////////////////////////////////////////////
 
+   public List<RegionOfInterest> sendImgAndGetRois(BufferedImage bufferedImage)
+   {
+     
+      
+      byte[] imgBytes;
+      byte[] imgDimBytes;
+      DataOutputStream dataOutputStream;
+      BufferedReader bufferedReader;
+      RegionOfInterest roi = new RegionOfInterest();
+      List<RegionOfInterest> roisToAppend = new ArrayList<>();
+      int[] roiData;
+      try
+      {
+         imgBytes = convertImgToBytes(bufferedImage);
+         imgDimBytes = convertImgDimToBytes(imgBytes.length, bufferedImage.getWidth(), bufferedImage.getHeight());
+         dataOutputStream = new DataOutputStream(socketForObjectDetector.getOutputStream());
+         dataOutputStream.write(imgDimBytes);
+         dataOutputStream.write(imgBytes);
+
+         bufferedReader = new BufferedReader(new InputStreamReader(socketForObjectDetector.getInputStream()));
+         roiData = convertStringToIntArray(bufferedReader.readLine());
+         System.out.println(Arrays.toString(roiData));
+         for (int i = 0; i < roiData.length; i+=5)
+         {
+            System.out.println(objNumToName(roiData[i])+" has been detected");
+            // id, x min x max, y min, y max
+            //roi.setName(roiData[i]);    add a name attribute
+            int xmin = i+1;
+            int xmax = i+2;
+            int ymin = i+3;
+            int ymax = i+4;
+            roi.setXOffset(roiData[xmin]);
+            roi.setYOffset(roiData[ymin]);
+            roi.setHeight(roiData[ymax] - roiData[ymin]);
+            roi.setWidth(roiData[xmax] - roiData[xmin]);
+            roisToAppend.add(roi);
+         }
+         // TODO:
+         // override roi pixels on bufferedImage.
+//         messager.submitMessage(LidarImageFusionAPI.ImageResultState, bufferedImage);
+         
+      }
+      catch (SocketException e)
+      {
+         System.out.println("hallo");
+      }
+      catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+      return roisToAppend;
+   }
+
+   public String objNumToName(int objNum)
+   {
+      String objName = "";
+      switch(objNum)
+      {
+         case 0: objName = "no object";
+            break;
+         case 1: objName = "door";
+            break;
+         case 2: objName = "doorHandle";
+            break;
+      }
+      return objName;
+   }
+
+   public int[] convertStringToIntArray(String msgFromPython)
+   {
+      int[] intArray = Arrays.stream(msgFromPython.split(",")).mapToInt(Integer::parseInt).toArray();
+      return intArray;
+   }
+
+   public byte[] convertImgToBytes(BufferedImage bufferedImage)
+   {
+      int width = bufferedImage.getWidth();
+      int height = bufferedImage.getHeight();
+
+      DataBuffer dataBuffer = bufferedImage.getData().getDataBuffer();
+      int[] imageInts = ((DataBufferInt) dataBuffer).getData();
+      ByteBuffer byteBuffer = ByteBuffer.allocate(imageInts.length * 4);
+      IntBuffer intBuffer = byteBuffer.asIntBuffer();
+      intBuffer.put(imageInts);
+      byte[] imageBytes = byteBuffer.array();
+      return imageBytes;
+   }
+
+   public byte[] convertImgDimToBytes(int size, int width, int height)
+   {
+      int[] imgDim = {size, width, height};
+      ByteBuffer byteBuffer = ByteBuffer.allocate(imgDim.length * 4);
+      IntBuffer intBuffer = byteBuffer.asIntBuffer();
+      intBuffer.put(imgDim);
+      byte[] imageSizeBytes = byteBuffer.array();
+      return imageSizeBytes;
+   }
+   
+/////////////////////////////////Abstraction////////////////////////////////////////////////////
+   
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
    {
       LidarScanMessage message = subscriber.takeNextData();
@@ -188,6 +251,7 @@ public class LidarImageFusionProcessorCommunicationModule
 
       messager.closeMessager();
       ros2Node.destroy();
+      socketForObjectDetector.close();
    }
 
    public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(SharedMemoryJavaFXMessager messager,
