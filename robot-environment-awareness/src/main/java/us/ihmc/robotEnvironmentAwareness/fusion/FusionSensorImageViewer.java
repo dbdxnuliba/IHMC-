@@ -13,6 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
+import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 
 public class FusionSensorImageViewer
 {

@@ -1,4 +1,4 @@
-package us.ihmc.robotEnvironmentAwareness.fusion;
+package us.ihmc.robotEnvironmentAwareness.communication;
 
 import java.awt.image.BufferedImage;
 import java.util.List;

@@ -6,7 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
-import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionAPI;
+import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 
 public class ImageProcessingAnchorPaneController
 {
