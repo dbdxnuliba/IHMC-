@@ -9,19 +9,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.ImageMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
-import javafx.animation.AnimationTimer;
 import sensor_msgs.msg.dds.RegionOfInterest;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.util.NetworkPorts;
@@ -46,10 +46,12 @@ public class LidarImageFusionProcessorCommunicationModule
    private final REAModuleStateReporter moduleStateReporter;
 
    private static final int socketPort = 65535;
+   private static final long milliSecondsForOneTick = 10;
+   private static final double maximumTimeToWaitResult = 20.0;
    private Socket objectDetectionSocket;
-   private List<RegionOfInterest> detectedROIs;
-   //private final AnimationTimer socketListener;
-   
+   private List<RegionOfInterest> detectedROIs = new ArrayList<>();
+   private boolean imageRequested;
+
    private final FusionSensorObjectDetectionManager objectDetectionManager;
 
    private final AtomicReference<String> socketHostIPAddress;
@@ -74,6 +76,69 @@ public class LidarImageFusionProcessorCommunicationModule
       messager.registerTopicListener(LidarImageFusionAPI.RequestObjectDetection, (content) -> requestObjectDetection());
       selectedObjecTypes = messager.createInput(LidarImageFusionAPI.SelectedObjecTypes, new ArrayList<ObjectType>());
       socketHostIPAddress = messager.createInput(LidarImageFusionAPI.ObjectDetectionModuleAddress);
+
+      TimerTask socketTimerTask = new TimerTask()
+      {
+         double waitingTime = 0;
+
+         @Override
+         public void run()
+         {
+            if (!imageRequested)
+               return;
+
+            waitingTime += (double) milliSecondsForOneTick / 1000;
+            if (waitingTime > maximumTimeToWaitResult)
+            {
+               done();
+               System.out.println("time out!");
+            }
+
+            BufferedReader bufferedReader;
+            RegionOfInterest roi = new RegionOfInterest();
+            int[] roiData;
+            try
+            {
+               InputStreamReader inputStreamReader = new InputStreamReader(objectDetectionSocket.getInputStream());
+               bufferedReader = new BufferedReader(inputStreamReader);
+
+               if (!bufferedReader.ready())
+                  return;
+
+               roiData = convertStringToIntArray(bufferedReader.readLine());
+               System.out.println(Arrays.toString(roiData));
+               for (int i = 0; i < roiData.length; i += 5)
+               {
+                  System.out.println(objNumToName(roiData[i]) + " has been detected");
+                  // id, x min x max, y min, y max
+                  //roi.setName(roiData[i]);    add a name attribute
+                  int xmin = roiData[i + 1];
+                  int xmax = roiData[i + 2];
+                  int ymin = roiData[i + 3];
+                  int ymax = roiData[i + 4];
+                  roi.setXOffset(roiData[i + 1]);
+                  roi.setYOffset(roiData[i + 3]);
+                  roi.setHeight(roiData[i + 4] - roiData[i + 3]);
+                  roi.setWidth(roiData[i + 2] - roiData[i + 1]);
+                  detectedROIs.add(roi);
+                  System.out.println(xmin + " " + xmax + " " + ymin + " " + ymax);
+               }
+               done();
+            }
+            catch (IOException e)
+            {
+               e.printStackTrace();
+            }
+         }
+
+         public void done()
+         {
+            waitingTime = 0.0;
+            imageRequested = false;
+         }
+      };
+      Timer socketTimer = new Timer();
+      socketTimer.schedule(socketTimerTask, 0, milliSecondsForOneTick);
    }
 
    private void connectWithObjectDetectionModule()
@@ -103,62 +168,33 @@ public class LidarImageFusionProcessorCommunicationModule
       {
          System.out.println(type.toString());
       }
-      
-      detectedROIs = sendImgAndGetRois(imageToSend);
-      
+
+      imageRequested = true;
+      sendImageToObjectDetectionModule(imageToSend);
+
+      //sendImgAndGetRois(imageToSend);
+
       // TODO : clean up and re define the calculators.
       // objectDetectionManager.computeAndPublish(ObjectType.Door, detectedROIs.get(0));
    }
 
-   public List<RegionOfInterest> sendImgAndGetRois(BufferedImage bufferedImage)
+   private void sendImageToObjectDetectionModule(BufferedImage bufferedImage)
    {
       byte[] imgBytes;
       byte[] imgDimBytes;
       DataOutputStream dataOutputStream;
-      BufferedReader bufferedReader;
-      RegionOfInterest roi = new RegionOfInterest();
-      List<RegionOfInterest> roisToAppend = new ArrayList<>();
-      int[] roiData;
+      imgBytes = convertImgToBytes(bufferedImage);
+      imgDimBytes = convertImgDimToBytes(imgBytes.length, bufferedImage.getWidth(), bufferedImage.getHeight());
       try
       {
-         imgBytes = convertImgToBytes(bufferedImage);
-         imgDimBytes = convertImgDimToBytes(imgBytes.length, bufferedImage.getWidth(), bufferedImage.getHeight());
          dataOutputStream = new DataOutputStream(objectDetectionSocket.getOutputStream());
          dataOutputStream.write(imgDimBytes);
          dataOutputStream.write(imgBytes);
-
-         bufferedReader = new BufferedReader(new InputStreamReader(objectDetectionSocket.getInputStream()));
-         roiData = convertStringToIntArray(bufferedReader.readLine());
-         System.out.println(Arrays.toString(roiData));
-         for (int i = 0; i < roiData.length; i += 5)
-         {
-            System.out.println(objNumToName(roiData[i]) + " has been detected");
-            // id, x min x max, y min, y max
-            //roi.setName(roiData[i]);    add a name attribute
-            int xmin = i + 1;
-            int xmax = i + 2;
-            int ymin = i + 3;
-            int ymax = i + 4;
-            roi.setXOffset(roiData[xmin]);
-            roi.setYOffset(roiData[ymin]);
-            roi.setHeight(roiData[ymax] - roiData[ymin]);
-            roi.setWidth(roiData[xmax] - roiData[xmin]);
-            roisToAppend.add(roi);
-         }
-         // TODO:
-         // override roi pixels on bufferedImage.
-         //         messager.submitMessage(LidarImageFusionAPI.ImageResultState, bufferedImage);
-
-      }
-      catch (SocketException e)
-      {
-         System.out.println("hallo");
       }
       catch (IOException e)
       {
          e.printStackTrace();
       }
-      return roisToAppend;
    }
 
    public String objNumToName(int objNum)
@@ -239,7 +275,9 @@ public class LidarImageFusionProcessorCommunicationModule
 
       messager.closeMessager();
       ros2Node.destroy();
-      objectDetectionSocket.close();
+      if (objectDetectionSocket != null)
+         if (!objectDetectionSocket.isClosed())
+            objectDetectionSocket.close();
    }
 
    public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(SharedMemoryJavaFXMessager messager,
