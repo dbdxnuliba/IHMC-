@@ -153,6 +153,8 @@ public class QuadrupedSupportState extends QuadrupedFootState
 
       footBarelyLoaded.set(false);
       isFootSlipping.set(false);
+
+      updateHoldPositionSetpoints();
    }
 
 
@@ -175,18 +177,7 @@ public class QuadrupedSupportState extends QuadrupedFootState
       footAcceleration.setBodyFrame(bodyFixedFrame);
       spatialAccelerationCommand.setSpatialAcceleration(soleFrame, footAcceleration);
       spatialAccelerationCommand.setLinearWeights(parameters.getSupportFootWeights());
-
-      if (footSwitch.hasFootHitGround())
-      {
-         if (!footIsVerifiedAsLoaded && timeInState > minimumTimeInSupportState.getValue())
-         {
-            footIsVerifiedAsLoaded = true;
-
-            tempPoint.setToZero(soleFrame);
-            groundPlanePosition.setMatchingFrame(tempPoint);
-            upcomingGroundPlanePosition.setMatchingFrame(tempPoint);
-         }
-      }
+      
 
       // assemble feedback command
       bodyFixedControlledPose.setToZero(soleFrame);
@@ -264,6 +255,7 @@ public class QuadrupedSupportState extends QuadrupedFootState
    private void updateIsFootSlippingEstimate()
    {
       footVelocity.setMatchingFrame(soleFrame.getTwistOfFrame().getLinearPart());
+      footVelocity.checkReferenceFrameMatch(worldFrame);
 
       double inPlaneVelocity = Math.sqrt(MathTools.square(footVelocity.getX()) + MathTools.square(footVelocity.getY()));
       footPlanarVelocity.set(inPlaneVelocity);

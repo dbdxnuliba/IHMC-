@@ -29,7 +29,6 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.TotalMassCalculator;
 import us.ihmc.robotics.sensors.CenterOfMassDataHolder;
-import us.ihmc.robotics.sensors.ContactSensorHolder;
 import us.ihmc.robotics.sensors.FootSwitchFactory;
 import us.ihmc.robotics.sensors.FootSwitchInterface;
 import us.ihmc.robotics.sensors.ForceSensorDataHolder;
@@ -45,11 +44,11 @@ import us.ihmc.rosControl.wholeRobot.JointStateHandle;
 import us.ihmc.rosControl.wholeRobot.PositionJointHandle;
 import us.ihmc.sensorProcessing.diagnostic.DiagnosticParameters.DiagnosticEnvironment;
 import us.ihmc.sensorProcessing.diagnostic.DiagnosticSensorProcessingConfiguration;
+import us.ihmc.sensorProcessing.model.RobotMotionStatus;
 import us.ihmc.sensorProcessing.model.RobotMotionStatusHolder;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.sensorProcessing.parameters.DRCRobotSensorInformation;
 import us.ihmc.sensorProcessing.sensorProcessors.SensorOutputMapReadOnly;
-import us.ihmc.sensorProcessing.sensors.RawJointSensorDataHolderMap;
 import us.ihmc.sensorProcessing.stateEstimation.StateEstimatorParameters;
 import us.ihmc.sensorProcessing.stateEstimation.evaluation.FullInverseDynamicsStructure;
 import us.ihmc.stateEstimation.humanoid.StateEstimatorController;
@@ -172,10 +171,7 @@ public class ValkyrieAutomatedDiagnosticController extends IHMCWholeRobotControl
       FloatingJointBasics rootJoint = fullRobotModel.getRootJoint();
       IMUDefinition[] imuDefinitions = fullRobotModel.getIMUDefinitions();
       ForceSensorDefinition[] forceSensorDefinitions = fullRobotModel.getForceSensorDefinitions();
-      ContactSensorHolder contactSensorHolder = new ContactSensorHolder(Arrays.asList(fullRobotModel.getContactSensorDefinitions()));
-      RawJointSensorDataHolderMap rawJointSensorDataHolderMap = new RawJointSensorDataHolderMap(fullRobotModel);
-      sensorReaderFactory.build(rootJoint, imuDefinitions, forceSensorDefinitions, contactSensorHolder, rawJointSensorDataHolderMap,
-                                estimatorDesiredJointDataHolder, registry);
+      sensorReaderFactory.build(rootJoint, imuDefinitions, forceSensorDefinitions, estimatorDesiredJointDataHolder, registry);
       sensorReader = sensorReaderFactory.getSensorReader();
       SensorOutputMapReadOnly sensorOutputMap = sensorReader.getSensorOutputMapReadOnly();
 
@@ -289,7 +285,7 @@ public class ValkyrieAutomatedDiagnosticController extends IHMCWholeRobotControl
 
          FootSwitchInterface footSwitchInterface = footSwitchFactory.newFootSwitch(namePrefix, contactablePlaneBody,
                                                                                    Collections.singleton(bipedFeet.get(robotSide.getOppositeSide())),
-                                                                                   footForceSensorForEstimator, null, totalRobotWeight, null, registry);
+                                                                                   footForceSensorForEstimator, totalRobotWeight, null, registry);
          footSwitchMap.put(rigidBody, footSwitchInterface);
 
       }
@@ -297,15 +293,23 @@ public class ValkyrieAutomatedDiagnosticController extends IHMCWholeRobotControl
       String[] imuSensorsToUseInStateEstimator = sensorInformation.getIMUSensorsToUseInStateEstimator();
 
       // Create the sensor readers and state estimator here:
+      RobotMotionStatusHolder robotMotionStatusHolder = new RobotMotionStatusHolder();
+      robotMotionStatusHolder.setCurrentRobotMotionStatus(RobotMotionStatus.UNKNOWN);
       StateEstimatorController stateEstimator = new DRCKinematicsBasedStateEstimator(inverseDynamicsStructure, stateEstimatorParameters,
                                                                                      sensorOutputMapReadOnly, centerOfMassDataHolderToUpdate,
                                                                                      imuSensorsToUseInStateEstimator, gravityMagnitude, footSwitchMap, null,
-                                                                                     new RobotMotionStatusHolder(), bipedFeetMap, yoGraphicsListRegistry);
+                                                                                     robotMotionStatusHolder, bipedFeetMap, yoGraphicsListRegistry);
 
       registry.addChild(stateEstimator.getYoVariableRegistry());
 
-      forceSensorStateUpdater = new ForceSensorStateUpdater(sensorOutputMapReadOnly, forceSensorDataHolderToUpdate, stateEstimatorParameters, gravityMagnitude,
-                                                            yoGraphicsListRegistry, registry);
+      forceSensorStateUpdater = new ForceSensorStateUpdater(fullRobotModel.getRootJoint(),
+                                                            sensorOutputMapReadOnly,
+                                                            forceSensorDataHolderToUpdate,
+                                                            stateEstimatorParameters,
+                                                            gravityMagnitude,
+                                                            robotMotionStatusHolder,
+                                                            yoGraphicsListRegistry,
+                                                            registry);
 
       return stateEstimator;
    }

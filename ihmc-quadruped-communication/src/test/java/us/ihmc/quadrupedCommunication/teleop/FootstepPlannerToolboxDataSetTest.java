@@ -137,6 +137,7 @@ public abstract class FootstepPlannerToolboxDataSetTest
             return 0.35;
          }
       };
+
       footstepPlanningModule = new QuadrupedFootstepPlanningModule(robotName, null, parameters, xGaitSettings,
                                                                    new DefaultPointFootSnapperParameters(), null, false, false, pubSubImplementation);
 
@@ -160,12 +161,15 @@ public abstract class FootstepPlannerToolboxDataSetTest
          throw new RuntimeException("Failed to start messager.");
       }
 
-      messager.submitMessage(FootstepPlannerMessagerAPI.XGaitSettingsTopic, xGaitSettings);
 
       if (VISUALIZE)
       {
          createUI(messager);
       }
+
+      messager.submitMessage(FootstepPlannerMessagerAPI.XGaitSettingsTopic, xGaitSettings);
+      messager.submitMessage(FootstepPlannerMessagerAPI.PlannerParametersTopic, parameters);
+
 
       ThreadTools.sleep(1000);
    }
@@ -560,7 +564,7 @@ public abstract class FootstepPlannerToolboxDataSetTest
          if (finalSteps.containsKey(step.getRobotQuadrant()))
             continue;
          else
-            finalSteps.put(step.getRobotQuadrant(), step.getGoalPosition());
+            finalSteps.put(step.getRobotQuadrant(), new Point3D(step.getGoalPosition()));
       }
 
       return finalSteps;

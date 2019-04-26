@@ -53,6 +53,7 @@ import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
+import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.parameters.EnumParameter;
 import us.ihmc.yoVariables.providers.EnumProvider;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -116,6 +117,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
 
    private boolean requestIntegratorReset = false;
    private final YoBoolean yoRequestingIntegratorReset = new YoBoolean("RequestingIntegratorReset", registry);
+   private final DoubleParameter loadPercentageForGroundPlane = new DoubleParameter("loadPercentageForGroundPlaneUpdate", registry, 0.25);
 
    private final ExecutionTimer controllerCoreTimer = new ExecutionTimer("controllerCoreTimer", 1.0, registry);
    private final EnumProvider<WholeBodyControllerCoreMode> controllerCoreMode;
@@ -167,7 +169,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       deactivateAccelerationIntegrationInWBC = runtimeEnvironment.getHighLevelControllerParameters().deactivateAccelerationIntegrationInTheWBC();
 
       // Initialize input providers.
-      stepMessageHandler = new QuadrupedStepMessageHandler(runtimeEnvironment.getRobotTimestamp(), registry);
+      stepMessageHandler = new QuadrupedStepMessageHandler(runtimeEnvironment.getRobotTimestamp(), runtimeEnvironment.getControlDT(), registry);
       commandConsumer = new QuadrupedStepCommandConsumer(commandInputManager, stepMessageHandler, controllerToolbox, controlManagerFactory);
 
       // step planner
@@ -241,7 +243,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       tempPoint.setToZero(controllerToolbox.getSoleReferenceFrame(quadrant));
       groundPlanePositions.get(quadrant).setMatchingFrame(tempPoint);
 
-      step.getGoalPosition(tempPoint);
+      tempPoint.setIncludingFrame(step.getReferenceFrame(), step.getGoalPosition());
       tempPoint.changeFrame(worldFrame);
       upcomingGroundPlanePositions.get(quadrant).setMatchingFrame(tempPoint);
 
@@ -259,7 +261,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       footstepStatusMessage.getDesiredStepInterval().setEndTime(step.getTimeInterval().getEndTime());
       footstepStatusMessage.getActualStepInterval().setStartTime(currentTime);
       footstepStatusMessage.getActualStepInterval().setEndTime(Double.NaN);
-      step.getGoalPosition(footstepStatusMessage.getDesiredTouchdownPositionInWorld());
+      footstepStatusMessage.getDesiredTouchdownPositionInWorld().set(step.getGoalPosition());
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
 
       controllerToolbox.getFallDetector().setNextFootstep(quadrant, step);
@@ -285,6 +287,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       footstepStatusMessage.getDesiredTouchdownPositionInWorld().add(balanceManager.getStepAdjustment(thisStepQuadrant));
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
 
+      stepMessageHandler.onTouchDown(thisStepQuadrant);
       stepMessageHandler.shiftPlanBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
 
       balanceManager.completedStep(thisStepQuadrant);
@@ -389,7 +392,9 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       }
 
       // update controller state machine
-      stateMachine.doActionAndTransition();
+      stateMachine.doTransitions();
+      stateMachine.doAction();
+//      stateMachine.doActionAndTransition();
 
       jointSpaceManager.compute();
 
@@ -434,7 +439,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       QuadrantDependentList<FootSwitchInterface> footSwitches = controllerToolbox.getRuntimeEnvironment().getFootSwitches();
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         if (footSwitches.get(robotQuadrant).hasFootHitGround())
+         if (footSwitches.get(robotQuadrant).computeFootLoadPercentage() > loadPercentageForGroundPlane.getValue())
          {
             groundPlanePositions.get(robotQuadrant).setFromReferenceFrame(controllerToolbox.getSoleReferenceFrame(robotQuadrant));
             upcomingGroundPlanePositions.get(robotQuadrant).setFromReferenceFrame(controllerToolbox.getSoleReferenceFrame(robotQuadrant));
@@ -453,6 +458,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       statusMessageOutputManager.reportStatusMessage(groundPlaneMessage);
    }
 
+   // FIXME does this do anything anymore?
    private void handleChangeInContactState()
    {
       // update accumulated step adjustment
@@ -520,7 +526,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
    {
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         boolean legLoaded = feetManager.getContactState(robotQuadrant).isLoadingBearing();
+         boolean legLoaded = feetManager.getContactState(robotQuadrant).isLoadBearing();
          if (legLoaded && legJointNames.get(robotQuadrant).contains(jointName))
             return true;
       }
