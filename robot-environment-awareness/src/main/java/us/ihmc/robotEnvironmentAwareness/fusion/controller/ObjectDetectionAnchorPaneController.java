@@ -6,6 +6,7 @@ import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.TextField;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.robotEnvironmentAwareness.fusion.LidarImageFusionAPI;
@@ -14,6 +15,11 @@ import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 public class ObjectDetectionAnchorPaneController
 {
    private JavaFXMessager messager;
+
+   private static final String defaultHostAddress = "10.100.3.157";
+
+   @FXML
+   private TextField serverADD;
 
    @FXML
    private Button btnConnect;
@@ -36,12 +42,17 @@ public class ObjectDetectionAnchorPaneController
    public void initialize(SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
+      serverADD.setText(defaultHostAddress);
+      cboxDoor.setSelected(true);
+      cboxDoorHandle.setSelected(true);
    }
 
    @FXML
    public void connect()
    {
+      messager.submitMessage(LidarImageFusionAPI.ObjectDetectionModuleAddress, serverADD.getText());
       messager.submitMessage(LidarImageFusionAPI.RequestSocketConnection, true);
+
    }
 
    @FXML

@@ -37,6 +37,7 @@ public class LidarImageFusionAPI
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
    private static final TypedTopicTheme<Boolean> Clear = apiFactory.createTypedTopicTheme("Clear");
    private static final TypedTopicTheme<Boolean> Request = apiFactory.createTypedTopicTheme("Request");
+   private static final TypedTopicTheme<String> Address = apiFactory.createTypedTopicTheme("Address");
    private static final TypedTopicTheme<List<RegionOfInterest>> ROIs = apiFactory.createTypedTopicTheme("ROIs");
    private static final TypedTopicTheme<List<ObjectType>> ObjecTypes = apiFactory.createTypedTopicTheme("ObjecTypes");
 
@@ -51,6 +52,7 @@ public class LidarImageFusionAPI
 
    public static final Topic<Boolean> RequestSocketConnection = ObjectDetectionCategory.child(Socket).topic(Request);
    public static final Topic<Boolean> RequestObjectDetection = ObjectDetectionCategory.topic(Request);
+   public static final Topic<String> ObjectDetectionModuleAddress = ObjectDetectionCategory.child(Socket).topic(Address);
    public static final Topic<List<ObjectType>> SelectedObjecTypes = ObjectDetectionCategory.topic(ObjecTypes);
    public static final Topic<List<RegionOfInterest>> ReceivedROIs = ObjectDetectionCategory.topic(ROIs);
 

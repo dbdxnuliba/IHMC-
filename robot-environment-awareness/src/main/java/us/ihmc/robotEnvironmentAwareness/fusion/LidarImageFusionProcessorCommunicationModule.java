@@ -46,12 +46,8 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private Socket socketForObjectDetector;
    private List<RegionOfInterest> detectedROIs;
-   private int numOfObjDetected;
-   private static final String socketHostIPAddress = "127.0.0.1";
+   private final AtomicReference<String> socketHostIPAddress;
    private static final int socketPort = 65535;
-
-   //   private static final int THREAD_PERIOD_MILLISECONDS = 200;
-   //   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
 
    private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
 
@@ -77,15 +73,16 @@ public class LidarImageFusionProcessorCommunicationModule
       messager.registerTopicListener(LidarImageFusionAPI.RequestSocketConnection, (content) -> connectWithObjectDetectionModule());
       messager.registerTopicListener(LidarImageFusionAPI.RequestObjectDetection, (content) -> requestObjectDetection());
       selectedObjecTypes = messager.createInput(LidarImageFusionAPI.SelectedObjecTypes, new ArrayList<ObjectType>());
+      socketHostIPAddress = messager.createInput(LidarImageFusionAPI.ObjectDetectionModuleAddress);
    }
 
    private void connectWithObjectDetectionModule()
    {
-      System.out.println("connectWithObjectDetectionModule");
+      System.out.println("server address to connect is "+ socketHostIPAddress.get());
 
       try
       {
-         socketForObjectDetector = new Socket(socketHostIPAddress, socketPort);
+         socketForObjectDetector = new Socket(socketHostIPAddress.get(), socketPort);
       }
       catch (UnknownHostException | ConnectException e)
       {
@@ -101,7 +98,6 @@ public class LidarImageFusionProcessorCommunicationModule
    private void requestObjectDetection()
    {
       System.out.println("requestObjectDetection");
-      //messager.submitMessage(LidarImageFusionAPI.RequestObjectDetection, false);
 
       BufferedImage imageToSend = latestBufferedImage.getAndSet(null);
       System.out.println("imageToSend " + imageToSend.getWidth() + " " + imageToSend.getHeight());
@@ -112,7 +108,6 @@ public class LidarImageFusionProcessorCommunicationModule
       }
       // TODO : send it to server here.
       detectedROIs = sendImgAndGetRois(imageToSend);
-      numOfObjDetected = detectedROIs.size();
       objectDetectionManager.computeAndPublish(ObjectType.Door, detectedROIs.get(0));
    }
 
@@ -120,8 +115,6 @@ public class LidarImageFusionProcessorCommunicationModule
 
    public List<RegionOfInterest> sendImgAndGetRois(BufferedImage bufferedImage)
    {
-     
-      
       byte[] imgBytes;
       byte[] imgDimBytes;
       DataOutputStream dataOutputStream;
