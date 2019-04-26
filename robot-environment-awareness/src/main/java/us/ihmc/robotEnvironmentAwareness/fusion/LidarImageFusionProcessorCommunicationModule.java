@@ -1,8 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferInt;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,11 +8,10 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +23,6 @@ import sensor_msgs.msg.dds.RegionOfInterest;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.util.NetworkPorts;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
-import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.pubsub.DomainFactory;
 import us.ihmc.pubsub.subscriber.Subscriber;
@@ -34,6 +30,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.KryoMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.FusionSensorObjectDetectionManager;
+import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectDetectionSocketHelper;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.updaters.REAModuleStateReporter;
 import us.ihmc.ros2.Ros2Node;
@@ -49,8 +46,8 @@ public class LidarImageFusionProcessorCommunicationModule
    private static final long milliSecondsForOneTick = 10;
    private static final double maximumTimeToWaitResult = 20.0;
    private Socket objectDetectionSocket;
-   private List<RegionOfInterest> detectedROIs = new ArrayList<>();
    private boolean imageRequested;
+   private final Map<ObjectType, RegionOfInterest> objectTypeToROIMap = new HashMap<>();
 
    private final FusionSensorObjectDetectionManager objectDetectionManager;
 
@@ -79,7 +76,7 @@ public class LidarImageFusionProcessorCommunicationModule
 
       TimerTask socketTimerTask = new TimerTask()
       {
-         double waitingTime = 0;
+         private double waitingTime = 0;
 
          @Override
          public void run()
@@ -91,39 +88,38 @@ public class LidarImageFusionProcessorCommunicationModule
             if (waitingTime > maximumTimeToWaitResult)
             {
                done();
-               System.out.println("time out!");
+               System.out.println("# detecting time out!");
             }
 
-            BufferedReader bufferedReader;
-            RegionOfInterest roi = new RegionOfInterest();
-            int[] roiData;
             try
             {
                InputStreamReader inputStreamReader = new InputStreamReader(objectDetectionSocket.getInputStream());
-               bufferedReader = new BufferedReader(inputStreamReader);
+               BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
                if (!bufferedReader.ready())
                   return;
 
-               roiData = convertStringToIntArray(bufferedReader.readLine());
-               System.out.println(Arrays.toString(roiData));
+               int[] roiData = ObjectDetectionSocketHelper.convertStringToIntArray(bufferedReader.readLine());
+               objectTypeToROIMap.clear();
                for (int i = 0; i < roiData.length; i += 5)
                {
-                  System.out.println(objNumToName(roiData[i]) + " has been detected");
-                  // id, x min x max, y min, y max
-                  //roi.setName(roiData[i]);    add a name attribute
+                  if (roiData[i] == -1)
+                     return;
+                  ObjectType detectedObjectType = ObjectType.values()[roiData[i]];
                   int xmin = roiData[i + 1];
                   int xmax = roiData[i + 2];
                   int ymin = roiData[i + 3];
                   int ymax = roiData[i + 4];
-                  roi.setXOffset(roiData[i + 1]);
-                  roi.setYOffset(roiData[i + 3]);
-                  roi.setHeight(roiData[i + 4] - roiData[i + 3]);
-                  roi.setWidth(roiData[i + 2] - roiData[i + 1]);
-                  detectedROIs.add(roi);
-                  System.out.println(xmin + " " + xmax + " " + ymin + " " + ymax);
+                  RegionOfInterest roi = new RegionOfInterest();
+                  roi.setXOffset(xmin);
+                  roi.setYOffset(ymin);
+                  roi.setHeight(ymax - ymin);
+                  roi.setWidth(xmax - xmin);
+                  objectTypeToROIMap.put(detectedObjectType, roi);
                }
+               System.out.println("# detecting time tooks "+waitingTime+" seconds.");
                done();
+               reportROIResults();
             }
             catch (IOException e)
             {
@@ -131,7 +127,7 @@ public class LidarImageFusionProcessorCommunicationModule
             }
          }
 
-         public void done()
+         private void done()
          {
             waitingTime = 0.0;
             imageRequested = false;
@@ -139,6 +135,20 @@ public class LidarImageFusionProcessorCommunicationModule
       };
       Timer socketTimer = new Timer();
       socketTimer.schedule(socketTimerTask, 0, milliSecondsForOneTick);
+   }
+
+   private void reportROIResults()
+   {
+      int numberOfSelectedObjects = selectedObjecTypes.get().size();
+      for (int i = 0; i < numberOfSelectedObjects; i++)
+      {
+         ObjectType objectType = selectedObjecTypes.get().get(i);
+         RegionOfInterest regionOfInterest = objectTypeToROIMap.get(objectType);
+         if (regionOfInterest != null)
+            System.out.println(objectType + " " + regionOfInterest.getXOffset() + " " + regionOfInterest.getYOffset() + " " + regionOfInterest.getWidth() + " "
+                  + regionOfInterest.getHeight());
+      }
+      // TODO: report to FusionSensorObjectDetectionManager.
    }
 
    private void connectWithObjectDetectionModule()
@@ -164,30 +174,17 @@ public class LidarImageFusionProcessorCommunicationModule
       System.out.println("requestObjectDetection");
       BufferedImage imageToSend = latestBufferedImage.getAndSet(null);
 
-      for (ObjectType type : selectedObjecTypes.get())
-      {
-         System.out.println(type.toString());
-      }
-
       imageRequested = true;
       sendImageToObjectDetectionModule(imageToSend);
-
-      //sendImgAndGetRois(imageToSend);
-
-      // TODO : clean up and re define the calculators.
-      // objectDetectionManager.computeAndPublish(ObjectType.Door, detectedROIs.get(0));
    }
 
    private void sendImageToObjectDetectionModule(BufferedImage bufferedImage)
    {
-      byte[] imgBytes;
-      byte[] imgDimBytes;
-      DataOutputStream dataOutputStream;
-      imgBytes = convertImgToBytes(bufferedImage);
-      imgDimBytes = convertImgDimToBytes(imgBytes.length, bufferedImage.getWidth(), bufferedImage.getHeight());
+      byte[] imgBytes = ObjectDetectionSocketHelper.convertImgToBytes(bufferedImage);
+      byte[] imgDimBytes = ObjectDetectionSocketHelper.convertImgDimToBytes(imgBytes.length, bufferedImage.getWidth(), bufferedImage.getHeight());
       try
       {
-         dataOutputStream = new DataOutputStream(objectDetectionSocket.getOutputStream());
+         DataOutputStream dataOutputStream = new DataOutputStream(objectDetectionSocket.getOutputStream());
          dataOutputStream.write(imgDimBytes);
          dataOutputStream.write(imgBytes);
       }
@@ -195,51 +192,6 @@ public class LidarImageFusionProcessorCommunicationModule
       {
          e.printStackTrace();
       }
-   }
-
-   public String objNumToName(int objNum)
-   {
-      String objName = "";
-      switch (objNum)
-      {
-      case 0:
-         objName = "no object";
-         break;
-      case 1:
-         objName = "door";
-         break;
-      case 2:
-         objName = "doorHandle";
-         break;
-      }
-      return objName;
-   }
-
-   private static int[] convertStringToIntArray(String msgFromPython)
-   {
-      int[] intArray = Arrays.stream(msgFromPython.split(",")).mapToInt(Integer::parseInt).toArray();
-      return intArray;
-   }
-
-   private static byte[] convertImgToBytes(BufferedImage bufferedImage)
-   {
-      DataBuffer dataBuffer = bufferedImage.getData().getDataBuffer();
-      int[] imageInts = ((DataBufferInt) dataBuffer).getData();
-      ByteBuffer byteBuffer = ByteBuffer.allocate(imageInts.length * 4);
-      IntBuffer intBuffer = byteBuffer.asIntBuffer();
-      intBuffer.put(imageInts);
-      byte[] imageBytes = byteBuffer.array();
-      return imageBytes;
-   }
-
-   private static byte[] convertImgDimToBytes(int size, int width, int height)
-   {
-      int[] imgDim = {size, width, height};
-      ByteBuffer byteBuffer = ByteBuffer.allocate(imgDim.length * 4);
-      IntBuffer intBuffer = byteBuffer.asIntBuffer();
-      intBuffer.put(imgDim);
-      byte[] imageSizeBytes = byteBuffer.array();
-      return imageSizeBytes;
    }
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
@@ -271,8 +223,6 @@ public class LidarImageFusionProcessorCommunicationModule
 
    public void stop() throws Exception
    {
-      LogTools.info("LidarImageFusionProcessorCommunicationModule is going down.");
-
       messager.closeMessager();
       ros2Node.destroy();
       if (objectDetectionSocket != null)
