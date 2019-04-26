@@ -1,5 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import controller_msgs.msg.dds.ImageMessage;
@@ -29,6 +30,8 @@ public class LidarImageFusionAPI
 
    private static final CategoryTheme Image = apiFactory.createCategoryTheme("Image");
    private static final CategoryTheme Socket = apiFactory.createCategoryTheme("Socket");
+   
+   private static final CategoryTheme Result = apiFactory.createCategoryTheme("Result");
 
    private static final TypedTopicTheme<Boolean> SnapShot = apiFactory.createTypedTopicTheme("SnapShot");
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
@@ -44,6 +47,7 @@ public class LidarImageFusionAPI
    public static final Topic<Boolean> ImageViewClear = UICategory.child(Image).topic(Clear);
 
    public static final Topic<ImageMessage> ImageState = ModuleCategory.child(Image).topic(Data);
+   public static final Topic<BufferedImage> ImageResultState = ModuleCategory.child(Image).child(Result).topic(Data);
 
    public static final Topic<Boolean> RequestSocketConnection = ObjectDetectionCategory.child(Socket).topic(Request);
    public static final Topic<Boolean> RequestObjectDetection = ObjectDetectionCategory.topic(Request);

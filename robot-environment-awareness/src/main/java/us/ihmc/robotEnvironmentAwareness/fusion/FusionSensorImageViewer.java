@@ -21,6 +21,7 @@ public class FusionSensorImageViewer
 
    private final AtomicReference<ImageMessage> newImageMessageToView;
    private final AtomicReference<BufferedImage> recentBufferedImage;
+   private final AtomicReference<BufferedImage> newBufferedImageToView;
 
    private final AtomicReference<Boolean> enableStreaming;
    private final AtomicReference<Boolean> snapshot;
@@ -43,7 +44,8 @@ public class FusionSensorImageViewer
 
       newImageMessageToView = messager.createInput(LidarImageFusionAPI.ImageState);
       recentBufferedImage = new AtomicReference<BufferedImage>(null);
-
+      newBufferedImageToView = messager.createInput(LidarImageFusionAPI.ImageResultState);
+      
       imageStreamer = new AnimationTimer()
       {
          @Override
@@ -75,6 +77,9 @@ public class FusionSensorImageViewer
 
       if (newImageMessageToView.get() == null)
          return;
+      
+      if(newBufferedImageToView.get() != null)
+         imagesToView.add(newBufferedImageToView.getAndSet(null));
 
       unpackImage(newImageMessageToView.getAndSet(null));
 
@@ -108,6 +113,7 @@ public class FusionSensorImageViewer
       imagesToView.clear();
    }
 
+   //TODO : create a helper class and move to there.
    public static BufferedImage convertImageMessageToBufferedImage(ImageMessage imageMessage)
    {
       int width = imageMessage.getWidth();
