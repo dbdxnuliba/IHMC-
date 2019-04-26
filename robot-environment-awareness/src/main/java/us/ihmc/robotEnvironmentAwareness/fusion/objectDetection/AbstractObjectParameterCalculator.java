@@ -15,7 +15,7 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.idl.IDLSequence.Float;
-import us.ihmc.robotEnvironmentAwareness.fusion.PointCloudProjectionHelper;
+import us.ihmc.robotEnvironmentAwareness.fusion.projection.PointCloudProjectionHelper;
 import us.ihmc.ros2.Ros2Node;
 
 public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>

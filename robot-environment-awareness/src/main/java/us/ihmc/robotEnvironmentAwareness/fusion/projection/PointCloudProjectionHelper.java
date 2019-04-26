@@ -1,4 +1,4 @@
-package us.ihmc.robotEnvironmentAwareness.fusion;
+package us.ihmc.robotEnvironmentAwareness.fusion.projection;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
