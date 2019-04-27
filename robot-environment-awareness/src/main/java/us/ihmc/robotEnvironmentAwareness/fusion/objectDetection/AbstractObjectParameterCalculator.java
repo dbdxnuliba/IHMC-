@@ -20,8 +20,7 @@ import us.ihmc.ros2.Ros2Node;
 
 public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
 {
-   //private static final IntrinsicParameters intrinsicParameters = PointCloudProjectionHelper.multisenseIntrinsicParameters;
-   private static final IntrinsicParameters intrinsicParameters = new IntrinsicParameters();
+   private static final IntrinsicParameters intrinsicParameters = PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters;
    protected final List<Point3DBasics> pointCloudToCalculate;
 
    private final IHMCROS2Publisher<T> packetPublisher;
@@ -31,13 +30,7 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
    {
       pointCloudToCalculate = new ArrayList<Point3DBasics>();
       packetPublisher = ROS2Tools.createPublisher(ros2Node, packetType, ROS2Tools.getDefaultTopicNameGenerator());
-      
-      intrinsicParameters.setFx(601.5020141601562);
-      intrinsicParameters.setFy(602.0339965820312);
-      intrinsicParameters.setCx(520.92041015625);
-      intrinsicParameters.setCy(273.5399169921875);
-      
-      System.out.println(intrinsicParameters.getCx());
+
       System.out.println(ROS2Tools.getDefaultTopicNameGenerator().generateTopicName(packetType));
    }
 
@@ -52,7 +45,6 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
          Point2D projectedPixel = new Point2D();
          PointCloudProjectionHelper.projectMultisensePointCloudOnImage(point, projectedPixel, intrinsicParameters);
 
-         //System.out.println(""+projectedPixel.getX()+" "+projectedPixel.getY()+" "+roi.getXOffset()+" "+roi.getYOffset());
          if (MathTools.intervalContains(projectedPixel.getX(), roi.getXOffset(), roi.getXOffset() + roi.getWidth()))
          {
             if (MathTools.intervalContains(projectedPixel.getY(), roi.getYOffset(), roi.getYOffset() + roi.getHeight()))
@@ -69,5 +61,5 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
       packetPublisher.publish(newPacket.get());
    }
 
-   public abstract void calculateAndPackResult();
+   public abstract void calculate();
 }
