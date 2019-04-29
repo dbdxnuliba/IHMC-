@@ -13,30 +13,30 @@ import us.ihmc.ros2.Ros2Node;
 public class FusionSensorObjectDetectionManager
 {
    private final Ros2Node ros2Node;
-   private final Map<ObjectType, AbstractObjectParameterCalculator<?>> objectTypeToCalculatorMap = new HashMap<>();
+
+   private final DoorParameterCalculator doorParameterCalculator;
 
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
 
    public FusionSensorObjectDetectionManager(Ros2Node ros2Node)
    {
       this.ros2Node = ros2Node;
-      defineCalculatorMap();
+      doorParameterCalculator = new DoorParameterCalculator(ros2Node, DoorParameterPacket.class);
    }
 
-   private void defineCalculatorMap()
-   {
-      objectTypeToCalculatorMap.put(ObjectType.Door, new DoorParameterCalculator(ros2Node, DoorParameterPacket.class));
-   }
-   
    public void updateLatestStereoVisionPointCloudMessage(StereoVisionPointCloudMessage message)
    {
       latestStereoVisionPointCloudMessage.set(message);
+   }
+   
+   public void computeDoorAndPublish()
+   {
+      
    }
 
    public void computeAndPublish(ObjectType objectType, RegionOfInterest roi)
    {
       long startTime = System.nanoTime();
-      objectTypeToCalculatorMap.get(objectType).getPointCloudInROI(latestStereoVisionPointCloudMessage.getAndSet(null), roi);
       //objectTypeToCalculatorMap.get(objectType).calculateAndPackResult();
       //objectTypeToCalculatorMap.get(objectType).publish();
 

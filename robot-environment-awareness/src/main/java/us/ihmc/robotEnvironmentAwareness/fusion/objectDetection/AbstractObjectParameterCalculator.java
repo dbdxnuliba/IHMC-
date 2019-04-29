@@ -23,20 +23,20 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
    private static final IntrinsicParameters intrinsicParameters = PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters;
    protected final List<Point3DBasics> pointCloudToCalculate;
 
+   private final Class<T> messageType;
    private final IHMCROS2Publisher<T> packetPublisher;
    protected final AtomicReference<T> newPacket = new AtomicReference<>(null);
 
-   public AbstractObjectParameterCalculator(Ros2Node ros2Node, Class<T> packetType)
+   public AbstractObjectParameterCalculator(Ros2Node ros2Node, Class<T> messageType)
    {
+      this.messageType = messageType;
       pointCloudToCalculate = new ArrayList<Point3DBasics>();
-      packetPublisher = ROS2Tools.createPublisher(ros2Node, packetType, ROS2Tools.getDefaultTopicNameGenerator());
-
-      System.out.println(ROS2Tools.getDefaultTopicNameGenerator().generateTopicName(packetType));
+      packetPublisher = ROS2Tools.createPublisher(ros2Node, messageType, ROS2Tools.getDefaultTopicNameGenerator());
+      newPacket.set(ROS2Tools.newMessageInstance(messageType));
    }
 
-   public void getPointCloudInROI(StereoVisionPointCloudMessage pointCloudMessage, RegionOfInterest roi)
+   public void trimPointCloudInROI(StereoVisionPointCloudMessage pointCloudMessage, RegionOfInterest roi)
    {
-      pointCloudToCalculate.clear();
       Float messageData = pointCloudMessage.getPointCloud();
       int numberOfPoints = messageData.size() / 3;
       for (int i = 0; i < numberOfPoints; i++)
@@ -56,10 +56,19 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
       System.out.println("total number of points in roi " + pointCloudToCalculate.size());
    }
 
+   public void initialize()
+   {
+      newPacket.set(ROS2Tools.newMessageInstance(messageType));
+      pointCloudToCalculate.clear();
+   }
+
    public void publish()
    {
       packetPublisher.publish(newPacket.get());
    }
 
-   public abstract void calculate();
+   /**
+    * Some object might need multiple ROIs to calculate out the parameters of the required packet.
+    */
+   public abstract void calculate(RegionOfInterest... additionalRois);
 }
