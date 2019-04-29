@@ -62,6 +62,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
 
       return current_alignment - initial_alignment;
    }
@@ -103,6 +105,9 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -126,6 +131,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.write(data.getPlanarRegionsListMessage(), cdr);
       cdr.write_type_2(data.getPlannerRequestId());
 
+      cdr.write_type_6(data.getGoalPositionProximity());
+
    }
 
    public static void read(controller_msgs.msg.dds.FootstepPlanningRequestPacket data, us.ihmc.idl.CDR cdr)
@@ -146,6 +153,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       	
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.read(data.getPlanarRegionsListMessage(), cdr);	
       data.setPlannerRequestId(cdr.read_type_2());
+      	
+      data.setGoalPositionProximity(cdr.read_type_6());
       	
 
    }
@@ -169,6 +178,7 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       ser.write_type_a("planar_regions_list_message", new controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType(), data.getPlanarRegionsListMessage());
 
       ser.write_type_2("planner_request_id", data.getPlannerRequestId());
+      ser.write_type_6("goal_position_proximity", data.getGoalPositionProximity());
    }
 
    @Override
@@ -190,6 +200,7 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       ser.read_type_a("planar_regions_list_message", new controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType(), data.getPlanarRegionsListMessage());
 
       data.setPlannerRequestId(ser.read_type_2("planner_request_id"));
+      data.setGoalPositionProximity(ser.read_type_6("goal_position_proximity"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.FootstepPlanningRequestPacket src, controller_msgs.msg.dds.FootstepPlanningRequestPacket dest)

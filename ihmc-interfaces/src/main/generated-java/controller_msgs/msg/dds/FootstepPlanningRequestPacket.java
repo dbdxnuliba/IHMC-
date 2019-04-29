@@ -33,6 +33,14 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
    public double horizon_length_;
    public controller_msgs.msg.dds.PlanarRegionsListMessage planar_regions_list_message_;
    public int planner_request_id_ = -1;
+   /**
+            * Radius around the given goal pose that defines a goal region.
+            * A step is considered inside the goal region if it's associated mid-foot point
+            * is inside the region.
+            * If this value is non-positive the goal region will consist of a single point
+            * at the given pose
+            */
+   public double goal_position_proximity_ = -1.0;
 
    public FootstepPlanningRequestPacket()
    {
@@ -67,6 +75,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
 
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.staticCopy(other.planar_regions_list_message_, planar_regions_list_message_);
       planner_request_id_ = other.planner_request_id_;
+
+      goal_position_proximity_ = other.goal_position_proximity_;
 
    }
 
@@ -160,6 +170,29 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       return planner_request_id_;
    }
 
+   /**
+            * Radius around the given goal pose that defines a goal region.
+            * A step is considered inside the goal region if it's associated mid-foot point
+            * is inside the region.
+            * If this value is non-positive the goal region will consist of a single point
+            * at the given pose
+            */
+   public void setGoalPositionProximity(double goal_position_proximity)
+   {
+      goal_position_proximity_ = goal_position_proximity;
+   }
+   /**
+            * Radius around the given goal pose that defines a goal region.
+            * A step is considered inside the goal region if it's associated mid-foot point
+            * is inside the region.
+            * If this value is non-positive the goal region will consist of a single point
+            * at the given pose
+            */
+   public double getGoalPositionProximity()
+   {
+      return goal_position_proximity_;
+   }
+
 
    public static Supplier<FootstepPlanningRequestPacketPubSubType> getPubSubType()
    {
@@ -195,6 +228,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       if (!this.planar_regions_list_message_.epsilonEquals(other.planar_regions_list_message_, epsilon)) return false;
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.planner_request_id_, other.planner_request_id_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.goal_position_proximity_, other.goal_position_proximity_, epsilon)) return false;
+
 
       return true;
    }
@@ -224,6 +259,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
 
       if (!this.planar_regions_list_message_.equals(otherMyClass.planar_regions_list_message_)) return false;
       if(this.planner_request_id_ != otherMyClass.planner_request_id_) return false;
+
+      if(this.goal_position_proximity_ != otherMyClass.goal_position_proximity_) return false;
 
 
       return true;
@@ -256,7 +293,9 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       builder.append("planar_regions_list_message=");
       builder.append(this.planar_regions_list_message_);      builder.append(", ");
       builder.append("planner_request_id=");
-      builder.append(this.planner_request_id_);
+      builder.append(this.planner_request_id_);      builder.append(", ");
+      builder.append("goal_position_proximity=");
+      builder.append(this.goal_position_proximity_);
       builder.append("}");
       return builder.toString();
    }
