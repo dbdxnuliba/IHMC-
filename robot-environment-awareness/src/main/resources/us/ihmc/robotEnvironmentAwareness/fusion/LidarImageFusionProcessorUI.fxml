@@ -9,7 +9,7 @@
    <bottom>
       <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
         <tabs>
-          <Tab text="point cloud">
+          <Tab text="PointCloud">
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                  <children>
@@ -18,7 +18,7 @@
               </AnchorPane>
             </content>
           </Tab>
-          <Tab text="image">
+          <Tab text="ImageProc">
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
               	 <children>
@@ -26,7 +26,7 @@
                  </children>
             </content>
           </Tab>
-          <Tab text="object">
+          <Tab text="ObjectDetection">
              <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
                 <children>

@@ -1,14 +1,11 @@
 package us.ihmc.robotEnvironmentAwareness.fusion;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -34,17 +31,17 @@ public class LidarImageFusionProcessorUI
 
    private final FusionSensorMeshViewer meshViewer;
    private final FusionSensorImageViewer imageViewer;
-   
+
    public static final int imageStreamingImageFixedWidth = 256;
-   
+
    private static final String UI_CONFIGURATION_FILE_NAME = "./Configurations/defaultREAUIConfiguration.txt";
 
    @FXML
    private PointCloudAnchorPaneController pointCloudAnchorPaneController;
-   
+
    @FXML
    private ImageProcessingAnchorPaneController imageProcessingAnchorPaneController;
-   
+
    @FXML
    private ObjectDetectionAnchorPaneController objectDetectionAnchorPaneController;
 
@@ -69,7 +66,7 @@ public class LidarImageFusionProcessorUI
 
       meshViewer = new FusionSensorMeshViewer(reaMessager);
       imageViewer = new FusionSensorImageViewer(messager, imageViewPane);
-      
+
       view3dFactory.addNodeToView(meshViewer.getRoot());
 
       primaryStage.setTitle(getClass().getSimpleName());
@@ -86,7 +83,7 @@ public class LidarImageFusionProcessorUI
                                                                 REACommunicationProperties.getPrivateNetClassList());
       REAUIMessager reaMessager = new REAUIMessager(moduleMessager);
       reaMessager.startMessager();
-      
+
       return new LidarImageFusionProcessorUI(messager, reaMessager, primaryStage);
    }
 
@@ -127,7 +124,7 @@ public class LidarImageFusionProcessorUI
       pointCloudAnchorPaneController.setConfigurationFile(configurationFile);
       pointCloudAnchorPaneController.attachREAMessager(reaMessager);
       pointCloudAnchorPaneController.bindControls();
-      
+
       imageProcessingAnchorPaneController.initialize(messager);
       objectDetectionAnchorPaneController.initialize(messager);
    }
