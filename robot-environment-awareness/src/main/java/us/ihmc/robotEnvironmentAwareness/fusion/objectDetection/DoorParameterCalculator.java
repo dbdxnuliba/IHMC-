@@ -15,8 +15,15 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
     * ROI(Door), ROI(Door Handle)
     */
    @Override
-   public void calculate(RegionOfInterest... additionalRois)
+   public void calculate(RegionOfInterest... additionalROIs)
    {
-      
+      if(additionalROIs == null)
+      {
+         // TODO : assume the handle located on left side of the image.
+      }
+      else
+      {
+         
+      }
    }
 }

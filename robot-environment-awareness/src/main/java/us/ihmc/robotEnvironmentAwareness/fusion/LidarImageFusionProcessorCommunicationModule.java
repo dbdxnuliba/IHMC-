@@ -118,7 +118,7 @@ public class LidarImageFusionProcessorCommunicationModule
                   roi.setWidth(xmax - xmin);
                   objectTypeToROIMap.put(detectedObjectType, roi);
                }
-               System.out.println("# detecting time tooks "+waitingTime+" seconds.");
+               System.out.println("# detecting time tooks " + waitingTime + " seconds.");
                done();
                reportROIResults();
             }
@@ -146,8 +146,10 @@ public class LidarImageFusionProcessorCommunicationModule
          ObjectType objectType = selectedObjecTypes.get().get(i);
          RegionOfInterest regionOfInterest = objectTypeToROIMap.get(objectType);
          if (regionOfInterest != null)
-            System.out.println(objectType + " " + regionOfInterest.getXOffset() + " " + regionOfInterest.getYOffset() + " " + regionOfInterest.getWidth() + " "
-                  + regionOfInterest.getHeight());
+         {
+            System.out.println("ROI of the detected " + objectType + " is");
+            System.out.println(regionOfInterest.x_offset_ + " " + regionOfInterest.y_offset_ + " " + regionOfInterest.width_ + " " + regionOfInterest.height_);
+         }
       }
       // TODO: report to FusionSensorObjectDetectionManager.
    }
@@ -172,7 +174,6 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private void requestObjectDetection()
    {
-      System.out.println("requestObjectDetection");
       BufferedImage imageToSend = latestBufferedImage.getAndSet(null);
 
       imageRequested = true;

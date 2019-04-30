@@ -15,6 +15,7 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.idl.IDLSequence.Float;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotEnvironmentAwareness.fusion.projection.PointCloudProjectionHelper;
 import us.ihmc.ros2.Ros2Node;
 
@@ -53,7 +54,7 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
             }
          }
       }
-      System.out.println("total number of points in roi " + pointCloudToCalculate.size());
+      LogTools.info("total number of points in roi " + pointCloudToCalculate.size());
    }
 
    public void initialize()
@@ -70,5 +71,5 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
    /**
     * Some object might need multiple ROIs to calculate out the parameters of the required packet.
     */
-   public abstract void calculate(RegionOfInterest... additionalRois);
+   public abstract void calculate(RegionOfInterest... additionalROIs);
 }
