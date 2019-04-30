@@ -23,6 +23,7 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
 {
    private static final IntrinsicParameters intrinsicParameters = PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters;
    protected final List<Point3DBasics> pointCloudToCalculate;
+   protected final RegionOfInterest objectROI = new RegionOfInterest();
 
    private final Class<T> messageType;
    private final IHMCROS2Publisher<T> packetPublisher;
@@ -54,6 +55,7 @@ public abstract class AbstractObjectParameterCalculator<T extends Packet<?>>
             }
          }
       }
+      objectROI.set(roi);
       LogTools.info("total number of points in roi " + pointCloudToCalculate.size());
    }
 
