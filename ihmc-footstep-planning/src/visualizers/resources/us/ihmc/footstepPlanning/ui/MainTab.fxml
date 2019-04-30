@@ -152,6 +152,9 @@
                   <Spinner fx:id="goalYaw" layoutX="243.0" layoutY="89.0" GridPane.columnIndex="9" GridPane.rowIndex="1" />
 
                   <Button fx:id="setStartPoseFromRobot" onAction="#setStartPoseFromRobot" text="Set From Robot" GridPane.columnIndex="11" />
+
+                  <Label text="Goal proximity" GridPane.columnIndex="13"/>
+                  <Spinner fx:id="goalProximity" layoutX="243.0" layoutY="89.0" GridPane.columnIndex="13" GridPane.rowIndex="1" />
                </children>
             </GridPane>
          </children></AnchorPane>

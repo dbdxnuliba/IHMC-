@@ -87,6 +87,8 @@ public class MainTabController
    private Spinner<Double> goalYPosition;
    @FXML
    private Spinner<Double> goalZPosition;
+   @FXML
+   private Spinner<Double> goalProximity;
 
    @FXML
    private Spinner<Double> startYaw;
@@ -166,6 +168,8 @@ public class MainTabController
       startYaw.setValueFactory(createStartGoalOrientationValueFactory());
       goalYaw.setValueFactory(createStartGoalOrientationValueFactory());
 
+      goalProximity.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(-1.0, 50.0, 0.0, 0.1));
+
       swingTimeSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.3, 3.5, 1.2, 0.1));
       transferTimeSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.3, 3.5, 0.8, 0.1));
 
@@ -218,6 +222,8 @@ public class MainTabController
       messager.bindPropertyToTopic(FootstepPlannerMessagerAPI.StartPositionEditModeEnabledTopic, rotateGoal.disableProperty());
       messager.bindPropertyToTopic(FootstepPlannerMessagerAPI.GoalPositionEditModeEnabledTopic, rotateGoal.disableProperty());
       messager.bindPropertyToTopic(FootstepPlannerMessagerAPI.StartOrientationEditModeEnabledTopic, rotateGoal.disableProperty());
+
+      messager.bindBidirectional(FootstepPlannerMessagerAPI.GoalProximityTopic, goalProximity.getValueFactory().valueProperty(), doubleToDoubleConverter, true);
 
       startPositionProperty.bindBidirectionalX(startXPosition.getValueFactory().valueProperty());
       startPositionProperty.bindBidirectionalY(startYPosition.getValueFactory().valueProperty());
