@@ -126,7 +126,6 @@ public class StepGeneratorJavaFXController
       continuousStepGenerator.setFootstepAdjustment(this::adjustFootstep);
       continuousStepGenerator.setFootstepMessenger(this::prepareFootsteps);
       continuousStepGenerator.setFootPoseProvider(robotSide -> new FramePose3D(javaFXRobotVisualizer.getFullRobotModel().getSoleFrame(robotSide)));
-//      continuousStepGenerator.setFootstepValidityIndicator(this::isSafeDistanceFromObstacle);
       continuousStepGenerator.setFootstepValidityIndicator((solePose, robotSide) -> isStepSnappable(solePose, robotSide) && isSafeDistanceFromObstacle(solePose, robotSide));
 
       SnapAndWiggleSingleStepParameters parameters = new SnapAndWiggleSingleStepParameters();
@@ -366,6 +365,7 @@ public class StepGeneratorJavaFXController
    {
       double groundOffset = 0.2;
       double bodyRadius = 0.5;
+      double minArea = 0.1;
 
       bodyCenter.set(solePose.getPosition());
       bodyCenter.addZ(bodyRadius + groundOffset);
@@ -374,7 +374,11 @@ public class StepGeneratorJavaFXController
 
       for (int i = 0; i < planarRegionsList.getNumberOfPlanarRegions(); i++)
       {
-         Point3D closestPoint = PlanarRegionTools.closestPointOnPlane(bodyCenter, planarRegionsList.getPlanarRegion(i));
+         PlanarRegion region = planarRegionsList.getPlanarRegion(i);
+         if (region.getConvexHull().getArea() < minArea)
+            continue;
+         
+         Point3D closestPoint = PlanarRegionTools.closestPointOnPlane(bodyCenter, region);
          if(closestPoint == null)
             continue;
 
