@@ -144,6 +144,7 @@ public class FusionSensorObjectDetectionManager
       }
       selectedObjectTypes.clear();
       selectedObjectTypes.addAll(selectedTypes);
+      imageRequested = true;
    }
 
    public void close() throws Exception
@@ -159,7 +160,7 @@ public class FusionSensorObjectDetectionManager
       {
          if(objectTypeToROIMap.get(objectType) != null)
          {
-            LogTools.info("calculate "+objectType);
+            LogTools.info("calculate " + objectType);
             switch(objectType)
             {
             case Cup:

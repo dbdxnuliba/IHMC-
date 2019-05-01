@@ -28,7 +28,7 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
 
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
-   private static final int numberOfSearchingRectangle = 10;
+   private static final int numberOfSearchingRectangle = 20;
 
    private final Map<DoorVertexName, Point3D> doorVerticesInWorld = new HashMap<>();
    private final Map<DoorVertexName, Point3D> doorVerticesInPCA = new HashMap<>();
@@ -176,7 +176,7 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
             LogTools.info("minimum area is " + minimumArea);
          }
 
-         double rotatingAngle = Math.PI / 2.0 / (numberOfSearchingRectangle - 1);
+         double rotatingAngle = Math.PI / 2.0 / numberOfSearchingRectangle;
          searchingPCARotationMatrix.appendYawRotation(rotatingAngle);
       }
       finiteRectangleCalculator.compute(bestPCARotationMatrix);
@@ -184,7 +184,7 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
 
       for (DoorVertexName vertexName : DoorVertexName.values())
       {
-         LogTools.info("vertexName " + vertexName + " " + doorVerticesInPCA.get(vertexName));
+         LogTools.info("doorVerticesInPCA vertexName " + vertexName + " " + doorVerticesInPCA.get(vertexName));
       }
    }
 
@@ -199,18 +199,20 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
       {
          double vertexHeight = doorVerticesInPCA.get(vertexName).getZ();
          double nextVertexHeight = doorVerticesInPCA.get(vertexName.nextName()).getZ();
-         LogTools.info("height info (center)" + assumedDoorCenterHeight + ", " + vertexName + " " + vertexHeight);
          if (vertexHeight > assumedDoorCenterHeight && nextVertexHeight > assumedDoorCenterHeight)
          {
-            LogTools.info("top side vertex name " + vertexName);
-            LogTools.info("top side vertex name " + vertexName.nextName());
             DoorVertexName vertexInPCA = vertexName;
             for (DoorVertexName vertexInWorld : DoorVertexName.values())
             {
-               doorVerticesInWorld.get(vertexInWorld).set(doorVerticesInPCA.get(vertexInPCA));
+               doorVerticesInWorld.put(vertexInWorld, doorVerticesInPCA.get(vertexInPCA));
                vertexInPCA = vertexInPCA.nextName();
             }
          }
+      }
+      
+      for (DoorVertexName vertexName : DoorVertexName.values())
+      {
+         LogTools.info("doorVerticesInWorld vertexName " + vertexName + " " + doorVerticesInWorld.get(vertexName));
       }
 
       newPacket.get().setDoorHeight(doorVerticesInWorld.get(DoorVertexName.BOTTOM_LEFT).getZ());
@@ -341,7 +343,7 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
             Point3D transformedPoint = new Point3D();
             transformer.inverseTransform(point, transformedPoint);
 
-            if (Math.abs(transformedPoint.getZ()) <= 0.001)
+            if (Math.abs(transformedPoint.getZ()) >= 0.001)
                LogTools.warn("The projection didn't work properly !!!!! ");
 
             Point2D convertedPoint = new Point2D(transformedPoint.getX(), transformedPoint.getY());
@@ -361,14 +363,11 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
             if (point.getY() > positiveYLength)
                positiveYLength = point.getY();
 
-            if (point.getY() > negativeYLength)
+            if (point.getY() < negativeYLength)
                negativeYLength = point.getY();
          }
 
-         LogTools.info("X length in 2d " + (positiveXLength - negativeXLength));
-         LogTools.info("Y length in 2d " + (positiveYLength - negativeYLength));
-
-         area = (positiveXLength - negativeXLength) * (positiveXLength - negativeXLength);
+         area = (positiveXLength - negativeXLength) * (positiveYLength - negativeYLength);
 
          submitVertex(DoorVertexName.TOP_RIGHT, transformer, positiveXLength, positiveYLength);
          submitVertex(DoorVertexName.TOP_LEFT, transformer, negativeXLength, positiveYLength);
