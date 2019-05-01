@@ -1,46 +1,62 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.objectDetection;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import controller_msgs.msg.dds.DoorParameterPacket;
 import sensor_msgs.msg.dds.RegionOfInterest;
 import us.ihmc.euclid.matrix.RotationMatrix;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
-import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
-import us.ihmc.euclid.tuple3D.interfaces.Tuple3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DBasics;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
-import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.Ros2Node;
 
 public class DoorParameterCalculator extends AbstractObjectParameterCalculator<DoorParameterPacket>
 {
    private static final int numberOfTimesToRANSAC = 100;
    private static final double thresholdOfInlier = 0.05;
-   private final List<Point3DBasics> pointsOnPlane = new ArrayList<>();
+   private final List<Point3DBasics> pointsInlier = new ArrayList<>();
    private final List<Point3DBasics> tempOutlierPoints = new ArrayList<>();
 
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
    private static final int numberOfSearchingRectangle = 10;
-   private static final SideDependentList<Point3D> bottomVertices = new SideDependentList<>();
-   private static final SideDependentList<Point3D> topSideVertices = new SideDependentList<>();
+
+   private final Map<DoorVertexName, Point3D> doorVerticesInWorld = new HashMap<>();
+   private final Map<DoorVertexName, Point3D> doorVerticesInPCA = new HashMap<>();
+
+   private enum DoorVertexName
+   {
+      TOP_RIGHT, TOP_LEFT, BOTTOM_LEFT, BOTTOM_RIGHT;
+      DoorVertexName nextName()
+      {
+         switch (this)
+         {
+         case TOP_RIGHT:
+            return TOP_LEFT;
+         case TOP_LEFT:
+            return BOTTOM_LEFT;
+         case BOTTOM_LEFT:
+            return BOTTOM_RIGHT;
+         case BOTTOM_RIGHT:
+            return TOP_RIGHT;
+         default:
+            return null;
+         }
+      }
+   }
 
    public DoorParameterCalculator(Ros2Node ros2Node, Class<DoorParameterPacket> packetType)
    {
       super(ros2Node, packetType);
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         bottomVertices.put(robotSide, new Point3D());
-         topSideVertices.put(robotSide, new Point3D());
-      }
    }
 
    /**
@@ -92,19 +108,19 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
          }
       }
 
-      pointsOnPlane.clear();
+      pointsInlier.clear();
       for (int i = 0; i < numberOfPointInROI; i++)
       {
          Point3DBasics point = pointCloudToCalculate.get(i);
          double distance = bestPlane.distance(point);
          if (distance <= thresholdOfInlier)
-            pointsOnPlane.add(point);
+            pointsInlier.add(point);
       }
 
       LogTools.info("Best Plane is " + bestPlane.getInformation());
-      LogTools.info("Number of points to be fitted is " + pointsOnPlane.size());
+      LogTools.info("Number of points to be fitted is " + pointsInlier.size());
 
-      // TODO: remove
+      // TODO: remove ----------------------
       tempOutlierPoints.clear();
       for (int i = 0; i < numberOfPointInROI; i++)
       {
@@ -116,60 +132,112 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
 
       Vector3D total = new Vector3D();
       for (Point3DBasics outPoint : tempOutlierPoints)
-      {
          total.add(outPoint);
-      }
       total.setX(total.getX() / tempOutlierPoints.size());
       total.setY(total.getY() / tempOutlierPoints.size());
       total.setZ(total.getZ() / tempOutlierPoints.size());
 
-      LogTools.info("Number of points out of door is " + tempOutlierPoints.size() + ", X: " + total.getX() + ", Y: " + total.getY() + ", Z: " + total.getZ());
+      LogTools.info("Number of points that outside of door is " + tempOutlierPoints.size() + ", X: " + total.getX() + ", Y: " + total.getY() + ", Z: "
+            + total.getZ());
+      // TODO: remove ----------------------
    }
 
    private void findPrincipalComponent()
    {
       pca.clear();
-      pca.addAllDataPoints(pointsOnPlane);
+      pca.addAllDataPoints(pointsInlier);
       pca.compute();
    }
 
    private void findRectangle()
    {
-      Point3D initialGuessCenter = new Point3D();
-      pca.getMean(initialGuessCenter);
+      Point3D centerPosition = new Point3D();
+      pca.getMean(centerPosition);
+      Vector3D normal = new Vector3D();
+      pca.getThirdVector(normal);
+      PlaneEquation clusteredPlane = new PlaneEquation(normal, centerPosition);
 
-      RotationMatrix clusterdRotationMatrix = new RotationMatrix();
-      pca.getPrincipalFrameRotationMatrix(clusterdRotationMatrix);
+      LogTools.info("assumed center is " + centerPosition);
+      FiniteRectangleCalculator finiteRectangleCalculator = new FiniteRectangleCalculator(clusteredPlane, centerPosition);
+      finiteRectangleCalculator.projectPointsOnPlane(pointsInlier);
 
-      //TODO: set center.
-      FiniteRectangleCalculator finiteRectangleCalculator = new FiniteRectangleCalculator();
+      RotationMatrix bestPCARotationMatrix = new RotationMatrix();
+      RotationMatrix searchingPCARotationMatrix = new RotationMatrix();
+      pca.getPrincipalFrameRotationMatrix(searchingPCARotationMatrix);
       double minimumArea = Double.POSITIVE_INFINITY;
       for (int i = 0; i < numberOfSearchingRectangle; i++)
       {
-         double rotatingAngle = i * Math.PI / 2.0 / (numberOfSearchingRectangle - 1);
-         clusterdRotationMatrix.appendYawRotation(rotatingAngle);
-
-         //TODO: set center position.
-         finiteRectangleCalculator.compute(pointsOnPlane, clusterdRotationMatrix);
+         finiteRectangleCalculator.compute(searchingPCARotationMatrix);
          double area = finiteRectangleCalculator.area();
          if (area < minimumArea)
          {
-            //TODO: get vertices.
+            minimumArea = area;
+            bestPCARotationMatrix.set(searchingPCARotationMatrix);
             LogTools.info("minimum area is " + minimumArea);
          }
+
+         double rotatingAngle = Math.PI / 2.0 / (numberOfSearchingRectangle - 1);
+         searchingPCARotationMatrix.appendYawRotation(rotatingAngle);
+      }
+      finiteRectangleCalculator.compute(bestPCARotationMatrix);
+      LogTools.info("final door area is " + finiteRectangleCalculator.area());
+
+      for (DoorVertexName vertexName : DoorVertexName.values())
+      {
+         LogTools.info("vertexName " + vertexName + " " + doorVerticesInPCA.get(vertexName));
       }
    }
 
    private void assignHingedPoint(RegionOfInterest handleROI)
    {
-      // TODO : select hinged vertex.
+      double assumedDoorCenterHeight = 0.0;
+      for (DoorVertexName vertexName : DoorVertexName.values())
+         assumedDoorCenterHeight = +doorVerticesInPCA.get(vertexName).getZ();
+      assumedDoorCenterHeight = assumedDoorCenterHeight / DoorVertexName.values().length;
+
+      for (DoorVertexName vertexName : DoorVertexName.values())
+      {
+         double vertexHeight = doorVerticesInPCA.get(vertexName).getZ();
+         double nextVertexHeight = doorVerticesInPCA.get(vertexName.nextName()).getZ();
+         LogTools.info("height info (center)" + assumedDoorCenterHeight + ", " + vertexName + " " + vertexHeight);
+         if (vertexHeight > assumedDoorCenterHeight && nextVertexHeight > assumedDoorCenterHeight)
+         {
+            LogTools.info("top side vertex name " + vertexName);
+            LogTools.info("top side vertex name " + vertexName.nextName());
+            DoorVertexName vertexInPCA = vertexName;
+            for (DoorVertexName vertexInWorld : DoorVertexName.values())
+            {
+               doorVerticesInWorld.get(vertexInWorld).set(doorVerticesInPCA.get(vertexInPCA));
+               vertexInPCA = vertexInPCA.nextName();
+            }
+         }
+      }
+
+      newPacket.get().setDoorHeight(doorVerticesInWorld.get(DoorVertexName.BOTTOM_LEFT).getZ());
       if (handleROI == null)
       {
-         // TODO : assume the handle located on left side of the image.
+         newPacket.get().getHingedPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_LEFT));
+         newPacket.get().getEndPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_RIGHT));
       }
       else
       {
+         double marginXLeft = handleROI.getXOffset() - objectROI.getXOffset();
+         double marginXRight = objectROI.getXOffset() + objectROI.getWidth() - handleROI.getXOffset() - handleROI.getWidth();
+         if (marginXLeft < 0 || marginXRight < 0)
+         {
+            LogTools.warn("The detected handle roi is not in door roi.");
+         }
 
+         if (marginXLeft < marginXRight)
+         {
+            newPacket.get().getHingedPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_LEFT));
+            newPacket.get().getEndPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_RIGHT));
+         }
+         else
+         {
+            newPacket.get().getHingedPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_RIGHT));
+            newPacket.get().getEndPointOnGround().set(doorVerticesInWorld.get(DoorVertexName.BOTTOM_LEFT));
+         }
       }
    }
 
@@ -187,24 +255,20 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
 
       }
 
-      /**
-       * a*x + b*y + c*z + d = 0.
-       * @param normal: a, b, c
-       * @param constant: d
-       */
       private PlaneEquation(Vector3DBasics normal, double constant)
       {
          normalVector.set(normal);
          constantD = constant;
       }
 
-      private PlaneEquation(Vector3DBasics normal, Tuple3DBasics pointOnPlane)
+      private PlaneEquation(Vector3DBasics normal, Point3DBasics pointOnPlane)
       {
          normalVector.set(normal);
-         constantD = -normalVector.getX() * pointOnPlane.getX() - normalVector.getY() * pointOnPlane.getY() - normalVector.getZ() * pointOnPlane.getZ();
+         Vector3D pointVector = new Vector3D(pointOnPlane);
+         constantD = -normalVector.dot(pointVector);
       }
 
-      private PlaneEquation(Tuple3DBasics point1, Tuple3DBasics point2, Tuple3DBasics point3)
+      private PlaneEquation(Point3DBasics point1, Point3DBasics point2, Point3DBasics point3)
       {
          Vector3D vector1To2 = new Vector3D(point2);
          vector1To2.sub(point1);
@@ -212,7 +276,8 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
          vector1To3.sub(point1);
 
          normalVector.cross(vector1To2, vector1To3);
-         constantD = -normalVector.getX() * point1.getX() - normalVector.getY() * point1.getY() - normalVector.getZ() * point1.getZ();
+         Vector3D pointVector = new Vector3D(point1);
+         constantD = -normalVector.dot(pointVector);
       }
 
       private void set(PlaneEquation other)
@@ -221,10 +286,19 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
          constantD = other.constantD;
       }
 
-      private double distance(Tuple3DBasics point)
+      private double distance(Point3DBasics point)
       {
-         return Math.abs(normalVector.getX() * point.getX() + normalVector.getY() * point.getY() + normalVector.getZ() * point.getZ() + constantD)
-               / Math.sqrt(normalVector.lengthSquared());
+         Vector3D pointVector = new Vector3D(point);
+         return Math.abs(normalVector.dot(pointVector) + constantD) / Math.sqrt(normalVector.lengthSquared());
+      }
+
+      private void project(Point3DBasics point, Point3DBasics pointToPack)
+      {
+         Vector3D pointVector = new Vector3D(point);
+         double projectionConstant = -(normalVector.dot(pointVector) + constantD) / normalVector.lengthSquared();
+         pointToPack.setX(point.getX() + projectionConstant * normalVector.getX());
+         pointToPack.setY(point.getY() + projectionConstant * normalVector.getY());
+         pointToPack.setZ(point.getZ() + projectionConstant * normalVector.getZ());
       }
 
       private String getInformation()
@@ -235,32 +309,83 @@ public class DoorParameterCalculator extends AbstractObjectParameterCalculator<D
 
    private class FiniteRectangleCalculator
    {
-      private final List<Point2DBasics> convertedPoints = new ArrayList<>();
-      //TODO: fields for edge.
+      private final PlaneEquation planeDefinition = new PlaneEquation();
+      private final Point3D centerDefinition = new Point3D();
+      private final List<Point3DBasics> projectedPoints = new ArrayList<>();
 
-      private FiniteRectangleCalculator()
+      private double area = 0.0;
+
+      private FiniteRectangleCalculator(PlaneEquation clusteredPlane, Point3DBasics centerPosition)
       {
-
+         planeDefinition.set(clusteredPlane);
+         centerDefinition.set(centerPosition);
       }
 
-      private void compute(List<Point3DBasics> points, RotationMatrix clusteredRotationMatrix)
+      private void projectPointsOnPlane(List<Point3DBasics> points)
       {
-         convertedPoints.clear();
+         projectedPoints.clear();
          for (Point3DBasics point : points)
          {
-            Point2D convertedPoint = new Point2D();
-            // TODO: convert 3d to 2d.
-            convertedPoints.add(convertedPoint);
+            Point3D projectedPoint = new Point3D();
+            planeDefinition.project(point, projectedPoint);
+            projectedPoints.add(projectedPoint);
+         }
+      }
+
+      private void compute(RotationMatrix clusteredRotationMatrix)
+      {
+         RigidBodyTransform transformer = new RigidBodyTransform(clusteredRotationMatrix, centerDefinition);
+         List<Point2D> localPoints = new ArrayList<Point2D>();
+         for (Point3DBasics point : projectedPoints)
+         {
+            Point3D transformedPoint = new Point3D();
+            transformer.inverseTransform(point, transformedPoint);
+
+            if (Math.abs(transformedPoint.getZ()) <= 0.001)
+               LogTools.warn("The projection didn't work properly !!!!! ");
+
+            Point2D convertedPoint = new Point2D(transformedPoint.getX(), transformedPoint.getY());
+            localPoints.add(convertedPoint);
          }
 
-         // TODO: find edge.
+         double positiveXLength = 0.0, negativeXLength = 0.0, positiveYLength = 0.0, negativeYLength = 0.0;
+         for (int i = 0; i < localPoints.size(); i++)
+         {
+            Point2D point = localPoints.get(i);
+            if (point.getX() > positiveXLength)
+               positiveXLength = point.getX();
+
+            if (point.getX() < negativeXLength)
+               negativeXLength = point.getX();
+
+            if (point.getY() > positiveYLength)
+               positiveYLength = point.getY();
+
+            if (point.getY() > negativeYLength)
+               negativeYLength = point.getY();
+         }
+
+         LogTools.info("X length in 2d " + (positiveXLength - negativeXLength));
+         LogTools.info("Y length in 2d " + (positiveYLength - negativeYLength));
+
+         area = (positiveXLength - negativeXLength) * (positiveXLength - negativeXLength);
+
+         submitVertex(DoorVertexName.TOP_RIGHT, transformer, positiveXLength, positiveYLength);
+         submitVertex(DoorVertexName.TOP_LEFT, transformer, negativeXLength, positiveYLength);
+         submitVertex(DoorVertexName.BOTTOM_LEFT, transformer, negativeXLength, negativeYLength);
+         submitVertex(DoorVertexName.BOTTOM_RIGHT, transformer, positiveXLength, negativeYLength);
+      }
+
+      private void submitVertex(DoorVertexName vertexName, RigidBodyTransform pcaTransform, double xInPCA, double yInPCA)
+      {
+         RigidBodyTransform vertexInWorld = new RigidBodyTransform(pcaTransform);
+         vertexInWorld.appendTranslation(xInPCA, yInPCA, 0.0);
+         doorVerticesInPCA.put(vertexName, new Point3D(vertexInWorld.getTranslationVector()));
       }
 
       private double area()
       {
-         return 0.0;
+         return area;
       }
-
-      // TODO: getter for vertex.
    }
 }
