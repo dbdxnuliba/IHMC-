@@ -405,7 +405,7 @@ public class StepGeneratorJavaFXController
    }
 
    private final Point3D bodyCenter = new Point3D();
-   private final BoundingBoxCollisionDetector collisionDetector = new BoundingBoxCollisionDetector(0.45, 0.95, 1.0, 0.01);
+   private final BoundingBoxCollisionDetector collisionDetector = new BoundingBoxCollisionDetector(0.65, 1.15, 1.0, 0.01);
 
    private boolean isSafeDistanceFromObstacle(FramePose3DReadOnly solePose, RobotSide robotSide)
    {
