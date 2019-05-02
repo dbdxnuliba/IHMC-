@@ -27,6 +27,16 @@ public interface ContactStateProvider extends TimeIntervalProvider
     */
    ContactState getContactState();
 
+   default int getNumberOfBodiesInContact()
+   {
+      return 1;
+   }
+
+   default int getBodyContactId(int bodyNumber)
+   {
+      return 0;
+   }
+
    default boolean hasCopConstraintRegion()
    {
       return false;
