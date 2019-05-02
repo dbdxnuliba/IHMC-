@@ -45,7 +45,7 @@ import static us.ihmc.communication.ROS2Tools.getTopicNameGenerator;
 
 public class BipedalSupportPlanarRegionPublisher
 {
-   private static final double defaultScaleFactor = 2.0;
+   private static final double defaultScaleFactor = 1.25;
 
    private static final int LEFT_FOOT_INDEX = 0;
    private static final int RIGHT_FOOT_INDEX = 1;
