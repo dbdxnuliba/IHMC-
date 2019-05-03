@@ -17,7 +17,8 @@ public interface FootstepValidityIndicator
     * Checks if the given pose is steppable.
     *
     * @param solePose footstep to check
+    * @param stanceFootPose previous footstep pose
     * @param robotSide side of the given footstep
     */
-   boolean isFootstepValid(FramePose3DReadOnly solePose, RobotSide robotSide);
+   boolean isFootstepValid(FramePose3DReadOnly solePose, FramePose3DReadOnly stanceFootPose, RobotSide robotSide);
 }

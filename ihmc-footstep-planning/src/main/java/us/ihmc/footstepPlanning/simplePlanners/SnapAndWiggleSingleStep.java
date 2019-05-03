@@ -47,7 +47,8 @@ public class SnapAndWiggleSingleStep
       this.planarRegionsList.set(steppableRegions);
    }
 
-   public ConvexPolygon2D snapAndWiggle(FramePose3D solePose, ConvexPolygon2DReadOnly footStepPolygon, boolean walkingForward) throws SnappingFailedException
+   public ConvexPolygon2D snapAndWiggle(FramePose3D solePose, ConvexPolygon2DReadOnly footStepPolygon, boolean walkingForward) 
+         throws SnappingFailedException
    {
       PlanarRegionsList planarRegionsList = this.planarRegionsList.get();
       if (planarRegionsList == null || planarRegionsList.isEmpty())
@@ -73,9 +74,6 @@ public class SnapAndWiggleSingleStep
       }
 
       ConvexPolygon2D foothold = doSnapAndWiggle(solePose, footStepPolygon, footPolygon);
-      checkAndHandleTopOfCliff(solePoseBeforeSnapping, solePose, walkingForward, footStepPolygon, footPolygon);
-      checkAndHandleBottomOfCliff(solePose);
-
       RigidBodyTransform soleTransform = new RigidBodyTransform();
       solePose.get(soleTransform);
       foothold.applyInverseTransform(soleTransform, false);

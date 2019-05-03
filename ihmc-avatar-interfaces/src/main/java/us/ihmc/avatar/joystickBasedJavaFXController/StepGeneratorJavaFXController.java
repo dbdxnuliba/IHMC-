@@ -146,8 +146,8 @@ public class StepGeneratorJavaFXController
       continuousStepGenerator.setFootstepAdjustment(this::adjustFootstep);
       continuousStepGenerator.setFootstepMessenger(this::prepareFootsteps);
       continuousStepGenerator.setFootPoseProvider(robotSide -> new FramePose3D(javaFXRobotVisualizer.getFullRobotModel().getSoleFrame(robotSide)));
-      continuousStepGenerator.setFootstepValidityIndicator((solePose, robotSide) -> isStepSnappable(solePose, robotSide)
-            && isSafeDistanceFromObstacle(solePose, robotSide));
+      continuousStepGenerator.setFootstepValidityIndicator((solePose, stanceFootPose, robotSide) -> isStepSnappable(solePose, robotSide)
+            && isSafeDistanceFromObstacle(solePose, robotSide) && !isAStepBackAndDown(solePose, stanceFootPose));
 
       SnapAndWiggleSingleStepParameters parameters = new SnapAndWiggleSingleStepParameters();
       parameters.setFootLength(walkingControllerParameters.getSteppingParameters().getFootLength());
@@ -367,6 +367,7 @@ public class StepGeneratorJavaFXController
       FootstepDataListMessage footstepsToSend = footstepsToSendReference.getAndSet(null);
       if (footstepsToSend != null && isWalking.get())
       {
+         LogTools.info("Publishing steps");
          footstepPublisher.publish(footstepsToSend);
       }
       if (!isWalking.get())
@@ -419,6 +420,22 @@ public class StepGeneratorJavaFXController
       collisionDetector.setBoxPose(solePose.getX() + offsetX, solePose.getY() + offsetY, solePose.getZ() + heightOffset, soleYaw);
 
       return !collisionDetector.checkForCollision().isCollisionDetected();
+   }
+      
+   private boolean isAStepBackAndDown(FramePose3DReadOnly solePose, FramePose3DReadOnly stancePose)
+   {
+      double stepDownThreshold = 0.03;
+      if(solePose.getZ() > stancePose.getZ() - stepDownThreshold)
+      {
+         return false;
+      }
+      
+      double stanceHeadingX = Math.cos(stancePose.getYaw());
+      double stanceHeadingY = Math.sin(stancePose.getYaw());
+      
+      double stepDX = solePose.getX() - stancePose.getX();
+      double stepDY = solePose.getY() - stancePose.getY();
+      return stanceHeadingX * stepDX + stanceHeadingY * stepDY < 0.0;
    }
 
    private final ConvexPolygon2D footPolygon = new ConvexPolygon2D();
