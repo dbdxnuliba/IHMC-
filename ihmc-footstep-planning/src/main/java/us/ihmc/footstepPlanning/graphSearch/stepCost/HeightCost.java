@@ -2,16 +2,16 @@ package us.ihmc.footstepPlanning.graphSearch.stepCost;
 
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 
 public class HeightCost implements FootstepCost
 {
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
 
    private final LinearHeightCost linearHeightCost;
    private final QuadraticHeightCost quadraticHeightCost;
 
-   public HeightCost(FootstepPlannerCostParameters costParameters, FootstepNodeSnapperReadOnly snapper)
+   public HeightCost(BipedFootstepPlannerCostParametersReadOnly costParameters, FootstepNodeSnapperReadOnly snapper)
    {
       this.costParameters = costParameters;
 

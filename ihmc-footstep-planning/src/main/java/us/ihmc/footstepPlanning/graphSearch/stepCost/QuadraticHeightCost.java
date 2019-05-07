@@ -5,16 +5,16 @@ import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapDat
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNodeTools;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 
 public class QuadraticHeightCost implements FootstepCost
 {
    private static final double stepHeightScalar = 10.0;
 
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
    private final FootstepNodeSnapperReadOnly snapper;
 
-   public QuadraticHeightCost(FootstepPlannerCostParameters costParameters, FootstepNodeSnapperReadOnly snapper)
+   public QuadraticHeightCost(BipedFootstepPlannerCostParametersReadOnly costParameters, FootstepNodeSnapperReadOnly snapper)
    {
       this.costParameters = costParameters;
       this.snapper = snapper;

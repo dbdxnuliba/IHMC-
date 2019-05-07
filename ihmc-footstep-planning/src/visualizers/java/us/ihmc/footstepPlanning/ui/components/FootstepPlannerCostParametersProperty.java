@@ -7,18 +7,18 @@ import us.ihmc.robotEnvironmentAwareness.ui.properties.ParametersProperty;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FootstepPlannerCostParametersProperty extends ParametersProperty<SettableFootstepPlannerCostParameters>
+public class FootstepPlannerCostParametersProperty extends ParametersProperty<BipedFootstepPlannerCostParameters>
 {
-   private BooleanField useQuadraticDistanceCost = new BooleanField(SettableFootstepPlannerCostParameters::useQuadraticDistanceCost, (p, v) -> p.setUseQuadraticDistanceCost(v));
-   private BooleanField useQuadraticHeightCost = new BooleanField(SettableFootstepPlannerCostParameters::useQuadraticHeightCost, (p, v) -> p.setUseQuadraticHeightCost(v));
-   private DoubleField yawWeight = new DoubleField(SettableFootstepPlannerCostParameters::getYawWeight, (p, v) -> p.setYawWeight(v));
-   private DoubleField pitchWeight = new DoubleField(SettableFootstepPlannerCostParameters::getPitchWeight, (p, v) -> p.setPitchWeight(v));
-   private DoubleField rollWeight = new DoubleField(SettableFootstepPlannerCostParameters::getRollWeight, (p, v) -> p.setRollWeight(v));
-   private DoubleField forwardWeight = new DoubleField(SettableFootstepPlannerCostParameters::getForwardWeight, (p, v) -> p.setForwardWeight(v));
-   private DoubleField lateralWeight = new DoubleField(SettableFootstepPlannerCostParameters::getLateralWeight, (p, v) -> p.setLateralWeight(v));
-   private DoubleField stepUpWeight = new DoubleField(SettableFootstepPlannerCostParameters::getStepUpWeight, (p, v) -> p.setStepUpWeight(v));
-   private DoubleField stepDownWeight = new DoubleField(SettableFootstepPlannerCostParameters::getStepDownWeight, (p, v) -> p.setStepDownWeight(v));
-   private DoubleField costPerStep = new DoubleField(SettableFootstepPlannerCostParameters::getCostPerStep, (p, v) -> p.setCostPerStep(v));
+   private BooleanField useQuadraticDistanceCost = new BooleanField(BipedFootstepPlannerCostParameters::useQuadraticDistanceCost, (p, v) -> p.setUseQuadraticDistanceCost(v));
+   private BooleanField useQuadraticHeightCost = new BooleanField(BipedFootstepPlannerCostParameters::useQuadraticHeightCost, (p, v) -> p.setUseQuadraticHeightCost(v));
+   private DoubleField yawWeight = new DoubleField(BipedFootstepPlannerCostParameters::getYawWeight, (p, v) -> p.setYawWeight(v));
+   private DoubleField pitchWeight = new DoubleField(BipedFootstepPlannerCostParameters::getPitchWeight, (p, v) -> p.setPitchWeight(v));
+   private DoubleField rollWeight = new DoubleField(BipedFootstepPlannerCostParameters::getRollWeight, (p, v) -> p.setRollWeight(v));
+   private DoubleField forwardWeight = new DoubleField(BipedFootstepPlannerCostParameters::getForwardWeight, (p, v) -> p.setForwardWeight(v));
+   private DoubleField lateralWeight = new DoubleField(BipedFootstepPlannerCostParameters::getLateralWeight, (p, v) -> p.setLateralWeight(v));
+   private DoubleField stepUpWeight = new DoubleField(BipedFootstepPlannerCostParameters::getStepUpWeight, (p, v) -> p.setStepUpWeight(v));
+   private DoubleField stepDownWeight = new DoubleField(BipedFootstepPlannerCostParameters::getStepDownWeight, (p, v) -> p.setStepDownWeight(v));
+   private DoubleField costPerStep = new DoubleField(BipedFootstepPlannerCostParameters::getCostPerStep, (p, v) -> p.setCostPerStep(v));
    private DoubleField aStarHeuristicsWeight = new DoubleField(p -> p.getAStarHeuristicsWeight().getValue(), (p, v) -> p.setAStarHeuristicsWeight(v));
    private DoubleField visGraphWithAStarHeuristicsWeight = new DoubleField(p -> p.getVisGraphWithAStarHeuristicsWeight().getValue(), (p, v) -> p.setVisGraphWithAStarHeuristicsWeight(v));
    private DoubleField depthFirstHeuristicsWeight = new DoubleField(p -> p.getDepthFirstHeuristicsWeight().getValue(), (p, v) -> p.setDepthFirstHeuristicsWeight(v));
@@ -29,20 +29,20 @@ public class FootstepPlannerCostParametersProperty extends ParametersProperty<Se
       this(bean, name, new DefaultFootstepPlannerCostParameters());
    }
 
-   public FootstepPlannerCostParametersProperty(Object bean, String name, FootstepPlannerCostParameters footstepPlannerParameters)
+   public FootstepPlannerCostParametersProperty(Object bean, String name, BipedFootstepPlannerCostParametersReadOnly footstepPlannerParameters)
    {
-      super(bean, name, new SettableFootstepPlannerCostParameters(footstepPlannerParameters));
+      super(bean, name, new BipedFootstepPlannerCostParameters(footstepPlannerParameters));
    }
 
-   public void setPlannerParameters(FootstepPlannerCostParameters parameters)
+   public void setPlannerParameters(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
-      setValue(new SettableFootstepPlannerCostParameters(parameters));
+      setValue(new BipedFootstepPlannerCostParameters(parameters));
    }
 
    @Override
-   protected SettableFootstepPlannerCostParameters getValueCopy(SettableFootstepPlannerCostParameters valueToCopy)
+   protected BipedFootstepPlannerCostParameters getValueCopy(BipedFootstepPlannerCostParameters valueToCopy)
    {
-      return new SettableFootstepPlannerCostParameters(valueToCopy);
+      return new BipedFootstepPlannerCostParameters(valueToCopy);
    }
    
    public void bidirectionalBindYawWeight(Property<? extends Number> property)

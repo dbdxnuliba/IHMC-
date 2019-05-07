@@ -317,7 +317,7 @@ public class YoFootstepPlannerParameters implements BipedFootstepPlannerParamete
    }
 
    @Override
-   public FootstepPlannerCostParameters getCostParameters()
+   public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
    {
       return costParameters;
    }
@@ -575,7 +575,7 @@ public class YoFootstepPlannerParameters implements BipedFootstepPlannerParamete
       this.minYClearanceFromStance.set(minYClearanceFromStance);
    }
 
-   public void setCostParameters(FootstepPlannerCostParameters parameters)
+   public void setCostParameters(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
       this.costParameters.set(parameters);
    }

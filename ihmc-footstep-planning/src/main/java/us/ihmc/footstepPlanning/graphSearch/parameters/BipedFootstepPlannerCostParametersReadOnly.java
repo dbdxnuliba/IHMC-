@@ -5,7 +5,7 @@ import us.ihmc.footstepPlanning.graphSearch.stepCost.EuclideanDistanceAndYawBase
 import us.ihmc.footstepPlanning.graphSearch.stepCost.LinearHeightCost;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
-public interface FootstepPlannerCostParameters
+public interface BipedFootstepPlannerCostParametersReadOnly
 {
    /**
     * Determines which cost function for distance and yaw to use, between {@link QuadraticDistanceAndYawCost} and {@link EuclideanDistanceAndYawBasedCost}
@@ -139,7 +139,7 @@ public interface FootstepPlannerCostParameters
 
    /**
     * If this value is non-zero, nodes will be given cost if the bounding box is within this xy distance of a planar region
-    * @see FootstepPlannerCostParameters#getBoundingBoxCost
+    * @see BipedFootstepPlannerCostParametersReadOnly#getBoundingBoxCost
     */
    default double getMaximum2dDistanceFromBoundingBoxToPenalize()
    {

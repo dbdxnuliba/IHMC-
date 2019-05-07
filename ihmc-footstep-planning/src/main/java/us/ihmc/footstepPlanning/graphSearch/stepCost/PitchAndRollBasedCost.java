@@ -5,15 +5,14 @@ import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapDat
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNodeTools;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
-import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 
 public class PitchAndRollBasedCost implements FootstepCost
 {
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
    private final FootstepNodeSnapperReadOnly snapper;
 
-   public PitchAndRollBasedCost(FootstepPlannerCostParameters costParameters, FootstepNodeSnapperReadOnly snapper)
+   public PitchAndRollBasedCost(BipedFootstepPlannerCostParametersReadOnly costParameters, FootstepNodeSnapperReadOnly snapper)
    {
       this.costParameters = costParameters;
       this.snapper = snapper;

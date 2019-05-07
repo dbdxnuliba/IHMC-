@@ -2,7 +2,7 @@ package us.ihmc.footstepPlanning;
 
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
 import java.util.Random;
@@ -305,10 +305,10 @@ public class FootstepPlanningTestTools
             return minYClearance;
          }
 
-         private final FootstepPlannerCostParameters costParameters = getRandomCostParameters(random);
+         private final BipedFootstepPlannerCostParametersReadOnly costParameters = getRandomCostParameters(random);
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return costParameters;
          }
@@ -318,9 +318,9 @@ public class FootstepPlanningTestTools
       return parameters;
    }
 
-   public static FootstepPlannerCostParameters getRandomCostParameters(Random random)
+   public static BipedFootstepPlannerCostParametersReadOnly getRandomCostParameters(Random random)
    {
-      return new FootstepPlannerCostParameters()
+      return new BipedFootstepPlannerCostParametersReadOnly()
       {
          private final boolean useQuadraticDistanceCost = RandomNumbers.nextBoolean(random, 0.5);
 
@@ -434,7 +434,7 @@ public class FootstepPlanningTestTools
    }
 
 
-   public static void assertCostParametersEqual(FootstepPlannerCostParameters parameters, FootstepPlannerCostParameters other)
+   public static void assertCostParametersEqual(BipedFootstepPlannerCostParametersReadOnly parameters, BipedFootstepPlannerCostParametersReadOnly other)
    {
       assertEquals(parameters.useQuadraticDistanceCost(), other.useQuadraticDistanceCost());
       assertEquals(parameters.useQuadraticHeightCost(), other.useQuadraticHeightCost());

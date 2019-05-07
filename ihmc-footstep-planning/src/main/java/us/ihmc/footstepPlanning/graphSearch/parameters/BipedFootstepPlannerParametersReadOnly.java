@@ -498,7 +498,7 @@ public interface BipedFootstepPlannerParametersReadOnly
       return 1.0;
    }
 
-   default FootstepPlannerCostParameters getCostParameters()
+   default BipedFootstepPlannerCostParametersReadOnly getCostParameters()
    {
       return new DefaultFootstepPlannerCostParameters();
    }

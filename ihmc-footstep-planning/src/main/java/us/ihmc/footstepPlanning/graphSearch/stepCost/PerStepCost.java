@@ -1,13 +1,13 @@
 package us.ihmc.footstepPlanning.graphSearch.stepCost;
 
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 
 public class PerStepCost implements FootstepCost
 {
    private final BipedFootstepPlannerParametersReadOnly parameters;
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
 
    public PerStepCost(BipedFootstepPlannerParametersReadOnly parameters)
    {

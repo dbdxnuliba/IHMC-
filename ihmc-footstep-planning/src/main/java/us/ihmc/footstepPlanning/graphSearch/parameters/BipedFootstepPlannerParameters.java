@@ -54,7 +54,7 @@ public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParam
    private double bodyBoxBaseY;
    private double bodyBoxBaseZ;
 
-   private final SettableFootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParameters costParameters;
 
    public BipedFootstepPlannerParameters()
    {
@@ -67,7 +67,7 @@ public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParam
                                                "ihmc-open-robotics-software",
                                                "ihmc-footstep-planning/src/main/resources");
 
-      this.costParameters = new SettableFootstepPlannerCostParameters(footstepPlannerParameters.getCostParameters());
+      this.costParameters = new BipedFootstepPlannerCostParameters(footstepPlannerParameters.getCostParameters());
 
       if (footstepPlannerParameters != null)
          set(footstepPlannerParameters);
@@ -656,7 +656,7 @@ public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParam
    }
 
    @Override
-   public SettableFootstepPlannerCostParameters getCostParameters()
+   public BipedFootstepPlannerCostParameters getCostParameters()
    {
       return costParameters;
    }

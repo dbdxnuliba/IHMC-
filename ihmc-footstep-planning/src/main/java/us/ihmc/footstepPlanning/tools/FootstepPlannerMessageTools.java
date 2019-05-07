@@ -10,7 +10,7 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D32;
 import us.ihmc.euclid.tuple4D.Quaternion32;
 import us.ihmc.footstepPlanning.FootstepPlannerType;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityGraphsParameters;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -93,7 +93,7 @@ public class FootstepPlannerMessageTools
       packet.setMinXClearanceFromStance(parameters.getMinXClearanceFromStance());
       packet.setMinYClearanceFromStance(parameters.getMinYClearanceFromStance());
 
-      FootstepPlannerCostParameters costParameters = parameters.getCostParameters();
+      BipedFootstepPlannerCostParametersReadOnly costParameters = parameters.getCostParameters();
 
       packet.getCostParameters().setUseQuadraticDistanceCost(costParameters.useQuadraticDistanceCost());
       packet.getCostParameters().setUseQuadraticHeightCost(costParameters.useQuadraticHeightCost());

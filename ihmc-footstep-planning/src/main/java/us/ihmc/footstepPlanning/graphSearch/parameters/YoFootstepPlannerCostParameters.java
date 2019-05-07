@@ -6,7 +6,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-public class YoFootstepPlannerCostParameters implements FootstepPlannerCostParameters
+public class YoFootstepPlannerCostParameters implements BipedFootstepPlannerCostParametersReadOnly
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -29,13 +29,13 @@ public class YoFootstepPlannerCostParameters implements FootstepPlannerCostParam
    private final YoDouble maximum2dDistanceFromBoundingBoxToPenalize = new YoDouble("maximum2dDistanceFromBoundingBoxToPenalize", registry);
    private final YoDouble boundingBoxCost = new YoDouble("boundingBoxCost", registry);
 
-   public YoFootstepPlannerCostParameters(YoVariableRegistry parentRegistry, FootstepPlannerCostParameters defaults)
+   public YoFootstepPlannerCostParameters(YoVariableRegistry parentRegistry, BipedFootstepPlannerCostParametersReadOnly defaults)
    {
       parentRegistry.addChild(registry);
       set(defaults);
    }
 
-   public void set(FootstepPlannerCostParameters defaults)
+   public void set(BipedFootstepPlannerCostParametersReadOnly defaults)
    {
       setUseQuadraticDistanceCost(defaults.useQuadraticDistanceCost());
       setUseQuadraticHeightCost(defaults.useQuadraticHeightCost());

@@ -6,17 +6,15 @@ import us.ihmc.footstepPlanning.graphSearch.collision.FootstepNodeBodyCollisionD
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
-import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNodeTools;
-import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 
 public class BodyCollisionNodeCost implements FootstepCost
 {
    private final FootstepNodeBodyCollisionDetector collisionDetector;
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
    private final FootstepNodeSnapperReadOnly snapper;
 
-   public BodyCollisionNodeCost(FootstepNodeBodyCollisionDetector collisionDetector, FootstepPlannerCostParameters costParameters, FootstepNodeSnapperReadOnly snapper)
+   public BodyCollisionNodeCost(FootstepNodeBodyCollisionDetector collisionDetector, BipedFootstepPlannerCostParametersReadOnly costParameters, FootstepNodeSnapperReadOnly snapper)
    {
       this.collisionDetector = collisionDetector;
       this.costParameters = costParameters;

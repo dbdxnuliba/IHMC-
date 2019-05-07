@@ -1,6 +1,6 @@
 package us.ihmc.valkyrie.parameters;
 
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.AdaptiveSwingParameters;
 
@@ -115,7 +115,7 @@ public class ValkyrieFootstepPlannerParameters implements BipedFootstepPlannerPa
    }
 
    @Override
-   public FootstepPlannerCostParameters getCostParameters()
+   public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
    {
       return new ValkyrieFootstepPlannerCostParameters();
    }

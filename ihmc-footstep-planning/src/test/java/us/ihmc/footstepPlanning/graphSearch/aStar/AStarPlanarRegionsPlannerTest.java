@@ -21,7 +21,7 @@ import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlannerGoal;
 import us.ihmc.footstepPlanning.FootstepPlannerGoalType;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FlatGroundFootstepNodeSnapper;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
@@ -206,7 +206,7 @@ public class AStarPlanarRegionsPlannerTest
       BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters()
       {
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {

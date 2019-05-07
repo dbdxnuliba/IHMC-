@@ -2,12 +2,12 @@ package us.ihmc.footstepPlanning.ui.components;
 
 import org.junit.jupiter.api.Test;
 import us.ihmc.footstepPlanning.FootstepPlanningTestTools;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParameters;
 
 import java.util.Random;
 
-public class SettableFootstepPlannerCostParametersTest
+public class BipedFootstepPlannerCostParametersTest
 {
    private final static int iters = 10;
 
@@ -18,8 +18,8 @@ public class SettableFootstepPlannerCostParametersTest
 
       for (int iter = 0; iter < iters; iter++)
       {
-         FootstepPlannerCostParameters costParameters = FootstepPlanningTestTools.getRandomCostParameters(random);
-         SettableFootstepPlannerCostParameters settableParameters = new SettableFootstepPlannerCostParameters(costParameters);
+         BipedFootstepPlannerCostParametersReadOnly costParameters = FootstepPlanningTestTools.getRandomCostParameters(random);
+         BipedFootstepPlannerCostParameters settableParameters = new BipedFootstepPlannerCostParameters(costParameters);
 
          FootstepPlanningTestTools.assertCostParametersEqual(costParameters, settableParameters);
 

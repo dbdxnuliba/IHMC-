@@ -15,7 +15,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlannerCostParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.geometry.PlanarRegionsListGenerator;
@@ -46,7 +46,7 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {
@@ -144,7 +144,7 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {
@@ -203,7 +203,7 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {
@@ -261,7 +261,7 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {
@@ -331,7 +331,7 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public FootstepPlannerCostParameters getCostParameters()
+         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
             return new DefaultFootstepPlannerCostParameters()
             {

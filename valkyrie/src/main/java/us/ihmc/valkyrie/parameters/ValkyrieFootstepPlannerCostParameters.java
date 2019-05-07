@@ -1,9 +1,9 @@
 package us.ihmc.valkyrie.parameters;
 
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
-public class ValkyrieFootstepPlannerCostParameters implements FootstepPlannerCostParameters
+public class ValkyrieFootstepPlannerCostParameters implements BipedFootstepPlannerCostParametersReadOnly
 {
    @Override
    public DoubleProvider getAStarHeuristicsWeight()

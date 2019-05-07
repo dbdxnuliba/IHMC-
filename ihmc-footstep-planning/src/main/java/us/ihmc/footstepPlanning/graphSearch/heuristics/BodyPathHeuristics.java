@@ -3,7 +3,7 @@ package us.ihmc.footstepPlanning.graphSearch.heuristics;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.Pose2D;
 import us.ihmc.euclid.tuple2D.Point2D;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.pathPlanning.bodyPathPlanner.BodyPathPlanner;
@@ -15,7 +15,7 @@ public class BodyPathHeuristics extends CostToGoHeuristics
    private static final double pathViolationWeight = 30.0;
    private final BodyPathPlanner bodyPath;
    private final BipedFootstepPlannerParametersReadOnly parameters;
-   private final FootstepPlannerCostParameters costParameters;
+   private final BipedFootstepPlannerCostParametersReadOnly costParameters;
 
    private double goalAlpha = 1.0;
 

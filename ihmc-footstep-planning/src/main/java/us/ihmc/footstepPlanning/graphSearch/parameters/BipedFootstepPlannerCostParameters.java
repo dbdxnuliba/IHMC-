@@ -1,9 +1,8 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
-public class SettableFootstepPlannerCostParameters implements FootstepPlannerCostParameters
+public class BipedFootstepPlannerCostParameters implements BipedFootstepPlannerCostParametersReadOnly
 {
    private boolean useQuadraticDistanceCost;
    private boolean useQuadraticHeightCost;
@@ -29,12 +28,12 @@ public class SettableFootstepPlannerCostParameters implements FootstepPlannerCos
    private final DoubleProvider depthFirstHeuristicsProvider = () -> depthFirstHeuristicsWeight;
    private final DoubleProvider bodyPathBasedHeuristicsProvider = () -> bodyPathBasedHeuristicsWeight;
 
-   public SettableFootstepPlannerCostParameters(FootstepPlannerCostParameters parameters)
+   public BipedFootstepPlannerCostParameters(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
       set(parameters);
    }
 
-   public void set(FootstepPlannerCostParameters parameters)
+   public void set(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
       this.useQuadraticDistanceCost = parameters.useQuadraticDistanceCost();
       this.useQuadraticHeightCost = parameters.useQuadraticHeightCost();
