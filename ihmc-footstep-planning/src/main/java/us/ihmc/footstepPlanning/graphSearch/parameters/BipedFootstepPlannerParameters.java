@@ -9,24 +9,40 @@ public class BipedFootstepPlannerParameters extends BipedFootstepPlannerCostPara
 {
    private final StoredPropertySet propertySet;
 
-   public static final String CONFIGURATION_FILE_NAME = "./saved-configurations/footstepPlannerParameters.txt";
-
-   public BipedFootstepPlannerParameters()
+   public BipedFootstepPlannerParameters() // for tests and stuff that's probably not gonna save
    {
       this(null);
    }
 
-   public BipedFootstepPlannerParameters(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
+   public BipedFootstepPlannerParameters(String projectName, String pathToResources) // for robots and UIs that want their own defaults and saves
+   {
+      this(projectName, pathToResources, null);
+   }
+
+   public BipedFootstepPlannerParameters(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters) // for message passing or temp access
+   {
+      this("ihmc-open-robotics-software", "ihmc-footstep-planning/src/main/resources", footstepPlannerParameters);
+   }
+
+   private BipedFootstepPlannerParameters(String projectName,
+                                          String pathToResources,
+                                          BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
       super(footstepPlannerParameters.getCostParameters());
 
-      this.propertySet = new StoredPropertySet(BipedFootstepPlannerParameterKeys.keys,
-                                               getClass(),
-                                               "ihmc-open-robotics-software",
-                                               "ihmc-footstep-planning/src/main/resources");
+      propertySet = new StoredPropertySet(BipedFootstepPlannerParameterKeys.keys,
+                                          getClass(),
+                                          projectName,
+                                          pathToResources);
 
       if (footstepPlannerParameters != null)
+      {
          set(footstepPlannerParameters);
+      }
+      else
+      {
+         propertySet.load();
+      }
    }
 
    public void set(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)

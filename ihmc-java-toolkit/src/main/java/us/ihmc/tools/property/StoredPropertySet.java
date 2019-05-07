@@ -45,8 +45,6 @@ public class StoredPropertySet implements StoredPropertySetReadOnly
       this.saveFileName = keys.getSaveFileName() + ".ini";
 
       values = new Object[keys.keys().size()];
-
-      load();
    }
 
    @Override

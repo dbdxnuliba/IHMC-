@@ -92,18 +92,18 @@ public class FootstepPlannerParametersUIController
 
    public FootstepPlannerParametersUIController()
    {
-      File configurationFile = new File(BipedFootstepPlannerParameters.CONFIGURATION_FILE_NAME);
-      try
-      {
-         configurationFile.getParentFile().mkdirs();
-         configurationFile.createNewFile();
-         filePropertyHelper = new FilePropertyHelper(configurationFile);
-      }
-      catch (IOException e)
-      {
-         System.out.println(configurationFile.getAbsolutePath());
-         e.printStackTrace();
-      }
+//      File configurationFile = new File(BipedFootstepPlannerParameters.CONFIGURATION_FILE_NAME);
+//      try
+//      {
+//         configurationFile.getParentFile().mkdirs();
+//         configurationFile.createNewFile();
+//         filePropertyHelper = new FilePropertyHelper(configurationFile);
+//      }
+//      catch (IOException e)
+//      {
+//         System.out.println(configurationFile.getAbsolutePath());
+//         e.printStackTrace();
+//      }
    }
 
    public void attachMessager(JavaFXMessager messager)
