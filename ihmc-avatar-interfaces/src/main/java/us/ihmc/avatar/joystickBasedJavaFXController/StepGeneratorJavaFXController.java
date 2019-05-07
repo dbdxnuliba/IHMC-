@@ -147,7 +147,7 @@ public class StepGeneratorJavaFXController
       continuousStepGenerator.setFootstepMessenger(this::prepareFootsteps);
       continuousStepGenerator.setFootPoseProvider(robotSide -> new FramePose3D(javaFXRobotVisualizer.getFullRobotModel().getSoleFrame(robotSide)));
       continuousStepGenerator.setFootstepValidityIndicator((solePose, stanceFootPose, robotSide) -> isStepSnappable(solePose, robotSide)
-            && isSafeDistanceFromObstacle(solePose, robotSide) && !isAStepBackAndDown(solePose, stanceFootPose));
+            && isSafeDistanceFromObstacle(solePose, robotSide) && !isAStepBackAndDown(solePose, stanceFootPose) && !isALargeStepUp(solePose, stanceFootPose));
 
       SnapAndWiggleSingleStepParameters parameters = new SnapAndWiggleSingleStepParameters();
       parameters.setFootLength(walkingControllerParameters.getSteppingParameters().getFootLength());
@@ -354,8 +354,10 @@ public class StepGeneratorJavaFXController
       for (int i = 0; i < footstepDataListMessage.getFootstepDataList().size(); i++)
       {
          FootstepDataMessage footstepDataMessage = footstepDataListMessage.getFootstepDataList().get(i);
-         footstepDataMessage.setSwingHeight(stepParametersReference.get().getSwingHeight());
          footstepNode.add(createFootstep(footstepDataMessage));
+         
+         if(footstepDataMessage.getSwingHeight() < 0.0)
+            footstepDataMessage.setSwingHeight(stepParametersReference.get().getSwingHeight());
       }
       footstepsToVisualizeReference.set(footstepNode);
       //      footstepDataListMessage.setAreFootstepsAdjustable(true);
@@ -367,7 +369,6 @@ public class StepGeneratorJavaFXController
       FootstepDataListMessage footstepsToSend = footstepsToSendReference.getAndSet(null);
       if (footstepsToSend != null && isWalking.get())
       {
-         LogTools.info("Publishing steps");
          footstepPublisher.publish(footstepsToSend);
       }
       if (!isWalking.get())
@@ -421,7 +422,7 @@ public class StepGeneratorJavaFXController
 
       return !collisionDetector.checkForCollision().isCollisionDetected();
    }
-      
+
    private boolean isAStepBackAndDown(FramePose3DReadOnly solePose, FramePose3DReadOnly stancePose)
    {
       double stepDownThreshold = 0.03;
@@ -432,10 +433,17 @@ public class StepGeneratorJavaFXController
       
       double stanceHeadingX = Math.cos(stancePose.getYaw());
       double stanceHeadingY = Math.sin(stancePose.getYaw());
-      
+
       double stepDX = solePose.getX() - stancePose.getX();
       double stepDY = solePose.getY() - stancePose.getY();
+      
       return stanceHeadingX * stepDX + stanceHeadingY * stepDY < 0.0;
+   }
+   
+   private boolean isALargeStepUp(FramePose3DReadOnly solePose, FramePose3DReadOnly stancePose)
+   {
+      double stepUpThreshold = 0.2;
+      return solePose.getZ() > stancePose.getZ() + stepUpThreshold;
    }
 
    private final ConvexPolygon2D footPolygon = new ConvexPolygon2D();

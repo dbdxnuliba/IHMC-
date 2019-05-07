@@ -328,7 +328,7 @@ public class ContinuousStepGenerator implements Updatable
          
          if(isStepUp || isStepDown)
          {
-            footstep.setSwingDuration(2.2);
+            footstep.setSwingDuration(1.5 * swingTime.getDoubleValue());
          }
          else
          {
@@ -338,13 +338,17 @@ public class ContinuousStepGenerator implements Updatable
          footstep.custom_waypoint_proportions_.clear();
          if(isStepUp)
          {
-            footstep.custom_waypoint_proportions_.add(0.05);
+            footstep.custom_waypoint_proportions_.add(0.0);
             footstep.custom_waypoint_proportions_.add(0.85);
+            
+            footstep.swing_height_ = 0.09;
          }
          else if(isStepDown)
          {
             footstep.custom_waypoint_proportions_.add(0.15);
-            footstep.custom_waypoint_proportions_.add(0.95);            
+            footstep.custom_waypoint_proportions_.add(1.05);            
+
+            footstep.swing_height_ = -1.0;
          }
 
          footstepPose2D.set(nextFootstepPose2D);
