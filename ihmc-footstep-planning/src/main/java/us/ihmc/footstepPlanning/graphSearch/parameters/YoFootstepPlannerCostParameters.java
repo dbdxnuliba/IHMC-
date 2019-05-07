@@ -1,6 +1,7 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
 import controller_msgs.msg.dds.FootstepPlannerCostParametersPacket;
+import us.ihmc.tools.property.StoredPropertySetReadOnly;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -55,6 +56,12 @@ public class YoFootstepPlannerCostParameters implements BipedFootstepPlannerCost
       setCostPerStep(defaults.getCostPerStep());
       setMaximum2dDistanceFromBoundingBoxToPenalize(defaults.getMaximum2dDistanceFromBoundingBoxToPenalize());
       setBoundingBoxCost(defaults.getBoundingBoxCost());
+   }
+
+   @Override
+   public StoredPropertySetReadOnly getStoredPropertySet()
+   {
+      return null;
    }
 
    @Override

@@ -2,6 +2,7 @@ package us.ihmc.footstepPlanning.graphSearch.parameters;
 
 import controller_msgs.msg.dds.FootstepPlannerCostParametersPacket;
 import controller_msgs.msg.dds.FootstepPlannerParametersPacket;
+import us.ihmc.tools.property.StoredPropertySetReadOnly;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -98,6 +99,12 @@ public class YoFootstepPlannerParameters implements BipedFootstepPlannerParamete
       minYClearanceFromStance.set(defaults.getMinYClearanceFromStance());
 
       costParameters.set(defaults.getCostParameters());
+   }
+
+   @Override
+   public StoredPropertySetReadOnly getStoredPropertySet()
+   {
+      return null;
    }
 
    @Override
