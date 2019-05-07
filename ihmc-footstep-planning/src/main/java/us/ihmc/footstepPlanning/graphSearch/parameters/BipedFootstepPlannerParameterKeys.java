@@ -1,9 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
-import us.ihmc.tools.property.BooleanStoredPropertyKey;
-import us.ihmc.tools.property.DoubleStoredPropertyKey;
-import us.ihmc.tools.property.IntegerStoredPropertyKey;
-import us.ihmc.tools.property.StoredPropertyKeyList;
+import us.ihmc.tools.property.*;
 
 public class BipedFootstepPlannerParameterKeys
 {
@@ -45,4 +42,9 @@ public class BipedFootstepPlannerParameterKeys
    public static final DoubleStoredPropertyKey  bodyBoxBaseX                        = keys.addDoubleKey ("Body box base X"                          );
    public static final DoubleStoredPropertyKey  bodyBoxBaseY                        = keys.addDoubleKey ("Body box base Y"                          );
    public static final DoubleStoredPropertyKey  bodyBoxBaseZ                        = keys.addDoubleKey ("Body box base Z"                          );
+
+   public static void main(String[] args)
+   {
+      StoredPropertySet.printInitialSaveFileContents(keys.keys());
+   }
 }
