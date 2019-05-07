@@ -8,7 +8,7 @@ import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.ui.components.FootstepPlannerParametersProperty;
-import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.messager.MessageBidirectionalBinding.PropertyToMessageTypeConverter;
 
@@ -90,20 +90,20 @@ public class FootstepPlannerCostsUIController
       messager.bindBidirectional(FootstepPlannerMessagerAPI.PlannerParametersTopic, property, createConverter(), true);
    }
 
-   private PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters> createConverter()
+   private PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, BipedFootstepPlannerParameters> createConverter()
    {
-      return new PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters>()
+      return new PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, BipedFootstepPlannerParameters>()
       {
          @Override
-         public BipedFootstepPlannerParametersReadOnly convert(SettableFootstepPlannerParameters propertyValue)
+         public BipedFootstepPlannerParametersReadOnly convert(BipedFootstepPlannerParameters propertyValue)
          {
             return propertyValue;
          }
 
          @Override
-         public SettableFootstepPlannerParameters interpret(BipedFootstepPlannerParametersReadOnly messageContent)
+         public BipedFootstepPlannerParameters interpret(BipedFootstepPlannerParametersReadOnly messageContent)
          {
-            return new SettableFootstepPlannerParameters(messageContent);
+            return new BipedFootstepPlannerParameters(messageContent);
          }
       };
    }

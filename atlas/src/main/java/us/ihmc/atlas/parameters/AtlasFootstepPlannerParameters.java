@@ -1,7 +1,7 @@
 package us.ihmc.atlas.parameters;
 
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotEnvironmentAwareness.io.FilePropertyHelper;
 
@@ -37,7 +37,7 @@ public class AtlasFootstepPlannerParameters implements BipedFootstepPlannerParam
 
    public AtlasFootstepPlannerParameters()
    {
-      Path parametersPath = Paths.get(SettableFootstepPlannerParameters.CONFIGURATION_FILE_NAME).toAbsolutePath().normalize();
+      Path parametersPath = Paths.get(BipedFootstepPlannerParameters.CONFIGURATION_FILE_NAME).toAbsolutePath().normalize();
 
       if (Files.exists(parametersPath))
       {

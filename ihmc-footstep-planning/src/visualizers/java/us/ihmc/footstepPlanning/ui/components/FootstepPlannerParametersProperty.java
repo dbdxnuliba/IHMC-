@@ -3,61 +3,61 @@ package us.ihmc.footstepPlanning.ui.components;
 import javafx.beans.property.Property;
 import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.ParametersProperty;
 
-public class FootstepPlannerParametersProperty extends ParametersProperty<SettableFootstepPlannerParameters>
+public class FootstepPlannerParametersProperty extends ParametersProperty<BipedFootstepPlannerParameters>
 {
-   private DoubleField idealFootstepWidth = new DoubleField(SettableFootstepPlannerParameters::getIdealFootstepWidth, SettableFootstepPlannerParameters::setIdealFootstepWidth);
-   private DoubleField idealFootstepLength = new DoubleField(SettableFootstepPlannerParameters::getIdealFootstepLength, SettableFootstepPlannerParameters::setIdealFootstepLength);
-   private DoubleField maxStepReach = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepReach, SettableFootstepPlannerParameters::setMaximumStepReach);
-   private DoubleField maxStepYaw = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepYaw, SettableFootstepPlannerParameters::setMaximumStepYaw);
-   private DoubleField minStepWidth = new DoubleField(SettableFootstepPlannerParameters::getMinimumStepWidth, SettableFootstepPlannerParameters::setMinimumStepWidth);
-   private DoubleField minStepLength = new DoubleField(SettableFootstepPlannerParameters::getMinimumStepLength, SettableFootstepPlannerParameters::setMinimumStepLength);
-   private DoubleField minStepYaw = new DoubleField(SettableFootstepPlannerParameters::getMinimumStepYaw, SettableFootstepPlannerParameters::setMinimumStepYaw);
-   private DoubleField maxStepZ = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepZ, SettableFootstepPlannerParameters::setMaximumStepZ);
-   private DoubleField minFootholdPercent = new DoubleField(SettableFootstepPlannerParameters::getMinimumFootholdPercent, SettableFootstepPlannerParameters::setMinimumFootholdPercent);
-   private DoubleField minSurfaceIncline = new DoubleField(SettableFootstepPlannerParameters::getMinimumSurfaceInclineRadians, SettableFootstepPlannerParameters::setMinimumSurfaceInclineRadians);
-   private DoubleField maxStepWidth = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepWidth, SettableFootstepPlannerParameters::setMaximumStepWidth);
-   private DoubleField minXClearanceFromStance = new DoubleField(SettableFootstepPlannerParameters::getMinXClearanceFromStance, SettableFootstepPlannerParameters::setMinXClearanceFromStance);
-   private DoubleField minYClearanceFromStance = new DoubleField(SettableFootstepPlannerParameters::getMinYClearanceFromStance, SettableFootstepPlannerParameters::setMinYClearanceFromStance);
-   private DoubleField maxXForStepUp = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepReachWhenSteppingUp, SettableFootstepPlannerParameters::setMaximumStepReachWhenSteppingUp);
-   private DoubleField minZToConsiderStepUp = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepZWhenSteppingUp, SettableFootstepPlannerParameters::setMaximumStepZWhenSteppingUp);
-   private DoubleField maxXForStepDown = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepXWhenForwardAndDown, SettableFootstepPlannerParameters::setMaximumStepXWhenForwardAndDown);
-   private DoubleField minZToConsiderStepDown = new DoubleField(SettableFootstepPlannerParameters::getMaximumStepZWhenForwardAndDown, SettableFootstepPlannerParameters::setMaximumStepZWhenForwardAndDown);
+   private DoubleField idealFootstepWidth = new DoubleField(BipedFootstepPlannerParameters::getIdealFootstepWidth, BipedFootstepPlannerParameters::setIdealFootstepWidth);
+   private DoubleField idealFootstepLength = new DoubleField(BipedFootstepPlannerParameters::getIdealFootstepLength, BipedFootstepPlannerParameters::setIdealFootstepLength);
+   private DoubleField maxStepReach = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepReach, BipedFootstepPlannerParameters::setMaximumStepReach);
+   private DoubleField maxStepYaw = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepYaw, BipedFootstepPlannerParameters::setMaximumStepYaw);
+   private DoubleField minStepWidth = new DoubleField(BipedFootstepPlannerParameters::getMinimumStepWidth, BipedFootstepPlannerParameters::setMinimumStepWidth);
+   private DoubleField minStepLength = new DoubleField(BipedFootstepPlannerParameters::getMinimumStepLength, BipedFootstepPlannerParameters::setMinimumStepLength);
+   private DoubleField minStepYaw = new DoubleField(BipedFootstepPlannerParameters::getMinimumStepYaw, BipedFootstepPlannerParameters::setMinimumStepYaw);
+   private DoubleField maxStepZ = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepZ, BipedFootstepPlannerParameters::setMaximumStepZ);
+   private DoubleField minFootholdPercent = new DoubleField(BipedFootstepPlannerParameters::getMinimumFootholdPercent, BipedFootstepPlannerParameters::setMinimumFootholdPercent);
+   private DoubleField minSurfaceIncline = new DoubleField(BipedFootstepPlannerParameters::getMinimumSurfaceInclineRadians, BipedFootstepPlannerParameters::setMinimumSurfaceInclineRadians);
+   private DoubleField maxStepWidth = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepWidth, BipedFootstepPlannerParameters::setMaximumStepWidth);
+   private DoubleField minXClearanceFromStance = new DoubleField(BipedFootstepPlannerParameters::getMinXClearanceFromStance, BipedFootstepPlannerParameters::setMinXClearanceFromStance);
+   private DoubleField minYClearanceFromStance = new DoubleField(BipedFootstepPlannerParameters::getMinYClearanceFromStance, BipedFootstepPlannerParameters::setMinYClearanceFromStance);
+   private DoubleField maxXForStepUp = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepReachWhenSteppingUp, BipedFootstepPlannerParameters::setMaximumStepReachWhenSteppingUp);
+   private DoubleField minZToConsiderStepUp = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepZWhenSteppingUp, BipedFootstepPlannerParameters::setMaximumStepZWhenSteppingUp);
+   private DoubleField maxXForStepDown = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepXWhenForwardAndDown, BipedFootstepPlannerParameters::setMaximumStepXWhenForwardAndDown);
+   private DoubleField minZToConsiderStepDown = new DoubleField(BipedFootstepPlannerParameters::getMaximumStepZWhenForwardAndDown, BipedFootstepPlannerParameters::setMaximumStepZWhenForwardAndDown);
 
-   private BooleanField returnBestEffortPlan = new BooleanField(SettableFootstepPlannerParameters::getReturnBestEffortPlan, SettableFootstepPlannerParameters::setReturnBestEffortPlan);
-   private BooleanField useQuadraticDistanceCost = new BooleanField(SettableFootstepPlannerParameters::useQuadraticDistanceCost, SettableFootstepPlannerParameters::setUseQuadraticDistanceCost);
-   private BooleanField useQuadraticHeightCost = new BooleanField(SettableFootstepPlannerParameters::useQuadraticHeightCost, SettableFootstepPlannerParameters::setUseQuadraticHeightCost);
-   private DoubleField yawWeight = new DoubleField(SettableFootstepPlannerParameters::getYawWeight, SettableFootstepPlannerParameters::setYawWeight);
-   private DoubleField pitchWeight = new DoubleField(SettableFootstepPlannerParameters::getPitchWeight, SettableFootstepPlannerParameters::setPitchWeight);
-   private DoubleField rollWeight = new DoubleField(SettableFootstepPlannerParameters::getRollWeight, SettableFootstepPlannerParameters::setRollWeight);
-   private DoubleField forwardWeight = new DoubleField(SettableFootstepPlannerParameters::getForwardWeight, SettableFootstepPlannerParameters::setForwardWeight);
-   private DoubleField lateralWeight = new DoubleField(SettableFootstepPlannerParameters::getLateralWeight, SettableFootstepPlannerParameters::setLateralWeight);
-   private DoubleField stepUpWeight = new DoubleField(SettableFootstepPlannerParameters::getStepUpWeight, SettableFootstepPlannerParameters::setStepUpWeight);
-   private DoubleField stepDownWeight = new DoubleField(SettableFootstepPlannerParameters::getStepDownWeight, SettableFootstepPlannerParameters::setStepDownWeight);
-   private DoubleField costPerStep = new DoubleField(SettableFootstepPlannerParameters::getCostPerStep, SettableFootstepPlannerParameters::setCostPerStep);
-   private DoubleField boundingBoxCost = new DoubleField(SettableFootstepPlannerParameters::getBoundingBoxCost, SettableFootstepPlannerParameters::setBoundingBoxCost);
-   private DoubleField maximum2dDistanceFromBoundingBoxToPenalize = new DoubleField(SettableFootstepPlannerParameters::getMaximum2dDistanceFromBoundingBoxToPenalize, SettableFootstepPlannerParameters::setMaximum2dDistanceFromBoundingBoxToPenalize);
-   private DoubleField aStarHeuristicsWeight = new DoubleField(SettableFootstepPlannerParameters::getAStarHeuristicsWeight, SettableFootstepPlannerParameters::setAStarHeuristicsWeight);
-   private DoubleField visGraphWithAStarHeuristicsWeight = new DoubleField(SettableFootstepPlannerParameters::getVisGraphWithAStarHeuristicsWeight, SettableFootstepPlannerParameters::setVisGraphWithAStarHeuristicsWeight);
-   private DoubleField depthFirstHeuristicsWeight = new DoubleField(SettableFootstepPlannerParameters::getDepthFirstHeuristicsWeight, SettableFootstepPlannerParameters::setDepthFirstHeuristicsWeight);
-   private DoubleField bodyPathBasedHeuristicsWeight = new DoubleField(SettableFootstepPlannerParameters::getBodyPathBasedHeuristicsWeight, SettableFootstepPlannerParameters::setBodyPathBasedHeuristicsWeight);
+   private BooleanField returnBestEffortPlan = new BooleanField(BipedFootstepPlannerParameters::getReturnBestEffortPlan, BipedFootstepPlannerParameters::setReturnBestEffortPlan);
+   private BooleanField useQuadraticDistanceCost = new BooleanField(BipedFootstepPlannerParameters::useQuadraticDistanceCost, BipedFootstepPlannerParameters::setUseQuadraticDistanceCost);
+   private BooleanField useQuadraticHeightCost = new BooleanField(BipedFootstepPlannerParameters::useQuadraticHeightCost, BipedFootstepPlannerParameters::setUseQuadraticHeightCost);
+   private DoubleField yawWeight = new DoubleField(BipedFootstepPlannerParameters::getYawWeight, BipedFootstepPlannerParameters::setYawWeight);
+   private DoubleField pitchWeight = new DoubleField(BipedFootstepPlannerParameters::getPitchWeight, BipedFootstepPlannerParameters::setPitchWeight);
+   private DoubleField rollWeight = new DoubleField(BipedFootstepPlannerParameters::getRollWeight, BipedFootstepPlannerParameters::setRollWeight);
+   private DoubleField forwardWeight = new DoubleField(BipedFootstepPlannerParameters::getForwardWeight, BipedFootstepPlannerParameters::setForwardWeight);
+   private DoubleField lateralWeight = new DoubleField(BipedFootstepPlannerParameters::getLateralWeight, BipedFootstepPlannerParameters::setLateralWeight);
+   private DoubleField stepUpWeight = new DoubleField(BipedFootstepPlannerParameters::getStepUpWeight, BipedFootstepPlannerParameters::setStepUpWeight);
+   private DoubleField stepDownWeight = new DoubleField(BipedFootstepPlannerParameters::getStepDownWeight, BipedFootstepPlannerParameters::setStepDownWeight);
+   private DoubleField costPerStep = new DoubleField(BipedFootstepPlannerParameters::getCostPerStep, BipedFootstepPlannerParameters::setCostPerStep);
+   private DoubleField boundingBoxCost = new DoubleField(BipedFootstepPlannerParameters::getBoundingBoxCost, BipedFootstepPlannerParameters::setBoundingBoxCost);
+   private DoubleField maximum2dDistanceFromBoundingBoxToPenalize = new DoubleField(BipedFootstepPlannerParameters::getMaximum2dDistanceFromBoundingBoxToPenalize, BipedFootstepPlannerParameters::setMaximum2dDistanceFromBoundingBoxToPenalize);
+   private DoubleField aStarHeuristicsWeight = new DoubleField(BipedFootstepPlannerParameters::getAStarHeuristicsWeight, BipedFootstepPlannerParameters::setAStarHeuristicsWeight);
+   private DoubleField visGraphWithAStarHeuristicsWeight = new DoubleField(BipedFootstepPlannerParameters::getVisGraphWithAStarHeuristicsWeight, BipedFootstepPlannerParameters::setVisGraphWithAStarHeuristicsWeight);
+   private DoubleField depthFirstHeuristicsWeight = new DoubleField(BipedFootstepPlannerParameters::getDepthFirstHeuristicsWeight, BipedFootstepPlannerParameters::setDepthFirstHeuristicsWeight);
+   private DoubleField bodyPathBasedHeuristicsWeight = new DoubleField(BipedFootstepPlannerParameters::getBodyPathBasedHeuristicsWeight, BipedFootstepPlannerParameters::setBodyPathBasedHeuristicsWeight);
 
-   private BooleanField checkForBodyBoxCollision = new BooleanField(SettableFootstepPlannerParameters::checkForBodyBoxCollisions, SettableFootstepPlannerParameters::setCheckForBodyBoxCollisions);
-   private BooleanField performHeuristicSearchPolicies = new BooleanField(SettableFootstepPlannerParameters::performHeuristicSearchPolicies, SettableFootstepPlannerParameters::setPerformHeuristicSearchPolicies);
-   private DoubleField bodyBoxWidth = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxWidth, SettableFootstepPlannerParameters::setBodyBoxWidth);
-   private DoubleField bodyBoxDepth = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxDepth, SettableFootstepPlannerParameters::setBodyBoxDepth);
-   private DoubleField bodyBoxHeight = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxHeight, SettableFootstepPlannerParameters::setBodyBoxHeight);
-   private DoubleField bodyBoxBaseX = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxBaseX, SettableFootstepPlannerParameters::setBodyBoxBaseX);
-   private DoubleField bodyBoxBaseY = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxBaseY, SettableFootstepPlannerParameters::setBodyBoxBaseY);
-   private DoubleField bodyBoxBaseZ = new DoubleField(SettableFootstepPlannerParameters::getBodyBoxBaseZ, SettableFootstepPlannerParameters::setBodyBoxBaseZ);
+   private BooleanField checkForBodyBoxCollision = new BooleanField(BipedFootstepPlannerParameters::checkForBodyBoxCollisions, BipedFootstepPlannerParameters::setCheckForBodyBoxCollisions);
+   private BooleanField performHeuristicSearchPolicies = new BooleanField(BipedFootstepPlannerParameters::performHeuristicSearchPolicies, BipedFootstepPlannerParameters::setPerformHeuristicSearchPolicies);
+   private DoubleField bodyBoxWidth = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxWidth, BipedFootstepPlannerParameters::setBodyBoxWidth);
+   private DoubleField bodyBoxDepth = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxDepth, BipedFootstepPlannerParameters::setBodyBoxDepth);
+   private DoubleField bodyBoxHeight = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxHeight, BipedFootstepPlannerParameters::setBodyBoxHeight);
+   private DoubleField bodyBoxBaseX = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxBaseX, BipedFootstepPlannerParameters::setBodyBoxBaseX);
+   private DoubleField bodyBoxBaseY = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxBaseY, BipedFootstepPlannerParameters::setBodyBoxBaseY);
+   private DoubleField bodyBoxBaseZ = new DoubleField(BipedFootstepPlannerParameters::getBodyBoxBaseZ, BipedFootstepPlannerParameters::setBodyBoxBaseZ);
 
-   private DoubleField cliffHeight = new DoubleField(SettableFootstepPlannerParameters::getCliffHeightToAvoid, SettableFootstepPlannerParameters::setCliffHeightToAvoid);
-   private DoubleField cliffClearance = new DoubleField(SettableFootstepPlannerParameters::getMinimumDistanceFromCliffBottoms, SettableFootstepPlannerParameters::setMinimumDistanceFromCliffBottoms);
-   private DoubleField maxWiggleXY = new DoubleField(SettableFootstepPlannerParameters::getMaximumXYWiggleDistance, SettableFootstepPlannerParameters::setMaximumXYWiggleDistance);
-   private DoubleField maxWiggleYaw = new DoubleField(SettableFootstepPlannerParameters::getMaximumYawWiggle, SettableFootstepPlannerParameters::setMaximumYawWiggle);
-   private DoubleField wiggleInsideDelta = new DoubleField(SettableFootstepPlannerParameters::getWiggleInsideDelta, SettableFootstepPlannerParameters::setWiggleInsideDelta);
+   private DoubleField cliffHeight = new DoubleField(BipedFootstepPlannerParameters::getCliffHeightToAvoid, BipedFootstepPlannerParameters::setCliffHeightToAvoid);
+   private DoubleField cliffClearance = new DoubleField(BipedFootstepPlannerParameters::getMinimumDistanceFromCliffBottoms, BipedFootstepPlannerParameters::setMinimumDistanceFromCliffBottoms);
+   private DoubleField maxWiggleXY = new DoubleField(BipedFootstepPlannerParameters::getMaximumXYWiggleDistance, BipedFootstepPlannerParameters::setMaximumXYWiggleDistance);
+   private DoubleField maxWiggleYaw = new DoubleField(BipedFootstepPlannerParameters::getMaximumYawWiggle, BipedFootstepPlannerParameters::setMaximumYawWiggle);
+   private DoubleField wiggleInsideDelta = new DoubleField(BipedFootstepPlannerParameters::getWiggleInsideDelta, BipedFootstepPlannerParameters::setWiggleInsideDelta);
 
    public FootstepPlannerParametersProperty(Object bean, String name)
    {
@@ -66,18 +66,18 @@ public class FootstepPlannerParametersProperty extends ParametersProperty<Settab
 
    public FootstepPlannerParametersProperty(Object bean, String name, BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
-      super(bean, name, new SettableFootstepPlannerParameters(footstepPlannerParameters));
+      super(bean, name, new BipedFootstepPlannerParameters(footstepPlannerParameters));
    }
 
    public void setPlannerParameters(BipedFootstepPlannerParametersReadOnly parameters)
    {
-      setValue(new SettableFootstepPlannerParameters(parameters));
+      setValue(new BipedFootstepPlannerParameters(parameters));
    }
 
    @Override
-   protected SettableFootstepPlannerParameters getValueCopy(SettableFootstepPlannerParameters valueToCopy)
+   protected BipedFootstepPlannerParameters getValueCopy(BipedFootstepPlannerParameters valueToCopy)
    {
-      return new SettableFootstepPlannerParameters(valueToCopy);
+      return new BipedFootstepPlannerParameters(valueToCopy);
    }
 
    public void bidirectionalBindIdealFootstepWidth(Property<? extends Number> property)

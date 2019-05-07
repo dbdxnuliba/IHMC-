@@ -3,13 +3,13 @@ package us.ihmc.footstepPlanning.ui.components;
 import org.junit.jupiter.api.Test;
 import us.ihmc.footstepPlanning.FootstepPlanningTestTools;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 
 import java.util.Random;
 
 import static us.ihmc.robotics.Assert.*;
 
-public class SettableFootstepPlannerParametersTest
+public class BipedFootstepPlannerParametersTest
 {
    private final static int iters = 10;
    private final static double epsilon = 1e-7;
@@ -22,7 +22,7 @@ public class SettableFootstepPlannerParametersTest
       for (int iter = 0; iter < iters; iter++)
       {
          BipedFootstepPlannerParametersReadOnly parameters = FootstepPlanningTestTools.createRandomParameters(random);
-         SettableFootstepPlannerParameters settableParameters = new SettableFootstepPlannerParameters(parameters);
+         BipedFootstepPlannerParameters settableParameters = new BipedFootstepPlannerParameters(parameters);
 
          assertParametersEqual(parameters, settableParameters);
 
@@ -91,7 +91,7 @@ public class SettableFootstepPlannerParametersTest
       }
    }
 
-   private void assertParametersEqual(BipedFootstepPlannerParametersReadOnly parameters, SettableFootstepPlannerParameters settableParameters)
+   private void assertParametersEqual(BipedFootstepPlannerParametersReadOnly parameters, BipedFootstepPlannerParameters settableParameters)
    {
       FootstepPlanningTestTools.assertParametersEqual(parameters, settableParameters);
 
