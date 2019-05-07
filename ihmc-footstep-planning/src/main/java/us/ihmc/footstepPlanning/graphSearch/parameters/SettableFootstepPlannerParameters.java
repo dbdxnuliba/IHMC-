@@ -1,6 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
-public class SettableFootstepPlannerParameters implements FootstepPlannerParameters
+public class SettableFootstepPlannerParameters implements BipedFootstepPlannerParametersReadOnly
 {
    public static final String CONFIGURATION_FILE_NAME = "./saved-configurations/footstepPlannerParameters.txt";
 
@@ -48,14 +48,14 @@ public class SettableFootstepPlannerParameters implements FootstepPlannerParamet
 
    private final SettableFootstepPlannerCostParameters costParameters;
 
-   public SettableFootstepPlannerParameters(FootstepPlannerParameters footstepPlannerParameters)
+   public SettableFootstepPlannerParameters(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
       this.costParameters = new SettableFootstepPlannerCostParameters(footstepPlannerParameters.getCostParameters());
 
       set(footstepPlannerParameters);
    }
 
-   public void set(FootstepPlannerParameters footstepPlannerParameters)
+   public void set(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
       this.idealFootstepWidth = footstepPlannerParameters.getIdealFootstepWidth();
       this.idealFootstepLength = footstepPlannerParameters.getIdealFootstepLength();

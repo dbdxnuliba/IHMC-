@@ -2,7 +2,7 @@ package us.ihmc.footstepPlanning.ui.components;
 
 import org.junit.jupiter.api.Test;
 import us.ihmc.footstepPlanning.FootstepPlanningTestTools;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
 
 import java.util.Random;
@@ -21,7 +21,7 @@ public class SettableFootstepPlannerParametersTest
 
       for (int iter = 0; iter < iters; iter++)
       {
-         FootstepPlannerParameters parameters = FootstepPlanningTestTools.createRandomParameters(random);
+         BipedFootstepPlannerParametersReadOnly parameters = FootstepPlanningTestTools.createRandomParameters(random);
          SettableFootstepPlannerParameters settableParameters = new SettableFootstepPlannerParameters(parameters);
 
          assertParametersEqual(parameters, settableParameters);
@@ -91,7 +91,7 @@ public class SettableFootstepPlannerParametersTest
       }
    }
 
-   private void assertParametersEqual(FootstepPlannerParameters parameters, SettableFootstepPlannerParameters settableParameters)
+   private void assertParametersEqual(BipedFootstepPlannerParametersReadOnly parameters, SettableFootstepPlannerParameters settableParameters)
    {
       FootstepPlanningTestTools.assertParametersEqual(parameters, settableParameters);
 

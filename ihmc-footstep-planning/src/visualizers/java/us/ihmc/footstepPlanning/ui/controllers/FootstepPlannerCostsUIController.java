@@ -6,7 +6,7 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.ui.components.FootstepPlannerParametersProperty;
 import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
@@ -48,7 +48,7 @@ public class FootstepPlannerCostsUIController
       this.messager = messager;
    }
 
-   public void setPlannerParameters(FootstepPlannerParameters parameters)
+   public void setPlannerParameters(BipedFootstepPlannerParametersReadOnly parameters)
    {
       property.setPlannerParameters(parameters);
    }
@@ -90,18 +90,18 @@ public class FootstepPlannerCostsUIController
       messager.bindBidirectional(FootstepPlannerMessagerAPI.PlannerParametersTopic, property, createConverter(), true);
    }
 
-   private PropertyToMessageTypeConverter<FootstepPlannerParameters, SettableFootstepPlannerParameters> createConverter()
+   private PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters> createConverter()
    {
-      return new PropertyToMessageTypeConverter<FootstepPlannerParameters, SettableFootstepPlannerParameters>()
+      return new PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters>()
       {
          @Override
-         public FootstepPlannerParameters convert(SettableFootstepPlannerParameters propertyValue)
+         public BipedFootstepPlannerParametersReadOnly convert(SettableFootstepPlannerParameters propertyValue)
          {
             return propertyValue;
          }
 
          @Override
-         public SettableFootstepPlannerParameters interpret(FootstepPlannerParameters messageContent)
+         public SettableFootstepPlannerParameters interpret(BipedFootstepPlannerParametersReadOnly messageContent)
          {
             return new SettableFootstepPlannerParameters(messageContent);
          }

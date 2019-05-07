@@ -1,6 +1,6 @@
 package us.ihmc.atlas.parameters;
 
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotEnvironmentAwareness.io.FilePropertyHelper;
@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class AtlasFootstepPlannerParameters implements FootstepPlannerParameters
+public class AtlasFootstepPlannerParameters implements BipedFootstepPlannerParametersReadOnly
 {
    private static volatile boolean printed = false;
 

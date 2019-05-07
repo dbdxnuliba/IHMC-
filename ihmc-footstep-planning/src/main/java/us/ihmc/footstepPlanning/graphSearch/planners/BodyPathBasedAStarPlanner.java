@@ -15,7 +15,7 @@ import us.ihmc.footstepPlanning.graphSearch.nodeChecking.FootstepNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.SnapBasedNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpansion;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
 import us.ihmc.pathPlanning.bodyPathPlanner.BodyPathPlanner;
@@ -37,7 +37,7 @@ public class BodyPathBasedAStarPlanner implements FootstepPlanner
    private final BodyPathHeuristics heuristics;
    private final YoDouble planningHorizonLength;
 
-   public BodyPathBasedAStarPlanner(String prefix, BodyPathPlanner bodyPathPlanner, FootstepPlannerParameters parameters,
+   public BodyPathBasedAStarPlanner(String prefix, BodyPathPlanner bodyPathPlanner, BipedFootstepPlannerParametersReadOnly parameters,
                                     SideDependentList<ConvexPolygon2D> footPolygons, DoubleProvider heuristicWeight, YoVariableRegistry parentRegistry,
                                     BipedalFootstepPlannerListener... listeners)
    {

@@ -3,7 +3,7 @@ package us.ihmc.footstepPlanning.ui.controllers;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.ui.components.FootstepPlannerParametersProperty;
 import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
@@ -74,18 +74,18 @@ public class BodyCollisionCheckingUIController
    }
 
 
-   private PropertyToMessageTypeConverter<FootstepPlannerParameters, SettableFootstepPlannerParameters> createConverter()
+   private PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters> createConverter()
    {
-      return new PropertyToMessageTypeConverter<FootstepPlannerParameters, SettableFootstepPlannerParameters>()
+      return new PropertyToMessageTypeConverter<BipedFootstepPlannerParametersReadOnly, SettableFootstepPlannerParameters>()
       {
          @Override
-         public FootstepPlannerParameters convert(SettableFootstepPlannerParameters propertyValue)
+         public BipedFootstepPlannerParametersReadOnly convert(SettableFootstepPlannerParameters propertyValue)
          {
             return propertyValue;
          }
 
          @Override
-         public SettableFootstepPlannerParameters interpret(FootstepPlannerParameters messageContent)
+         public SettableFootstepPlannerParameters interpret(BipedFootstepPlannerParametersReadOnly messageContent)
          {
             return new SettableFootstepPlannerParameters(messageContent);
          }

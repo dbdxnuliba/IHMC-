@@ -5,7 +5,7 @@ import us.ihmc.euclid.shape.Box3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.geometry.polytope.ConvexPolytope;
 import us.ihmc.geometry.polytope.GilbertJohnsonKeerthiCollisionDetector;
 import us.ihmc.robotics.geometry.PlanarRegion;
@@ -16,7 +16,7 @@ import java.util.List;
 
 class BoundingBoxCollisionDetector
 {
-   private final FootstepPlannerParameters parameters;
+   private final BipedFootstepPlannerParametersReadOnly parameters;
    private PlanarRegionsList planarRegionsList;
    private final List<ConvexPolytope> planarRegionPolytopes = new ArrayList<>();
    private final GilbertJohnsonKeerthiCollisionDetector collisionDetector = new GilbertJohnsonKeerthiCollisionDetector();
@@ -34,7 +34,7 @@ class BoundingBoxCollisionDetector
    private final Point3D tempPoint1 = new Point3D();
    private final Point3D tempPoint2 = new Point3D();
 
-   BoundingBoxCollisionDetector(FootstepPlannerParameters parameters)
+   BoundingBoxCollisionDetector(BipedFootstepPlannerParametersReadOnly parameters)
    {
       this.parameters = parameters;
    }

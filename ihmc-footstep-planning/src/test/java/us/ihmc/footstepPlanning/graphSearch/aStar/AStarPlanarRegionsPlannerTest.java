@@ -22,7 +22,7 @@ import us.ihmc.footstepPlanning.FootstepPlannerGoal;
 import us.ihmc.footstepPlanning.FootstepPlannerGoalType;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FlatGroundFootstepNodeSnapper;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
@@ -147,7 +147,7 @@ public class AStarPlanarRegionsPlannerTest
 
       FootstepNode node = new FootstepNode(0.0, 0.0, Math.PI, RobotSide.RIGHT);
 
-      FootstepPlannerParameters parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
       SimpleSideBasedExpansion expansion = new SimpleSideBasedExpansion(parameters);
       HashSet<FootstepNode> neighbors = expansion.expandNode(node);
 
@@ -203,7 +203,7 @@ public class AStarPlanarRegionsPlannerTest
 
       // create planner
       YoVariableRegistry registry = new YoVariableRegistry("TestRegistry");
-      FootstepPlannerParameters parameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters()
       {
          @Override
          public FootstepPlannerCostParameters getCostParameters()

@@ -27,7 +27,7 @@ import us.ihmc.footstepPlanning.graphSearch.listeners.HeuristicSearchAndActionPo
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.*;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpansion;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.BodyPathBasedAStarPlanner;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
@@ -82,12 +82,12 @@ public class FootstepPlanningStage implements FootstepPlanner
 
    private final List<PlannerCompletionCallback> completionCallbackList = new ArrayList<>();
 
-   private final FootstepPlannerParameters footstepPlanningParameters;
+   private final BipedFootstepPlannerParametersReadOnly footstepPlanningParameters;
    private IHMCRealtimeROS2Publisher<TextToSpeechPacket> textToSpeechPublisher;
 
    private final PlannerGoalRecommendationHolder plannerGoalRecommendationHolder;
 
-   public FootstepPlanningStage(int stageId, RobotContactPointParameters<RobotSide> contactPointParameters, FootstepPlannerParameters footstepPlannerParameters,
+   public FootstepPlanningStage(int stageId, RobotContactPointParameters<RobotSide> contactPointParameters, BipedFootstepPlannerParametersReadOnly footstepPlannerParameters,
                                 BodyPathPlanner bodyPathPlanner, EnumProvider<FootstepPlannerType> activePlanner, MultiStagePlannerListener plannerListener,
                                 IntegerProvider planId, long tickDurationMs)
 

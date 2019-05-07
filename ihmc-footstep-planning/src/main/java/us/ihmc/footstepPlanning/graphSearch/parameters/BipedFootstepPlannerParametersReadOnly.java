@@ -5,7 +5,7 @@ import us.ihmc.footstepPlanning.FootstepPlanningResult;
 import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.GoodFootstepPositionChecker;
 
-public interface FootstepPlannerParameters
+public interface BipedFootstepPlannerParametersReadOnly
 {
    /**
     * Sets whether or not the search should check if the body is colliding with the world. This may cause the planner

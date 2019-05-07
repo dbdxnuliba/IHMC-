@@ -1,6 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
-public class DefaultFootstepPlanningParameters implements FootstepPlannerParameters
+public class DefaultFootstepPlanningParameters implements BipedFootstepPlannerParametersReadOnly
 {
 
    @Override

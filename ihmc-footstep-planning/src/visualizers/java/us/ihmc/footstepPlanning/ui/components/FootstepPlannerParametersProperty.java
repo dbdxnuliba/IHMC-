@@ -2,7 +2,7 @@ package us.ihmc.footstepPlanning.ui.components;
 
 import javafx.beans.property.Property;
 import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.SettableFootstepPlannerParameters;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.ParametersProperty;
 
@@ -64,12 +64,12 @@ public class FootstepPlannerParametersProperty extends ParametersProperty<Settab
       this(bean, name, new DefaultFootstepPlanningParameters());
    }
 
-   public FootstepPlannerParametersProperty(Object bean, String name, FootstepPlannerParameters footstepPlannerParameters)
+   public FootstepPlannerParametersProperty(Object bean, String name, BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
       super(bean, name, new SettableFootstepPlannerParameters(footstepPlannerParameters));
    }
 
-   public void setPlannerParameters(FootstepPlannerParameters parameters)
+   public void setPlannerParameters(BipedFootstepPlannerParametersReadOnly parameters)
    {
       setValue(new SettableFootstepPlannerParameters(parameters));
    }

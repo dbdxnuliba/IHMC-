@@ -3,16 +3,16 @@ package us.ihmc.footstepPlanning.graphSearch.heuristics;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
 public class DistanceAndYawBasedHeuristics extends CostToGoHeuristics
 {
-   private final FootstepPlannerParameters parameters;
+   private final BipedFootstepPlannerParametersReadOnly parameters;
    private final FootstepPlannerCostParameters costParameters;
 
-   public DistanceAndYawBasedHeuristics(DoubleProvider weight, FootstepPlannerParameters parameters)
+   public DistanceAndYawBasedHeuristics(DoubleProvider weight, BipedFootstepPlannerParametersReadOnly parameters)
    {
       super(weight);
       this.parameters = parameters;

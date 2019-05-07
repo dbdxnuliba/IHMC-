@@ -14,7 +14,7 @@ import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.footstepPlanning.*;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapper;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnappingTools;
@@ -43,7 +43,7 @@ public class DepthFirstFootstepPlanner implements BodyPathAndFootstepPlanner
    private final String name = getClass().getSimpleName();
    private final YoVariableRegistry registry = new YoVariableRegistry(name);
 
-   private final FootstepPlannerParameters parameters;
+   private final BipedFootstepPlannerParametersReadOnly parameters;
    private final YoInteger maximumNumberOfNodesToExpand = new YoInteger("maximumNumberOfNodesToExpand", registry);
    private final YoDouble timeout = new YoDouble("Timeout", registry);
    private final YoDouble planningDuration = new YoDouble("planningDuration", registry);
@@ -66,7 +66,7 @@ public class DepthFirstFootstepPlanner implements BodyPathAndFootstepPlanner
    private final YoInteger numberOfNodesExpanded = new YoInteger("numberOfNodesExpanded", registry);
    private final YoLong planningStartTime = new YoLong("planningStartTime", registry);
 
-   public DepthFirstFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeSnapper snapper, FootstepNodeChecker checker,
+   public DepthFirstFootstepPlanner(BipedFootstepPlannerParametersReadOnly parameters, FootstepNodeSnapper snapper, FootstepNodeChecker checker,
                                     FootstepCost stepCostCalculator, YoVariableRegistry parentRegistry)
    {
       parentRegistry.addChild(registry);

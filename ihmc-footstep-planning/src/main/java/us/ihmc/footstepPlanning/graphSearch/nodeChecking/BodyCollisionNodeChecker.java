@@ -6,16 +6,16 @@ import us.ihmc.footstepPlanning.graphSearch.collision.FootstepNodeBodyCollisionD
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.visualization.BipedalFootstepPlannerNodeRejectionReason;
-import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 
 public class BodyCollisionNodeChecker extends FootstepNodeChecker
 {
    private final FootstepNodeBodyCollisionDetector collisionDetector;
-   private final FootstepPlannerParameters parameters;
+   private final BipedFootstepPlannerParametersReadOnly parameters;
    private final FootstepNodeSnapperReadOnly snapper;
 
-   public BodyCollisionNodeChecker(FootstepNodeBodyCollisionDetector collisionDetector, FootstepPlannerParameters parameters, FootstepNodeSnapperReadOnly snapper)
+   public BodyCollisionNodeChecker(FootstepNodeBodyCollisionDetector collisionDetector, BipedFootstepPlannerParametersReadOnly parameters, FootstepNodeSnapperReadOnly snapper)
    {
       this.parameters = parameters;
       this.collisionDetector = collisionDetector;
