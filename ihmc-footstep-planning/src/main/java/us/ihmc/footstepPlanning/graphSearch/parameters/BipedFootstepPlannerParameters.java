@@ -1,7 +1,15 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
+import us.ihmc.tools.property.BooleanStoredPropertyKey;
+import us.ihmc.tools.property.DoubleStoredPropertyKey;
+import us.ihmc.tools.property.IntegerStoredPropertyKey;
+import us.ihmc.tools.property.StoredPropertySet;
+
 public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParametersReadOnly
 {
+   private final StoredPropertySet propertySet;
+
+
    public static final String CONFIGURATION_FILE_NAME = "./saved-configurations/footstepPlannerParameters.txt";
 
    private double idealFootstepWidth;
@@ -48,58 +56,47 @@ public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParam
 
    private final SettableFootstepPlannerCostParameters costParameters;
 
+   public BipedFootstepPlannerParameters()
+   {
+      this(null);
+   }
    public BipedFootstepPlannerParameters(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
+      this.propertySet = new StoredPropertySet(BipedFootstepPlannerParameterKeys.keys,
+                                               getClass(),
+                                               "ihmc-open-robotics-software",
+                                               "ihmc-footstep-planning/src/main/resources");
+
       this.costParameters = new SettableFootstepPlannerCostParameters(footstepPlannerParameters.getCostParameters());
 
-      set(footstepPlannerParameters);
+      if (footstepPlannerParameters != null)
+         set(footstepPlannerParameters);
+   }
+
+   @Override
+   public StoredPropertySet getStoredPropertySet()
+   {
+      return null;
    }
 
    public void set(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
-      this.idealFootstepWidth = footstepPlannerParameters.getIdealFootstepWidth();
-      this.idealFootstepLength = footstepPlannerParameters.getIdealFootstepLength();
+      propertySet.setAllValues(footstepPlannerParameters.getStoredPropertySet().getAllValues());
+   }
 
-      this.wiggleInsideDelta = footstepPlannerParameters.getWiggleInsideDelta();
-      this.wiggleIntoConvexHullOfPlanarRegions = footstepPlannerParameters.getWiggleIntoConvexHullOfPlanarRegions();
-      this.rejectIfCannotFullyWiggleInside = footstepPlannerParameters.getRejectIfCannotFullyWiggleInside();
-      this.maximumXYWiggleDistance = footstepPlannerParameters.getMaximumXYWiggleDistance();
-      this.maximumYawWiggle = footstepPlannerParameters.getMaximumYawWiggle();
+   public void setValue(DoubleStoredPropertyKey key, double value)
+   {
+      propertySet.setValue(key, value);
+   }
 
-      this.maxStepReach = footstepPlannerParameters.getMaximumStepReach();
-      this.maxStepYaw = footstepPlannerParameters.getMaximumStepYaw();
-      this.minStepWidth = footstepPlannerParameters.getMinimumStepWidth();
-      this.minStepLength = footstepPlannerParameters.getMinimumStepLength();
-      this.minStepYaw = footstepPlannerParameters.getMinimumStepYaw();
-      this.maxStepZ = footstepPlannerParameters.getMaximumStepZ();
-      this.maxStepWidth = footstepPlannerParameters.getMaximumStepWidth();
-      this.minFootholdPercent = footstepPlannerParameters.getMinimumFootholdPercent();
-      this.minSurfaceIncline = footstepPlannerParameters.getMinimumSurfaceInclineRadians();
-      this.minXClearanceFromStance = footstepPlannerParameters.getMinXClearanceFromStance();
-      this.minYClearanceFromStance = footstepPlannerParameters.getMinYClearanceFromStance();
+   public void setValue(IntegerStoredPropertyKey key, int value)
+   {
+      propertySet.setValue(key, value);
+   }
 
-      this.maximumStepReachWhenSteppingUp = footstepPlannerParameters.getMaximumStepReachWhenSteppingUp();
-      this.maximumStepZWhenSteppingUp = footstepPlannerParameters.getMaximumStepZWhenSteppingUp();
-      this.maximumStepXWhenForwardAndDown = footstepPlannerParameters.getMaximumStepXWhenForwardAndDown();
-      this.maximumStepZWhenForwardAndDown = footstepPlannerParameters.getMaximumStepZWhenForwardAndDown();
-      this.maximumZPenetrationOnValleyRegions = footstepPlannerParameters.getMaximumZPenetrationOnValleyRegions();
-      this.cliffHeightToAvoid = footstepPlannerParameters.getCliffHeightToAvoid();
-      this.minimumDistanceFromCliffBottoms = footstepPlannerParameters.getMinimumDistanceFromCliffBottoms();
-
-      this.returnBestEffortPlan = footstepPlannerParameters.getReturnBestEffortPlan();
-      this.minimumStepsForBestEffortPlan = footstepPlannerParameters.getMinimumStepsForBestEffortPlan();
-
-      this.bodyGroundClearance = footstepPlannerParameters.getBodyGroundClearance();
-      this.checkForBodyBoxCollisions = footstepPlannerParameters.checkForBodyBoxCollisions();
-      this.performHeuristicSearchPolicies = footstepPlannerParameters.performHeuristicSearchPolicies();
-      this.bodyBoxHeight = footstepPlannerParameters.getBodyBoxHeight();
-      this.bodyBoxWidth = footstepPlannerParameters.getBodyBoxWidth();
-      this.bodyBoxDepth = footstepPlannerParameters.getBodyBoxDepth();
-      this.bodyBoxBaseX = footstepPlannerParameters.getBodyBoxBaseX();
-      this.bodyBoxBaseY = footstepPlannerParameters.getBodyBoxBaseY();
-      this.bodyBoxBaseZ = footstepPlannerParameters.getBodyBoxBaseZ();
-
-      this.costParameters.set(footstepPlannerParameters.getCostParameters());
+   public void setValue(BooleanStoredPropertyKey key, boolean value)
+   {
+      propertySet.setValue(key, value);
    }
 
    public void setIdealFootstepWidth(double idealFootstepWidth)

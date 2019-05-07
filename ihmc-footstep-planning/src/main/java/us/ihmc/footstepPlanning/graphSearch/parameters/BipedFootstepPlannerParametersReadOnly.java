@@ -4,9 +4,27 @@ import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
 import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.GoodFootstepPositionChecker;
+import us.ihmc.tools.property.*;
 
 public interface BipedFootstepPlannerParametersReadOnly
 {
+   default double getValue(DoubleStoredPropertyKey key)
+   {
+      return getStoredPropertySet().getValue(key);
+   }
+
+   default int getValue(IntegerStoredPropertyKey key)
+   {
+      return getStoredPropertySet().getValue(key);
+   }
+
+   default boolean getValue(BooleanStoredPropertyKey key)
+   {
+      return getStoredPropertySet().getValue(key);
+   }
+
+   StoredPropertySetReadOnly getStoredPropertySet();
+
    /**
     * Sets whether or not the search should check if the body is colliding with the world. This may cause the planner
     * to run slower.
