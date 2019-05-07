@@ -55,7 +55,7 @@ import us.ihmc.footstepPlanning.FootstepPlannerType;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerCommunicationProperties;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.tools.PlannerTools;
 import us.ihmc.footstepPlanning.ui.ApplicationRunner;
@@ -879,7 +879,7 @@ public abstract class FootstepPlannerToolboxDataSetTest
       @Override
       public BipedFootstepPlannerParametersReadOnly getFootstepPlannerParameters()
       {
-         return new DefaultFootstepPlanningParameters();
+         return new BipedFootstepPlannerParameters();
       }
 
       @Override

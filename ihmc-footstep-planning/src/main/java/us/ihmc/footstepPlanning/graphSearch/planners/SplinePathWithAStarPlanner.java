@@ -18,6 +18,6 @@ public class SplinePathWithAStarPlanner extends BodyPathAndFootstepPlannerWrappe
 
       waypointPathPlanner = new SplinePathPlanner(parameters, registry);
       footstepPlanner = new BodyPathBasedAStarPlanner(prefix, bodyPathPlanner, parameters, footPolygons,
-                                                      parameters.getCostParameters().getBodyPathBasedHeuristicsWeight(), registry);
+                                                      parameters.getCostParameters().getBodyPathBasedHeuristicsWeightProvider(), registry);
    }
 }

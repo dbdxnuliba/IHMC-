@@ -12,10 +12,7 @@ import org.junit.jupiter.api.Test;
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlannerCostParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
+import us.ihmc.footstepPlanning.graphSearch.parameters.*;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.geometry.PlanarRegionsListGenerator;
@@ -25,7 +22,7 @@ public class BoundingBoxCollisionDetectorTest
    @Test
    public void testBodyCollisionWithZeroYaw()
    {
-      BipedFootstepPlannerParametersReadOnly plannerParameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly plannerParameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getBodyBoxDepth()
@@ -46,9 +43,9 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
+         public BipedFootstepPlannerCostParameters getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getMaximum2dDistanceFromBoundingBoxToPenalize()
@@ -123,7 +120,7 @@ public class BoundingBoxCollisionDetectorTest
    @Test
    public void testCollisionWithRotatedBody()
    {
-      BipedFootstepPlannerParametersReadOnly plannerParameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly plannerParameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getBodyBoxDepth()
@@ -144,9 +141,9 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
+         public BipedFootstepPlannerCostParameters getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getMaximum2dDistanceFromBoundingBoxToPenalize()
@@ -182,7 +179,7 @@ public class BoundingBoxCollisionDetectorTest
    @Test
    public void testHeightDetection()
    {
-      BipedFootstepPlannerParametersReadOnly plannerParameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly plannerParameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getBodyBoxDepth()
@@ -203,9 +200,9 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
+         public BipedFootstepPlannerCostParameters getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getMaximum2dDistanceFromBoundingBoxToPenalize()
@@ -240,7 +237,7 @@ public class BoundingBoxCollisionDetectorTest
    @Test
    public void testCollidingWithACube()
    {
-      BipedFootstepPlannerParametersReadOnly plannerParameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly plannerParameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getBodyBoxDepth()
@@ -263,7 +260,7 @@ public class BoundingBoxCollisionDetectorTest
          @Override
          public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getMaximum2dDistanceFromBoundingBoxToPenalize()
@@ -310,7 +307,7 @@ public class BoundingBoxCollisionDetectorTest
    @Test
    public void testClosestPointsInFrontAndBack()
    {
-      BipedFootstepPlannerParametersReadOnly plannerParameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly plannerParameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getBodyBoxDepth()
@@ -331,9 +328,9 @@ public class BoundingBoxCollisionDetectorTest
          }
 
          @Override
-         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
+         public BipedFootstepPlannerCostParameters getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getMaximum2dDistanceFromBoundingBoxToPenalize()

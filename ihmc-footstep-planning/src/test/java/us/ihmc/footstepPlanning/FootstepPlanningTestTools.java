@@ -1,6 +1,8 @@
 package us.ihmc.footstepPlanning;
 
 import us.ihmc.commons.RandomNumbers;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -15,7 +17,7 @@ public class FootstepPlanningTestTools
 
    public static BipedFootstepPlannerParametersReadOnly createRandomParameters(Random random)
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParametersReadOnly()
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters()
       {
          private final double idealWidth = RandomNumbers.nextDouble(random, 0.01, 1.0);
 
@@ -318,9 +320,9 @@ public class FootstepPlanningTestTools
       return parameters;
    }
 
-   public static BipedFootstepPlannerCostParametersReadOnly getRandomCostParameters(Random random)
+   public static BipedFootstepPlannerCostParameters getRandomCostParameters(Random random)
    {
-      return new BipedFootstepPlannerCostParametersReadOnly()
+      return new BipedFootstepPlannerCostParameters()
       {
          private final boolean useQuadraticDistanceCost = RandomNumbers.nextBoolean(random, 0.5);
 
@@ -344,25 +346,25 @@ public class FootstepPlanningTestTools
          private final double bodyPathBasedHeuristicsWeight = RandomNumbers.nextDouble(random, 0.01, 10.0);
 
          @Override
-         public DoubleProvider getAStarHeuristicsWeight()
+         public DoubleProvider getAStarHeuristicsWeightProvider()
          {
             return () -> aStarHeuristicsWeight;
          }
 
          @Override
-         public DoubleProvider getVisGraphWithAStarHeuristicsWeight()
+         public DoubleProvider getVisGraphWithAStarHeuristicsWeightProvider()
          {
             return () -> visGraphWithAStarHeuristicsWeight;
          }
 
          @Override
-         public DoubleProvider getDepthFirstHeuristicsWeight()
+         public DoubleProvider getDepthFirstHeuristicsWeightProvider()
          {
             return () -> depthFirstHeuristicsWeight;
          }
 
          @Override
-         public DoubleProvider getBodyPathBasedHeuristicsWeight()
+         public DoubleProvider getBodyPathBasedHeuristicsWeightProvider()
          {
             return () -> bodyPathBasedHeuristicsWeight;
          }
@@ -438,10 +440,10 @@ public class FootstepPlanningTestTools
    {
       assertEquals(parameters.useQuadraticDistanceCost(), other.useQuadraticDistanceCost());
       assertEquals(parameters.useQuadraticHeightCost(), other.useQuadraticHeightCost());
-      assertEquals(parameters.getAStarHeuristicsWeight().getValue(), other.getAStarHeuristicsWeight().getValue(), epsilon);
-      assertEquals(parameters.getVisGraphWithAStarHeuristicsWeight().getValue(), other.getVisGraphWithAStarHeuristicsWeight().getValue(), epsilon);
-      assertEquals(parameters.getDepthFirstHeuristicsWeight().getValue(), other.getDepthFirstHeuristicsWeight().getValue(), epsilon);
-      assertEquals(parameters.getBodyPathBasedHeuristicsWeight().getValue(), other.getBodyPathBasedHeuristicsWeight().getValue(), epsilon);
+      assertEquals(parameters.getAStarHeuristicsWeightProvider().getValue(), other.getAStarHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getVisGraphWithAStarHeuristicsWeightProvider().getValue(), other.getVisGraphWithAStarHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getDepthFirstHeuristicsWeightProvider().getValue(), other.getDepthFirstHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getBodyPathBasedHeuristicsWeightProvider().getValue(), other.getBodyPathBasedHeuristicsWeightProvider().getValue(), epsilon);
       assertEquals(parameters.getYawWeight(), other.getYawWeight(), epsilon);
       assertEquals(parameters.getForwardWeight(), other.getForwardWeight(), epsilon);
       assertEquals(parameters.getLateralWeight(), other.getLateralWeight(), epsilon);

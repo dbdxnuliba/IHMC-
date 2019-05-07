@@ -1,233 +1,116 @@
 package us.ihmc.footstepPlanning.graphSearch.parameters;
 
-import us.ihmc.yoVariables.providers.DoubleProvider;
+import us.ihmc.tools.property.StoredPropertySet;
+import us.ihmc.tools.property.StoredPropertySetReadOnly;
 
 public class BipedFootstepPlannerCostParameters implements BipedFootstepPlannerCostParametersReadOnly
 {
-   private boolean useQuadraticDistanceCost;
-   private boolean useQuadraticHeightCost;
+   private final StoredPropertySet propertySet;
 
-   private double yawWeight;
-   private double pitchWeight;
-   private double rollWeight;
-   private double costPerStep;
-   private double forwardWeight;
-   private double lateralWeight;
-   private double stepUpWeight;
-   private double stepDownWeight;
-
-   private double aStarHeuristicsWeight;
-   private double visGraphWithAStarHeuristicsWeight;
-   private double depthFirstHeuristicsWeight;
-   private double bodyPathBasedHeuristicsWeight;
-   private double boundingBoxCost;
-   private double maximum2dDistanceFromBoundingBoxToPenalize;
-
-   private final DoubleProvider aStarHeuristicsProvider = () -> aStarHeuristicsWeight;
-   private final DoubleProvider visGraphWithAStarHeuristicsProvider = () -> visGraphWithAStarHeuristicsWeight;
-   private final DoubleProvider depthFirstHeuristicsProvider = () -> depthFirstHeuristicsWeight;
-   private final DoubleProvider bodyPathBasedHeuristicsProvider = () -> bodyPathBasedHeuristicsWeight;
+   public BipedFootstepPlannerCostParameters()
+   {
+      this(null);
+   }
 
    public BipedFootstepPlannerCostParameters(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
-      set(parameters);
+      this.propertySet = new StoredPropertySet(BipedFootstepPlannerCostParameterKeys.keys,
+                                               getClass(),
+                                               "ihmc-open-robotics-software",
+                                               "ihmc-footstep-planning/src/main/resources");
+
+      if (parameters != null)
+         set(parameters);
    }
 
    public void set(BipedFootstepPlannerCostParametersReadOnly parameters)
    {
-      this.useQuadraticDistanceCost = parameters.useQuadraticDistanceCost();
-      this.useQuadraticHeightCost = parameters.useQuadraticHeightCost();
-
-      this.yawWeight = parameters.getYawWeight();
-      this.pitchWeight = parameters.getPitchWeight();
-      this.rollWeight = parameters.getRollWeight();
-      this.costPerStep = parameters.getCostPerStep();
-      this.forwardWeight = parameters.getForwardWeight();
-      this.lateralWeight = parameters.getLateralWeight();
-      this.stepUpWeight = parameters.getStepUpWeight();
-      this.stepDownWeight = parameters.getStepDownWeight();
-
-      this.aStarHeuristicsWeight = parameters.getAStarHeuristicsWeight().getValue();
-      this.visGraphWithAStarHeuristicsWeight = parameters.getVisGraphWithAStarHeuristicsWeight().getValue();
-      this.depthFirstHeuristicsWeight = parameters.getDepthFirstHeuristicsWeight().getValue();
-      this.bodyPathBasedHeuristicsWeight = parameters.getBodyPathBasedHeuristicsWeight().getValue();
-      this.boundingBoxCost = parameters.getBoundingBoxCost();
-      this.maximum2dDistanceFromBoundingBoxToPenalize = parameters.getMaximum2dDistanceFromBoundingBoxToPenalize();
+      propertySet.setAllValues(parameters.getStoredPropertySet().getAllValues());
    }
 
    public void setUseQuadraticDistanceCost(boolean useQuadraticDistanceCost)
    {
-      this.useQuadraticDistanceCost = useQuadraticDistanceCost;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.useQuadraticDistanceCost, useQuadraticDistanceCost);
    }
 
    public void setUseQuadraticHeightCost(boolean useQuadraticHeightCost)
    {
-      this.useQuadraticHeightCost = useQuadraticHeightCost;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.useQuadraticHeightCost, useQuadraticHeightCost);
    }
 
    public void setYawWeight(double yawWeight)
    {
-      this.yawWeight = yawWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.yawWeight, yawWeight);
    }
 
    public void setPitchWeight(double pitchWeight)
    {
-      this.pitchWeight = pitchWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.pitchWeight, pitchWeight);
    }
 
    public void setRollWeight(double rollWeight)
    {
-      this.rollWeight = rollWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.rollWeight, rollWeight);
    }
 
    public void setCostPerStep(double costPerStep)
    {
-      this.costPerStep = costPerStep;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.costPerStep, costPerStep);
    }
 
    public void setAStarHeuristicsWeight(double heuristicsWeight)
    {
-      aStarHeuristicsWeight = heuristicsWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.aStarHeuristicsWeight, heuristicsWeight);
    }
 
    public void setVisGraphWithAStarHeuristicsWeight(double heuristicsWeight)
    {
-      visGraphWithAStarHeuristicsWeight = heuristicsWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.visGraphWithAStarHeuristicsWeight, heuristicsWeight);
    }
 
    public void setDepthFirstHeuristicsWeight(double heuristicsWeight)
    {
-      depthFirstHeuristicsWeight = heuristicsWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.depthFirstHeuristicsWeight, heuristicsWeight);
    }
 
    public void setBodyPathBasedHeuristicsWeight(double heuristicsWeight)
    {
-      bodyPathBasedHeuristicsWeight = heuristicsWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.bodyPathBasedHeuristicsWeight, heuristicsWeight);
    }
 
    public void setForwardWeight(double forwardWeight)
    {
-      this.forwardWeight = forwardWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.forwardWeight, forwardWeight);
    }
 
    public void setLateralWeight(double lateralWeight)
    {
-      this.lateralWeight = lateralWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.lateralWeight, lateralWeight);
    }
 
    public void setStepUpWeight(double stepUpWeight)
    {
-      this.stepUpWeight = stepUpWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.stepUpWeight, stepUpWeight);
    }
 
    public void setStepDownWeight(double stepDownWeight)
    {
-      this.stepDownWeight = stepDownWeight;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.stepDownWeight, stepDownWeight);
    }
 
    public void setBoundingBoxCost(double boundingBoxCost)
    {
-      this.boundingBoxCost = boundingBoxCost;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.boundingBoxCost, boundingBoxCost);
    }
 
    public void setMaximum2dDistanceFromBoundingBoxToPenalize(double maximum2dDistanceFromBoundingBoxToPenalize)
    {
-      this.maximum2dDistanceFromBoundingBoxToPenalize = maximum2dDistanceFromBoundingBoxToPenalize;
+      propertySet.setValue(BipedFootstepPlannerCostParameterKeys.maximum2dDistanceFromBoundingBoxToPenalize, maximum2dDistanceFromBoundingBoxToPenalize);
    }
 
    @Override
-   public boolean useQuadraticDistanceCost()
+   public StoredPropertySetReadOnly getStoredPropertySet()
    {
-      return useQuadraticDistanceCost;
-   }
-
-   @Override
-   public boolean useQuadraticHeightCost()
-   {
-      return useQuadraticHeightCost;
-   }
-
-   @Override
-   public double getYawWeight()
-   {
-      return yawWeight;
-   }
-
-   @Override
-   public double getPitchWeight()
-   {
-      return pitchWeight;
-   }
-
-   @Override
-   public double getRollWeight()
-   {
-      return rollWeight;
-   }
-
-   @Override
-   public double getCostPerStep()
-   {
-      return costPerStep;
-   }
-
-   @Override
-   public double getForwardWeight()
-   {
-      return forwardWeight;
-   }
-
-   @Override
-   public double getLateralWeight()
-   {
-      return lateralWeight;
-   }
-
-   @Override
-   public double getStepUpWeight()
-   {
-      return stepUpWeight;
-   }
-
-   @Override
-   public double getStepDownWeight()
-   {
-      return stepDownWeight;
-   }
-
-   @Override
-   public DoubleProvider getAStarHeuristicsWeight()
-   {
-      return aStarHeuristicsProvider;
-   }
-
-   @Override
-   public DoubleProvider getVisGraphWithAStarHeuristicsWeight()
-   {
-      return visGraphWithAStarHeuristicsProvider;
-   }
-
-   @Override
-   public DoubleProvider getDepthFirstHeuristicsWeight()
-   {
-      return depthFirstHeuristicsProvider;
-   }
-
-   @Override
-   public DoubleProvider getBodyPathBasedHeuristicsWeight()
-   {
-      return bodyPathBasedHeuristicsProvider;
-   }
-
-   @Override
-   public double getMaximum2dDistanceFromBoundingBoxToPenalize()
-   {
-      return maximum2dDistanceFromBoundingBoxToPenalize;
-   }
-
-   @Override
-   public double getBoundingBoxCost()
-   {
-      return boundingBoxCost;
+      return propertySet;
    }
 }

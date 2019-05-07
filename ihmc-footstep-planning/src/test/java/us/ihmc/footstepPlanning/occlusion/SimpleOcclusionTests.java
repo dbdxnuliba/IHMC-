@@ -26,8 +26,8 @@ import us.ihmc.footstepPlanning.FootstepPlanner;
 import us.ihmc.footstepPlanning.FootstepPlannerGoal;
 import us.ihmc.footstepPlanning.FootstepPlannerGoalType;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.graphSearch.planners.VisibilityGraphWithAStarPlanner;
 import us.ihmc.footstepPlanning.tools.PlannerTools;
 import us.ihmc.graphicsDescription.Graphics3DObject;
@@ -101,7 +101,7 @@ public class SimpleOcclusionTests
       runTest(testInfo, startPose, goalPose, regions, parameters, new DefaultVisibilityGraphParameters(), 2.0);
    }
 
-   private class BestEffortPlannerParameters extends DefaultFootstepPlanningParameters
+   private class BestEffortPlannerParameters extends BipedFootstepPlannerParameters
    {
       @Override
       public boolean getReturnBestEffortPlan()
@@ -595,7 +595,7 @@ public class SimpleOcclusionTests
 
    private BipedFootstepPlannerParametersReadOnly getParameters()
    {
-      return new DefaultFootstepPlanningParameters();
+      return new BipedFootstepPlannerParameters();
    }
 
    private VisibilityGraphsParameters getVisibilityGraphsParameters()

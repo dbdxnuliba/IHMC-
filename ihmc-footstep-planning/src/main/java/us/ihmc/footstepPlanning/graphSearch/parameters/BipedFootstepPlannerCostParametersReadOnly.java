@@ -3,16 +3,20 @@ package us.ihmc.footstepPlanning.graphSearch.parameters;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.QuadraticDistanceAndYawCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.EuclideanDistanceAndYawBasedCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.LinearHeightCost;
+import us.ihmc.tools.property.StoredPropertySetReadOnly;
 import us.ihmc.yoVariables.providers.DoubleProvider;
+import static us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParameterKeys.*;
 
 public interface BipedFootstepPlannerCostParametersReadOnly
 {
+   StoredPropertySetReadOnly getStoredPropertySet();
+
    /**
     * Determines which cost function for distance and yaw to use, between {@link QuadraticDistanceAndYawCost} and {@link EuclideanDistanceAndYawBasedCost}
     */
    default boolean useQuadraticDistanceCost()
    {
-      return false;
+      return getStoredPropertySet().getValue(useQuadraticDistanceCost);
    }
 
    /**
@@ -20,39 +24,71 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default boolean useQuadraticHeightCost()
    {
-      return false;
+      return getStoredPropertySet().getValue(useQuadraticHeightCost);
    }
 
    /**
     * Gets the weight for the heuristics in the A Star planner.
     */
-   default DoubleProvider getAStarHeuristicsWeight()
+   default DoubleProvider getAStarHeuristicsWeightProvider()
    {
-      return () -> 1.5;
+      return () -> getStoredPropertySet().getValue(aStarHeuristicsWeight);
    }
 
    /**
     * Gets the weight for the heuristics in the Visibility graph with A star planner.
     */
-   default DoubleProvider getVisGraphWithAStarHeuristicsWeight()
+   default DoubleProvider getVisGraphWithAStarHeuristicsWeightProvider()
    {
-      return () -> 15.0;
+      return () -> getStoredPropertySet().getValue(visGraphWithAStarHeuristicsWeight);
    }
 
    /**
     * Gets the weight for the heuristics in the Depth First planner.
     */
-   default DoubleProvider getDepthFirstHeuristicsWeight()
+   default DoubleProvider getDepthFirstHeuristicsWeightProvider()
    {
-      return () -> 1.0;
+      return () -> getStoredPropertySet().getValue(depthFirstHeuristicsWeight);
    }
 
    /**
     * Gets the weight for the heuristics in the Body path based planner.
     */
-   default DoubleProvider getBodyPathBasedHeuristicsWeight()
+   default DoubleProvider getBodyPathBasedHeuristicsWeightProvider()
    {
-      return () -> 1.0;
+      return () -> getStoredPropertySet().getValue(bodyPathBasedHeuristicsWeight);
+   }
+
+   /**
+    * Gets the weight for the heuristics in the A Star planner.
+    */
+   default double getAStarHeuristicsWeight()
+   {
+      return getStoredPropertySet().getValue(aStarHeuristicsWeight);
+   }
+
+   /**
+    * Gets the weight for the heuristics in the Visibility graph with A star planner.
+    */
+   default double getVisGraphWithAStarHeuristicsWeight()
+   {
+      return getStoredPropertySet().getValue(visGraphWithAStarHeuristicsWeight);
+   }
+
+   /**
+    * Gets the weight for the heuristics in the Depth First planner.
+    */
+   default double getDepthFirstHeuristicsWeight()
+   {
+      return getStoredPropertySet().getValue(depthFirstHeuristicsWeight);
+   }
+
+   /**
+    * Gets the weight for the heuristics in the Body path based planner.
+    */
+   default double getBodyPathBasedHeuristicsWeight()
+   {
+      return getStoredPropertySet().getValue(bodyPathBasedHeuristicsWeight);
    }
 
    /**
@@ -61,7 +97,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getYawWeight()
    {
-      return 0.1;
+      return getStoredPropertySet().getValue(yawWeight);
    }
 
    /**
@@ -76,7 +112,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getForwardWeight()
    {
-      return 1.0;
+      return getStoredPropertySet().getValue(forwardWeight);
    }
 
    /**
@@ -91,7 +127,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getLateralWeight()
    {
-      return 1.0;
+      return getStoredPropertySet().getValue(lateralWeight);
    }
 
    /**
@@ -100,7 +136,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getCostPerStep()
    {
-      return 0.15;
+      return getStoredPropertySet().getValue(costPerStep);
    }
 
    /**
@@ -109,7 +145,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getStepUpWeight()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(stepUpWeight);
    }
 
    /**
@@ -118,7 +154,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getStepDownWeight()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(stepDownWeight);
    }
 
    /**
@@ -126,7 +162,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getRollWeight()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(rollWeight);
    }
 
    /**
@@ -134,7 +170,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getPitchWeight()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(pitchWeight);
    }
 
    /**
@@ -143,7 +179,7 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getMaximum2dDistanceFromBoundingBoxToPenalize()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(maximum2dDistanceFromBoundingBoxToPenalize);
    }
 
    /**
@@ -153,6 +189,6 @@ public interface BipedFootstepPlannerCostParametersReadOnly
     */
    default double getBoundingBoxCost()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(boundingBoxCost);
    }
 }

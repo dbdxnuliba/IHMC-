@@ -21,6 +21,6 @@ public class VisibilityGraphWithAStarPlanner extends BodyPathAndFootstepPlannerW
 
       waypointPathPlanner = new VisibilityGraphPathPlanner(parameters, visibilityGraphsParameters, parentRegistry);
       footstepPlanner = new BodyPathBasedAStarPlanner(prefix, bodyPathPlanner, parameters, footPolygons,
-                                                      parameters.getCostParameters().getAStarHeuristicsWeight(), registry, listeners);
+                                                      parameters.getCostParameters().getAStarHeuristicsWeightProvider(), registry, listeners);
    }
 }

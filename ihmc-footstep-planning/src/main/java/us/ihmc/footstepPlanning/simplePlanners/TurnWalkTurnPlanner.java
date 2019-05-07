@@ -11,6 +11,7 @@ import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlanner;
 import us.ihmc.footstepPlanning.FootstepPlannerGoal;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.geometry.AngleTools;
@@ -285,7 +286,7 @@ public class TurnWalkTurnPlanner implements FootstepPlanner
    {
    }
 
-   private static class DefaultTurnWalkTurnPlannerParameters implements BipedFootstepPlannerParametersReadOnly
+   private static class DefaultTurnWalkTurnPlannerParameters extends BipedFootstepPlannerParameters
    {
       @Override
       public double getIdealFootstepWidth()

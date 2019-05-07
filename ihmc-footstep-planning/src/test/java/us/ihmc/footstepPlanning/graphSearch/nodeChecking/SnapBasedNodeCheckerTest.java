@@ -22,8 +22,8 @@ import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapper
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.visualization.BipedalFootstepPlannerNodeRejectionReason;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.tools.PlannerTools;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -51,7 +51,7 @@ public class SnapBasedNodeCheckerTest
    @Test
    public void testSwingingThroughObstacle0()
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
 
       PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
       generator.translate(-0.5, 0.5, 0.5);
@@ -127,7 +127,7 @@ public class SnapBasedNodeCheckerTest
    @Test
    public void testSwingingThroughObstacle1()
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       double bodyGroundClearance = parameters.getBodyGroundClearance();
 
       PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
@@ -204,7 +204,7 @@ public class SnapBasedNodeCheckerTest
    public void testValidNode()
    {
       FootstepNodeSnapper snapper = new TestSnapper();
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       SnapBasedNodeChecker checker = new SnapBasedNodeChecker(parameters, footPolygons, snapper);
 
       // the checker should check for limits in z-height, pitch, and roll.
@@ -219,7 +219,7 @@ public class SnapBasedNodeCheckerTest
    public void testStartNodeValid()
    {
       FootstepNodeSnapper snapper = new TestSnapper();
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       SnapBasedNodeChecker checker = new SnapBasedNodeChecker(parameters, footPolygons, snapper);
 
       // the start node is valid even if it can not be snapped or the parent is null.
@@ -232,7 +232,7 @@ public class SnapBasedNodeCheckerTest
    @Test
    public void testSameNodes()
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       SnapBasedNodeChecker checker = new SnapBasedNodeChecker(parameters, footPolygons, new TestSnapper());
       FootstepNode node = new FootstepNode(0.0, 0.0, 0.0, RobotSide.LEFT);
 
@@ -244,7 +244,7 @@ public class SnapBasedNodeCheckerTest
    @Test
    public void testTooHighNode()
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters()
       {
          @Override
          public double getMaximumStepZ()
@@ -285,7 +285,7 @@ public class SnapBasedNodeCheckerTest
    @Test
    public void testTooSmallFoothold()
    {
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       FootstepNodeSnapper snapper = new TestSnapper();
       SnapBasedNodeChecker checker = new SnapBasedNodeChecker(parameters, footPolygons, snapper);
 
@@ -350,7 +350,7 @@ public class SnapBasedNodeCheckerTest
       double footLength = 0.2;
       double footWidth = 0.1;
       SideDependentList<ConvexPolygon2D> footPolygons = PlannerTools.createFootPolygons(footLength, footWidth);
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters()
       {
          // don't use 45
          @Override

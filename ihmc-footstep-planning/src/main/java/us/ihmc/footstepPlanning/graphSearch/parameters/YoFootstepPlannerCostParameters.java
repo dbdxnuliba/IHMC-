@@ -40,10 +40,10 @@ public class YoFootstepPlannerCostParameters implements BipedFootstepPlannerCost
       setUseQuadraticDistanceCost(defaults.useQuadraticDistanceCost());
       setUseQuadraticHeightCost(defaults.useQuadraticHeightCost());
 
-      setAStarHeuristicsWeight(defaults.getAStarHeuristicsWeight().getValue());
-      setVisGraphWithAStarHeuristicsWeight(defaults.getVisGraphWithAStarHeuristicsWeight().getValue());
-      setDepthFirstHeuristicsWeight(defaults.getDepthFirstHeuristicsWeight().getValue());
-      setBodyPathBasedHeuristicWeight(defaults.getBodyPathBasedHeuristicsWeight().getValue());
+      setAStarHeuristicsWeight(defaults.getAStarHeuristicsWeightProvider().getValue());
+      setVisGraphWithAStarHeuristicsWeight(defaults.getVisGraphWithAStarHeuristicsWeightProvider().getValue());
+      setDepthFirstHeuristicsWeight(defaults.getDepthFirstHeuristicsWeightProvider().getValue());
+      setBodyPathBasedHeuristicWeight(defaults.getBodyPathBasedHeuristicsWeightProvider().getValue());
 
       setYawWeight(defaults.getYawWeight());
       setPitchWeight(defaults.getPitchWeight());
@@ -70,25 +70,25 @@ public class YoFootstepPlannerCostParameters implements BipedFootstepPlannerCost
    }
 
    @Override
-   public DoubleProvider getAStarHeuristicsWeight()
+   public DoubleProvider getAStarHeuristicsWeightProvider()
    {
       return aStarHeuristicsWeight;
    }
 
    @Override
-   public DoubleProvider getVisGraphWithAStarHeuristicsWeight()
+   public DoubleProvider getVisGraphWithAStarHeuristicsWeightProvider()
    {
       return visGraphAStarHeuristicsWeight;
    }
 
    @Override
-   public DoubleProvider getDepthFirstHeuristicsWeight()
+   public DoubleProvider getDepthFirstHeuristicsWeightProvider()
    {
       return depthFirstHeuristicsWeight;
    }
 
    @Override
-   public DoubleProvider getBodyPathBasedHeuristicsWeight()
+   public DoubleProvider getBodyPathBasedHeuristicsWeightProvider()
    {
       return bodyPathBasedHeuristicsWeight;
    }

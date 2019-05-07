@@ -5,78 +5,28 @@ import us.ihmc.tools.property.DoubleStoredPropertyKey;
 import us.ihmc.tools.property.IntegerStoredPropertyKey;
 import us.ihmc.tools.property.StoredPropertySet;
 
-public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParametersReadOnly
+public class BipedFootstepPlannerParameters extends BipedFootstepPlannerCostParameters implements BipedFootstepPlannerParametersReadOnly
 {
    private final StoredPropertySet propertySet;
 
-
    public static final String CONFIGURATION_FILE_NAME = "./saved-configurations/footstepPlannerParameters.txt";
-
-   private double idealFootstepWidth;
-   private double idealFootstepLength;
-
-   private double wiggleInsideDelta;
-   private boolean wiggleIntoConvexHullOfPlanarRegions;
-   private boolean rejectIfCannotFullyWiggleInside;
-   private double maximumXYWiggleDistance;
-   private double maximumYawWiggle;
-
-   private double maxStepReach;
-   private double maxStepYaw;
-   private double minStepWidth;
-   private double minStepLength;
-   private double minStepYaw;
-   private double maxStepZ;
-   private double minFootholdPercent;
-   private double minSurfaceIncline;
-   private double maxStepWidth;
-   private double minXClearanceFromStance;
-   private double minYClearanceFromStance;
-
-   private double maximumStepReachWhenSteppingUp;
-   private double maximumStepZWhenSteppingUp;
-   private double maximumStepXWhenForwardAndDown;
-   private double maximumStepZWhenForwardAndDown;
-   private double maximumZPenetrationOnValleyRegions;
-   private double cliffHeightToAvoid;
-   private double minimumDistanceFromCliffBottoms;
-
-   private boolean returnBestEffortPlan;
-   private int minimumStepsForBestEffortPlan;
-
-   private double bodyGroundClearance;
-   private boolean checkForBodyBoxCollisions;
-   private boolean performHeuristicSearchPolicies;
-   private double bodyBoxWidth;
-   private double bodyBoxHeight;
-   private double bodyBoxDepth;
-   private double bodyBoxBaseX;
-   private double bodyBoxBaseY;
-   private double bodyBoxBaseZ;
-
-   private final BipedFootstepPlannerCostParameters costParameters;
 
    public BipedFootstepPlannerParameters()
    {
       this(null);
    }
+
    public BipedFootstepPlannerParameters(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
    {
+      super(footstepPlannerParameters.getCostParameters());
+
       this.propertySet = new StoredPropertySet(BipedFootstepPlannerParameterKeys.keys,
                                                getClass(),
                                                "ihmc-open-robotics-software",
                                                "ihmc-footstep-planning/src/main/resources");
 
-      this.costParameters = new BipedFootstepPlannerCostParameters(footstepPlannerParameters.getCostParameters());
-
       if (footstepPlannerParameters != null)
          set(footstepPlannerParameters);
-   }
-
-   @Override
-   public StoredPropertySet getStoredPropertySet()
-   {
-      return null;
    }
 
    public void set(BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)
@@ -101,563 +51,193 @@ public class BipedFootstepPlannerParameters implements BipedFootstepPlannerParam
 
    public void setIdealFootstepWidth(double idealFootstepWidth)
    {
-      this.idealFootstepWidth = idealFootstepWidth;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.idealFootstepWidth, idealFootstepWidth);
    }
 
    public void setIdealFootstepLength(double idealFootstepLength)
    {
-      this.idealFootstepLength = idealFootstepLength;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.idealFootstepLength, idealFootstepLength);
    }
 
    public void setWiggleInsideDelta(double wiggleInsideDelta)
    {
-      this.wiggleInsideDelta = wiggleInsideDelta;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.wiggleInsideDelta, wiggleInsideDelta);
    }
 
    public void setWiggleIntoConvexHullOfPlanarRegions(boolean wiggleIntoConvexHullOfPlanarRegions)
    {
-      this.wiggleIntoConvexHullOfPlanarRegions = wiggleIntoConvexHullOfPlanarRegions;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.wiggleIntoConvexHullOfPlanarRegions, wiggleIntoConvexHullOfPlanarRegions);
    }
 
    public void setRejectIfCannotFullyWiggleInside(boolean rejectIfCannotFullyWiggleInside)
    {
-      this.rejectIfCannotFullyWiggleInside = rejectIfCannotFullyWiggleInside;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.rejectIfCannotFullyWiggleInside, rejectIfCannotFullyWiggleInside);
    }
 
    public void setMaximumXYWiggleDistance(double maximumXYWiggleDistance)
    {
-      this.maximumXYWiggleDistance = maximumXYWiggleDistance;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumXYWiggleDistance, maximumXYWiggleDistance);
    }
 
    public void setMaximumYawWiggle(double maximumYawWiggle)
    {
-      this.maximumYawWiggle = maximumYawWiggle;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumYawWiggle, maximumYawWiggle);
    }
 
    public void setMaximumStepReach(double maxStepReach)
    {
-      this.maxStepReach = maxStepReach;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maxStepReach, maxStepReach);
    }
 
    public void setMaximumStepYaw(double maxStepYaw)
    {
-      this.maxStepYaw = maxStepYaw;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maxStepYaw, maxStepYaw);
    }
 
    public void setMinimumStepWidth(double minStepWidth)
    {
-      this.minStepWidth = minStepWidth;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minStepWidth, minStepWidth);
    }
 
    public void setMinimumStepLength(double minStepLength)
    {
-      this.minStepLength = minStepLength;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minStepLength, minStepLength);
    }
 
    public void setMinimumStepYaw(double minStepYaw)
    {
-      this.minStepYaw = minStepYaw;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minStepYaw, minStepYaw);
    }
 
    public void setMaximumStepZ(double maxStepZ)
    {
-      this.maxStepZ = maxStepZ;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maxStepZ, maxStepZ);
    }
 
    public void setMaximumStepWidth(double maxStepWidth)
    {
-      this.maxStepWidth = maxStepWidth;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maxStepWidth, maxStepWidth);
    }
 
    public void setMinimumFootholdPercent(double minFootholdPercent)
    {
-      this.minFootholdPercent = minFootholdPercent;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minFootholdPercent, minFootholdPercent);
    }
 
    public void setMinimumSurfaceInclineRadians(double minSurfaceIncline)
    {
-      this.minSurfaceIncline = minSurfaceIncline;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minSurfaceIncline, minSurfaceIncline);
    }
 
    public void setMaximumStepReachWhenSteppingUp(double maximumStepReachWhenSteppingUp)
    {
-      this.maximumStepReachWhenSteppingUp = maximumStepReachWhenSteppingUp;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumStepReachWhenSteppingUp, maximumStepReachWhenSteppingUp);
    }
 
    public void setMaximumStepZWhenSteppingUp(double maximumStepZWhenSteppingUp)
    {
-      this.maximumStepZWhenSteppingUp = maximumStepZWhenSteppingUp;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumStepZWhenSteppingUp, maximumStepZWhenSteppingUp);
    }
 
    public void setMaximumStepXWhenForwardAndDown(double maximumStepXWhenForwardAndDown)
    {
-      this.maximumStepXWhenForwardAndDown = maximumStepXWhenForwardAndDown;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumStepXWhenForwardAndDown, maximumStepXWhenForwardAndDown);
    }
 
    public void setMaximumStepZWhenForwardAndDown(double maximumStepZWhenForwardAndDown)
    {
-      this.maximumStepZWhenForwardAndDown = maximumStepZWhenForwardAndDown;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumStepZWhenForwardAndDown, maximumStepZWhenForwardAndDown);
    }
 
    public void setMinXClearanceFromStance(double minXClearanceFromStance)
    {
-      this.minXClearanceFromStance = minXClearanceFromStance;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minXClearanceFromStance, minXClearanceFromStance);
    }
 
    public void setMinYClearanceFromStance(double minYClearanceFromStance)
    {
-      this.minYClearanceFromStance = minYClearanceFromStance;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minYClearanceFromStance, minYClearanceFromStance);
    }
 
    public void setMaximumZPenetrationOnValleyRegions(double maximumZPenetrationOnValleyRegions)
    {
-      this.maximumZPenetrationOnValleyRegions = maximumZPenetrationOnValleyRegions;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.maximumZPenetrationOnValleyRegions, maximumZPenetrationOnValleyRegions);
    }
 
    public void setCliffHeightToAvoid(double cliffHeightToAvoid)
    {
-      this.cliffHeightToAvoid = cliffHeightToAvoid;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.cliffHeightToAvoid, cliffHeightToAvoid);
    }
 
    public void setMinimumDistanceFromCliffBottoms(double minimumDistanceFromCliffBottoms)
    {
-      this.minimumDistanceFromCliffBottoms = minimumDistanceFromCliffBottoms;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minimumDistanceFromCliffBottoms, minimumDistanceFromCliffBottoms);
    }
 
    public void setReturnBestEffortPlan(boolean returnBestEffortPlan)
    {
-      this.returnBestEffortPlan = returnBestEffortPlan;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.returnBestEffortPlan, returnBestEffortPlan);
    }
 
    public void setMinimumStepsForBestEffortPlan(int minimumStepsForBestEffortPlan)
    {
-      this.minimumStepsForBestEffortPlan = minimumStepsForBestEffortPlan;
-   }
-
-   public void setYawWeight(double yawWeight)
-   {
-      costParameters.setYawWeight(yawWeight);
-   }
-
-   public void setPitchWeight(double pitchWeight)
-   {
-      costParameters.setPitchWeight(pitchWeight);
-   }
-
-   public void setRollWeight(double rollWeight)
-   {
-      costParameters.setRollWeight(rollWeight);
-   }
-
-   public void setForwardWeight(double forwardWeight)
-   {
-      costParameters.setForwardWeight(forwardWeight);
-   }
-
-   public void setLateralWeight(double lateralWeight)
-   {
-      costParameters.setLateralWeight(lateralWeight);
-   }
-
-   public void setStepUpWeight(double stepUpWeight)
-   {
-      costParameters.setStepUpWeight(stepUpWeight);
-   }
-
-   public void setStepDownWeight(double stepDownWeight)
-   {
-      costParameters.setStepDownWeight(stepDownWeight);
-   }
-
-   public void setUseQuadraticDistanceCost(boolean useQuadraticDistanceCost)
-   {
-      costParameters.setUseQuadraticDistanceCost(useQuadraticDistanceCost);
-   }
-
-   public void setUseQuadraticHeightCost(boolean useQuadraticHeightCost)
-   {
-      costParameters.setUseQuadraticHeightCost(useQuadraticHeightCost);
-   }
-
-   public void setCostPerStep(double costPerStep)
-   {
-      costParameters.setCostPerStep(costPerStep);
-   }
-
-   public void setAStarHeuristicsWeight(double heuristicsWeight)
-   {
-      costParameters.setAStarHeuristicsWeight(heuristicsWeight);
-   }
-
-   public void setVisGraphWithAStarHeuristicsWeight(double heuristicsWeight)
-   {
-      costParameters.setVisGraphWithAStarHeuristicsWeight(heuristicsWeight);
-   }
-
-   public void setDepthFirstHeuristicsWeight(double heuristicsWeight)
-   {
-      costParameters.setDepthFirstHeuristicsWeight(heuristicsWeight);
-   }
-
-   public void setBodyPathBasedHeuristicsWeight(double heuristicsWeight)
-   {
-      costParameters.setBodyPathBasedHeuristicsWeight(heuristicsWeight);
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.minimumStepsForBestEffortPlan, minimumStepsForBestEffortPlan);
    }
 
    public void setBodyGroundClearance(double bodyGroundClearance)
    {
-      this.bodyGroundClearance = bodyGroundClearance;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyGroundClearance, bodyGroundClearance);
    }
 
    public void setCheckForBodyBoxCollisions(boolean checkForBodyBoxCollisions)
    {
-      this.checkForBodyBoxCollisions = checkForBodyBoxCollisions;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.checkForBodyBoxCollisions, checkForBodyBoxCollisions);
    }
 
    public void setPerformHeuristicSearchPolicies(boolean performHeuristicSearchPolicies)
    {
-      this.performHeuristicSearchPolicies = performHeuristicSearchPolicies;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.performHeuristicSearchPolicies, performHeuristicSearchPolicies);
    }
 
    public void setBodyBoxWidth(double bodyBoxWidth)
    {
-      this.bodyBoxWidth = bodyBoxWidth;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxWidth, bodyBoxWidth);
    }
 
    public void setBodyBoxHeight(double bodyBoxHeight)
    {
-      this.bodyBoxHeight = bodyBoxHeight;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxHeight, bodyBoxHeight);
    }
 
    public void setBodyBoxDepth(double bodyBoxDepth)
    {
-      this.bodyBoxDepth = bodyBoxDepth;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxDepth, bodyBoxDepth);
    }
 
    public void setBodyBoxBaseX(double bodyBoxBaseX)
    {
-      this.bodyBoxBaseX = bodyBoxBaseX;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxBaseX, bodyBoxBaseX);
    }
 
    public void setBodyBoxBaseY(double bodyBoxBaseY)
    {
-      this.bodyBoxBaseY = bodyBoxBaseY;
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxBaseY, bodyBoxBaseY);
    }
 
    public void setBodyBoxBaseZ(double bodyBoxBaseZ)
    {
-      this.bodyBoxBaseZ = bodyBoxBaseZ;
-   }
-
-   public void setMaximum2dDistanceFromBoundingBoxToPenalize(double maximum2dDistanceFromBoundingBoxToPenalize)
-   {
-      this.costParameters.setMaximum2dDistanceFromBoundingBoxToPenalize(maximum2dDistanceFromBoundingBoxToPenalize);
-   }
-
-   public void setBoundingBoxCost(double boundingBoxCost)
-   {
-      this.costParameters.setBoundingBoxCost(boundingBoxCost);
+      propertySet.setValue(BipedFootstepPlannerParameterKeys.bodyBoxBaseZ, bodyBoxBaseZ);
    }
 
    @Override
-   public double getIdealFootstepWidth()
+   public StoredPropertySet getStoredPropertySet()
    {
-      return idealFootstepWidth;
+      return propertySet;
    }
 
    @Override
-   public double getIdealFootstepLength()
+   public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
    {
-      return idealFootstepLength;
-   }
-
-   @Override
-   public double getWiggleInsideDelta()
-   {
-      return wiggleInsideDelta;
-   }
-
-   @Override
-   public boolean getWiggleIntoConvexHullOfPlanarRegions()
-   {
-      return wiggleIntoConvexHullOfPlanarRegions;
-   }
-
-   @Override
-   public boolean getRejectIfCannotFullyWiggleInside()
-   {
-      return rejectIfCannotFullyWiggleInside;
-   }
-
-   @Override
-   public double getMaximumXYWiggleDistance()
-   {
-      return maximumXYWiggleDistance;
-   }
-
-   @Override
-   public double getMaximumYawWiggle()
-   {
-      return maximumYawWiggle;
-   }
-
-   @Override
-   public double getMaximumStepReach()
-   {
-      return maxStepReach;
-   }
-
-   @Override
-   public double getMaximumStepYaw()
-   {
-      return maxStepYaw;
-   }
-
-   @Override
-   public double getMinimumStepWidth()
-   {
-      return minStepWidth;
-   }
-
-   @Override
-   public double getMinimumStepLength()
-   {
-      return minStepLength;
-   }
-
-   @Override
-   public double getMinimumStepYaw()
-   {
-      return minStepYaw;
-   }
-
-   @Override
-   public double getMaximumStepZ()
-   {
-      return maxStepZ;
-   }
-
-   @Override
-   public double getMaximumStepWidth()
-   {
-      return maxStepWidth;
-   }
-
-   @Override
-   public double getMaximumStepReachWhenSteppingUp()
-   {
-      return maximumStepReachWhenSteppingUp;
-   }
-
-   @Override
-   public double getMaximumStepZWhenSteppingUp()
-   {
-      return maximumStepZWhenSteppingUp;
-   }
-
-   @Override
-   public double getMaximumStepXWhenForwardAndDown()
-   {
-      return maximumStepXWhenForwardAndDown;
-   }
-
-   @Override
-   public double getMaximumStepZWhenForwardAndDown()
-   {
-      return maximumStepZWhenForwardAndDown;
-   }
-
-   @Override
-   public double getMinXClearanceFromStance()
-   {
-      return minXClearanceFromStance;
-   }
-
-   @Override
-   public double getMinYClearanceFromStance()
-   {
-      return minYClearanceFromStance;
-   }
-
-   @Override
-   public double getMinimumFootholdPercent()
-   {
-      return minFootholdPercent;
-   }
-
-   @Override
-   public double getMinimumSurfaceInclineRadians()
-   {
-      return minSurfaceIncline;
-   }
-
-   @Override
-   public double getMaximumZPenetrationOnValleyRegions()
-   {
-      return maximumZPenetrationOnValleyRegions;
-   }
-
-   @Override
-   public double getCliffHeightToAvoid()
-   {
-      return cliffHeightToAvoid;
-   }
-
-   @Override
-   public double getMinimumDistanceFromCliffBottoms()
-   {
-      return minimumDistanceFromCliffBottoms;
-   }
-
-   @Override
-   public boolean getReturnBestEffortPlan()
-   {
-      return returnBestEffortPlan;
-   }
-
-   @Override
-   public int getMinimumStepsForBestEffortPlan()
-   {
-      return minimumStepsForBestEffortPlan;
-   }
-
-   @Override
-   public double getBodyGroundClearance()
-   {
-      return bodyGroundClearance;
-   }
-
-   @Override
-   public boolean checkForBodyBoxCollisions()
-   {
-      return checkForBodyBoxCollisions;
-   }
-
-   @Override
-   public boolean performHeuristicSearchPolicies()
-   {
-      return performHeuristicSearchPolicies;
-   }
-
-   @Override
-   public double getBodyBoxHeight()
-   {
-      return bodyBoxHeight;
-   }
-
-   @Override
-   public double getBodyBoxWidth()
-   {
-      return bodyBoxWidth;
-   }
-
-   @Override
-   public double getBodyBoxDepth()
-   {
-      return bodyBoxDepth;
-   }
-
-   @Override
-   public double getBodyBoxBaseX()
-   {
-      return bodyBoxBaseX;
-   }
-
-   @Override
-   public double getBodyBoxBaseY()
-   {
-      return bodyBoxBaseY;
-   }
-
-   @Override
-   public double getBodyBoxBaseZ()
-   {
-      return bodyBoxBaseZ;
-   }
-
-   public boolean useQuadraticDistanceCost()
-   {
-      return costParameters.useQuadraticDistanceCost();
-   }
-
-   public boolean useQuadraticHeightCost()
-   {
-      return costParameters.useQuadraticHeightCost();
-   }
-
-   public double getYawWeight()
-   {
-      return costParameters.getYawWeight();
-   }
-
-   public double getPitchWeight()
-   {
-      return costParameters.getPitchWeight();
-   }
-
-   public double getRollWeight()
-   {
-      return costParameters.getRollWeight();
-   }
-
-   public double getForwardWeight()
-   {
-      return costParameters.getForwardWeight();
-   }
-
-   public double getLateralWeight()
-   {
-      return costParameters.getLateralWeight();
-   }
-
-   public double getStepUpWeight()
-   {
-      return costParameters.getStepUpWeight();
-   }
-
-   public double getStepDownWeight()
-   {
-      return costParameters.getStepDownWeight();
-   }
-
-   public double getCostPerStep()
-   {
-      return costParameters.getCostPerStep();
-   }
-
-   public double getMaximum2dDistanceFromBoundingBoxToPenalize()
-   {
-      return costParameters.getMaximum2dDistanceFromBoundingBoxToPenalize();
-   }
-
-   public double getBoundingBoxCost()
-   {
-      return costParameters.getBoundingBoxCost();
-   }
-
-   public double getAStarHeuristicsWeight()
-   {
-      return costParameters.getAStarHeuristicsWeight().getValue();
-   }
-
-   public double getVisGraphWithAStarHeuristicsWeight()
-   {
-      return costParameters.getVisGraphWithAStarHeuristicsWeight().getValue();
-   }
-
-   public double getDepthFirstHeuristicsWeight()
-   {
-      return costParameters.getDepthFirstHeuristicsWeight().getValue();
-   }
-
-   public double getBodyPathBasedHeuristicsWeight()
-   {
-      return costParameters.getBodyPathBasedHeuristicsWeight().getValue();
-   }
-
-   @Override
-   public BipedFootstepPlannerCostParameters getCostParameters()
-   {
-      return costParameters;
+      return this;
    }
 }

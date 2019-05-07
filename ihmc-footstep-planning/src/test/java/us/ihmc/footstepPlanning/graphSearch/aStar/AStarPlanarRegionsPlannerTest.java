@@ -15,14 +15,11 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlannerCostParameters;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.*;
 import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlannerGoal;
 import us.ihmc.footstepPlanning.FootstepPlannerGoalType;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
-import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerCostParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FlatGroundFootstepNodeSnapper;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
@@ -147,7 +144,7 @@ public class AStarPlanarRegionsPlannerTest
 
       FootstepNode node = new FootstepNode(0.0, 0.0, Math.PI, RobotSide.RIGHT);
 
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       SimpleSideBasedExpansion expansion = new SimpleSideBasedExpansion(parameters);
       HashSet<FootstepNode> neighbors = expansion.expandNode(node);
 
@@ -203,12 +200,12 @@ public class AStarPlanarRegionsPlannerTest
 
       // create planner
       YoVariableRegistry registry = new YoVariableRegistry("TestRegistry");
-      BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters()
+      BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters()
       {
          @Override
-         public BipedFootstepPlannerCostParametersReadOnly getCostParameters()
+         public BipedFootstepPlannerCostParameters getCostParameters()
          {
-            return new DefaultFootstepPlannerCostParameters()
+            return new BipedFootstepPlannerCostParameters()
             {
                @Override
                public double getCostPerStep()

@@ -787,12 +787,12 @@ public class RemoteFootstepPlannerUIMessagingTest
       assertEquals("Use quadratic distance cost flags aren't equal.", parameters.useQuadraticDistanceCost(), packet.getUseQuadraticDistanceCost());
       assertEquals("Use quadratic height cost flags aren't equal.", parameters.useQuadraticHeightCost(), packet.getUseQuadraticHeightCost());
 
-      assertEquals("A star heuristics weights aren't equal.", parameters.getAStarHeuristicsWeight().getValue(), packet.getAStarHeuristicsWeight(), epsilon);
-      assertEquals("Vis graph with A star heuristics weights aren't equal.", parameters.getVisGraphWithAStarHeuristicsWeight().getValue(),
+      assertEquals("A star heuristics weights aren't equal.", parameters.getAStarHeuristicsWeightProvider().getValue(), packet.getAStarHeuristicsWeight(), epsilon);
+      assertEquals("Vis graph with A star heuristics weights aren't equal.", parameters.getVisGraphWithAStarHeuristicsWeightProvider().getValue(),
                    packet.getVisGraphWithAStarHeuristicsWeight(), epsilon);
-      assertEquals("Depth first heuristics weights aren't equal.", parameters.getDepthFirstHeuristicsWeight().getValue(),
+      assertEquals("Depth first heuristics weights aren't equal.", parameters.getDepthFirstHeuristicsWeightProvider().getValue(),
                    packet.getDepthFirstHeuristicsWeight(), epsilon);
-      assertEquals("Body path based heuristics weights aren't equal.", parameters.getBodyPathBasedHeuristicsWeight().getValue(),
+      assertEquals("Body path based heuristics weights aren't equal.", parameters.getBodyPathBasedHeuristicsWeightProvider().getValue(),
                    packet.getBodyPathBasedHeuristicsWeight(), epsilon);
 
       assertEquals("Yaw weights aren't equal.", parameters.getYawWeight(), packet.getYawWeight(), epsilon);

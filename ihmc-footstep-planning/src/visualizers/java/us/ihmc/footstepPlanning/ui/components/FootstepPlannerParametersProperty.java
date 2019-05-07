@@ -1,7 +1,6 @@
 package us.ihmc.footstepPlanning.ui.components;
 
 import javafx.beans.property.Property;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.ParametersProperty;
@@ -61,7 +60,7 @@ public class FootstepPlannerParametersProperty extends ParametersProperty<BipedF
 
    public FootstepPlannerParametersProperty(Object bean, String name)
    {
-      this(bean, name, new DefaultFootstepPlanningParameters());
+      this(bean, name, new BipedFootstepPlannerParameters());
    }
 
    public FootstepPlannerParametersProperty(Object bean, String name, BipedFootstepPlannerParametersReadOnly footstepPlannerParameters)

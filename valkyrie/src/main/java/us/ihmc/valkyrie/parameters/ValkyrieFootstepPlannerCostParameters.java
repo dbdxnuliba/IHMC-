@@ -6,7 +6,7 @@ import us.ihmc.yoVariables.providers.DoubleProvider;
 public class ValkyrieFootstepPlannerCostParameters implements BipedFootstepPlannerCostParametersReadOnly
 {
    @Override
-   public DoubleProvider getAStarHeuristicsWeight()
+   public DoubleProvider getAStarHeuristicsWeightProvider()
    {
       return () -> 5.0;
    }

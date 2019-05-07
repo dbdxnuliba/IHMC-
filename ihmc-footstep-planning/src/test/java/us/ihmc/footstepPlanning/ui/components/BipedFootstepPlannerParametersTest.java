@@ -73,10 +73,10 @@ public class BipedFootstepPlannerParametersTest
 
          settableParameters.setUseQuadraticDistanceCost(parameters.getCostParameters().useQuadraticDistanceCost());
          settableParameters.setUseQuadraticHeightCost(parameters.getCostParameters().useQuadraticHeightCost());
-         settableParameters.setAStarHeuristicsWeight(parameters.getCostParameters().getAStarHeuristicsWeight().getValue());
-         settableParameters.setVisGraphWithAStarHeuristicsWeight(parameters.getCostParameters().getVisGraphWithAStarHeuristicsWeight().getValue());
-         settableParameters.setDepthFirstHeuristicsWeight(parameters.getCostParameters().getDepthFirstHeuristicsWeight().getValue());
-         settableParameters.setBodyPathBasedHeuristicsWeight(parameters.getCostParameters().getBodyPathBasedHeuristicsWeight().getValue());
+         settableParameters.setAStarHeuristicsWeight(parameters.getCostParameters().getAStarHeuristicsWeightProvider().getValue());
+         settableParameters.setVisGraphWithAStarHeuristicsWeight(parameters.getCostParameters().getVisGraphWithAStarHeuristicsWeightProvider().getValue());
+         settableParameters.setDepthFirstHeuristicsWeight(parameters.getCostParameters().getDepthFirstHeuristicsWeightProvider().getValue());
+         settableParameters.setBodyPathBasedHeuristicsWeight(parameters.getCostParameters().getBodyPathBasedHeuristicsWeightProvider().getValue());
          settableParameters.setYawWeight(parameters.getCostParameters().getYawWeight());
          settableParameters.setForwardWeight(parameters.getCostParameters().getForwardWeight());
          settableParameters.setLateralWeight(parameters.getCostParameters().getLateralWeight());
@@ -98,10 +98,10 @@ public class BipedFootstepPlannerParametersTest
 
       assertEquals(parameters.getCostParameters().useQuadraticDistanceCost(), settableParameters.useQuadraticDistanceCost());
       assertEquals(parameters.getCostParameters().useQuadraticHeightCost(), settableParameters.useQuadraticHeightCost());
-      assertEquals(parameters.getCostParameters().getAStarHeuristicsWeight().getValue(), settableParameters.getAStarHeuristicsWeight(), epsilon);
-      assertEquals(parameters.getCostParameters().getVisGraphWithAStarHeuristicsWeight().getValue(), settableParameters.getVisGraphWithAStarHeuristicsWeight(), epsilon);
-      assertEquals(parameters.getCostParameters().getDepthFirstHeuristicsWeight().getValue(), settableParameters.getDepthFirstHeuristicsWeight(), epsilon);
-      assertEquals(parameters.getCostParameters().getBodyPathBasedHeuristicsWeight().getValue(), settableParameters.getBodyPathBasedHeuristicsWeight(), epsilon);
+      assertEquals(parameters.getCostParameters().getAStarHeuristicsWeightProvider().getValue(), settableParameters.getAStarHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getCostParameters().getVisGraphWithAStarHeuristicsWeightProvider().getValue(), settableParameters.getVisGraphWithAStarHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getCostParameters().getDepthFirstHeuristicsWeightProvider().getValue(), settableParameters.getDepthFirstHeuristicsWeightProvider().getValue(), epsilon);
+      assertEquals(parameters.getCostParameters().getBodyPathBasedHeuristicsWeightProvider().getValue(), settableParameters.getBodyPathBasedHeuristicsWeightProvider().getValue(), epsilon);
       assertEquals(parameters.getCostParameters().getYawWeight(), settableParameters.getYawWeight(), epsilon);
       assertEquals(parameters.getCostParameters().getForwardWeight(), settableParameters.getForwardWeight(), epsilon);
       assertEquals(parameters.getCostParameters().getLateralWeight(), settableParameters.getLateralWeight(), epsilon);

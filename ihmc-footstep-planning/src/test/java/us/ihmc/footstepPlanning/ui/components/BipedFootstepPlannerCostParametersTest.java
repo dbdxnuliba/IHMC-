@@ -31,10 +31,10 @@ public class BipedFootstepPlannerCostParametersTest
          costParameters = FootstepPlanningTestTools.getRandomCostParameters(random);
          settableParameters.setUseQuadraticDistanceCost(costParameters.useQuadraticDistanceCost());
          settableParameters.setUseQuadraticHeightCost(costParameters.useQuadraticHeightCost());
-         settableParameters.setAStarHeuristicsWeight(costParameters.getAStarHeuristicsWeight().getValue());
-         settableParameters.setVisGraphWithAStarHeuristicsWeight(costParameters.getVisGraphWithAStarHeuristicsWeight().getValue());
-         settableParameters.setDepthFirstHeuristicsWeight(costParameters.getDepthFirstHeuristicsWeight().getValue());
-         settableParameters.setBodyPathBasedHeuristicsWeight(costParameters.getBodyPathBasedHeuristicsWeight().getValue());
+         settableParameters.setAStarHeuristicsWeight(costParameters.getAStarHeuristicsWeightProvider().getValue());
+         settableParameters.setVisGraphWithAStarHeuristicsWeight(costParameters.getVisGraphWithAStarHeuristicsWeightProvider().getValue());
+         settableParameters.setDepthFirstHeuristicsWeight(costParameters.getDepthFirstHeuristicsWeightProvider().getValue());
+         settableParameters.setBodyPathBasedHeuristicsWeight(costParameters.getBodyPathBasedHeuristicsWeightProvider().getValue());
          settableParameters.setYawWeight(costParameters.getYawWeight());
          settableParameters.setForwardWeight(costParameters.getForwardWeight());
          settableParameters.setLateralWeight(costParameters.getLateralWeight());

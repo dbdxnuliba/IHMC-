@@ -98,10 +98,10 @@ public class FootstepPlannerMessageTools
       packet.getCostParameters().setUseQuadraticDistanceCost(costParameters.useQuadraticDistanceCost());
       packet.getCostParameters().setUseQuadraticHeightCost(costParameters.useQuadraticHeightCost());
 
-      packet.getCostParameters().setAStarHeuristicsWeight(costParameters.getAStarHeuristicsWeight().getValue());
-      packet.getCostParameters().setVisGraphWithAStarHeuristicsWeight(costParameters.getVisGraphWithAStarHeuristicsWeight().getValue());
-      packet.getCostParameters().setDepthFirstHeuristicsWeight(costParameters.getDepthFirstHeuristicsWeight().getValue());
-      packet.getCostParameters().setBodyPathBasedHeuristicsWeight(costParameters.getBodyPathBasedHeuristicsWeight().getValue());
+      packet.getCostParameters().setAStarHeuristicsWeight(costParameters.getAStarHeuristicsWeightProvider().getValue());
+      packet.getCostParameters().setVisGraphWithAStarHeuristicsWeight(costParameters.getVisGraphWithAStarHeuristicsWeightProvider().getValue());
+      packet.getCostParameters().setDepthFirstHeuristicsWeight(costParameters.getDepthFirstHeuristicsWeightProvider().getValue());
+      packet.getCostParameters().setBodyPathBasedHeuristicsWeight(costParameters.getBodyPathBasedHeuristicsWeightProvider().getValue());
 
       packet.getCostParameters().setYawWeight(costParameters.getYawWeight());
       packet.getCostParameters().setPitchWeight(costParameters.getPitchWeight());

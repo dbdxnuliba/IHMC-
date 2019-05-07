@@ -19,7 +19,7 @@ import us.ihmc.footstepPlanning.graphSearch.nodeChecking.AlwaysValidNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.FootstepNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpansion;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.EuclideanDistanceAndYawBasedCost;
@@ -112,7 +112,7 @@ public class ControllerBasedBodyPathTest
       private final List<Point3D> waypoints = new ArrayList<>();
       private final WaypointDefinedBodyPathPlanner bodyPath = new WaypointDefinedBodyPathPlanner();
 
-      private final BipedFootstepPlannerParametersReadOnly parameters = new DefaultFootstepPlanningParameters();
+      private final BipedFootstepPlannerParametersReadOnly parameters = new BipedFootstepPlannerParameters();
       private final AStarFootstepPlanner planner = createBodyPathBasedPlanner(registry, parameters, bodyPath);
 
       private static final int stepsPerSide = 10;

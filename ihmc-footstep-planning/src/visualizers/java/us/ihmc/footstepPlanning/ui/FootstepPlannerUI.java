@@ -26,8 +26,8 @@ import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParam
 import us.ihmc.communication.controllerAPI.RobotLowLevelMessenger;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.footstepPlanning.communication.FootstepPlannerMessagerAPI;
+import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParametersReadOnly;
-import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.tools.FootstepPlannerDataExporter;
 import us.ihmc.footstepPlanning.ui.components.NodeCheckerEditor;
 import us.ihmc.footstepPlanning.ui.components.OccupancyMapRenderer;
@@ -124,7 +124,7 @@ public class FootstepPlannerUI
 
    public FootstepPlannerUI(Stage primaryStage, JavaFXMessager messager) throws Exception
    {
-      this(primaryStage, messager, new DefaultFootstepPlanningParameters(), new DefaultVisibilityGraphParameters(), null, null, null);
+      this(primaryStage, messager, new BipedFootstepPlannerParameters(), new DefaultVisibilityGraphParameters(), null, null, null);
    }
 
    public FootstepPlannerUI(Stage primaryStage, JavaFXMessager messager, BipedFootstepPlannerParametersReadOnly plannerParameters,

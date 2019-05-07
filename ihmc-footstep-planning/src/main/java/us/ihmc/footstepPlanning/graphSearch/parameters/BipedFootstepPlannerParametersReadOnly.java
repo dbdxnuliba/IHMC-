@@ -2,9 +2,9 @@ package us.ihmc.footstepPlanning.graphSearch.parameters;
 
 import us.ihmc.footstepPlanning.FootstepPlan;
 import us.ihmc.footstepPlanning.FootstepPlanningResult;
-import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.GoodFootstepPositionChecker;
 import us.ihmc.tools.property.*;
+import static us.ihmc.footstepPlanning.graphSearch.parameters.BipedFootstepPlannerParameterKeys.*;
 
 public interface BipedFootstepPlannerParametersReadOnly
 {
@@ -31,7 +31,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default boolean checkForBodyBoxCollisions()
    {
-      return false;
+      return getStoredPropertySet().getValue(checkForBodyBoxCollisions);
    }
 
    /**
@@ -39,23 +39,29 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default boolean performHeuristicSearchPolicies()
    {
-      return true;
+      return getStoredPropertySet().getValue(performHeuristicSearchPolicies);
    }
 
    /**
     * Returns the ideal step width for walking on flat ground.
     * This is ONLY used when assumed to be walking on flat ground.
     */
-   double getIdealFootstepWidth();
+   default double getIdealFootstepWidth()
+   {
+      return getStoredPropertySet().getValue(idealFootstepWidth);
+   }
 
    /**
     * Returns the ideal step length for walking on flat ground.
     * This is ONLY used when assumed to be walking on flat ground.
     */
-   double getIdealFootstepLength();
+   default double getIdealFootstepLength()
+   {
+      return getStoredPropertySet().getValue(idealFootstepLength);
+   }
 
    /**
-    * If the planner in use utilized footstep wiggling (see {@link PolygonWiggler}) to move footholds onto planer
+    * If the planner in use utilized footstep wiggling (see PolygonWiggler) to move footholds onto planer
     * regions this parameter will be used. It specifies the minimum distance between the foot polygon and the
     * edge of the planar region polygon that the footstep is moved into. This value can be negative. That corresponds
     * to allowing footsteps that partially intersect planar regions.
@@ -71,7 +77,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getWiggleInsideDelta()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(wiggleInsideDelta);
    }
 
    /**
@@ -86,7 +92,10 @@ public interface BipedFootstepPlannerParametersReadOnly
     * This parameter is intended to prevent accepting candidate footsteps that are near both the maximum step length and step width.
     * </p>
     */
-   double getMaximumStepReach();
+   default double getMaximumStepReach()
+   {
+      return getStoredPropertySet().getValue(maxStepReach);
+   }
 
    /**
     * Maximum yaw between consecutive footsteps
@@ -101,7 +110,10 @@ public interface BipedFootstepPlannerParametersReadOnly
     * its maximum reach.
     * </p>
     */
-   double getMaximumStepYaw();
+   default double getMaximumStepYaw()
+   {
+      return getStoredPropertySet().getValue(maxStepYaw);
+   }
 
    /**
     * Minimum step width the planner will consider for candidate steps.
@@ -120,7 +132,10 @@ public interface BipedFootstepPlannerParametersReadOnly
     *    The {@link GoodFootstepPositionChecker} will reject a node if it is not wide enough using this parameter.
     * </p>
     */
-   double getMinimumStepWidth();
+   default double getMinimumStepWidth()
+   {
+      return getStoredPropertySet().getValue(minStepWidth);
+   }
 
    /**
     * Minimum step length the planner will consider for candidate steps.
@@ -137,7 +152,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinimumStepLength()
    {
-      return -getMaximumStepReach();
+      return getStoredPropertySet().getValue(minStepLength);
    }
 
    /**
@@ -145,7 +160,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinimumStepYaw()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(minStepYaw);
    }
 
    /**
@@ -167,7 +182,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumStepReachWhenSteppingUp()
    {
-      return getMaximumStepReach();
+      return getStoredPropertySet().getValue(maximumStepReachWhenSteppingUp);
    }
 
    /**
@@ -189,7 +204,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumStepZWhenSteppingUp()
    {
-      return Double.POSITIVE_INFINITY;
+      return getStoredPropertySet().getValue(maximumStepZWhenSteppingUp);
    }
 
    /**
@@ -211,7 +226,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumStepXWhenForwardAndDown()
    {
-      return Double.POSITIVE_INFINITY;
+      return getStoredPropertySet().getValue(maximumStepXWhenForwardAndDown);
    }
 
    /**
@@ -233,7 +248,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumStepZWhenForwardAndDown()
    {
-      return Double.POSITIVE_INFINITY;
+      return getStoredPropertySet().getValue(maximumStepZWhenForwardAndDown);
    }
 
    /**
@@ -244,7 +259,10 @@ public interface BipedFootstepPlannerParametersReadOnly
     * z-up sole frame.
     * </p>
     */
-   double getMaximumStepZ();
+   default double getMaximumStepZ()
+   {
+      return getStoredPropertySet().getValue(maxStepZ);
+   }
 
    /**
     * Minimum percentage that a candidate footstep needs to overlap with its associated planar region in order to be accepted.
@@ -254,7 +272,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinimumFootholdPercent()
    {
-      return 0.9;
+      return getStoredPropertySet().getValue(minFootholdPercent);
    }
 
    /**
@@ -268,7 +286,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinimumSurfaceInclineRadians()
    {
-      return Math.toRadians(45.0);
+      return getStoredPropertySet().getValue(minSurfaceIncline);
    }
 
    /**
@@ -284,7 +302,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default boolean getWiggleIntoConvexHullOfPlanarRegions()
    {
-      return true;
+      return getStoredPropertySet().getValue(wiggleIntoConvexHullOfPlanarRegions);
    }
 
    /**
@@ -295,7 +313,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default boolean getRejectIfCannotFullyWiggleInside()
    {
-      return false;
+      return getStoredPropertySet().getValue(rejectIfCannotFullyWiggleInside);
    }
 
    /**
@@ -304,7 +322,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumXYWiggleDistance()
    {
-      return LatticeNode.gridSizeXY / 2.0;
+      return getStoredPropertySet().getValue(maximumXYWiggleDistance);
    }
 
    /**
@@ -313,7 +331,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumYawWiggle()
    {
-      return LatticeNode.gridSizeYaw / 2.0;
+      return getStoredPropertySet().getValue(maximumYawWiggle);
    }
 
    /**
@@ -324,7 +342,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMaximumZPenetrationOnValleyRegions()
    {
-      return Double.POSITIVE_INFINITY;
+      return getStoredPropertySet().getValue(maximumZPenetrationOnValleyRegions);
    }
 
    /**
@@ -343,7 +361,10 @@ public interface BipedFootstepPlannerParametersReadOnly
     *   The {@link GoodFootstepPositionChecker} will reject a node if it is too wide using this parameter.
     * </p>
     */
-   double getMaximumStepWidth();
+   default double getMaximumStepWidth()
+   {
+      return getStoredPropertySet().getValue(maxStepWidth);
+   }
 
    /**
     * The planner can be setup to avoid footsteps near the bottom of "cliffs". When the footstep has a planar region
@@ -358,7 +379,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getCliffHeightToAvoid()
    {
-      return Double.MAX_VALUE;
+      return getStoredPropertySet().getValue(cliffHeightToAvoid);
    }
 
    /**
@@ -374,7 +395,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinimumDistanceFromCliffBottoms()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(minimumDistanceFromCliffBottoms);
    }
 
    /**
@@ -386,7 +407,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default boolean getReturnBestEffortPlan()
    {
-      return false;
+      return getStoredPropertySet().getValue(returnBestEffortPlan);
    }
 
    /**
@@ -395,7 +416,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default int getMinimumStepsForBestEffortPlan()
    {
-      return 3;
+      return getStoredPropertySet().getValue(minimumStepsForBestEffortPlan);
    }
 
    /**
@@ -406,7 +427,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyGroundClearance()
    {
-      return 0.25;
+      return getStoredPropertySet().getValue(bodyGroundClearance);
    }
 
    /**
@@ -417,7 +438,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxHeight()
    {
-      return 1.5;
+      return getStoredPropertySet().getValue(bodyBoxHeight);
    }
 
    /**
@@ -427,7 +448,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxDepth()
    {
-      return 0.3;
+      return getStoredPropertySet().getValue(bodyBoxDepth);
    }
 
    /**
@@ -437,7 +458,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxWidth()
    {
-      return 0.7;
+      return getStoredPropertySet().getValue(bodyBoxWidth);
    }
 
    /**
@@ -447,7 +468,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxBaseX()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(bodyBoxBaseX);
    }
 
    /**
@@ -457,7 +478,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxBaseY()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(bodyBoxBaseY);
    }
 
    /**
@@ -467,7 +488,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getBodyBoxBaseZ()
    {
-      return 0.25;
+      return getStoredPropertySet().getValue(bodyBoxBaseZ);
    }
 
    /**
@@ -477,7 +498,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinXClearanceFromStance()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(minXClearanceFromStance);
    }
 
    /**
@@ -487,7 +508,7 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getMinYClearanceFromStance()
    {
-      return 0.0;
+      return getStoredPropertySet().getValue(minYClearanceFromStance);
    }
 
    /**
@@ -495,12 +516,12 @@ public interface BipedFootstepPlannerParametersReadOnly
     */
    default double getFinalTurnProximity()
    {
-      return 1.0;
+      return getStoredPropertySet().getValue(finalTurnProximity);
    }
 
    default BipedFootstepPlannerCostParametersReadOnly getCostParameters()
    {
-      return new DefaultFootstepPlannerCostParameters();
+      return new BipedFootstepPlannerCostParameters();
    }
 
    /**

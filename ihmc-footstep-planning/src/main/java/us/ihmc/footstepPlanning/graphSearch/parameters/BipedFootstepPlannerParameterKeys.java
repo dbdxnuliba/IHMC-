@@ -42,6 +42,7 @@ public class BipedFootstepPlannerParameterKeys
    public static final DoubleStoredPropertyKey  bodyBoxBaseX                        = keys.addDoubleKey ("Body box base X"                          );
    public static final DoubleStoredPropertyKey  bodyBoxBaseY                        = keys.addDoubleKey ("Body box base Y"                          );
    public static final DoubleStoredPropertyKey  bodyBoxBaseZ                        = keys.addDoubleKey ("Body box base Z"                          );
+   public static final DoubleStoredPropertyKey  finalTurnProximity                  = keys.addDoubleKey ("Final turn proximity"                     );
 
    public static void main(String[] args)
    {

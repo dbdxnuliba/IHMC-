@@ -19,14 +19,14 @@ public class FootstepPlannerCostParametersProperty extends ParametersProperty<Bi
    private DoubleField stepUpWeight = new DoubleField(BipedFootstepPlannerCostParameters::getStepUpWeight, (p, v) -> p.setStepUpWeight(v));
    private DoubleField stepDownWeight = new DoubleField(BipedFootstepPlannerCostParameters::getStepDownWeight, (p, v) -> p.setStepDownWeight(v));
    private DoubleField costPerStep = new DoubleField(BipedFootstepPlannerCostParameters::getCostPerStep, (p, v) -> p.setCostPerStep(v));
-   private DoubleField aStarHeuristicsWeight = new DoubleField(p -> p.getAStarHeuristicsWeight().getValue(), (p, v) -> p.setAStarHeuristicsWeight(v));
-   private DoubleField visGraphWithAStarHeuristicsWeight = new DoubleField(p -> p.getVisGraphWithAStarHeuristicsWeight().getValue(), (p, v) -> p.setVisGraphWithAStarHeuristicsWeight(v));
-   private DoubleField depthFirstHeuristicsWeight = new DoubleField(p -> p.getDepthFirstHeuristicsWeight().getValue(), (p, v) -> p.setDepthFirstHeuristicsWeight(v));
-   private DoubleField bodyPathBasedHeuristicsWeight = new DoubleField(p -> p.getBodyPathBasedHeuristicsWeight().getValue(), (p, v) -> p.setBodyPathBasedHeuristicsWeight(v));
+   private DoubleField aStarHeuristicsWeight = new DoubleField(p -> p.getAStarHeuristicsWeightProvider().getValue(), (p, v) -> p.setAStarHeuristicsWeight(v));
+   private DoubleField visGraphWithAStarHeuristicsWeight = new DoubleField(p -> p.getVisGraphWithAStarHeuristicsWeightProvider().getValue(), (p, v) -> p.setVisGraphWithAStarHeuristicsWeight(v));
+   private DoubleField depthFirstHeuristicsWeight = new DoubleField(p -> p.getDepthFirstHeuristicsWeightProvider().getValue(), (p, v) -> p.setDepthFirstHeuristicsWeight(v));
+   private DoubleField bodyPathBasedHeuristicsWeight = new DoubleField(p -> p.getBodyPathBasedHeuristicsWeightProvider().getValue(), (p, v) -> p.setBodyPathBasedHeuristicsWeight(v));
 
    public FootstepPlannerCostParametersProperty(Object bean, String name)
    {
-      this(bean, name, new DefaultFootstepPlannerCostParameters());
+      this(bean, name, new BipedFootstepPlannerCostParameters());
    }
 
    public FootstepPlannerCostParametersProperty(Object bean, String name, BipedFootstepPlannerCostParametersReadOnly footstepPlannerParameters)
