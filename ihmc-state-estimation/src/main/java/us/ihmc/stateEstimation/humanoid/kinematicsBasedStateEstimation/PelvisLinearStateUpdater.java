@@ -324,14 +324,14 @@ public class PelvisLinearStateUpdater
          switch (slippageCompensatorMode.getEnumValue())
          {
          case LOAD_THRESHOLD:
-            int filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnContactForces(numberOfEndEffectorsTrusted.getIntegerValue());
+            int filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnContactForces();
             numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
             break;
          case MIN_PELVIS_ACCEL:
             filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnResultingPelvisAcceleration(numberOfEndEffectorsTrusted.getIntegerValue());
             numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
          case LOAD_THRESHOLD_AND_PELVIS_ACCEL:
-            filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnContactForces(numberOfEndEffectorsTrusted.getIntegerValue());
+            filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnContactForces();
             filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnResultingPelvisAcceleration(filteredNumberOfEndEffectorsTrusted);
             numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
             break;
@@ -541,14 +541,14 @@ public class PelvisLinearStateUpdater
       return lowestFootInContact;
    }
 
-   private final List<RigidBodyBasics> filteredTrustedFeet = new ArrayList<>(6);
-
-   private int filterTrustedFeetBasedOnContactForces(int numberOfEndEffectorsTrusted)
+   private int filterTrustedFeetBasedOnContactForces()
    {
       double totalForceZ = 0.0;
       for (int i = 0; i < feet.size(); i++)
       {
          RigidBodyBasics foot = feet.get(i);
+         if (!areFeetTrusted.get(foot).getBooleanValue())
+            continue;
          Wrench footWrench = footWrenches.get(foot);
          footSwitches.get(foot).computeAndPackFootWrench(footWrench);
          FixedFrameVector3DBasics footForce = footForces.get(foot);
@@ -556,11 +556,13 @@ public class PelvisLinearStateUpdater
          totalForceZ += footForce.getZ();
       }
 
-      filteredTrustedFeet.clear();
-
+      int numberOfEndEffectorsTrusted = 0;
       for (int i = 0; i < feet.size(); i++)
       {
          RigidBodyBasics foot = feet.get(i);
+         if (!areFeetTrusted.get(foot).getBooleanValue())
+            continue;
+
          FixedFrameVector3DBasics footForce = footForces.get(foot);
          YoDouble footLoad = footForcesZInPercentOfTotalForce.get(foot);
          footLoad.set(footForce.getZ() / totalForceZ);
@@ -569,19 +571,10 @@ public class PelvisLinearStateUpdater
 
          percentForce = MathTools.clamp(percentForce, minForceZInPercentThresholdToFilterFoot, maxForceZInPercentThresholdToFilterFoot);
 
-         if (footLoad.getValue() >= percentForce)
-            filteredTrustedFeet.add(foot);
-      }
-
-      if (!filteredTrustedFeet.isEmpty())
-      {
-         numberOfEndEffectorsTrusted = filteredTrustedFeet.size();
-
-         for (int i = 0; i < feet.size(); i++)
-         {
-            RigidBodyBasics foot = feet.get(i);
-            areFeetTrusted.get(foot).set(filteredTrustedFeet.remove(foot));
-         }
+         if (footLoad.getValue() < percentForce)
+            areFeetTrusted.get(foot).set(false);
+         else
+            numberOfEndEffectorsTrusted++;
       }
 
       return numberOfEndEffectorsTrusted;
@@ -605,10 +598,14 @@ public class PelvisLinearStateUpdater
 
          // any foot velocity is bad, as it should all be zero, unless it is slipping
          FrameVector3DReadOnly footVelocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot);
-         averageFootVelocity.scaleAdd(1.0 / numberOfEndEffectorsTrusted, footVelocity, averageFootVelocity);
+         averageFootVelocity.add(footVelocity);
       }
 
+      averageFootVelocity.scale(1.0 / numberOfEndEffectorsTrusted);
+
       double totalAverageVelocity = averageFootVelocity.length();
+
+      numberOfEndEffectorsTrusted = 0;
 
       for (int i = 0; i < feet.size(); i++)
       {
@@ -618,10 +615,10 @@ public class PelvisLinearStateUpdater
             continue;
 
          double velocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot).length();
-         if (velocity < totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue())
-            areFeetTrusted.get(foot).set(true);
-         else if (velocity > minFootVelocityToFilterFoot.getValue())
+         if (velocity > Math.max(minFootVelocityToFilterFoot.getValue(), totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue()))
             areFeetTrusted.get(foot).set(false);
+         else
+            numberOfEndEffectorsTrusted++;
       }
 
 
