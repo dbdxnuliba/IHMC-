@@ -59,6 +59,19 @@ public class PelvisLinearStateUpdater
    private static final double minForceZInPercentThresholdToFilterFoot = 0.0;
    private static final double maxForceZInPercentThresholdToFilterFoot = 0.45;
 
+   private static Comparator<DoubleProvider> footSpeedComparator = (DoubleProvider footASpeed, DoubleProvider footBSpeed) -> {
+      double speedA = footASpeed.getValue();
+      double speedB = footBSpeed.getValue();
+      if (Double.isNaN(speedA) && Double.isNaN(speedB))
+         return 0;
+      else if (Double.isNaN(speedA))
+         return -1;
+      else if (Double.isNaN(speedB))
+         return 1;
+      else
+         return Double.compare(speedA, speedB);
+   };
+
    private static boolean VISUALIZE = false;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -211,7 +224,7 @@ public class PelvisLinearStateUpdater
       optimalNumberOfTrustedFeet = new IntegerParameter("optimalNumberOfTrustedFeet", registry, 2);
       forceZInPercentThresholdToTrustFoot = new DoubleParameter("forceZInPercentThresholdToTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToTrustFoot());
       forceZInPercentThresholdToNotTrustFoot = new DoubleParameter("forceZInPercentThresholdToNotTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToNotTrustFoot());
-      footVelocityDifferenceRatioToFilterFoot = new DoubleParameter("footVelocityDifferenceRatioToFilterFoot", registry, Double.POSITIVE_INFINITY);
+      footVelocityDifferenceRatioToFilterFoot = new DoubleParameter("footVelocityDifferenceRatioToFilterFoot", registry, 1.6);
       minFootVelocityToFilterFoot = new DoubleParameter("minFootVelocityToFilterFoot", registry, 0.025);
       trustImuWhenNoFeetAreInContact = new BooleanParameter("trustImuWhenNoFeetAreInContact", registry, stateEstimatorParameters.getPelvisLinearStateUpdaterTrustImuWhenNoFeetAreInContact());
       useGroundReactionForcesToComputeCenterOfMassVelocity = new BooleanParameter("useGRFToComputeCoMVelocity", registry, stateEstimatorParameters.useGroundReactionForcesToComputeCenterOfMassVelocity());
@@ -634,34 +647,44 @@ public class PelvisLinearStateUpdater
          RigidBodyBasics foot = feet.get(i);
          // don't add it if it isn't already trusted
          if (!areFeetTrusted.get(foot).getBooleanValue())
-            continue;
-
-         // any foot velocity is bad, as it should all be zero, unless it is slipping, but we can trust the velocity more if the foot is loaded more.
-         FrameVector3DReadOnly footVelocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot);
-         weightedAverageFootVelocity.scaleAdd(footForcesZInPercentOfTotalForce.get(foot).getValue(), footVelocity, weightedAverageFootVelocity);
-      }
-
-      weightedAverageFootSpeed.set(weightedAverageFootVelocity.length());
-
-      int filteredNumberOfEndEffectorsTrusted = 0;
-
-      for (int i = 0; i < feet.size(); i++)
-      {
-         RigidBodyBasics foot = feet.get(i);
-         // don't bother if it isn't already trusted
-         if (!areFeetTrusted.get(foot).getBooleanValue())
          {
             footSpeeds.get(foot).setToNaN();
             continue;
          }
 
-         double velocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot).length();
-         footSpeeds.get(foot).set(velocity);
-         if (velocity > Math.max(minFootVelocityToFilterFoot.getValue(), weightedAverageFootSpeed.getDoubleValue() * footVelocityDifferenceRatioToFilterFoot.getValue()))
-            areFeetTrusted.get(foot).set(false);
-         else
-            filteredNumberOfEndEffectorsTrusted++;
+         // any foot velocity is bad, as it should all be zero, unless it is slipping, but we can trust the velocity more if the foot is loaded more.
+         FrameVector3DReadOnly footVelocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot);
+         footSpeeds.get(foot).set(footVelocity.length());
+         weightedAverageFootVelocity.scaleAdd(footForcesZInPercentOfTotalForce.get(foot).getValue(), footVelocity, weightedAverageFootVelocity);
       }
+
+      weightedAverageFootSpeed.set(weightedAverageFootVelocity.length());
+
+      int filteredNumberOfEndEffectorsTrusted = numberOfEndEffectorsTrusted;
+
+      sortFeetBySpeed();
+
+      int footIndex = feet.size() - 1;
+      while (footIndex >= 0 && filteredNumberOfEndEffectorsTrusted > 1)
+      {
+         RigidBodyBasics foot = feet.get(footIndex);
+         // don't bother if it isn't already trusted
+         if (!areFeetTrusted.get(foot).getBooleanValue())
+            continue;
+
+         if (footSpeeds.get(foot).getValue() > Math.max(minFootVelocityToFilterFoot.getValue(), weightedAverageFootSpeed.getDoubleValue() * footVelocityDifferenceRatioToFilterFoot.getValue()))
+         {
+            areFeetTrusted.get(foot).set(false);
+            filteredNumberOfEndEffectorsTrusted--;
+         }
+         else
+         { // these are in order, so once one isn't filtered, the rest will be ok
+            break;
+         }
+
+         footIndex--;
+      }
+
 
       numberOfEndEffectorsFilteredByVelocity.set(numberOfEndEffectorsTrusted - filteredNumberOfEndEffectorsTrusted);
       return filteredNumberOfEndEffectorsTrusted;
@@ -800,6 +823,34 @@ public class PelvisLinearStateUpdater
          else
             listOfUnTrustedFeet.add(foot);
       }
+   }
+
+   private void sortFeetBySpeed()
+   {
+      boolean ordered = false;
+
+      while (!ordered)
+      {
+         ordered = true;
+         for (int i = 0; i < feet.size() - 1; i++)
+         {
+            RigidBodyBasics footA = feet.get(i);
+            RigidBodyBasics footB = feet.get(i + 1);
+
+            if (footSpeedComparator.compare(footSpeeds.get(footA), footSpeeds.get(footB)) > 0)
+            {
+               ordered = false;
+               swap(feet, i, i + 1);
+            }
+         }
+      }
+   }
+
+   private static <T> void swap(List<T> ts, int a, int b)
+   {
+      T tmp = ts.get(a);
+      ts.set(a, ts.get(b));
+      ts.set(b, tmp);
    }
 
    public void getEstimatedPelvisPosition(FramePoint3D pelvisPositionToPack)
