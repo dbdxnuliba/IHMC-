@@ -57,8 +57,8 @@ null,
 </Track Booleans>
 </Track data>
 <Fix Position>
-<Fix X>-0.04132221307193859</Fix X>
-<Fix Y>-0.017983124601073024</Fix Y>
-<Fix Z>0.9116582994812518</Fix Z>
+<Fix X>0.0</Fix X>
+<Fix Y>0.0</Fix Y>
+<Fix Z>0.89</Fix Z>
 </Fix Position>
 </Canvas 1>

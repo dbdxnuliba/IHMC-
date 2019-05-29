@@ -26,6 +26,7 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
+import us.ihmc.simulationConstructionSetTools.util.environments.CinderBlockFieldEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.environments.SmallStepDownEnvironment;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
@@ -111,7 +112,7 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
    {
       setupTest();
 
-      FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
+      FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage(); //creates a list
       footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, new Point3D(stepLength, stepWidth / 2.0, 0.0), new FrameQuaternion()));
       footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, new Point3D(stepLength, -stepWidth / 2.0, 0.0), new FrameQuaternion()));
 
@@ -125,6 +126,23 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
       drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox);
    }
 
+   @Test
+   public void teststep() throws SimulationExceededMaximumTimeException
+   {
+      setuptestk();
+      FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
+      footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, new Point3D(stepLength, stepWidth/2.0, 0.0),new FrameQuaternion()));
+      footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, new Point3D(stepLength, stepWidth/2.0, 0.0),new FrameQuaternion()));
+
+      drcSimulationTestHelper.publishToController(footstepDataListMessage);
+
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(10.0));
+
+      Point3D center = new Point3D(stepLength,0.0,0.0);
+      Vector3D plusMinusvector = new Vector3D(0.1, 0.1, 0.15);
+      BoundingBox3D boundingBox = BoundingBox3D.createUsingCenterAndPlusMinusVector(center, plusMinusvector);
+      drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox);
+   }
    @Test
    public void testForwardStepWithPause() throws SimulationExceededMaximumTimeException
    {
@@ -300,6 +318,14 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(6.0));
 
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
+   }
+
+   private void setuptestk() throws SimulationExceededMaximumTimeException
+   {
+      CinderBlockFieldEnvironment cinderBlockFieldEnvironment = new CinderBlockFieldEnvironment();
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), cinderBlockFieldEnvironment);
+      drcSimulationTestHelper.setTestEnvironment(cinderBlockFieldEnvironment);
+      drcSimulationTestHelper.createSimulation("EndtoEndCinderBlockFieldtest");
    }
 
    private void setupTest() throws SimulationExceededMaximumTimeException
