@@ -15,6 +15,20 @@ public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
 
    @Override
    @Test
+   public void testWalkingUpOfSmallStep() throws SimulationExceededMaximumTimeException
+   {
+      super.testWalkingUpOfSmallStep();
+   }
+
+   @Override
+   @Test
+   public void testWalkingUpOfMediumStep() throws SimulationExceededMaximumTimeException
+   {
+      super.testWalkingUpOfMediumStep();
+   }
+
+   @Override
+   @Test
    public void testWalkingUpOfHighStep() throws SimulationExceededMaximumTimeException
    {
       super.testWalkingUpOfHighStep();
