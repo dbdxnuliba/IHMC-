@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import controller_msgs.msg.dds.FootstepDataMessage;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.poi.ss.formula.functions.T;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -13,11 +14,13 @@ import controller_msgs.msg.dds.FootstepDataListMessage;
 import org.junit.jupiter.api.Test;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
+import us.ihmc.commonWalkingControlModules.controlModules.foot.FootRotationCalculator;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commons.thread.ThreadTools;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Disabled;
 import us.ihmc.euclid.geometry.BoundingBox3D;
+import us.ihmc.euclid.referenceFrame.FrameMatrix3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -26,9 +29,7 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
-import us.ihmc.simulationConstructionSetTools.util.environments.CinderBlockFieldEnvironment;
-import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
-import us.ihmc.simulationConstructionSetTools.util.environments.SmallStepDownEnvironment;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
 import us.ihmc.tools.MemoryTools;
@@ -162,6 +163,61 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
       BoundingBox3D boundingBox = BoundingBox3D.createUsingCenterAndPlusMinusVector(center, plusMinusvector);
       drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox);
    }
+
+   @Test
+   public void singleStepUp() throws SimulationExceededMaximumTimeException
+   {
+      singleStairSetuptest();
+      Point3D Step1 = new Point3D(0.6,stepWidth/2.0, 0.0);
+      Point3D Step2 = new Point3D(0.6,-stepWidth/2.0, 0.0);
+      Point3D Step3 = new Point3D(1.1,stepWidth/2.0, 0.3);
+      Point3D Step4 = new Point3D(1.5,-stepWidth/2.0, 0.6);
+      Point3D Step5 = new Point3D(1.5,stepWidth/2.0, 0.6);
+
+      ArrayList<Point3D> step = new ArrayList<Point3D>();
+      step.add(Step1);
+      step.add(Step2);
+      step.add(Step3);
+      step.add(Step4);
+      step.add(Step5);
+      RobotSide side = RobotSide.LEFT;
+      FootstepDataListMessage footsteps = new FootstepDataListMessage();
+
+      for (int i = 0; i < step.size(); i++)
+      {
+         footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(side, step.get(i), new FrameQuaternion()));
+         side = side.getOppositeSide();
+      }
+
+      drcSimulationTestHelper.publishToController(footsteps);
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(20.0));
+      /*
+      FootstepDataListMessage footsteps = new FootstepDataListMessage();
+      footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, Step1, new FrameQuaternion()));
+      //drcSimulationTestHelper.publishToController(footsteps);
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, Step2, new FrameQuaternion()));
+      //drcSimulationTestHelper.publishToController(footsteps);
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, Step3, new FrameQuaternion()));
+      //drcSimulationTestHelper.publishToController(footsteps);
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, Step4, new FrameQuaternion()));
+      //drcSimulationTestHelper.publishToController(footsteps);
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      footsteps.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, Step5, new FrameQuaternion()));
+      //drcSimulationTestHelper.publishToController(footsteps);
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      drcSimulationTestHelper.publishToController(footsteps);
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(20.0));
+      */
+
+
+      //Point3D center = new Point3D(,0.0,0.0);
+      //Vector3D plusMinusvector = new Vector3D(0.1, 0.1, 0.15);
+      //BoundingBox3D boundingBox = BoundingBox3D.createUsingCenterAndPlusMinusVector(center, plusMinusvector);
+      //drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox);
+   }
    @Test
    public void testForwardStepWithPause() throws SimulationExceededMaximumTimeException
    {
@@ -242,8 +298,8 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
    {
       setupTest();
 
-      Point3D step1 = new Point3D(0.0, -stepWidth, 0.0);
-      Point3D step2 = new Point3D(0.0, stanceWidth - stepWidth, 0.0);
+      Point3D step1 = new Point3D(0.0, -stepWidth, 0.0); //right side
+      Point3D step2 = new Point3D(0.0, stanceWidth - stepWidth, 0.0); ///left side
 
       FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
       footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, step1, new FrameQuaternion()));
@@ -339,12 +395,20 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   private void setuptestk() throws SimulationExceededMaximumTimeException
+   private void singleStairSetuptest() throws SimulationExceededMaximumTimeException
    {
-      CinderBlockFieldEnvironment cinderBlockFieldEnvironment = new CinderBlockFieldEnvironment();
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), cinderBlockFieldEnvironment);
-      drcSimulationTestHelper.setTestEnvironment(cinderBlockFieldEnvironment);
-      drcSimulationTestHelper.createSimulation("EndtoEndCinderBlockFieldtest");
+      //CinderBlockFieldEnvironment cinderBlockFieldEnvironment = new CinderBlockFieldEnvironment();
+      //StairsUpAndDownEnvironment stairsUpAndDownEnvironment = new StairsUpAndDownEnvironment();
+      AdjustableStairsEnvironment adjustableStairsEnvironment = new AdjustableStairsEnvironment();
+      adjustableStairsEnvironment.setStairsParameters(2,1,0.3,0.4);
+      adjustableStairsEnvironment.generateTerrains();
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), adjustableStairsEnvironment);
+      drcSimulationTestHelper.createSimulation("withStairs");
+
+      setupCamera();
+      ThreadTools.sleep(1000);
+
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(1.0));
    }
 
    private void setupTest() throws SimulationExceededMaximumTimeException
