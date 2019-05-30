@@ -9,18 +9,24 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import controller_msgs.msg.dds.EuclideanTrajectoryPointMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.geometry.BoundingBox3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.SingleStepEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
@@ -68,9 +74,31 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
    }
 
    @Test
+   public void testWalkingUpOfSmallStep() throws SimulationExceededMaximumTimeException
+   {
+      double stepHeight = 0.2;
+      walkUpToHighStep(stepHeight);
+
+   }
+
+   @Test
+   public void testWalkingUpOfMediumStep() throws SimulationExceededMaximumTimeException
+   {
+      double stepHeight = 0.3;
+      walkUpToHighStep(stepHeight);
+   }
+
+   @Test
    public void testWalkingUpOfHighStep() throws SimulationExceededMaximumTimeException
    {
       double stepHeight = 0.5;
+      walkUpToHighStep(stepHeight);
+
+   }
+
+   private void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
+   {
+
       SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 1.0);
       OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(0.7, 0.0, 0.0, 0.0);
 
@@ -82,13 +110,30 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
       drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
       createTorqueGraph(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
 
-      FootstepDataListMessage footsteps = createFootstepsForHighStepUp(stepHeight);
-
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
       assertTrue(success);
 
+      double nominalPelvisHeight;
+      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
+      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
+      nominalPelvisHeight = pelvisFrame.getZ();
+
+      FootstepDataListMessage footsteps = createFootstepsForHighStepUp(stepHeight);
+      PelvisHeightTrajectoryMessage pelvisHeightTrajectory = new PelvisHeightTrajectoryMessage();
+      pelvisHeightTrajectory.setEnableUserPelvisControlDuringWalking(true);
+      pelvisHeightTrajectory.setEnableUserPelvisControl(true); // ?
+      EuclideanTrajectoryPointMessage waypoint1 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+      waypoint1.getPosition().setZ(1.05 * nominalPelvisHeight);
+      waypoint1.setTime(2.0);
+      EuclideanTrajectoryPointMessage waypoint2 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+      waypoint2.getPosition().setZ(nominalPelvisHeight + stepHeight);
+      waypoint2.setTime(2.5);
+      waypoint1.getLinearVelocity().setZ(0.0);
+
       drcSimulationTestHelper.publishToController(footsteps);
+      drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
 
       WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
@@ -105,16 +150,27 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
 
    private FootstepDataListMessage createFootstepsForHighStepUp(double stepHeight)
    {
-      double[][] footstepLocations = new double[][] {{1.2, 0.11, stepHeight}, {1.2, -0.11, stepHeight}};
-
-      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, footstepLocations.length);
+      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2);
       FootstepDataListMessage newList = new FootstepDataListMessage();
 
       for (int i = 0; i < robotSides.length; ++i)
       {
-         Point3D location = new Point3D(footstepLocations[i]);
+         MovingReferenceFrame soleFrame = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(robotSides[i]);
+         FramePose3D footPose = new FramePose3D(soleFrame);
+         footPose.changeFrame(ReferenceFrame.getWorldFrame());
+
+         Point3D location = new Point3D(1.2, footPose.getY(), stepHeight);
          Quaternion quaternion = new Quaternion();
          FootstepDataMessage footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
+         if (robotSides[i] == RobotSide.RIGHT)
+         {
+            footstep.setTrajectoryType(TrajectoryType.CUSTOM.toByte());
+            Point3D waypoint1 = footstep.getCustomPositionWaypoints().add();
+            Point3D waypoint2 = footstep.getCustomPositionWaypoints().add();
+            waypoint1.set(footPose.getX() - 0.1, footPose.getY(), stepHeight / 2.0);
+            waypoint2.set(footPose.getX(), footPose.getY(), stepHeight + 0.2);
+         }
+
          newList.getFootstepDataList().add().set(footstep);
       }
 
@@ -160,6 +216,13 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
 
    private void createTorqueGraph(SimulationConstructionSet scs, Robot robot)
    {
+      StandardSimulationGUI window = scs.getGUI();
+      GraphArrayPanel panel = window.getGraphArrayPanel();
+      ArrayList<YoGraph> graphs = panel.getGraphsOnThisPanel();
+
+      if (graphs.size() != 0)
+         return;
+
       List<PinJoint> pinJoints = new ArrayList<PinJoint>();
 
       getPinJoints(robot, pinJoints);
@@ -186,11 +249,9 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
          }
       }
 
-
       addGraph(scs, torsoJoints);
       addGraph(scs, leftLegJoints);
       addGraph(scs, rightLegJoints);
-
    }
 
    private void addGraph(SimulationConstructionSet scs, List<String> torsoJoints)
