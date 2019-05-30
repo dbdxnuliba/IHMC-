@@ -46,8 +46,8 @@ public class AtlasStraightLegSingleStepTest extends AvatarStraightLegSingleStepT
    @Test
    public void teststep() throws SimulationExceededMaximumTimeException
    {
-      double stepLength = 1.5;
-      double stepWidth = 0.35;
+      double stepLength = 0.6;
+      double stepWidth = 0.25;
 
       setStepLength(stepLength);
       setStepWidth(stepWidth);

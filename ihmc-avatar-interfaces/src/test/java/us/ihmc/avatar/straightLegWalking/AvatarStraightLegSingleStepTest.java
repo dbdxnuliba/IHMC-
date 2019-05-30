@@ -129,14 +129,33 @@ public abstract class AvatarStraightLegSingleStepTest implements MultiRobotTestI
    @Test
    public void teststep() throws SimulationExceededMaximumTimeException
    {
-      setuptestk();
-      FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
-      footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT, new Point3D(stepLength, stepWidth/2.0, 0.0),new FrameQuaternion()));
-      footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT, new Point3D(stepLength, stepWidth/2.0, 0.0),new FrameQuaternion()));
+      setupTest();
 
-      drcSimulationTestHelper.publishToController(footstepDataListMessage);
+      for(int i = 0 ; i < 6; i++)
+      {
+         FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
+         footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.LEFT,
+                                                                                                                new Point3D(stepLength, stepWidth / 2.0, 0.0),
+                                                                                                                new FrameQuaternion()));
+         if(i<4){stepLength=stepLength +0.6;}
+         footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT,
+                                                                                                                new Point3D(stepLength, -stepWidth / 2.0, 0.0),
+                                                                                                              new FrameQuaternion()));
+         stepLength=stepLength +0.6;
+         //System.out.println(stepLength);
+         drcSimulationTestHelper.publishToController(footstepDataListMessage);
+         assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+      }
 
-      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(10.0));
+      //System.out.println(stepLength);
+      /*FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
+      footstepDataListMessage.getFootstepDataList().add().set(HumanoidMessageTools.createFootstepDataMessage(RobotSide.RIGHT,
+                                                                                                                new Point3D(stepLength, -stepWidth / 2.0, 0.0),
+                                                                                                                  new FrameQuaternion()));*/
+      //drcSimulationTestHelper.publishToController(footstepDataListMessage);
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(3.0));
+
+      //assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(15.0));
 
       Point3D center = new Point3D(stepLength,0.0,0.0);
       Vector3D plusMinusvector = new Vector3D(0.1, 0.1, 0.15);

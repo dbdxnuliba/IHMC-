@@ -148,6 +148,7 @@ public abstract class AvatarStraightLegWalkingTest implements MultiRobotTestInte
       FootstepDataListMessage footsteps = generateFootstepsForCinderBlockField(cinderBlockFieldEnvironment.getCinderBlockPoses());
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), cinderBlockFieldEnvironment);
+      //drcSimulationTestHelper.createSimulation("EndToEndCinderBlockFieldTest");
       drcSimulationTestHelper.createSimulation("EndToEndCinderBlockFieldTest");
 
       ThreadTools.sleep(1000);
