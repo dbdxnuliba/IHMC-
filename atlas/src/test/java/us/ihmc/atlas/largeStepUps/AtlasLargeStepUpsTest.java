@@ -13,25 +13,46 @@ public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
 {
    private final AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
 
-   @Override
    @Test
    public void testWalkingUpOfSmallStep() throws SimulationExceededMaximumTimeException
    {
-      super.testWalkingUpOfSmallStep();
+      double stepHeight = 0.2;
+      super.walkUpToHighStep(stepHeight);
    }
 
-   @Override
    @Test
    public void testWalkingUpOfMediumStep() throws SimulationExceededMaximumTimeException
    {
-      super.testWalkingUpOfMediumStep();
+      double stepHeight = 0.3;
+      super.walkUpToHighStep(stepHeight);
    }
 
-   @Override
    @Test
    public void testWalkingUpOfHighStep() throws SimulationExceededMaximumTimeException
    {
-      super.testWalkingUpOfHighStep();
+      double stepHeight = 0.5;
+      super.walkUpToHighStep(stepHeight);
+   }
+
+   @Test
+   public void testWalkingDownOfSmallStep() throws SimulationExceededMaximumTimeException
+   {
+      double stepHeight = 0.2;
+      super.walkDownFromHighStep(stepHeight);
+   }
+
+   @Test
+   public void testWalkingDownOfMediumStep() throws SimulationExceededMaximumTimeException
+   {
+      double stepHeight = 0.3;
+      super.walkDownFromHighStep(stepHeight);
+   }
+
+   @Test
+   public void testWalkingDownOfHighStep() throws SimulationExceededMaximumTimeException
+   {
+      double stepHeight = 0.5;
+      super.walkDownFromHighStep(stepHeight);
    }
 
    @Override
