@@ -38,8 +38,6 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
    private static final double maxBodyRoll = 0.15;
    private static final double maxBodyPitch = 0.15;
    private static final double bodyOrientationShiftTime = 0.1;
-   private static final double maxTranslationX = 0.25;
-   private static final double maxTranslationY = 0.15;
 
    private final MutableDouble maxVelocityY = new MutableDouble();
    private final MutableDouble maxVelocityYaw = new MutableDouble();
