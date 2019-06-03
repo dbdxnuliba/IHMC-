@@ -13,7 +13,6 @@ import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
-import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commons.thread.ThreadTools;
@@ -27,7 +26,6 @@ import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
-import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.SingleStepEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
 import us.ihmc.simulationconstructionset.PinJoint;
@@ -108,58 +106,6 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
       assertTrue(success);
    }
 
-   protected void walkDownFromHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
-   {
-
-      SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 1.0);
-      OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(1.8, 0.0, stepHeight, 0.0);
-
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
-      drcSimulationTestHelper.setStartingLocation(offset);
-      drcSimulationTestHelper.createSimulation("WalkingDownFromHighPlatformtest");
-      Point3D cameraFix = new Point3D(1.1281, 0.0142, 1.0528);
-      Point3D cameraPosition = new Point3D(0.2936, -5.531, 1.7983);
-      drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
-      createTorqueGraph(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
-
-      ThreadTools.sleep(1000);
-      boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
-      assertTrue(success);
-
-      FootstepDataListMessage footsteps = createFootstepsForHighStepDown(stepHeight);
-
-      WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
-      double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
-      double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
-
-      double nominalPelvisHeight;
-      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
-      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-      nominalPelvisHeight = pelvisFrame.getZ();
-      PelvisHeightTrajectoryMessage pelvisHeightTrajectory = new PelvisHeightTrajectoryMessage();
-      pelvisHeightTrajectory.setEnableUserPelvisControlDuringWalking(true);
-      pelvisHeightTrajectory.setEnableUserPelvisControl(true); // ?
-      EuclideanTrajectoryPointMessage waypoint1 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-      waypoint1.getPosition().setZ(nominalPelvisHeight - 0.9 * stepHeight);
-      waypoint1.setTime(initialFinalTransfer + walkingControllerParameters.getDefaultTransferTime());
-      EuclideanTrajectoryPointMessage waypoint2 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-      waypoint2.getPosition().setZ(nominalPelvisHeight - stepHeight);
-      waypoint2.setTime(initialFinalTransfer + stepTime);
-      waypoint1.getLinearVelocity().setZ(0.0);
-
-      drcSimulationTestHelper.publishToController(footsteps);
-      drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
-
-      int numberOfSteps = footsteps.getFootstepDataList().size();
-      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(numberOfSteps * stepTime + 2.0 * initialFinalTransfer + 3.0);
-
-      printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
-
-      assertReachedGoal(footsteps);
-      assertTrue(success);
-   }
-
    private FootstepDataListMessage createFootstepsForHighStepUp(ArrayList<Point3D> stepsCenters)
    {
       if (stepsCenters == null || stepsCenters.size() < 2)
@@ -183,13 +129,17 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
          FootstepDataMessage footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
          if (i % 2 != 0)
          {
-            footstep.setTrajectoryType(TrajectoryType.CUSTOM.toByte());
-            Point3D waypoint1 = footstep.getCustomPositionWaypoints().add();
-            Point3D waypoint2 = footstep.getCustomPositionWaypoints().add();
             double initialHeight = stepsCenters.get(i / 2).getZ();
             double deltaZ = stepHeight - initialHeight;
-            waypoint1.set(stepsCenters.get(i / 2).getX() - 0.05, footPose.getY(), initialHeight + deltaZ / 2.0);
-            waypoint2.set(stepsCenters.get(i / 2).getX(), footPose.getY(), stepHeight + 0.2);
+
+            if (deltaZ > 0)
+            {
+               footstep.setTrajectoryType(TrajectoryType.CUSTOM.toByte());
+               Point3D waypoint1 = footstep.getCustomPositionWaypoints().add();
+               Point3D waypoint2 = footstep.getCustomPositionWaypoints().add();
+               waypoint1.set(stepsCenters.get(i / 2).getX() - 0.05, footPose.getY(), initialHeight + deltaZ / 2.0);
+               waypoint2.set(stepsCenters.get(i / 2).getX(), footPose.getY(), stepHeight + 0.2);
+            }
          }
 
          newList.getFootstepDataList().add().set(footstep);
@@ -225,8 +175,16 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
 
       for (int i = 1; i < stepsCenters.size(); ++i)
       {
+         double deltaHeight = stepsCenters.get(i).getZ() - stepsCenters.get(i - 1).getZ();
          EuclideanTrajectoryPointMessage waypoint1 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-         waypoint1.getPosition().setZ(nominalPelvisHeight);
+         if (deltaHeight < 0)
+         {
+            waypoint1.getPosition().setZ(nominalPelvisHeight + 1.1 * deltaHeight);
+         }
+         else
+         {
+            waypoint1.getPosition().setZ(nominalPelvisHeight);
+         }
          waypoint1.setTime(time + stepTime - 1.0);
          EuclideanTrajectoryPointMessage waypoint2 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
          nominalPelvisHeight = pelvisFrame.getZ() + stepsCenters.get(i).getZ();
@@ -238,27 +196,6 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
       }
 
       return pelvisHeightTrajectory;
-   }
-
-   private FootstepDataListMessage createFootstepsForHighStepDown(double stepHeight)
-   {
-      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2);
-      FootstepDataListMessage newList = new FootstepDataListMessage();
-
-      for (int i = 0; i < robotSides.length; ++i)
-      {
-         MovingReferenceFrame soleFrame = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(robotSides[i]);
-         FramePose3D footPose = new FramePose3D(soleFrame);
-         footPose.changeFrame(ReferenceFrame.getWorldFrame());
-
-         Point3D location = new Point3D(2.2, footPose.getY(), 0.0);
-         Quaternion quaternion = new Quaternion();
-         FootstepDataMessage footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
-
-         newList.getFootstepDataList().add().set(footstep);
-      }
-
-      return newList;
    }
 
    private void assertReachedGoal(FootstepDataListMessage footsteps)

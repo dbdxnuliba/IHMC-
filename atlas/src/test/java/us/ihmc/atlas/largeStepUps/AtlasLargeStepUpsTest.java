@@ -53,22 +53,50 @@ public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
    @Test
    public void testWalkingDownOfSmallStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.2;
-      super.walkDownFromHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(-0.2);
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Test
    public void testWalkingDownOfMediumStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.3;
-      super.walkDownFromHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(-0.3);
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Test
    public void testWalkingDownOfHighStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.5;
-      super.walkDownFromHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(-0.4);
+      super.walkUpToHighStep(stepHeights);
+   }
+
+   @Test
+   public void testWalkingDownOf2MediumStepsAndASmallStep() throws SimulationExceededMaximumTimeException
+   {
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(-0.3);
+      stepHeights.add(-0.6);
+      stepHeights.add(-0.8);
+
+      super.walkUpToHighStep(stepHeights);
+   }
+
+   @Test
+   public void testWalkingUpAndDownOf2MediumStepsAndASmallStep() throws SimulationExceededMaximumTimeException
+   {
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.3);
+      stepHeights.add(0.6);
+      stepHeights.add(0.8);
+      stepHeights.add(0.6);
+      stepHeights.add(0.3);
+      stepHeights.add(0.0);
+
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Override
