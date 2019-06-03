@@ -1,5 +1,7 @@
 package us.ihmc.atlas.largeStepUps;
 
+import java.util.ArrayList;
+
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.atlas.AtlasRobotModel;
@@ -16,22 +18,36 @@ public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
    @Test
    public void testWalkingUpOfSmallStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.2;
-      super.walkUpToHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.2);
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Test
    public void testWalkingUpOfMediumStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.3;
-      super.walkUpToHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.3);
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Test
    public void testWalkingUpOfHighStep() throws SimulationExceededMaximumTimeException
    {
-      double stepHeight = 0.5;
-      super.walkUpToHighStep(stepHeight);
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.45);
+      super.walkUpToHighStep(stepHeights);
+   }
+
+   @Test
+   public void testWalkingUpOf2MediumStepsAndASmallStep() throws SimulationExceededMaximumTimeException
+   {
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.3);
+      stepHeights.add(0.6);
+      stepHeights.add(0.8);
+
+      super.walkUpToHighStep(stepHeights);
    }
 
    @Test
