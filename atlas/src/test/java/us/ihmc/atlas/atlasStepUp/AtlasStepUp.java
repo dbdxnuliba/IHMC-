@@ -14,9 +14,17 @@ public class AtlasStepUp extends AvatarStepUp
 
    @Override
    @Test
-   public void stepUp() throws SimulationExceededMaximumTimeException
+   public void stepUpSmall() throws SimulationExceededMaximumTimeException
    {
-      super.stepUp();
+      super.stepUpSmall();
+   }
+
+
+   @Override
+   @Test
+   public void stepUpBig() throws SimulationExceededMaximumTimeException
+   {
+      super.stepUpBig();
    }
 
    @Override
@@ -30,10 +38,10 @@ public class AtlasStepUp extends AvatarStepUp
    {
       return "Atlas";
    }
-
+/*
    public static void main(String[] args) throws Exception
    {
-      AvatarStepUp test = new AvatarStepUp();
+      AtlasStepUp test = new AtlasStepUp();
       test.stepUp();
-   }
+   } */
 }
