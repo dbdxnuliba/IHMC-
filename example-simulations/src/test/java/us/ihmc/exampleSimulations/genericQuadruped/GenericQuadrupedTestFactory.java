@@ -199,7 +199,7 @@ public class GenericQuadrupedTestFactory implements QuadrupedTestFactory
 
          graphicsListRegistry = new YoGraphicsListRegistry();
          networkProcessor = new GenericQuadrupedNetworkProcessor(modelFactory, physicalProperties.getNominalBodyHeight(), physicalProperties.getFeetGroundContactPoints(),
-                                                                 new DefaultFootstepPlannerParameters(),
+                                                                 new GenericQuadrupedFootstepPlannerParameters(),
                                                                  xGaitSettings, new GenericQuadrupedPointFootSnapperParameters(),
                                                                  PubSubImplementation.INTRAPROCESS, networkModuleParameters);
          networkProcessor.setRootRegistry(teleopRegistry, graphicsListRegistry);
