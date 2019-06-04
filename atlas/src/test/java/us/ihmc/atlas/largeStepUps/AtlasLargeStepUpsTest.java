@@ -9,11 +9,18 @@ import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.largeStepUps.AvatarLargeStepUpsTest;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
+import us.ihmc.wholeBodyController.AdditionalSimulationContactPoints;
+import us.ihmc.wholeBodyController.FootContactPoints;
 
 public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
 {
-   private final AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+   FootContactPoints<RobotSide> simulationContactPoints = new AdditionalSimulationContactPoints<>(RobotSide.values, 2, 2, true, true);
+   private final AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS,
+                                                                       RobotTarget.SCS,
+                                                                       false,
+                                                                       simulationContactPoints);
 
    @Test
    public void testWalkingUpOfSmallStep() throws SimulationExceededMaximumTimeException
@@ -91,10 +98,10 @@ public class AtlasLargeStepUpsTest extends AvatarLargeStepUpsTest
       ArrayList<Double> stepHeights = new ArrayList<Double>();
       stepHeights.add(0.3);
       stepHeights.add(0.6);
+      stepHeights.add(0.3);
+      stepHeights.add(0.5);
       stepHeights.add(0.8);
       stepHeights.add(0.6);
-      stepHeights.add(0.3);
-      stepHeights.add(0.0);
 
       super.walkUpToHighStep(stepHeights);
    }

@@ -16,14 +16,17 @@ import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
@@ -106,6 +109,24 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
       assertTrue(success);
    }
 
+   private ArrayList<Point2D> createPartialSupportPolygonForFoot(WalkingControllerParameters walkingControllerParameters)
+   {
+      ArrayList<Point2D> footSupportPolygon = new ArrayList<>();
+      double rearOfFoot = -walkingControllerParameters.getSteppingParameters().getFootLength() / 2.0;
+      double frontOfFoot = walkingControllerParameters.getSteppingParameters().getFootLength() / 2.0;
+      double cropPercentage = 0.0;
+      double adjustedRearOfFoot = rearOfFoot + cropPercentage * (frontOfFoot - rearOfFoot);
+      double frontWidth = walkingControllerParameters.getSteppingParameters().getToeWidth() / 2.0;
+      double rearWidth = (1 - cropPercentage) * walkingControllerParameters.getSteppingParameters().getFootWidth() / 2.0 + cropPercentage * frontWidth;
+
+      footSupportPolygon.add(new Point2D(frontOfFoot, frontWidth));
+      footSupportPolygon.add(new Point2D(frontOfFoot, -frontWidth));
+      footSupportPolygon.add(new Point2D(adjustedRearOfFoot, rearWidth));
+      footSupportPolygon.add(new Point2D(adjustedRearOfFoot, -rearWidth));
+
+      return footSupportPolygon;
+   }
+
    private FootstepDataListMessage createFootstepsForHighStepUp(ArrayList<Point3D> stepsCenters)
    {
       if (stepsCenters == null || stepsCenters.size() < 2)
@@ -113,8 +134,26 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
          return new FootstepDataListMessage();
       }
 
-      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2 * (stepsCenters.size() - 1));
+      RobotSide startingFoot = RobotSide.LEFT;
+
+      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(startingFoot, 2 * (stepsCenters.size() - 1));
       FootstepDataListMessage newList = new FootstepDataListMessage();
+
+      ArrayList<Point2D> reducedFootPoints = createPartialSupportPolygonForFoot(getRobotModel().getWalkingControllerParameters());
+      ArrayList<Point2D> fullFootPoints = null;
+      
+      double reducedHeelLength = Math.abs(reducedFootPoints.get(3).getX());
+
+      SideDependentList<ArrayList<Point2D>> sideDependentReducedFootPoints;
+
+      if (startingFoot == RobotSide.LEFT)
+      {
+         sideDependentReducedFootPoints = new SideDependentList<ArrayList<Point2D>>(reducedFootPoints, fullFootPoints);
+      }
+      else 
+      {
+         sideDependentReducedFootPoints = new SideDependentList<ArrayList<Point2D>>(fullFootPoints, reducedFootPoints);
+      }
 
       for (int i = 0; i < robotSides.length; ++i)
       {
@@ -123,15 +162,32 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
          footPose.changeFrame(ReferenceFrame.getWorldFrame());
 
          double stepHeight = stepsCenters.get(i / 2 + 1).getZ();
-         Point3D location = new Point3D(stepsCenters.get(i / 2 + 1).getX(), footPose.getY(), stepHeight);
 
-         Quaternion quaternion = new Quaternion();
-         FootstepDataMessage footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
-         if (i % 2 != 0)
+         FootstepDataMessage footstep;
+
+         double initialHeight = stepsCenters.get(i / 2).getZ();
+         double deltaZ = stepHeight - initialHeight;
+
+         if (i % 2 == 0 && deltaZ > 0) // In even step-ups place the foot on the edge of the step
          {
-            double initialHeight = stepsCenters.get(i / 2).getZ();
-            double deltaZ = stepHeight - initialHeight;
+            double stepLength = stepsCenters.get(i / 2 + 1).getX() - stepsCenters.get(i / 2).getX();
+            double xForFootCentered = stepsCenters.get(i / 2 + 1).getX();
+            double xForFootOnTheEdge = stepsCenters.get(i / 2 + 1).getX() - stepLength / 2 + reducedHeelLength;
+            double deltaX = xForFootCentered - xForFootOnTheEdge;
+            Point3D location = new Point3D(xForFootCentered - deltaX * 0.25, footPose.getY(), stepHeight);
+            Quaternion quaternion = new Quaternion();
+            footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion, sideDependentReducedFootPoints.get(robotSides[i]));
 
+         }
+         else
+         {
+            Point3D location = new Point3D(stepsCenters.get(i / 2 + 1).getX(), footPose.getY(), stepHeight);
+            Quaternion quaternion = new Quaternion();
+            footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
+         }
+
+         if (i % 2 != 0) // Custom swing trajectory for odd step-ups to avoid hitting the stair with the shin
+         {
             if (deltaZ > 0)
             {
                footstep.setTrajectoryType(TrajectoryType.CUSTOM.toByte());
@@ -144,6 +200,8 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
 
          newList.getFootstepDataList().add().set(footstep);
       }
+
+      newList.setExecutionTiming(ExecutionTiming.CONTROL_ABSOLUTE_TIMINGS.toByte());
 
       return newList;
    }
@@ -171,7 +229,7 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
       pelvisHeightTrajectory.setEnableUserPelvisControlDuringWalking(true);
       pelvisHeightTrajectory.setEnableUserPelvisControl(true);
 
-      double time = 1.0 + initialFinalTransfer - transferTime;
+      double time = initialFinalTransfer - transferTime;
 
       for (int i = 1; i < stepsCenters.size(); ++i)
       {
@@ -185,11 +243,11 @@ public abstract class AvatarLargeStepUpsTest implements MultiRobotTestInterface
          {
             waypoint1.getPosition().setZ(nominalPelvisHeight);
          }
-         waypoint1.setTime(time + stepTime - 1.0);
+         waypoint1.setTime(time + stepTime);
          EuclideanTrajectoryPointMessage waypoint2 = pelvisHeightTrajectory.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
          nominalPelvisHeight = pelvisFrame.getZ() + stepsCenters.get(i).getZ();
          waypoint2.getPosition().setZ(nominalPelvisHeight);
-         waypoint2.setTime(time + 2 * stepTime - 1.0);
+         waypoint2.setTime(time + 2 * stepTime);
          waypoint2.getLinearVelocity().setZ(0.0);
 
          time += 2 * stepTime;
