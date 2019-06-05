@@ -28,7 +28,7 @@ public class PolygonWiggler
    /** Weight associated with moving the polygon. */
    private static final double moveWeight = 1.0;
 
-   private static int[] emptyArray = new int[0];
+   private static final int[] emptyArray = new int[0];
 
    /**
     * Returns a transform that will move the given polygon into the convex hull of a planar region.

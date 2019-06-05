@@ -1,5 +1,6 @@
 package us.ihmc.footstepPlanning.polygonWiggling;
 
+import static org.junit.Assert.assertEquals;
 import static us.ihmc.robotics.Assert.assertFalse;
 import static us.ihmc.robotics.Assert.assertTrue;
 import static us.ihmc.robotics.Assert.fail;
@@ -17,33 +18,118 @@ import org.ejml.ops.CommonOps;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import us.ihmc.commonWalkingControlModules.polygonWiggling.PointWiggler;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.PolygonWiggler;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.WiggleParameters;
 import us.ihmc.commons.MutationTestFacilitator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
+import us.ihmc.euclid.geometry.interfaces.Vertex2DSupplier;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.footstepPlanning.tools.PlannerTools;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
+import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.plotting.Plotter;
 import us.ihmc.robotics.geometry.ConvexPolygon2dCalculator;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFrameConvexPolygon2D;
+import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 public class PolygonWigglingTest
 {
-   private static final boolean visualize = false;
+   private static final boolean visualize = true;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final ArtifactList artifacts = new ArtifactList(getClass().getSimpleName());
 
    private final static double epsilon = 0.00001;
+
+   @Test
+   public void testPointWiggler()
+   {
+      double[][] polygonToWiggleIntoVertices = new double[][] {{2.0, 2.0}, {2.1, 2.0}, {2.1, 2.1}};
+      ConvexPolygon2DReadOnly polygonToWiggleInto = new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(polygonToWiggleIntoVertices));
+
+      WiggleParameters wiggleParameters = new WiggleParameters();
+      double distanceInside = 0.015;
+      wiggleParameters.deltaInside = distanceInside;
+      wiggleParameters.maxX = 0.2;
+      
+      int[] startingVerticesToIgnore = new int[] {};
+
+      Point2D point = new Point2D(2.0 + 0.15, 2.0 + 0.1 - 0.02);
+      RigidBodyTransform transform = PointWiggler.findWiggleTransform(point, polygonToWiggleInto, wiggleParameters, startingVerticesToIgnore);
+
+      //      System.out.println(transform);
+
+      Point2D wiggledPoint = new Point2D(point);
+      transform.transform(wiggledPoint);
+
+      double distance = polygonToWiggleInto.signedDistance(wiggledPoint);
+
+      //      System.out.println(wiggledPoint);
+      //      System.out.println(distance);
+
+      if (visualize)
+      {
+         addPolygonToArtifacts("Plane", polygonToWiggleInto, Color.BLACK);
+         addPointToArtifacts("InitialFoot", point, Color.RED);
+         addPointToArtifacts("Foot", wiggledPoint, Color.BLUE);
+         showPlotterAndSleep(artifacts);
+      }
+
+      assertEquals(distance, -distanceInside, 1e-4);
+      
+   }
+   
+   
+   @Test
+   public void testSomePointProjections()
+   {
+      double[][] polygonToWiggleIntoVertices = new double[][] {{2.0, 2.0}, {2.1, 2.0}, {2.1, 2.1}};
+      ConvexPolygon2DReadOnly polygonToWiggleInto = new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(polygonToWiggleIntoVertices));
+
+      WiggleParameters wiggleParameters = new WiggleParameters();
+      double distanceInside = 0.015;
+      wiggleParameters.deltaInside = distanceInside;
+      wiggleParameters.maxX = 0.2;
+      
+      int[] startingVerticesToIgnore = new int[] {};
+
+      Point2D point = new Point2D(2.0 + 0.15, 2.0 + 0.1 - 0.02);
+      double[][] polygonToWiggleVertices = new double[][] {{point.getX(), point.getY()}};
+      ConvexPolygon2DReadOnly polygonToWiggle = new ConvexPolygon2D(Vertex2DSupplier.asVertex2DSupplier(polygonToWiggleVertices));
+
+      RigidBodyTransform transform = PolygonWiggler.findWiggleTransform(polygonToWiggle, polygonToWiggleInto, wiggleParameters, startingVerticesToIgnore);
+
+      //      System.out.println(transform);
+
+      Point2D wiggledPoint = new Point2D(point);
+      transform.transform(wiggledPoint);
+
+      double distance = polygonToWiggleInto.signedDistance(wiggledPoint);
+
+      //      System.out.println(wiggledPoint);
+      //      System.out.println(distance);
+
+      if (visualize)
+      {
+         addPolygonToArtifacts("Plane", polygonToWiggleInto, Color.BLACK);
+         addPointToArtifacts("InitialFoot", point, Color.RED);
+         addPointToArtifacts("Foot", wiggledPoint, Color.BLUE);
+         showPlotterAndSleep(artifacts);
+      }
+
+      assertEquals(distance, -distanceInside, 1e-4);
+   }
 
    @Test
    public void testSimpleProjection()
@@ -59,6 +145,36 @@ public class PolygonWigglingTest
       RigidBodyTransform initialFootTransform = new RigidBodyTransform();
       initialFootTransform.setRotationYawAndZeroTranslation(Math.toRadians(-30.0));
       initialFootTransform.setTranslation(-0.1, -0.3, 0.0);
+      initialFoot.applyTransform(initialFootTransform, false);
+
+      WiggleParameters wiggleParameters = new WiggleParameters();
+      ConvexPolygon2D foot = PolygonWiggler.wigglePolygon(initialFoot, plane, wiggleParameters);
+
+      if (visualize)
+      {
+         addPolygonToArtifacts("Plane", plane, Color.BLACK);
+         addPolygonToArtifacts("InitialFoot", initialFoot, Color.RED);
+         addPolygonToArtifacts("Foot", foot, Color.BLUE);
+         showPlotterAndSleep(artifacts);
+      }
+
+      assertTrue(ConvexPolygon2dCalculator.isPolygonInside(foot, 1.0e-5, plane));
+   }
+
+   @Test
+   public void testProjectionFarFromOrigin()
+   {
+      ConvexPolygon2D plane = new ConvexPolygon2D();
+      plane.addVertex(10.0, 10.0);
+      plane.addVertex(10.5, 10.0);
+      plane.addVertex(10.0, 10.5);
+      plane.addVertex(10.5, 10.5);
+      plane.update();
+
+      ConvexPolygon2D initialFoot = PlannerTools.createDefaultFootPolygon();
+      RigidBodyTransform initialFootTransform = new RigidBodyTransform();
+      initialFootTransform.setRotationYawAndZeroTranslation(Math.toRadians(-30.0));
+      initialFootTransform.setTranslation(10.0 - 0.1, 10.0 - 0.3, 0.0);
       initialFoot.applyTransform(initialFootTransform, false);
 
       WiggleParameters wiggleParameters = new WiggleParameters();
@@ -156,7 +272,7 @@ public class PolygonWigglingTest
    {
       double largestDistance = Double.NEGATIVE_INFINITY;
 
-      for (int i=0; i<foot.getNumberOfVertices(); i++)
+      for (int i = 0; i < foot.getNumberOfVertices(); i++)
       {
          Point2DReadOnly vertex = foot.getVertex(i);
          double signedDistance = plane.signedDistance(vertex);
@@ -238,7 +354,7 @@ public class PolygonWigglingTest
 
       Random random = new Random(382848284829L);
       double yawLimit = Math.toRadians(15.0);
-      for (int i = 0; i < 1000; i ++)
+      for (int i = 0; i < 1000; i++)
       {
          ConvexPolygon2D initialFoot = PlannerTools.createDefaultFootPolygon();
          RigidBodyTransform initialFootTransform = new RigidBodyTransform();
@@ -1043,7 +1159,7 @@ public class PolygonWigglingTest
 
       Random random = new Random(-8133358861874482661L);
 
-      for (int iters= 0; iters < 1000; iters++)
+      for (int iters = 0; iters < 1000; iters++)
       {
          point1.set(random.nextDouble(), random.nextDouble());
          point2.set(random.nextDouble(), random.nextDouble());
@@ -1256,8 +1372,6 @@ public class PolygonWigglingTest
       for (int i = 0; i < solution.getNumRows(); i++)
          assertTrue(solution.get(i, 0) <= b.get(i, 0) + epsilon);
 
-
-
       // on line but before segment
       x.set(0, 0, -1.0);
       x.set(1, 0, 0.0);
@@ -1267,9 +1381,6 @@ public class PolygonWigglingTest
       for (int i = 0; i < solution.getNumRows(); i++)
          allLessThan &= solution.get(i, 0) <= b.get(i, 0) + epsilon;
       assertFalse(allLessThan);
-
-
-
 
       // on line but past segment
       x.set(0, 0, 2.0);
@@ -1922,11 +2033,18 @@ public class PolygonWigglingTest
       assertFalse(allInside);
    }
 
-   private void addPolygonToArtifacts(String name, ConvexPolygon2D polygon, Color color)
+   private void addPolygonToArtifacts(String name, ConvexPolygon2DReadOnly polygon, Color color)
    {
       YoFrameConvexPolygon2D yoPlanePolygon = new YoFrameConvexPolygon2D(name + "Polygon", worldFrame, 10, registry);
-      artifacts.add(new YoArtifactPolygon(name, yoPlanePolygon , color, false));
+      artifacts.add(new YoArtifactPolygon(name, yoPlanePolygon, color, false));
       yoPlanePolygon.set(polygon);
+   }
+
+   private void addPointToArtifacts(String name, Point2DReadOnly point, Color color)
+   {
+      YoFramePoint2D yoFramePoint = new YoFramePoint2D(name + "Point", worldFrame, registry);
+      artifacts.add(new YoArtifactPosition(name, yoFramePoint, GraphicType.BALL, color, 0.01));
+      yoFramePoint.set(point);
    }
 
    private static void showPlotterAndSleep(ArtifactList artifacts)
