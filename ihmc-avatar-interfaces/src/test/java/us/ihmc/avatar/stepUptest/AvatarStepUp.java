@@ -14,6 +14,8 @@ import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.humanoidRobotics.communication.packets.*;
+import us.ihmc.mecano.frames.*;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.simulationConstructionSetTools.bambooTools.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
@@ -83,13 +85,16 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       walkingStair(stepHeight);
    }
 
+   @Test
    private void walkingStair(double stepHeight) throws SimulationExceededMaximumTimeException
    {
       setTestEnvironment(stepHeight);
 
       FootstepDataListMessage footsteps = createFootSteps(stepHeight);
+      //PelvisHeightTrajectoryMessage pelvisDHeight = createPelvisZUp(stepHeight);
 
       drcSimulationTestHelper.publishToController(footsteps);
+      //drcSimulationTestHelper.publishToController(pelvisDHeight);
 
       WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTouchdownTime();
@@ -100,6 +105,37 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       assertreached(footsteps);
    }
 
+
+   private PelvisHeightTrajectoryMessage createPelvisZUp(double stepHeight)
+   {
+      double nominalPelvisHeight;
+      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+      FramePoint3D reference = new FramePoint3D(pelvisZUpFrame);
+      reference.changeFrame(ReferenceFrame.getWorldFrame());
+      nominalPelvisHeight = reference.getZ(); //now you have the Z value from world frame perspective
+
+
+      PelvisHeightTrajectoryMessage pelvisHeightTrajectoryMessage = new PelvisHeightTrajectoryMessage();
+      pelvisHeightTrajectoryMessage.setEnableUserPelvisControl(true);
+      pelvisHeightTrajectoryMessage.setEnableUserPelvisControlDuringWalking(true);
+      EuclideanTrajectoryPointMessage waypoint1 = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+      waypoint1.getPosition().setZ(1.05*nominalPelvisHeight);
+      waypoint1.setTime(2.0);
+
+      EuclideanTrajectoryPointMessage waypoint2 = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+      waypoint2.getPosition().setZ(1.1*nominalPelvisHeight);
+      waypoint2.setTime(4.0);
+
+      EuclideanTrajectoryPointMessage waypoint3 = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+      waypoint3.getPosition().setZ(1.2*nominalPelvisHeight + stepHeight);
+      waypoint3.setTime(6.5);
+
+      waypoint1.getLinearVelocity().setZ(0.0);
+      waypoint2.getLinearVelocity().setZ(0.0);
+      waypoint3.getLinearVelocity().setZ(0.0);
+
+      return pelvisHeightTrajectoryMessage;
+   }
    private FootstepDataListMessage createFootSteps(double stepHeight)
    {
       //create a list of desired footstep
@@ -111,6 +147,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          double[][] steps = {{0.3, stepWidth, 0.0}, {0.6, -stepWidth, 0.0}, {0.75, stepWidth, 0.0}, {1.1, -stepWidth, stepHeight}, {1.1, stepWidth, stepHeight}};
          //Point3D[][] steps2 =  {{new Point3D(0.0, 0.0, 0.0)},{0.3,-stepWidth,0.0},{0.6,stepWidth,0.4},{0.8,-stepWidth,0.8},{0.8,stepWidth,0.8}};
       }*/
+
+
 
       ///create a object for the footstepdtatalistmessage class
       FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
@@ -135,12 +173,12 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
    private static void recursivelyAddPinJoints(Joint joint, List<PinJoint> pinJoints)
    {
-      if (joint instanceof PinJoint)
-         pinJoints.add((PinJoint) joint);
+      if (joint instanceof PinJoint) // other joint types are - FloatingJoint, FreeJoint, FloatingPlanarJoint, PinJoint, SliderJoint and NullJoints
+         pinJoints.add((PinJoint) joint); //type casting
 
       for(Joint child : joint. getChildrenJoints())
       {
-         recursivelyAddPinJoints(child, pinJoints);
+         recursivelyAddPinJoints(child, pinJoints); //calling itself to add the child joints too
       }
    }
 
@@ -187,8 +225,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       setUpCamera();
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(20);
-      createTorqueGraphs(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
-      printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
+      //createTorqueGraphs(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
+      //printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
       assertTrue(success);
 
    }
@@ -200,7 +238,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
    }
 
-   private void getPinJoints(Robot robot, List<PinJoint> pinJoint)
+   private void getPinJoints(Robot robot, List<PinJoint> pinJoint) //call the recursivelyAddPinJoints to get a list of all PinJoint(only) and ignore the other types of joints
    {
       for(Joint rootJoint : robot.getRootJoints())
       {
@@ -243,7 +281,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       private void addGraph(SimulationConstructionSet scs, List<String> joint)
       {
-         scs.setupGraph(joint.toArray(new String[0])); //casting it to string object so that it can be passed to plot graph
+         //scs.setupGraph(joint.toArray(new String[0])); //casting it to string object so that it can be passed to plot graph
       }
 
       private void printMinMax(SimulationConstructionSet scs)
