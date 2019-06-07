@@ -24,7 +24,7 @@ public class QuadrupedAStarFootstepPlannerDataSetTest extends FootstepPlannerDat
       return FootstepPlannerType.A_STAR;
    }
 
-   public QuadrupedXGaitSettingsReadOnly getXGaitSettings()
+   public QuadrupedXGaitSettings getXGaitSettings()
    {
       QuadrupedXGaitSettings settings = new QuadrupedXGaitSettings();
       settings.setStanceLength(1.0);
@@ -33,7 +33,7 @@ public class QuadrupedAStarFootstepPlannerDataSetTest extends FootstepPlannerDat
       settings.setEndPhaseShift(QuadrupedGait.AMBLE.getEndPhaseShift());
       settings.getAmbleMediumTimings().setEndDoubleSupportDuration(0.25);
       settings.getAmbleMediumTimings().setStepDuration(0.5);
-      settings.getAmbleMediumTimings().setMaxSpeed(1.0);
+      settings.getAmbleMediumTimings().setMaxSpeed(0.4);
       return settings;
    }
 
@@ -41,7 +41,7 @@ public class QuadrupedAStarFootstepPlannerDataSetTest extends FootstepPlannerDat
    public QuadrupedBodyPathAndFootstepPlanner createPlanner()
    {
       YoVariableRegistry registry = new YoVariableRegistry("test");
-      QuadrupedXGaitSettingsReadOnly xGaitSettings = getXGaitSettings();
+      xGaitSettings = getXGaitSettings();
       FootstepPlannerParameters parameters = new DefaultFootstepPlannerParameters()
       {
          @Override
@@ -90,7 +90,8 @@ public class QuadrupedAStarFootstepPlannerDataSetTest extends FootstepPlannerDat
       QuadrupedAStarFootstepPlannerDataSetTest test = new QuadrupedAStarFootstepPlannerDataSetTest();
       VISUALIZE = true;
       test.setup();
-      String errorMessage = test.runAssertions(DataSetName._20171115_171243_SimplePlaneAndWall);
+//      String errorMessage = test.runAssertions(DataSetName._20171114_135559_PartialShallowMaze);
+      String errorMessage = test.runAssertions(DataSetName._20171215_220208_SimpleStairs);
       assertTrue(errorMessage, errorMessage.isEmpty());
 //      if (activelyVisualize)
 //         test.visualizer.showAndSleep(true);

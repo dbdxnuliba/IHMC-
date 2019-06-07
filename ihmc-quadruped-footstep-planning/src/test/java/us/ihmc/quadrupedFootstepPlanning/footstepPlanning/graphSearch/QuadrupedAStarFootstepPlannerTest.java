@@ -38,14 +38,14 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static us.ihmc.robotics.Assert.assertTrue;
+import static us.ihmc.robotics.Assert.assertEquals;
 
 public class QuadrupedAStarFootstepPlannerTest
 {
    private static final double epsilon = 1e-3;
    private static boolean visualize = true;
-   private static boolean activelyVisualize = false;
+   private static boolean activelyVisualize = true;
 
    private static final QuadrantDependentList<AppearanceDefinition> colorDefinitions = new QuadrantDependentList<>(YoAppearance.Red(), YoAppearance.Green(), YoAppearance.DarkRed(), YoAppearance.DarkGreen());
 
@@ -67,6 +67,21 @@ public class QuadrupedAStarFootstepPlannerTest
       FramePose3D startPose = new FramePose3D();
       FramePose3D goalPose = new FramePose3D();
       goalPose.setPosition(2.0, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
+
+   @Test
+   public void testSimpleWalkBackward()
+   {
+      PlanarRegionsList planarRegionsList = null;
+
+      double timeout = 10.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      goalPose.setPosition(-2.0, 0.0, 0.0);
 
       runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
    }
@@ -232,7 +247,7 @@ public class QuadrupedAStarFootstepPlannerTest
          visualizer.showAndSleep(true);
       }
 
-      assertTrue(result.validForExecution());
+      assertTrue("Result was : " + result, result.validForExecution());
       FootstepPlan steps = planner.getPlan();
 
       if (visualize && !activelyVisualize)
@@ -258,8 +273,8 @@ public class QuadrupedAStarFootstepPlannerTest
 
       centerPoint.scale(0.25);
 
-      EuclidCoreTestTools.assertPoint3DGeometricallyEquals(goalPosition, centerPoint, FootstepNode.gridSizeXY);
-      assertEquals(goalYaw, nominalYaw, FootstepNode.gridSizeYaw);
+      assertTrue("Goal Position expected:\n" + goalPosition +"\n but was:\n" + centerPoint + "\nDifference of: " + goalPosition.distanceXY(centerPoint), goalPosition.distanceXY(centerPoint) < FootstepNode.gridSizeXY);
+      assertEquals("Tried to acheive yaw " + goalYaw + ", actually achieved " + nominalYaw, goalYaw, nominalYaw, FootstepNode.gridSizeYaw);
    }
 
    private static QuadrantDependentList<Point3DBasics> getFinalStepPositions(FootstepPlan plannedSteps)
