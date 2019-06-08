@@ -9,10 +9,13 @@ import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.*;
+import us.ihmc.commonWalkingControlModules.controlModules.TrajectoryStatusMessageHelper.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple3D.*;
+import us.ihmc.euclid.tuple4D.*;
+import us.ihmc.euclid.tuple4D.interfaces.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.idl.IDLSequence.Double;
 import us.ihmc.idl.IDLSequence.Object;
@@ -94,12 +97,24 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       FootstepDataListMessage footsteps = createFootSteps(robotModel, stepHeight, swingHeight);
       PelvisHeightTrajectoryMessage pelvisDHeight = createPelvisZUp(stepHeight); //hits the stairs so modify the waypoints for the foot so that you can take step a bit back and then go ahead
+      ChestTrajectoryMessage chestTrajectoryPoints = createChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //create desired chest trajectory
+      ArmTrajectoryMessage[] armTrajectoryMessages = createArmTrajectory();
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(pelvisDHeight);
+      drcSimulationTestHelper.publishToController(chestTrajectoryPoints);
+
+      int i = 0; //variable for iterating over eac arm orientation message (an array of double)
+      do
+      {
+
+         drcSimulationTestHelper.publishToController(armTrajectoryMessages[i]);
+         ++i;
+      }
+      while (i<2);
 
       //Object<Point3D> waypoints = footsteps.getFootstepDataList().get(1).getCustomPositionWaypoints();
-      //Double Proportion = footsteps.getFootstepDataList().get(1).getCustomWaypointProportions();
+      //Double Proportion = footsteps.getFootstepDataList().get(1).getCustomWayPointProportions();
       //System.out.println(waypoints);
       //System.out.println(Proportion);
 
@@ -108,7 +123,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
       // robot fell
-      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 8.0));
+      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 11.0));
 
       // robot did not fall but did not reach goal
       assertreached(footsteps);
@@ -116,14 +131,45 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       ThreadTools.sleepForever(); //does not kill the simulation
    }
 
+   private ArmTrajectoryMessage[] createArmTrajectory()
+   {
+      ArmTrajectoryMessage[] armPoses = new ArmTrajectoryMessage[]{new ArmTrajectoryMessage(), new ArmTrajectoryMessage()};
+      double trajectoryTime = 0.5;
+      double[][] armJoints = new double[][] {{-2.5, -0.8, 1.12, 1.48, 0.9, -1.0, -2.8},{0.44, 0.02, 2.7, -1.78, 0.3, -1.5, -0.5}};
+      RobotSide[] side = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2);
+      // this message commands the controller to move an arm in JOINTSPACE to the desired joint angles while going through the specified trajectory points
+      for(int j=0;j < 2 ; ++j)
+      {
+         double[] desiredArmPose = armJoints[j];
+         ArmTrajectoryMessage armPose = HumanoidMessageTools.createArmTrajectoryMessage(side[j], trajectoryTime, desiredArmPose);
+         armPoses[j] = armPose;
+      }
+      return armPoses;
+   }
 
+   private ChestTrajectoryMessage createChestTrajectory(ReferenceFrame dataframe, ReferenceFrame trajectoryFrame)
+   {
+      double trajectoryTime = 0.5;
+      FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
+      double leanAngle = 2.0; //original values 20.0 and yaw was -2.36
+      chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(), 0.0,Math.toRadians(leanAngle), 0.0);
+      Quaternion desiredchestOrientation = new Quaternion(chestOrientation);
+      //ReferenceFrame dataframe;
+      //ReferenceFrame trajectoryFrame;
+
+      ChestTrajectoryMessage chestPoints = HumanoidMessageTools.createChestTrajectoryMessage(trajectoryTime, desiredchestOrientation, dataframe, trajectoryFrame);
+
+      return chestPoints;
+   }
    private PelvisHeightTrajectoryMessage createPelvisZUp(double stepHeight)
    {
       double nominalPelvisHeight;
       MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
       FramePoint3D reference = new FramePoint3D(pelvisZUpFrame);
 
-      reference.changeFrame(ReferenceFrame.getWorldFrame());
+      //createChestTrajectory(ReferenceFrame.getWorldFrame(), pelvisZUpFrame); //calling chest Trajectory method
+
+      //reference.changeFrame(ReferenceFrame.getWorldFrame());
       nominalPelvisHeight = reference.getZ(); //now you have the Z value from world frame perspective
 
       PelvisHeightTrajectoryMessage pelvisHeightTrajectoryMessage = new PelvisHeightTrajectoryMessage();
@@ -139,7 +185,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       EuclideanTrajectoryPointMessage waypoint3 = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
       waypoint3.getPosition().setZ(nominalPelvisHeight+ stepHeight + 0.1);
-      waypoint3.setTime(12.5);
+      waypoint3.setTime(17.5);
 
       waypoint1.getLinearVelocity().setZ(0.0);
       //waypoint2.getLinearVelocity().setZ(0.0);
