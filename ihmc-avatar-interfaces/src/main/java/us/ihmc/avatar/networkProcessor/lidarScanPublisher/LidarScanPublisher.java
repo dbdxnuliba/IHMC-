@@ -50,7 +50,7 @@ import us.ihmc.utilities.ros.subscriber.RosTopicSubscriberInterface;
 
 public class LidarScanPublisher
 {
-   private static final double DEFAULT_SHADOW_ANGLE_THRESHOLD = Math.toRadians(12.0);
+   private static final double DEFAULT_SHADOW_ANGLE_THRESHOLD = Math.toRadians(1.0);
 
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 

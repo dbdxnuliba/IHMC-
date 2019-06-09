@@ -15,6 +15,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBod
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SO3TrajectoryControllerCommand;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.robotics.controllers.pidGains.GainCoupling;
 import us.ihmc.robotics.controllers.pidGains.implementations.DefaultPID3DGains;
@@ -37,6 +38,7 @@ public class QuadrupedBodyOrientationManager
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final FrameVector3DReadOnly zeroVector3D = new FrameVector3D(worldFrame);
+   private static final double initializationTransitionTime = 1.0;
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final ParameterizedPID3DGains bodyOrientationGainsParameter;
@@ -57,6 +59,10 @@ public class QuadrupedBodyOrientationManager
    private final FrameQuaternion desiredBodyOrientationOffset;
    private final FrameVector3D desiredBodyAngularVelocity;
    private final FrameVector3D desiredBodyAngularAcceleration;
+   
+   private final RigidBodyBasics base;
+   private final RigidBodyBasics body;
+   private final FrameQuaternion tempQuaternion = new FrameQuaternion();
 
    private final FrameQuaternion desiredAbsoluteYawOrientation = new FrameQuaternion();
    private final FrameVector3D desiredAbsoluteYawVelocity = new FrameVector3D();
@@ -79,7 +85,10 @@ public class QuadrupedBodyOrientationManager
    {
       bodyFrame = controllerToolbox.getReferenceFrames().getBodyFrame();
       robotTimestamp = controllerToolbox.getRuntimeEnvironment().getRobotTimestamp();
-
+      
+      base = controllerToolbox.getFullRobotModel().getElevator();
+      body = controllerToolbox.getFullRobotModel().getBody();
+      
       pitchOscillationGenerator.setMode(YoFunctionGeneratorMode.SINE);
 
       DefaultPID3DGains bodyOrientationDefaultGains = new DefaultPID3DGains();
@@ -123,14 +132,38 @@ public class QuadrupedBodyOrientationManager
    public void initialize()
    {
       ReferenceFrame trajectoryFrame = offsetBodyOrientationTrajectory.getReferenceFrame();
+      double currentTime = robotTimestamp.getDoubleValue();
+      
+      if(offsetBodyOrientationTrajectory.isEmpty())
+      {
+         // first initialization - set to current
+         desiredBodyOrientation.setToZero(desiredFrameToHold);         
+         desiredBodyOrientation.changeFrame(trajectoryFrame);
+         desiredBodyOrientation.invert();
+         
+         tempQuaternion.setToZero(body.getBodyFixedFrame());
+         tempQuaternion.changeFrame(trajectoryFrame);
+         desiredBodyOrientation.append(tempQuaternion);
+
+         desiredBodyAngularVelocity.setToZero(trajectoryFrame);
+         desiredBodyAngularAcceleration.setToZero(trajectoryFrame);
+      }
+      else
+      {
+         // set to current desired
+         offsetBodyOrientationTrajectory.compute(currentTime);
+         offsetBodyOrientationTrajectory.getAngularData(desiredBodyOrientationOffset, desiredBodyAngularVelocity, desiredBodyAngularAcceleration);
+         offsetBodyOrientationTrajectory.clear();
+      }
+
+      offsetBodyOrientationTrajectory.appendWaypoint(currentTime, desiredBodyOrientation, desiredBodyAngularVelocity);
+
+      // add zero waypoint in trajectory frame
       desiredBodyOrientation.setToZero(trajectoryFrame);
       desiredBodyAngularVelocity.setToZero(trajectoryFrame);
       desiredBodyAngularAcceleration.setToZero(trajectoryFrame);
+      offsetBodyOrientationTrajectory.appendWaypoint(currentTime + initializationTransitionTime, desiredBodyOrientation, desiredBodyAngularVelocity);
 
-      double currentTime = robotTimestamp.getDoubleValue();
-
-      offsetBodyOrientationTrajectory.clear();
-      offsetBodyOrientationTrajectory.appendWaypoint(currentTime, desiredBodyOrientation, desiredBodyAngularVelocity);
       offsetBodyOrientationTrajectory.initialize();
 
       useAbsoluteBodyOrientationTrajectory.set(false);
