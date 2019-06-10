@@ -29,8 +29,15 @@ geometry_msgs/Point goal_position
 # Field default value -1.0
 float64 ground_clearance
 
+# In case the trajectory type is set to TRAJECTORY_TYPE_CUSTOM two swing waypoints can be specified here.
+# The waypoints define sole positions.
+# The controller will compute times and velocities at the waypoints.
+# This is a convenient way to shape the trajectory of the swing.
+# The position waypoints are expected in the trajectory frame.
+geometry_msgs/Point[] custom_position_waypoints
+
 # This contains information on what the swing trajectory should be for each step. Recommended is TRAJECTORY_TYPE_DEFAULT.
-# TRAJECTORY_TYPE_CUSTOM and TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
+# TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
 # the controller uses either TRAJECTORY_TYPE_DEFAULT or TRAJECTORY_TYPE_OBSTACLE_CLEARANCE.
 # Field default value 255
 int8 trajectory_type

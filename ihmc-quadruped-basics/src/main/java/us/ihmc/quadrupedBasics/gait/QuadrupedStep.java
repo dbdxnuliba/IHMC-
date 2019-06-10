@@ -1,9 +1,11 @@
 package us.ihmc.quadrupedBasics.gait;
 
+import java.util.List;
+
 import us.ihmc.commons.MathTools;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -18,6 +20,7 @@ public class QuadrupedStep
    private Point3D goalPosition = new Point3D(0.0, 0.0, 0.0);
    private double groundClearance = 0.0;
    private TrajectoryType trajectoryType = null;
+   private final RecyclingArrayList<Point3D> customPositionWaypoints = new RecyclingArrayList<Point3D>(2, Point3D.class);
 
    public QuadrupedStep()
    {
@@ -107,6 +110,7 @@ public class QuadrupedStep
       setGoalPosition(other.getGoalPositionInternal());
       setGroundClearance(other.getGroundClearance());
       setTrajectoryType(other.getTrajectoryType());
+      setCustomPositionWaypoints(other.getCustomPositionWaypoints());
    }
 
    public void set(QuadrupedStepCommand command)
@@ -115,6 +119,7 @@ public class QuadrupedStep
       setGoalPosition(command.getGoalPosition());
       setGroundClearance(command.getGroundClearance());
       setTrajectoryType(command.getTrajectoryType());
+      setCustomPositionWaypoints(command.getCustomPositionWaypoints());
    }
 
    public void get(QuadrupedTimedStep other)
@@ -123,15 +128,40 @@ public class QuadrupedStep
       other.setGoalPosition(getGoalPositionInternal());
       other.setGroundClearance(getGroundClearance());
       other.setTrajectoryType(getTrajectoryType());
+      other.setCustomPositionWaypoints(getCustomPositionWaypoints());
+   }
+   
+   public void setCustomPositionWaypoints(List<? extends Point3DBasics> customPositionWaypoints)
+   {
+      this.customPositionWaypoints.clear();
+      for(int i = 0; i < customPositionWaypoints.size(); i++)
+      {
+         this.customPositionWaypoints.add().set(customPositionWaypoints.get(i));
+      }
+   }
+   
+   public List<? extends Point3DBasics> getCustomPositionWaypoints()
+   {
+      return customPositionWaypoints;
    }
 
    public boolean epsilonEquals(QuadrupedTimedStep other, double epsilon)
    {
-      return getRobotQuadrant() == other.getRobotQuadrant() &&
-             getGoalPositionInternal().epsilonEquals(other.getGoalPositionInternal(), epsilon) &&
-             MathTools.epsilonEquals(getGroundClearance(), other.getGroundClearance(), epsilon) && 
-             (getTrajectoryType() == other.getTrajectoryType());
-
+      boolean areQuadrantsEqual = getRobotQuadrant() == other.getRobotQuadrant();
+      boolean areGoalPositionsEqual = getGoalPositionInternal().epsilonEquals(other.getGoalPositionInternal(), epsilon);
+      boolean areGroundClearancesEqual = MathTools.epsilonEquals(getGroundClearance(), other.getGroundClearance(), epsilon);
+      boolean areTrajectoryTypesEqual = getTrajectoryType() == other.getTrajectoryType();
+      boolean areCustomWaypointsEqual = getCustomPositionWaypoints().size() == other.getCustomPositionWaypoints().size();
+      for(int i = 0; i < Math.min(getCustomPositionWaypoints().size(), other.getCustomPositionWaypoints().size()); i++)
+      {
+         areCustomWaypointsEqual = areCustomWaypointsEqual && getCustomPositionWaypoints().get(i).epsilonEquals(other.getCustomPositionWaypoints().get(i), epsilon);
+      }
+      
+      return areQuadrantsEqual &&
+             areGoalPositionsEqual &&
+             areGroundClearancesEqual &&
+             areTrajectoryTypesEqual && 
+             areCustomWaypointsEqual;
    }
 
    public boolean equals(Object obj)
@@ -149,6 +179,15 @@ public class QuadrupedStep
       if (getGroundClearance() != other.getGroundClearance())
          return false;
       
+      if(getCustomPositionWaypoints().size() != other.getCustomPositionWaypoints().size())
+         return false;
+      
+      for(int i = 0; i < getCustomPositionWaypoints().size(); i++)
+      {
+         if(!getCustomPositionWaypoints().get(i).equals(other.getCustomPositionWaypoints().get(i)))
+               return false;
+      }
+      
       if (trajectoryType != other.trajectoryType)
          return false;
 
@@ -162,6 +201,7 @@ public class QuadrupedStep
       string += "\ngoalPosition:" + getGoalPositionInternal();
       string += "\ngroundClearance: " + getGroundClearance();
       string += "\ntrajectoryType: " + getTrajectoryType();
+      string += "\ncustomWaypoint: " + getCustomPositionWaypoints();
       return string;
    }
 }

@@ -3,6 +3,7 @@ package us.ihmc.quadrupedRobotics.controller.force;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import controller_msgs.msg.dds.QuadrupedFootstepStatusMessage;
 import controller_msgs.msg.dds.TimeIntervalMessage;
@@ -29,6 +30,7 @@ import us.ihmc.quadrupedRobotics.QuadrupedTestGoals;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.testing.YoVariableTestGoal;
+import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner;
 import us.ihmc.tools.MemoryTools;
@@ -313,6 +315,102 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
       conductor.simulate();
 
       conductor.concludeTesting();
+   }
+   
+   @Test
+   public void testScriptedFlatGroundWalkingWithCustomSwingWaypoints() throws BlockingSimulationRunner.SimulationExceededMaximumTimeException
+   {
+      QuadrupedTestBehaviors.standUp(conductor, variables);
+      QuadrupedTestBehaviors.startBalancing(conductor, variables, stepTeleopManager);
+
+      stepTeleopManager.requestWalkingState();
+
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 1.0));
+      conductor.simulate();
+
+      List<QuadrupedTimedStepMessage> steps = getSteps();
+      setCustomPositionWaypoints(steps);
+      QuadrupedTimedStepListMessage message = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(steps, false);
+      
+      stepTeleopManager.publishTimedStepListToController(message);
+
+      // check robot is still upright and walked forward
+      Point3D expectedFinalPlanarPosition = getFinalPlanarPosition();
+      conductor.addTerminalGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyX(), expectedFinalPlanarPosition.getX(), 0.1));
+      conductor.addTerminalGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyY(), expectedFinalPlanarPosition.getY(), 0.1));
+      conductor.addTerminalGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), expectedFinalPlanarPosition.getZ(), 0.1));
+      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, message.getQuadrupedStepList().getLast().getTimeInterval().getEndTime() + 2.0));
+      conductor.addTimeLimit(variables.getYoTime(), 20.0);
+      conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
+
+      conductor.simulate();
+
+      conductor.concludeTesting();
+   }
+   
+   private void setCustomPositionWaypoints(List<QuadrupedTimedStepMessage> steps)
+   {
+      for(int i = 0; i < steps.size(); i++)
+      {
+         QuadrupedTimedStepMessage step = steps.get(i);
+         for (int j = i + 1; j < steps.size(); j++)
+         {
+            if(RobotQuadrant.fromByte(step.getQuadrupedStepMessage().getRobotQuadrant()) == RobotQuadrant.fromByte(steps.get(j).getQuadrupedStepMessage().getRobotQuadrant()))
+            {
+               QuadrupedTimedStepMessage nextStep = steps.get(j);               
+               setCustomWaypoints(step, nextStep);
+            }
+         }
+      }      
+   }
+   
+   private void setCustomWaypoints(QuadrupedTimedStepMessage step, QuadrupedTimedStepMessage nextStep)
+   {
+      Point3D startOfSwing = step.getQuadrupedStepMessage().getGoalPosition();
+      Point3D endOfSwing = nextStep.getQuadrupedStepMessage().getGoalPosition();
+      
+      nextStep.getQuadrupedStepMessage().getCustomPositionWaypoints().clear();
+      nextStep.getQuadrupedStepMessage().setTrajectoryType(TrajectoryType.CUSTOM.toByte());
+      Point3D waypoint0 = nextStep.getQuadrupedStepMessage().getCustomPositionWaypoints().add();
+      Point3D waypoint1 = nextStep.getQuadrupedStepMessage().getCustomPositionWaypoints().add();
+      
+      Vector3D stepTranslation = new Vector3D();
+      stepTranslation.sub(endOfSwing, startOfSwing);
+      double stepLength = stepTranslation.length();
+      stepTranslation.normalize();
+      Vector3D stepFrameY = new Vector3D(- stepTranslation.getY(), stepTranslation.getX(), 0.0);
+      
+      double firstWaypointHeight = 0.04;
+      double secondWaypointHeight = 0.08;
+
+      double firstWaypointYValue = 0.03;
+      double secondWaypointYValue = -0.03;
+      
+      double firstWaypointProportion = 0.3;
+      double secondWaypointProportion = 0.7;
+      
+      waypoint0.set(startOfSwing);
+      waypoint1.set(startOfSwing);
+      
+      waypoint0.addZ(firstWaypointHeight);
+      waypoint1.addZ(secondWaypointHeight);
+      
+      Vector3D tempVector = new Vector3D();
+      tempVector.set(stepTranslation);
+      tempVector.scale(stepLength * firstWaypointProportion);
+      waypoint0.add(tempVector);
+
+      tempVector.set(stepTranslation);
+      tempVector.scale(stepLength * secondWaypointProportion);
+      waypoint1.add(tempVector);
+
+      tempVector.set(stepFrameY);
+      tempVector.scale(firstWaypointYValue);
+      waypoint0.add(tempVector);
+
+      tempVector.set(stepFrameY);
+      tempVector.scale(secondWaypointYValue);
+      waypoint1.add(tempVector);
    }
 
    /**

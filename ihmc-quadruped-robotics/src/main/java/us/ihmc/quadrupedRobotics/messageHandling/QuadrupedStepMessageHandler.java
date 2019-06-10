@@ -109,8 +109,12 @@ public class QuadrupedStepMessageHandler
       offsettingHeightPlanWithStepError.set(command.getOffsetStepsHeightWithExecutionError());
 
       receivedStepSequence.clear();
+      System.out.println("---received new step list---");
+      
       for (int i = 0; i < Math.min(stepCommands.size(), STEP_QUEUE_SIZE); i++)
       {
+         System.out.println("---step " + i + " : # wps = " + stepCommands.get(i).getStepCommand().getCustomPositionWaypoints().size());
+         
          double timeShift = isExpressedInAbsoluteTime ? 0.0 : currentTime + initialTransferDurationForShifting.getDoubleValue();
          double touchdownTime = stepCommands.get(i).getTimeIntervalCommand().getEndTime();
          if (touchdownTime + timeShift >= currentTime)

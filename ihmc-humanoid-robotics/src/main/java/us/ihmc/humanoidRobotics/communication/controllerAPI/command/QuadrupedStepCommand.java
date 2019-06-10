@@ -1,9 +1,11 @@
 package us.ihmc.humanoidRobotics.communication.controllerAPI.command;
 
 import controller_msgs.msg.dds.QuadrupedStepMessage;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 
@@ -16,6 +18,7 @@ public class QuadrupedStepCommand implements Command<QuadrupedStepCommand, Quadr
    private FramePoint3D goalPosition = new FramePoint3D();
    private double groundClearance = 0.0;
    private TrajectoryType trajectoryType;
+   private final RecyclingArrayList<Point3D> customPositionWaypoints = new RecyclingArrayList<Point3D>(2, Point3D.class);
 
    public QuadrupedStepCommand()
    {
@@ -29,6 +32,7 @@ public class QuadrupedStepCommand implements Command<QuadrupedStepCommand, Quadr
       robotQuadrant = null;
       groundClearance = 0.0;
       goalPosition.setToNaN();
+      customPositionWaypoints.clear();
    }
 
    @Override
@@ -39,6 +43,12 @@ public class QuadrupedStepCommand implements Command<QuadrupedStepCommand, Quadr
       groundClearance = message.getGroundClearance();
       goalPosition.setIncludingFrame(worldFrame, message.getGoalPosition());
       trajectoryType = TrajectoryType.fromByte(message.getTrajectoryType());
+
+      customPositionWaypoints.clear();      
+      for(int i = 0; i < message.getCustomPositionWaypoints().size(); i++)
+      {
+         customPositionWaypoints.add().set(message.getCustomPositionWaypoints().get(i));
+      }
    }
 
    @Override
@@ -49,6 +59,12 @@ public class QuadrupedStepCommand implements Command<QuadrupedStepCommand, Quadr
       groundClearance = other.groundClearance;
       goalPosition.setIncludingFrame(other.goalPosition);
       trajectoryType = other.getTrajectoryType();
+      
+      customPositionWaypoints.clear();      
+      for(int i = 0; i < other.getCustomPositionWaypoints().size(); i++)
+      {
+         customPositionWaypoints.add().set(other.getCustomPositionWaypoints().get(i));
+      }
    }
 
    public RobotQuadrant getRobotQuadrant()
@@ -69,6 +85,11 @@ public class QuadrupedStepCommand implements Command<QuadrupedStepCommand, Quadr
    public TrajectoryType getTrajectoryType()
    {
       return trajectoryType;
+   }
+   
+   public RecyclingArrayList<Point3D> getCustomPositionWaypoints()
+   {
+      return customPositionWaypoints;
    }
 
    @Override

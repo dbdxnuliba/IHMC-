@@ -1,5 +1,11 @@
 package us.ihmc.quadrupedRobotics.util;
 
+import java.util.List;
+import java.util.function.Supplier;
+
+import us.ihmc.commons.lists.PreallocatedList;
+import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.commons.lists.SupplierBuilder;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -20,6 +26,7 @@ public class YoQuadrupedTimedStep extends QuadrupedTimedStep
    private final YoDouble groundClearance;
    private final YoFramePoint3D goalPosition;
    private final YoEnum<TrajectoryType> trajectoryType;
+   private final RecyclingArrayList<YoFramePoint3D> customPositionWaypoints;
 
    public YoQuadrupedTimedStep(String prefix, YoVariableRegistry registry)
    {
@@ -29,6 +36,9 @@ public class YoQuadrupedTimedStep extends QuadrupedTimedStep
       this.goalPosition = new YoFramePoint3D(prefix + "GoalPosition", ReferenceFrame.getWorldFrame(), registry);
       this.timeInterval = new YoTimeInterval(prefix + "TimeInterval", registry);
       this.trajectoryType = YoEnum.create(prefix + "TrajectoryType", prefix + "TrajectoryType", TrajectoryType.class, registry, true);
+      
+      Supplier<YoFramePoint3D> pointSupplier = SupplierBuilder.indexedSupplier(i -> new YoFramePoint3D(prefix + "_CustomWP" + i, ReferenceFrame.getWorldFrame(), registry));
+      this.customPositionWaypoints = new RecyclingArrayList<YoFramePoint3D>(2, pointSupplier);
    }
 
    @Override
@@ -65,6 +75,22 @@ public class YoQuadrupedTimedStep extends QuadrupedTimedStep
    public double getGroundClearance()
    {
       return this.groundClearance.getDoubleValue();
+   }
+   
+   @Override
+   public void setCustomPositionWaypoints(List<? extends Point3DBasics> customPositionWaypoints)
+   {      
+      this.customPositionWaypoints.clear();
+      for(int i = 0; i < customPositionWaypoints.size(); i++)
+      {
+         this.customPositionWaypoints.add().set(customPositionWaypoints.get(i));
+      }
+   }
+   
+   @Override
+   public List<? extends Point3DBasics> getCustomPositionWaypoints()
+   {
+      return customPositionWaypoints;
    }
    
    @Override

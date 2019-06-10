@@ -48,6 +48,9 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 2; ++i0)
+      {
+          current_alignment += geometry_msgs.msg.dds.PointPubSubType.getMaxCdrSerializedSize(current_alignment);}
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
@@ -74,6 +77,11 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+      for(int i0 = 0; i0 < data.getCustomPositionWaypoints().size(); ++i0)
+      {
+          current_alignment += geometry_msgs.msg.dds.PointPubSubType.getCdrSerializedSize(data.getCustomPositionWaypoints().get(i0), current_alignment);}
+
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
@@ -90,6 +98,10 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
       geometry_msgs.msg.dds.PointPubSubType.write(data.getGoalPosition(), cdr);
       cdr.write_type_6(data.getGroundClearance());
 
+      if(data.getCustomPositionWaypoints().size() <= 2)
+      cdr.write_type_e(data.getCustomPositionWaypoints());else
+          throw new RuntimeException("custom_position_waypoints field exceeds the maximum length");
+
       cdr.write_type_9(data.getTrajectoryType());
 
    }
@@ -103,6 +115,7 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
       geometry_msgs.msg.dds.PointPubSubType.read(data.getGoalPosition(), cdr);	
       data.setGroundClearance(cdr.read_type_6());
       	
+      cdr.read_type_e(data.getCustomPositionWaypoints());	
       data.setTrajectoryType(cdr.read_type_9());
       	
 
@@ -116,6 +129,7 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
       ser.write_type_a("goal_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getGoalPosition());
 
       ser.write_type_6("ground_clearance", data.getGroundClearance());
+      ser.write_type_e("custom_position_waypoints", data.getCustomPositionWaypoints());
       ser.write_type_9("trajectory_type", data.getTrajectoryType());
    }
 
@@ -127,6 +141,7 @@ public class QuadrupedStepMessagePubSubType implements us.ihmc.pubsub.TopicDataT
       ser.read_type_a("goal_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getGoalPosition());
 
       data.setGroundClearance(ser.read_type_6("ground_clearance"));
+      ser.read_type_e("custom_position_waypoints", data.getCustomPositionWaypoints());
       data.setTrajectoryType(ser.read_type_9("trajectory_type"));
    }
 

@@ -38,8 +38,16 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
             */
    public double ground_clearance_ = -1.0;
    /**
+            * In case the trajectory type is set to TRAJECTORY_TYPE_CUSTOM two swing waypoints can be specified here.
+            * The waypoints define sole positions.
+            * The controller will compute times and velocities at the waypoints.
+            * This is a convenient way to shape the trajectory of the swing.
+            * The position waypoints are expected in the trajectory frame.
+            */
+   public us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D>  custom_position_waypoints_;
+   /**
             * This contains information on what the swing trajectory should be for each step. Recommended is TRAJECTORY_TYPE_DEFAULT.
-            * TRAJECTORY_TYPE_CUSTOM and TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
+            * TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
             * the controller uses either TRAJECTORY_TYPE_DEFAULT or TRAJECTORY_TYPE_OBSTACLE_CLEARANCE.
             */
    public byte trajectory_type_ = (byte) 255;
@@ -47,6 +55,8 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
    public QuadrupedStepMessage()
    {
       goal_position_ = new us.ihmc.euclid.tuple3D.Point3D();
+      custom_position_waypoints_ = new us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D> (2, new geometry_msgs.msg.dds.PointPubSubType());
+
    }
 
    public QuadrupedStepMessage(QuadrupedStepMessage other)
@@ -64,6 +74,7 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
       geometry_msgs.msg.dds.PointPubSubType.staticCopy(other.goal_position_, goal_position_);
       ground_clearance_ = other.ground_clearance_;
 
+      custom_position_waypoints_.set(other.custom_position_waypoints_);
       trajectory_type_ = other.trajectory_type_;
 
    }
@@ -124,9 +135,22 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
       return ground_clearance_;
    }
 
+
+   /**
+            * In case the trajectory type is set to TRAJECTORY_TYPE_CUSTOM two swing waypoints can be specified here.
+            * The waypoints define sole positions.
+            * The controller will compute times and velocities at the waypoints.
+            * This is a convenient way to shape the trajectory of the swing.
+            * The position waypoints are expected in the trajectory frame.
+            */
+   public us.ihmc.idl.IDLSequence.Object<us.ihmc.euclid.tuple3D.Point3D>  getCustomPositionWaypoints()
+   {
+      return custom_position_waypoints_;
+   }
+
    /**
             * This contains information on what the swing trajectory should be for each step. Recommended is TRAJECTORY_TYPE_DEFAULT.
-            * TRAJECTORY_TYPE_CUSTOM and TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
+            * TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
             * the controller uses either TRAJECTORY_TYPE_DEFAULT or TRAJECTORY_TYPE_OBSTACLE_CLEARANCE.
             */
    public void setTrajectoryType(byte trajectory_type)
@@ -135,7 +159,7 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
    }
    /**
             * This contains information on what the swing trajectory should be for each step. Recommended is TRAJECTORY_TYPE_DEFAULT.
-            * TRAJECTORY_TYPE_CUSTOM and TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
+            * TRAJECTORY_TYPE_WAYPOINTS are currently not supported. If a trajectory type is not set,
             * the controller uses either TRAJECTORY_TYPE_DEFAULT or TRAJECTORY_TYPE_OBSTACLE_CLEARANCE.
             */
    public byte getTrajectoryType()
@@ -168,6 +192,13 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
       if (!this.goal_position_.epsilonEquals(other.goal_position_, epsilon)) return false;
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.ground_clearance_, other.ground_clearance_, epsilon)) return false;
 
+      if (this.custom_position_waypoints_.size() != other.custom_position_waypoints_.size()) { return false; }
+      else
+      {
+         for (int i = 0; i < this.custom_position_waypoints_.size(); i++)
+         {  if (!this.custom_position_waypoints_.get(i).epsilonEquals(other.custom_position_waypoints_.get(i), epsilon)) return false; }
+      }
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.trajectory_type_, other.trajectory_type_, epsilon)) return false;
 
 
@@ -190,6 +221,7 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
       if (!this.goal_position_.equals(otherMyClass.goal_position_)) return false;
       if(this.ground_clearance_ != otherMyClass.ground_clearance_) return false;
 
+      if (!this.custom_position_waypoints_.equals(otherMyClass.custom_position_waypoints_)) return false;
       if(this.trajectory_type_ != otherMyClass.trajectory_type_) return false;
 
 
@@ -210,6 +242,8 @@ public class QuadrupedStepMessage extends Packet<QuadrupedStepMessage> implement
       builder.append(this.goal_position_);      builder.append(", ");
       builder.append("ground_clearance=");
       builder.append(this.ground_clearance_);      builder.append(", ");
+      builder.append("custom_position_waypoints=");
+      builder.append(this.custom_position_waypoints_);      builder.append(", ");
       builder.append("trajectory_type=");
       builder.append(this.trajectory_type_);
       builder.append("}");
