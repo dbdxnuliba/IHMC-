@@ -4,6 +4,7 @@ import static us.ihmc.robotics.Assert.*;
 
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
+import us.ihmc.atlas.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
@@ -20,7 +21,10 @@ import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.idl.IDLSequence.Double;
 import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.mecano.frames.*;
+import us.ihmc.mecano.multiBodySystem.interfaces.*;
+import us.ihmc.robotModels.*;
 import us.ihmc.robotics.*;
+import us.ihmc.robotics.partNames.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.trajectories.*;
 import us.ihmc.simulationConstructionSetTools.bambooTools.*;
@@ -40,6 +44,16 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 {
    private final static ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
+   private final AtlasRobotVersion version = AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS;
+   private final AtlasRobotModel robotModel = new AtlasRobotModel(version,RobotTarget.SCS,false);
+   private final AtlasJointMap jointMap = new AtlasJointMap(version,robotModel.getPhysicalProperties());//cannot use getRobotModel its of type DRCRobotModel while AtlasJintMap requires AtlasRobotModel object
+   private ArmJointName[] armJoint = getArmJointNames();
+   private Random random = new Random(42);
+   //private DRCRobotModel robotModela = getRobotModel();
+   private FullHumanoidRobotModel fullRobotModel = robotModel.createFullRobotModel();
+
+
+
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
    //private final AtlasR
@@ -70,6 +84,22 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
+   protected ArmJointName[] getArmJointNames()
+   {
+      return jointMap.getArmJointNames();
+   }
+
+   protected int getArmTrajectoryPoints()
+   {
+      return 4;
+   }
+
+   protected int getArmDoF()
+   {
+      return 6;
+   }
+
+
    //start writing your step up code here now
    @Test
    public void stepUpSmall() throws SimulationExceededMaximumTimeException
@@ -98,12 +128,19 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       FootstepDataListMessage footsteps = createFootSteps(robotModel, stepHeight, swingHeight);
       PelvisHeightTrajectoryMessage pelvisDHeight = createPelvisZUp(stepHeight); //hits the stairs so modify the waypoints for the foot so that you can take step a bit back and then go ahead
       ChestTrajectoryMessage chestTrajectoryPoints = createChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //create desired chest trajectory
-      ArmTrajectoryMessage[] armTrajectoryMessages = createArmTrajectory();
+      ArmTrajectoryMessage rightArmTrajectoryMessages = createArmRightTrajectory();
+      ArmTrajectoryMessage leftArmTrajectoryMessages = createArmLeftTrajectory();
+      //System.out.println(armJoint);
+      //System.exit(1);
+
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(pelvisDHeight);
       drcSimulationTestHelper.publishToController(chestTrajectoryPoints);
+      drcSimulationTestHelper.publishToController(leftArmTrajectoryMessages);
+      drcSimulationTestHelper.publishToController(rightArmTrajectoryMessages);
 
+      /*
       int i = 0; //variable for iterating over eac arm orientation message (an array of double)
       do
       {
@@ -111,7 +148,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          drcSimulationTestHelper.publishToController(armTrajectoryMessages[i]);
          ++i;
       }
-      while (i<2);
+      while (i<2);*/
+
 
       //Object<Point3D> waypoints = footsteps.getFootstepDataList().get(1).getCustomPositionWaypoints();
       //Double Proportion = footsteps.getFootstepDataList().get(1).getCustomWayPointProportions();
@@ -131,11 +169,20 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       ThreadTools.sleepForever(); //does not kill the simulation
    }
 
-   private ArmTrajectoryMessage[] createArmTrajectory()
+   private ArmTrajectoryMessage createArmLeftTrajectory()
    {
+      /*
       ArmTrajectoryMessage[] armPoses = new ArmTrajectoryMessage[]{new ArmTrajectoryMessage(), new ArmTrajectoryMessage()};
       double trajectoryTime = 0.5;
-      double[][] armJoints = new double[][] {{-2.5, -0.8, 1.12, 1.48, 0.9, -1.0, -2.8},{0.44, 0.02, 2.7, -1.78, 0.3, -1.5, -0.5}};
+      //double[][] armJoints = new double[][] {{-2.5, -0.8, 1.12, 1.48, 0.9, -1.0, -2.8},{0.44, 0.02, 2.7, -1.78, 0.3, -1.5, -0.5}};
+      double[][] armJoints = new double[2][getArmTrajectoryPoints()];
+      for(int armJointindex = 0 ; armJointindex < getArmDoF(); ++armJointindex)
+      {
+       for (int trajectoryPointIndex =0; trajectoryPointIndex < getArmTrajectoryPoints(); ++trajectoryPointIndex)
+       {
+
+       }
+      }
       RobotSide[] side = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2);
       // this message commands the controller to move an arm in JOINTSPACE to the desired joint angles while going through the specified trajectory points
       for(int j=0;j < 2 ; ++j)
@@ -144,13 +191,98 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          ArmTrajectoryMessage armPose = HumanoidMessageTools.createArmTrajectoryMessage(side[j], trajectoryTime, desiredArmPose);
          armPoses[j] = armPose;
       }
-      return armPoses;
+      return armPoses;*/
+      //OneDoFJointTrajectoryMessage[] leftandrightinfo = new OneDoFJointTrajectoryMessage[] {new OneDoFJointTrajectoryMessage(), new OneDoFJointTrajectoryMessage()}
+
+      ArrayList<OneDoFJointTrajectoryMessage> leftandrightinfo = new ArrayList<>();
+
+      ArmTrajectoryMessage leftHandMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT);
+      //ArmTrajectoryMessage rightHandMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT);
+
+      ArmJointName[] armJointName = getArmJointNames();
+
+      ArrayList<OneDoFJointTrajectoryMessage> leftArmTrajectory = new ArrayList<>();
+      //ArrayList<OneDoFJointTrajectoryMessage> rightArmTrajectory = new ArrayList<>();
+
+      for(int armJointindex = 0 ; armJointindex < getArmDoF(); ++armJointindex)
+      {
+         OneDoFJointTrajectoryMessage leftJointTrajectory = new OneDoFJointTrajectoryMessage();
+         //OneDoFJointTrajectoryMessage rightJointTrajectory = new OneDoFJointTrajectoryMessage();
+
+         for (int trajectoryPointIndex =0; trajectoryPointIndex < getArmTrajectoryPoints(); ++trajectoryPointIndex)
+         {
+            leftJointTrajectory.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage((double) (2*trajectoryPointIndex +1), getRandomJointAngle(RobotSide.LEFT,armJoint[armJointindex],fullRobotModel),(double) 0));
+            //rightJointTrajectory.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage((double) (2*trajectoryPointIndex +1), getRandomJointAngle(RobotSide.RIGHT, armJoint[armJointindex], fullRobotModel), (double) 0));
+         }
+         leftHandMessage.getJointspaceTrajectory().getJointTrajectoryMessages().add().set(leftJointTrajectory);
+         //rightHandMessage.getJointspaceTrajectory().getJointTrajectoryMessages().add().set(rightJointTrajectory);
+         leftArmTrajectory.add(leftJointTrajectory);
+         //rightArmTrajectory.add(rightJointTrajectory);
+      }
+      //leftandrightinfo[0] = leftArmTrajectory;
+      return leftHandMessage;
    }
+
+   private ArmTrajectoryMessage createArmRightTrajectory()
+   {
+      /*
+      ArmTrajectoryMessage[] armPoses = new ArmTrajectoryMessage[]{new ArmTrajectoryMessage(), new ArmTrajectoryMessage()};
+      double trajectoryTime = 0.5;
+      //double[][] armJoints = new double[][] {{-2.5, -0.8, 1.12, 1.48, 0.9, -1.0, -2.8},{0.44, 0.02, 2.7, -1.78, 0.3, -1.5, -0.5}};
+      double[][] armJoints = new double[2][getArmTrajectoryPoints()];
+      for(int armJointindex = 0 ; armJointindex < getArmDoF(); ++armJointindex)
+      {
+       for (int trajectoryPointIndex =0; trajectoryPointIndex < getArmTrajectoryPoints(); ++trajectoryPointIndex)
+       {
+
+       }
+      }
+      RobotSide[] side = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 2);
+      // this message commands the controller to move an arm in JOINTSPACE to the desired joint angles while going through the specified trajectory points
+      for(int j=0;j < 2 ; ++j)
+      {
+         double[] desiredArmPose = armJoints[j];
+         ArmTrajectoryMessage armPose = HumanoidMessageTools.createArmTrajectoryMessage(side[j], trajectoryTime, desiredArmPose);
+         armPoses[j] = armPose;
+      }
+      return armPoses;*/
+      //OneDoFJointTrajectoryMessage[] leftandrightinfo = new OneDoFJointTrajectoryMessage[] {new OneDoFJointTrajectoryMessage(), new OneDoFJointTrajectoryMessage()}
+
+      //ArrayList<OneDoFJointTrajectoryMessage> leftandrightinfo = new ArrayList<>();
+
+      //ArmTrajectoryMessage leftHandMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT);
+      ArmTrajectoryMessage rightHandMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT);
+
+      //ArmJointName[] armJointName = getArmJointNames();
+
+      //ArrayList<OneDoFJointTrajectoryMessage> leftArmTrajectory = new ArrayList<>();
+      ArrayList<OneDoFJointTrajectoryMessage> rightArmTrajectory = new ArrayList<>();
+
+      for(int armJointindex = 0 ; armJointindex < getArmDoF(); ++armJointindex)
+      {
+         //OneDoFJointTrajectoryMessage leftJointTrajectory = new OneDoFJointTrajectoryMessage();
+         OneDoFJointTrajectoryMessage rightJointTrajectory = new OneDoFJointTrajectoryMessage();
+
+         for (int trajectoryPointIndex =0; trajectoryPointIndex < getArmTrajectoryPoints(); ++trajectoryPointIndex)
+         {
+            //leftJointTrajectory.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage((double) (2*trajectoryPointIndex +1), getRandomJointAngle(RobotSide.LEFT,armJoint[armJointindex],fullRobotModel),(double) 0));
+            rightJointTrajectory.getTrajectoryPoints().add().set(HumanoidMessageTools.createTrajectoryPoint1DMessage((double) (2*trajectoryPointIndex +1), getRandomJointAngle(RobotSide.RIGHT, armJoint[armJointindex], fullRobotModel), (double) 0));
+         }
+         //leftHandMessage.getJointspaceTrajectory().getJointTrajectoryMessages().add().set(leftJointTrajectory);
+         rightHandMessage.getJointspaceTrajectory().getJointTrajectoryMessages().add().set(rightJointTrajectory);
+         //leftArmTrajectory.add(leftJointTrajectory);
+         rightArmTrajectory.add(rightJointTrajectory);
+      }
+      //leftandrightinfo[0] = leftArmTrajectory;
+      return rightHandMessage;
+   }
+
 
    private ChestTrajectoryMessage createChestTrajectory(ReferenceFrame dataframe, ReferenceFrame trajectoryFrame)
    {
       double trajectoryTime = 0.5;
       FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
+      //chestOrientation.appendYawRotation(2.0); //there also these append methods that you can use to mention only yaw,roll or pitch angles.
       double leanAngle = 2.0; //original values 20.0 and yaw was -2.36
       chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(), 0.0,Math.toRadians(leanAngle), 0.0);
       Quaternion desiredchestOrientation = new Quaternion(chestOrientation);
@@ -454,6 +586,20 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       }
    }
 
+   protected double getRandomJointAngle(RobotSide side, ArmJointName armJointName, FullHumanoidRobotModel fullHumanoidRobotModel)
+   {
+      OneDoFJointBasics armJoint = fullHumanoidRobotModel.getArmJoint(side, armJointName);
+      if (armJoint!= null)
+      {
+         double jointAngle = armJoint.getJointLimitLower() + (armJoint.getJointLimitUpper() - armJoint.getJointLimitLower()) * random.nextDouble();
+         return jointAngle;
+      }
+      else
+      {
+         return 0.0;
+      }
+   }
+
 
 
    private void assertreached(FootstepDataListMessage footsteps)
@@ -486,10 +632,13 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
 
       String className = getClass().getSimpleName();
-      SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 0.7);
+      //SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 0.7);
+      Wallswithstairs wall = new Wallswithstairs(0.7, 1.0, stepHeight);
       DRCRobotModel robotModel = getRobotModel();
+
       //pass this reference to the simulator
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
+
       //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, DRCRobotModel atlasRobotModel, adjustableStairsEnvironment);
       drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
       drcSimulationTestHelper.createSimulation(className);
