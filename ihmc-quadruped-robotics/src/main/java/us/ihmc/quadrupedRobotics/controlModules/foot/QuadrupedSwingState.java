@@ -42,7 +42,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final FrameVector3DReadOnly zeroVector3D = new FrameVector3D(worldFrame);
    private static final boolean debug = false;
-   
+
    private static final double minSwingHeight = 0.04;
    private static final double maxSwingHeight = 0.3;
 
@@ -156,7 +156,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
       activeTrajectoryType = new YoEnum<>(namePrefix + TrajectoryType.class.getSimpleName(), registry, TrajectoryType.class);
 
       MovingReferenceFrame soleFrame = controllerToolbox.getReferenceFrames().getSoleFrame(robotQuadrant);
-      
+
       oneWaypointSwingTrajectoryCalculator = new OneWaypointSwingGenerator(namePrefix + "1", minSwingHeight, maxSwingHeight, defaultSwingHeight, registry,
                                                                            graphicsListRegistry);
       twoWaypointSwingTrajectoryCalculator = new TwoWaypointSwingGenerator(namePrefix + "2", minSwingHeight, maxSwingHeight, defaultSwingHeight, registry,
@@ -235,7 +235,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
       double swingDuration = Math
             .max(currentStepCommand.getTimeInterval().getEndTime() - timestamp.getValue(), parameters.getMinSwingTimeForDisturbanceRecovery());
       setFootstepDurationInternal(swingDuration);
-      
+
       activeTrajectoryType.set(getTrajectoryType());
       fillAndInitializeTrajectories(true);
 
@@ -292,7 +292,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
       blendForStepAdjustment();
 
       limitedSwingTimeSpeedUpFactor.update();
-      
+
       double time;
       if (!isSwingSpeedUpEnabled.getValue() || timeInStateWithSwingSpeedUp.isNaN())
       {
@@ -394,7 +394,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
          waypointCalculator.setTrajectoryType(activeTrajectoryType.getEnumValue());
          if (activeTrajectoryType.getEnumValue() == TrajectoryType.DEFAULT)
          {
-            oneWaypointSwingTrajectoryCalculator.setWaypointProportion(parameters.getFlatSwingWaypointProportion());            
+            oneWaypointSwingTrajectoryCalculator.setWaypointProportion(parameters.getFlatSwingWaypointProportion());
             waypointCalculator.setSwingHeight(currentStepCommand.getGroundClearance());
          }
          else if (activeTrajectoryType.getEnumValue() == TrajectoryType.OBSTACLE_CLEARANCE)
@@ -405,10 +405,10 @@ public class QuadrupedSwingState extends QuadrupedFootState
          }
          else
          {
-            twoWaypointSwingTrajectoryCalculator.setWaypointProportions(parameters.getSwingWaypointProportion0(), parameters.getSwingWaypointProportion1());            
+            twoWaypointSwingTrajectoryCalculator.setWaypointProportions(parameters.getSwingWaypointProportion0(), parameters.getSwingWaypointProportion1());
             waypointCalculator.setSwingHeight(currentStepCommand.getGroundClearance());
          }
-         
+
          waypointCalculator.initialize();
       }
 
