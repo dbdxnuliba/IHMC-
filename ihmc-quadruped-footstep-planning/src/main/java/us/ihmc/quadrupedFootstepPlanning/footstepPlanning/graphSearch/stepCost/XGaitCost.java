@@ -1,10 +1,12 @@
 package us.ihmc.quadrupedFootstepPlanning.footstepPlanning.graphSearch.stepCost;
 
+import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.Vector2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.quadrupedBasics.supportPolygon.QuadrupedSupportPolygon;
 import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
@@ -64,10 +66,10 @@ public class XGaitCost implements FootstepCost
          snapData.getSnapTransform().transform(startFootPositions.get(robotQuadrant));
       }
 
-
+      Point2DReadOnly startXGaitPosition = startNode.getOrComputeXGaitCenterPoint();
 
       double nominalPitch = QuadrupedSupportPolygon.getNominalPitch(startFootPositions, 4);
-      startXGaitPose.setPosition(startNode.getOrComputeXGaitCenterPoint());
+      startXGaitPose.setPosition(startXGaitPosition);
       startXGaitPose.setOrientationYawPitchRoll(startNode.getNominalYaw(), nominalPitch, 0.0);
       startXGaitPoseFrame.setPoseAndUpdate(startXGaitPose);
 
@@ -79,14 +81,14 @@ public class XGaitCost implements FootstepCost
       double desiredMaxForwardSpeed = plannerParameters.getMaxWalkingSpeedMultiplier() * xGaitSettings.getMaxSpeed();
       double desiredMaxHorizontalSpeed = xGaitSettings.getMaxHorizontalSpeedFraction() * desiredMaxForwardSpeed;
 
-      FrameVector2D desiredVelocity = new FrameVector2D(nominalVelocityHeading);
-      desiredVelocity.setX(desiredVelocity.getX() * desiredMaxForwardSpeed);
-      desiredVelocity.setY(desiredVelocity.getY() * desiredMaxHorizontalSpeed);
-      desiredVelocity.changeFrameAndProjectToXYPlane(worldFrame);
+      double desiredVelocityAtHeading = computeMagnitudeOnEllipseInDirection(desiredMaxForwardSpeed, desiredMaxHorizontalSpeed, nominalVelocityHeading.getX(), nominalVelocityHeading.getY());
 
-      FramePoint2D endXGaitPosition = new FramePoint2D(desiredVelocity);
-      endXGaitPosition.scale(durationBetweenSteps);
-      endXGaitPosition.add(startNode.getOrComputeXGaitCenterPoint());
+      FrameVector2D desiredTranslation = new FrameVector2D(nominalVelocityHeading);
+      desiredTranslation.scale(desiredVelocityAtHeading * durationBetweenSteps);
+      desiredTranslation.changeFrameAndProjectToXYPlane(worldFrame);
+
+      FramePoint2D endXGaitPosition = new FramePoint2D();
+      endXGaitPosition.add(startXGaitPosition, desiredTranslation);
 
       double nominalYawOfEnd = velocityProvider.computeNominalYaw(endXGaitPosition);
       if (Double.isNaN(nominalYawOfEnd))
@@ -98,7 +100,7 @@ public class XGaitCost implements FootstepCost
       }
 
 
-         endXGaitPose.setPosition(endXGaitPosition);
+      endXGaitPose.setPosition(endXGaitPosition);
       endXGaitPose.setOrientationYawPitchRoll(nominalYawOfEnd, 0.0, 0.0);
       endXGaitPoseFrame.setPoseAndUpdate(endXGaitPose);
 
@@ -106,9 +108,19 @@ public class XGaitCost implements FootstepCost
       nominalEndFootPosition.setX(0.5 * movingQuadrant.getEnd().negateIfHindEnd(xGaitSettings.getStanceLength()));
       nominalEndFootPosition.setY(0.5 * movingQuadrant.getSide().negateIfRightSide(xGaitSettings.getStanceWidth()));
       nominalEndFootPosition.changeFrameAndProjectToXYPlane(worldFrame);
+      nominalEndFootPosition.setX(FootstepNode.gridSizeXY * FootstepNode.snapToGrid(nominalEndFootPosition.getX()));
+      nominalEndFootPosition.setY(FootstepNode.gridSizeXY * FootstepNode.snapToGrid(nominalEndFootPosition.getY()));
 
       Point2D endFootPosition = new Point2D(endNode.getX(movingQuadrant), endNode.getY(movingQuadrant));
 
       return plannerParameters.getXGaitWeight() * endFootPosition.distanceSquared(nominalEndFootPosition);
+   }
+
+   static double computeMagnitudeOnEllipseInDirection(double maxX, double maxY, double xDirection, double yDirection)
+   {
+      double magnitude = EuclidCoreTools.norm(xDirection, yDirection);
+      magnitude *= maxX * maxY;
+      magnitude /= Math.sqrt(MathTools.square(maxX * yDirection) + MathTools.square(maxY * xDirection));
+      return magnitude;
    }
 }
