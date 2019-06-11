@@ -92,6 +92,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
    private final LegConfigurationManager legConfigurationManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
+   private final CollisionManager collisionManager;
 
    private final ArrayList<RigidBodyControlManager> bodyManagers = new ArrayList<>();
    private final Map<String, RigidBodyControlManager> bodyManagerByJointName = new HashMap<>();
@@ -213,6 +214,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
+      collisionManager = managerFactory.getOrCreateCollisionManager();
 
       this.commandInputManager = commandInputManager;
       this.statusOutputManager = statusOutputManager;
@@ -563,6 +565,9 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       commandConsumer.handleAutomaticManipulationAbortOnICPError(currentState);
       commandConsumer.consumeLoadBearingCommands();
       commandConsumer.consumePlanarRegionsListCommand();
+      commandConsumer.consumeCollisioManagerCommand();
+
+      collisionManager.compute(feetManager.getCurrentConstraintType(RobotSide.LEFT).isLoadBearing());
 
       updateFailureDetection();
 
@@ -823,6 +828,8 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       controllerCoreCommand.addFeedbackControlCommand(comHeightManager.getFeedbackControlCommand());
 
       controllerCoreCommand.addInverseDynamicsCommand(controllerCoreOptimizationSettings.getCommand());
+
+      controllerCoreCommand.addInverseDynamicsCommand(collisionManager.getInverseDynamicsCommand());
    }
 
    public ControllerCoreCommand getControllerCoreCommand()

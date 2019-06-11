@@ -10,6 +10,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOrientationManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionManager;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.states.WalkingState;
 import us.ihmc.commonWalkingControlModules.messageHandlers.WalkingMessageHandler;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
@@ -80,6 +81,7 @@ public class WalkingCommandConsumer
    private final FeetManager feetManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
+   private final CollisionManager collisionManager;
 
    private final RigidBodyControlManager chestManager;
    private final RigidBodyControlManager headManager;
@@ -138,6 +140,7 @@ public class WalkingCommandConsumer
       feetManager = managerFactory.getOrCreateFeetManager();
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
+      collisionManager = managerFactory.getOrCreateCollisionManager();
 
       isAutomaticManipulationAbortEnabled.set(walkingControllerParameters.allowAutomaticManipulationAbort());
       icpErrorThresholdToAbortManipulation.set(walkingControllerParameters.getICPErrorThresholdForManipulationAbort());
@@ -523,5 +526,11 @@ public class WalkingCommandConsumer
       {
          walkingMessageHandler.handlePlanarRegionsListCommand(commandConsumerWithDelayBuffers.pollNewestCommand(PlanarRegionsListCommand.class));
       }
+   }
+
+   public void consumeCollisioManagerCommand()
+   {
+      // TODO Auto-generated method stub
+
    }
 }
