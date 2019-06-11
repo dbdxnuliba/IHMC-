@@ -236,7 +236,7 @@ public class HighLevelControlManagerFactory
       MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
 
-      collisionManager = new CollisionManager(shinParent, shinChild, shinBody, elevator, registry, 0.374);
+      collisionManager = new CollisionManager(shinParent, shinChild, shinBody, elevator, registry);
 
       return collisionManager;
    }
