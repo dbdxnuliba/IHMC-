@@ -16,6 +16,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -38,8 +39,7 @@ import us.ihmc.quadrupedFootstepPlanning.ui.controllers.PlannerReachParametersUI
 import us.ihmc.quadrupedFootstepPlanning.ui.controllers.VisibilityGraphsParametersUIController;
 import us.ihmc.quadrupedFootstepPlanning.ui.viewers.BodyPathMeshViewer;
 import us.ihmc.quadrupedFootstepPlanning.ui.viewers.FootstepPathMeshViewer;
-import us.ihmc.quadrupedFootstepPlanning.ui.viewers.StartGoalOrientationViewer;
-import us.ihmc.quadrupedFootstepPlanning.ui.viewers.StartGoalPositionViewer;
+import us.ihmc.quadrupedFootstepPlanning.ui.viewers.QuadrupedInteractiveTargetPose;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedRobotics.model.QuadrupedModelFactory;
 import us.ihmc.quadrupedUI.skybox.QuadrupedSkybox3D;
@@ -53,15 +53,18 @@ import us.ihmc.tools.inputDevices.joystick.JoystickModel;
 
 public class QuadrupedUserInterface
 {
-   public static final QuadrantDependentList<Color> feetColors = new QuadrantDependentList<>(Color.web("#DA5526"), Color.web("#F68930"), Color.web("#0C695D"), Color.web("#37AFA9"));
+   public static final QuadrantDependentList<Color> feetColors = new QuadrantDependentList<>(Color.web("#DA5526"),
+                                                                                             Color.web("#F68930"),
+                                                                                             Color.web("#0C695D"),
+                                                                                             Color.web("#37AFA9"));
 
    private final Stage primaryStage;
    private final BorderPane mainPane;
    private final JavaFXMessager messager;
 
    private final PlanarRegionViewer planarRegionViewer;
-   private final StartGoalPositionViewer startGoalPositionViewer;
-   private final StartGoalOrientationViewer startGoalOrientationViewer;
+   private final QuadrupedInteractiveTargetPose startPoseViewer = new QuadrupedInteractiveTargetPose();
+   private final QuadrupedInteractiveTargetPose goalPoseViewer = new QuadrupedInteractiveTargetPose();
    private final StartGoalPositionEditor startGoalPositionEditor;
    private final StartGoalOrientationEditor startGoalOrientationEditor;
    private final FootstepPathMeshViewer pawPathViewer;
@@ -157,18 +160,24 @@ public class QuadrupedUserInterface
                                                         QuadrupedUIMessagerAPI.RobotConfigurationDataTopic);
 
       this.planarRegionViewer = new PlanarRegionViewer(messager, QuadrupedUIMessagerAPI.PlanarRegionDataTopic, QuadrupedUIMessagerAPI.ShowPlanarRegionsTopic);
-      this.startGoalPositionViewer = new StartGoalPositionViewer(messager, QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
-                                                                 QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
-                                                                 QuadrupedUIMessagerAPI.StartPositionTopic, QuadrupedUIMessagerAPI.StartOrientationTopic,
-                                                                 QuadrupedUIMessagerAPI.LowLevelGoalPositionTopic, QuadrupedUIMessagerAPI.GoalPositionTopic,
-                                                                 QuadrupedUIMessagerAPI.GoalOrientationTopic, QuadrupedUIMessagerAPI.XGaitSettingsTopic,
-                                                                 QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
-      this.startGoalOrientationViewer = new StartGoalOrientationViewer(messager, QuadrupedUIMessagerAPI.StartOrientationEditModeEnabledTopic,
-                                                                       QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic,
-                                                                       QuadrupedUIMessagerAPI.StartPositionTopic, QuadrupedUIMessagerAPI.StartOrientationTopic,
-                                                                       QuadrupedUIMessagerAPI.LowLevelGoalPositionTopic,
-                                                                       QuadrupedUIMessagerAPI.LowLevelGoalOrientationTopic,
-                                                                       QuadrupedUIMessagerAPI.GoalPositionTopic, QuadrupedUIMessagerAPI.GoalOrientationTopic);
+      startPoseViewer.configureWithMessager(messager,
+                                            QuadrupedUIMessagerAPI.ShowStartPoseFootstepTopic,
+                                            QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
+                                            QuadrupedUIMessagerAPI.StartOrientationEditModeEnabledTopic,
+                                            QuadrupedUIMessagerAPI.StartPositionTopic,
+                                            QuadrupedUIMessagerAPI.StartOrientationTopic,
+                                            QuadrupedUIMessagerAPI.XGaitSettingsTopic,
+                                            QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
+      startPoseViewer.getTargetNode().setUnselectedMaterial(new PhongMaterial(Color.GREEN));
+      goalPoseViewer.configureWithMessager(messager,
+                                           QuadrupedUIMessagerAPI.ShowGoalPoseFootstepTopic,
+                                           QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
+                                           QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic,
+                                           QuadrupedUIMessagerAPI.GoalPositionTopic,
+                                           QuadrupedUIMessagerAPI.GoalOrientationTopic,
+                                           QuadrupedUIMessagerAPI.XGaitSettingsTopic,
+                                           QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
+      goalPoseViewer.getTargetNode().setUnselectedMaterial(new PhongMaterial(Color.RED));
       this.startGoalPositionEditor = new StartGoalPositionEditor(messager, subScenePane, QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.StartPositionTopic, QuadrupedUIMessagerAPI.GoalPositionTopic,
@@ -204,8 +213,8 @@ public class QuadrupedUserInterface
       messager.submitMessage(QuadrupedUIMessagerAPI.XGaitSettingsTopic, xGaitSettings);
 
       view3dFactory.addNodeToView(planarRegionViewer.getRoot());
-      view3dFactory.addNodeToView(startGoalPositionViewer.getRoot());
-      view3dFactory.addNodeToView(startGoalOrientationViewer.getRoot());
+      view3dFactory.addNodeToView(startPoseViewer.getTargetNode());
+      view3dFactory.addNodeToView(goalPoseViewer.getTargetNode());
       view3dFactory.addNodeToView(robotVisualizer.getRootNode());
       view3dFactory.addNodeToView(pawPathViewer.getRoot());
       view3dFactory.addNodeToView(bodyPathMeshViewer.getRoot());
@@ -251,8 +260,6 @@ public class QuadrupedUserInterface
       videoViewOverlay.start(messager, QuadrupedUIMessagerAPI.LeftCameraVideo);
       timeStatisticsManager.start();
       planarRegionViewer.start();
-      startGoalPositionViewer.start();
-      startGoalOrientationViewer.start();
       startGoalPositionEditor.start();
       startGoalOrientationEditor.start();
       pawPathViewer.start();
@@ -273,7 +280,6 @@ public class QuadrupedUserInterface
       primaryStage.setScene(mainScene);
       primaryStage.setOnCloseRequest(event -> stop());
    }
-
 
    private void onKeyEvent(KeyEvent keyEvent)
    {
@@ -300,8 +306,6 @@ public class QuadrupedUserInterface
       timeStatisticsManager.stop();
       plannerTabController.stop();
       planarRegionViewer.stop();
-      startGoalPositionViewer.stop();
-      startGoalOrientationViewer.stop();
       startGoalPositionEditor.stop();
       startGoalOrientationEditor.stop();
       pawPathViewer.stop();

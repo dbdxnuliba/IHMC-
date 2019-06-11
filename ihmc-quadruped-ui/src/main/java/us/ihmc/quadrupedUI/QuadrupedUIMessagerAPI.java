@@ -163,6 +163,8 @@ public class QuadrupedUIMessagerAPI
    public static final Topic<FootstepPlan> FootstepPlanTopic = Root.child(FootstepPlanning).child(Result).topic(FootstepPlan);
 
    public static final Topic<Boolean> ShowFootstepPreviewTopic = Root.child(FootstepPlanning).child(Result).child(Review).topic(Show);
+   public static final Topic<Boolean> ShowStartPoseFootstepTopic = Root.child(FootstepPlanning).child(Start).topic(Show);
+   public static final Topic<Boolean> ShowGoalPoseFootstepTopic = Root.child(FootstepPlanning).child(Goal).topic(Show);
    public static final Topic<Number> PlannerPlaybackFractionTopic = Root.child(FootstepPlanning).child(Result).child(Review).topic(Fraction);
    public static final Topic<Point3D> StartPositionTopic = Root.child(FootstepPlanning).child(Command).child(Start).child(Position).topic(Point);
    public static final Topic<FootstepPlannerTargetType> StartTargetTypeTopic = Root.child(FootstepPlanning).child(Command).child(Start).child(Position).topic(FootstepPlannerTargetType);
