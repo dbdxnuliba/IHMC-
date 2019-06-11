@@ -8,19 +8,19 @@ public class Wallswithstairs extends PlanarRegionEnvironmentInterface
 
    public Wallswithstairs(double stepLength, double wallHeight, double stepUpHeight)
    {
-
-      double wallOffSet = 0.8; //0.11 was comfotable to wall so choosing 0.08 as starting position
+      double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
+      double wallOffSet = 0.8; //0.11 was comfortable to wall so choosing 0.08 as starting position
       generator.identity();
-      generator.translate(0.0,wallOffSet,0.0);
+      generator.translate(wallInitialOffSet,wallOffSet,0.0);  // left wall
       generator.addCubeReferencedAtBottomMiddle(stepLength, 0.1, wallHeight);
 
       generator.identity();
-      generator.translate(0.0,0.0,wallHeight);
-      generator.addCubeReferencedAtBottomMiddle(stepLength,2*wallOffSet,0.2);
+      generator.translate(wallInitialOffSet,0.0,wallHeight); // top roof
+      generator.addCubeReferencedAtBottomMiddle(stepLength,2*wallOffSet +0.1,0.1);
 
 
       generator.identity();
-      generator.translate(0.0, -wallOffSet,0.0);
+      generator.translate(wallInitialOffSet, -wallOffSet,0.0); //right wall
       generator.addCubeReferencedAtBottomMiddle(stepLength, 0.1, wallHeight);
 
       addPlanarRegionsToTerrain(YoAppearance.Grey());
