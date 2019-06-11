@@ -568,8 +568,6 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       commandConsumer.consumePrepareForLocomotionCommands();
       commandConsumer.consumeCollisioManagerCommand();
 
-      collisionManager.compute(feetManager.getCurrentConstraintType(RobotSide.LEFT).isLoadBearing());
-
       updateFailureDetection();
 
       // Do transitions will request ICP planner updates.
@@ -691,6 +689,9 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
       else
          balanceManager.compute(currentState.getSupportSide(), controlledCoMHeightAcceleration.getDoubleValue(), keepCMPInsideSupportPolygon,
                                 controlHeightWithMomentum);
+
+      collisionManager.compute(feetManager.getCurrentConstraintType(RobotSide.LEFT).isLoadBearing());
+
    }
 
    private void reportStatusMessages()

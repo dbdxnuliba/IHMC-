@@ -5,6 +5,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamic
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -28,7 +29,7 @@ public class CollisionManager
    private final YoDouble measuredDistance, expectedLength;
 
    public CollisionManager(MovingReferenceFrame firstEndLinkFrame, MovingReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
-                           RigidBodyBasics elevator, YoVariableRegistry parentRegistry, double expectedLength)
+                           RigidBodyBasics elevator, YoVariableRegistry parentRegistry)
    {
       spatialAccelerationCommand.set(/*
                                       * MultiBodySystemTools.getRootBody(body)
@@ -47,7 +48,6 @@ public class CollisionManager
 
       measuredDistance = new YoDouble(body.getName() + "measuredLenght", registry);
       this.expectedLength = new YoDouble(body.getName() + "expectedLenght", registry);
-      this.expectedLength.set(expectedLength);
    }
 
    public void compute(boolean loadBearing)
@@ -87,6 +87,11 @@ public class CollisionManager
    public InverseDynamicsCommand<?> getInverseDynamicsCommand()
    {
       return spatialAccelerationCommand;
+   }
+
+   public void handleCollisionManagerCommand(CollisionManagerCommand command)
+   {
+      this.expectedLength.set(command.getTest());
    }
 
 }

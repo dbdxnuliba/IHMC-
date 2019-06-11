@@ -25,6 +25,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.AutomaticMan
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CenterOfMassTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestHybridJointspaceTaskspaceTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestTrajectoryCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.DesiredAccelerationsCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootLoadBearingCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajectoryCommand;
@@ -544,7 +545,10 @@ public class WalkingCommandConsumer
 
    public void consumeCollisioManagerCommand()
    {
-      // TODO Auto-generated method stub
-
+      if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CollisionManagerCommand.class))
+      {
+         CollisionManagerCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CollisionManagerCommand.class);
+         collisionManager.handleCollisionManagerCommand(command);
+      }
    }
 }

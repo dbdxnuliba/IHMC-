@@ -6,45 +6,47 @@ import us.ihmc.communication.controllerAPI.command.Command;
 public class CollisionManagerCommand implements Command<CollisionManagerCommand, CollisionManagerMessage>
 {
 
+   private float test;
    @Override
    public void set(CollisionManagerCommand other)
    {
-      // TODO Auto-generated method stub
+      this.test = other.test;
 
+   }
+
+   public float getTest()
+   {
+      return test;
    }
 
    @Override
    public void clear()
    {
-      // TODO Auto-generated method stub
-
+      test = (float) 0.0;
    }
 
    @Override
    public void setFromMessage(CollisionManagerMessage message)
    {
-      // TODO Auto-generated method stub
+      test = message.getTest();
 
    }
 
    @Override
    public Class<CollisionManagerMessage> getMessageClass()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return CollisionManagerMessage.class;
    }
 
    @Override
    public boolean isCommandValid()
    {
-      // TODO Auto-generated method stub
-      return false;
+      return true;
    }
 
    @Override
    public long getSequenceId()
    {
-      // TODO Auto-generated method stub
       return 0;
    }
 
