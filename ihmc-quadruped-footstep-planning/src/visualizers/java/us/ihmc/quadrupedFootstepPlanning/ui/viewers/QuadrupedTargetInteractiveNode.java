@@ -42,7 +42,7 @@ import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 
-public class QuadrupedInteractiveTargetPose
+public class QuadrupedTargetInteractiveNode
 {
    public static final double DEFAULT_SIZE = 0.05;
    public static final double DEFAULT_ARROW_LENGTH = 5.0 * DEFAULT_SIZE;
@@ -50,13 +50,13 @@ public class QuadrupedInteractiveTargetPose
    public static final PhongMaterial defaultUnselectedMaterial = new PhongMaterial(Color.RED);
    public static final PhongMaterial defaultSelectedMaterial = new PhongMaterial(Color.ORANGE.deriveColor(0.0, 1.0, 1.0, 0.7));
 
-   private final QuadrupedTargetNode node = new QuadrupedTargetNode();
+   private final TargetNode node = new TargetNode();
 
-   public QuadrupedInteractiveTargetPose()
+   public QuadrupedTargetInteractiveNode()
    {
    }
 
-   public QuadrupedTargetNode getTargetNode()
+   public TargetNode getTargetNode()
    {
       return node;
    }
@@ -112,7 +112,7 @@ public class QuadrupedInteractiveTargetPose
       });
    }
 
-   public static class QuadrupedTargetNode extends Group
+   public static class TargetNode extends Group
    {
       private final Sphere center = new Sphere(DEFAULT_SIZE);
       private final QuadrantDependentList<Sphere> feet = new QuadrantDependentList<>();
@@ -137,7 +137,7 @@ public class QuadrupedInteractiveTargetPose
 
       private final Affine nodeAffine = new Affine();
 
-      public QuadrupedTargetNode()
+      public TargetNode()
       {
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          {

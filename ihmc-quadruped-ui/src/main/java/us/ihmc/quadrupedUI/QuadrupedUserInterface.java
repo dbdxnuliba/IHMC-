@@ -39,7 +39,7 @@ import us.ihmc.quadrupedFootstepPlanning.ui.controllers.PlannerReachParametersUI
 import us.ihmc.quadrupedFootstepPlanning.ui.controllers.VisibilityGraphsParametersUIController;
 import us.ihmc.quadrupedFootstepPlanning.ui.viewers.BodyPathMeshViewer;
 import us.ihmc.quadrupedFootstepPlanning.ui.viewers.FootstepPathMeshViewer;
-import us.ihmc.quadrupedFootstepPlanning.ui.viewers.QuadrupedInteractiveTargetPose;
+import us.ihmc.quadrupedFootstepPlanning.ui.viewers.QuadrupedTargetInteractiveNode;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedRobotics.model.QuadrupedModelFactory;
 import us.ihmc.quadrupedUI.skybox.QuadrupedSkybox3D;
@@ -63,8 +63,8 @@ public class QuadrupedUserInterface
    private final JavaFXMessager messager;
 
    private final PlanarRegionViewer planarRegionViewer;
-   private final QuadrupedInteractiveTargetPose startPoseViewer = new QuadrupedInteractiveTargetPose();
-   private final QuadrupedInteractiveTargetPose goalPoseViewer = new QuadrupedInteractiveTargetPose();
+   private final QuadrupedTargetInteractiveNode startPoseViewer = new QuadrupedTargetInteractiveNode();
+   private final QuadrupedTargetInteractiveNode goalPoseViewer = new QuadrupedTargetInteractiveNode();
    private final StartGoalPositionEditor startGoalPositionEditor;
    private final StartGoalOrientationEditor startGoalOrientationEditor;
    private final FootstepPathMeshViewer pawPathViewer;
