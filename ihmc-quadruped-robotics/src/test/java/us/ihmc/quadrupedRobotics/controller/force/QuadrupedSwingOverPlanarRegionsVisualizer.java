@@ -138,7 +138,7 @@ public class QuadrupedSwingOverPlanarRegionsVisualizer
       ThreadTools.sleepForever();
    }
 
-   public double expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPose, FramePoint3DReadOnly swingEndPose,
+   public boolean expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPose, FramePoint3DReadOnly swingEndPose,
                                                    PlanarRegionsList planarRegionsList)
    {
       this.startPosition.set(swingStartPose);

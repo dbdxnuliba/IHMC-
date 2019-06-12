@@ -133,16 +133,13 @@ public abstract class QuadrupedSwingOverPlanarRegionsSimulationTest implements Q
          swingStartPosition.set(footPositions.get(frontQuadrant));
          swingEndPosition.set(frontLocation);
 
-         double maxSpeedDimensionless = Double.NaN;
-
          if (LOCAL_MODE)
          {
-            maxSpeedDimensionless = swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
+            swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
          }
          else
          {
-            maxSpeedDimensionless = swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08,
-                                                                                                               planarRegionsList, null);
+            swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08, planarRegionsList, null);
          }
 
          PrintTools.info("Step " + i + ": " + swingOverPlanarRegionsTrajectoryExpander.getStatus());
@@ -157,16 +154,13 @@ public abstract class QuadrupedSwingOverPlanarRegionsSimulationTest implements Q
          swingStartPosition.set(footPositions.get(hindQuadrant));
          swingEndPosition.set(hindLocation);
 
-         maxSpeedDimensionless = Double.NaN;
-
          if (LOCAL_MODE)
          {
-            maxSpeedDimensionless = swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
+            swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
          }
          else
          {
-            maxSpeedDimensionless = swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08,
-                                                                                                               planarRegionsList, null);
+            swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08, planarRegionsList, null);
          }
 
          PrintTools.info("Step " + i + ": " + swingOverPlanarRegionsTrajectoryExpander.getStatus());
@@ -179,19 +173,11 @@ public abstract class QuadrupedSwingOverPlanarRegionsSimulationTest implements Q
             hindMessage.getQuadrupedStepMessage().getCustomPositionWaypoints().add().set(swingOverPlanarRegionsTrajectoryExpander.getExpandedWaypoints().get(j));
 
 
-         double maxSpeed = maxSpeedDimensionless / stepDuration;
-         if (maxSpeed > maxSwingSpeed)
-         {
-            double adjustedSwingTime = maxSpeedDimensionless / maxSwingSpeed;
-            frontMessage.getTimeInterval().setStartTime(currentTime);
-            frontMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
-            hindMessage.getTimeInterval().setStartTime(currentTime);
-            hindMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
 
-            simulationTime += adjustedSwingTime;
-         }
-         else
-            simulationTime += stepDuration;
+         frontMessage.getTimeInterval().setStartTime(currentTime);
+         frontMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
+         hindMessage.getTimeInterval().setStartTime(currentTime);
+         hindMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
 
          stepListMessage.getQuadrupedStepList().add().set(frontMessage);
          stepListMessage.getQuadrupedStepList().add().set(hindMessage);

@@ -113,9 +113,7 @@ public class QuadrupedSwingOverPlanarRegionsTest
          swingStartPosition.set(footPositions.get(frontQuadrant));
          swingEndPosition.set(frontLocation);
 
-         double maxSpeedDimensionless = Double.NaN;
-
-            maxSpeedDimensionless = swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
+         swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
 
          PrintTools.info("Step " + i + ": " + swingOverPlanarRegionsTrajectoryExpander.getStatus());
          PrintTools.info("Foot: " + robotSide + "  X: " + footstepX + "  Y: " + footstepY);
@@ -125,16 +123,10 @@ public class QuadrupedSwingOverPlanarRegionsTest
          swingStartPosition.set(footPositions.get(hindQuadrant));
          swingEndPosition.set(hindLocation);
 
-         maxSpeedDimensionless = Double.NaN;
-
-            maxSpeedDimensionless = swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
+         swingOverPlanarRegionsVisualizer.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, planarRegionsList);
 
          PrintTools.info("Step " + i + ": " + swingOverPlanarRegionsTrajectoryExpander.getStatus());
          PrintTools.info("Foot: " + robotSide + "  X: " + footstepX + "  Y: " + footstepY);
-
-
-         double maxSpeed = maxSpeedDimensionless / stepDuration;
-
 
          footPositions.get(frontQuadrant).set(frontLocation);
          footPositions.get(hindQuadrant).set(hindLocation);

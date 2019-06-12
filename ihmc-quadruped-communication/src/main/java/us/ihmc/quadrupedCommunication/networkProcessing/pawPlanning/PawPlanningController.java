@@ -1,12 +1,14 @@
 package us.ihmc.quadrupedCommunication.networkProcessing.pawPlanning;
 
 import controller_msgs.msg.dds.*;
+import us.ihmc.commonWalkingControlModules.trajectories.QuadrupedPlanarRegionsTrajectoryExpander;
 import us.ihmc.commons.Conversions;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersBasics;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.YoVisibilityGraphParameters;
@@ -28,7 +30,10 @@ import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapperParameters;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
+import us.ihmc.robotics.robotSide.QuadrantDependentList;
+import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -53,6 +58,8 @@ public class PawPlanningController extends QuadrupedToolboxController
    private final AtomicReference<PawStepPlanningRequestPacket> latestRequestReference = new AtomicReference<>(null);
    private Optional<PlanarRegionsList> planarRegionsList = Optional.empty();
 
+   private PawStepPlannerStart start;
+
    private final YoQuadrupedXGaitSettings xGaitSettings;
    private final VisibilityGraphsParametersBasics visibilityGraphParameters;
    private final PawStepPlannerParametersBasics pawPlannerParameters;
@@ -61,6 +68,8 @@ public class PawPlanningController extends QuadrupedToolboxController
    private final YoBoolean isDone = new YoBoolean("isDone", registry);
    private final YoDouble timeout = new YoDouble("toolboxTimeout", registry);
    private final YoInteger planId = new YoInteger("planId", registry);
+
+   private final QuadrupedPlanarRegionsTrajectoryExpander swingOverPlanarRegionsTrajectoryExpander;
 
 
    public PawPlanningController(QuadrupedXGaitSettingsReadOnly defaultXGaitSettings, VisibilityGraphsParametersBasics defaultVisibilityGraphParameters,
@@ -76,6 +85,8 @@ public class PawPlanningController extends QuadrupedToolboxController
       xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, registry);
       new YoPawStepPlannerParameters(pawPlannerParameters, registry);
       new YoVisibilityGraphParameters(registry, visibilityGraphParameters);
+
+      swingOverPlanarRegionsTrajectoryExpander = new QuadrupedPlanarRegionsTrajectoryExpander(registry, graphicsListRegistry);
 
       if (robotDataReceiver != null)
       {
@@ -345,8 +356,48 @@ public class PawPlanningController extends QuadrupedToolboxController
       result.setFootstepPlanningResult(status.toByte());
       result.setTimeTaken(plannerMap.get(activePlanner.getEnumValue()).getPlanningDuration());
 
+      addObstacleAvoidanceWaypointsWhenNecessary(result.getFootstepDataList());
+
       return result;
    }
+
+   private void addObstacleAvoidanceWaypointsWhenNecessary(QuadrupedTimedStepListMessage stepListMessage)
+   {
+      if (!planarRegionsList.isPresent())
+         return;
+
+      QuadrantDependentList<FramePoint3D> footPositions = new QuadrantDependentList<>();
+      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
+      {
+         FramePoint3D footPosition = new FramePoint3D(start.getPawGoalPosition(robotQuadrant));
+         footPositions.put(robotQuadrant, footPosition);
+      }
+
+      FramePoint3D swingStartPosition = new FramePoint3D();
+      FramePoint3D swingEndPosition = new FramePoint3D();
+
+
+      for (int stepIndex = 1; stepIndex < stepListMessage.getQuadrupedStepList().size(); stepIndex++)
+      {
+         QuadrupedStepMessage stepMessage = stepListMessage.getQuadrupedStepList().get(stepIndex).getQuadrupedStepMessage();
+         RobotQuadrant movingQuadrant = RobotQuadrant.fromByte(stepMessage.getRobotQuadrant());
+         swingStartPosition.set(footPositions.get(movingQuadrant));
+         swingEndPosition.set(stepMessage.getGoalPosition());
+
+
+         if (swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08, planarRegionsList.get(), null))
+         {
+            List<FramePoint3D> expandedWaypoints = swingOverPlanarRegionsTrajectoryExpander.getExpandedWaypoints();
+            for (int waypointIndex = 0; waypointIndex < expandedWaypoints.size(); waypointIndex++)
+            {
+               stepMessage.getCustomPositionWaypoints().add().set(expandedWaypoints.get(waypointIndex));
+            }
+         }
+
+         footPositions.get(movingQuadrant).set(swingEndPosition);
+      }
+   }
+
 
    private static QuadrupedTimedStepListMessage convertToTimedStepListMessage(PawStepPlan pawStepPlan)
    {

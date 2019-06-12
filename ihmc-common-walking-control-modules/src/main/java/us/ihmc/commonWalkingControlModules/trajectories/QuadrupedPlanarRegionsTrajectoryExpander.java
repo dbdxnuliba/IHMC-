@@ -158,7 +158,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       incrementalAdjustmentDistance.set(0.03);
    }
 
-   public double expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPosition, FramePoint3DReadOnly swingEndPosition, double swingHeight,
+   public boolean expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPosition, FramePoint3DReadOnly swingEndPosition, double swingHeight,
                                                    PlanarRegionsList planarRegionsList, TrajectoryType trajectoryType)
    {
       trajectoryType = getTrajectoryType(trajectoryType, swingEndPosition);
@@ -218,7 +218,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
          else
          {
             numberOfWaypoints.set(1);
-            return oneWaypointSwingGenerator.computeAndGetMaxSpeed();
+            return false;
          }
 
       }
@@ -280,7 +280,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
          numberOfTriesCounter.countOne();
       }
 
-      return swingGenerator.computeAndGetMaxSpeed();
+      return true;
    }
 
    private TrajectoryType getTrajectoryType(TrajectoryType specifiedType, FramePoint3DReadOnly finalPosition)
