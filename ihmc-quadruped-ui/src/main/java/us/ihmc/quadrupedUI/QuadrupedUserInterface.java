@@ -173,13 +173,14 @@ public class QuadrupedUserInterface
                                                                QuadrupedUIMessagerAPI.GoalPositionTopic,
                                                                QuadrupedUIMessagerAPI.GoalOrientationTopic,
                                                                QuadrupedUIMessagerAPI.XGaitSettingsTopic,
-                                                               QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
+                                                               QuadrupedUIMessagerAPI.PlanarRegionDataTopic,
+                                                               QuadrupedUIMessagerAPI.RobotConfigurationDataTopic);
       this.startGoalPositionEditor = new StartGoalPositionEditor(messager, subScenePane, QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.StartPositionTopic, QuadrupedUIMessagerAPI.GoalPositionTopic,
                                                                  QuadrupedUIMessagerAPI.PlanarRegionDataTopic, QuadrupedUIMessagerAPI.SelectedRegionTopic,
                                                                  QuadrupedUIMessagerAPI.StartOrientationEditModeEnabledTopic,
-                                                                 QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic);
+                                                                 null);//QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic);
       this.startGoalOrientationEditor = new StartGoalOrientationEditor(messager, subScene, QuadrupedUIMessagerAPI.EditModeEnabledTopic,
                                                                        QuadrupedUIMessagerAPI.StartOrientationEditModeEnabledTopic,
                                                                        QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic,

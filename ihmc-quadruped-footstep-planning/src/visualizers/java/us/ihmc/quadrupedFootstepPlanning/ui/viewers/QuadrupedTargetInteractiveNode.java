@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import controller_msgs.msg.dds.RobotConfigurationData;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -30,10 +31,13 @@ import javafx.scene.transform.Translate;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;
+import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.yawPitchRoll.YawPitchRoll;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMeshBuilder;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
@@ -104,7 +108,7 @@ public class QuadrupedTargetInteractiveNode
    public static void configureAsGoalPoseViewer(QuadrupedTargetInteractiveNode interactiveNode, JavaFXMessager messager, Topic<Boolean> showTopic,
                                                 Topic<Boolean> selectedPositionTopic, Topic<Boolean> selectedOrientationTopic, Topic<Point3D> positionTopic,
                                                 Topic<Quaternion> orientationTopic, Topic<QuadrupedXGaitSettingsReadOnly> xGaitSettingsTopic,
-                                                Topic<PlanarRegionsList> planarRegionsTopic)
+                                                Topic<PlanarRegionsList> planarRegionsTopic, Topic<RobotConfigurationData> currentRobotConfigurationTopic)
    {
       TargetNode node = interactiveNode.getTargetNode();
       messager.bindPropertyToTopic(showTopic, node.showProperty());
@@ -150,6 +154,27 @@ public class QuadrupedTargetInteractiveNode
             return null;
 
          return new Point3D(PlanarRegionTools.projectPointToPlanesVertically(new Point3D(in.getX(), in.getY(), 100.0), planarRegionsList));
+      });
+
+      AtomicReference<RobotConfigurationData> robotConfigurationInput = messager.createInput(currentRobotConfigurationTopic, null);
+
+      node.positionProperty().addListener(new ChangeListener<Point3D>()
+      {
+         @Override
+         public void changed(ObservableValue<? extends Point3D> observable, Point3D oldValue, Point3D newValue)
+         {
+            if (!node.isPositionSelected())
+               return;
+
+            Point2D robotPosition = new Point2D();
+            if (robotConfigurationInput.get() != null)
+               robotPosition.set(robotConfigurationInput.get().getRootTranslation());
+            Point2D targetPosition = new Point2D(newValue);
+            Vector2D direction = new Vector2D();
+            direction.sub(targetPosition, robotPosition);
+            double heading = Math.atan2(direction.getY(), direction.getX());
+            node.orientationProperty().set(new YawPitchRoll(heading, 0.0, 0.0));
+         }
       });
 
       node.setUnselectedMaterial(new PhongMaterial(Color.RED));
