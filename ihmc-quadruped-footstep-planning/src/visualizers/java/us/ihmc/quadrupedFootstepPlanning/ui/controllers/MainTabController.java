@@ -579,6 +579,8 @@ public class MainTabController
          startFeetPositions.put(robotQuadrant, new Point3D(footPosition));
       }
 
+      messager.submitMessage(startPositionTopic, startPositionProperty.get());
+      messager.submitMessage(startOrientationTopic, startRotationProperty.get());
       messager.submitMessage(startTargetTypeTopic, FootstepPlannerTargetType.FOOTSTEPS);
       messager.submitMessage(startFeetPositionTopic, startFeetPositions);
    }
