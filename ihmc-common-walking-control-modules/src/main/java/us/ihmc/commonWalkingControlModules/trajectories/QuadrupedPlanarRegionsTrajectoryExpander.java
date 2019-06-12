@@ -100,8 +100,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       INITIALIZED, FAILURE_HIT_MAX_ADJUSTMENT_DISTANCE, SEARCHING_FOR_SOLUTION, SOLUTION_FOUND,
    }
 
-   public QuadrupedPlanarRegionsTrajectoryExpander(YoVariableRegistry parentRegistry,
-                                                   YoGraphicsListRegistry graphicsListRegistry)
+   public QuadrupedPlanarRegionsTrajectoryExpander(YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicsListRegistry)
    {
       String namePrefix = "trajectoryExpander";
       twoWaypointSwingGenerator = new TwoWaypointSwingGenerator(namePrefix + "Two", minSwingHeight, maxSwingHeight, defaultSwingHeight, parentRegistry,
@@ -177,48 +176,70 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       }
       else
       {
-         swingGenerator = oneWaypointSwingGenerator;
-         numberOfWaypoints.set(1);
+         this.swingStartPosition.setMatchingFrame(swingStartPosition);
+         this.swingEndPosition.setMatchingFrame(swingEndPosition);
+         oneWaypointSwingGenerator.setInitialConditions(this.swingStartPosition, initialVelocity);
+         oneWaypointSwingGenerator.setFinalConditions(this.swingEndPosition, touchdownVelocity);
+         oneWaypointSwingGenerator.setStepTime(stepDurationToCheckWith.getDoubleValue());
+
+         FramePoint3D waypoint = originalWaypoints.add();
+         waypoint.interpolate(swingStartPosition, swingEndPosition, oneWaypointSwingProportion);
+         midGroundPoint.set(waypoint);
+         waypoint.addZ(swingHeight);
+         adjustedWaypoints.add().set(waypoint);
+
+
+         swingTrajectoryPlane.set(this.swingStartPosition, adjustedWaypoints.get(0), this.swingEndPosition);
+
+         axisAngle.set(swingTrajectoryPlane.getNormal(), Math.PI / 2.0);
+         rigidBodyTransform.setRotation(axisAngle);
+
+         tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
+         rigidBodyTransform.transform(tempPlaneNormal);
+         tempPlaneNormal.normalize();
+         swingFloorPlane.set(this.swingStartPosition, tempPlaneNormal);
+
+         tempPlaneNormal.sub(this.swingEndPosition, this.swingStartPosition);
+         tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingStartPosition);
+         frontOfCollisionPlaneFacingEnd.set(tempPointOnPlane, tempPlaneNormal);
+
+         tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
+         tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingEndPosition);
+         backOfCollisionPlaneFacingStart.set(tempPointOnPlane, tempPlaneNormal);
+
+         if (checkOnePointTrajectoryForCollisions(planarRegionsList))
+         {
+            oneWaypointSwingGenerator.hideVisualization();
+            swingGenerator = twoWaypointSwingGenerator;
+            originalWaypoints.clear();
+            adjustedWaypoints.clear();
+            numberOfWaypoints.set(2);
+         }
+         else
+         {
+            numberOfWaypoints.set(1);
+            return oneWaypointSwingGenerator.computeAndGetMaxSpeed();
+         }
+
       }
 
-         this.swingStartPosition.setMatchingFrame(swingStartPosition);
-      swingGenerator.setInitialConditions(this.swingStartPosition, initialVelocity);
-
+      this.swingStartPosition.setMatchingFrame(swingStartPosition);
       this.swingEndPosition.setMatchingFrame(swingEndPosition);
-
-
-
-
+      swingGenerator.setInitialConditions(this.swingStartPosition, initialVelocity);
       swingGenerator.setFinalConditions(this.swingEndPosition, touchdownVelocity);
       swingGenerator.setStepTime(stepDurationToCheckWith.getDoubleValue());
 
       double maxStepZ = Math.max(this.swingStartPosition.getZ(), this.swingEndPosition.getZ());
 
       midGroundPoint.setToZero();
-      switch (trajectoryType)
+      for (int i = 0; i < numberOfWaypoints.getIntegerValue(); i++)
       {
-      case OBSTACLE_CLEARANCE:
-         for (int i = 0; i < numberOfWaypoints.getIntegerValue(); i++)
-         {
-            FramePoint3D waypoint = originalWaypoints.add();
-            waypoint.interpolate(swingStartPosition, swingEndPosition, twoWaypoingSwingProportions[i]);
-            midGroundPoint.add(waypoint);
-            waypoint.setZ(maxStepZ + swingHeight);
-            adjustedWaypoints.add().set(waypoint);
-         }
-         break;
-      default:
-         for (int i = 0; i < numberOfWaypoints.getIntegerValue(); i++)
-         {
-            FramePoint3D waypoint = originalWaypoints.add();
-            waypoint.interpolate(swingStartPosition, swingEndPosition, oneWaypointSwingProportion);
-            midGroundPoint.add(waypoint);
-            waypoint.addZ(swingHeight);
-            adjustedWaypoints.add().set(waypoint);
-         }
-         break;
+         FramePoint3D waypoint = originalWaypoints.add();
+         waypoint.interpolate(swingStartPosition, swingEndPosition, twoWaypoingSwingProportions[i]);
+         midGroundPoint.add(waypoint);
+         waypoint.setZ(maxStepZ + swingHeight);
+         adjustedWaypoints.add().set(waypoint);
       }
-
 
       midGroundPoint.scale(0.5);
 
@@ -228,7 +249,6 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
       axisAngle.set(swingTrajectoryPlane.getNormal(), Math.PI / 2.0);
       rigidBodyTransform.setRotation(axisAngle);
-
 
       tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
       rigidBodyTransform.transform(tempPlaneNormal);
@@ -277,7 +297,6 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
          return specifiedType;
       }
    }
-
 
    private boolean checkStepUpOrDown(FramePoint3DReadOnly finalPosition)
    {
@@ -340,41 +359,14 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
                         axisAngle.set(swingTrajectoryPlane.getNormal(), Math.PI * phaseThroughTrajectory);
                         rigidBodyTransform.setRotation(axisAngle);
 
-//                        waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
-//                        waypointAdjustmentVector.normalize();
-//                        rigidBodyTransform.transform(waypointAdjustmentVector);
-//                        waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
-
-                        switch (numberOfWaypoints.getIntegerValue())
-                        {
-                        case 1:
-                           waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
-                           waypointAdjustmentVector.normalize();
-                           rigidBodyTransform.transform(waypointAdjustmentVector);
-                           waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
-//                           waypointAdjustmentVector.scale(1.0 - phaseIncrement);
-                           adjustedWaypoints.get(0).add(waypointAdjustmentVector);
-//                           adjustedWaypoints.get(0).add(waypointAdjustmentVector);
-                           break;
-                        case 2:
 
                            waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
                            waypointAdjustmentVector.normalize();
                            rigidBodyTransform.transform(waypointAdjustmentVector);
                            waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
-                           waypointAdjustmentVector.scale(1.0 - phaseIncrement);
-                           adjustedWaypoints.get(0).add(waypointAdjustmentVector);
 
-                           waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
-                           waypointAdjustmentVector.normalize();
-                           rigidBodyTransform.transform(waypointAdjustmentVector);
-                           waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
-                           waypointAdjustmentVector.scale(phaseIncrement);
-                           adjustedWaypoints.get(1).add(waypointAdjustmentVector);
-                           break;
-                        default:
-                           throw new RuntimeException("not handled");
-                        }
+                           adjustedWaypoints.get(0).scaleAdd(1.0 - phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(0));
+                           adjustedWaypoints.get(1).scaleAdd(phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(1));
 
                         if (haveAnyAdjustmentsHitMaxDistance())
                         {
@@ -394,6 +386,60 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       return SwingOverPlanarRegionsTrajectoryExpansionStatus.SOLUTION_FOUND;
    }
 
+   private boolean checkOnePointTrajectoryForCollisions( PlanarRegionsList planarRegionsList)
+   {
+      oneWaypointSwingGenerator.setTrajectoryType(TrajectoryType.CUSTOM, adjustedWaypoints);
+      oneWaypointSwingGenerator.initialize();
+
+      double phaseIncrement = 1.0 / numberOfCheckpoints.getIntegerValue();
+      for (double phaseThroughTrajectory = 0.0; phaseThroughTrajectory < 1.0; phaseThroughTrajectory += phaseIncrement)
+      {
+         oneWaypointSwingGenerator.compute(phaseThroughTrajectory);
+         FramePoint3D frameTupleUnsafe = new FramePoint3D(trajectoryPosition);
+         oneWaypointSwingGenerator.getPosition(frameTupleUnsafe);
+         trajectoryPosition.setMatchingFrame(frameTupleUnsafe);
+
+         footCollisionSphere.setToZero(worldFrame);
+         footCollisionSphere.setRadius(collisionSphereRadius);
+         footCollisionSphere.getSphere3d().setPosition(trajectoryPosition);
+
+         for (int regionIndex = 0; regionIndex < planarRegionsList.getNumberOfPlanarRegions(); regionIndex++)
+         {
+            PlanarRegion planarRegion = planarRegionsList.getPlanarRegion(regionIndex);
+            planarRegion.getTransformToWorld(planarRegionTransform);
+            planarRegionReferenceFrame.setTransformAndUpdate(planarRegionTransform);
+            for (int j = 0; j < planarRegion.getNumberOfConvexPolygons(); j++)
+            {
+               framePlanarRegion.setIncludingFrame(planarRegionReferenceFrame, planarRegion.getConvexPolygon(j));
+
+               boolean intersectionExists = sphereWithConvexPolygonIntersector.checkIfIntersectionExists(footCollisionSphere, framePlanarRegion);
+               updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.NO_INTERSECTION);
+
+               if (intersectionExists)
+               {
+                  updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.INTERSECTION_BUT_BELOW_IGNORE_PLANE);
+
+                  if (swingFloorPlane.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon())
+                        && swingFloorPlane.distance(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()) > ignoreDistanceFromFloor)
+                  {
+                     updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.INTERSECTION_BUT_OUTSIDE_TRAJECTORY);
+
+                     if ((frontOfCollisionPlaneFacingEnd.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon())
+                           && backOfCollisionPlaneFacingStart.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()))
+                           || midGroundPoint.distance(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()) < midGroundPoint
+                           .distance(trajectoryPosition))
+                     {
+                        updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.CRITICAL_INTERSECTION);
+                        return true;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      return false;
+   }
 
    private boolean haveAnyAdjustmentsHitMaxDistance()
    {
