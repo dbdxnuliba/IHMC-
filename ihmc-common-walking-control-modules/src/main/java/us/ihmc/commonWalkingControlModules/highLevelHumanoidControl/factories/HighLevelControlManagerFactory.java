@@ -230,8 +230,8 @@ public class HighLevelControlManagerFactory
          return collisionManager;
       }
 
-      MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH);
-      RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(RobotSide.LEFT, LegJointName.KNEE_PITCH).getSuccessor();
+      MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH);
+      RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH).getSuccessor();
       assert (shinBody.hasChildrenJoints());
       MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();

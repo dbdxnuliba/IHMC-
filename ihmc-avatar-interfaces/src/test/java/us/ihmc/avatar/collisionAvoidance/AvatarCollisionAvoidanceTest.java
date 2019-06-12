@@ -10,18 +10,22 @@ import org.junit.jupiter.api.BeforeEach;
 import controller_msgs.msg.dds.CollisionManagerMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
+import controller_msgs.msg.dds.PlanarRegionMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionTiming;
+import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
@@ -82,9 +86,8 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
-      //send 0.374 to collision manager
-      CollisionManagerMessage collisionMessage = new CollisionManagerMessage();
-      collisionMessage.setTest((float) 0.38);
+      CollisionManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
+
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(collisionMessage);
 
@@ -128,6 +131,24 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       newList.setExecutionTiming(ExecutionTiming.CONTROL_ABSOLUTE_TIMINGS.toByte());
 
       return newList;
+   }
+
+   private CollisionManagerMessage createCollisionMessage(PlanarRegionsList planarRegions)
+   {
+      CollisionManagerMessage collisionMessage = new CollisionManagerMessage();
+      collisionMessage.setTest((float) 0.38);
+
+      for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
+      {
+         Vector3D normal = planarRegions.getPlanarRegion(i).getNormal();
+         if (Math.abs(normal.getZ()) < 0.1)
+         {
+            PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
+            collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
+         }
+      }
+
+      return collisionMessage;
    }
 
    private void assertReachedGoal(FootstepDataListMessage footsteps)
