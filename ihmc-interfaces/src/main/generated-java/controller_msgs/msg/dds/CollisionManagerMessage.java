@@ -9,9 +9,12 @@ import us.ihmc.pubsub.TopicDataType;
 public class CollisionManagerMessage extends Packet<CollisionManagerMessage> implements Settable<CollisionManagerMessage>, EpsilonComparable<CollisionManagerMessage>
 {
    public float test_;
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PlanarRegionMessage>  planar_regions_list_;
 
    public CollisionManagerMessage()
    {
+      planar_regions_list_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PlanarRegionMessage> (100, new controller_msgs.msg.dds.PlanarRegionMessagePubSubType());
+
    }
 
    public CollisionManagerMessage(CollisionManagerMessage other)
@@ -24,6 +27,7 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
    {
       test_ = other.test_;
 
+      planar_regions_list_.set(other.planar_regions_list_);
    }
 
    public void setTest(float test)
@@ -33,6 +37,12 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
    public float getTest()
    {
       return test_;
+   }
+
+
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PlanarRegionMessage>  getPlanarRegionsList()
+   {
+      return planar_regions_list_;
    }
 
 
@@ -55,6 +65,14 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.test_, other.test_, epsilon)) return false;
 
+      if (this.planar_regions_list_.size() != other.planar_regions_list_.size()) { return false; }
+      else
+      {
+         for (int i = 0; i < this.planar_regions_list_.size(); i++)
+         {  if (!this.planar_regions_list_.get(i).epsilonEquals(other.planar_regions_list_.get(i), epsilon)) return false; }
+      }
+
+
       return true;
    }
 
@@ -69,6 +87,7 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
 
       if(this.test_ != otherMyClass.test_) return false;
 
+      if (!this.planar_regions_list_.equals(otherMyClass.planar_regions_list_)) return false;
 
       return true;
    }
@@ -80,7 +99,9 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
 
       builder.append("CollisionManagerMessage {");
       builder.append("test=");
-      builder.append(this.test_);
+      builder.append(this.test_);      builder.append(", ");
+      builder.append("planar_regions_list=");
+      builder.append(this.planar_regions_list_);
       builder.append("}");
       return builder.toString();
    }
