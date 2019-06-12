@@ -76,6 +76,8 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
 
       return current_alignment - initial_alignment;
    }
@@ -134,6 +136,9 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -164,8 +169,12 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
 
       cdr.write_type_6(data.getHorizonLength());
 
+      cdr.write_type_6(data.getObstacleAvoidanceRadius());
+
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.write(data.getPlanarRegionsListMessage(), cdr);
       cdr.write_type_7(data.getAssumeFlatGround());
+
+      cdr.write_type_7(data.getAvoidObstaclesInSwing());
 
    }
 
@@ -195,8 +204,12 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
       	
       data.setHorizonLength(cdr.read_type_6());
       	
+      data.setObstacleAvoidanceRadius(cdr.read_type_6());
+      	
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.read(data.getPlanarRegionsListMessage(), cdr);	
       data.setAssumeFlatGround(cdr.read_type_7());
+      	
+      data.setAvoidObstaclesInSwing(cdr.read_type_7());
       	
 
    }
@@ -228,9 +241,11 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
       ser.write_type_6("timeout", data.getTimeout());
       ser.write_type_6("best_effort_timeout", data.getBestEffortTimeout());
       ser.write_type_6("horizon_length", data.getHorizonLength());
+      ser.write_type_6("obstacle_avoidance_radius", data.getObstacleAvoidanceRadius());
       ser.write_type_a("planar_regions_list_message", new controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType(), data.getPlanarRegionsListMessage());
 
       ser.write_type_7("assume_flat_ground", data.getAssumeFlatGround());
+      ser.write_type_7("avoid_obstacles_in_swing", data.getAvoidObstaclesInSwing());
    }
 
    @Override
@@ -260,9 +275,11 @@ public class PawStepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.To
       data.setTimeout(ser.read_type_6("timeout"));
       data.setBestEffortTimeout(ser.read_type_6("best_effort_timeout"));
       data.setHorizonLength(ser.read_type_6("horizon_length"));
+      data.setObstacleAvoidanceRadius(ser.read_type_6("obstacle_avoidance_radius"));
       ser.read_type_a("planar_regions_list_message", new controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType(), data.getPlanarRegionsListMessage());
 
       data.setAssumeFlatGround(ser.read_type_7("assume_flat_ground"));
+      data.setAvoidObstaclesInSwing(ser.read_type_7("avoid_obstacles_in_swing"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.PawStepPlanningRequestPacket src, controller_msgs.msg.dds.PawStepPlanningRequestPacket dest)

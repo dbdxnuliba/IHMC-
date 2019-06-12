@@ -68,9 +68,10 @@ public class PawPlanningController extends QuadrupedToolboxController
    private final YoBoolean isDone = new YoBoolean("isDone", registry);
    private final YoDouble timeout = new YoDouble("toolboxTimeout", registry);
    private final YoInteger planId = new YoInteger("planId", registry);
+   private final YoDouble obstacleAvoidanceRadius = new YoDouble("obstacleAvoidanceRadius", registry);
+   private final YoBoolean avoidObstaclesInSwing = new YoBoolean("avoidObstaclesInSwing", registry);
 
    private final QuadrupedPlanarRegionsTrajectoryExpander swingOverPlanarRegionsTrajectoryExpander;
-
 
    public PawPlanningController(QuadrupedXGaitSettingsReadOnly defaultXGaitSettings, VisibilityGraphsParametersBasics defaultVisibilityGraphParameters,
                                 PawStepPlannerParametersBasics pawPlannerParameters, PointFootSnapperParameters pointFootSnapperParameters,
@@ -86,6 +87,7 @@ public class PawPlanningController extends QuadrupedToolboxController
       new YoPawStepPlannerParameters(pawPlannerParameters, registry);
       new YoVisibilityGraphParameters(registry, visibilityGraphParameters);
 
+      obstacleAvoidanceRadius.set(0.05);
       swingOverPlanarRegionsTrajectoryExpander = new QuadrupedPlanarRegionsTrajectoryExpander(registry, graphicsListRegistry);
 
       if (robotDataReceiver != null)
@@ -169,6 +171,10 @@ public class PawPlanningController extends QuadrupedToolboxController
       PawStepPlanningRequestPacket request = latestRequestReference.getAndSet(null);
       if (request == null)
          return false;
+
+      if (request.getObstacleAvoidanceRadius() != -1.0)
+         obstacleAvoidanceRadius.set(request.getObstacleAvoidanceRadius());
+      avoidObstaclesInSwing.set(request.getAvoidObstaclesInSwing());
 
       planId.set(request.getPlannerRequestId());
       if (request.getRequestedPawPlannerType() >= 0)
@@ -356,7 +362,8 @@ public class PawPlanningController extends QuadrupedToolboxController
       result.setFootstepPlanningResult(status.toByte());
       result.setTimeTaken(plannerMap.get(activePlanner.getEnumValue()).getPlanningDuration());
 
-      addObstacleAvoidanceWaypointsWhenNecessary(result.getFootstepDataList());
+      if (avoidObstaclesInSwing.getBooleanValue())
+         addObstacleAvoidanceWaypointsWhenNecessary(result.getFootstepDataList());
 
       return result;
    }
@@ -365,6 +372,8 @@ public class PawPlanningController extends QuadrupedToolboxController
    {
       if (!planarRegionsList.isPresent())
          return;
+
+      swingOverPlanarRegionsTrajectoryExpander.setCollisionSphereRadius(obstacleAvoidanceRadius.getDoubleValue());
 
       QuadrantDependentList<FramePoint3D> footPositions = new QuadrantDependentList<>();
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
@@ -376,16 +385,15 @@ public class PawPlanningController extends QuadrupedToolboxController
       FramePoint3D swingStartPosition = new FramePoint3D();
       FramePoint3D swingEndPosition = new FramePoint3D();
 
-
-      for (int stepIndex = 1; stepIndex < stepListMessage.getQuadrupedStepList().size(); stepIndex++)
+      for (int stepIndex = 0; stepIndex < stepListMessage.getQuadrupedStepList().size(); stepIndex++)
       {
          QuadrupedStepMessage stepMessage = stepListMessage.getQuadrupedStepList().get(stepIndex).getQuadrupedStepMessage();
          RobotQuadrant movingQuadrant = RobotQuadrant.fromByte(stepMessage.getRobotQuadrant());
          swingStartPosition.set(footPositions.get(movingQuadrant));
          swingEndPosition.set(stepMessage.getGoalPosition());
 
-
-         if (swingOverPlanarRegionsTrajectoryExpander.expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, 0.08, planarRegionsList.get(), null))
+         if (swingOverPlanarRegionsTrajectoryExpander
+               .expandTrajectoryOverPlanarRegions(swingStartPosition, swingEndPosition, xGaitSettings.getStepGroundClearance(), planarRegionsList.get(), null))
          {
             List<FramePoint3D> expandedWaypoints = swingOverPlanarRegionsTrajectoryExpander.getExpandedWaypoints();
             for (int waypointIndex = 0; waypointIndex < expandedWaypoints.size(); waypointIndex++)

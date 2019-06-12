@@ -69,8 +69,12 @@ module controller_msgs
         double timeout;
         double best_effort_timeout;
         double horizon_length;
+        @defaultValue(value=-1.0)
+        double obstacle_avoidance_radius;
         controller_msgs::msg::dds::PlanarRegionsListMessage planar_regions_list_message;
         boolean assume_flat_ground;
+        @defaultValue(value=True)
+        boolean avoid_obstacles_in_swing;
       };
     };
   };

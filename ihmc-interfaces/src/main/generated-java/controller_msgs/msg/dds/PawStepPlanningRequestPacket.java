@@ -40,8 +40,10 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
    public double timeout_;
    public double best_effort_timeout_;
    public double horizon_length_;
+   public double obstacle_avoidance_radius_ = -1.0;
    public controller_msgs.msg.dds.PlanarRegionsListMessage planar_regions_list_message_;
    public boolean assume_flat_ground_;
+   public boolean avoid_obstacles_in_swing_ = true;
 
    public PawStepPlanningRequestPacket()
    {
@@ -88,8 +90,12 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
 
       horizon_length_ = other.horizon_length_;
 
+      obstacle_avoidance_radius_ = other.obstacle_avoidance_radius_;
+
       controller_msgs.msg.dds.PlanarRegionsListMessagePubSubType.staticCopy(other.planar_regions_list_message_, planar_regions_list_message_);
       assume_flat_ground_ = other.assume_flat_ground_;
+
+      avoid_obstacles_in_swing_ = other.avoid_obstacles_in_swing_;
 
    }
 
@@ -219,6 +225,15 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
       return horizon_length_;
    }
 
+   public void setObstacleAvoidanceRadius(double obstacle_avoidance_radius)
+   {
+      obstacle_avoidance_radius_ = obstacle_avoidance_radius;
+   }
+   public double getObstacleAvoidanceRadius()
+   {
+      return obstacle_avoidance_radius_;
+   }
+
 
    public controller_msgs.msg.dds.PlanarRegionsListMessage getPlanarRegionsListMessage()
    {
@@ -232,6 +247,15 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
    public boolean getAssumeFlatGround()
    {
       return assume_flat_ground_;
+   }
+
+   public void setAvoidObstaclesInSwing(boolean avoid_obstacles_in_swing)
+   {
+      avoid_obstacles_in_swing_ = avoid_obstacles_in_swing;
+   }
+   public boolean getAvoidObstaclesInSwing()
+   {
+      return avoid_obstacles_in_swing_;
    }
 
 
@@ -276,8 +300,12 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.horizon_length_, other.horizon_length_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.obstacle_avoidance_radius_, other.obstacle_avoidance_radius_, epsilon)) return false;
+
       if (!this.planar_regions_list_message_.epsilonEquals(other.planar_regions_list_message_, epsilon)) return false;
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.assume_flat_ground_, other.assume_flat_ground_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.avoid_obstacles_in_swing_, other.avoid_obstacles_in_swing_, epsilon)) return false;
 
 
       return true;
@@ -316,8 +344,12 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
 
       if(this.horizon_length_ != otherMyClass.horizon_length_) return false;
 
+      if(this.obstacle_avoidance_radius_ != otherMyClass.obstacle_avoidance_radius_) return false;
+
       if (!this.planar_regions_list_message_.equals(otherMyClass.planar_regions_list_message_)) return false;
       if(this.assume_flat_ground_ != otherMyClass.assume_flat_ground_) return false;
+
+      if(this.avoid_obstacles_in_swing_ != otherMyClass.avoid_obstacles_in_swing_) return false;
 
 
       return true;
@@ -361,10 +393,14 @@ public class PawStepPlanningRequestPacket extends Packet<PawStepPlanningRequestP
       builder.append(this.best_effort_timeout_);      builder.append(", ");
       builder.append("horizon_length=");
       builder.append(this.horizon_length_);      builder.append(", ");
+      builder.append("obstacle_avoidance_radius=");
+      builder.append(this.obstacle_avoidance_radius_);      builder.append(", ");
       builder.append("planar_regions_list_message=");
       builder.append(this.planar_regions_list_message_);      builder.append(", ");
       builder.append("assume_flat_ground=");
-      builder.append(this.assume_flat_ground_);
+      builder.append(this.assume_flat_ground_);      builder.append(", ");
+      builder.append("avoid_obstacles_in_swing=");
+      builder.append(this.avoid_obstacles_in_swing_);
       builder.append("}");
       return builder.toString();
    }

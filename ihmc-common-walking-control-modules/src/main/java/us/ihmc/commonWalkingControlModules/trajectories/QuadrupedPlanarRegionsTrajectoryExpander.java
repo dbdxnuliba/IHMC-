@@ -457,6 +457,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       this.collisionSphereRadius = Math.max(0.0, collisionSphereRadius);
    }
 
+
    private void updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType collisionType)
    {
       if (collisionType.ordinal() > this.mostSevereCollisionType.getEnumValue().ordinal())

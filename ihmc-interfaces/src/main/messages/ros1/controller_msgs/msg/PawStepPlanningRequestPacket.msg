@@ -54,8 +54,14 @@ float64 best_effort_timeout
 
 float64 horizon_length
 
+# Field default value -1.0
+float64 obstacle_avoidance_radius
+
 controller_msgs/PlanarRegionsListMessage planar_regions_list_message
 
 bool assume_flat_ground
+
+# Field default value True
+bool avoid_obstacles_in_swing
 
 
