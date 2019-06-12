@@ -128,7 +128,7 @@ public class OneWaypointSwingGenerator implements SwingGenerator
    }
 
    @Override
-   public void setTrajectoryType(TrajectoryType trajectoryType, RecyclingArrayList<FramePoint3D> waypoints)
+   public void setTrajectoryType(TrajectoryType trajectoryType, List<FramePoint3D> waypoints)
    {
       if (trajectoryType == TrajectoryType.CUSTOM && waypoints == null)
       {
@@ -326,5 +326,11 @@ public class OneWaypointSwingGenerator implements SwingGenerator
       waypointDataToPack.setTime(waypointTime);
       waypointDataToPack.setPosition(waypointPositions.get(waypointIndex));
       waypointDataToPack.setLinearVelocity(tempWaypointVelocity);
+   }
+
+   public double computeAndGetMaxSpeed()
+   {
+      trajectory.computeMaxSpeed();
+      return trajectory.getMaxSpeed() / stepTime.getDoubleValue();
    }
 }

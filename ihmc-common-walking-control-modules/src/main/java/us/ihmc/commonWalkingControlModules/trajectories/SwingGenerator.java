@@ -8,6 +8,8 @@ import us.ihmc.robotics.math.trajectories.PositionTrajectoryGenerator;
 import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameEuclideanTrajectoryPoint;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 
+import java.util.List;
+
 public interface SwingGenerator extends PositionTrajectoryGenerator
 {
    boolean doOptimizationUpdate();
@@ -23,7 +25,7 @@ public interface SwingGenerator extends PositionTrajectoryGenerator
       setTrajectoryType(trajectoryType, null);
    }
 
-   void setTrajectoryType(TrajectoryType trajectoryType, RecyclingArrayList<FramePoint3D> waypoints);
+   void setTrajectoryType(TrajectoryType trajectoryType, List<FramePoint3D> waypoints);
 
    void setStanceFootPosition(FramePoint3DReadOnly stanceFootPosition);
 
@@ -34,4 +36,6 @@ public interface SwingGenerator extends PositionTrajectoryGenerator
    int getNumberOfWaypoints();
 
    void getWaypointData(int waypointIndex, FrameEuclideanTrajectoryPoint waypointDataToPack);
+
+   double computeAndGetMaxSpeed();
 }

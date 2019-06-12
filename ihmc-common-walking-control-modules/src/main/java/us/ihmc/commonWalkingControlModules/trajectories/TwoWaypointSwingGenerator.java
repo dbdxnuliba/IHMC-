@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.trajectories;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
@@ -133,7 +134,7 @@ public class TwoWaypointSwingGenerator implements SwingGenerator
    }
 
    @Override
-   public void setTrajectoryType(TrajectoryType trajectoryType, RecyclingArrayList<FramePoint3D> waypoints)
+   public void setTrajectoryType(TrajectoryType trajectoryType, List<FramePoint3D> waypoints)
    {
       if (trajectoryType == TrajectoryType.CUSTOM && waypoints == null)
       {
