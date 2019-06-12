@@ -1,16 +1,20 @@
 package us.ihmc.quadrupedFootstepPlanning.ui.viewers;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -24,10 +28,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.TransformChangedEvent;
 import javafx.scene.transform.Translate;
 import us.ihmc.euclid.axisAngle.AxisAngle;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;
-import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
@@ -61,11 +63,50 @@ public class QuadrupedTargetInteractiveNode
       return node;
    }
 
-   public <O extends Orientation3DReadOnly> void configureWithMessager(JavaFXMessager messager, Topic<Boolean> showTopic, Topic<Boolean> selectedPositionTopic,
-                                                                       Topic<Boolean> selectedOrientationTopic, Topic<Point3D> positionTopic,
-                                                                       Topic<O> orientationTopic, Topic<QuadrupedXGaitSettingsReadOnly> xGaitSettingsTopic,
-                                                                       Topic<PlanarRegionsList> planarRegionsTopic)
+   public static void configureAsStartPoseViewer(QuadrupedTargetInteractiveNode interactiveNode, JavaFXMessager messager, Topic<Boolean> showTopic,
+                                                 Topic<Point3D> positionTopic, Topic<Quaternion> orientationTopic,
+                                                 Topic<QuadrantDependentList<Point3D>> feetLocationTopic)
    {
+      TargetNode node = interactiveNode.getTargetNode();
+      messager.bindPropertyToTopic(showTopic, node.showProperty());
+      node.setSelectable(false);
+      messager.registerJavaFXSyncedTopicListener(positionTopic, m ->
+      {
+         if (m != null)
+         {
+            node.positionProperty().set(new Point3D(m));
+            if (!node.isShown())
+               node.show(true);
+         }
+      });
+      messager.registerJavaFXSyncedTopicListener(orientationTopic, m ->
+      {
+         if (m != null)
+         {
+            node.orientationProperty().set(new Quaternion(m));
+            if (!node.isShown())
+               node.show(true);
+         }
+      });
+
+      Property<QuadrantDependentList<Point3D>> feetLocationProperty = messager.createPropertyInput(feetLocationTopic, new QuadrantDependentList<>());
+      feetLocationProperty.addListener((InvalidationListener) observable ->
+      {
+         node.adjustFeetPosition();
+         if (!node.isShown())
+            node.show(true);
+      });
+
+      node.setIndividualFootPositionAdjustment((robotQuadrant, in) -> feetLocationProperty.getValue().getOrDefault(robotQuadrant, in));
+      node.setUnselectedMaterial(new PhongMaterial(Color.GREEN));
+   }
+
+   public static void configureAsGoalPoseViewer(QuadrupedTargetInteractiveNode interactiveNode, JavaFXMessager messager, Topic<Boolean> showTopic,
+                                                Topic<Boolean> selectedPositionTopic, Topic<Boolean> selectedOrientationTopic, Topic<Point3D> positionTopic,
+                                                Topic<Quaternion> orientationTopic, Topic<QuadrupedXGaitSettingsReadOnly> xGaitSettingsTopic,
+                                                Topic<PlanarRegionsList> planarRegionsTopic)
+   {
+      TargetNode node = interactiveNode.getTargetNode();
       messager.bindPropertyToTopic(showTopic, node.showProperty());
       messager.bindBidirectional(selectedPositionTopic, node.positionSelectedProperty(), false);
       messager.bindBidirectional(selectedOrientationTopic, node.orientationSelectedProperty(), false);
@@ -108,8 +149,10 @@ public class QuadrupedTargetInteractiveNode
          if (planarRegionsList == null)
             return null;
 
-         return PlanarRegionTools.projectPointToPlanesVertically(new Point3D(in.getX(), in.getY(), 100.0), planarRegionsList);
+         return new Point3D(PlanarRegionTools.projectPointToPlanesVertically(new Point3D(in.getX(), in.getY(), 100.0), planarRegionsList));
       });
+
+      node.setUnselectedMaterial(new PhongMaterial(Color.RED));
    }
 
    public static class TargetNode extends Group
@@ -130,10 +173,12 @@ public class QuadrupedTargetInteractiveNode
 
       private Material unselectedMaterial = defaultUnselectedMaterial;
       private Material selectedMaterial = defaultSelectedMaterial;
-      private final BooleanProperty positionSelectedProperty = new SimpleBooleanProperty(this, "selected");
-      private final BooleanProperty orientationSelectedProperty = new SimpleBooleanProperty(this, "selected");
 
-      private Function<Point3DReadOnly, Point3DReadOnly> footPositionAdjustment = Function.identity();
+      private final BooleanProperty selectableProperty = new SimpleBooleanProperty(this, "selectable", true);
+      private final BooleanProperty positionSelectedProperty = new SimpleBooleanProperty(this, "positionSelected");
+      private final BooleanProperty orientationSelectedProperty = new SimpleBooleanProperty(this, "orientationSelected");
+
+      private BiFunction<RobotQuadrant, Point3D, Point3D> footPositionAdjustment = null;
 
       private final Affine nodeAffine = new Affine();
 
@@ -157,7 +202,6 @@ public class QuadrupedTargetInteractiveNode
          arrow.getTransforms().add(arrowAdjustmentRotate);
          getTransforms().add(nodeAffine);
          nodeAffine.addEventHandler(TransformChangedEvent.TRANSFORM_CHANGED, e -> adjustFeetPosition());
-         nodeAffine.addEventHandler(TransformChangedEvent.TRANSFORM_CHANGED, e -> adjustArrowOrientation());
 
          showProperty.addListener(new ChangeListener<Boolean>()
          {
@@ -182,20 +226,63 @@ public class QuadrupedTargetInteractiveNode
 
          positionSelectedProperty.addListener((observable, oldValue, newValue) ->
          {
-            if (newValue.booleanValue() != oldValue.booleanValue())
+            if (!selectableProperty.get() && newValue.booleanValue())
+            {
+               positionSelectedProperty.set(false);
+               setPositionMaterial(unselectedMaterial);
+            }
+            else if (newValue.booleanValue() != oldValue.booleanValue())
+            {
                setPositionMaterial(newValue.booleanValue() ? selectedMaterial : unselectedMaterial);
+            }
          });
          orientationSelectedProperty.addListener((observable, oldValue, newValue) ->
          {
-            if (newValue.booleanValue() != oldValue.booleanValue())
+            if (!selectableProperty.get() && newValue.booleanValue())
+            {
+               orientationSelectedProperty.set(false);
+               setOrientationMaterial(unselectedMaterial);
+            }
+            else if (newValue.booleanValue() != oldValue.booleanValue())
+            {
                setOrientationMaterial(newValue.booleanValue() ? selectedMaterial : unselectedMaterial);
+            }
          });
 
          setPositionMaterial(unselectedMaterial);
          setOrientationMaterial(unselectedMaterial);
 
-         center.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> positionSelectedProperty.set(true));
-         arrow.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> orientationSelectedProperty.set(true));
+         EventHandler<? super MouseEvent> positionSelector = e -> positionSelectedProperty.set(true);
+         EventHandler<? super MouseEvent> orientationSelector = e ->
+         {
+            positionSelectedProperty.set(true);
+            orientationSelectedProperty.set(true);
+         };
+
+         selectableProperty.addListener(new ChangeListener<Boolean>()
+         {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue)
+            {
+               if (newValue != null && newValue.booleanValue() != oldValue.booleanValue())
+               {
+                  if (newValue.booleanValue())
+                  {
+                     center.addEventHandler(MouseEvent.MOUSE_CLICKED, positionSelector);
+                     arrow.addEventHandler(MouseEvent.MOUSE_CLICKED, orientationSelector);
+                  }
+                  else
+                  {
+                     center.removeEventHandler(MouseEvent.MOUSE_CLICKED, positionSelector);
+                     arrow.removeEventHandler(MouseEvent.MOUSE_CLICKED, orientationSelector);
+                     positionSelectedProperty.set(false);
+                     orientationSelectedProperty.set(false);
+                  }
+               }
+            }
+         });
+
+         selectableProperty.set(true);
       }
 
       private MeshView createArrowGraphic(double length, double radius)
@@ -214,6 +301,9 @@ public class QuadrupedTargetInteractiveNode
 
       private void adjustFeetPosition()
       {
+         if (footPositionAdjustment == null)
+            return;
+
          for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          {
             Sphere foot = feet.get(robotQuadrant);
@@ -221,7 +311,7 @@ public class QuadrupedTargetInteractiveNode
             Translate translate = feetAdjustmentTranslates.get(robotQuadrant);
             javafx.geometry.Point3D localToParent = foot.localToScene(0.0, 0.0, 0.0);
             Point3D footPosition = new Point3D(localToParent.getX(), localToParent.getY(), localToParent.getZ());
-            Point3DReadOnly adjustedPosition = footPositionAdjustment.apply(footPosition);
+            Point3DReadOnly adjustedPosition = footPositionAdjustment.apply(robotQuadrant, footPosition);
 
             if (adjustedPosition == null)
             {
@@ -253,55 +343,14 @@ public class QuadrupedTargetInteractiveNode
          }
       }
 
-      private void adjustArrowOrientation()
-      {
-         javafx.geometry.Point3D localToParent = arrow.localToScene(DEFAULT_ARROW_LENGTH, 0.0, 0.0);
-         Point3D arrowHeadPosition = new Point3D(localToParent.getX(), localToParent.getY(), localToParent.getZ());
-         Point3DReadOnly adjustedPosition = footPositionAdjustment.apply(arrowHeadPosition);
-
-         if (adjustedPosition == null)
-         {
-            arrowAdjustmentRotate.setAngle(0.0);
-         }
-         else
-         {
-            Vector3D adjustmentVector = new Vector3D();
-            adjustmentVector.sub(adjustedPosition, arrowHeadPosition);
-
-            try
-            {
-               javafx.geometry.Point3D localOffset = arrow.getLocalToSceneTransform()
-                                                          .inverseDeltaTransform(adjustmentVector.getX(), adjustmentVector.getY(), adjustmentVector.getZ());
-               Vector3D originalArrowVector = new Vector3D(DEFAULT_ARROW_LENGTH, 0.0, 0.0);
-               Vector3D adjustedArrowVector = new Vector3D(localOffset.getX(), localOffset.getY(), localOffset.getZ());
-               adjustedArrowVector.add(originalArrowVector);
-               AxisAngle axisAngle = new AxisAngle();
-               EuclidGeometryTools.axisAngleFromFirstToSecondVector3D(originalArrowVector, adjustedArrowVector, axisAngle);
-               appendOrientation(axisAngle, arrowAdjustmentRotate);
-            }
-            catch (NonInvertibleTransformException e)
-            {
-               e.printStackTrace();
-               arrowAdjustmentRotate.setAngle(0.0);
-            }
-         }
-      }
-
-      private static void appendOrientation(Orientation3DReadOnly orientationToAdd, Rotate rotateToModify)
-      {
-         AxisAngle axisAngle = new AxisAngle();
-         axisAngle.setAxisAngle(rotateToModify.getAxis().getX(),
-                                rotateToModify.getAxis().getY(),
-                                rotateToModify.getAxis().getZ(),
-                                Math.toRadians(rotateToModify.getAngle()));
-         axisAngle.append(orientationToAdd);
-         rotateToModify.setAngle(Math.toDegrees(axisAngle.getAngle()));
-         rotateToModify.setAxis(new javafx.geometry.Point3D(axisAngle.getX(), axisAngle.getY(), axisAngle.getZ()));
-      }
-
-      public void setFootPositionAdjustment(Function<Point3DReadOnly, Point3DReadOnly> function)
+      public void setIndividualFootPositionAdjustment(BiFunction<RobotQuadrant, Point3D, Point3D> function)
       {
          footPositionAdjustment = function;
+      }
+
+      public void setFootPositionAdjustment(Function<Point3D, Point3D> function)
+      {
+         footPositionAdjustment = (robotQuadrant, in) -> function.apply(in);
       }
 
       public void setPositionMaterial(Material material)
@@ -352,6 +401,21 @@ public class QuadrupedTargetInteractiveNode
             setPositionMaterial(unselectedMaterial);
          if (!orientationSelectedProperty.get())
             setOrientationMaterial(unselectedMaterial);
+      }
+
+      public boolean isSelectable()
+      {
+         return selectableProperty.get();
+      }
+
+      public void setSelectable(boolean selectable)
+      {
+         selectableProperty.set(selectable);
+      }
+
+      public BooleanProperty selectableProperty()
+      {
+         return selectableProperty;
       }
 
       public boolean isPositionSelected()

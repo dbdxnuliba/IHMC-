@@ -16,7 +16,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -160,24 +159,21 @@ public class QuadrupedUserInterface
                                                         QuadrupedUIMessagerAPI.RobotConfigurationDataTopic);
 
       this.planarRegionViewer = new PlanarRegionViewer(messager, QuadrupedUIMessagerAPI.PlanarRegionDataTopic, QuadrupedUIMessagerAPI.ShowPlanarRegionsTopic);
-      startPoseViewer.configureWithMessager(messager,
-                                            QuadrupedUIMessagerAPI.ShowStartPoseFootstepTopic,
-                                            QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
-                                            QuadrupedUIMessagerAPI.StartOrientationEditModeEnabledTopic,
-                                            QuadrupedUIMessagerAPI.StartPositionTopic,
-                                            QuadrupedUIMessagerAPI.StartOrientationTopic,
-                                            QuadrupedUIMessagerAPI.XGaitSettingsTopic,
-                                            QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
-      startPoseViewer.getTargetNode().setUnselectedMaterial(new PhongMaterial(Color.GREEN));
-      goalPoseViewer.configureWithMessager(messager,
-                                           QuadrupedUIMessagerAPI.ShowGoalPoseFootstepTopic,
-                                           QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
-                                           QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic,
-                                           QuadrupedUIMessagerAPI.GoalPositionTopic,
-                                           QuadrupedUIMessagerAPI.GoalOrientationTopic,
-                                           QuadrupedUIMessagerAPI.XGaitSettingsTopic,
-                                           QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
-      goalPoseViewer.getTargetNode().setUnselectedMaterial(new PhongMaterial(Color.RED));
+      QuadrupedTargetInteractiveNode.configureAsStartPoseViewer(startPoseViewer,
+                                                                messager,
+                                                                QuadrupedUIMessagerAPI.ShowStartPoseFootstepTopic,
+                                                                QuadrupedUIMessagerAPI.StartPositionTopic,
+                                                                QuadrupedUIMessagerAPI.StartOrientationTopic,
+                                                                QuadrupedUIMessagerAPI.StartFeetPositionTopic);
+      QuadrupedTargetInteractiveNode.configureAsGoalPoseViewer(goalPoseViewer,
+                                                               messager,
+                                                               QuadrupedUIMessagerAPI.ShowGoalPoseFootstepTopic,
+                                                               QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
+                                                               QuadrupedUIMessagerAPI.GoalOrientationEditModeEnabledTopic,
+                                                               QuadrupedUIMessagerAPI.GoalPositionTopic,
+                                                               QuadrupedUIMessagerAPI.GoalOrientationTopic,
+                                                               QuadrupedUIMessagerAPI.XGaitSettingsTopic,
+                                                               QuadrupedUIMessagerAPI.PlanarRegionDataTopic);
       this.startGoalPositionEditor = new StartGoalPositionEditor(messager, subScenePane, QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.GoalPositionEditModeEnabledTopic,
                                                                  QuadrupedUIMessagerAPI.StartPositionTopic, QuadrupedUIMessagerAPI.GoalPositionTopic,
