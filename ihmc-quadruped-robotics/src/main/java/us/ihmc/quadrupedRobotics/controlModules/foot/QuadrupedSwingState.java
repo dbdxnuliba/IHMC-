@@ -67,9 +67,6 @@ public class QuadrupedSwingState extends QuadrupedFootState
 
    private final CurrentRigidBodyStateProvider currentStateProvider;
 
-   private final RecyclingArrayList<FramePoint3D> positionWaypointsForSole;
-   private final RecyclingArrayList<FrameEuclideanTrajectoryPoint> swingWaypoints;
-
    private final FramePoint3D initialPosition = new FramePoint3D();
    private final FrameVector3D initialLinearVelocity = new FrameVector3D();
 
@@ -168,10 +165,6 @@ public class QuadrupedSwingState extends QuadrupedFootState
       lastStepPosition.setToNaN();
       activeTrajectoryType = new YoEnum<>(namePrefix + TrajectoryType.class.getSimpleName(), registry, TrajectoryType.class);
 
-      swingWaypoints = new RecyclingArrayList<>(Footstep.maxNumberOfSwingWaypoints, FrameEuclideanTrajectoryPoint.class);
-      positionWaypointsForSole = new RecyclingArrayList<>(2, FramePoint3D.class);
-
-
       MovingReferenceFrame soleFrame = controllerToolbox.getReferenceFrames().getSoleFrame(robotQuadrant);
 
       oneWaypointSwingTrajectoryCalculator = new OneWaypointSwingGenerator(namePrefix + "1", minSwingHeight, maxSwingHeight, defaultSwingHeight, registry,
@@ -234,24 +227,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
       if (lastStepPosition.containsNaN())
          lastStepPosition.setToZero(controllerToolbox.getSoleReferenceFrame(robotQuadrant));
 
-      positionWaypointsForSole.clear();
-      swingWaypoints.clear();
-
-      if (activeTrajectoryType.getEnumValue() == TrajectoryType.CUSTOM)
-      {
-         List<? extends Point3DBasics> positionWaypointsForSole = currentStepCommand.getCustomPositionWaypoints();
-         for (int i = 0; i < positionWaypointsForSole.size(); i++)
-            this.positionWaypointsForSole.add().set(positionWaypointsForSole.get(i));
-      }
-      else if (activeTrajectoryType.getEnumValue() == TrajectoryType.WAYPOINTS)
-      {
-         throw new RuntimeException("not yet implemented.");
-//         List<FrameSE3TrajectoryPoint> swingWaypoints = footstep.getSwingTrajectory();
-//         for (int i = 0; i < swingWaypoints.size(); i++)
-//         {
-//            this.swingWaypoints.add().set(swingWaypoints.get(i));
-//         }
-      }
+      customPositionWaypoints.clear();
 
       finalPosition.set(currentStepCommand.getReferenceFrame(), currentStepCommand.getGoalPosition());
 
@@ -365,7 +341,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
          activeTrajectory = blendedSwingTrajectory;
 
       SwingGenerator waypointGenerator = getSwingGenerator();
-      if (activeTrajectoryType.getEnumValue() != TrajectoryType.DEFAULT && waypointGenerator.doOptimizationUpdate()) // haven't finished original planning
+      if (activeTrajectoryType.getEnumValue() != TrajectoryType.WAYPOINTS && waypointGenerator.doOptimizationUpdate()) // haven't finished original planning
          fillAndInitializeTrajectories(false);
 
       activeTrajectory.compute(time);
@@ -434,19 +410,7 @@ public class QuadrupedSwingState extends QuadrupedFootState
 
       if (activeTrajectoryType.getEnumValue() == TrajectoryType.WAYPOINTS)
       {
-         if (swingWaypoints.get(0).getTime() > 1.0e-5)
-         {
-            blendedSwingTrajectory.appendPositionWaypoint(0.0, initialPosition, initialLinearVelocity);
-         }
-
-         for (int i = 0; i < swingWaypoints.size(); i++)
-         {
-            twoWaypointSwingTrajectoryCalculator.setWaypointProportions(parameters.getSwingObstacleClearanceWaypointProportion0(), parameters.getSwingObstacleClearanceWaypointProportion1());
-            double swingHeight = Math.max(obstacleClearanceSwingHeight, currentStepCommand.getGroundClearance());
-            waypointCalculator.setSwingHeight(swingHeight);
-         }
-
-//         appendFootstepPose = !Precision.equals(swingWaypoints.getLast().getTime(), swingDuration);
+         throw new RuntimeException("Not yet implemented.");
       }
       else
       {

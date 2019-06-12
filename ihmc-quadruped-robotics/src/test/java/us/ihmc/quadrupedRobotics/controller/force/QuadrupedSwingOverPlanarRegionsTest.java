@@ -1,7 +1,5 @@
 package us.ihmc.quadrupedRobotics.controller.force;
 
-import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.QuadrupedTimedStepListMessage;
 import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
 import org.junit.jupiter.api.AfterEach;
@@ -10,33 +8,25 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import us.ihmc.commonWalkingControlModules.trajectories.QuadrupedPlanarRegionsTrajectoryExpander;
 import us.ihmc.commons.PrintTools;
-import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.Vector3D;
-import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.quadrupedCommunication.teleop.RemoteQuadrupedTeleopManager;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
-import us.ihmc.quadrupedRobotics.QuadrupedForceTestYoVariables;
-import us.ihmc.quadrupedRobotics.QuadrupedMultiRobotTestInterface;
-import us.ihmc.quadrupedRobotics.QuadrupedTestBehaviors;
-import us.ihmc.quadrupedRobotics.QuadrupedTestFactory;
+import us.ihmc.quadrupedRobotics.*;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControlMode;
 import us.ihmc.quadrupedRobotics.model.QuadrupedInitialOffsetAndYaw;
-import us.ihmc.quadrupedRobotics.model.QuadrupedInitialPositionParameters;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
-import us.ihmc.robotics.partNames.QuadrupedJointName;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.testing.YoVariableTestGoal;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.LittleWallsWithIncreasingHeightPlanarRegionEnvironment;
+import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.WideWallsWithIncreasingHeightPlanarRegionEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.tools.MemoryTools;
@@ -53,19 +43,19 @@ public abstract class QuadrupedSwingOverPlanarRegionsTest implements QuadrupedMu
    private QuadrupedTestFactory quadrupedTestFactory;
 
 
-   private static final boolean LOCAL_MODE = false;
+   private static final boolean LOCAL_MODE = true;
 
    @Test
    public void testSwingOverPlanarRegions() throws SimulationExceededMaximumTimeException
    {
       double stepDuration = 0.33;
-      double dwellDuration = 0.2;
-      double stepLength = 0.3;
+      double dwellDuration = 0.05;
+      double stepLength = 0.25;
       double stepWidth = 0.25;
       double maxSwingSpeed = 1.0;
       int steps = 10;
 
-      LittleWallsWithIncreasingHeightPlanarRegionEnvironment environment = new LittleWallsWithIncreasingHeightPlanarRegionEnvironment();
+      WideWallsWithIncreasingHeightPlanarRegionEnvironment environment = new WideWallsWithIncreasingHeightPlanarRegionEnvironment();
       PlanarRegionsList planarRegionsList = environment.getPlanarRegionsList();
 
       YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -84,8 +74,11 @@ public abstract class QuadrupedSwingOverPlanarRegionsTest implements QuadrupedMu
          swingOverPlanarRegionsTrajectoryExpander = new QuadrupedPlanarRegionsTrajectoryExpander(registry, yoGraphicsListRegistry);
       }
 
-      conductor.getScs().getRootRegistry().addChild(registry);
-      conductor.getScs().addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      if (LOCAL_MODE)
+      {
+         conductor.getScs().getRootRegistry().addChild(registry);
+         conductor.getScs().addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      }
 
       QuadrupedTestBehaviors.standUp(conductor, variables);
       QuadrupedTestBehaviors.startBalancing(conductor, variables, stepTeleopManager);
@@ -210,9 +203,13 @@ public abstract class QuadrupedSwingOverPlanarRegionsTest implements QuadrupedMu
       }
 
       stepTeleopManager.publishTimedStepListToController(stepListMessage);
+      conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
+      conductor.addTerminalGoal(YoVariableTestGoal.doubleGreaterThan(variables.getRobotBodyX(), 2.81));
+      conductor.addTimeLimit(variables.getYoTime(), variables.getYoTime().getDoubleValue() + simulationTime);
       conductor.addTimeLimit(variables.getYoTime(), variables.getYoTime().getDoubleValue() + simulationTime);
       conductor.simulate();
 
+      /*
       Point3D rootJointPosition = new Point3D(2.81, 0.0, 0.83);
       Vector3D epsilon = new Vector3D(0.05, 0.05, 0.10);
       Point3D min = new Point3D(rootJointPosition);
@@ -228,6 +225,7 @@ public abstract class QuadrupedSwingOverPlanarRegionsTest implements QuadrupedMu
       {
 //         drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(new BoundingBox3D(min, max));
       }
+      */
    }
 
    @BeforeEach
@@ -239,7 +237,7 @@ public abstract class QuadrupedSwingOverPlanarRegionsTest implements QuadrupedMu
       {
          quadrupedTestFactory = createQuadrupedTestFactory();
 
-         LittleWallsWithIncreasingHeightPlanarRegionEnvironment environment = new LittleWallsWithIncreasingHeightPlanarRegionEnvironment();
+         WideWallsWithIncreasingHeightPlanarRegionEnvironment environment = new WideWallsWithIncreasingHeightPlanarRegionEnvironment();
 
          quadrupedTestFactory.setGroundProfile3D(environment.getTerrainObject3D());
          quadrupedTestFactory.setInitialOffset(new QuadrupedInitialOffsetAndYaw(-0.5, 0.0, 0.0, 0.0));

@@ -394,6 +394,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       return SwingOverPlanarRegionsTrajectoryExpansionStatus.SOLUTION_FOUND;
    }
 
+
    private boolean haveAnyAdjustmentsHitMaxDistance()
    {
       for (int i = 0; i < numberOfWaypoints.getIntegerValue(); i++)
