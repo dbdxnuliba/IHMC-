@@ -3,7 +3,9 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
 import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.Line3D;
+import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -12,7 +14,6 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionCommand;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
@@ -39,15 +40,14 @@ public class CollisionManager
    Point3D secondMinDistanceSegmentPoint = new Point3D();
    Point3D firstConcaveHullVertex = new Point3D();
    Point3D secondConcaveHullVertex = new Point3D();
-   Vector3D distanceVector = new Vector3D();
-   Point3D pointOnBody = new Point3D();
    Vector3D minDistanceVector = new Vector3D();
    Point3D closestPointOnBody = new Point3D();
-   PlanarRegion asPlanarRegion = new PlanarRegion();
+   LineSegment2D edge = new LineSegment2D();
+
 
    private final FrameVector3D desiredLinearAcceleration = new FrameVector3D();
    
-   private final RecyclingArrayList<PlanarRegionCommand> planarRegions = new RecyclingArrayList<>(100, PlanarRegionCommand.class);
+   private final RecyclingArrayList<PlanarRegion> planarRegions = new RecyclingArrayList<>(100, PlanarRegion.class);
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -115,6 +115,8 @@ public class CollisionManager
       bodyLine.set(firstEndPose.getPosition(), otherEndPose.getPosition());
 
       double minDistance = -1.0;
+      Vector3D distanceVector = new Vector3D();
+      Point3D pointOnBody = new Point3D();
 
       for (int i = 0; i < planarRegions.size(); ++i)
       {
@@ -123,8 +125,8 @@ public class CollisionManager
          if ((minDistance < -0.5) || (distance < minDistance))
          {
             minDistance = distance;
-            minDistanceVector = distanceVector;
-            closestPointOnBody = pointOnBody;
+            minDistanceVector.set(distanceVector);
+            closestPointOnBody.set(pointOnBody);
             closestPlanarRegion.set(i);
          }
       }
@@ -132,10 +134,9 @@ public class CollisionManager
       distanceX.set(minDistanceVector.getX());
       distanceY.set(minDistanceVector.getY());
       distanceZ.set(minDistanceVector.getZ());
-      //TODO use the correct variable here
-      closestBodyPointX.set(firstEndPoseInPlaneCoordinates.getX()); //This has been temporary modified for debug purposes
-      closestBodyPointY.set(firstEndPoseInPlaneCoordinates.getY()); //This has been temporary modified for debug purposes
-      closestBodyPointZ.set(firstEndPoseInPlaneCoordinates.getZ()); //This has been temporary modified for debug purposes
+      closestBodyPointX.set(closestPointOnBody.getX());
+      closestBodyPointY.set(closestPointOnBody.getY());
+      closestBodyPointZ.set(closestPointOnBody.getZ());
       minimumDistanceValue.set(minDistance);
 
 //      if (loadBearing)
@@ -166,30 +167,30 @@ public class CollisionManager
 
       for (int i = 0; i < regions; i++)
       {
-         planarRegions.add().set(command.getPlanarRegionCommand(i));
+         planarRegions.add();
+         command.getPlanarRegionCommand(i).getPlanarRegion(planarRegions.getLast());
       }
    }
    
-   private double computeDistanceFromPlanarRegion(PlanarRegionCommand region, Vector3D distanceVector, Point3D pointOnBody)
+   private double computeDistanceFromPlanarRegion(PlanarRegion region, Vector3D distanceVector, Point3D pointOnBody)
    {
       firstEndPoseInPlaneCoordinates.set(firstEndPose);
       otherEndPoseInPlaneCoordinates.set(otherEndPose);
       
-      planeToWorldTransform = region.getTransformToWorld();
-      planeFromWorldTransform = region.getTransformFromWorld();
+      region.getTransformToWorld(planeToWorldTransform);
+      planeFromWorldTransform.setAndInvert(planeToWorldTransform);
 
       firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
       otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
 
-      region.getPlanarRegion(asPlanarRegion);
 
       if (firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0) //The two points are in two different semiplanes or at least one of them is on the plane
       {
-         Point3D intersection = asPlanarRegion.intersectWithLine(bodyLine);
+         Point3D intersection = region.intersectWithLine(bodyLine);
 
          if (intersection != null)
          {
-            distanceVector.set(asPlanarRegion.getNormal());
+            distanceVector.set(region.getNormal());
             pointOnBody.set(intersection);
             pointOnBody.applyTransform(planeToWorldTransform);
 
@@ -199,12 +200,12 @@ public class CollisionManager
       
       double minDistance = -1.0;
       
-      boolean firstProjectionIsInside = asPlanarRegion.isPointInside(firstEndPoseInPlaneCoordinates.getX(),
+      boolean firstProjectionIsInside = region.isPointInside(firstEndPoseInPlaneCoordinates.getX(),
                                                                      firstEndPoseInPlaneCoordinates.getY());
       
-      boolean otherProjectionIsInside = asPlanarRegion.isPointInside(otherEndPoseInPlaneCoordinates.getX(),
+      boolean otherProjectionIsInside = region.isPointInside(otherEndPoseInPlaneCoordinates.getX(),
                                                                      otherEndPoseInPlaneCoordinates.getY());
-      
+
       if (firstProjectionIsInside || otherProjectionIsInside)
       {
          boolean firstIsCloser = firstProjectionIsInside
@@ -214,27 +215,52 @@ public class CollisionManager
          {
             minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
             pointOnBody.set(firstEndPose.getPosition());
-            distanceVector.set(asPlanarRegion.getNormal());
+            distanceVector.set(region.getNormal());
          }
          else
          {
             minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
             pointOnBody.set(otherEndPose.getPosition());
-            distanceVector.set(asPlanarRegion.getNormal());
+            distanceVector.set(region.getNormal());
          }
       }
 
-      for (int v = 0; v < region.getConcaveHullsVertices().size(); ++v)
+      Vector3D tempDistanceVector = new Vector3D();
+      Point3D tempMinPoint = new Point3D();
+
+      for (int polygon = 0; polygon < region.getNumberOfConvexPolygons(); ++polygon)
       {
-         if (v == 0)
+         double distance = computeMinimumDistanceFromConvexHullEdges(region.getConvexPolygon(polygon), tempDistanceVector, tempMinPoint);
+         
+         if ((minDistance < -0.5) || (distance < minDistance))
          {
-            firstConcaveHullVertex.set(region.getConcaveHullsVertices().get(region.getConcaveHullsVertices().size() - 1));
+            minDistance = distance;
+            distanceVector.set(tempDistanceVector);
+            pointOnBody.set(tempMinPoint);
          }
-         else
-         {
-            firstConcaveHullVertex.set(region.getConcaveHullsVertices().get(v - 1));
-         }
-         secondConcaveHullVertex.set(region.getConcaveHullsVertices().get(v));
+      }
+
+      if (minDistance > 0.01)
+      {
+         distanceVector.normalize();
+      }
+      else
+      {
+         distanceVector.set(region.getNormal());
+      }
+
+      return minDistance;
+   }
+
+   private double computeMinimumDistanceFromConvexHullEdges(ConvexPolygon2D polygon, Vector3D distanceVector, Point3D pointOnBody)
+   {
+      double minDistance = -1.0;
+      for (int v = 0; v < polygon.getNumberOfVertices(); ++v)
+      {
+         polygon.getEdge(v, edge);
+
+         firstConcaveHullVertex.set(edge.getFirstEndpoint());
+         secondConcaveHullVertex.set(edge.getSecondEndpoint());
 
          double distance = EuclidGeometryTools.closestPoint3DsBetweenTwoLineSegment3Ds(firstEndPoseInPlaneCoordinates.getPosition(),
                                                                                        otherEndPoseInPlaneCoordinates.getPosition(),
@@ -252,22 +278,11 @@ public class CollisionManager
 
             minDistance = distance;
             distanceVector.set(secondMinDistanceSegmentPoint.getX() - firstMinDistanceSegmentPoint.getX(),
-                                  secondMinDistanceSegmentPoint.getY() - firstMinDistanceSegmentPoint.getY(),
-                                  secondMinDistanceSegmentPoint.getZ() - firstMinDistanceSegmentPoint.getZ());
+                               secondMinDistanceSegmentPoint.getY() - firstMinDistanceSegmentPoint.getY(),
+                               secondMinDistanceSegmentPoint.getZ() - firstMinDistanceSegmentPoint.getZ());
             pointOnBody.set(firstMinDistanceSegmentPoint);
          }
       }
-
-      if (minDistance > 0.01)
-      {
-         distanceVector.normalize();
-      }
-      else
-      {
-         distanceVector.set(asPlanarRegion.getNormal());
-      }
-
-
 
       return minDistance;
    }
