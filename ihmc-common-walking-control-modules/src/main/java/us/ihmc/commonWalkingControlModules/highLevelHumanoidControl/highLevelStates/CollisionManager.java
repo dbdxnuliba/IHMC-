@@ -198,6 +198,31 @@ public class CollisionManager
       }
       
       double minDistance = -1.0;
+      
+      boolean firstProjectionIsInside = asPlanarRegion.isPointInside(firstEndPoseInPlaneCoordinates.getX(),
+                                                                     firstEndPoseInPlaneCoordinates.getY());
+      
+      boolean otherProjectionIsInside = asPlanarRegion.isPointInside(otherEndPoseInPlaneCoordinates.getX(),
+                                                                     otherEndPoseInPlaneCoordinates.getY());
+      
+      if (firstProjectionIsInside || otherProjectionIsInside)
+      {
+         boolean firstIsCloser = firstProjectionIsInside
+               && (!otherProjectionIsInside || firstEndPoseInPlaneCoordinates.getZ() < otherEndPoseInPlaneCoordinates.getZ());
+
+         if (firstIsCloser)
+         {
+            minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
+            pointOnBody.set(firstEndPose.getPosition());
+            distanceVector.set(asPlanarRegion.getNormal());
+         }
+         else
+         {
+            minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
+            pointOnBody.set(otherEndPose.getPosition());
+            distanceVector.set(asPlanarRegion.getNormal());
+         }
+      }
 
       for (int v = 0; v < region.getConcaveHullsVertices().size(); ++v)
       {
