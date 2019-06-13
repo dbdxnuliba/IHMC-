@@ -25,6 +25,8 @@ import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHuma
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
@@ -231,12 +233,18 @@ public class HighLevelControlManagerFactory
       }
 
       MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH);
+      ReferenceFrame shinParent_plusOffset = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent("shinParent_plus_offset",
+                                                                                                                   shinParent,
+                                                                                                                   new Vector3D(0.075, 0.0, 0.0));
       RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH).getSuccessor();
       assert (shinBody.hasChildrenJoints());
       MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
+      ReferenceFrame shinChild_plusOffset = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent("shinChild_plus_offset",
+                                                                                                                  shinChild,
+                                                                                                                  new Vector3D(0.05, 0.0, 0.0));
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
 
-      collisionManager = new CollisionManager(shinParent, shinChild, shinBody, elevator, registry);
+      collisionManager = new CollisionManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry);
 
       return collisionManager;
    }

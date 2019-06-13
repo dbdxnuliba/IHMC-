@@ -14,7 +14,6 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
-import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -26,7 +25,7 @@ public class CollisionManager
    private final SpatialAccelerationCommand spatialAccelerationCommand = new SpatialAccelerationCommand();
 
    private final RigidBodyBasics body;
-   MovingReferenceFrame firstEndLinkFrame, otherEndLinkFrame;
+   ReferenceFrame firstEndLinkFrame, otherEndLinkFrame;
    FramePose3D firstEndPose = new FramePose3D();
    FramePose3D otherEndPose = new FramePose3D();
    FramePose3D firstEndPoseInPlaneCoordinates = new FramePose3D();
@@ -59,7 +58,7 @@ public class CollisionManager
    private final YoDouble measuredDistance, expectedLength, minimumDistanceValue;
    private final YoInteger numberOfPlanarSurfaces;
 
-   public CollisionManager(MovingReferenceFrame firstEndLinkFrame, MovingReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
+   public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
                            RigidBodyBasics elevator, YoVariableRegistry parentRegistry)
    {
       spatialAccelerationCommand.set(/*
@@ -114,7 +113,7 @@ public class CollisionManager
 
       bodyLine.set(firstEndPose.getPosition(), otherEndPose.getPosition());
 
-      double minDistance = -1.0;
+      double minDistance = 1.0;
       Vector3D distanceVector = new Vector3D();
       Point3D pointOnBody = new Point3D();
 
