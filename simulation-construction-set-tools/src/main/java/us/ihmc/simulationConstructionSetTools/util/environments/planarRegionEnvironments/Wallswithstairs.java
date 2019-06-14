@@ -1,10 +1,25 @@
 package us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments;
 
 import us.ihmc.euclid.*;
+import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.simulationConstructionSetTools.robotController.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
+import us.ihmc.simulationConstructionSetTools.util.ground.*;
+import us.ihmc.simulationconstructionset.*;
+import us.ihmc.simulationconstructionset.util.ground.*;
+import us.ihmc.simulationconstructionset.util.simulationRunner.*;
+import us.ihmc.yoVariables.registry.*;
+
+import java.util.*;
 
 public class Wallswithstairs extends PlanarRegionEnvironmentInterface
 {
+   private final List<Robot> contactableRobots = new ArrayList<>();
+   private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
+   private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<>();
+   //private YoVariableRegistry doorTestRegistry;
 
    public Wallswithstairs(double stepLength, double wallHeight, double stepUpHeight)
    {
@@ -51,9 +66,62 @@ public class Wallswithstairs extends PlanarRegionEnvironmentInterface
       generator.addRectangle(2.0, 2.0);
 
       addPlanarRegionsToTerrain(YoAppearance.Grey());
+/*
+      //combinedTerrainObject.addBox(-5.0,-30.0,5.0,-0.05,0.0,YoAppearance.DarkGray());
+      //combinedTerrainObject.addBox(-1.2192, -0.025, 0, 0.025, wallHeight,YoAppearance.Red());
+      //combinedTerrainObject.addBox(0.0 +ContactableDoorRobot.DEFAULT_DOOR_DIMENSIONS.getX(), -0.025, 1.2192 + ContactableDoorRobot.DEFAULT_DOOR_DIMENSIONS.getY(), 0.025, wallHeight, YoAppearance.Blue());
 
 
+      //combinedTerrainObject3D.getLinkGraphics().identity();
+      //combinedTerrainObject3D.getLinkGraphics().addModelFile("models/SCTestBed.obj");
+
+      ContactableDoorRobot door = new ContactableDoorRobot("doorRobot", new Point3D());
+      contactableRobots.add(door);
+      door.createAvailableContactPoints(0,15,15,0.02,true);
+*/
 
    }
+/*
+   @Override
+   public TerrainObject3D getTerrainObject3D()
+   {
+      return combinedTerrainObject;
+   }
+
+   @Override
+   public List<? extends Robot> getEnvironmentRobots()
+   {
+      return contactableRobots;
+   }
+
+   @Override
+   public void createAndSetContactControllerToARobot()
+   {
+      ContactController contactController = new ContactController();
+      contactController.setContactParameters(100000.0, 100.0, 0.5, 0.3);
+
+      contactController.addContactPoints(contactPoints);
+
+      for (Robot r : contactableRobots)
+      {
+         if (r instanceof Contactable)
+            contactController.addContactable((Contactable) r);
+
+      }
+      if (contactableRobots.size() > 0)
+         contactableRobots.get(0).setController(contactController);
+   }
+
+   @Override
+   public void addContactPoints(List<? extends ExternalForcePoint> externalForcePoints)
+   {
+      this.contactPoints.addAll(externalForcePoints);
+   }
+
+   @Override
+   public void addSelectableListenerToSelectables(SelectableObjectListener selectedListener)
+   {
+   }
+*/
 
 }
