@@ -314,35 +314,40 @@ public class CollisionManager
       
       boolean otherProjectionIsInside = region.isPointInside(otherEndPoseInPlaneCoordinates.getX(),
                                                                      otherEndPoseInPlaneCoordinates.getY());
-      //TODO This part is commented out since it seems to have problems in computing the distance
-      //      if (firstProjectionIsInside || otherProjectionIsInside)
-      //      {
-      //         boolean firstIsCloser = firstProjectionIsInside
-      //               && (!otherProjectionIsInside || firstEndPoseInPlaneCoordinates.getZ() < otherEndPoseInPlaneCoordinates.getZ());
-      //
-      //         if (firstIsCloser)
-      //         {
-      //            minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
-      //            pointOnBody.set(firstEndPose.getPosition());
-      //
-      //            firstEndPoseInPlaneCoordinates.setZ(0.0);
-      //            firstEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-      //            distanceVector.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
-      //                               firstEndPoseInPlaneCoordinates.getY() - firstEndPose.getPosition().getY(),
-      //                               firstEndPoseInPlaneCoordinates.getZ() - firstEndPose.getPosition().getZ());
-      //         }
-      //         else
-      //         {
-      //            minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
-      //            pointOnBody.set(otherEndPose.getPosition());
-      //
-      //            otherEndPoseInPlaneCoordinates.setZ(0.0);
-      //            otherEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-      //            distanceVector.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
-      //                               otherEndPoseInPlaneCoordinates.getY() - otherEndPose.getPosition().getY(),
-      //                               otherEndPoseInPlaneCoordinates.getZ() - otherEndPose.getPosition().getZ());
-      //         }
-      //      }
+
+      if (firstProjectionIsInside || otherProjectionIsInside)
+      {
+         boolean firstIsCloser = firstProjectionIsInside
+               && (!otherProjectionIsInside || Math.abs(firstEndPoseInPlaneCoordinates.getZ()) < Math.abs(otherEndPoseInPlaneCoordinates.getZ()));
+
+         if (firstIsCloser)
+         {
+            minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
+            pointOnBody.set(firstEndPose.getPosition());
+
+            firstEndPoseInPlaneCoordinates.setZ(0.0);
+            firstEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
+            distanceVector.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
+                               firstEndPoseInPlaneCoordinates.getY() - firstEndPose.getPosition().getY(),
+                               firstEndPoseInPlaneCoordinates.getZ() - firstEndPose.getPosition().getZ());
+            firstEndPoseInPlaneCoordinates.set(firstEndPose);
+            firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
+
+         }
+         else
+         {
+            minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
+            pointOnBody.set(otherEndPose.getPosition());
+
+            otherEndPoseInPlaneCoordinates.setZ(0.0);
+            otherEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
+            distanceVector.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
+                               otherEndPoseInPlaneCoordinates.getY() - otherEndPose.getPosition().getY(),
+                               otherEndPoseInPlaneCoordinates.getZ() - otherEndPose.getPosition().getZ());
+            otherEndPoseInPlaneCoordinates.set(otherEndPose);
+            otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
+         }
+      }
 
       FrameVector3D tempDistanceVector = new FrameVector3D();
       FramePoint3D tempMinPoint = new FramePoint3D();
