@@ -830,7 +830,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       controllerCoreCommand.addInverseDynamicsCommand(controllerCoreOptimizationSettings.getCommand());
 
-      controllerCoreCommand.addInverseDynamicsCommand(collisionManager.getInverseDynamicsCommand());
+      controllerCoreCommand.addFeedbackControlCommand(collisionManager.getFeedbackControlCommand());
    }
 
    public ControllerCoreCommand getControllerCoreCommand()
