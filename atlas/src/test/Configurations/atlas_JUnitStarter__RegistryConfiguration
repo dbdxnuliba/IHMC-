@@ -337,3 +337,6 @@ root.atlas.SimulatedDRCRobotTimeProvider*false*false
 root.atlas.ActualCMPComputer*false*false
 root.atlas.ExactCoMCalcualtor*false*false
 root.atlas.LinearGroundContactModel*false*false
+root.doorRobot*false*false
+root.doorRobot.ContactController*false*false
+root.doorRobot.ContactController.simpleContactSimpleStickSlipContactModel*false*false

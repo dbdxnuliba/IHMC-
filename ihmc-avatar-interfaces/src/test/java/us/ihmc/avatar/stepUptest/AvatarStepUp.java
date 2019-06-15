@@ -7,8 +7,10 @@ import org.junit.jupiter.api.*;
 import us.ihmc.atlas.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
+import us.ihmc.avatar.environments.*;
 import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
+import us.ihmc.avatar.simulationStarter.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
 import us.ihmc.commonWalkingControlModules.configurations.*;
@@ -48,6 +50,7 @@ import us.ihmc.robotics.partNames.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.trajectories.*;
 import us.ihmc.simulationConstructionSetTools.bambooTools.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
 import us.ihmc.simulationToolkit.controllers.*;
@@ -58,6 +61,7 @@ import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulatio
 import us.ihmc.simulationconstructionset.util.simulationTesting.*;
 
 import us.ihmc.tools.*;
+import us.ihmc.wholeBodyController.*;
 import us.ihmc.yoVariables.registry.*;
 import us.ihmc.yoVariables.variable.*;
 
@@ -90,9 +94,9 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private FullHumanoidRobotModel fullRobotModel = robotModel.createFullRobotModel();
 
    private final boolean IS_PAUSING_ON = false;  //should be false for now
-   private final boolean IS_CHEST_ON = true;
-   private final boolean IS_LEFTARM_ON = true;
-   private final boolean IS_RIGHTARM_ON = true;
+   private final boolean IS_CHEST_ON = false;
+   private final boolean IS_LEFTARM_ON = false;
+   private final boolean IS_RIGHTARM_ON = false;
    private final boolean IS_PELVIS_ON = true;
    private final boolean IS_FOOTSTEP_ON = true;
 
@@ -166,7 +170,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    public void stepUpSmall() throws SimulationExceededMaximumTimeException
    {
       double stepHeight = 0.3;
-      double swingHeight = 0.10; //maybe needs to be changed
+      double swingHeight = 0.15; //maybe needs to be changed
       //walkingStair(stepHeight, swingHeight);
       setPublishers(IS_LEFTARM_ON, IS_RIGHTARM_ON, IS_CHEST_ON, IS_FOOTSTEP_ON, IS_PELVIS_ON, IS_PAUSING_ON,  stepHeight, swingHeight);
 
@@ -191,7 +195,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
     * @param swingHeight - swing phase parameter
     * @throws SimulationExceededMaximumTimeException
     */
-   @Test
+
    public void setPublishers(boolean leftArm, boolean rightArm, boolean chest, boolean isfootstepsON, boolean pelvis, boolean pauseWhileWalking, double stepHeight, double swingHeight) throws SimulationExceededMaximumTimeException
    {
       DRCRobotModel robotModel = setTestEnvironment(stepHeight);
@@ -240,7 +244,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       // robot fell
       Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));
-
+      //drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0);
       // robot did not fall but did not reach goal
       assertreached(footsteps);
 
@@ -662,19 +666,23 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    }
    private DRCRobotModel setTestEnvironment(double stepHeight) throws SimulationExceededMaximumTimeException
    {
-    /*      //create environment
-      AdjustableStairsEnvironment adjustableStairsEnvironment = new AdjustableStairsEnvironment();
-      //adjustableStairsEnvironment.setCourseStartDistance(0.5);
-      //adjustableStairsEnvironment.setLandingPlatformParameters(0,0,0,0);
-      //adjustableStairsEnvironment.setRailingParameters(0,0,0,0,0,false);
-      adjustableStairsEnvironment.setStairsParameters(2,1.0,0.4,0.5);
-      adjustableStairsEnvironment.generateTerrains();
-*/
-
-
+      boolean step_up_door = true;
+      boolean Walls_with_stairs = false;
       String className = getClass().getSimpleName();
-      //SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 0.7);
-      Wallswithstairs wall = new Wallswithstairs(0.5, 1.5, stepHeight);
+
+      if(Walls_with_stairs)
+      {
+         Wallswithstairs wall = new Wallswithstairs(0.5, 1.7, stepHeight);
+         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
+      }
+
+      if(step_up_door)
+      {
+         StepUpDoor stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
+         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
+      }
+      //DRCFinalsEnvironment environment = new DRCFinalsEnvironment(true, false, false,false,true);
+      //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
 
       //Point3D doorPosition = new Point3D(2.0 + 1.0, 0.0, 0.0);
       //ContactableDoorRobot door = new ContactableDoorRobot("doorRobot", doorPosition);
@@ -691,8 +699,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       DRCRobotModel robotModel = getRobotModel();
 
       //pass this reference to the simulator
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
-
+      //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
+      //drcSimulationTestHelper = new DRCSimulationStarter(robotModel,wall);
       //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, DRCRobotModel atlasRobotModel, adjustableStairsEnvironment);
       drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
       drcSimulationTestHelper.createSimulation(className);
@@ -702,8 +710,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       setUpCamera();
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.25);
-      //createTorqueGraphs(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
-      //printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
+
       assertTrue(success);
 
       return robotModel;

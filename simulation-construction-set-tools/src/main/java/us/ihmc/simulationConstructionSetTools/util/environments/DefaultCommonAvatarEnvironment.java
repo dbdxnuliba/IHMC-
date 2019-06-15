@@ -1198,7 +1198,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
       setUpCinderBlockSquare(combinedTerrainObject, point[0], point[1], h, deg);
    }
 
-   private CombinedTerrainObject3D setUpPath5NarrowDoor(String name)
+   public CombinedTerrainObject3D setUpPath5NarrowDoor(String name)
    {
       CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(name);
 
