@@ -19,6 +19,10 @@ import us.ihmc.euclid.referenceFrame.tools.EuclidFrameTools;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
@@ -71,9 +75,10 @@ public class CollisionManager
    private final YoInteger closestPlanarRegion;
    private final YoDouble measuredDistance, minimumDistanceValue, desiredAcceleration;
    private final YoInteger numberOfPlanarSurfaces;
+   private final YoGraphicVector distanceArrow;
 
    public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
-                           RigidBodyBasics elevator, YoVariableRegistry parentRegistry)
+                           RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       spatialAccelerationCommand.set(/*
                                       * MultiBodySystemTools.getRootBody(body)
@@ -108,6 +113,21 @@ public class CollisionManager
       measuredDistance = new YoDouble("collision_" + body.getName() + "measuredLenght", registry);
       
       numberOfPlanarSurfaces = new YoInteger("collision_numberOfPlanarSurfaces", registry);
+      
+      distanceArrow = new YoGraphicVector("ClosestCollisionVector",
+                                          closestBodyPointX,
+                                          closestBodyPointY,
+                                          closestBodyPointZ,
+                                          distanceX,
+                                          distanceY,
+                                          distanceZ,
+                                          1.0,
+                                          YoAppearance.BlackMetalMaterial(),
+                                          true);
+      distanceArrow.setLineRadiusWhenOneMeterLong(0.03);
+      YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionManagerGraphics");
+      yoGraphicsList.add(distanceArrow);
+      yoGraphicsListRegistry.registerYoGraphicsList(yoGraphicsList);
       
    }
 
@@ -159,9 +179,9 @@ public class CollisionManager
          minDistanceVector.normalize();
       }
       
-      distanceX.set(minDistanceVector.getX());
-      distanceY.set(minDistanceVector.getY());
-      distanceZ.set(minDistanceVector.getZ());
+      distanceX.set(minDistanceVector.getX() * minDistance);
+      distanceY.set(minDistanceVector.getY() * minDistance);
+      distanceZ.set(minDistanceVector.getZ() * minDistance);
       closestBodyPointX.set(closestPointOnBody.getX());
       closestBodyPointY.set(closestPointOnBody.getY());
       closestBodyPointZ.set(closestPointOnBody.getZ());
@@ -244,9 +264,13 @@ public class CollisionManager
 
          spatialAccelerationCommand.setLinearAcceleration(closestPointFrame, desiredLinearAcceleration);
          desiredAcceleration.set(saturate(desiredAccelerationValue, maxAcceleration));
+         
+         distanceArrow.showGraphicObject();
+
       }
       else
       {
+         distanceArrow.hide();
          spatialAccelerationCommand.getSelectionMatrix().clearSelection();
          desiredAcceleration.set(0.0);
          closestPlanarRegion.set(-1);
