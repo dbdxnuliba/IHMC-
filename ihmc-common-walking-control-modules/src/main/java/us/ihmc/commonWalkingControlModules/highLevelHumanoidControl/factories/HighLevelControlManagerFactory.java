@@ -243,8 +243,9 @@ public class HighLevelControlManagerFactory
                                                                                                                   shinChild,
                                                                                                                   new Vector3D(0.11, 0.0, 0.0));
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
+      YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
-      collisionManager = new CollisionManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry);
+      collisionManager = new CollisionManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry, graphicsListRegistry);
 
       return collisionManager;
    }
