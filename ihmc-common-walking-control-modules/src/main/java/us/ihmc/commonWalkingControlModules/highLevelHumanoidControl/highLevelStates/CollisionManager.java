@@ -3,8 +3,6 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.PointFeedbackControlCommand;
-import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
-import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.SpatialAccelerationCommand;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
@@ -34,11 +32,10 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 public class CollisionManager
 {
-   private final SpatialAccelerationCommand spatialAccelerationCommand = new SpatialAccelerationCommand();
    private final PointFeedbackControlCommand pointFeedbackCommand = new PointFeedbackControlCommand();
 
    private final RigidBodyBasics body;
-   RigidBodyBasics root;
+   private final RigidBodyBasics root;
    private final ReferenceFrame firstEndLinkFrame, otherEndLinkFrame;
    private final FramePose3D firstEndPose = new FramePose3D();
    private final FramePose3D otherEndPose = new FramePose3D();
@@ -62,8 +59,6 @@ public class CollisionManager
    private final FramePoint3D desiredPosition = new FramePoint3D();
    private final FrameVector3D zeroVector = new FrameVector3D();
 
-   private final FrameVector3D desiredLinearAcceleration = new FrameVector3D();
-   
    private final RecyclingArrayList<PlanarRegion> planarRegions = new RecyclingArrayList<>(100, PlanarRegion.class);
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -73,19 +68,13 @@ public class CollisionManager
    private final YoDouble distanceX, distanceY, distanceZ;
    private final YoDouble closestBodyPointX, closestBodyPointY, closestBodyPointZ;
    private final YoInteger closestPlanarRegion;
-   private final YoDouble measuredDistance, minimumDistanceValue, desiredAcceleration;
+   private final YoDouble measuredDistance, minimumDistanceValue;
    private final YoInteger numberOfPlanarSurfaces;
    private final YoGraphicVector distanceArrow;
 
    public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
                            RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
-      spatialAccelerationCommand.set(/*
-                                      * MultiBodySystemTools.getRootBody(body)
-                                      */
-                                     elevator,
-                                     body); //Does this uses also the base acceleration?
-      
       pointFeedbackCommand.set(elevator, body);
       pointFeedbackCommand.setControlMode(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
 
@@ -108,7 +97,6 @@ public class CollisionManager
       closestBodyPointZ = new YoDouble("collision_" + body.getName() + "_closestBodyPointZ", registry);
       minimumDistanceValue = new YoDouble("collision_" + body.getName() + "_minDistanceValue", registry);
       closestPlanarRegion = new YoInteger("collision_" + body.getName() + "_closestRegion", registry);
-      desiredAcceleration = new YoDouble("collision_" + body.getName() + "_desiredAccelerationModule", registry);
 
       measuredDistance = new YoDouble("collision_" + body.getName() + "measuredLenght", registry);
       
@@ -130,6 +118,9 @@ public class CollisionManager
       yoGraphicsListRegistry.registerYoGraphicsList(yoGraphicsList);
       
    }
+
+   private FrameVector3D templPlaneDistanceVector = new FrameVector3D();
+   private FramePoint3D templPlaneClosestPointOnBody = new FramePoint3D();
 
    public void compute(boolean loadBearing)
    {
@@ -155,18 +146,16 @@ public class CollisionManager
       double distanceThreshold = 0.1;
 
       double minDistance = distanceThreshold;
-      FrameVector3D distanceVector = new FrameVector3D();
-      FramePoint3D pointOnBody = new FramePoint3D();
 
       for (int i = 0; i < planarRegions.size(); ++i)
       {
-         double distance = computeDistanceFromPlanarRegion(planarRegions.get(i), distanceVector, pointOnBody);
+         double distance = computeDistanceFromPlanarRegion(planarRegions.get(i), templPlaneDistanceVector, templPlaneClosestPointOnBody);
 
          if (distance < minDistance)
          {
             minDistance = distance;
-            minDistanceVector.set(distanceVector);
-            closestPointOnBody.set(pointOnBody);
+            minDistanceVector.set(templPlaneDistanceVector);
+            closestPointOnBody.set(templPlaneClosestPointOnBody);
             closestPlanarRegion.set(i);
          }
       }
@@ -187,73 +176,34 @@ public class CollisionManager
       closestBodyPointZ.set(closestPointOnBody.getZ());
       minimumDistanceValue.set(minDistance);
 
-      setupCommands(distanceThreshold, minDistance, distanceVector);
+      setupCommands(distanceThreshold, minDistance, templPlaneDistanceVector);
    }
+
+   private RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
+   private WeightMatrix3D weights = new WeightMatrix3D();
+   private SelectionMatrix3D selection = new SelectionMatrix3D();
 
    private void setupCommands(double distanceThreshold, double minDistance, FrameVector3D distanceVector)
    {
       if (minDistance >= 0.0 && minDistance < distanceThreshold)
       {
-         EuclidFrameTools.axisAngleFromFirstToSecondVector3D(zAxis, minDistanceVector, worldZToDistanceVectorRotation);
-
-         body_H_closestPoint.setToZero(ReferenceFrame.getWorldFrame());
-         body_H_closestPoint.setPosition(closestPointOnBody);
-         body_H_closestPoint.setOrientation(worldZToDistanceVectorRotation); //This frame is located on the point of
-                                                                          //the body at the minimum distance from the closest obstacle 
-                                                                          //and oriented such that the Z-axis is aligned 
-                                                                          //with the distance direction
-         body_H_closestPoint.changeFrame(body.getBodyFixedFrame()); //Express the pose in body coordinates
-
-         RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform(body_H_closestPoint.getOrientation(), body_H_closestPoint.getPosition());
-
-         ReferenceFrame closestPointFrame = ReferenceFrameTools.constructFrameWithUnchangingTransformFromParent(body.getName() + "_collisionFrame",
-                                                                                                                body.getBodyFixedFrame(),
-                                                                                                                body_H_closestPointAsRBT);
-
-         desiredLinearAcceleration.setToZero(closestPointFrame);
+         ReferenceFrame closestPointFrame = computeClosestPointFrame();
 
          double accelerationGain = 500.0;
-         double maxAcceleration = 50.0;
+         double maxFeedback = 50.0;
 
-         double desiredAccelerationValue = accelerationGain * (distanceThreshold
-               - minDistance);/*
-                               * (1.0 / (minDistance + 1e-4) - 1.0 /
-                               * distanceThreshold) / (minDistance * minDistance
-                               * + 1e-4);
-                               */
-
-         desiredLinearAcceleration.setZ(saturate(desiredAccelerationValue, maxAcceleration));
-
-         spatialAccelerationCommand.getSelectionMatrix().clearSelection();
-         //         spatialAccelerationCommand.getSelectionMatrix().getLinearPart().selectZAxis(true);
-         spatialAccelerationCommand.getSelectionMatrix().getLinearPart().setSelectionFrame(closestPointFrame);
-         spatialAccelerationCommand.getSelectionMatrix().getLinearPart().setAxisSelection(false, false, true);
-
-         spatialAccelerationCommand.getWeightMatrix().setWeightFrame(closestPointFrame);
-         spatialAccelerationCommand.getWeightMatrix().setLinearWeights(0.0, 0.0, 10.0);
-         //TODO Figure out how to use the control frame
-         //         spatialAccelerationCommand.getControlFramePose().set(other);
-
-//         pointFeedbackCommand.getSpatialAccelerationCommand().set(spatialAccelerationCommand);
-         SelectionMatrix3D selection = new SelectionMatrix3D(closestPointFrame, false, false, true);
+         selection.setSelectionFrame(closestPointFrame);
+         selection.setAxisSelection(false, false, true);
          pointFeedbackCommand.setSelectionMatrix(selection);
 
-         WeightMatrix3D weights = new WeightMatrix3D();
          weights.setWeightFrame(closestPointFrame);
          weights.setWeights(0.0, 0.0, 10.0);
          pointFeedbackCommand.setWeightMatrix(weights);
          pointFeedbackCommand.setBodyFixedPointToControl(body_H_closestPoint.getPosition());
-         //         pointFeedbackCommand.setGainsFrame(closestPointFrame);
          pointFeedbackCommand.getGains().setProportionalGains(accelerationGain);
          pointFeedbackCommand.getGains().setDerivativeGains(2.0 * Math.sqrt(accelerationGain));
          pointFeedbackCommand.getGains().setIntegralGains(0.0, 0.0);
-         pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxAcceleration, maxAcceleration * 10);
-
-         //         feedForwardLinearAcceleration.setIncludingFrame(pointFeedbackCommand.getReferenceLinearAcceleration());
-         //         feedForwardLinearAcceleration.setX(0.0);
-         //         feedForwardLinearAcceleration.setY(0.0);
-         //         feedForwardLinearAcceleration.setZ(0.0);
-         //         pointFeedbackCommand.getReferenceLinearAcceleration().set(feedForwardLinearAcceleration);
+         pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxFeedback, maxFeedback * 10);
 
          desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * distanceVector.getX(),
                              closestPointOnBody.getY() - (distanceThreshold - minDistance) * distanceVector.getY(),
@@ -261,9 +211,6 @@ public class CollisionManager
          desiredPosition.changeFrame(root.getBodyFixedFrame());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
-
-         spatialAccelerationCommand.setLinearAcceleration(closestPointFrame, desiredLinearAcceleration);
-         desiredAcceleration.set(saturate(desiredAccelerationValue, maxAcceleration));
          
          distanceArrow.showGraphicObject();
 
@@ -271,20 +218,34 @@ public class CollisionManager
       else
       {
          distanceArrow.hide();
-         spatialAccelerationCommand.getSelectionMatrix().clearSelection();
-         desiredAcceleration.set(0.0);
          closestPlanarRegion.set(-1);
 
-         pointFeedbackCommand.getSpatialAccelerationCommand().set(spatialAccelerationCommand);
+         selection.clearSelection();
+         pointFeedbackCommand.setSelectionMatrix(selection);
          pointFeedbackCommand.getGains().setProportionalGains(0.0);
          pointFeedbackCommand.getGains().setDerivativeGains(0.0);
          pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(0.0, 0.0);
       }
    }
 
-   public InverseDynamicsCommand<?> getInverseDynamicsCommand()
+   private ReferenceFrame computeClosestPointFrame()
    {
-      return spatialAccelerationCommand;
+      EuclidFrameTools.axisAngleFromFirstToSecondVector3D(zAxis, minDistanceVector, worldZToDistanceVectorRotation);
+
+      body_H_closestPoint.setToZero(ReferenceFrame.getWorldFrame());
+      body_H_closestPoint.setPosition(closestPointOnBody);
+      body_H_closestPoint.setOrientation(worldZToDistanceVectorRotation); //This frame is located on the point of
+                                                                       //the body at the minimum distance from the closest obstacle 
+                                                                       //and oriented such that the Z-axis is aligned 
+                                                                       //with the distance direction
+      body_H_closestPoint.changeFrame(body.getBodyFixedFrame()); //Express the pose in body coordinates
+
+      body_H_closestPointAsRBT.set(body_H_closestPoint.getOrientation(), body_H_closestPoint.getPosition());
+
+      ReferenceFrame closestPointFrame = ReferenceFrameTools.constructFrameWithUnchangingTransformFromParent(body.getName() + "_collisionFrame",
+                                                                                                             body.getBodyFixedFrame(),
+                                                                                                             body_H_closestPointAsRBT); //This is allocating memory
+      return closestPointFrame;
    }
 
    public FeedbackControlCommand<?> getFeedbackControlCommand()
@@ -305,6 +266,9 @@ public class CollisionManager
       }
    }
    
+   private FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
+   private FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
+
    private double computeDistanceFromPlanarRegion(PlanarRegion region, FrameVector3D distanceVector, FramePoint3D pointOnBody)
    {
       firstEndPoseInPlaneCoordinates.set(firstEndPose);
@@ -319,7 +283,7 @@ public class CollisionManager
 
       if (firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0) //The two points are in two different semiplanes or at least one of them is on the plane
       {
-         Point3D intersection = region.intersectWithLine(bodyLine);
+         Point3D intersection = region.intersectWithLine(bodyLine); //This is allocating memory
 
          if (intersection != null)
          {
@@ -371,18 +335,15 @@ public class CollisionManager
          }
       }
 
-      FrameVector3D tempDistanceVector = new FrameVector3D();
-      FramePoint3D tempMinPoint = new FramePoint3D();
-
       for (int polygon = 0; polygon < region.getNumberOfConvexPolygons(); ++polygon)
       {
-         double distance = computeMinimumDistanceFromConvexHullEdges(region.getConvexPolygon(polygon), tempDistanceVector, tempMinPoint);
+         double distance = computeMinimumDistanceFromConvexHullEdges(region.getConvexPolygon(polygon), tempEdgeDistanceVector, tempEdgeBodyClosestPoint);
 
          if ((minDistance < -0.5) || (distance < minDistance))
          {
             minDistance = distance;
-            distanceVector.set(tempDistanceVector);
-            pointOnBody.set(tempMinPoint);
+            distanceVector.set(tempEdgeDistanceVector);
+            pointOnBody.set(tempEdgeBodyClosestPoint);
          }
       }
 
@@ -424,11 +385,6 @@ public class CollisionManager
       }
 
       return minDistance;
-   }
-
-   private double saturate(double input, double threshold)
-   {
-      return Math.max(-threshold, Math.min(threshold, input));
    }
 
 }
