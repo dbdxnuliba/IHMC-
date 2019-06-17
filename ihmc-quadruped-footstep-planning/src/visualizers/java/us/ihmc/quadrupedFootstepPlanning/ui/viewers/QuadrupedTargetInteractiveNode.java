@@ -15,7 +15,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -38,6 +37,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.yawPitchRoll.YawPitchRoll;
+import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMeshBuilder;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
@@ -73,7 +73,6 @@ public class QuadrupedTargetInteractiveNode
    {
       TargetNode node = interactiveNode.getTargetNode();
       messager.bindPropertyToTopic(showTopic, node.showProperty());
-      node.setSelectable(false);
       messager.registerJavaFXSyncedTopicListener(positionTopic, m ->
       {
          if (m != null)
@@ -188,7 +187,7 @@ public class QuadrupedTargetInteractiveNode
                                                                                                             new Translate(),
                                                                                                             new Translate(),
                                                                                                             new Translate());
-      private final MeshView arrow = createArrowGraphic(DEFAULT_ARROW_LENGTH, 0.2 * DEFAULT_SIZE);
+      private final MeshView arrow = createArrowGraphic(DEFAULT_ARROW_LENGTH, 0.4 * DEFAULT_SIZE, 0.9 * DEFAULT_SIZE);
       private final Rotate arrowAdjustmentRotate = new Rotate();
 
       private final DoubleProperty stanceLengthProperty = new SimpleDoubleProperty(this, "stanceLength", 0.1);
@@ -198,8 +197,6 @@ public class QuadrupedTargetInteractiveNode
 
       private Material unselectedMaterial = defaultUnselectedMaterial;
       private Material selectedMaterial = defaultSelectedMaterial;
-
-      private final BooleanProperty selectableProperty = new SimpleBooleanProperty(this, "selectable", true);
       private final BooleanProperty positionSelectedProperty = new SimpleBooleanProperty(this, "positionSelected");
       private final BooleanProperty orientationSelectedProperty = new SimpleBooleanProperty(this, "orientationSelected");
 
@@ -251,74 +248,31 @@ public class QuadrupedTargetInteractiveNode
 
          positionSelectedProperty.addListener((observable, oldValue, newValue) ->
          {
-            if (!selectableProperty.get() && newValue.booleanValue())
-            {
-               positionSelectedProperty.set(false);
-               setPositionMaterial(unselectedMaterial);
-            }
-            else if (newValue.booleanValue() != oldValue.booleanValue())
-            {
+            if (newValue.booleanValue() != oldValue.booleanValue())
                setPositionMaterial(newValue.booleanValue() ? selectedMaterial : unselectedMaterial);
-            }
          });
          orientationSelectedProperty.addListener((observable, oldValue, newValue) ->
          {
-            if (!selectableProperty.get() && newValue.booleanValue())
-            {
-               orientationSelectedProperty.set(false);
-               setOrientationMaterial(unselectedMaterial);
-            }
-            else if (newValue.booleanValue() != oldValue.booleanValue())
-            {
+            if (newValue.booleanValue() != oldValue.booleanValue())
                setOrientationMaterial(newValue.booleanValue() ? selectedMaterial : unselectedMaterial);
-            }
          });
 
          setPositionMaterial(unselectedMaterial);
          setOrientationMaterial(unselectedMaterial);
 
-         EventHandler<? super MouseEvent> positionSelector = e -> positionSelectedProperty.set(true);
-         EventHandler<? super MouseEvent> orientationSelector = e ->
-         {
-            positionSelectedProperty.set(true);
-            orientationSelectedProperty.set(true);
-         };
-
-         selectableProperty.addListener(new ChangeListener<Boolean>()
-         {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue)
-            {
-               if (newValue != null && newValue.booleanValue() != oldValue.booleanValue())
-               {
-                  if (newValue.booleanValue())
-                  {
-                     center.addEventHandler(MouseEvent.MOUSE_CLICKED, positionSelector);
-                     arrow.addEventHandler(MouseEvent.MOUSE_CLICKED, orientationSelector);
-                  }
-                  else
-                  {
-                     center.removeEventHandler(MouseEvent.MOUSE_CLICKED, positionSelector);
-                     arrow.removeEventHandler(MouseEvent.MOUSE_CLICKED, orientationSelector);
-                     positionSelectedProperty.set(false);
-                     orientationSelectedProperty.set(false);
-                  }
-               }
-            }
-         });
-
-         selectableProperty.set(true);
+         center.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> positionSelectedProperty.set(true));
+         arrow.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> orientationSelectedProperty.set(true));
       }
 
-      private MeshView createArrowGraphic(double length, double radius)
+      private MeshView createArrowGraphic(double length, double radius, double offsetFromCenter)
       {
          JavaFXMeshBuilder meshBuilder = new JavaFXMeshBuilder();
 
-         double coneHeight = 0.10 * length;
-         double coneRadius = 1.5 * radius;
+         double coneHeight = 0.25 * length;
+         double coneRadius = 2.50 * radius;
 
-         meshBuilder.addCylinder(length, radius, new Point3D(), new AxisAngle(0.0, 1.0, 0.0, Math.PI / 2.0));
-         meshBuilder.addCone(coneHeight, coneRadius, new Point3D(length, 0.0, 0.0), new AxisAngle(0.0, 1.0, 0.0, Math.PI / 2.0));
+         meshBuilder.addCylinder(length, radius, new Point3D(offsetFromCenter, 0.0, 0.0), new AxisAngle(0.0, 1.0, 0.0, Math.PI / 2.0));
+         meshBuilder.addMesh(MeshDataGenerator.GenTruncatedCone(coneHeight, 0.5 * coneRadius, coneRadius, 0.0, 0.0, 32), new Point3D(length + offsetFromCenter, 0.0, 0.0), new AxisAngle(0.0, 1.0, 0.0, Math.PI / 2.0));
 
          MeshView arrow = new MeshView(meshBuilder.generateMesh());
          return arrow;
@@ -382,11 +336,13 @@ public class QuadrupedTargetInteractiveNode
       {
          center.setMaterial(material);
          feet.values().forEach(foot -> foot.setMaterial(material));
+         arrow.setMaterial(material);
       }
 
       public void setOrientationMaterial(Material material)
       {
          arrow.setMaterial(material);
+         feet.values().forEach(foot -> foot.setMaterial(material));
       }
 
       public void show(boolean show)
@@ -426,21 +382,6 @@ public class QuadrupedTargetInteractiveNode
             setPositionMaterial(unselectedMaterial);
          if (!orientationSelectedProperty.get())
             setOrientationMaterial(unselectedMaterial);
-      }
-
-      public boolean isSelectable()
-      {
-         return selectableProperty.get();
-      }
-
-      public void setSelectable(boolean selectable)
-      {
-         selectableProperty.set(selectable);
-      }
-
-      public BooleanProperty selectableProperty()
-      {
-         return selectableProperty;
       }
 
       public boolean isPositionSelected()
