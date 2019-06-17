@@ -136,7 +136,6 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
    private CollisionManagerMessage createCollisionMessage(PlanarRegionsList planarRegions)
    {
       CollisionManagerMessage collisionMessage = new CollisionManagerMessage();
-      collisionMessage.setTest((float) 0.38);
 
       for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
       {

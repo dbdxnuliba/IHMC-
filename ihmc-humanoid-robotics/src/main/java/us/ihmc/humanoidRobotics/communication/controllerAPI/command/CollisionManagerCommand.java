@@ -10,7 +10,6 @@ import us.ihmc.communication.controllerAPI.command.Command;
 public class CollisionManagerCommand implements Command<CollisionManagerCommand, CollisionManagerMessage>
 {
 
-   private float test;
    private final PlanarRegionCommand planarRegionCommand = new PlanarRegionCommand();
    private final RecyclingArrayList<PlanarRegionCommand> planarRegions = new RecyclingArrayList<>(100, PlanarRegionCommand.class);
 
@@ -19,7 +18,6 @@ public class CollisionManagerCommand implements Command<CollisionManagerCommand,
    {
       clear();
 
-      this.test = other.test;
       RecyclingArrayList<PlanarRegionCommand> dataList = other.getPlanarRegions();
       if (dataList != null)
       {
@@ -43,15 +41,9 @@ public class CollisionManagerCommand implements Command<CollisionManagerCommand,
       return planarRegions.get(i);
    }
 
-   public float getTest()
-   {
-      return test;
-   }
-
    @Override
    public void clear()
    {
-      test = (float) 0.0;
       planarRegions.clear();
    }
 
@@ -59,8 +51,6 @@ public class CollisionManagerCommand implements Command<CollisionManagerCommand,
    public void setFromMessage(CollisionManagerMessage message)
    {
       clear();
-
-      test = message.getTest();
 
       List<PlanarRegionMessage> planarRegionsList = message.getPlanarRegionsList();
       

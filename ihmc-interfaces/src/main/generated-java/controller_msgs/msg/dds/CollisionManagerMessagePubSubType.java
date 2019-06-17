@@ -40,12 +40,9 @@ public class CollisionManagerMessagePubSubType implements us.ihmc.pubsub.TopicDa
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
-
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 100; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.PlanarRegionMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
-
       return current_alignment - initial_alignment;
    }
 
@@ -59,21 +56,15 @@ public class CollisionManagerMessagePubSubType implements us.ihmc.pubsub.TopicDa
       int initial_alignment = current_alignment;
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
-
-
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
       for(int i0 = 0; i0 < data.getPlanarRegionsList().size(); ++i0)
       {
           current_alignment += controller_msgs.msg.dds.PlanarRegionMessagePubSubType.getCdrSerializedSize(data.getPlanarRegionsList().get(i0), current_alignment);}
-
 
       return current_alignment - initial_alignment;
    }
 
    public static void write(controller_msgs.msg.dds.CollisionManagerMessage data, us.ihmc.idl.CDR cdr)
    {
-      cdr.write_type_5(data.getTest());
-
       if(data.getPlanarRegionsList().size() <= 100)
       cdr.write_type_e(data.getPlanarRegionsList());else
           throw new RuntimeException("planar_regions_list field exceeds the maximum length");
@@ -82,8 +73,6 @@ public class CollisionManagerMessagePubSubType implements us.ihmc.pubsub.TopicDa
 
    public static void read(controller_msgs.msg.dds.CollisionManagerMessage data, us.ihmc.idl.CDR cdr)
    {
-      data.setTest(cdr.read_type_5());
-      	
       cdr.read_type_e(data.getPlanarRegionsList());	
 
    }
@@ -91,14 +80,12 @@ public class CollisionManagerMessagePubSubType implements us.ihmc.pubsub.TopicDa
    @Override
    public final void serialize(controller_msgs.msg.dds.CollisionManagerMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_5("test", data.getTest());
       ser.write_type_e("planar_regions_list", data.getPlanarRegionsList());
    }
 
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.CollisionManagerMessage data)
    {
-      data.setTest(ser.read_type_5("test"));
       ser.read_type_e("planar_regions_list", data.getPlanarRegionsList());
    }
 

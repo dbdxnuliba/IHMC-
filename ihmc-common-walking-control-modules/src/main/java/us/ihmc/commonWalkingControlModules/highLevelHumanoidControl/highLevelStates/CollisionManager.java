@@ -69,7 +69,7 @@ public class CollisionManager
    private final YoDouble distanceX, distanceY, distanceZ;
    private final YoDouble closestBodyPointX, closestBodyPointY, closestBodyPointZ;
    private final YoInteger closestPlanarRegion;
-   private final YoDouble measuredDistance, expectedLength, minimumDistanceValue, desiredAcceleration;
+   private final YoDouble measuredDistance, minimumDistanceValue, desiredAcceleration;
    private final YoInteger numberOfPlanarSurfaces;
 
    public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
@@ -106,7 +106,6 @@ public class CollisionManager
       desiredAcceleration = new YoDouble("collision_" + body.getName() + "_desiredAccelerationModule", registry);
 
       measuredDistance = new YoDouble("collision_" + body.getName() + "measuredLenght", registry);
-      this.expectedLength = new YoDouble("collision_" + body.getName() + "expectedLenght", registry);
       
       numberOfPlanarSurfaces = new YoInteger("collision_numberOfPlanarSurfaces", registry);
       
@@ -271,7 +270,6 @@ public class CollisionManager
 
    public void handleCollisionManagerCommand(CollisionManagerCommand command)
    {
-      this.expectedLength.set(command.getTest());
       int regions = command.getNumberOfPlanarRegions();
       numberOfPlanarSurfaces.set(regions);
       planarRegions.clear();
