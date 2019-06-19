@@ -67,10 +67,11 @@ public class CollisionManager
    private final YoDouble bodyEndX, bodyEndY, bodyEndZ;
    private final YoDouble distanceX, distanceY, distanceZ;
    private final YoDouble closestBodyPointX, closestBodyPointY, closestBodyPointZ;
+   private final YoDouble desiredPositionX, desiredPositionY, desiredPositionZ;
    private final YoInteger closestPlanarRegion;
    private final YoDouble measuredDistance, minimumDistanceValue;
    private final YoInteger numberOfPlanarSurfaces;
-   private final YoGraphicVector distanceArrow;
+   private final YoGraphicVector distanceArrow, desiredPositionArrow;
 
    public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
                            RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
@@ -95,6 +96,9 @@ public class CollisionManager
       closestBodyPointX = new YoDouble("collision_" + body.getName() + "_closestBodyPointX", registry);
       closestBodyPointY = new YoDouble("collision_" + body.getName() + "_closestBodyPointY", registry);
       closestBodyPointZ = new YoDouble("collision_" + body.getName() + "_closestBodyPointZ", registry);
+      desiredPositionX = new YoDouble("collision_" + body.getName() + "_desiredPositionX", registry);
+      desiredPositionY = new YoDouble("collision_" + body.getName() + "_desiredPositionY", registry);
+      desiredPositionZ = new YoDouble("collision_" + body.getName() + "_desiredPositionZ", registry);
       minimumDistanceValue = new YoDouble("collision_" + body.getName() + "_minDistanceValue", registry);
       closestPlanarRegion = new YoInteger("collision_" + body.getName() + "_closestRegion", registry);
 
@@ -113,8 +117,22 @@ public class CollisionManager
                                           YoAppearance.BlackMetalMaterial(),
                                           true);
       distanceArrow.setLineRadiusWhenOneMeterLong(0.03);
+
+      desiredPositionArrow = new YoGraphicVector("DesiredPositionToAvoidCollision",
+                                                 closestBodyPointX,
+                                                 closestBodyPointY,
+                                                 closestBodyPointZ,
+                                                 desiredPositionX,
+                                                 desiredPositionY,
+                                                 desiredPositionZ,
+                                                 1.0,
+                                                 YoAppearance.DarkRed(),
+                                                 true);
+      desiredPositionArrow.setLineRadiusWhenOneMeterLong(0.03);
+
       YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionManagerGraphics");
       yoGraphicsList.add(distanceArrow);
+      yoGraphicsList.add(desiredPositionArrow);
       yoGraphicsListRegistry.registerYoGraphicsList(yoGraphicsList);
       
    }
@@ -161,7 +179,7 @@ public class CollisionManager
       }
       
       double maxZComponent = -0.1;
-      
+
       if (minDistanceVector.getZ() > maxZComponent)
       {
          minDistanceVector.setZ(maxZComponent);
@@ -176,7 +194,7 @@ public class CollisionManager
       closestBodyPointZ.set(closestPointOnBody.getZ());
       minimumDistanceValue.set(minDistance);
 
-      setupCommands(distanceThreshold, minDistance, templPlaneDistanceVector);
+      setupCommands(distanceThreshold, minDistance, minDistanceVector);
    }
 
    private RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
@@ -201,23 +219,30 @@ public class CollisionManager
          pointFeedbackCommand.setWeightMatrix(weights);
          pointFeedbackCommand.setBodyFixedPointToControl(body_H_closestPoint.getPosition());
          pointFeedbackCommand.getGains().setProportionalGains(accelerationGain);
-         pointFeedbackCommand.getGains().setDerivativeGains(2.0 * Math.sqrt(accelerationGain));
+         pointFeedbackCommand.getGains().setDerivativeGains(5.0 * Math.sqrt(accelerationGain));
          pointFeedbackCommand.getGains().setIntegralGains(0.0, 0.0);
          pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxFeedback, maxFeedback * 10);
 
-         desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * distanceVector.getX(),
-                             closestPointOnBody.getY() - (distanceThreshold - minDistance) * distanceVector.getY(),
-                             closestPointOnBody.getZ() - (distanceThreshold - minDistance) * distanceVector.getZ());
+         desiredPosition.setToZero(ReferenceFrame.getWorldFrame());
+         desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getX(),
+                             closestPointOnBody.getY() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getY(),
+                             closestPointOnBody.getZ() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getZ());
          desiredPosition.changeFrame(root.getBodyFixedFrame());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
          
+         desiredPositionX.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getX());
+         desiredPositionY.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getY());
+         desiredPositionZ.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getZ());
+
          distanceArrow.showGraphicObject();
+         desiredPositionArrow.showGraphicObject();
 
       }
       else
       {
          distanceArrow.hide();
+         desiredPositionArrow.hide();
          closestPlanarRegion.set(-1);
 
          selection.clearSelection();
