@@ -170,6 +170,10 @@ public class BehaviorDispatcher<E extends Enum<E>> implements Runnable
       callUpdatables();
 
       stateMachine.doControlAndTransitions();
+      if(!stateMachine.getCurrentBehaviorKey().equals(stopBehaviorKey)&&stateMachine.getCurrentAction().isDone())
+      {
+         requestedBehavior.set(stopBehaviorKey);
+      }
 
       //a behavior has finished or has aborted and has transitioned to STOP
 
@@ -225,6 +229,7 @@ public class BehaviorDispatcher<E extends Enum<E>> implements Runnable
             stateMachine.stop();
             behaviorStatusPublisher.publish(HumanoidMessageTools.createBehaviorStatusPacket(CurrentBehaviorStatus.NO_BEHAVIOR_RUNNING));
             behaviorControlModeResponsePublisher.publish(HumanoidMessageTools.createBehaviorControlModeResponsePacket(BehaviorControlModeEnum.STOP));
+            requestedBehavior.set(stopBehaviorKey);
             break;
          case PAUSE:
             stateMachine.pause();

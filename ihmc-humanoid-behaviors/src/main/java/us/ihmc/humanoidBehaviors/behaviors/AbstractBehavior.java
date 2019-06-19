@@ -17,12 +17,10 @@ import us.ihmc.communication.ROS2Tools.MessageTopicNameGenerator;
 import us.ihmc.communication.ROS2Tools.ROS2TopicQualifier;
 import us.ihmc.communication.net.ObjectConsumer;
 import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidBehaviors.IHMCHumanoidBehaviorManager;
 import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.BehaviorService;
-import us.ihmc.humanoidBehaviors.coactiveDesignFramework.CoactiveElement;
 import us.ihmc.humanoidBehaviors.communication.ConcurrentListeningQueue;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.simulationconstructionset.util.RobotController;
@@ -122,6 +120,11 @@ public abstract class AbstractBehavior implements RobotController
    public <T> IHMCROS2Publisher<T> createBehaviorOutputPublisher(Class<T> messageType)
    {
       return createPublisher(messageType, behaviorPubGenerator);
+   }
+   
+   public <T> IHMCROS2Publisher<T> createBehaviorInputPublisher(Class<T> messageType)
+   {
+      return createPublisher(messageType, behaviorSubGenerator);
    }
 
    public <T> IHMCROS2Publisher<T> createPublisher(Class<T> messageType, MessageTopicNameGenerator topicNameGenerator)
@@ -239,7 +242,6 @@ public abstract class AbstractBehavior implements RobotController
    {
       publishTextToSpeech("Resuming Behavior");
       isPaused.set(false);
-      isPaused.set(false);
 
       for (BehaviorService behaviorService : behaviorsServices)
       {
@@ -251,6 +253,7 @@ public abstract class AbstractBehavior implements RobotController
 
    public void publishTextToSpeech(String textToSpeak)
    {
+      System.err.println("**** "+textToSpeak);
       textToSpeechPublisher.publish(MessageTools.createTextToSpeechPacket(textToSpeak));
    }
    
@@ -303,11 +306,6 @@ public abstract class AbstractBehavior implements RobotController
    public BehaviorStatus getBehaviorStatus()
    {
       return yoBehaviorStatus.getEnumValue();
-   }
-
-   public CoactiveElement getCoactiveElement()
-   {
-      return null;
    }
 
    @Override

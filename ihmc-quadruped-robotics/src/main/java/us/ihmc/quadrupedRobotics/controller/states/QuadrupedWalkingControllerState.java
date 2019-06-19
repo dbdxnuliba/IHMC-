@@ -60,10 +60,7 @@ import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.parameters.EnumParameter;
 import us.ihmc.yoVariables.providers.EnumProvider;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoFramePoint3D;
-import us.ihmc.yoVariables.variable.YoInteger;
+import us.ihmc.yoVariables.variable.*;
 
 public class QuadrupedWalkingControllerState extends HighLevelControllerState implements QuadrupedStepTransitionCallback
 {
@@ -212,9 +209,6 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       // Manually triggered events to transition to main controllers.
       factory.addTransition(QuadrupedSteppingRequestedEvent.REQUEST_STEP, QuadrupedSteppingStateEnum.STAND, QuadrupedSteppingStateEnum.STEP);
 
-      Runnable stepToStandCallback = stepController::halt;
-      factory.addCallback(QuadrupedSteppingRequestedEvent.REQUEST_STAND, QuadrupedSteppingStateEnum.STEP, stepToStandCallback);
-
       factory.addStateChangedListener(new StateChangedListener<QuadrupedSteppingStateEnum>()
       {
          @Override
@@ -289,7 +283,8 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
 
       stepMessageHandler.onTouchDown(thisStepQuadrant);
-      stepMessageHandler.shiftPlanBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
+      stepMessageHandler.shiftPlanPositionBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
+      stepMessageHandler.shiftPlanTimeBasedOnTouchdown(thisStepQuadrant, currentTime);
       tempVector.sub(footstepStatusMessage.getActualTouchdownPositionInWorld(), footstepStatusMessage.getDesiredTouchdownPositionInWorld());
       stepMessageHandler.addOffsetVectorOnTouchdown(tempVector);
 
