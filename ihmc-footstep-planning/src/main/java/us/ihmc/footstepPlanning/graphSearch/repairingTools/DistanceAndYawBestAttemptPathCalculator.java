@@ -1,21 +1,35 @@
 package us.ihmc.footstepPlanning.graphSearch.repairingTools;
 
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.heuristics.HeuristicsTools;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.robotics.geometry.AngleTools;
 
-public class DistanceAndYawSubOptimalPathCalculator implements BestSubOptimalPathCalculator
+public class DistanceAndYawBestAttemptPathCalculator implements BestAttemptPathCalculator
 {
    private final FootstepPlannerParameters parameters;
    private final FootstepPlannerCostParameters costParameters;
+   private FootstepGraph footstepGraph;
 
-   public DistanceAndYawSubOptimalPathCalculator(FootstepPlannerParameters parameters)
+   public DistanceAndYawBestAttemptPathCalculator(FootstepPlannerParameters parameters)
    {
       this.parameters = parameters;
       this.costParameters = parameters.getCostParameters();
+   }
+
+   @Override
+   public void addFootstepGraph(FootstepGraph footstepGraph)
+   {
+      this.footstepGraph = footstepGraph;
+   }
+
+   @Override
+   public FootstepGraph getFootstepGraph()
+   {
+      return footstepGraph;
    }
 
    @Override

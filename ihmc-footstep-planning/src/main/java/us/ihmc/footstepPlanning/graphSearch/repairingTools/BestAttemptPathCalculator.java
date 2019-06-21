@@ -1,27 +1,26 @@
 package us.ihmc.footstepPlanning.graphSearch.repairingTools;
 
-import us.ihmc.footstepPlanning.graphSearch.graph.FootstepEdge;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
-public interface BestSubOptimalPathCalculator
+public interface BestAttemptPathCalculator
 {
-   default FootstepNode computeBestEndNode(SideDependentList<FootstepNode> goalNodes, Set<FootstepNode> expandedNodes, HashMap<FootstepNode, FootstepEdge> incomingBestEdges)
+   default FootstepNode computeBestEndNode(SideDependentList<FootstepNode> goalNodes, Set<FootstepNode> expandedNodes)
    {
       FootstepNode bestNode = null;
       double lowestCost = Double.POSITIVE_INFINITY;
 
       for (FootstepNode expandedNode : expandedNodes)
       {
-         FootstepEdge edgeOfExpandedNode = incomingBestEdges.get(expandedNode);
-         if (edgeOfExpandedNode == null)
+         FootstepNode childOfExpandedNode = getParentNode(expandedNode);
+         if (childOfExpandedNode == null)
             continue;
 
-         FootstepNode childOfExpandedNode = edgeOfExpandedNode.getStartNode();
          double nodeCost = computeRemainingCostToGoal(goalNodes, expandedNode, childOfExpandedNode);
 
          if (nodeCost < lowestCost)
@@ -44,6 +43,21 @@ public interface BestSubOptimalPathCalculator
 
       return lowerCost;
    }
+
+   default FootstepNode getParentNode(FootstepNode node)
+   {
+      return getFootstepGraph().getParentNode(node);
+   }
+
+   default List<FootstepNode> getBestAttemptPath(SideDependentList<FootstepNode> goalNodes, Set<FootstepNode> expandedNodes)
+   {
+      FootstepNode bestEndNode = computeBestEndNode(goalNodes, expandedNodes);
+      return getFootstepGraph().getPathFromStart(bestEndNode);
+   }
+
+   void addFootstepGraph(FootstepGraph footstepGraph);
+
+   FootstepGraph getFootstepGraph();
 
    double computeRemainingCostToGoal(FootstepNode goalNodes, FootstepNode possibleEndNode, FootstepNode childNode);
 }

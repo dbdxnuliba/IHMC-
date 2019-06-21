@@ -21,6 +21,8 @@ import us.ihmc.footstepPlanning.graphSearch.listeners.StartAndGoalListener;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.*;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
 import us.ihmc.humanoidRobotics.footstep.SimpleFootstep;
@@ -38,6 +40,7 @@ import java.util.*;
 public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 {
    private static final boolean debug = false;
+   private static final boolean returnBestAttemptPlan = false;
    private static final RobotSide defaultStartNodeSide = RobotSide.LEFT;
 
    private final String name = getClass().getSimpleName();
@@ -62,6 +65,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private final FootstepNodeExpansion nodeExpansion;
    private final FootstepCost stepCostCalculator;
    private final FootstepNodeSnapper snapper;
+   private final BestAttemptPathCalculator bestAttemptPathCalculator;
    private final SideDependentList<ConvexPolygon2D> footPolygons;
 
    private final ArrayList<StartAndGoalListener> startAndGoalListeners = new ArrayList<>();
@@ -78,20 +82,23 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private final YoBoolean abortPlanning = new YoBoolean("abortPlanning", registry);
 
    public AStarFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeChecker nodeChecker, CostToGoHeuristics heuristics,
-                               FootstepNodeExpansion expansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper, YoVariableRegistry parentRegistry)
+                               FootstepNodeExpansion expansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper,
+                               BestAttemptPathCalculator bestAttemptPathCalculator, YoVariableRegistry parentRegistry)
    {
-      this(parameters, nodeChecker, heuristics, expansion, stepCostCalculator, snapper, null, null, parentRegistry);
+      this(parameters, nodeChecker, heuristics, expansion, stepCostCalculator, snapper, bestAttemptPathCalculator, null, null, parentRegistry);
    }
 
    public AStarFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeChecker nodeChecker, CostToGoHeuristics heuristics,
                                FootstepNodeExpansion nodeExpansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper,
-                               BipedalFootstepPlannerListener listener, SideDependentList<ConvexPolygon2D> footPolygons, YoVariableRegistry parentRegistry)
+                               BestAttemptPathCalculator bestAttemptPathCalculator, BipedalFootstepPlannerListener listener,
+                               SideDependentList<ConvexPolygon2D> footPolygons, YoVariableRegistry parentRegistry)
    {
       this.parameters = parameters;
       this.nodeChecker = nodeChecker;
       this.heuristics = heuristics;
       this.nodeExpansion = nodeExpansion;
       this.stepCostCalculator = stepCostCalculator;
+      this.bestAttemptPathCalculator = bestAttemptPathCalculator;
       this.listener = listener;
       this.snapper = snapper;
       this.graph = new FootstepGraph();
@@ -100,6 +107,8 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       this.footPolygons = footPolygons;
 
       nodeChecker.addFootstepGraph(graph);
+      if (bestAttemptPathCalculator != null)
+         bestAttemptPathCalculator.addFootstepGraph(graph);
       parentRegistry.addChild(registry);
    }
 
@@ -205,6 +214,8 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       if (result.validForExecution() && listener != null)
          listener.plannerFinished(null);
+      else if (returnBestAttemptPlan && endNode == null && bestAttemptPathCalculator != null)
+         endNode = bestAttemptPathCalculator.computeBestEndNode(goalNodes, expandedNodes);
 
       if (debug)
       {
@@ -471,6 +482,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       PlanarRegionBaseOfCliffAvoider cliffAvoider = new PlanarRegionBaseOfCliffAvoider(parameters, snapper, footPolygons);
 
       DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(parameters.getCostParameters().getAStarHeuristicsWeight(), parameters);
+      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(parameters);
 
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
       nodeChecker.addPlannerListener(listener);
@@ -485,8 +497,8 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       FootstepCost footstepCost = costBuilder.buildCost();
 
-      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, listener,
-                                                              footPolygons, registry);
+      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper,
+                                                              bestAttemptPathCalculator, listener, footPolygons, registry);
 
       if (policyDefinitions != null)
       {

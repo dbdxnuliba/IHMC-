@@ -12,7 +12,8 @@ public enum FootstepPlanningResult
    TIMED_OUT_BEFORE_SOLUTION,
    NO_PATH_EXISTS,
    SNAPPING_FAILED,
-   PLANNER_FAILED;
+   PLANNER_FAILED,
+   BEST_ATTEMPT_PATH;
 
    public static final FootstepPlanningResult[] values = values();
 

@@ -3,28 +3,41 @@ package us.ihmc.footstepPlanning.graphSearch.repairingTools;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.geometry.Pose2D;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.heuristics.HeuristicsTools;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerCostParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.pathPlanning.bodyPathPlanner.BodyPathPlanner;
 import us.ihmc.robotics.geometry.AngleTools;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 
-public class BodyPathSubOptimalPathCalculator implements BestSubOptimalPathCalculator
+public class BodyPathBestAttemptPathCalculator implements BestAttemptPathCalculator
 {
    private static final double pathViolationWeight = 30.0;
    private final BodyPathPlanner bodyPath;
    private final FootstepPlannerParameters parameters;
    private final FootstepPlannerCostParameters costParameters;
+   private FootstepGraph footstepGraph;
 
    private double goalAlpha = 1.0;
 
-   public BodyPathSubOptimalPathCalculator(FootstepPlannerParameters parameters, BodyPathPlanner bodyPath)
+   public BodyPathBestAttemptPathCalculator(FootstepPlannerParameters parameters, BodyPathPlanner bodyPath)
    {
       this.parameters = parameters;
       this.costParameters = parameters.getCostParameters();
       this.bodyPath = bodyPath;
+   }
+
+   @Override
+   public void addFootstepGraph(FootstepGraph footstepGraph)
+   {
+      this.footstepGraph = footstepGraph;
+   }
+
+   @Override
+   public FootstepGraph getFootstepGraph()
+   {
+      return footstepGraph;
    }
 
    @Override
