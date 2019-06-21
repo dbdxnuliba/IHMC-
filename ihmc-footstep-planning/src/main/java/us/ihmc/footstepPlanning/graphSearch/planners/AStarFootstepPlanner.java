@@ -21,6 +21,8 @@ import us.ihmc.footstepPlanning.graphSearch.listeners.StartAndGoalListener;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.*;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.YoFootstepPlannerCostParameters;
+import us.ihmc.footstepPlanning.graphSearch.parameters.YoFootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptHeuristicPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
@@ -42,10 +44,14 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private static final boolean returnBestAttemptPlan = true;
    private static final RobotSide defaultStartNodeSide = RobotSide.LEFT;
 
+   private static final double heuristicReductionPercent = 0.05;
+   private static final double minimumHeuristicReductionAmount = 0.05;
+   private static final boolean performGraphRepair = false;
+
    private final String name = getClass().getSimpleName();
    private final YoVariableRegistry registry = new YoVariableRegistry(name);
 
-   private final FootstepPlannerParameters parameters;
+   private final YoFootstepPlannerParameters parameters;
 
    private SideDependentList<FootstepNode> goalNodes;
    private HashSet<FootstepNode> expandedNodes;
@@ -70,6 +76,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private final ArrayList<StartAndGoalListener> startAndGoalListeners = new ArrayList<>();
 
    private final YoDouble timeout = new YoDouble("footstepPlannerTimeout", registry);
+   private final YoDouble repairingTimeout = new YoDouble("footstepPlannerRepairingTimeout", registry);
    private final YoDouble planningTime = new YoDouble("PlanningTime", registry);
    private final YoLong numberOfExpandedNodes = new YoLong("NumberOfExpandedNodes", registry);
    private final YoDouble percentRejectedNodes = new YoDouble("PercentRejectedNodes", registry);
@@ -89,10 +96,9 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
    public AStarFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeChecker nodeChecker, CostToGoHeuristics heuristics,
                                FootstepNodeExpansion nodeExpansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper,
-                               BipedalFootstepPlannerListener listener,
-                               SideDependentList<ConvexPolygon2D> footPolygons, YoVariableRegistry parentRegistry)
+                               BipedalFootstepPlannerListener listener, SideDependentList<ConvexPolygon2D> footPolygons, YoVariableRegistry parentRegistry)
    {
-      this.parameters = parameters;
+      this.parameters = (YoFootstepPlannerParameters) parameters;
       this.nodeChecker = nodeChecker;
       this.heuristics = heuristics;
       this.nodeExpansion = nodeExpansion;
@@ -103,6 +109,8 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       timeout.set(Double.POSITIVE_INFINITY);
       this.initialize.set(true);
       this.footPolygons = footPolygons;
+
+      repairingTimeout.set(6.0);
 
       nodeChecker.addFootstepGraph(graph);
       parentRegistry.addChild(registry);
@@ -359,13 +367,56 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
          iterations++;
 
-         FootstepNode nodeToExpand = stack.poll();
-         if (expandedNodes.contains(nodeToExpand))
-            continue;
-         expandedNodes.add(nodeToExpand);
+         boolean performingRepair = endNode != null;
 
-         if (checkAndHandleNodeAtGoal(nodeToExpand))
-            break;
+         FootstepNode nodeToExpand = stack.poll();
+
+         // changes which one to do first, as we want to see if the node is at the goal again to see if we should reduce the heuristic weight
+         if (performingRepair)
+         {
+            if (checkAndHandleNodeAtGoal(nodeToExpand, true))
+            {
+               if (heuristics.getWeight() <= 1.0)
+                  break;
+
+               double newHeuristicWeight = heuristics.getWeight() - Math.max(heuristicReductionPercent * heuristics.getWeight(), minimumHeuristicReductionAmount);
+               newHeuristicWeight = Math.max(newHeuristicWeight, 1.0);
+               PrintTools.info("reducing heuristic weight to " + newHeuristicWeight);
+               ((YoFootstepPlannerCostParameters) parameters.getCostParameters()).setAStarHeuristicsWeight(newHeuristicWeight);
+               continue;
+            }
+
+            if (expandedNodes.contains(nodeToExpand))
+               continue;
+            expandedNodes.add(nodeToExpand);
+         }
+         else
+         {
+            if (expandedNodes.contains(nodeToExpand))
+               continue;
+            expandedNodes.add(nodeToExpand);
+
+            boolean nodeIsAtGoal = checkAndHandleNodeAtGoal(nodeToExpand, false);
+            if (nodeIsAtGoal)
+            {
+               if (performGraphRepair)
+               {
+                  if (heuristics.getWeight() <= 1.0)
+                     break;
+
+                  double newHeuristicWeight =
+                        heuristics.getWeight() - Math.max(heuristicReductionPercent * heuristics.getWeight(), minimumHeuristicReductionAmount);
+                  newHeuristicWeight = Math.max(newHeuristicWeight, 1.0);
+                  PrintTools.info("reducing heuristic weight to " + newHeuristicWeight);
+                  ((YoFootstepPlannerCostParameters) parameters.getCostParameters()).setAStarHeuristicsWeight(newHeuristicWeight);
+                  continue;
+               }
+               else
+               {
+                  break;
+               }
+            }
+         }
 
          checkAndHandleBestEffortNode(nodeToExpand);
 
@@ -393,8 +444,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
          if (listener != null)
             listener.tickAndUpdate();
 
-         long timeInNano = System.nanoTime();
-         if (Conversions.nanosecondsToSeconds(timeInNano - planningStartTime) > timeout.getDoubleValue() || abortPlanning.getBooleanValue())
+         if (checkIfPastTimeout(System.nanoTime(), planningStartTime) || abortPlanning.getBooleanValue())
          {
             if (abortPlanning.getBooleanValue())
                PrintTools.info("Abort planning requested.");
@@ -412,7 +462,19 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       return true;
    }
 
-   private boolean checkAndHandleNodeAtGoal(FootstepNode nodeToExpand)
+   private boolean checkIfPastTimeout(long timeInNano, long planningStartTime)
+   {
+      double planningTime = Conversions.nanosecondsToSeconds(timeInNano - planningStartTime);
+      if (planningTime > timeout.getDoubleValue())
+         return true;
+
+      if (endNode != null && planningTime > repairingTimeout.getDoubleValue())
+         return true;
+
+      return false;
+   }
+
+   private boolean checkAndHandleNodeAtGoal(FootstepNode nodeToExpand, boolean checkIfAlreadyExpanded)
    {
       if (!validGoalNode.getBooleanValue())
          return false;
@@ -421,8 +483,17 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       if (goalNodes.get(nodeSide).equals(nodeToExpand))
       {
          endNode = goalNodes.get(nodeSide.getOppositeSide());
-         graph.checkAndSetEdge(nodeToExpand, endNode, 0.0);
+         if (!checkIfAlreadyExpanded)
+         {
+            graph.checkAndSetEdge(nodeToExpand, endNode, 0.0);
+         }
+
+         else if (!expandedNodes.contains(nodeToExpand))
+         {
+            graph.checkAndSetEdge(nodeToExpand, endNode, 0.0);
+         }
          return true;
+
       }
 
       return false;
@@ -485,7 +556,9 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       BodyCollisionNodeChecker bodyCollisionNodeChecker = new BodyCollisionNodeChecker(collisionDetector, parameters, snapper);
       PlanarRegionBaseOfCliffAvoider cliffAvoider = new PlanarRegionBaseOfCliffAvoider(parameters, snapper, footPolygons);
 
-      DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(parameters.getCostParameters().getAStarHeuristicsWeight(), parameters);
+      YoDouble heuristicWeight = new YoDouble("heuristicWeight", registry);
+      heuristicWeight.set(parameters.getCostParameters().getAStarHeuristicsWeight().getValue());
+      DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(heuristicWeight, parameters);
 
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
       nodeChecker.addPlannerListener(listener);
