@@ -40,7 +40,7 @@ import java.util.*;
 public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 {
    private static final boolean debug = false;
-   private static final boolean returnBestAttemptPlan = false;
+   private static final boolean returnBestAttemptPlan = true;
    private static final RobotSide defaultStartNodeSide = RobotSide.LEFT;
 
    private final String name = getClass().getSimpleName();
@@ -212,10 +212,17 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       FootstepPlanningResult result = checkResult();
 
-      if (result.validForExecution() && listener != null)
-         listener.plannerFinished(null);
-      else if (returnBestAttemptPlan && endNode == null && bestAttemptPathCalculator != null)
+      if (!result.validForExecution() && returnBestAttemptPlan && endNode == null && bestAttemptPathCalculator != null)
+      {
          endNode = bestAttemptPathCalculator.computeBestEndNode(goalNodes, expandedNodes);
+         result = FootstepPlanningResult.BEST_ATTEMPT_PATH;
+      }
+
+      if (result.validForExecution() && listener != null)
+      {
+         listener.plannerFinished(null);
+      }
+
 
       if (debug)
       {

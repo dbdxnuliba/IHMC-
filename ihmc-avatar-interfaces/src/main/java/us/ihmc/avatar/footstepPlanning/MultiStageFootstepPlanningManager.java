@@ -685,6 +685,7 @@ public class MultiStageFootstepPlanningManager implements PlannerCompletionCallb
       }
       else
       {
+
          FootstepPlanningResult stepStatus = getWorstResult(completedStepResults.getCopyForReading());
          if (!stepStatus.validForExecution())
          {

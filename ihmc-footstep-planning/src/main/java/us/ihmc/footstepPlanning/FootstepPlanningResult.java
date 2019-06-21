@@ -9,11 +9,11 @@ public enum FootstepPlanningResult
 {
    OPTIMAL_SOLUTION,
    SUB_OPTIMAL_SOLUTION,
+   BEST_ATTEMPT_PATH,
    TIMED_OUT_BEFORE_SOLUTION,
    NO_PATH_EXISTS,
    SNAPPING_FAILED,
-   PLANNER_FAILED,
-   BEST_ATTEMPT_PATH;
+   PLANNER_FAILED;
 
    public static final FootstepPlanningResult[] values = values();
 
@@ -28,6 +28,7 @@ public enum FootstepPlanningResult
       {
       case OPTIMAL_SOLUTION:
       case SUB_OPTIMAL_SOLUTION:
+      case BEST_ATTEMPT_PATH:
          return true;
       default:
          return false;

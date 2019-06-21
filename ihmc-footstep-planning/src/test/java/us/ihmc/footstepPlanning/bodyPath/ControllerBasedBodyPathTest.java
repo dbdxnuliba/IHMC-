@@ -281,7 +281,7 @@ public class ControllerBasedBodyPathTest
 //         FootstepNodeExpansion nodeExpansion = new SimpleSideBasedExpansion(parameters);
          FootstepCost stepCostCalculator = new EuclideanDistanceAndYawBasedCost(parameters);
          FlatGroundFootstepNodeSnapper snapper = new FlatGroundFootstepNodeSnapper();
-         AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, nodeExpansion, stepCostCalculator, snapper, registry);
+         AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, nodeExpansion, stepCostCalculator, snapper, null, registry);
          return planner;
       }
    }

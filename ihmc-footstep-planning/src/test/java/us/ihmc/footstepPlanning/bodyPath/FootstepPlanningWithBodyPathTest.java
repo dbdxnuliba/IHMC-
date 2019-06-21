@@ -26,6 +26,8 @@ import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpa
 import us.ihmc.footstepPlanning.graphSearch.parameters.DefaultFootstepPlanningParameters;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.EuclideanDistanceAndYawBasedCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.testTools.PlanningTestTools;
@@ -149,8 +151,10 @@ public class FootstepPlanningWithBodyPathTest
       FootstepNodeExpansion nodeExpansion = new ParameterBasedNodeExpansion(parameters);
       FootstepCost stepCostCalculator = new EuclideanDistanceAndYawBasedCost(parameters);
       FlatGroundFootstepNodeSnapper snapper = new FlatGroundFootstepNodeSnapper();
+      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(parameters);
 
-      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, nodeExpansion, stepCostCalculator, snapper, registry);
+      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, nodeExpansion, stepCostCalculator, snapper,
+                                                              bestAttemptPathCalculator, registry);
       return planner;
    }
 }

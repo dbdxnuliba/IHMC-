@@ -59,6 +59,8 @@ import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.DepthFirstFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.SplinePathWithAStarPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.VisibilityGraphWithAStarPlanner;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.ConstantFootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
@@ -362,6 +364,7 @@ public class FootstepPathCalculatorModule
       SimplePlanarRegionFootstepNodeSnapper snapper = new SimplePlanarRegionFootstepNodeSnapper(footPolygons);
       FootstepNodeSnapAndWiggler postProcessingSnapper = new FootstepNodeSnapAndWiggler(footPolygons, parameters);
       FootstepNodeBodyCollisionDetector collisionDetector = new FootstepNodeBodyCollisionDetector(parameters);
+      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(parameters);
 
       SnapBasedNodeChecker snapBasedNodeChecker = new SnapBasedNodeChecker(parameters, footPolygons, snapper);
       BodyCollisionNodeChecker bodyCollisionNodeChecker = new BodyCollisionNodeChecker(collisionDetector, parameters, snapper);
@@ -385,8 +388,8 @@ public class FootstepPathCalculatorModule
       snapBasedNodeChecker.addPlannerListener(plannerListener);
       bodyCollisionNodeChecker.addPlannerListener(plannerListener);
 
-      return new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, plannerListener, footPolygons,
-                                      registry);
+      return new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, bestAttemptPathCalculator,
+                                      plannerListener, footPolygons, registry);
    }
 
    private BodyPathAndFootstepPlanner createPlanarRegionBipedalPlanner(SideDependentList<ConvexPolygon2D> footPolygonsInSoleFrame, YoVariableRegistry registry)
