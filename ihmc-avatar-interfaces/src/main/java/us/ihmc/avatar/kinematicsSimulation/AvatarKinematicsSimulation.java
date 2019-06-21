@@ -106,7 +106,7 @@ public class AvatarKinematicsSimulation
 
    private void controllerTick()
    {
-      avatarKinematicsSimulationController.updateInternal();
+      avatarKinematicsSimulationController.doControl();
 
       robotConfigurationDataPublisher.publish(extractRobotConfigurationData(avatarKinematicsSimulationController.getFullRobotModel()));
 

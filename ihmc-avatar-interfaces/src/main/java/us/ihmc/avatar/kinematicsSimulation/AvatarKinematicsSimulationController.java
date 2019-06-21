@@ -296,7 +296,7 @@ public class AvatarKinematicsSimulationController
       taskExecutor.submit(new KinematicsWalkingInitializeTask(walkingController, controllerToolbox.getFootContactStates())); // few ticks to get it going
    }
 
-   public void updateInternal()
+   public void doControl()
    {
       if (kinematicsSimulationInputManager.isNewCommandAvailable(FootstepDataListCommand.class))
       {
