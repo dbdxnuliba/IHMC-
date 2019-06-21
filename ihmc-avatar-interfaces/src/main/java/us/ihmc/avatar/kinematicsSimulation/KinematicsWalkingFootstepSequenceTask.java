@@ -7,6 +7,7 @@ import us.ihmc.commonWalkingControlModules.capturePoint.BalanceManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseDynamics.InverseDynamicsCommandList;
 import us.ihmc.commonWalkingControlModules.sensors.footSwitch.SettableFootSwitch;
+import us.ihmc.commons.thread.Notification;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager.StatusMessageListener;
@@ -41,6 +42,7 @@ public class KinematicsWalkingFootstepSequenceTask implements KinematicsWalkingT
    private final InverseDynamicsCommandList commandList = new InverseDynamicsCommandList();
 
    private final SideDependentList<SettableFootSwitch> footSwitches;
+   private final Notification walkingCompletedNotification;
    private RobotSide currentSwingSide = null;
 
    private final BalanceManager balanceManager;
@@ -60,9 +62,14 @@ public class KinematicsWalkingFootstepSequenceTask implements KinematicsWalkingT
     *           end-of-swing/beginning-of-support.
     * @param footSwitchesToUpdate this tasks updates the foot switch used in the walking controller.
     */
-   public KinematicsWalkingFootstepSequenceTask(FloatingJointReadOnly rootJoint, FootstepDataListCommand footstepList, CommandInputManager walkingInputManager,
-                                                StatusMessageOutputManager walkingOutputManager, SideDependentList<YoPlaneContactState> footContactStates,
-                                                BalanceManager balanceManager, SideDependentList<SettableFootSwitch> footSwitchesToUpdate)
+   public KinematicsWalkingFootstepSequenceTask(FloatingJointReadOnly rootJoint,
+                                                FootstepDataListCommand footstepList,
+                                                CommandInputManager walkingInputManager,
+                                                StatusMessageOutputManager walkingOutputManager,
+                                                SideDependentList<YoPlaneContactState> footContactStates,
+                                                BalanceManager balanceManager,
+                                                SideDependentList<SettableFootSwitch> footSwitchesToUpdate,
+                                                Notification walkingCompletedNotification)
    {
       this.rootJoint = rootJoint;
       this.footstepList = footstepList;
@@ -71,6 +78,7 @@ public class KinematicsWalkingFootstepSequenceTask implements KinematicsWalkingT
       this.footContactStates = footContactStates;
       this.balanceManager = balanceManager;
       this.footSwitches = footSwitchesToUpdate;
+      this.walkingCompletedNotification = walkingCompletedNotification;
    }
 
    @Override
@@ -139,6 +147,8 @@ public class KinematicsWalkingFootstepSequenceTask implements KinematicsWalkingT
    public void onExit()
    {
       destroyListeners();
+
+      walkingCompletedNotification.set();
    }
 
    @Override
