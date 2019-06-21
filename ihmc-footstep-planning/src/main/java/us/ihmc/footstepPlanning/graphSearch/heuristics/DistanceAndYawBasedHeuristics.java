@@ -35,25 +35,9 @@ public class DistanceAndYawBasedHeuristics extends CostToGoHeuristics
 
    private double computeReferenceYaw(FootstepNode node, FootstepNode goalNode)
    {
-      double distanceToGoal = node.euclideanDistance(goalNode);
-      double finalTurnProximity = parameters.getFinalTurnProximity();
-
-      double minimumBlendDistance = 0.75 * finalTurnProximity;
-      double maximumBlendDistance = 1.25 * finalTurnProximity;
-
       double pathHeading = Math.atan2(goalNode.getY() - node.getY(), goalNode.getX() - node.getX());
       pathHeading = AngleTools.trimAngleMinusPiToPi(pathHeading);
 
-      double yawMultiplier;
-      if(distanceToGoal < minimumBlendDistance)
-         yawMultiplier = 0.0;
-      else if(distanceToGoal > maximumBlendDistance)
-         yawMultiplier = 1.0;
-      else
-         yawMultiplier = (distanceToGoal - minimumBlendDistance) / (maximumBlendDistance - minimumBlendDistance);
-
-      double referenceHeading = yawMultiplier * pathHeading;
-      referenceHeading += (1.0 - yawMultiplier) * goalNode.getYaw();
-      return AngleTools.trimAngleMinusPiToPi(referenceHeading);
+      return HeuristicsTools.computeReferenceYaw(node, goalNode, parameters.getFinalTurnProximity(), pathHeading);
    }
 }

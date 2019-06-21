@@ -44,9 +44,12 @@ public class BodyPathHeuristics extends CostToGoHeuristics
       double pathLength = bodyPath.computePathLength(alpha) - bodyPath.computePathLength(goalAlpha);
       double remainingDistance = pathLength + pathViolationWeight * distanceToPath;
 
-      double yaw = pathViolationWeight * AngleTools.computeAngleDifferenceMinusPiToPi(node.getYaw(), closestPointOnPath.getYaw());
+      double referenceYaw = HeuristicsTools.computeReferenceYaw(node, goalNode, parameters.getFinalTurnProximity(), closestPointOnPath.getYaw());
+
+      double yawError = AngleTools.computeAngleDifferenceMinusPiToPi(node.getYaw(), referenceYaw);
+      double yawCost = costParameters.getYawWeight() * pathViolationWeight * Math.abs(yawError);
       double minSteps = remainingDistance / parameters.getMaximumStepReach();
-      return remainingDistance + costParameters.getYawWeight() * Math.abs(yaw) + costParameters.getCostPerStep() * minSteps;
+      return remainingDistance + yawCost + costParameters.getCostPerStep() * minSteps;
    }
 
    public void setGoalAlpha(double alpha)
