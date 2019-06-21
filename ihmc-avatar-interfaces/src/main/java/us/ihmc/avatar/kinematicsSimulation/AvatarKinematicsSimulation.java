@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 
 public class AvatarKinematicsSimulation
 {
-   private static final double DT = UnitConversions.hertzToSeconds(100);
-   public static final double PLAYBACK_SPEED = 7.0;
+   private static final double DT = UnitConversions.hertzToSeconds(70);
+   public static final double PLAYBACK_SPEED = 10.0;
    private final DRCRobotModel robotModel;
    private final AvatarKinematicsSimulationController avatarKinematicsSimulationController;
    private final ExceptionHandlingThreadScheduler scheduler = new ExceptionHandlingThreadScheduler(getClass().getSimpleName(),
