@@ -8,7 +8,7 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSta
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
-public class KinematicsWalkingHaltTask implements KinematicsWalkingTask
+public class KinematicsWalkingInitializeTask implements KinematicsWalkingTask
 {
    private final SideDependentList<YoPlaneContactState> footContactStates;
    private final SideDependentList<WalkingPreviewContactStateHolder> contactStateHolders = new SideDependentList<>();
@@ -19,7 +19,7 @@ public class KinematicsWalkingHaltTask implements KinematicsWalkingTask
    private int count = 0;
    private final int numberOfTicksBeforeDone = 2; // 2 ticks seem necessary when reinitializing the controller.
 
-   public KinematicsWalkingHaltTask(WalkingHighLevelHumanoidController walkingController, SideDependentList<YoPlaneContactState> footContactStates)
+   public KinematicsWalkingInitializeTask(WalkingHighLevelHumanoidController walkingController, SideDependentList<YoPlaneContactState> footContactStates)
    {
       this.walkingController = walkingController;
       this.footContactStates = footContactStates;

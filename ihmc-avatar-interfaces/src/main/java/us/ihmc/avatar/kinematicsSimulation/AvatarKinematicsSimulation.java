@@ -5,8 +5,6 @@ import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WalkingStatusMessage;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.initialSetup.DRCRobotInitialSetup;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.HumanoidHighLevelControllerManager;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelHumanoidControllerFactory;
 import us.ihmc.commons.Conversions;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
@@ -22,8 +20,6 @@ import us.ihmc.robotDataLogger.YoVariableServer;
 import us.ihmc.robotDataLogger.logger.DataServerSettings;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
-import us.ihmc.robotics.sensors.ForceSensorDefinition;
-import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.sensorProcessing.communication.packets.dataobjects.RobotConfigurationDataFactory;
 import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
@@ -39,7 +35,8 @@ import java.util.stream.Collectors;
 
 public class AvatarKinematicsSimulation
 {
-   private static final double DT = UnitConversions.hertzToSeconds(50);
+   private static final double DT = UnitConversions.hertzToSeconds(100);
+   public static final double PLAYBACK_SPEED = 7.0;
    private final DRCRobotModel robotModel;
    private final AvatarKinematicsSimulationController avatarKinematicsSimulationController;
    private final ExceptionHandlingThreadScheduler scheduler = new ExceptionHandlingThreadScheduler(getClass().getSimpleName(),
@@ -104,7 +101,7 @@ public class AvatarKinematicsSimulation
 
       avatarKinematicsSimulationController.initialize();
 
-      scheduler.schedule(this::controllerTick, Conversions.secondsToNanoseconds(DT), TimeUnit.NANOSECONDS);
+      scheduler.schedule(this::controllerTick, Conversions.secondsToNanoseconds(DT / PLAYBACK_SPEED), TimeUnit.NANOSECONDS);
    }
 
    private void controllerTick()

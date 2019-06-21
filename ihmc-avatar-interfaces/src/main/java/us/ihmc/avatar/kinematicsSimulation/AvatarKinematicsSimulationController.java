@@ -30,7 +30,6 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootstepDataListCommand;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
-import us.ihmc.log.LogTools;
 import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
@@ -52,7 +51,6 @@ import us.ihmc.wholeBodyController.DRCControllerThread;
 import us.ihmc.wholeBodyController.RobotContactPointParameters;
 import us.ihmc.wholeBodyController.parameters.ParameterLoaderHelper;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoVariable;
 
@@ -66,11 +64,8 @@ public class AvatarKinematicsSimulationController
    private final double gravityZ = 9.81;
    private final double integrationDT;
    private final YoDouble yoTime;
-   private final YoBoolean hasControllerFailed;
-//   private final YoBoolean isDone;
 
    private final FloatingJointBasics rootJoint;
-   private final OneDoFJointBasics[] allOneDoFJointsExcludingHands;
    private final FullHumanoidRobotModel fullRobotModel;
    private final YoVariableRegistry registry;
    private final CommonHumanoidReferenceFrames referenceFrames;
@@ -84,7 +79,6 @@ public class AvatarKinematicsSimulationController
 
    private final CommandInputManager kinematicsSimulationInputManager;
 
-   // is this for the initial condition?
    private final CommandInputManager walkingInputManager = new CommandInputManager("walking_preview_internal",
                                                                                    ControllerAPIDefinition.getControllerSupportedCommands());
    private final StatusMessageOutputManager walkingOutputManager = new StatusMessageOutputManager(
@@ -109,8 +103,6 @@ public class AvatarKinematicsSimulationController
       fullRobotModel = robotModel.createFullRobotModel();
       referenceFrames = new HumanoidReferenceFrames(fullRobotModel);
       yoTime = new YoDouble("timeInPreview", registry);
-//      isDone = new YoBoolean("isDone", registry);
-      hasControllerFailed = new YoBoolean("hasControllerFailed", registry);
 
       WalkingControllerParameters walkingControllerParameters = robotModel.getWalkingControllerParameters();
       ICPWithTimeFreezingPlannerParameters capturePointPlannerParameters = robotModel.getCapturePointPlannerParameters();
@@ -128,11 +120,9 @@ public class AvatarKinematicsSimulationController
       humanoidHighLevelControllerManagerRegistry.addChild(managerParentRegistry);
 
       controllerToolbox = createHighLevelControllerToolbox(robotModel, yoGraphicsListRegistry);
-      controllerToolbox.attachControllerFailureListener(fallingDirection -> hasControllerFailed.set(true));
       humanoidHighLevelControllerManagerRegistry.addChild(controllerToolbox.getYoVariableRegistry());
       setupWalkingMessageHandler(walkingControllerParameters, yoGraphicsListRegistry);
       rootJoint = fullRobotModel.getRootJoint();
-      allOneDoFJointsExcludingHands = FullRobotModelUtils.getAllJointsExcludingHands(fullRobotModel);
 
       // Initializes this desired robot to the most recent robot configuration data received from the walking controller.
       KinematicsToolboxHelper.setRobotStateFromRawData(initialPelvisPose,
@@ -295,21 +285,7 @@ public class AvatarKinematicsSimulationController
 
    public void initialize()
    {
-//      isDone.set(false);
-      hasControllerFailed.set(false);
-   }
-
-   private void initializeInternal()
-   {
-      LogTools.info("Initializing");
-//      isDone.set(false);
-      yoTime.set(0.0);
-
-      for (JointBasics joint : fullRobotModel.getElevator().childrenSubtreeIterable())
-      {
-         joint.setJointTwistToZero();
-         joint.setJointAccelerationToZero();
-      }
+      zeroMotion();
 
       referenceFrames.updateFrames();
       controllerCore.initialize();
@@ -317,24 +293,13 @@ public class AvatarKinematicsSimulationController
       walkingController.initialize();
 
       taskExecutor.clear();
-      taskExecutor.submit(new KinematicsWalkingHaltTask(walkingController, controllerToolbox.getFootContactStates()));
+      taskExecutor.submit(new KinematicsWalkingInitializeTask(walkingController, controllerToolbox.getFootContactStates())); // few ticks to get it going
    }
 
    public void updateInternal()
    {
-//      if (isDone())
-//      {
-//         for (JointBasics joint : fullRobotModel.getElevator().childrenSubtreeIterable())
-//         {
-//            joint.setJointAccelerationToZero();
-//            joint.setJointTwistToZero();
-//         }
-//         return;
-//      }
-
       if (kinematicsSimulationInputManager.isNewCommandAvailable(FootstepDataListCommand.class))
       {
-         initializeInternal();
          FootstepDataListCommand foostepCommand = kinematicsSimulationInputManager.pollNewestCommand(FootstepDataListCommand.class);
          taskExecutor.submit(new KinematicsWalkingFootstepSequenceTask(fullRobotModel.getRootJoint(),
                                                                        foostepCommand,
@@ -353,13 +318,9 @@ public class AvatarKinematicsSimulationController
          controllerToolbox.update();
       }
 
-      if (taskExecutor.isDone())
+      if (taskExecutor.isDone())  // keep robot from drifting when no tasks are present
       {
-         for (JointBasics joint : fullRobotModel.getElevator().childrenSubtreeIterable())
-         {
-            joint.setJointAccelerationToZero();
-            joint.setJointTwistToZero();
-         }
+         zeroMotion();
          return;
       }
 
@@ -396,19 +357,15 @@ public class AvatarKinematicsSimulationController
 
       integrator.setIntegrationDT(integrationDT);
       integrator.doubleIntegrateFromAcceleration(Arrays.asList(controllerToolbox.getControlledJoints()));
+   }
 
-
-//      isDone.set(taskExecutor.isDone() || hasControllerFailed.getValue());
-
-//      if (isDone())
-//      {
-//         LogTools.info("Preview is done, packing and sending result, number of frames: " + previewFrames.size());
-//         if (hasControllerFailed.getValue())
-//            LogTools.info("Controller has failed.");
-//         WalkingControllerPreviewOutputMessage output = MessageTools.createWalkingControllerPreviewOutputMessage(integrationDT, previewFrames);
-//         LogTools.info(output.toString());
-//         taskExecutor.clear();
-//      }
+   private void zeroMotion()
+   {
+      for (JointBasics joint : fullRobotModel.getElevator().childrenSubtreeIterable())
+      {
+         joint.setJointAccelerationToZero();
+         joint.setJointTwistToZero();
+      }
    }
 
    public Notification getWalkingCompletedNotification()
@@ -424,10 +381,5 @@ public class AvatarKinematicsSimulationController
    public FullHumanoidRobotModel getFullRobotModel()
    {
       return fullRobotModel;
-   }
-
-   public double getIntegrationDT()
-   {
-      return integrationDT;
    }
 }
