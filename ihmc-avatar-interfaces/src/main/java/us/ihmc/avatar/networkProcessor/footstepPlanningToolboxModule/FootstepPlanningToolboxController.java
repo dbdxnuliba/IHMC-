@@ -43,8 +43,6 @@ import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.DepthFirstFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.SplinePathWithAStarPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.VisibilityGraphWithAStarPlanner;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.ConstantFootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
@@ -140,7 +138,6 @@ public class FootstepPlanningToolboxController extends ToolboxController
       PlanarRegionBaseOfCliffAvoider cliffAvoider = new PlanarRegionBaseOfCliffAvoider(footstepPlanningParameters, snapper, footPolygons);
 
       DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(footstepPlanningParameters.getCostParameters().getAStarHeuristicsWeight(), footstepPlanningParameters);
-      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(footstepPlanningParameters);
 
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
 //      nodeChecker.addPlannerListener(nu);
@@ -161,7 +158,7 @@ public class FootstepPlanningToolboxController extends ToolboxController
       bodyCollisionNodeChecker.addPlannerListener(plannerListener);
 
       AStarFootstepPlanner planner = new AStarFootstepPlanner(footstepPlanningParameters, nodeChecker, heuristics, expansion, footstepCost,
-                                                              postProcessingSnapper, bestAttemptPathCalculator, plannerListener, footPolygons, registry);
+                                                              postProcessingSnapper, plannerListener, footPolygons, registry);
 
       return planner;
    }

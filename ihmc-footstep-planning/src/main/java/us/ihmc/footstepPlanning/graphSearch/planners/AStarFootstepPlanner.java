@@ -21,8 +21,7 @@ import us.ihmc.footstepPlanning.graphSearch.listeners.StartAndGoalListener;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.*;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
+import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptHeuristicPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
 import us.ihmc.humanoidRobotics.footstep.SimpleFootstep;
@@ -51,6 +50,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private SideDependentList<FootstepNode> goalNodes;
    private HashSet<FootstepNode> expandedNodes;
    private PriorityQueue<FootstepNode> stack;
+   private BestAttemptHeuristicPathCalculator bestAttemptPathCalculator;
    private FootstepNode startNode;
    private FootstepNode endNode;
 
@@ -65,7 +65,6 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    private final FootstepNodeExpansion nodeExpansion;
    private final FootstepCost stepCostCalculator;
    private final FootstepNodeSnapper snapper;
-   private final BestAttemptPathCalculator bestAttemptPathCalculator;
    private final SideDependentList<ConvexPolygon2D> footPolygons;
 
    private final ArrayList<StartAndGoalListener> startAndGoalListeners = new ArrayList<>();
@@ -83,14 +82,14 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
    public AStarFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeChecker nodeChecker, CostToGoHeuristics heuristics,
                                FootstepNodeExpansion expansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper,
-                               BestAttemptPathCalculator bestAttemptPathCalculator, YoVariableRegistry parentRegistry)
+                               YoVariableRegistry parentRegistry)
    {
-      this(parameters, nodeChecker, heuristics, expansion, stepCostCalculator, snapper, bestAttemptPathCalculator, null, null, parentRegistry);
+      this(parameters, nodeChecker, heuristics, expansion, stepCostCalculator, snapper, null, null, parentRegistry);
    }
 
    public AStarFootstepPlanner(FootstepPlannerParameters parameters, FootstepNodeChecker nodeChecker, CostToGoHeuristics heuristics,
                                FootstepNodeExpansion nodeExpansion, FootstepCost stepCostCalculator, FootstepNodeSnapper snapper,
-                               BestAttemptPathCalculator bestAttemptPathCalculator, BipedalFootstepPlannerListener listener,
+                               BipedalFootstepPlannerListener listener,
                                SideDependentList<ConvexPolygon2D> footPolygons, YoVariableRegistry parentRegistry)
    {
       this.parameters = parameters;
@@ -98,7 +97,6 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       this.heuristics = heuristics;
       this.nodeExpansion = nodeExpansion;
       this.stepCostCalculator = stepCostCalculator;
-      this.bestAttemptPathCalculator = bestAttemptPathCalculator;
       this.listener = listener;
       this.snapper = snapper;
       this.graph = new FootstepGraph();
@@ -107,8 +105,6 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       this.footPolygons = footPolygons;
 
       nodeChecker.addFootstepGraph(graph);
-      if (bestAttemptPathCalculator != null)
-         bestAttemptPathCalculator.addFootstepGraph(graph);
       parentRegistry.addChild(registry);
    }
 
@@ -212,9 +208,9 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       FootstepPlanningResult result = checkResult();
 
-      if (!result.validForExecution() && returnBestAttemptPlan && endNode == null && bestAttemptPathCalculator != null)
+      if (!result.validForExecution() && returnBestAttemptPlan && endNode == null)
       {
-         endNode = bestAttemptPathCalculator.computeBestEndNode(goalNodes, expandedNodes);
+         endNode = bestAttemptPathCalculator.computeBestEndNode(expandedNodes);
          result = FootstepPlanningResult.BEST_ATTEMPT_PATH;
       }
 
@@ -297,6 +293,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       graph.initialize(startNode);
       NodeComparator nodeComparator = new NodeComparator(graph, goalNodes, heuristics);
       stack = new PriorityQueue<>(nodeComparator);
+      bestAttemptPathCalculator = new BestAttemptHeuristicPathCalculator(nodeComparator);
 
       validGoalNode.set(true);
       for (RobotSide robotSide : RobotSide.values)
@@ -489,7 +486,6 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       PlanarRegionBaseOfCliffAvoider cliffAvoider = new PlanarRegionBaseOfCliffAvoider(parameters, snapper, footPolygons);
 
       DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(parameters.getCostParameters().getAStarHeuristicsWeight(), parameters);
-      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(parameters);
 
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
       nodeChecker.addPlannerListener(listener);
@@ -504,8 +500,8 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       FootstepCost footstepCost = costBuilder.buildCost();
 
-      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper,
-                                                              bestAttemptPathCalculator, listener, footPolygons, registry);
+      AStarFootstepPlanner planner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, listener,
+                                                              footPolygons, registry);
 
       if (policyDefinitions != null)
       {

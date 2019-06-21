@@ -30,8 +30,6 @@ import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpa
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.planners.AStarFootstepPlanner;
 import us.ihmc.footstepPlanning.graphSearch.planners.BodyPathBasedAStarPlanner;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.DistanceAndYawBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
 import us.ihmc.footstepPlanning.simplePlanners.PlanThenSnapPlanner;
@@ -153,7 +151,6 @@ public class FootstepPlanningStage implements FootstepPlanner
 
       DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(footstepPlanningParameters.getCostParameters().getAStarHeuristicsWeight(),
                                                                                    footstepPlanningParameters);
-      BestAttemptPathCalculator bestAttemptPathCalculator = new DistanceAndYawBestAttemptPathCalculator(footstepPlanningParameters);
 
       StagePlannerListener plannerListener = new StagePlannerListener(snapper, multiStageListener.getBroadcastDt());
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
@@ -171,7 +168,7 @@ public class FootstepPlanningStage implements FootstepPlanner
       FootstepCost footstepCost = costBuilder.buildCost();
 
       AStarFootstepPlanner planner = new AStarFootstepPlanner(footstepPlanningParameters, nodeChecker, heuristics, expansion, footstepCost,
-                                                              postProcessingSnapper, bestAttemptPathCalculator, plannerListener, footPolygons, registry);
+                                                              postProcessingSnapper, plannerListener, footPolygons, registry);
 
       heuristicPolicies.setCollisionNodeChecker(bodyCollisionNodeChecker);
       heuristicPolicies.setNodeSnapper(snapper);

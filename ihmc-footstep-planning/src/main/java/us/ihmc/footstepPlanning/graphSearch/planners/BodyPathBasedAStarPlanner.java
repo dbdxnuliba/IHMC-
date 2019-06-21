@@ -16,8 +16,6 @@ import us.ihmc.footstepPlanning.graphSearch.nodeChecking.SnapBasedNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.ParameterBasedNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.BestAttemptPathCalculator;
-import us.ihmc.footstepPlanning.graphSearch.repairingTools.BodyPathBestAttemptPathCalculator;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
 import us.ihmc.pathPlanning.bodyPathPlanner.BodyPathPlanner;
@@ -54,7 +52,6 @@ public class BodyPathBasedAStarPlanner implements FootstepPlanner
       FootstepNodeChecker nodeChecker = new SnapBasedNodeChecker(parameters, footPolygons, snapper);
       FootstepNodeExpansion expansion = new ParameterBasedNodeExpansion(parameters);
       FootstepNodeSnapper postProcessingSnapper = new FootstepNodeSnapAndWiggler(footPolygons, parameters);
-      BestAttemptPathCalculator bestAttemptPathCalculator = new BodyPathBestAttemptPathCalculator(parameters, this.bodyPathPlanner);
 
       FootstepCostBuilder costBuilder = new FootstepCostBuilder();
       costBuilder.setFootstepPlannerParameters(parameters);
@@ -74,13 +71,12 @@ public class BodyPathBasedAStarPlanner implements FootstepPlanner
 
       if (listeners.length > 0)
       {
-         footstepPlanner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper,
-                                                    bestAttemptPathCalculator, listeners[0], null, registry);
+         footstepPlanner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, listeners[0],
+                                                    null, registry);
       }
       else
       {
-         footstepPlanner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper,
-                                                    bestAttemptPathCalculator, registry);
+         footstepPlanner = new AStarFootstepPlanner(parameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, registry);
       }
 
       parentRegistry.addChild(registry);
