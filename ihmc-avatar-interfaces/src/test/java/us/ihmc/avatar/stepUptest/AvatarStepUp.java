@@ -15,7 +15,9 @@ import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.controlModules.TrajectoryStatusMessageHelper.*;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.thread.*;
+import us.ihmc.communication.*;
 import us.ihmc.communication.packets.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
@@ -34,12 +36,22 @@ import us.ihmc.footstepPlanning.graphSearch.parameters.*;
 import us.ihmc.footstepPlanning.graphSearch.planners.*;
 import us.ihmc.footstepPlanning.simplePlanners.*;
 import us.ihmc.footstepPlanning.tools.*;
+import us.ihmc.graphicsDescription.yoGraphics.*;
+import us.ihmc.humanoidBehaviors.*;
+import us.ihmc.humanoidBehaviors.dispatcher.*;
+import us.ihmc.humanoidBehaviors.utilities.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
+import us.ihmc.humanoidRobotics.communication.packets.behaviors.*;
+import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.footstep.*;
+import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.idl.IDLSequence.Double;
 import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.mecano.frames.*;
 import us.ihmc.mecano.multiBodySystem.interfaces.*;
+import us.ihmc.pubsub.DomainFactory.*;
+import us.ihmc.pubsub.subscriber.*;
+import us.ihmc.robotDataLogger.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.*;
 import us.ihmc.robotics.geometry.*;
@@ -48,8 +60,12 @@ import us.ihmc.robotics.math.trajectories.trajectorypoints.*;
 import us.ihmc.robotics.math.trajectories.trajectorypoints.lists.*;
 import us.ihmc.robotics.partNames.*;
 import us.ihmc.robotics.robotSide.*;
+import us.ihmc.robotics.sensors.*;
 import us.ihmc.robotics.trajectories.*;
+import us.ihmc.ros2.*;
+import us.ihmc.sensorProcessing.parameters.*;
 import us.ihmc.simulationConstructionSetTools.bambooTools.*;
+import us.ihmc.simulationConstructionSetTools.util.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
@@ -68,9 +84,15 @@ import us.ihmc.yoVariables.variable.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.*;
 
 public abstract class AvatarStepUp implements MultiRobotTestInterface
 {
+
+   private final boolean DEBUG = true;
+   private final boolean step_up_door = true;
+   private final boolean Walls_with_stairs = false;
+
    public us.ihmc.euclid.tuple3D.Point3D waypointtotransfer;
    //private AvatarStepUp planner;
    private YoVariableRegistry registry = new YoVariableRegistry("testRegistry");
@@ -92,6 +114,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private Random random = new Random(42);
    //private DRCRobotModel robotModela = getRobotModel();
    private FullHumanoidRobotModel fullRobotModel = robotModel.createFullRobotModel();
+   private WalkingControllerParameters walkingControllerParameters;
 
    private final boolean IS_PAUSING_ON = false;  //should be false for now
    private final boolean IS_CHEST_ON = false;
@@ -100,6 +123,15 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private final boolean IS_PELVIS_ON = true;
    private final boolean IS_FOOTSTEP_ON = true;
 
+   private BehaviorDispatcher<HumanoidBehaviorType> behaviorDispatcher;
+   private Ros2Node ros2Node;
+   private HumanoidFloatingRootJointRobot robot;
+   private YoDouble yoTime;
+   private HumanoidRobotDataReceiver robotDataReceiver;
+   private YoGraphicsListRegistry yoGraphicsListRegistry;
+   private HumanoidReferenceFrames referenceFrames;
+   //private FullHumanoidRobotModel fullRobotModel;
+   private AtomicReference<WalkingStatusMessage> newStatusReference = new AtomicReference<>(null);
 
 
 
@@ -121,6 +153,61 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       ParameterBasedNodeExpansion expansion = new ParameterBasedNodeExpansion(parameters);
       this.planner = AStarFootstepPlanner.createPlanner(parameters, null, footPolygons, expansion, registry);
       planner.setTimeout(0.5);
+
+      String className = getClass().getSimpleName();
+
+      double stepHeight = 0.3;
+      if(Walls_with_stairs)
+      {
+         Wallswithstairs wall = new Wallswithstairs(0.5, 1.7, stepHeight);
+         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
+      }
+
+      if(step_up_door)
+      {
+         StepUpDoor stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
+         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
+
+         if (DEBUG)
+         {
+            //System.out.println();
+         }
+      }
+
+
+
+      DRCRobotModel robotModel = getRobotModel();
+
+      drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
+      drcSimulationTestHelper.createSimulation(className);
+
+      registry = new YoVariableRegistry(getClass().getSimpleName());
+      this.yoTime = new YoDouble("yoTime",registry);
+
+      this.ros2Node = new ROS2Tools().createRos2Node(PubSubImplementation.INTRAPROCESS, "Avatar_step_up");
+      ROS2Tools.createCallbackSubscription(ros2Node,
+                                           WalkingStatusMessage.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           s -> newStatusReference.set(s.takeNextData()));
+      //robot = drcSimulationTestHelper.getRobot();
+      walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
+      yoGraphicsListRegistry = new YoGraphicsListRegistry();
+
+      behaviorDispatcher = setupBehaviorDispatcher(getRobotModel().getSimpleRobotName(), fullRobotModel, ros2Node, yoGraphicsListRegistry, registry);
+
+      CapturePointUpdatable capturePointUpdatable = createCapturePointUpdateable(drcSimulationTestHelper, registry, yoGraphicsListRegistry);
+      behaviorDispatcher.addUpdatable(capturePointUpdatable);
+
+      HumanoidRobotSensorInformation sensorInformation = getRobotModel().getSensorInformation();
+      for(RobotSide robotSide : RobotSide.values())
+      {
+         WristForceSensorFilteredUpdatable wristSensorUpdatable = new WristForceSensorFilteredUpdatable(drcSimulationTestHelper.getRobotName(), robotSide, fullRobotModel, sensorInformation, robotDataReceiver.getForceSensorDataHolder(), IHMCHumanoidBehaviorManager.BEHAVIOR_YO_VARIABLE_SERVER_DT, drcSimulationTestHelper.getRos2Node(), registry);
+
+         behaviorDispatcher.addUpdatable(wristSensorUpdatable);
+      }
+
+      referenceFrames = robotDataReceiver.getReferenceFrames();
+
    }
 
    @AfterEach
@@ -136,6 +223,17 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       {
          drcSimulationTestHelper.destroySimulation();
          drcSimulationTestHelper = null;
+
+         behaviorDispatcher.closeAndDispose();
+         ros2Node = null;
+         yoTime = null;
+         robot = null;
+         fullRobotModel = null;
+         //worldFrame = null;
+         referenceFrames = null;
+         walkingControllerParameters = null;
+         robotDataReceiver = null;
+         behaviorDispatcher = null;
       }
 
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + "after test.");
@@ -164,6 +262,46 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       return 6;
    }
 
+
+   private BehaviorDispatcher<HumanoidBehaviorType> setupBehaviorDispatcher(String robotName, FullHumanoidRobotModel fullRobotModel, Ros2Node ros2Node,
+                                                                            YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry registry)
+   {
+      ForceSensorDataHolder forceSensorDataHolder = new ForceSensorDataHolder(Arrays.asList(fullRobotModel.getForceSensorDefinitions()));
+      robotDataReceiver = new HumanoidRobotDataReceiver(fullRobotModel, forceSensorDataHolder);
+      ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, ControllerAPIDefinition.getPublisherTopicNameGenerator(robotName),
+                                           s -> {
+                                              if(robotDataReceiver!=null && s!=null)
+                                                 robotDataReceiver.receivedPacket(s.takeNextData());
+                                           });
+
+      BehaviorControlModeSubscriber desiredBehaviorControlSubscriber = new BehaviorControlModeSubscriber();
+      ROS2Tools.createCallbackSubscription(ros2Node, BehaviorControlModePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(robotName),
+                                           s -> desiredBehaviorControlSubscriber.receivedPacket(s.takeNextData()));
+
+      HumanoidBehaviorTypeSubscriber desiredBehaviorSubscriber = new HumanoidBehaviorTypeSubscriber();
+      ROS2Tools.createCallbackSubscription(ros2Node, HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(robotName),
+                                           s -> desiredBehaviorSubscriber.receivedPacket(s.takeNextData()));
+
+      YoVariableServer yoVariableServer = null;
+      yoGraphicsListRegistry.setYoGraphicsUpdatedRemotely(false);
+
+      BehaviorDispatcher<HumanoidBehaviorType> ret = new BehaviorDispatcher<>(robotName, yoTime, robotDataReceiver, desiredBehaviorControlSubscriber,
+                                                                              desiredBehaviorSubscriber, ros2Node, yoVariableServer, HumanoidBehaviorType.class,
+                                                                              HumanoidBehaviorType.STOP, registry, yoGraphicsListRegistry);
+
+      return ret;
+   }
+
+   private CapturePointUpdatable createCapturePointUpdateable(DRCSimulationTestHelper testHelper, YoVariableRegistry registry,
+                                                              YoGraphicsListRegistry yoGraphicsListRegistry)
+   {
+      CapturabilityBasedStatusSubscriber capturabilityBasedStatusSubsrciber = new CapturabilityBasedStatusSubscriber();
+      testHelper.createSubscriberFromController(CapturabilityBasedStatus.class, capturabilityBasedStatusSubsrciber::receivedPacket);
+
+      CapturePointUpdatable ret = new CapturePointUpdatable(capturabilityBasedStatusSubsrciber, yoGraphicsListRegistry, registry);
+
+      return ret;
+   }
 
    //start writing your step up code here now
    @Test
@@ -239,14 +377,15 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       }
 
       WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
+
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTouchdownTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
       // robot fell
-      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));
+//      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));
       //drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0);
       // robot did not fall but did not reach goal
-      assertreached(footsteps);
+//      assertreached(footsteps);
 
       ThreadTools.sleepForever(); //does not kill the simulation
    }
@@ -666,21 +805,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    }
    private DRCRobotModel setTestEnvironment(double stepHeight) throws SimulationExceededMaximumTimeException
    {
-      boolean step_up_door = true;
-      boolean Walls_with_stairs = false;
-      String className = getClass().getSimpleName();
 
-      if(Walls_with_stairs)
-      {
-         Wallswithstairs wall = new Wallswithstairs(0.5, 1.7, stepHeight);
-         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
-      }
-
-      if(step_up_door)
-      {
-         StepUpDoor stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
-         drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
-      }
+     /*
       //DRCFinalsEnvironment environment = new DRCFinalsEnvironment(true, false, false,false,true);
       //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
 
@@ -706,7 +832,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       drcSimulationTestHelper.createSimulation(className);
       //PushRobotController pushRobotController = new PushRobotController(drcSimulationTestHelper.getRobot(), robotModel.createFullRobotModel().getChest().getParentJoint().getName(), new Vector3D(0.0, 0.0, 0.15));
 
-
+      */
       setUpCamera();
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.25);

@@ -14,6 +14,9 @@ import java.util.*;
 
 public class StepUpDoor implements CommonAvatarEnvironmentInterface
 {
+   private final boolean ADD_FIDCUIAL_FLOATING_BOX = true;
+   private final boolean ADD_DOOR = true;
+
    private final List<Robot> contactableRobots = new ArrayList<>();
    private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>();
@@ -26,9 +29,10 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
       double xstart = 0.5;
       double stairStart = 0.5 + xstart;
       double wallWidth = 0.2;
-      double doorAngle = 1.5708; //90degrees in rads
+      double doorAngle = -1.5708; //90degrees in rads
       //DefaultCommonAvatarEnvironment environment = new DefaultCommonAvatarEnvironment();
       //combinedTerrainObject.addTerrainObject(environment.setUpGround("ground"));
+
       combinedTerrainObject.addTerrainObject(setUpGround("Ground"));
       //combinedTerrainObject.addTerrainObject(environment.getTerrainObject3D());
       combinedTerrainObject.addBox(stairStart , -1.0, stairStart+stepLength, 1.0, stepUpHeight, YoAppearance.Gray()); //the robot is the starting location
@@ -39,16 +43,29 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
       combinedTerrainObject.addBox(wallInitialOffSet, wallOffSet, wallInitialOffSet+ stepLength, wallOffSet+wallWidth ,wallHeight, appearance); //left wall
       combinedTerrainObject.addBox(wallInitialOffSet, -wallOffSet, wallInitialOffSet+stepLength, -(wallOffSet+wallWidth),wallHeight, appearance); //right wall
       //combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallHeight), 0.3, appearance); //top wall
-      combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallWidth), wallHeight,wallHeight+0.3,appearance);
+//      combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallWidth), wallHeight,wallHeight+0.3,appearance);
 
-      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 0.5, 0.0, 0.0);
+      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 0.5, 0.5, 0.0);
+      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 0.5, 0.0, 1.25);
 
-      ContactableDoorRobot door = new ContactableDoorRobot("doorRobot", doorPosition);
-      contactableRobots.add(door);
-      door.createAvailableContactPoints(0,15,15,0.02,true);
+      if(ADD_DOOR)
+      {
 
-      door.setYaw(1.5708);
+         ContactableDoorRobot door = new ContactableDoorRobot("doorRobot", doorPosition);
+         contactableRobots.add(door);
+         door.createAvailableContactPoints(0, 15, 15, 0.02, true);
 
+         door.setYaw(doorAngle);
+      }
+
+      if(ADD_FIDCUIAL_FLOATING_BOX)
+      {
+         FloatingFiducialBoxRobot fiducialBoxRobot = new FloatingFiducialBoxRobot(Fiducial.FIDUCIAL50,"1");
+         fiducialBoxRobot.setPosition(fiducialPosition);
+         fiducialBoxRobot.setYawPitchRoll(0.0, Math.PI/2.0, 0.0);
+
+         contactableRobots.add(fiducialBoxRobot);
+      }
    }
 
    public CombinedTerrainObject3D setUpGround(String name)
