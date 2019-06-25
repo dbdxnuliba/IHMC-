@@ -20,6 +20,7 @@ import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
+import us.ihmc.communication.ROS2ModuleIdentifier;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.net.ObjectCommunicator;
 import us.ihmc.communication.net.ObjectConsumer;
