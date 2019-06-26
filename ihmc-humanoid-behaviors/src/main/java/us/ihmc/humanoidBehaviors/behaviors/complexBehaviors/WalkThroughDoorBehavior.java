@@ -68,8 +68,8 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
    private final boolean setUpArms = true;
 
    //this is the predefined walk to points relative to the door reference frame, these should eventualy be replaced by a behavior that finds the best location to walk up to given an arm task space 
-   private Vector3D32 doorOffsetPoint1 = new Vector3D32(0.5f, -0.9f, 0f);
-   private Vector3D32 doorOffsetPoint2 = new Vector3D32(0.5f, -0.6f, 0f);
+   private Vector3D32 doorOffsetPoint1 = new Vector3D32(-0.5f, -0.9f, 0f);
+   private Vector3D32 doorOffsetPoint2 = new Vector3D32(-0.5f, -0.6f, 0f);
 
    //define some of the sub-behaviors that will be used that are specific to this behavior
    private final SearchForDoorBehavior searchForDoorBehavior;   //initially it was used to look fir Fiducial and then return the doorpose. Now - takes i/p DoorLocationPacket only
@@ -125,7 +125,8 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
       doorToBehaviorPublisher = createBehaviorOutputPublisher(DoorLocationPacket.class);   //DoorLocation being published Topic Name is probably /ihmc/atlas/DoorLocationPacket
       doorToUIPublisher = createBehaviorInputPublisher(DoorLocationPacket.class);          //Why are there two of these? if they are publishing the same thing to the same topic
-      
+
+      //depending on the message type, the respective topic name is created by calling the correct the MessageTopicNameGenerator present in parent classes of the publisher
 
       //setup publisher for sending door location to UI
       setupStateMachine(); //this is defined in StateMachine and triggers the COnfigureStateMachineAndInitialKey
@@ -137,17 +138,17 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
 
       //should constantly be searching for door and updating its location here
 
-      if (doorOpenDetectorBehaviorService.newPose != null)
+      if (doorOpenDetectorBehaviorService.newPose != null) //cheack if you have a new pose of the door
       {
          Point3D location = new Point3D();
          Quaternion orientation = new Quaternion();
-         doorOpenDetectorBehaviorService.newPose.get(location, orientation);
-         publishUIPositionCheckerPacket(location, orientation);
+         doorOpenDetectorBehaviorService.newPose.get(location, orientation); //gets and set the position in location and orientation in orientation
+         publishUIPositionCheckerPacket(location, orientation); //and publishes it
       }
 
       if (isDoorOpen != doorOpenDetectorBehaviorService.isDoorOpen())  //write the other way around by declaring isDoorOpen = true...same thing smh
       {
-         isDoorOpen = doorOpenDetectorBehaviorService.isDoorOpen();    //checking again!!
+         isDoorOpen = doorOpenDetectorBehaviorService.isDoorOpen();    //isDoorOpen is being assigned true value here
          if (isDoorOpen)
             publishTextToSpeech("Door is Open");
 
@@ -160,7 +161,7 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       //{
 
          FramePose3D tmpFP = new FramePose3D();
-         fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpFP);
+         fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpFP);  //gets the fiducial frame pose
 
          tmpFP.appendPitchRotation(Math.toRadians(90));
          tmpFP.appendYawRotation(0);
@@ -187,7 +188,7 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
          //pose.get();
          publishUIPositionCheckerPacket(pose.getPosition(), pose.getOrientation());
 
-         doorToBehaviorPublisher.publish(HumanoidMessageTools.createDoorLocationPacket(pose));
+         doorToBehaviorPublisher.publish(HumanoidMessageTools.createDoorLocationPacket(pose)); // this is the guy creating a DoorLocationPacket and then publishing the same to anyone is subscribing to the same topic
          doorToUIPublisher.publish(HumanoidMessageTools.createDoorLocationPacket(pose));
       //}
       super.doControl();

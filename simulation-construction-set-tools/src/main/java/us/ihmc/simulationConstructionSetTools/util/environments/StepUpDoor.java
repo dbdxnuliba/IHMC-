@@ -14,7 +14,7 @@ import us.ihmc.simulationconstructionset.util.ground.*;
 
 import java.util.*;
 
-public class StepUpDoor implements CommonAvatarEnvironmentInterface
+public class StepUpDoor extends DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentInterface
 {
    private final boolean ADD_FIDCUIAL_FLOATING_BOX = false;
    private final boolean ADD_DOOR = true;
@@ -78,7 +78,8 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
       }
    }
 
-   public CombinedTerrainObject3D setUpGround(String name)
+
+   public static CombinedTerrainObject3D setUpGround(String name)
    {
       CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(name);
 
@@ -108,9 +109,9 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
    }
 
    @Override
-   public List<? extends Robot> getEnvironmentRobots()
+   public ArrayList<Robot> getEnvironmentRobots()
    {
-      return contactableRobots;
+      return (ArrayList<Robot>) contactableRobots;
    }
 
    @Override
