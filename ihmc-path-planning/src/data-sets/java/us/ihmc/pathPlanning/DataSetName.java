@@ -2,6 +2,7 @@ package us.ihmc.pathPlanning;
 
 public enum DataSetName
 {
+	_20190626_Plank,
 	_20171218_204917_FlatGround,
 	_20190204_160000_CampLejeuneRock8,
 	_20190220_172417_Jersey_Barriers_IHMC_55cm,
