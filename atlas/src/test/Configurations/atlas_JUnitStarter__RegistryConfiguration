@@ -340,4 +340,3 @@ root.atlas.LinearGroundContactModel*false*false
 root.doorRobot*false*false
 root.doorRobot.ContactController*false*false
 root.doorRobot.ContactController.simpleContactSimpleStickSlipContactModel*false*false
-root.FloatingFiducialBoxRobot_1*false*false

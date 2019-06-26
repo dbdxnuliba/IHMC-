@@ -24,7 +24,8 @@ public class SearchForDoorBehavior extends AbstractBehavior
    public SearchForDoorBehavior(String robotName,String yoNamePrefix, Ros2Node ros2Node, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       super(robotName, yoNamePrefix, ros2Node);
-      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationQueue::put);
+      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationQueue::put); //instantiating a subscriber for behavior input and consuming the DoorLocation info
+                                                                                       // to the doorLocationQueue abd then this doorLocationQueue object is used everywhere else in this code
      
 
    }
@@ -48,7 +49,7 @@ public class SearchForDoorBehavior extends AbstractBehavior
    public boolean isDone()
    {
       return recievedNewDoorLocation&& doorTransformToWorld!=null;
-   }
+   }   //so basically this action is complete the instant a DoorLocationPacket has some data in it
 
    @Override
    public void onBehaviorExited()
@@ -64,7 +65,7 @@ public class SearchForDoorBehavior extends AbstractBehavior
    private void recievedDoorLocation(DoorLocationPacket doorLocationPacket)
    {
       //publishTextToSpeech("Recieved Door Location");
-      setDoorLocation(doorLocationPacket.getDoorTransformToWorld());
+      setDoorLocation(doorLocationPacket.getDoorTransformToWorld());   //get the pose(position and orientation) of the Door
    }
    
    public void setDoorLocation(Pose3D pose)

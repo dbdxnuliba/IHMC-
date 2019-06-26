@@ -44,8 +44,8 @@ public class OpenDoorBehavior extends StateMachineBehavior<OpenDoorState>
    private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private SleepBehavior sleepBehavior;
    private final IHMCROS2Publisher<UIPositionCheckerPacket> uiPositionCheckerPacketpublisher;
-   protected final AtomicReference<DoorLocationPacket> doorLocationReference = new AtomicReference<DoorLocationPacket>();
-   private final DoorOpenDetectorBehaviorService doorOpenDetectorBehaviorService;
+   protected final AtomicReference<DoorLocationPacket> doorLocationReference = new AtomicReference<DoorLocationPacket>();   //basically instantiated as object will be used simultaneously in multiple threads
+   private final DoorOpenDetectorBehaviorService doorOpenDetectorBehaviorService;                                          // its atomic because this behavior as well as the start() behavior make use of this reference
 
    private final IHMCROS2Publisher<AutomaticManipulationAbortMessage> abortMessagePublisher;
 
@@ -59,14 +59,14 @@ public class OpenDoorBehavior extends StateMachineBehavior<OpenDoorState>
       sleepBehavior = new SleepBehavior(robotName, ros2Node, yoTime);
       abortMessagePublisher = createPublisherForController(AutomaticManipulationAbortMessage.class);
 
-      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationReference::set);
+      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationReference::set);   //copies the DoorLocation info into doorLocationReference
 
-      setupStateMachine();
-
+      setupStateMachine(); //this guy triggers the whole configureStateMachineAndReturnIntialKey
+                           //when you call this constructor, the conf...() gets called with the behavior constructors being called as well. So, setBehaviorInput and isDone() is called at that instant too
    }
 
    @Override
-   public void onBehaviorEntered()
+   public void onBehaviorEntered()  //set to intialStateKey - openDoorState.Start
    {
       succeeded = false;
       doorLocationReference.set(null);
@@ -79,19 +79,19 @@ public class OpenDoorBehavior extends StateMachineBehavior<OpenDoorState>
    }
 
    @Override
-   protected OpenDoorState configureStateMachineAndReturnInitialKey(StateMachineFactory<OpenDoorState, BehaviorAction> factory)
+   protected OpenDoorState configureStateMachineAndReturnInitialKey(StateMachineFactory<OpenDoorState, BehaviorAction> factory) //initializes behaviors and adds them to the StatMachineFactory using add###(K,S,K)
    {
 
-      BehaviorAction start = new BehaviorAction()
+      BehaviorAction start = new BehaviorAction() //each behavior has three core functionalities onEntry(), doEntry() and onExit(). We override these and add more to them if be
       {
          @Override
-         protected void setBehaviorInput()
+         protected void setBehaviorInput() //behavior inputs are triggered when you call onEntry() in BehaviorAction
          {
-
+               //constructor triggers them
          }
 
          @Override
-         public boolean isDone()
+         public boolean isDone()  //this isDone() method is triggered at each add and done transition method call. The methods transits from one state to another where the isDone() of the current state returns true
          {
             //wait for the door to be located and a baseline set for open detection
             return doorLocationReference.get() != null;
@@ -116,11 +116,13 @@ public class OpenDoorBehavior extends StateMachineBehavior<OpenDoorState>
          }
       };
       
-      BehaviorAction setDoorDetectorStart = new BehaviorAction()
+      BehaviorAction setDoorDetectorStart = new BehaviorAction()   //this is the doorDetector behavior when you are right in front of it and want it verify
+                                                                   // if the door is closed or open
       {
          @Override
          protected void setBehaviorInput()
          {
+            //also there is no super here meaning its completely being over riding the stuff from behaviorAction class
             publishTextToSpeech("Starting Door Open Detector Service");
 
             doorOpenDetectorBehaviorService.reset();
@@ -220,7 +222,7 @@ public class OpenDoorBehavior extends StateMachineBehavior<OpenDoorState>
       factory.addState(OpenDoorState.DONE, done);
       factory.addState(OpenDoorState.FAILED, failed);
 
-      factory.addTransition(OpenDoorState.PUSH_ON_DOOR, OpenDoorState.FAILED, t -> pushDoorALittle.isDone() && !doorOpenDetectorBehaviorService.isDoorOpen());
+      factory.addTransition(OpenDoorState.PUSH_ON_DOOR, OpenDoorState.FAILED, t -> pushDoorALittle.isDone() && !doorOpenDetectorBehaviorService.isDoorOpen()); //keep on pushing the right hand until doorOpenDetector's  isDone() returns true
       factory.addTransition(OpenDoorState.PUSH_ON_DOOR, OpenDoorState.PUSH_OPEN_DOOR, t -> doorOpenDetectorBehaviorService.isDoorOpen());
 
       

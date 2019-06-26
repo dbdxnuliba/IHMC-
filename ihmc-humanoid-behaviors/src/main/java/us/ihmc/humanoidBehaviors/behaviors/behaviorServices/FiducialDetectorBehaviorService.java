@@ -3,6 +3,7 @@ package us.ihmc.humanoidBehaviors.behaviors.behaviorServices;
 import controller_msgs.msg.dds.VideoPacket;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -10,6 +11,7 @@ import us.ihmc.humanoidBehaviors.behaviors.goalLocation.GoalDetectorBehaviorServ
 import us.ihmc.humanoidBehaviors.communication.ConcurrentListeningQueue;
 import us.ihmc.ihmcPerception.fiducialDetector.FiducialDetectorFromCameraImages;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
 public class FiducialDetectorBehaviorService extends GoalDetectorBehaviorService
@@ -93,7 +95,11 @@ public class FiducialDetectorBehaviorService extends GoalDetectorBehaviorService
    {
       synchronized (fiducialDetectorFromCameraImagesConch)
       {
+
          fiducialDetectorFromCameraImages.getReportedFiducialPoseWorldFrame(framePoseToPack);
+         //StepUpDoor doorframepose = new StepUpDoor();
+         //doorframepose.getDoorFramePose();
+
       }
    }
 

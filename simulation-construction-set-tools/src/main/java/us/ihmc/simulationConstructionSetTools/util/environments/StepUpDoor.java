@@ -1,5 +1,7 @@
 package us.ihmc.simulationConstructionSetTools.util.environments;
 
+import us.ihmc.euclid.geometry.*;
+import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.shape.*;
 import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple3D.*;
@@ -14,12 +16,18 @@ import java.util.*;
 
 public class StepUpDoor implements CommonAvatarEnvironmentInterface
 {
-   private final boolean ADD_FIDCUIAL_FLOATING_BOX = true;
+   private final boolean ADD_FIDCUIAL_FLOATING_BOX = false;
    private final boolean ADD_DOOR = true;
+   private FramePose3D doorframepose = new FramePose3D();
 
    private final List<Robot> contactableRobots = new ArrayList<>();
    private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>();
+
+   public StepUpDoor()
+   {
+
+   }
 
    public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
    {
@@ -45,9 +53,11 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
       //combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallHeight), 0.3, appearance); //top wall
 //      combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallWidth), wallHeight,wallHeight+0.3,appearance);
 
-      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 0.5, 0.5, 0.0);
-      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 0.5, 0.0, 1.25);
+      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
+      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
+      doorframepose = new FramePose3D(new Pose3D(doorPosition.getX(),doorPosition.getY(),doorPosition.getZ(),doorAngle,0.0,0.0));
+      //System.out.println(doorframepose.getPosition().getX());
       if(ADD_DOOR)
       {
 
@@ -55,12 +65,12 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
          contactableRobots.add(door);
          door.createAvailableContactPoints(0, 15, 15, 0.02, true);
 
-         door.setYaw(doorAngle);
+         door.setYaw(-doorAngle);
       }
 
       if(ADD_FIDCUIAL_FLOATING_BOX)
       {
-         FloatingFiducialBoxRobot fiducialBoxRobot = new FloatingFiducialBoxRobot(Fiducial.FIDUCIAL50,"1");
+         FloatingFiducialBoxRobot fiducialBoxRobot = new FloatingFiducialBoxRobot(Fiducial.FIDUCIAL450,"4");
          fiducialBoxRobot.setPosition(fiducialPosition);
          fiducialBoxRobot.setYawPitchRoll(0.0, Math.PI/2.0, 0.0);
 
@@ -84,6 +94,11 @@ public class StepUpDoor implements CommonAvatarEnvironmentInterface
       combinedTerrainObject.addTerrainObject(newBox2);
 
       return combinedTerrainObject;
+   }
+
+   public FramePose3D getDoorFramePose()
+   {
+      return doorframepose;
    }
 
    @Override

@@ -34,6 +34,7 @@ import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.wholeBodyController.WholeBodyControllerParameters;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -71,16 +72,16 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
    private Vector3D32 doorOffsetPoint2 = new Vector3D32(0.5f, -0.6f, 0f);
 
    //define some of the sub-behaviors that will be used that are specific to this behavior
-   private final SearchForDoorBehavior searchForDoorBehavior;
-   private final OpenDoorBehavior openDoorBehavior;
-   private final WalkToInteractableObjectBehavior walkToInteractableObjectBehavior;
-   private final ResetRobotBehavior resetRobotBehavior;
+   private final SearchForDoorBehavior searchForDoorBehavior;   //initially it was used to look fir Fiducial and then return the doorpose. Now - takes i/p DoorLocationPacket only
+   private final OpenDoorBehavior openDoorBehavior;             // subscribing to DoorLocationPacket too. Factory of behaviors and their corresponding methods to exclusively open door
+   private final WalkToInteractableObjectBehavior walkToInteractableObjectBehavior; //Factory of behaviors and their corresponding methods to exclusively walk till walkToPoint2 with 2 waypoints
+   private final ResetRobotBehavior resetRobotBehavior; // reset behavior which for GoHomeBehavior for both arms, chest and pelvis
 
    //this hold all the primitive behaviors that get used across most behaviors.
    private final AtlasPrimitiveActions atlasPrimitiveActions;
    private SleepBehavior sleepBehavior;
    //sends out a door location packet for use in debugging. not really necesary until the door is found from a behavior instead of the user supplying its location
-   private final FiducialDetectorBehaviorService fiducialDetectorBehaviorService;
+   private final FiducialDetectorBehaviorService fiducialDetectorBehaviorService;  //Fiducial detector - does not work :(
    private IHMCROS2Publisher<DoorLocationPacket> doorToBehaviorPublisher;
    private IHMCROS2Publisher<DoorLocationPacket> doorToUIPublisher;
 
@@ -94,24 +95,24 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
                                   WholeBodyControllerParameters wholeBodyControllerParameters, AtlasPrimitiveActions atlasPrimitiveActions,
                                   YoGraphicsListRegistry yoGraphicsListRegistry)
    {
-      super(robotName, "walkThroughDoorBehavior", WalkThroughDoorBehaviorState.class, yoTime, ros2Node);
+      super(robotName, "walkThroughDoorBehavior", WalkThroughDoorBehaviorState.class, yoTime, ros2Node); //thos does instantiate a behaviorService<> that is currently empty
       headTrajectoryPublisher = createPublisherForController(HeadTrajectoryMessage.class);
       this.referenceFrames = referenceFrames;
       doorOpenDetectorBehaviorService = new DoorOpenDetectorBehaviorService(robotName, yoNamePrefix + "DoorOpenService", ros2Node, yoGraphicsListRegistry);
       doorOpenDetectorBehaviorService.setTargetIDToLocate(50);
       doorOpenDetectorBehaviorService.setExpectedFiducialSize(0.2032);
       registry.addChild(doorOpenDetectorBehaviorService.getYoVariableRegistry());
-      addBehaviorService(doorOpenDetectorBehaviorService);
+      addBehaviorService(doorOpenDetectorBehaviorService);  //this is the first behavior added to the list of behavior service
 
       sleepBehavior = new SleepBehavior(robotName, ros2Node, yoTime);
       fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(robotName, yoNamePrefix + "SearchForDoorFiducial1", ros2Node,
-                                                                            yoGraphicsListRegistry);
+                                                                            yoGraphicsListRegistry);  //Fiducial Detector is instantiated before SearchForDoor which takes as i/p from this service DoorLocationPacket
       fiducialDetectorBehaviorService.setTargetIDToLocate(50);
       fiducialDetectorBehaviorService.setExpectedFiducialSize(0.2032);
 
       registry.addChild(fiducialDetectorBehaviorService.getYoVariableRegistry());
 
-      addBehaviorService(fiducialDetectorBehaviorService);
+      addBehaviorService(fiducialDetectorBehaviorService); //second behavior service added to the list
 
       this.atlasPrimitiveActions = atlasPrimitiveActions;
       //    basicTimingBehavior = new BasicTimingBehavior(robotName, ros2Node);
@@ -122,12 +123,12 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       openDoorBehavior = new OpenDoorBehavior(robotName, yoNamePrefix, yoTime, ros2Node, atlasPrimitiveActions, doorOpenDetectorBehaviorService,
                                               yoGraphicsListRegistry);
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
-      doorToBehaviorPublisher = createBehaviorOutputPublisher(DoorLocationPacket.class);
-      doorToUIPublisher = createBehaviorInputPublisher(DoorLocationPacket.class);
+      doorToBehaviorPublisher = createBehaviorOutputPublisher(DoorLocationPacket.class);   //DoorLocation being published Topic Name is probably /ihmc/atlas/DoorLocationPacket
+      doorToUIPublisher = createBehaviorInputPublisher(DoorLocationPacket.class);          //Why are there two of these? if they are publishing the same thing to the same topic
       
 
       //setup publisher for sending door location to UI
-      setupStateMachine();
+      setupStateMachine(); //this is defined in StateMachine and triggers the COnfigureStateMachineAndInitialKey
    }
 
    @Override
@@ -144,18 +145,19 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
          publishUIPositionCheckerPacket(location, orientation);
       }
 
-      if (isDoorOpen != doorOpenDetectorBehaviorService.isDoorOpen())
+      if (isDoorOpen != doorOpenDetectorBehaviorService.isDoorOpen())  //write the other way around by declaring isDoorOpen = true...same thing smh
       {
-         isDoorOpen = doorOpenDetectorBehaviorService.isDoorOpen();
+         isDoorOpen = doorOpenDetectorBehaviorService.isDoorOpen();    //checking again!!
          if (isDoorOpen)
             publishTextToSpeech("Door is Open");
 
          else
             publishTextToSpeech("Door is Closed");
       }
-
-      if (fiducialDetectorBehaviorService.getGoalHasBeenLocated())
-      {
+      //System.out.println(fiducialDetectorBehaviorService.getGoalHasBeenLocated());
+      //System.exit(1);
+      //if (fiducialDetectorBehaviorService.getGoalHasBeenLocated())
+      //{
 
          FramePose3D tmpFP = new FramePose3D();
          fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpFP);
@@ -169,7 +171,12 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
          FramePose3D doorFrame = new FramePose3D(tmpFP);
          doorFrame.appendTranslation(0.025875, 0.68183125, -1.1414125);
 
-         Pose3D pose = new Pose3D(doorFrame.getPosition(), doorFrame.getOrientation());
+         //StepUpDoor doorframepose = new StepUpDoor();
+         StepUpDoor doorframepose = new StepUpDoor(0.5,1.7,0.3);
+         doorframepose.getDoorFramePose();
+         //System.out.println("door position :" + doorframepose.getDoorFramePose().getPosition().getX() + " " + doorframepose.getDoorFramePose().getPosition().getY() + " " + doorframepose.getDoorFramePose().getPosition().getZ());
+         //Pose3D pose = new Pose3D(doorFrame.getPosition(), doorFrame.getOrientation());
+         Pose3D pose = new Pose3D(doorframepose.getDoorFramePose().getPosition(), doorframepose.getDoorFramePose().getOrientation());
 
          //publishTextToSpeech("Recieved Door Location From fiducial");
          pose.appendYawRotation(Math.toRadians(-90));
@@ -177,11 +184,12 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
          Point3D location = new Point3D();
          Quaternion orientation = new Quaternion();
          pose.get(location, orientation);
-         publishUIPositionCheckerPacket(location, orientation);
+         //pose.get();
+         publishUIPositionCheckerPacket(pose.getPosition(), pose.getOrientation());
 
          doorToBehaviorPublisher.publish(HumanoidMessageTools.createDoorLocationPacket(pose));
          doorToUIPublisher.publish(HumanoidMessageTools.createDoorLocationPacket(pose));
-      }
+      //}
       super.doControl();
 
    }
@@ -228,17 +236,17 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       {
 
          @Override
-         public void onEntry()
+         public void onEntry()   //SearchForDoorBehavior has its own setInputBehavior in its parent class that gets triggered as mentioned in the comment below
          {
             publishTextToSpeech("Searching For The Door");
-            super.onEntry();
-         }
+            super.onEntry(); //this guy is the one triggering initialize() triggering run() triggering threading action that recursively keeps on looking for fiducial
+         }                   //onEntry is triggering BehaviorAction onEntry which triggers its setBehaviorInput which is being over ridden
       };
 
       BehaviorAction searchForDoorNear = new BehaviorAction(searchForDoorBehavior)
       {
          @Override
-         public void onEntry()
+         public void onEntry()   //these onEntry() are being over ridden only for the sake of publishing the text
          {
             publishTextToSpeech("Confirm door location before walking through");
 
@@ -246,7 +254,7 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
          }
 
          @Override
-         public void onExit()
+         public void onExit()    //also triggers the postBehavior cleanup
          {
 
             System.out.println("SETTING OPEN DOOR ACTION INPUT " + searchForDoorBehavior.getLocation());
@@ -258,7 +266,7 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       BehaviorAction walkToDoorAction = new BehaviorAction(walkToInteractableObjectBehavior)
       {
          @Override
-         protected void setBehaviorInput()
+         protected void setBehaviorInput()  //in this case onEntry() is not the one triggering it but the constructor (this (not the java keyword)) that's doing the job for you
          {
             lookDown();
             if (DEBUG)
@@ -375,7 +383,7 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
       factory.addStateAndDoneTransition(WalkThroughDoorBehaviorState.FAILED, failedState, WalkThroughDoorBehaviorState.DONE);
       factory.addState(WalkThroughDoorBehaviorState.DONE, doneState);
 
-      return WalkThroughDoorBehaviorState.SETUP_ROBOT;
+      return WalkThroughDoorBehaviorState.SETUP_ROBOT;  //return should always be the initial key ...not th first element in the enum but the first state you add to the StateFactory
    }
 
    private FramePoint3D offsetPointFromDoor(Vector3D32 point)
@@ -392,15 +400,19 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
    {
 
       PoseReferenceFrame doorPose = new PoseReferenceFrame("DoorReferenceFrame", ReferenceFrame.getWorldFrame());
+      StepUpDoor doorframepose = new StepUpDoor(0.5,1.7,0.3);
+      Pose3D tmp = new Pose3D(doorframepose.getDoorFramePose().getPosition().getX(),doorframepose.getDoorFramePose().getPosition().getY(),doorframepose.getDoorFramePose().getPosition().getZ(),
+                              doorframepose.getDoorFramePose().getOrientation().getYaw(),doorframepose.getDoorFramePose().getOrientation().getPitch(),doorframepose.getDoorFramePose().getOrientation().getRoll());
 
-      Pose3D unrotatedDoor = new Pose3D(searchForDoorBehavior.getLocation());
+      //Pose3D unrotatedDoor = new Pose3D(searchForDoorBehavior.getLocation());
+      Pose3D unrotatedDoor = new Pose3D(tmp);
 
       double offsetLeftRight = -.05;
       
 
       
-      unrotatedDoor.appendYawRotation(Math.toRadians(180));
-      unrotatedDoor.appendTranslation(-0.9144, 0, 0);
+      //unrotatedDoor.appendYawRotation(Math.toRadians(180));
+      //unrotatedDoor.appendTranslation(-0.9144, 0, 0);
 
       doorPose.setPoseAndUpdate(unrotatedDoor);
 
@@ -460,9 +472,9 @@ public class WalkThroughDoorBehavior extends StateMachineBehavior<WalkThroughDoo
    }
 
    @Override
-   public void onBehaviorExited()
+   public void onBehaviorExited()  //these overrides are only there to publish test but oddly this guy never gets triggered
    {
-      publishTextToSpeech("Leaving Walk Through Door behavior");
+      publishTextToSpeech("Leaving Walk Through Door behavior");   //he actually does but when the SearchForDoorNear exits its behavior - odd
 
    }
 
