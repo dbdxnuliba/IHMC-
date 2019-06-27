@@ -477,7 +477,7 @@ public class MultiStageFootstepPlanningManager implements PlannerCompletionCallb
    public void processFootstepPlannerParameters(FootstepPlannerParametersPacket parameters)
    {
       latestFootstepPlannerParametersReference.set(parameters);
-      LogTools.info("Received new set of footstep planner parameters.");
+//      LogTools.info("Received new set of footstep planner parameters.");
    }
 
    public void processVisibilityGraphsParameters(VisibilityGraphsParametersPacket parameters)

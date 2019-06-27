@@ -1,4 +1,6 @@
-start_position 0.0 0.0 0.25
-goal_position 3.0448 0.0 0.25
+start_position 0.0 0.0 0.5
+goal_position 3.0448 0.0 0.55
 start_yaw -0.0
 goal_yaw -0.0
+a_star_timeout 10.0
+
