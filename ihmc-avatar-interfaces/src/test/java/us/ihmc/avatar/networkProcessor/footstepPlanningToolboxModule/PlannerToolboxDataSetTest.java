@@ -92,9 +92,10 @@ public class PlannerToolboxDataSetTest
    // Whether to start the UI or not.
    public static boolean VISUALIZE = true;
    // For enabling helpful prints.
-   private static boolean DEBUG = true;
+   private static boolean DEBUG = false;
    private static boolean VERBOSE = true;
 
+   private static final double numberOfIterationsToAverage = 10;
 
 
    private FootstepPlannerUI ui = null;
@@ -114,6 +115,7 @@ public class PlannerToolboxDataSetTest
    private final AtomicReference<FootstepPlan> actualPlan = new AtomicReference<>(null);
    private final AtomicReference<FootstepPlanningResult> expectedResult = new AtomicReference<>(null);
    private final AtomicReference<FootstepPlanningResult> actualResult = new AtomicReference<>(null);
+   private final AtomicReference<Double> planningDuration = new AtomicReference<>(null);
 
    private static final String robotName = "testBot";
    private MultiStageFootstepPlanningModule toolboxModule;
@@ -140,6 +142,7 @@ public class PlannerToolboxDataSetTest
 
       messager.registerTopicListener(FootstepPlanResponseTopic, request -> uiReceivedPlan.set(true));
       messager.registerTopicListener(PlanningResultTopic, request -> uiReceivedResult.set(true));
+      messager.registerTopicListener(PlannerTimeTakenTopic, planningDuration::set);
 
       uiFootstepPlanReference = messager.createInput(FootstepPlanResponseTopic);
       uiPlanningResultReference = messager.createInput(PlanningResultTopic);
@@ -183,29 +186,6 @@ public class PlannerToolboxDataSetTest
    private RobotContactPointParameters<RobotSide> getContactParameters()
    {
       return new TestContactPointParameters();
-   }
-
-   @Test
-   public void testDataSets()
-   {
-      List<DataSet> dataSets = DataSetIOTools.loadDataSets(dataset -> {
-         if (!dataset.hasPlannerInput())
-            return false;
-         return dataset.getPlannerInput().getStepPlannerIsTestable() && dataset.getPlannerInput().containsFlag(getTimeoutFlag());
-      });
-      runAssertionsOnAllDatasets(this::runAssertions, dataSets);
-   }
-
-   @Test
-   @Disabled
-   public void runInDevelopmentDataSets()
-   {
-      List<DataSet> dataSets = DataSetIOTools.loadDataSets(dataset -> {
-         if (!dataset.hasPlannerInput())
-            return false;
-         return dataset.getPlannerInput().getStepPlannerIsInDevelopment() && dataset.getPlannerInput().containsFlag(getTimeoutFlag());
-      });
-      runAssertionsOnAllDatasets(this::runAssertions, dataSets);
    }
 
    @AfterEach
@@ -269,7 +249,7 @@ public class PlannerToolboxDataSetTest
       void startModule() throws IOException;
    }
 
-   private void setupFootstepPlanningToolboxModule() throws IOException
+   private void setupFootstepPlanningToolboxModule()
    {
       toolboxModule = new MultiStageFootstepPlanningModule(getRobotModel(), null, true, pubSubImplementation);
    }
@@ -279,18 +259,27 @@ public class PlannerToolboxDataSetTest
       return new TestRobotModel();
    }
 
-   public void runAssertionsOnDataset(Function<DataSet, String> dataSetTester, DataSetName dataSetName)
+   public void runAssertionsOnDataSet(DataSetName dataSetName)
    {
-      DataSet dataset = DataSetIOTools.loadDataSet(dataSetName);
-
-      resetAllAtomics();
-      String errorMessages = dataSetTester.apply(dataset);
-      Assertions.assertTrue(errorMessages.isEmpty(), "Errors:" + errorMessages);
+      List<DataSetName> dataSetNames = new ArrayList<>();
+      dataSetNames.add(dataSetName);
+      runAssertionsOnDataSets(dataSetNames);
    }
 
-   public void runAssertionsOnAllDatasets(Function<DataSet, String> dataSetTester, List<DataSet> allDatasets)
+   public void runAssertionsOnDataSets(List<DataSetName> dataSetNames)
    {
-      if (VERBOSE || DEBUG)
+      List<DataSet> dataSets = new ArrayList<>();
+      for (DataSetName dataSetName : dataSetNames)
+      {
+         dataSets.add(DataSetIOTools.loadDataSet(dataSetName));
+      }
+
+      runAssertionsOnAllDataSets(dataSets);
+   }
+
+   public void runAssertionsOnAllDataSets(List<DataSet> allDatasets)
+   {
+      if (DEBUG)
          LogTools.info("Unit test files found: " + allDatasets.size());
 
       if (allDatasets.isEmpty())
@@ -306,21 +295,38 @@ public class PlannerToolboxDataSetTest
             LogTools.info("Testing file: " + dataset.getName());
 
          numberOfTestedSets++;
-         resetAllAtomics();
-         String errorMessagesForCurrentFile = dataSetTester.apply(dataset);
-         if (!errorMessagesForCurrentFile.isEmpty())
+
+         double totalDuration = 0.0;
+         double numberOfTests = 0.0;
+         for (int trialNumber = 0; trialNumber < numberOfIterationsToAverage; trialNumber++)
          {
-            numberOfFailingTests++;
-            failingDatasets.add(dataset.getName());
+            resetAllAtomics();
+            String errorMessagesForCurrentFile = runAssertions(dataset);
+            if (!errorMessagesForCurrentFile.isEmpty())
+            {
+               numberOfFailingTests++;
+               failingDatasets.add(dataset.getName());
+            }
+
+            if (DEBUG)
+            {
+               String result = errorMessagesForCurrentFile.isEmpty() ? "passed" : "failed";
+               LogTools.info(dataset.getName() + " " + result);
+            }
+
+            if (trialNumber > numberOfIterationsToAverage / 2.0)
+            {
+               totalDuration += planningDuration.getAndSet(null);
+               numberOfTests += 1.0;
+            }
          }
 
-         if (DEBUG || VERBOSE)
+         if (VERBOSE)
          {
-            String result = errorMessagesForCurrentFile.isEmpty() ? "passed" : "failed";
-            LogTools.info(dataset.getName() + " " + result);
+            LogTools.info("Average duration = " + totalDuration / numberOfTests);
          }
 
-         ThreadTools.sleep(500); // Apparently need to give some time for the prints to appear in the right order.
+         ThreadTools.sleep(50); // Apparently need to give some time for the prints to appear in the right order.
       }
 
       String message = "Number of failing datasets: " + numberOfFailingTests + " out of " + numberOfTestedSets;
@@ -343,12 +349,12 @@ public class PlannerToolboxDataSetTest
    public String runAssertions(DataSet dataset)
    {
       resetAllAtomics();
-      ThreadTools.sleep(1000);
+//      ThreadTools.sleep(1000);
 
       packPlanningRequest(dataset, messager);
 
       resetAllAtomics();
-      ThreadTools.sleep(1000);
+//      ThreadTools.sleep(1000);
 
       return findPlanAndAssertGoodResult(dataset);
    }
@@ -1491,7 +1497,7 @@ public class PlannerToolboxDataSetTest
 
       VISUALIZE = true;
       test.setup();
-      test.runAssertionsOnDataset(test::runAssertions, DataSetName._20190626_Plank);
+      test.runAssertionsOnDataSet(DataSetName._20190626_Plank);
 
       ThreadTools.sleepForever();
       test.tearDown();
