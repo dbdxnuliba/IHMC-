@@ -3,7 +3,9 @@ package us.ihmc.footstepPlanning.graphSearch.nodeExpansion;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import us.ihmc.commons.InterpolationTools;
 import us.ihmc.euclid.axisAngle.AxisAngle;
+import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
@@ -46,13 +48,18 @@ public class ParameterBasedNodeExpansion implements FootstepNodeExpansion
       }
    }
 
-   private void addDefaultFootsteps(FootstepNode node, HashSet<FootstepNode> expansion)
+   private void addDefaultFootsteps(FootstepNode nodeToExpand, HashSet<FootstepNode> expansion)
    {
-      RobotSide nextSide = node.getRobotSide().getOppositeSide();
+      RobotSide nextSide = nodeToExpand.getRobotSide().getOppositeSide();
+
       for (double x = parameters.getMinimumStepLength(); x < parameters.getMaximumStepReach(); x += LatticeNode.gridSizeXY)
       {
          for (double y = parameters.getMinimumStepWidth(); y < parameters.getMaximumStepWidth(); y += LatticeNode.gridSizeXY)
          {
+            double fractionOfMaxReach = EuclidCoreTools.norm(x, y)  / parameters.getMaximumStepReach();
+            if (fractionOfMaxReach > 1.0)
+               continue;
+
             if (Math.abs(x) <= parameters.getMinXClearanceFromStance() && Math.abs(y) <= parameters.getMinYClearanceFromStance())
             {
                continue;
@@ -60,7 +67,7 @@ public class ParameterBasedNodeExpansion implements FootstepNodeExpansion
 
             for (double yaw = parameters.getMinimumStepYaw(); yaw < parameters.getMaximumStepYaw(); yaw += LatticeNode.gridSizeYaw)
             {
-               FootstepNode offsetNode = constructNodeInPreviousNodeFrame(x, nextSide.negateIfRightSide(y), nextSide.negateIfRightSide(yaw), node);
+               FootstepNode offsetNode = constructNodeInPreviousNodeFrame(x, nextSide.negateIfRightSide(y), nextSide.negateIfRightSide(yaw), nodeToExpand);
                expansion.add(offsetNode);
             }
          }
