@@ -95,6 +95,15 @@ public class PlannerToolboxDataSetTest
    private static boolean DEBUG = false;
    private static boolean VERBOSE = true;
 
+   private static final List<DataSetName> dataSetsToTest = new ArrayList<>();
+   static
+   {
+      dataSetsToTest.add(DataSetName._20190626_Plank);
+      dataSetsToTest.add(DataSetName._20171215_214730_CinderBlockField);
+      dataSetsToTest.add(DataSetName._20171026_131304_PlanarRegion_Ramp_2Story_UnitTest);
+      dataSetsToTest.add(DataSetName._20171215_214801_StairsUpDown);
+   }
+
    private static final double numberOfIterationsToAverage = 10;
 
 
@@ -1497,7 +1506,12 @@ public class PlannerToolboxDataSetTest
 
       VISUALIZE = true;
       test.setup();
-      test.runAssertionsOnDataSet(DataSetName._20190626_Plank);
+//      test.runAssertionsOnDataSet(DataSetName._20190626_Plank);
+//      test.runAssertionsOnDataSet(DataSetName._20171215_214730_CinderBlockField);
+//      test.runAssertionsOnDataSet(DataSetName._20171026_131304_PlanarRegion_Ramp_2Story_UnitTest);
+//      test.runAssertionsOnDataSet(DataSetName._20171215_220523_SteppingStones);
+//      test.runAssertionsOnDataSet(DataSetName._20171215_214801_StairsUpDown);
+      test.runAssertionsOnDataSets(dataSetsToTest);
 
       ThreadTools.sleepForever();
       test.tearDown();
