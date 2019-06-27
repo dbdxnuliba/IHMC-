@@ -25,6 +25,7 @@ import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
 import us.ihmc.jMonkeyEngineToolkit.camera.CameraConfiguration;
+import us.ihmc.log.LogTools;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -134,6 +135,8 @@ public class AtlasSimulationWithCamera
 
       CameraConfiguration cameraConfiguration = new CameraConfiguration(cameraName);
       cameraConfiguration.setCameraMount(cameraName);
+
+      LogTools.info("w: {}, h: {}", width, height);
 
       int framesPerSecond = 25;
       scs.startStreamingVideoData(cameraConfiguration,
