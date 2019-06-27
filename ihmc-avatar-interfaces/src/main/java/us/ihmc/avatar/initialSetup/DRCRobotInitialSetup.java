@@ -1,19 +1,32 @@
 package us.ihmc.avatar.initialSetup;
 
+import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
 
+import java.util.List;
+
 public interface DRCRobotInitialSetup<T extends Robot>
 {
-   public abstract void initializeRobot(T robot, DRCRobotJointMap jointMap);
+   void initializeRobot(T robot, DRCRobotJointMap jointMap);
 
-   public abstract void setInitialYaw(double yaw);
-   public abstract double getInitialYaw();
+   default List<Double> getInitialJointAngles()
+   {
+      throw new RuntimeException("Not implemented.");
+   }
 
-   public abstract void setInitialGroundHeight(double groundHeight);
-   public abstract double getInitialGroundHeight();
+   default Pose3DReadOnly getInitialPelvisPose()
+   {
+      throw new RuntimeException("Not implemented.");
+   }
 
-   public abstract void setOffset(Vector3D additionalOffset);
-   public abstract void getOffset(Vector3D offsetToPack);
+   void setInitialYaw(double yaw);
+   double getInitialYaw();
+
+   void setInitialGroundHeight(double groundHeight);
+   double getInitialGroundHeight();
+
+   void setOffset(Vector3D additionalOffset);
+   void getOffset(Vector3D offsetToPack);
 }
