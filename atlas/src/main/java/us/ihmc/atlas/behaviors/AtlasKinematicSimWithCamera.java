@@ -48,10 +48,10 @@ public class AtlasKinematicSimWithCamera
       scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
 
       RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames = new RemoteSyncedHumanoidFrames(robotModel, ros2Node);
-      remoteSyncedHumanoidFrames.pollHumanoidReferenceFrames().getNeckFrame(NeckJointName.DISTAL_NECK_PITCH);
+      ;
 
       /// create scs
-      SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation();
+      SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation(remoteSyncedHumanoidFrames);
       SimulationConstructionSet scs = sensorOnlySimulation.getSCS();
 
       // create camera in scs

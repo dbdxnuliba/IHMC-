@@ -2,15 +2,18 @@ package us.ihmc.atlas.behaviors.scsSensorSimulation;
 
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.BagOfBalls;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.humanoidBehaviors.tools.RemoteSyncedHumanoidFrames;
 import us.ihmc.jMonkeyEngineToolkit.GPULidar;
 import us.ihmc.robotics.controllers.PDController;
 import us.ihmc.robotics.lidar.LidarScan;
 import us.ihmc.robotics.lidar.LidarScanParameters;
+import us.ihmc.robotics.partNames.NeckJointName;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -26,6 +29,7 @@ public class SensorOnlyController implements RobotController
    private final SensorOnlyRobot robot;
    private final SimulationConstructionSet scs;
    private final LidarScanParameters lidarScanParameters;
+   private final RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames;
    private GPULidar gpuLidar;
    private LinkedBlockingQueue<LidarScan> gpuLidarScanBuffer = new LinkedBlockingQueue<>();
    private YoDouble tauLidarZ;
@@ -46,11 +50,15 @@ public class SensorOnlyController implements RobotController
    private double desiredZRate = 0.3;
    private final static double DESIRED_X_RATE = 0.3;
 
-   public SensorOnlyController(SensorOnlyRobot robot, YoGraphicsListRegistry yoGraphicsListRegistry, SimulationConstructionSet scs)
+   public SensorOnlyController(SensorOnlyRobot robot,
+                               YoGraphicsListRegistry yoGraphicsListRegistry,
+                               SimulationConstructionSet scs,
+                               RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames)
    {
       this.robot = robot;
       this.scs = scs;
       this.lidarScanParameters = robot.getLidarScanParameters();
+      this.remoteSyncedHumanoidFrames = remoteSyncedHumanoidFrames;
 
       YoGraphicPosition yoGraphicPosition = new YoGraphicPosition("point", point, 0.01, YoAppearance.Purple());
       yoGraphicsListRegistry.registerYoGraphic("test", yoGraphicPosition);
@@ -110,33 +118,40 @@ public class SensorOnlyController implements RobotController
 
    public void doControl()
    {
-      double currentTime = scs.getTime();
-      double dt = currentTime - lastTime;
-      lastTime = currentTime;
+      FramePose3DReadOnly neckPose = remoteSyncedHumanoidFrames.quickPollPoseReadOnly(frames -> frames.getNeckFrame(NeckJointName.DISTAL_NECK_PITCH));
 
-      double currentZPosition = qLidarZ.getValueAsDouble();
-      double desiredZPosition = lastPositionZ + desiredZRate * dt;
-      double currentZRate = (currentZPosition - lastPositionZ) * dt;
+//      double currentTime = scs.getTime();
+//      double dt = currentTime - lastTime;
+//      lastTime = currentTime;
+//
+//      double currentZPosition = qLidarZ.getValueAsDouble();
+//      double desiredZPosition = lastPositionZ + desiredZRate * dt;
+//      double currentZRate = (currentZPosition - lastPositionZ) * dt;
+//
+//      double desiredXRate = Math.cos(currentZPosition) * DESIRED_X_RATE;
+//      double currentXPosition = qLidarX.getValueAsDouble();
+//      double desiredXPosition = lastPositionX + desiredXRate * dt;
+//      double currentXRate = (currentXPosition - lastPositionX) * dt;
+//
+//      double zCorrectionSum = pdControllerZ.compute(currentZPosition, desiredZPosition, currentZRate, desiredZRate);
+//      double xCorrectionSum = pdControllerX.compute(currentXPosition, desiredXPosition, currentXRate, desiredXRate);
+//
+//      tauLidarZ.set(zCorrectionSum);
+//      tauLidarX.set(xCorrectionSum);
+//
+//      lastPositionX = currentXPosition;
+//      lastPositionZ = currentZPosition;
 
-      double desiredXRate = Math.cos(currentZPosition) * DESIRED_X_RATE;
-      double currentXPosition = qLidarX.getValueAsDouble();
-      double desiredXPosition = lastPositionX + desiredXRate * dt;
-      double currentXRate = (currentXPosition - lastPositionX) * dt;
+//      RigidBodyTransform transform = new RigidBodyTransform();
+//      neckPose.get(transform);
 
-      double zCorrectionSum = pdControllerZ.compute(currentZPosition, desiredZPosition, currentZRate, desiredZRate);
-      double xCorrectionSum = pdControllerX.compute(currentXPosition, desiredXPosition, currentXRate, desiredXRate);
+      robot.getLidarZJoint().setQ(neckPose.getZ());
 
-      tauLidarZ.set(zCorrectionSum);
-      tauLidarX.set(xCorrectionSum);
 
-      lastPositionX = currentXPosition;
-      lastPositionZ = currentZPosition;
 
-      RigidBodyTransform transform = new RigidBodyTransform();
+//      robot.getLidarXJoint().getTransformToWorld(transform);
 
-      robot.getLidarXJoint().getTransformToWorld(transform);
-
-      gpuLidar.setTransformFromWorld(transform, 0);
+//      gpuLidar.setTransformFromWorld(transform, 0);
 
       while (!gpuLidarScanBuffer.isEmpty())
       {

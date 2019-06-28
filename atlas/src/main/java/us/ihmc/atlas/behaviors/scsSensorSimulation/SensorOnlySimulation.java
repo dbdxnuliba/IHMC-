@@ -3,8 +3,8 @@ package us.ihmc.atlas.behaviors.scsSensorSimulation;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.humanoidBehaviors.tools.RemoteSyncedHumanoidFrames;
 import us.ihmc.jMonkeyEngineToolkit.camera.CameraConfiguration;
-import us.ihmc.simulationconstructionset.Simulation;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 
 public class SensorOnlySimulation
@@ -12,7 +12,7 @@ public class SensorOnlySimulation
 
    private final SimulationConstructionSet scs;
 
-   public SensorOnlySimulation()
+   public SensorOnlySimulation(RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames)
    {
       SensorOnlyRobot robot = new SensorOnlyRobot();
 
@@ -21,7 +21,7 @@ public class SensorOnlySimulation
       scs = new SimulationConstructionSet(robot);
       scs.setDT(0.0001, 100);
 
-      SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry, scs);
+      SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry, scs, remoteSyncedHumanoidFrames);
       robot.setController(controller);
 
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
@@ -53,8 +53,8 @@ public class SensorOnlySimulation
       scs.addStaticLinkGraphics(sphere);
    }
 
-   public static void main(String[] args)
-   {
-      new SensorOnlySimulation();
-   }
+//   public static void main(String[] args)
+//   {
+//      new SensorOnlySimulation(remoteSyncedHumanoidFrames);
+//   }
 }
