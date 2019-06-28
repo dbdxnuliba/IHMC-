@@ -3,6 +3,7 @@ package us.ihmc.simulationConstructionSetTools.util.environments;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.shape.*;
+import us.ihmc.euclid.shape.primitives.*;
 import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.graphicsDescription.appearance.*;

@@ -1,9 +1,12 @@
 package us.ihmc.atlas.behaviors.scsSensorSimulation;
 
+import us.ihmc.avatar.drcRobot.*;
+import us.ihmc.avatar.kinematicsSimulation.*;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.jMonkeyEngineToolkit.camera.CameraConfiguration;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.simulationconstructionset.Simulation;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 
@@ -19,10 +22,11 @@ public class SensorOnlySimulation
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
       scs = new SimulationConstructionSet(robot);
-      scs.setDT(0.0001, 100);
+      scs.setDT(0.0001, 100); //this gets set as well
+      //AvatarKinematicsSimulation.createForManualTest(robotModel,false)
 
       SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry, scs);
-      robot.setController(controller);
+      robot.setController(controller); //no need to writing
 
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
 
@@ -38,6 +42,11 @@ public class SensorOnlySimulation
       controller.initialize();
 
       scs.startOnAThread();
+   }
+
+  // public AvatarKinematicsSimulation setaks(DRCRobotModel robotModel)
+   {
+     // return AvatarKinematicsSimulation.createForManualTest(robotModel,false);
    }
 
    public SimulationConstructionSet getSCS()
