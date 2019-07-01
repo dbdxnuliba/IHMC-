@@ -28,12 +28,12 @@ public class BehaviorModule
                                                         new BehaviorMessagerUpdateThread(BehaviorModule.class.getSimpleName(), 5));
       ExceptionTools.handle(() -> messager.startMessager(), DefaultExceptionHandler.RUNTIME_EXCEPTION);
       return new BehaviorModule(robotModel, messager);
-   }
+   } //initializing a server and returns a new Behavior Module
 
    public static BehaviorModule createForTest(DRCRobotModel robotModel, Messager messager)
    {
       return new BehaviorModule(robotModel, messager);
-   }
+   } //pseudo constructor
 
    private BehaviorModule(DRCRobotModel robotModel, Messager messager)
    {
@@ -41,11 +41,11 @@ public class BehaviorModule
 
       LogTools.info("Starting behavior backpack");
       
-      PubSubImplementation pubSubImplementation = messager instanceof SharedMemoryMessager ? PubSubImplementation.INTRAPROCESS : PubSubImplementation.FAST_RTPS;
-      Ros2Node ros2Node = ROS2Tools.createRos2Node(pubSubImplementation, "behavior_backpack");
+      PubSubImplementation pubSubImplementation = messager instanceof SharedMemoryMessager ? PubSubImplementation.INTRAPROCESS : PubSubImplementation.FAST_RTPS; //check messager instanceof
+      Ros2Node ros2Node = ROS2Tools.createRos2Node(pubSubImplementation, "behavior_backpack"); //create a new ros node with respective communication protocol
 
       new StepInPlaceBehavior(messager, ros2Node, robotModel);  // TODO don't start threads on construction, but right now not hurting anything
-      new PatrolBehavior(messager, ros2Node, robotModel);
+      new PatrolBehavior(messager, ros2Node, robotModel); //why call behaviors in constructors?!!
    }
 
    public static MessagerAPI getBehaviorAPI()

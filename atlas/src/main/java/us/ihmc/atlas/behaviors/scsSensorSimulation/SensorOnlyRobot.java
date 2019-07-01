@@ -5,6 +5,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
+import us.ihmc.mecano.multiBodySystem.*;
 import us.ihmc.robotics.lidar.LidarScanParameters;
 import us.ihmc.robotics.robotDescription.LidarSensorDescription;
 import us.ihmc.simulationconstructionset.*;
@@ -17,10 +18,15 @@ public class SensorOnlyRobot extends Robot
 
    public SensorOnlyRobot()
    {
-      super("SensorOnlyRobot");
+      super("SensorOnlyRobot"); //creates the rest of the robot
 
+      System.out.println("Entering Sensor Only Robot");
+      //creating the camera joint
       double height = 0.2;
       double radius = 0.05;
+
+
+
 
       gimbalJoint = new GimbalJoint("gimbalZ", "gimbalX", "gimbalY", new Vector3D(0.0, 0.0, 1.0), this, Axis.Z, Axis.X, Axis.Y);
       Link link = new Link("lidar");

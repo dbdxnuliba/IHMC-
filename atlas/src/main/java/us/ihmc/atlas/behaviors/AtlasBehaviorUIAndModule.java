@@ -17,20 +17,21 @@ import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 
 public class AtlasBehaviorUIAndModule extends Application
 {
-   private BehaviorUI ui;
+   private BehaviorUI ui;  // created a Behavior UI object
 
    @Override
    public void start(Stage primaryStage) throws Exception
    {
-      DRCRobotModel drcRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT, false);
+      DRCRobotModel drcRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT, false); //create a robot model
 
-      Messager behaviorMessager = RemoteBehaviorInterface.createForUI(NetworkParameters.getHost(NetworkParameterKeys.networkManager));
+      Messager behaviorMessager = RemoteBehaviorInterface.createForUI(NetworkParameters.getHost(NetworkParameterKeys.networkManager));  // creates a meassageer for the messages to be published by the behaviorUI module.
+      //crates a kryo createclient on this side(Remote Behavior interface)and the kryo createserver is in behaviorModule
 
       ui = new BehaviorUI(primaryStage,
                           behaviorMessager,
                           drcRobotModel,
-                          PubSubImplementation.FAST_RTPS);
-      ui.show();
+                          PubSubImplementation.FAST_RTPS); //instaniaed it
+      ui.show(); //method to stage a window
    }
 
    @Override
@@ -42,7 +43,7 @@ public class AtlasBehaviorUIAndModule extends Application
 
    public static void main(String[] args)
    {
-      ThreadTools.startAThread(() -> new AtlasBehaviorModule(), AtlasBehaviorUIAndModule.class.getSimpleName());
+      ThreadTools.startAThread(() -> new AtlasBehaviorModule(), AtlasBehaviorUIAndModule.class.getSimpleName()); //launching UIModule and BehaviorModule simultaneously
       launch(args);
    }
 }

@@ -20,6 +20,7 @@ import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.producers.VideoDataServer;
 import us.ihmc.communication.producers.VideoDataServerImageCallback;
 import us.ihmc.communication.producers.VideoSource;
+import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.humanoidBehaviors.tools.RemoteSyncedHumanoidFrames;
@@ -47,8 +48,9 @@ public class AtlasKinematicSimWithCamera
       Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "kinematic_camera");
       scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
 
-      RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames = new RemoteSyncedHumanoidFrames(robotModel, ros2Node);
-      ;
+      RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames = new RemoteSyncedHumanoidFrames(robotModel, ros2Node); //reference frame attached to the atlas being simulated in the kinematic simulation
+      //FramePose3DReadOnly neckPose = remoteSyncedHumanoidFrames.quickPollPoseReadOnly(frames -> frames.getNeckFrame(NeckJointName.DISTAL_NECK_PITCH));
+      //System.out.println("Priting neckPose Values:" + neckPose.getX() + " " + neckPose.getY() + " " + neckPose.getZ());
 
       /// create scs
       SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation(remoteSyncedHumanoidFrames);
@@ -65,6 +67,7 @@ public class AtlasKinematicSimWithCamera
 
       CameraConfiguration cameraConfiguration = new CameraConfiguration(cameraName);
       cameraConfiguration.setCameraMount(cameraName);
+
 
       int width = 1024;
       int height = 544;
