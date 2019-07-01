@@ -38,27 +38,27 @@ import java.nio.ByteBuffer;
 
 public class AtlasKinematicSimWithCamera
 {
-   //private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
+   private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
 
    public AtlasKinematicSimWithCamera(DRCRobotModel robotModel, CommonAvatarEnvironmentInterface environment)
    {
 
 
-      //Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "kinematic_camera");
-      //scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
+      Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "kinematic_camera");
+      scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
 
-      //RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames = new RemoteSyncedHumanoidFrames(robotModel, ros2Node);
-      //remoteSyncedHumanoidFrames.pollHumanoidReferenceFrames().getNeckFrame(NeckJointName.DISTAL_NECK_PITCH);
+      RemoteSyncedHumanoidFrames remoteSyncedHumanoidFrames = new RemoteSyncedHumanoidFrames(robotModel, ros2Node);
+      remoteSyncedHumanoidFrames.pollHumanoidReferenceFrames().getNeckFrame(NeckJointName.DISTAL_NECK_PITCH);
 
-      /// create scs
-      //SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation();
-      //SimulationConstructionSet scs = sensorOnlySimulation.getSCS();
+      // create scs
+      SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation();
+      SimulationConstructionSet scs = sensorOnlySimulation.getSCS();
 
       AvatarKinematicsSimulation.createForManualTest(robotModel, false);
       //AvatarKinematicsSimulation.sensorinfo(robotModel);
       // create camera in scs
 
-      /*ROS2Input<RobotConfigurationData> robotConfigurationData = new ROS2Input<>(ros2Node,
+      ROS2Input<RobotConfigurationData> robotConfigurationData = new ROS2Input<>(ros2Node,
                                                                                  RobotConfigurationData.class,
                                                                                  robotModel.getSimpleRobotName(),
                                                                                  HighLevelHumanoidControllerFactory.ROS2_ID);
@@ -76,7 +76,7 @@ public class AtlasKinematicSimWithCamera
                                   height,
                                   new VideoDataServerImageCallback(new VideoPacketCallback()),
                                   () -> robotConfigurationData.getLatest().getSyncTimestamp(),
-                                  framesPerSecond)*/;
+                                  framesPerSecond);
    }
 
    private static final Object hackyLockBecauseJPEGEncoderIsNotThreadsafe = new Object();

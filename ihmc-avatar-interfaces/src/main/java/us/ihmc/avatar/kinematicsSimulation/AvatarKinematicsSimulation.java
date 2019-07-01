@@ -49,6 +49,7 @@ import us.ihmc.tools.functional.FunctionalTools;
 import us.ihmc.tools.thread.ExceptionHandlingThreadScheduler;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
+import java.awt.Robot;
 import java.awt.image.*;
 import java.io.*;
 import java.nio.*;
@@ -83,24 +84,26 @@ public class AvatarKinematicsSimulation
    private final int framesPerSecond = 25;
 
 
-   private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
+
+   //private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
 
    public static void createForManualTest(DRCRobotModel robotModel, boolean createYoVariableServer)
    {
-      //create(robotModel, createYoVariableServer, PubSubImplementation.FAST_RTPS);
+      create(robotModel, createYoVariableServer, PubSubImplementation.FAST_RTPS);
    }
 
    public static void createForManualTestwscs(DRCRobotModel robotModel, boolean createYoVariableServer, SimulationConstructionSet scs)
    {
-      create(robotModel, createYoVariableServer, PubSubImplementation.FAST_RTPS, scs);
+      //create(robotModel, createYoVariableServer, PubSubImplementation.FAST_RTPS, scs);
    }
 
    public static void createForAutomatedTest(DRCRobotModel robotModel, boolean createYoVariableServer)
    {
-      //create(robotModel, createYoVariableServer, PubSubImplementation.INTRAPROCESS);
+      create(robotModel, createYoVariableServer, PubSubImplementation.INTRAPROCESS);
    }
 
-   private static void create(DRCRobotModel robotModel, boolean createYoVariableServer, PubSubImplementation pubSubImplementation, SimulationConstructionSet scs)
+
+   private static void create(DRCRobotModel robotModel, boolean createYoVariableServer, PubSubImplementation pubSubImplementation)//, SimulationConstructionSet scs)
    {
       boolean DEBUG = false;
       if(!DEBUG)
@@ -114,8 +117,6 @@ public class AvatarKinematicsSimulation
    }
 
 
-
-
    public AvatarKinematicsSimulation(DRCRobotModel robotModel, boolean createYoVariableServer, PubSubImplementation pubSubImplementation)
    {
       this.robotModel = robotModel;
@@ -123,7 +124,7 @@ public class AvatarKinematicsSimulation
 
       // instantiate some existing controller ROS2 API?
       ros2Node = ROS2Tools.createRos2Node(pubSubImplementation, HighLevelHumanoidControllerFactory.ROS2_ID.getNodeName("kinematic"));
-      scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
+      //scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
 
       robotConfigurationDataPublisher = new IHMCROS2Publisher<>(ros2Node,
                                                                 RobotConfigurationData.class,
@@ -156,7 +157,7 @@ public class AvatarKinematicsSimulation
 
       //SensorOnlySimulation sensorOnlySimulation = new SensorOnlySimulation();
       //SimulationConstructionSet scs = sensorOnlySimulation.getSCS();
-      sensorinfo(robotModel,ros2Node, width, height);
+      //sensorinfo(robotModel,ros2Node, width, height);
 
       scheduler.schedule(this::controllerTick, Conversions.secondsToNanoseconds(DT / PLAYBACK_SPEED), TimeUnit.NANOSECONDS);
    }
@@ -210,13 +211,14 @@ public class AvatarKinematicsSimulation
       return robotConfigurationData;
    }
 
+
    //write native code that takes in camera info similar to the one done in scs
 
-   //public void setDt(double simulateDT, int recordFrequency)
-   //{
+   public void setDt(double simulateDT, int recordFrequency)
+   {
 
-   //}
-   public void sensorinfo(DRCRobotModel robotModel, Ros2Node ros2Node, int width, int height)
+   }
+   /*public void sensorinfo(DRCRobotModel robotModel, Ros2Node ros2Node, int width, int height)
    {
       //RobotSesnor sesnoronlyRobot = new RobotSesnor();
       //YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
@@ -282,15 +284,15 @@ public class AvatarKinematicsSimulation
          {
             standardGUIActions.setupCameraMenu(cameraConfigurationList, getStandardSimulationGUI());
          }
-      });*/
-   }
+      });
+   }*/
 
    /*private void createGUI(Graphics3DAdapter graphics3DAdapter)
    {
       myGUI = new StandardSimulationGUI(graphics3DAdapter, simulationSynchronizer, standardAllCommandsExecutor, null, this, this, robots, myDataBuffer,
                                         varGroupList, jApplet, rootRegistry);
    }*/
-   public DRCRobotModel getRobotModel()
+   /*public DRCRobotModel getRobotModel()
    {
       return robotModel;
    }
@@ -353,7 +355,7 @@ public class AvatarKinematicsSimulation
          return lidarScanParameters;
       }
    }*/
-   private static final Object hackyLockBecauseJPEGEncoderIsNotThreadsafe = new Object();
+   /*private static final Object hackyLockBecauseJPEGEncoderIsNotThreadsafe = new Object();
 
    class VideoPacketCallback implements VideoDataServer
    {
@@ -399,7 +401,7 @@ public class AvatarKinematicsSimulation
       {
          return true; // do nothing
       }
-   }
+   }*/
 
 }
 

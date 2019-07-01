@@ -24,7 +24,7 @@ public class SensorOnlyController implements RobotController
 {
    private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final SensorOnlyRobot robot;
-   private final SimulationConstructionSet scs;
+   //private final SimulationConstructionSet scs;
    private final LidarScanParameters lidarScanParameters;
    private GPULidar gpuLidar;
    private LinkedBlockingQueue<LidarScan> gpuLidarScanBuffer = new LinkedBlockingQueue<>();
@@ -46,10 +46,10 @@ public class SensorOnlyController implements RobotController
    private double desiredZRate = 0.3;
    private final static double DESIRED_X_RATE = 0.3;
 
-   public SensorOnlyController(SensorOnlyRobot robot, YoGraphicsListRegistry yoGraphicsListRegistry, SimulationConstructionSet scs)
+   public SensorOnlyController(SensorOnlyRobot robot, YoGraphicsListRegistry yoGraphicsListRegistry)//, SimulationConstructionSet scs)
    {
       this.robot = robot;
-      this.scs = scs;
+      //this.scs = scs;
       this.lidarScanParameters = robot.getLidarScanParameters();
 
       YoGraphicPosition yoGraphicPosition = new YoGraphicPosition("point", point, 0.01, YoAppearance.Purple());
@@ -73,15 +73,15 @@ public class SensorOnlyController implements RobotController
 
       lastPositionZ = qLidarZ.getDoubleValue();
       lastPositionX = qLidarX.getDoubleValue();
-      lastTime = scs.getTime();
+      lastTime = robot.getTime();
    }
 
    public void initialize()
    {
-      startGPULidar();
+      //startGPULidar();
    }
 
-   private void startGPULidar()
+   /*private void startGPULidar()
    {
       gpuLidar = scs.getGraphics3dAdapter().createGPULidar(lidarScanParameters.getPointsPerSweep(), lidarScanParameters.getScanHeight(),
                                                            lidarScanParameters.getFieldOfView(), lidarScanParameters.getMinRange(),
@@ -89,7 +89,7 @@ public class SensorOnlyController implements RobotController
       gpuLidar.addGPULidarListener((scan, currentTransform,
                                     time) -> gpuLidarScanBuffer.add(new LidarScan(lidarScanParameters, new RigidBodyTransform(currentTransform),
                                                                                   new RigidBodyTransform(currentTransform), scan)));
-   }
+   }*/
 
    public YoVariableRegistry getYoVariableRegistry()
    {
@@ -110,7 +110,7 @@ public class SensorOnlyController implements RobotController
 
    public void doControl()
    {
-      double currentTime = scs.getTime();
+      double currentTime = robot.getTime();
       double dt = currentTime - lastTime;
       lastTime = currentTime;
 
