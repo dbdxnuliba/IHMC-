@@ -409,8 +409,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
 
-      double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTouchdownTime();
-      double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
+//      double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTouchdownTime();
+//      double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
       // robot fell
 //      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));

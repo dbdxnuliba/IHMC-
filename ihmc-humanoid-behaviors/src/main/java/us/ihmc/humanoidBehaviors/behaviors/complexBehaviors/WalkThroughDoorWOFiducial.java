@@ -20,6 +20,7 @@ import us.ihmc.ros2.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.yoVariables.variable.*;
 
+//wrtie a code to kick things
 public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
 {
    private final boolean DEBUG = false;
@@ -28,16 +29,12 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
    //create a list of states
    public enum WalkThroughDoorWOFiducialStates
    {
-      START,
-      SETUP_ROBOT,
-      RECEIVING_DOOR_LOCATION,
-      WALKING_TO_DOOR,
-      OPEN_DOOR,
-      SET_UP_ROBOT_FOR_DOOR_WALK,
-      WALK_THROUGH_DOOR,
-      RESET_ROBOT,
-      FAILED,
-      DONE
+      START, //start the action
+      SETUP_ROBOT, //set up robot
+
+      RESET_ROBOT, //reset to original configuration
+      FAILED, //did it fail or not
+      DONE //done state
    }
 
    //reset your arms

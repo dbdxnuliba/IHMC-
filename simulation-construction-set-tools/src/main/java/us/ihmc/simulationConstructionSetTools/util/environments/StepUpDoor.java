@@ -1,29 +1,49 @@
 package us.ihmc.simulationConstructionSetTools.util.environments;
 
+import com.github.quickhull3d.*;
+import javafx.geometry.*;
+import us.ihmc.euclid.axisAngle.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.euclid.shape.*;
+//import us.ihmc.euclid.shape.*;
 import us.ihmc.euclid.shape.primitives.*;
 import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple3D.*;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.appearance.*;
 import us.ihmc.simulationConstructionSetTools.robotController.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationConstructionSetTools.util.ground.*;
 import us.ihmc.simulationconstructionset.*;
+import us.ihmc.simulationconstructionset.util.*;
 import us.ihmc.simulationconstructionset.util.ground.*;
 
 import java.util.*;
 
 public class StepUpDoor extends DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentInterface
 {
-   private final boolean ADD_FIDCUIAL_FLOATING_BOX = false;
-   private final boolean ADD_DOOR = true;
+   private final boolean ADD_FIDCUIAL_FLOATING_BOX = true;
+   private final boolean ADD_DOOR = false;
+
+   private final boolean ADD_BOXES = true;
+   private final boolean ADD_CYLINDER = false;
+   private final boolean ADD_SPHERES = false;
+
    private FramePose3D doorframepose = new FramePose3D();
+   private final int NUmberofBoxes = 1;
+   private final int NumberofSpheres = 1;
+   private final int NumberofCylinders = 1;
 
    private final List<Robot> contactableRobots = new ArrayList<>();
    private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>();
+
+   double kXY = 1000.0;
+   double bXY = 100.0;
+   double kZ = 500.0;
+   double bZ = 50.0;
+   double alphaStick = 0.7;
+   double alphaSlip = 0.5;
 
    public StepUpDoor()
    {
@@ -54,6 +74,8 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       //combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallHeight), 0.3, appearance); //top wall
 //      combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallWidth), wallHeight,wallHeight+0.3,appearance);
 
+      double forceVectorScale = 1.0 / 50.0;
+
       Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
       Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
@@ -76,6 +98,63 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          fiducialBoxRobot.setYawPitchRoll(0.0, Math.PI/2.0, 0.0);
 
          contactableRobots.add(fiducialBoxRobot);
+      }
+
+      if(ADD_CYLINDER)
+      {
+         double cylinderOffset = 0.5;
+         Vector3D cylinderPosition = new Vector3D(doorPosition.getX(),0.0,0.0); //initial cylinder position
+         for (int i = 0; i < NumberofCylinders; i++)
+         {
+
+            RigidBodyTransform transform = new RigidBodyTransform();
+
+            AxisAngle facingUpwards = new AxisAngle();
+            transform.setTranslation(cylinderPosition);
+            transform.setRotation(facingUpwards);
+
+            double cylinderHeight = 1.0;
+            double cylinderRadius = 0.20;
+            ContactableStaticCylinderRobot contactableStaticCylinderRobot = new ContactableStaticCylinderRobot("CylinderRobot"  + i, transform, cylinderHeight, cylinderRadius, YoAppearance.Gray());
+            contactableStaticCylinderRobot.createAvailableContactPoints(1, 10, forceVectorScale, true);
+            contactableRobots.add(contactableStaticCylinderRobot);
+
+            //cylinderPosition.set(, , cylinderPosition.getZ() + cylinderOffset );
+            cylinderPosition.setX(cylinderPosition.getX() + cylinderOffset);
+         }
+      }
+
+      if(ADD_BOXES) //change the dimensions of the box
+      {
+         double initialBoxPosition = doorPosition.getX();
+         for(int i =0; i< NUmberofBoxes; i++)
+         {
+            ContactableSelectableBoxRobot boxRobot = new ContactableSelectableBoxRobot("BoxRobot" + i);
+            boxRobot.setPosition(initialBoxPosition,0.0,0.0);
+            boxRobot.createAvailableContactPoints(1,10, 0.02, true);
+
+            contactableRobots.add(boxRobot);
+            initialBoxPosition += 1.2;
+
+            GroundContactModel groundContactModel = new LinearStickSlipGroundContactModel(boxRobot,
+                                                                                          kXY, bXY, kZ, bZ, alphaSlip, alphaStick, boxRobot.getRobotsYoVariableRegistry());
+
+            groundContactModel.setGroundProfile3D(combinedTerrainObject);
+            boxRobot.setGroundContactModel(groundContactModel);
+         }
+      }
+
+      if(ADD_SPHERES)
+      {
+         double initialSpherePosition = doorPosition.getX();
+         for(int i = 0; i < NumberofSpheres; i++)
+         {
+            ContactableSphereRobot sphereRobot = new ContactableSphereRobot("sphere" + i);
+            sphereRobot.setMass(1.0);
+            sphereRobot.setPosition(initialSpherePosition, 0.0, 0.0);
+            contactableRobots.add(sphereRobot);
+            initialSpherePosition += 0.5;
+         }
       }
    }
 

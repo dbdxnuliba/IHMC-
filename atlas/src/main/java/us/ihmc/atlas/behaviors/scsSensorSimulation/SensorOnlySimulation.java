@@ -42,10 +42,10 @@ public class SensorOnlySimulation
       aks.setDt(0.0001,100);
       //AvatarKinematicsSimulation.createForManualTest(robotModel,false)
 
-      SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry)//, scs);
+      SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry);//, scs);
       robot.setController(controller); //no need to writing
 
-      aks.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      //aks.addYoGraphicsListRegistry(yoGraphicsListRegistry);
 
       CameraConfiguration camera = new CameraConfiguration("camera");
       camera.setCameraMount("camera");
@@ -84,15 +84,15 @@ public class SensorOnlySimulation
          this.attachPlaybackListener(playbackListener);
       }
 
-      if (myGUI != null)
-         myGUI.addYoGraphicsListRegistry(yoGraphicsListRegistry, updateFromSimulationThread);
+//      if (myGUI != null)
+//         myGUI.addYoGraphicsListRegistry(yoGraphicsListRegistry, updateFromSimulationThread);
 
       List<YoGraphicsList> yoGraphicsLists = yoGraphicsListRegistry.getYoGraphicsLists();
 
       if (yoGraphicsLists == null)
          return;
 
-      yoGraphicListRegistries.add(yoGraphicsListRegistry);
+//      yoGraphicListRegistries.add(yoGraphicsListRegistry);
    }
 
    public void attachPlaybackListener(PlaybackListener playbackListener)
@@ -104,7 +104,7 @@ public class SensorOnlySimulation
 
       playbackListeners.add(playbackListener);
 
-      myDataBuffer.attachIndexChangedListener(playbackListener);
+//      myDataBuffer.attachIndexChangedListener(playbackListener);
    }
 
    // public AvatarKinematicsSimulation setaks(DRCRobotModel robotModel)
