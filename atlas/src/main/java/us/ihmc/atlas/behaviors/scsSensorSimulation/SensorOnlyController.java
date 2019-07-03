@@ -133,7 +133,7 @@ public class SensorOnlyController implements RobotController
 
 
      // FramePose3DReadOnly neckPose = remoteSyncedHumanoidFrames.quickPollPoseReadOnly(frames -> frames.getLegJointFrame(RobotSide.LEFT, LegJointName.HIP_YAW));
-      double currentTime = scs.getTime();
+      /*double currentTime = scs.getTime();
       double dt = currentTime - lastTime;
       lastTime = currentTime;
 
@@ -149,7 +149,7 @@ public class SensorOnlyController implements RobotController
       double zCorrectionSum = pdControllerZ.compute(currentZPosition, desiredZPosition, currentZRate, desiredZRate);
       double xCorrectionSum = pdControllerX.compute(currentXPosition, desiredXPosition, currentXRate, desiredXRate);
 
-      if(neckPose.getX() != -0.10066621529019597)
+      /*if(neckPose.getX() != -0.10066621529019597)
       {
          int t = 0;
          if(t%50 == 0)
@@ -159,7 +159,7 @@ public class SensorOnlyController implements RobotController
             System.out.println("Printing neckPose Parameters : " + neckPose.getX() + " " + neckPose.getY() + " " + neckPose.getZ());
             t++;
          }
-      }
+      }*/
 
       //tmpJoint.setPosition(neckPose.getX(),neckPose.getY(),neckPose.getZ());
       robot.getCameraJoint().setPosition(neckPose.getX(),neckPose.getY(),neckPose.getZ());

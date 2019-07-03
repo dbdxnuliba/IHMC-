@@ -71,7 +71,7 @@ public class AtlasKinematicSimWithCamera
 
       int width = 1024;
       int height = 544;
-      int framesPerSecond = 25;
+      int framesPerSecond = 15;
       scs.startStreamingVideoData(cameraConfiguration,
                                   width,
                                   height,
