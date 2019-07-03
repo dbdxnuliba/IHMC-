@@ -30,7 +30,7 @@ public class AtlasBehaviorUIAndModule extends Application
       ui = new BehaviorUI(primaryStage,
                           behaviorMessager,
                           drcRobotModel,
-                          PubSubImplementation.FAST_RTPS); //instaniaed it
+                          PubSubImplementation.FAST_RTPS); //instantiated it
       ui.show(); //method to stage a window
    }
 

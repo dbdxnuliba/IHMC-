@@ -40,10 +40,10 @@ public class SensorOnlySimulation
       scs.setupCamera(camera);
 
 
-      addSphere(2.0, 2.0, scs);
-      addSphere(-2.0, 2.0, scs);
-      addSphere(2.0, -2.0, scs);
-      addSphere(-2.0, -2.0, scs);
+      addSphere(6.0, 6.0, scs);
+      addSphere(-6.0, 6.0, scs);
+      addSphere(6.0, -6.0, scs);
+      addSphere(-6.0, -6.0, scs);
       System.out.println("Initializing controller ");
       controller.initialize();
 
@@ -61,7 +61,7 @@ public class SensorOnlySimulation
    {
       Graphics3DObject sphere = new Graphics3DObject();
       sphere.translate(x, y, 0.5);
-      sphere.addSphere(1.0, YoAppearance.Gray());
+      sphere.addSphere(3.0, YoAppearance.Gray());
       scs.addStaticLinkGraphics(sphere);
    }
 

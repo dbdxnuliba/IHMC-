@@ -4,6 +4,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.BagOfBalls;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
@@ -16,7 +17,7 @@ import us.ihmc.robotics.lidar.LidarScan;
 import us.ihmc.robotics.lidar.LidarScanParameters;
 import us.ihmc.robotics.partNames.*;
 import us.ihmc.robotics.robotSide.*;
-import us.ihmc.simulationconstructionset.SimulationConstructionSet;
+import us.ihmc.simulationconstructionset.*;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -28,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class SensorOnlyController implements RobotController
 {
    private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+   //private FloatingJoint tmpJoint;
    private final SensorOnlyRobot robot;
    private final SimulationConstructionSet scs;
    private final LidarScanParameters lidarScanParameters;
@@ -37,6 +39,7 @@ public class SensorOnlyController implements RobotController
    private YoDouble tauLidarZ;
    private YoDouble tauLidarX;
    private YoDouble qLidarZ;
+   private YoDouble qLidarY;
    private YoDouble qLidarX;
 
    private final YoFramePoint3D point = new YoFramePoint3D("point", ReferenceFrame.getWorldFrame(), registry);
@@ -47,6 +50,7 @@ public class SensorOnlyController implements RobotController
    private final YoDouble proportionalGain;
    private final YoDouble derivativeGain;
    private double lastPositionZ;
+   private double lastPositionY;
    private double lastPositionX;
    private double lastTime;
    private double desiredZRate = 0.3;
@@ -67,10 +71,12 @@ public class SensorOnlyController implements RobotController
 
       bagOfBalls = new BagOfBalls(lidarScanParameters.getPointsPerSweep(), 0.005, YoAppearance.AliceBlue(), registry, yoGraphicsListRegistry);
 
+      //tmpJoint = new FloatingJoint("camera1",new Vector3D(), robot);
       tauLidarZ = (YoDouble) robot.getVariable("tau_gimbalZ");
       tauLidarX = (YoDouble) robot.getVariable("tau_gimbalX");
 
       qLidarZ = (YoDouble) robot.getVariable("q_gimbalZ");
+      qLidarY = (YoDouble) robot.getVariable("q_gimbalY");
       qLidarX = (YoDouble) robot.getVariable("q_gimbalX");
 
       proportionalGain = new YoDouble("lidarPGain", registry);
@@ -82,6 +88,7 @@ public class SensorOnlyController implements RobotController
       pdControllerZ.setDerivativeGain(1.0);
 
       lastPositionZ = qLidarZ.getDoubleValue();
+      lastPositionY = qLidarY.getDoubleValue();
       lastPositionX = qLidarX.getDoubleValue();
       lastTime = scs.getTime();
       System.out.println("Entering Sensor Only Controller");
@@ -124,6 +131,7 @@ public class SensorOnlyController implements RobotController
 
       FramePose3DReadOnly neckPose = remoteSyncedHumanoidFrames.quickPollPoseReadOnly(frames -> frames.getNeckFrame(NeckJointName.PROXIMAL_NECK_PITCH)); //getting the neckpose from the Atlas in kinematicSimWithCamera
 
+
      // FramePose3DReadOnly neckPose = remoteSyncedHumanoidFrames.quickPollPoseReadOnly(frames -> frames.getLegJointFrame(RobotSide.LEFT, LegJointName.HIP_YAW));
       double currentTime = scs.getTime();
       double dt = currentTime - lastTime;
@@ -141,24 +149,35 @@ public class SensorOnlyController implements RobotController
       double zCorrectionSum = pdControllerZ.compute(currentZPosition, desiredZPosition, currentZRate, desiredZRate);
       double xCorrectionSum = pdControllerX.compute(currentXPosition, desiredXPosition, currentXRate, desiredXRate);
 
-      /*if(neckPose.getX() != -0.10066621529019597)
+      if(neckPose.getX() != -0.10066621529019597)
       {
-         System.out.println("-------------------------------------------------------------------------- \n");
-         System.out.println("Entering Sensor Only Controller - do control loop ; I should be printed infinite times");
-         System.out.println("Printing neckPose Parameters : " + neckPose.getX() + " " + neckPose.getY() + " " + neckPose.getZ());
-      }*/
+         int t = 0;
+         if(t%50 == 0)
+         {
+            System.out.println("-------------------------------------------------------------------------- \n");
+            //System.out.println("Entering Sensor Only Controller - do control loop ; I should be printed infinite times");
+            System.out.println("Printing neckPose Parameters : " + neckPose.getX() + " " + neckPose.getY() + " " + neckPose.getZ());
+            t++;
+         }
+      }
 
-      tauLidarZ.set(zCorrectionSum);
-      tauLidarX.set(xCorrectionSum);
+      //tmpJoint.setPosition(neckPose.getX(),neckPose.getY(),neckPose.getZ());
+      robot.getCameraJoint().setPosition(neckPose.getX(),neckPose.getY(),neckPose.getZ());
+      robot.getCameraJoint().setYawPitchRoll(neckPose.getYaw(), neckPose.getPitch(), neckPose.getRoll());
+      //tauLidarZ.set(zCorrectionSum);
+      //tauLidarX.set(xCorrectionSum);
 
       lastPositionX = neckPose.getX();
+      lastPositionY = neckPose.getY();
       lastPositionZ = neckPose.getZ();
+
+
 
       RigidBodyTransform transform = new RigidBodyTransform();
 
 
       robot.getLidarXJoint().getTransformToWorld(transform); //transforms from transform to world frame
-
+      //robot.getCameraJoint().getTransformToWorld(transform);
 
       gpuLidar.setTransformFromWorld(transform, 0);
 
