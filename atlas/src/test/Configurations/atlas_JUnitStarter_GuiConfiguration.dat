@@ -37,7 +37,7 @@
 		</GraphConfig>
 	</Graph>
 	<Graph>
-		<Variables>root.atlas.gc_l_leg_akx_6_ForceInSensorFrameX</Variables>
+		<Variables>root.atlas.gc_l_leg_akx_6_ForceInSensorFrameX,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameX,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameZ,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameY</Variables>
 		<GraphConfiguration>
 			<Name>config4</Name>
 			<ScalingMethod>1</ScalingMethod>
@@ -67,9 +67,9 @@ null,
 
 <Current View>Normal View</Current View>
  <Canvas 1> 
- <Camera X>8.590704561089115</Camera X>
- <Camera Y>-5.437816580882549</Camera Y>
- <Camera Z>1.8175483689604524</Camera Z>
+ <Camera X>7.486866621045482</Camera X>
+ <Camera Y>-10.975274812604582</Camera Y>
+ <Camera Z>1.7178322298268485</Camera Z>
  <Dolly data> 
  <Position X>2.0</Position X>
  <Position Y>12.0</Position Y>
@@ -93,8 +93,8 @@ null,
 </Track Booleans>
 </Track data>
 <Fix Position>
-<Fix X>2.630961048674405</Fix X>
-<Fix Y>2.644436894712989</Fix Y>
-<Fix Z>-0.02338509601153893</Fix Z>
+<Fix X>5.934292290171193</Fix X>
+<Fix Y>-1.5194889110005732</Fix Y>
+<Fix Z>0.7491827841512462</Fix Z>
 </Fix Position>
 </Canvas 1>

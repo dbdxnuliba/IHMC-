@@ -334,5 +334,5 @@ root.atlas.LinearGroundContactModel*false*false
 root.FloatingFiducialBoxRobot_4*false*false
 root.FloatingFiducialBoxRobot_4.ContactController*false*false
 root.FloatingFiducialBoxRobot_4.ContactController.simpleContactSimpleStickSlipContactModel*false*false
-root.BoxRobot0*false*false
-root.BoxRobot0.LinearStickSlipGroundContactModel*false*false
+root.sphere0*false*false
+root.sphere0.LinearGroundContactModel*false*false

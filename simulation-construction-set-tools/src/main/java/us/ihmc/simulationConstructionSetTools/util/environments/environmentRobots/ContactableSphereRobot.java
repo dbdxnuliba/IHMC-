@@ -63,6 +63,11 @@ public class ContactableSphereRobot extends ContactableRobot
       return ret;
    }
 
+   public static double getDefaultRadius()
+   {
+      return DEFAULT_RADIUS;
+   }
+
    @Override
    public synchronized boolean isPointOnOrInside(Point3D pointInWorldToCheck)
    {
