@@ -152,6 +152,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          for(int i = 0; i < NumberofSpheres; i++)
          {
             ContactableSphereRobot sphereRobot = new ContactableSphereRobot("sphere" + i); //not adding contact points
+
             sphereRobot.setMass(1.0);
             sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.1);
 
