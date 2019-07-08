@@ -221,4 +221,10 @@ public class AtlasSimInitialSetup implements DRCRobotInitialSetup<HumanoidFloati
    {
       return groundZ;
    }
+
+   @Override
+   public boolean supportsReset()
+   {
+      return true;
+   }
 }
