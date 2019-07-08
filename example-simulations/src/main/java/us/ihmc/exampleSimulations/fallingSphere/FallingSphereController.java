@@ -1,5 +1,6 @@
 package us.ihmc.exampleSimulations.fallingSphere;
 
+import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
@@ -10,9 +11,9 @@ public class FallingSphereController implements RobotController
    private final YoVariableRegistry registry = new YoVariableRegistry("FallingSphereController");
 
 
-   private final FallingSphereRobot robot;
+   private final ContactableRollingSphereRobot robot;
    
-   public FallingSphereController(FallingSphereRobot robot)
+   public FallingSphereController(ContactableRollingSphereRobot robot)
    {
       this.robot = robot;
    }

@@ -1,5 +1,6 @@
 package us.ihmc.exampleSimulations.fallingSphere;
 
+import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.SimulationConstructionSetParameters;
@@ -13,14 +14,19 @@ public class FallingSphereSimulation
       FallingSphereRobot fallingSphereImpulse = new FallingSphereRobot("FallingSphereImpulse", true);
       FallingSphereRobot fallingSphereSpringDamper = new FallingSphereRobot("FallingSphereSpringDamper", false);
 
-      FallingSphereController controller = new FallingSphereController(fallingSphereImpulse);
-      fallingSphereImpulse.setController(controller);
+      ContactableRollingSphereRobot rollingSphere = new ContactableRollingSphereRobot("rollingball");
 
-      controller = new FallingSphereController(fallingSphereSpringDamper);
-      fallingSphereSpringDamper.setController(controller);
+      FallingSphereController controller = new FallingSphereController(rollingSphere);
+      //fallingSphereImpulse.setController(controller);
 
-      Robot[] robots = new Robot[] {fallingSphereImpulse, fallingSphereSpringDamper};
-      
+      rollingSphere.setController(controller);
+
+      //controller = new FallingSphereController(fallingSphereSpringDamper);
+      //fallingSphereSpringDamper.setController(controller);
+
+      //Robot[] robots = new Robot[] {fallingSphereImpulse, fallingSphereSpringDamper};
+      Robot[] robots = new Robot[] {rollingSphere};
+
       SimulationConstructionSetParameters parameters = new SimulationConstructionSetParameters();
       parameters.setDataBufferSize(16000);
       sim = new SimulationConstructionSet(robots, parameters);

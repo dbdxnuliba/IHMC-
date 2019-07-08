@@ -175,15 +175,11 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
       }
 
+      yoGraphicsListRegistry = new YoGraphicsListRegistry();
       if(step_up_door)
       {
-         stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
+         stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
-
-         if (DEBUG)
-         {
-            //System.out.println();
-         }
       }
 
 
@@ -205,7 +201,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       //robot = drcSimulationTestHelper.getRobot();
       fullRobotModel = getRobotModel().createFullRobotModel();
       walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
-      yoGraphicsListRegistry = new YoGraphicsListRegistry();
+
 
       behaviorDispatcher = setupBehaviorDispatcher(getRobotModel().getSimpleRobotName(), fullRobotModel, ros2Node, yoGraphicsListRegistry, registry);
 

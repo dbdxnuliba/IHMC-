@@ -11,6 +11,7 @@ import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.appearance.*;
+import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.robotics.geometry.*;
 import us.ihmc.simulationConstructionSetTools.robotController.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
@@ -35,6 +36,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
    private final boolean ADD_SPHERES = true;
+   private final boolean ADD_ROLLING_SPHERE = false;
 
    private FramePose3D doorframepose = new FramePose3D();
    private final int NUmberofBoxes = 1;
@@ -45,6 +47,8 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>(); //list of external contact points
    private ContactableSphereRobot sphereRobot;
+   private ContactableRollingSphereRobot rollingSphere;
+   private
 
 
    double wallOffSet = 0.8;
@@ -64,10 +68,18 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 //   double alphaStick = 0.7;
 //   double alphaSlip = 0.5;
 
-
-
-
    public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
+   {
+      this.stepLength = stepLength;
+      this.wallHeight = wallHeight;
+      this.stepUpHeight = stepUpHeight;
+      initialSpherePosition = 0.0;
+      System.out.println("This constructor has been deprecated");
+   }
+
+
+
+   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
 
@@ -171,26 +183,44 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
          for(int i = 0; i < NumberofSpheres; i++)
          {
-            sphereRobot = new ContactableSphereRobot("sphere" + i); //not adding contact points
-
+            sphereRobot = new ContactableSphereRobot("sphere" + i,yoGraphicsListRegistry); //not adding contact points
             sphereRobot.setMass(1.0);
-            sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.1);
-
-            Point3D[] contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(),50); //lookup rolling sphere e.g
-            for(int j = 0; j < contactPointOffset.length; j++)
-            {
-               Point3D contactPointoffset = contactPointOffset[i];
-               GroundContactPoint groundContactPoint = new GroundContactPoint("ballGC" + j,new Vector3D(contactPointoffset), sphereRobot);
-               sphereRobot.getRootJoints().get(0).addGroundContactPoint(groundContactPoint);
-            }
-            sphereRobot.createAvailableContactPoints(1,10,0.02,true);
+            sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.01);
+//            YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
+//
+//            Point3D[] contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 50); //lookup rolling sphere e.g
+//            for (int j = 0; j < contactPointOffset.length; j++)
+//            {
+//               Point3D contactPointoffset = contactPointOffset[i];
+//               GroundContactPoint groundContactPoint = new GroundContactPoint("ballGC" + j, new Vector3D(contactPointoffset), sphereRobot);
+//               sphereRobot.getRootJoints().get(0).addGroundContactPoint(groundContactPoint);
+//               YoGraphicPosition yoGraphicPosition = new YoGraphicPosition("ballG" + j, groundContactPoint.getYoPosition(), 0.01, YoAppearance.Red());
+//
+//               yoGraphicsListRegistry.registerYoGraphic("SphereGCPoints", yoGraphicPosition);
+//            }
+            //the last two variable are just cosmetic thing like ratio to visualize, and true to visulize the force vector
+            sphereRobot.createAvailableContactPoints(1, 10, 0.02, true);
             contactableRobots.add(sphereRobot);
-//            initialSpherePosition = initialSpherePosition + 0.5;
+            //            initialSpherePosition = initialSpherePosition + 0.5;
 
             setGroundConatactPoint(sphereRobot);
+
          }
       }
 
+      if(ADD_ROLLING_SPHERE)
+      {
+
+         rollingSphere = new ContactableRollingSphereRobot("rollingSphere");
+         rollingSphere.setMass(1.0);
+         ContactableRollingSphereRobot.setDefaultRadius(ContactableSphereRobot.getDefaultRadius());
+         rollingSphere.setPosition(initialSpherePosition, 0.0, ContactableRollingSphereRobot.getDefaultRadius() + 0.01);
+         rollingSphere.createAvailableContactPoints(1,10,0.02,true);
+         contactableRobots.add(rollingSphere);
+         rollingSphere.setGravity(0.0);
+
+         //rollingSphere.setController();
+      }
    }
 
    public Point3D getBallLocation()
@@ -227,6 +257,18 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          double bZ = 50.0; //1000.0;
 
          GroundContactModel groundContactModel = new LinearGroundContactModel(robot, kXY, bXY, kZ, bZ, robot.getRobotsYoVariableRegistry()); //verify if the ground contact model you are using is accurate to your situation
+         groundContactModel.setGroundProfile3D(combinedTerrainObject.getTerrainObjects().get(0));
+         robot.setGroundContactModel(groundContactModel);
+      }
+
+      else if(ADD_ROLLING_SPHERE)
+      {
+         double kXY = 1000.0; //1422.0;
+         double bXY = 100.0; //150.6;
+         double kZ = 20.0; //50.0;
+         double bZ = 50.0; //1000.0;
+
+         GroundContactModel groundContactModel = new LinearGroundContactModel(robot, kXY, bXY, kZ, bZ, robot.getRobotsYoVariableRegistry());
          groundContactModel.setGroundProfile3D(combinedTerrainObject.getTerrainObjects().get(0));
          robot.setGroundContactModel(groundContactModel);
       }
@@ -279,6 +321,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       }
       if (contactableRobots.size() > 0)
          contactableRobots.get(0).setController(contactController);
+//         contactableRobots.get(contactableRobots.size()-1).setController();
    }
 
    @Override
