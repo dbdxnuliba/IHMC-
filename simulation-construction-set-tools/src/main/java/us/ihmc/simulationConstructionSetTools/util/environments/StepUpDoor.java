@@ -26,6 +26,11 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 {
    private final boolean ADD_FIDCUIAL_FLOATING_BOX = true;
    private final boolean ADD_DOOR = false;
+   private final double stepLength;
+   private final double wallHeight;
+   private final double stepUpHeight;
+   private final double initialSpherePosition;
+
 
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
@@ -39,8 +44,20 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final List<Robot> contactableRobots = new ArrayList<>();  //list of robots
    private final CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(getClass().getSimpleName());
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>(); //list of external contact points
+   private ContactableSphereRobot sphereRobot;
 
-//   double kXY = 1000.0;
+
+   double wallOffSet = 0.8;
+
+   double xstart = 0.5;
+   double stairStart = 0.5 + xstart;
+   double wallWidth = 0.2;
+   double doorAngle = -1.5708;
+
+   double forceVectorScale = 1.0 / 50.0;
+
+
+   //   double kXY = 1000.0;
 //   double bXY = 100.0;
 //   double kZ = 500.0;
 //   double bZ = 50.0;
@@ -53,14 +70,18 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
    {
       double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
-      double wallOffSet = 0.8;
 
-      double xstart = 0.5;
-      double stairStart = 0.5 + xstart;
-      double wallWidth = 0.2;
-      double doorAngle = -1.5708; //90degrees in rads
+      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
+      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
+
+      initialSpherePosition = doorPosition.getX() + 3.0;
+
+     //90degrees in rads
       //DefaultCommonAvatarEnvironment environment = new DefaultCommonAvatarEnvironment();
       //combinedTerrainObject.addTerrainObject(environment.setUpGround("ground"));
+      this.stepLength = stepLength;
+      this.wallHeight = wallHeight;
+      this.stepUpHeight = stepUpHeight;
 
       combinedTerrainObject.addTerrainObject(setUpGround("Ground"));
       //combinedTerrainObject.addTerrainObject(environment.getTerrainObject3D());
@@ -74,10 +95,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       //combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallHeight), 0.3, appearance); //top wall
 //      combinedTerrainObject.addBox(wallInitialOffSet,wallOffSet,wallInitialOffSet+stepLength,-(wallOffSet+wallWidth), wallHeight,wallHeight+0.3,appearance);
 
-      double forceVectorScale = 1.0 / 50.0;
 
-      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
-      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
       doorframepose = new FramePose3D(new Pose3D(doorPosition.getX(),doorPosition.getY(),doorPosition.getZ(),doorAngle,0.0,0.0));
       //System.out.println(doorframepose.getPosition().getX());
@@ -146,12 +164,14 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          }
       }
 
+
+
       if(ADD_SPHERES)
       {
-         double initialSpherePosition = doorPosition.getX();
+
          for(int i = 0; i < NumberofSpheres; i++)
          {
-            ContactableSphereRobot sphereRobot = new ContactableSphereRobot("sphere" + i); //not adding contact points
+            sphereRobot = new ContactableSphereRobot("sphere" + i); //not adding contact points
 
             sphereRobot.setMass(1.0);
             sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.1);
@@ -165,13 +185,19 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
             }
             sphereRobot.createAvailableContactPoints(1,10,0.02,true);
             contactableRobots.add(sphereRobot);
-            initialSpherePosition += 0.5;
+//            initialSpherePosition = initialSpherePosition + 0.5;
 
             setGroundConatactPoint(sphereRobot);
          }
       }
+
    }
 
+   public Point3D getBallLocation()
+   {
+      return new Point3D(getInitialSpherePosition()-ContactableSphereRobot.getDefaultRadius(),0.0,ContactableSphereRobot.getDefaultRadius());
+//      return new Point3D(ballX.getDoubleValue(), ballY.getDoubleValue(), ballZ.getDoubleValue());
+   }
 
    public static CombinedTerrainObject3D setUpGround(String name)
    {
@@ -190,6 +216,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
       return combinedTerrainObject;
    }
+
    public void setGroundConatactPoint(Robot robot)
    {
       if (ADD_SPHERES)
@@ -210,6 +237,11 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          groundContactModel.setGroundProfile3D(combinedTerrainObject.getTerrainObjects().get(0));
          robot.setGroundContactModel(groundContactModel);
       }
+   }
+
+   public double getInitialSpherePosition()
+   {
+      return initialSpherePosition;
    }
 
 

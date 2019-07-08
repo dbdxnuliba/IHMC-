@@ -40,6 +40,7 @@ public class HumanoidBehaviorTypePacket extends Packet<HumanoidBehaviorTypePacke
    public static final byte FIRE_FIGHTING = (byte) 26;
    public static final byte CUTTING_WALL = (byte) 27;
    public static final byte REPEATEDLY_WALK_FOOTSTEP_LIST = (byte) 28;
+   public static final byte WALK_THROUGH_DOOR_WO_FID = (byte) 29;
    /**
             * Unique ID used to identify this message, should preferably be consecutively increasing.
             */

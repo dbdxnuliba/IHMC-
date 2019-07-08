@@ -97,6 +97,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private final boolean DEBUG = true;
    private final boolean step_up_door = true;
    private final boolean Walls_with_stairs = false;
+   private int tmpcounter = 0;
 
    public us.ihmc.euclid.tuple3D.Point3D waypointtotransfer;
    //private AvatarStepUp planner;
@@ -141,6 +142,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    //private AtomicReference<WalkingStatusMessage> newStatusReference = new AtomicReference<>(null); //creates an atomic reference with the given initial value
    private WalkingStatusMessage newStatusReference = new WalkingStatusMessage();
    //private WalkingStatusMessage abc =  newStatusReference.get();
+   private StepUpDoor stepUpDoor;
 
 
 
@@ -175,7 +177,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       if(step_up_door)
       {
-         StepUpDoor stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
+         stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight);
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
 
          if (DEBUG)
@@ -235,8 +237,10 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    {
       if (message.takeNextData().getWalkingStatus() != 0)
       {
+         if(tmpcounter == 0)
          //createAndPublishChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //call your door opening behavior form this code point
          callDoorTiminingBehavior();
+         tmpcounter++;
       }
    }
 
@@ -425,21 +429,19 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    {
       //DoorTimingBehaviorAutomated doorTimingBehaviorAutomated = new DoorTimingBehaviorAutomated(getSimpleRobotName(),ros2Node, yoTime,yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions,yoGraphicsListRegistry);
 
-      WalkThroughDoorBehavior WalkThroughDoor = new WalkThroughDoorBehavior(getSimpleRobotName(),"automateDoorBehavior", ros2Node, yoTime, yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions, yoGraphicsListRegistry);
-      FiducialDetectorBehaviorService fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(getSimpleRobotName(), FiducialDetectorBehaviorService.class.getSimpleName(),ros2Node,yoGraphicsListRegistry);
-      //FollowFiducialBehavior followFiducialBehavior = new FollowFiducialBehavior(getSimpleRobotName(),ros2Node, yoTime, robotModel, referenceFrames, fiducialDetectorBehaviorService);
-      //WalkToFiducialAndTurnBehavior walkToFiducialAndTurnBehavior = new WalkToFiducialAndTurnBehavior(getSimpleRobotName(),ros2Node,yoTime,robotModel,referenceFrames,getRobotModel().getFootstepPlannerParameters(),fiducialDetectorBehaviorService,fullRobotModel);
-      HumanoidBehaviorTypePacket requestwalkthroughdoor = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR);
-      //HumanoidBehaviorTypePacket requestwalktofiducial = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.FOLLOW_FIDUCIAL_50_AND_TURN);
-      System.out.println("behavior byte info :- ");
-      //System.out.println(HumanoidBehaviorType.WALK_THROUGH_DOOR_AUTOMATED_TIMING_BEHAVIOR.toByte());
-      //System.out.println(HumanoidBehaviorType.WALK_THROUGH_DOOR.toByte());
-      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestwalkthroughdoor);
-      //drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestwalktofiducial);
-      //doorTimingBehaviorAutomated.initialize();
-      behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR,WalkThroughDoor);
+      //WalkThroughDoorBehavior WalkThroughDoor = new WalkThroughDoorBehavior(getSimpleRobotName(),"automateDoorBehavior", ros2Node, yoTime, yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions, yoGraphicsListRegistry);
+      WalkThroughDoorWOFiducial walkThroughDoorWOFiducial = new WalkThroughDoorWOFiducial(getSimpleRobotName(),ros2Node,yoTime, referenceFrames, atlasPrimitiveActions,fullRobotModel, robotModel,yoDoubleSupport,stepUpDoor);
 
-      //behaviorDispatcher.addBehavior(HumanoidBehaviorType.FOLLOW_FIDUCIAL_50_AND_TURN,walkToFiducialAndTurnBehavior);
+      //FiducialDetectorBehaviorService fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(getSimpleRobotName(), FiducialDetectorBehaviorService.class.getSimpleName(),ros2Node,yoGraphicsListRegistry);
+
+      //HumanoidBehaviorTypePacket requestwalkthroughdoor = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR);
+      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR_WO_FIDUCIAL);
+      System.out.println("behavior byte info :- ");
+
+      //drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestwalkthroughdoor);
+      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
+      //behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR,WalkThroughDoor);
+      behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR_WO_FIDUCIAL,walkThroughDoorWOFiducial);
       behaviorDispatcher.start();
    }
 
