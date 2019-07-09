@@ -36,7 +36,7 @@ public class ContactableRollingSphereRobot extends ContactableRobot
    {
       super(name);
 
-//      this.setGravity(0.0, 0.0, -G);
+      this.setGravity(0.0, 0.0, -G);
 
       // Base:
 
@@ -88,14 +88,14 @@ public class ContactableRollingSphereRobot extends ContactableRobot
       double kZ = 20.0; //50.0;
       double bZ = 50.0; //1000.0;
 
-      groundContactModel = new LinearGroundContactModel(this, kXY, bXY, kZ, bZ, registry);
-      double amplitude = 0.1;
-      double frequency = 0.3;
-      double offset = 0.5;
-      GroundProfile3D groundProfile = new RollingGroundProfile(amplitude, frequency, offset);
-
-      groundContactModel.setGroundProfile3D(groundProfile);
-      this.setGroundContactModel(groundContactModel);
+//      groundContactModel = new LinearGroundContactModel(this, kXY, bXY, kZ, bZ, registry);
+//      double amplitude = 0.1;
+//      double frequency = 0.3;
+//      double offset = 0.5;
+//      GroundProfile3D groundProfile = new RollingGroundProfile(amplitude, frequency, offset);
+//
+//      groundContactModel.setGroundProfile3D(groundProfile);
+//      this.setGroundContactModel(groundContactModel);
 
       this.getRobotsYoVariableRegistry().addChild(registry);
       this.addYoGraphicsListRegistry(yoGraphicsListRegistry);

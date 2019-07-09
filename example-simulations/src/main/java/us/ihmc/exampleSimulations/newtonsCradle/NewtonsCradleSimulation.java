@@ -718,10 +718,10 @@ public class NewtonsCradleSimulation
       //            createBoxDownRampSimulation();
 //                  createRowOfDominosSimulation();
       //      createStackOfBlocksSimulation();
-//            createRollingObjectsSimulation();
+            createRollingObjectsSimulation();
 //            createSpinningAndDroppingObjectsSimulation();
 //      createTeeteringEdgeToEdgeContactSimulation();
-            createPileOfRandomObjectsSimulation();
+//            createPileOfRandomObjectsSimulation();
    }
 
 }

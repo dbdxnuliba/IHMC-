@@ -43,6 +43,7 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
       RESET_ROBOT, //reset to original configuration
       FAILED, //did it fail or not
       DONE //done state
+      //add a stop behavior (checkout behavior dispatcher line179 more details)
    }
 
    //reset your arms

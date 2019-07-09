@@ -335,4 +335,5 @@ root.FloatingFiducialBoxRobot_4*false*false
 root.FloatingFiducialBoxRobot_4.ContactController*false*false
 root.FloatingFiducialBoxRobot_4.ContactController.simpleContactSimpleStickSlipContactModel*false*false
 root.sphere0*false*false
+root.sphere0.RollingSphere*false*false
 root.sphere0.LinearGroundContactModel*false*false

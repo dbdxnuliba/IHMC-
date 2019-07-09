@@ -179,6 +179,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       if(step_up_door)
       {
          stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);
+//         yoGraphicsListRegistry.registerYoGraphicsList(stepUpDoor.getSphereRobot().getYoGraphicsList());
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
       }
 
@@ -315,6 +316,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       YoVariableServer yoVariableServer = null;
       yoGraphicsListRegistry.setYoGraphicsUpdatedRemotely(false);
+//      yoGraphicsListRegistry.registerYoGraphicsList(stepUpDoor.getSphereRobot().getYoGraphicsList());
+
 
       BehaviorDispatcher<HumanoidBehaviorType> ret = new BehaviorDispatcher<>(robotName, yoTime, robotDataReceiver, desiredBehaviorControlSubscriber,
                                                                               desiredBehaviorSubscriber, ros2Node, yoVariableServer, HumanoidBehaviorType.class,

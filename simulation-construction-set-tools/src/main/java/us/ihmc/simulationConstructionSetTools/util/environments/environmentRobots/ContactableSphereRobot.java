@@ -14,16 +14,24 @@ import us.ihmc.simulationconstructionset.*;
 import us.ihmc.yoVariables.registry.*;
 import us.ihmc.yoVariables.variable.*;
 
+import java.util.*;
+
 public class ContactableSphereRobot extends ContactableRobot
 {
    private static final double DEFAULT_RADIUS = 0.5;
    private static final double DEFAULT_MASS = 10.0;
-   private static final boolean ROLLING = true;
+   private static boolean ROLLING = true;
    private ReferenceFrame referenceFrame = ReferenceFrame.getWorldFrame();
 
    private final FloatingJoint floatingJoint;
    private final Sphere3D originalSphere3d, currentSphere3d;
-   private YoGraphicsListRegistry yoGraphicsListRegistry;
+   private YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
+   private final YoVariableRegistry registry = new YoVariableRegistry("RollingSphere");
+//   private ArrayList<YoGraphicPosition> yoGraphicPositionsList;
+//   private ArrayList<YoGraphicVector> yoGraphicVectorList;
+//   private ArrayList<YoGraphic> testing = new ArrayList<>();
+   private YoGraphicsList yoGraphicsList = new YoGraphicsList("init");
+  // private ArrayList<YoGraphicsList> = new ArrayList<>();
    private YoGraphicPosition yoGraphicPosition;// = new YoGraphicPosition("init", new YoFramePoint3D(0.0,0.0,0.0,referenceFrame), 0.01, YoAppearance.Red());
    private YoGraphicVector yoGraphicVector;// =  new YoGraphicVector("initf", new YoFramePoint3D(0.0,0.0,0.0,referenceFrame), new YoFrameVector3D(0.0,0.0,0.0,referenceFrame), 1.0/50.0);
 
@@ -39,17 +47,17 @@ public class ContactableSphereRobot extends ContactableRobot
       this(name, DEFAULT_RADIUS,DEFAULT_MASS,YoAppearance.EarthTexture());
    }
 
-   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry)
+   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry1)
    {
-      this(name, DEFAULT_RADIUS,DEFAULT_MASS,YoAppearance.EarthTexture(), yoGraphicsListRegistry);
+      this(name, DEFAULT_RADIUS,DEFAULT_MASS,YoAppearance.EarthTexture(), yoGraphicsListRegistry1);
    }
 
-//   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry)
+//   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry1)
 //   {
-//      this(name, DEFAULT_RADIUS, DEFAULT_MASS, YoAppearance.EarthTexture(), yoGraphicsListRegistry);
+//      this(name, DEFAULT_RADIUS, DEFAULT_MASS, YoAppearance.EarthTexture(), yoGraphicsListRegistry1);
 //   }
 
-   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color)//, YoGraphicsListRegistry yoGraphicsListRegistry)
+   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color)//, YoGraphicsListRegistry yoGraphicsListRegistry1)
    {
       super(name);
 
@@ -62,8 +70,8 @@ public class ContactableSphereRobot extends ContactableRobot
       originalSphere3d = new Sphere3D(radius);
       currentSphere3d = new Sphere3D(radius);
    }
-//      YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-//      this.yoGraphicsListRegistry = yoGraphicsListRegistry;
+//      YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
+//      this.yoGraphicsListRegistry1 = yoGraphicsListRegistry1;
 //
 //
 //
@@ -91,19 +99,19 @@ public class ContactableSphereRobot extends ContactableRobot
 //               floatingJoint.addGroundContactPoint(gc);
 //
 //               YoGraphicPosition yoGraphicPosition = new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());
-//               yoGraphicsListRegistry.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
+//               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
 //
 //
 //               YoGraphicVector yoGraphicVector = new YoGraphicVector(gcName + "Force", gc.getYoPosition(), gc.getYoForce(), 1.0/50.0);
-//               yoGraphicsListRegistry.registerYoGraphic("FallingSphereForces", yoGraphicVector);
+//               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereForces", yoGraphicVector);
 //
-//               this.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+//               this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
 //            }
 //         }
 //      }
 //   }
-
-   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color, YoGraphicsListRegistry yoGraphicsListRegistry)//, YoGraphicsListRegistry yoGraphicsListRegistry)
+   //called by the constructor
+   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color, YoGraphicsListRegistry yoGraphicsListRegistry)//, YoGraphicsListRegistry yoGraphicsListRegistry1)
    {
       super(name);
 
@@ -115,10 +123,8 @@ public class ContactableSphereRobot extends ContactableRobot
 
       originalSphere3d = new Sphere3D(radius);
       currentSphere3d = new Sphere3D(radius);
-      //      YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-      this.yoGraphicsListRegistry = yoGraphicsListRegistry;
-
-
+      //      YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
+      //this.yoGraphicsListRegistry1 = yoGraphicsListRegistry1;
 
       if(ROLLING)
       {
@@ -143,18 +149,53 @@ public class ContactableSphereRobot extends ContactableRobot
                GroundContactPoint gc = new GroundContactPoint(gcName, new Vector3D(x, y, z), this);
                floatingJoint.addGroundContactPoint(gc);
 
-               yoGraphicPosition = new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());
-               yoGraphicsListRegistry.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
+               yoGraphicPosition= new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());
+               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
+               //yoGraphicPositionsList.add(new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());)
+//               yoGraphicsList.add(yoGraphicPosition);
+               //yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicsList);
 
 
                yoGraphicVector = new YoGraphicVector(gcName + "Force", gc.getYoPosition(), gc.getYoForce(), 1.0/50.0);
-               yoGraphicsListRegistry.registerYoGraphic("FallingSphereForces", yoGraphicVector);
+               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereForces", yoGraphicVector);
+               //yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicVector);
+//               yoGraphicsList.add(yoGraphicVector);
 
-               //this.addYoGraphicsListRegistry(yoGraphicsListRegistry);
-               //yoGraphicsListRegistry.addGraphicsUpdatable();
+
+               //this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
+//               addYoGraphicsListRegistry(yoGraphicsListRegistry1);
+               //yoGraphicsListRegistry1.addGraphicsUpdatable();
             }
+//            yoGraphicsListRegistry1.registerYoGraphicsList(testing);
+//            addYoGraphicsListRegistry();
          }
+         this.getRobotsYoVariableRegistry().addChild(registry);
+
+//         yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicsList); //register the list here
+         //yoGraphicsListRegistry1.registerYoGraphicsLists();
+         //addYoGraphicsListRegistry(yoGraphicsListRegistry1);
+         this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
       }
+   }
+
+   public static void setROLLING(boolean ROLLING)
+   {
+      ContactableSphereRobot.ROLLING = ROLLING;
+   }
+
+   public boolean getROLLING()
+   {
+      return ContactableSphereRobot.ROLLING;
+   }
+
+   public YoGraphicsListRegistry getYoGraphicsListRegistry()
+   {
+      return yoGraphicsListRegistry1;
+   }
+
+   public YoGraphicsList getYoGraphicsList()
+   {
+      return yoGraphicsList;
    }
 
    private Link ball(double radius, double mass, AppearanceDefinition color)
