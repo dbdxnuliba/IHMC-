@@ -37,6 +37,7 @@ public class AtlasBehaviorUIDemo extends Application
    private static final AtlasRobotVersion ATLAS_VERSION = AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS;
    private static final RobotTarget ATLAS_TARGET = RobotTarget.SCS;
    private static final boolean USE_FLAT_GROUND = false;
+   private static final boolean USE_KINEMATIC_SIMULATION = true;
 
    private BehaviorUI ui;
 
@@ -58,15 +59,17 @@ public class AtlasBehaviorUIDemo extends Application
 
       new Thread(() -> {
          LogTools.info("Creating simulation");
-//         AtlasBehaviorSimulation.createForManualTest(createRobotModel(),
-//                                                     USE_FLAT_GROUND ?
-//                                                     new FlatGroundEnvironment() :
-//                                                     new PlanarRegionsListDefinedEnvironment(createPlanarRegions(),
-//                                                                                             0.02,
-//                                                                                             false)
-//         )
-//                                .simulate();
-         AvatarKinematicsSimulation.createForManualTest(createRobotModel(), false);
+         if (USE_KINEMATIC_SIMULATION)
+         {
+            AvatarKinematicsSimulation.createForManualTest(createRobotModel(), true);
+         }
+         else
+         {
+            AtlasBehaviorSimulation.createForManualTest(createRobotModel(),
+                                                        USE_FLAT_GROUND ?
+                                                              new FlatGroundEnvironment() :
+                                                              new PlanarRegionsListDefinedEnvironment(createPlanarRegions(), 0.02, false)).simulate();
+         }
       }
       ).start();
 

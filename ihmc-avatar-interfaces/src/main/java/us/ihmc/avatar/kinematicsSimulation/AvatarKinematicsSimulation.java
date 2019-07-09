@@ -42,6 +42,9 @@ public class AvatarKinematicsSimulation
    private final ExceptionHandlingThreadScheduler scheduler = new ExceptionHandlingThreadScheduler(getClass().getSimpleName(),
                                                                                                    DefaultExceptionHandler.PRINT_MESSAGE,
                                                                                                    5);
+   private final ExceptionHandlingThreadScheduler yoVariableScheduler = new ExceptionHandlingThreadScheduler(getClass().getSimpleName(),
+                                                                                                             DefaultExceptionHandler.PRINT_MESSAGE,
+                                                                                                             5);
    private final Ros2Node ros2Node;
    private final IHMCROS2Publisher<RobotConfigurationData> robotConfigurationDataPublisher;
    private final IHMCROS2Publisher<WalkingStatusMessage> walkingStatusPublisher;
@@ -127,7 +130,7 @@ public class AvatarKinematicsSimulation
       yoVariableServer.setMainRegistry(registry, robotModel.createFullRobotModel().getElevator(), yoGraphicsListRegistry);
       ThreadTools.startAThread(() -> yoVariableServer.start(), getClass().getSimpleName() + "YoVariableServer");
 
-      yoVariableServerScheduled = scheduler.schedule(this::yoVariableUpdateThread, 1, TimeUnit.MILLISECONDS);
+      yoVariableServerScheduled = yoVariableScheduler.schedule(this::yoVariableUpdateThread, 1, TimeUnit.MILLISECONDS);
    }
 
    private void yoVariableUpdateThread()
