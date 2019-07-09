@@ -253,5 +253,4 @@ public class FiducialDetectorFromCameraImagesTest
       return simpleRobotWithCamera;
    }
 
-
 }

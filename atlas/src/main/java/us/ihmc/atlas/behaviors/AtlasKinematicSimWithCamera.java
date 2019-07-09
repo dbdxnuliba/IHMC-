@@ -111,7 +111,7 @@ public class AtlasKinematicSimWithCamera
                                                                              cameraPosition,
                                                                              cameraOrientation,
                                                                              intrinsicParameters);
-            //scsCameraPublisher.publish(videoPacket);
+            scsCameraPublisher.publish(videoPacket);
          }
          catch (IOException e)
          {

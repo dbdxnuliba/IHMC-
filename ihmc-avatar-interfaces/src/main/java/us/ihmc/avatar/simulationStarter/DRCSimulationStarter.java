@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import controller_msgs.msg.dds.HighLevelStateMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.avatar.DRCLidar;
 import us.ihmc.avatar.DRCStartingLocation;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
@@ -28,7 +28,7 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.Co
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControllerStateFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelHumanoidControllerFactory;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
-import us.ihmc.communication.ROS2Tools;
+import us.ihmc.communication.*;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.communication.net.LocalObjectCommunicator;
 import us.ihmc.communication.producers.VideoDataServerImageCallback;
@@ -36,6 +36,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidBehaviors.behaviors.scripts.engine.ScriptBasedControllerCommandGenerator;
+import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
 import us.ihmc.humanoidRobotics.communication.producers.RawVideoDataServer;
 import us.ihmc.humanoidRobotics.communication.subscribers.PelvisPoseCorrectionCommunicatorInterface;
@@ -48,7 +49,7 @@ import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.controllers.ControllerFailureListener;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.RealtimeRos2Node;
+import us.ihmc.ros2.*;
 import us.ihmc.sensorProcessing.parameters.HumanoidRobotSensorInformation;
 import us.ihmc.sensorProcessing.parameters.AvatarRobotCameraParameters;
 import us.ihmc.sensorProcessing.parameters.AvatarRobotLidarParameters;
@@ -508,6 +509,8 @@ public class DRCSimulationStarter implements SimulationStarterInterface
 
       if (createSCSSimulatedSensors)
       {
+//         IHMCROS2Publisher<LocalVideoPacket> scsCameraPublisher;
+//         Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "kinematic_camera");
          HumanoidRobotSensorInformation sensorInformation = robotModel.getSensorInformation();
          DRCRobotJointMap jointMap = robotModel.getJointMap();
          TimestampProvider timeStampProvider = avatarSimulation.getSimulatedRobotTimeProvider();
@@ -530,6 +533,8 @@ public class DRCSimulationStarter implements SimulationStarterInterface
             simulationConstructionSet.startStreamingVideoData(cameraConfiguration, width, height,
                                                               new VideoDataServerImageCallback(drcRenderedSceneVideoHandler), timeStampProvider,
                                                               framesPerSecond);
+//            scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, LocalVideoPacket.class);
+//            scsCameraPublisher.publish(drcRenderedSceneVideoHandler.getVideoPacket());
          }
 
          for (AvatarRobotLidarParameters lidarParams : sensorInformation.getLidarParameters())

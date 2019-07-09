@@ -202,13 +202,13 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
             kickTheBall.setObjectToKickPoint(balltoKickLocation);
          }
 
-         @Override
-         public void onExit()
-         {
-            publishTextToSpeech("exiting kick behavior");
-            super.onExit();
-            //System.out.println("sfhhf");
-         }
+//         @Override
+//         public void onExit()
+//         {
+//            publishTextToSpeech("exiting kick behavior");
+//            super.onExit();
+//            //System.out.println("sfhhf");
+//         }
       };
 
       //BehaviorAction kickTheBall = new BehaviorAction(kicktheball);

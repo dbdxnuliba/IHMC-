@@ -41,7 +41,7 @@ public class ObjectDetectorFromCameraImagesTest
 {
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
 
-   @Disabled
+   //@Disabled
    @Test
    public void testUsingSimulationConstructionSet() throws Exception
    {
@@ -212,5 +212,9 @@ public class ObjectDetectorFromCameraImagesTest
       return simpleRobotWithCamera;
    }
 
+   public void main(String[] args) throws Exception
+   {
+      testUsingSimulationConstructionSet();
+   }
 
 }

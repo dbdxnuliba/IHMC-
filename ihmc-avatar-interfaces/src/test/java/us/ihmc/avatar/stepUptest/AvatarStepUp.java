@@ -2,9 +2,11 @@ package us.ihmc.avatar.stepUptest;
 
 import static us.ihmc.robotics.Assert.*;
 
+import boofcv.struct.calib.*;
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
 import us.ihmc.atlas.*;
+import us.ihmc.atlas.behaviors.AtlasKinematicSimWithCamera.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.avatar.environments.*;
@@ -12,6 +14,9 @@ import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.simulationStarter.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
+import us.ihmc.codecs.generated.*;
+import us.ihmc.codecs.generated.YUVPicture.*;
+import us.ihmc.codecs.yuv.*;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.controlModules.TrajectoryStatusMessageHelper.*;
@@ -19,12 +24,14 @@ import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
 import us.ihmc.communication.packets.*;
+import us.ihmc.communication.producers.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.referenceFrame.tools.*;
 import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
+import us.ihmc.euclid.tuple3D.interfaces.*;
 import us.ihmc.euclid.tuple4D.*;
 import us.ihmc.euclid.tuple4D.interfaces.*;
 import us.ihmc.footstepPlanning.*;
@@ -51,7 +58,7 @@ import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.footstep.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.idl.IDLSequence.Double;
-import us.ihmc.idl.IDLSequence.Object;
+import us.ihmc.jMonkeyEngineToolkit.camera.*;
 import us.ihmc.mecano.frames.*;
 import us.ihmc.mecano.multiBodySystem.interfaces.*;
 import us.ihmc.pubsub.DomainFactory.*;
@@ -87,6 +94,9 @@ import us.ihmc.yoVariables.registry.*;
 import us.ihmc.yoVariables.variable.*;
 
 import java.awt.*;
+import java.awt.image.*;
+import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.*;
@@ -106,7 +116,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private YoBoolean walkPaused;
    private AvatarSimulation avatarSimulation;
    private Robot[] robots;
-   //protected SimulationTestingParameters simulationTestingParameters;
+//   protected SimulationTestingParameters simulationTestingParameters;
+//   private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
 
    private int numberOfFootstepByPlanner;
    private double stepLength = 0.7;
@@ -227,8 +238,86 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       referenceFrames = robotDataReceiver.getReferenceFrames();
 
       atlasPrimitiveActions = new AtlasPrimitiveActions(getSimpleRobotName(), ros2Node, getRobotModel().getFootstepPlannerParameters(),fullRobotModel, atlasRobotModel, referenceFrames, yoTime, robotModel, registry);
-
    }
+//
+//   @BeforeEach
+//   public void cameraRelatedStuff()
+//   {
+//      scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
+//      SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
+//
+//      ROS2Input<RobotConfigurationData> robotConfigurationData = new ROS2Input<>(ros2Node,
+//                                                                                 RobotConfigurationData.class,
+//                                                                                 robotModel.getSimpleRobotName(),
+//                                                                                 HighLevelHumanoidControllerFactory.ROS2_ID);
+//      String cameraName = "camera";
+//      CameraConfiguration cameraConfiguration = new CameraConfiguration(cameraName);
+//      scs.setupCamera(cameraConfiguration);
+//
+//
+//
+//      cameraConfiguration.setCameraMount(cameraName);
+//
+//
+//      int width = 1024;
+//      int height = 544;
+//      int framesPerSecond = 25;
+//      scs.startStreamingVideoData(cameraConfiguration,
+//                                  width,
+//                                  height,
+//                                  new VideoDataServerImageCallback(new VideoPacketCallback()),
+//                                  () -> robotConfigurationData.getLatest().getSyncTimestamp(),
+//                                  framesPerSecond);
+//      //scs.startStreamingVideoData();
+//   }
+//
+//   private static final java.lang.Object hackyLockBecauseJPEGEncoderIsNotThreadsafe = new Object();
+//
+//   class VideoPacketCallback implements VideoDataServer
+//   {
+//      private final YUVPictureConverter converter = new YUVPictureConverter();
+//      private final JPEGEncoder encoder = new JPEGEncoder();
+//
+//      @Override
+//      public void onFrame(VideoSource videoSource,
+//                          BufferedImage bufferedImage,
+//                          long timeStamp,
+//                          Point3DReadOnly cameraPosition,
+//                          QuaternionReadOnly cameraOrientation,
+//                          IntrinsicParameters intrinsicParameters)
+//      {
+//
+//         YUVPicture picture = converter.fromBufferedImage(bufferedImage, YUVSubsamplingType.YUV420);
+//         try
+//         {
+//            ByteBuffer buffer;
+//            synchronized (hackyLockBecauseJPEGEncoderIsNotThreadsafe)
+//            {
+//               buffer = encoder.encode(picture, 75);
+//            }
+//            byte[] data = new byte[buffer.remaining()];
+//            buffer.get(data);
+//            VideoPacket videoPacket = HumanoidMessageTools.createVideoPacket(videoSource,
+//                                                                             timeStamp,
+//                                                                             data,
+//                                                                             cameraPosition,
+//                                                                             cameraOrientation,
+//                                                                             intrinsicParameters);
+//            scsCameraPublisher.publish(videoPacket);
+//         }
+//         catch (IOException e)
+//         {
+//            e.printStackTrace();
+//         }
+//         picture.delete();
+//      }
+//
+//      @Override
+//      public boolean isConnected()
+//      {
+//         return true; // do nothing
+//      }
+//   }
 
    private void checkAndPublishChestTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {

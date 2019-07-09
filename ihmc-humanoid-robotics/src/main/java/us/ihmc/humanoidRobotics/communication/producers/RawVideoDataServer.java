@@ -14,7 +14,7 @@ import us.ihmc.humanoidRobotics.communication.packets.LocalVideoPacket;
 public class RawVideoDataServer implements VideoDataServer
 {
    protected final ObjectCommunicator objectCommunicator;
-   
+
    public RawVideoDataServer(ObjectCommunicator objectCommunicator)
    {
       this.objectCommunicator = objectCommunicator;
