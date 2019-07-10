@@ -1,34 +1,22 @@
 package us.ihmc.humanoidBehaviors.behaviors.complexBehaviors;
 
-import com.sun.xml.internal.bind.v2.*;
-import controller_msgs.msg.dds.*;
-import org.jfree.chart.plot.*;
-import us.ihmc.communication.*;
-import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
-import us.ihmc.euclid.tuple4D.*;
-import us.ihmc.graphicsDescription.yoGraphics.*;
-import us.ihmc.humanoidBehaviors.behaviors.*;
-import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.*;
-import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.WalkThroughDoorWOFiducial.*;
+import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.SearchAndKickBehavior.*;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
 import us.ihmc.humanoidBehaviors.stateMachine.*;
-import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.robotModels.*;
-import us.ihmc.robotics.referenceFrames.*;
 import us.ihmc.robotics.stateMachine.factories.*;
-import us.ihmc.robotics.taskExecutor.*;
 import us.ihmc.ros2.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.wholeBodyController.*;
 import us.ihmc.yoVariables.variable.*;
 
 //wrtie a code to kick things
-public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
+public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
 {
    private final boolean DEBUG = false;
    private boolean isDoorOpen = false;
@@ -55,11 +43,13 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
    private Vector3D offsetwaypoint1 = new Vector3D(0.5f,-0.9f,0f); //these indicate that you are kinda swaying but why???
    private Vector3D offsetwaypoint2 = new Vector3D(0.5f,-0.6f,0f);
 
+   private boolean BALL_DETECTION = true;
+
    private final double standingDistance = 0.4;
 
 //   private final PipeLine<AbstractBehavior> pipeLine;
    //define the behavior that will be required
-   private final AtlasPrimitiveActions atlasPrimitiveActions;
+//   private final AtlasPrimitiveActions atlasPrimitiveActions;
    private final SleepBehavior sleepBehavior;
    private final StepUpDoor environment;
    //environment variable
@@ -81,11 +71,11 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
 
 
    // create a constructor
-   public WalkThroughDoorWOFiducial(String robotName, Ros2Node ros2Node, YoDouble yoTime, HumanoidReferenceFrames referenceFrames,
-                                    AtlasPrimitiveActions atlasPrimitiveActions, FullHumanoidRobotModel fullHumanoidRobotModel,
-                                    WholeBodyControllerParameters wholeBodyControllerParameters, YoBoolean yoDoubleSupport, StepUpDoor environment)
+   public SearchAndKickBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, HumanoidReferenceFrames referenceFrames,
+                                FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
+                                YoBoolean yoDoubleSupport, StepUpDoor environment)
    {
-      super(robotName, "WalkThroughDoorWOFiducial",WalkThroughDoorWOFiducialStates.class,yoTime, ros2Node);
+      super(robotName, "SearchAndKickBehavior",WalkThroughDoorWOFiducialStates.class,yoTime, ros2Node);
       this.referenceFrames = referenceFrames;
 //      pipeLine = new PipeLine<>(yoTime);
 
@@ -93,7 +83,7 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
       kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
       this.environment = environment;
 
-      this.atlasPrimitiveActions = atlasPrimitiveActions;
+//      this.atlasPrimitiveActions = atlasPrimitiveActions;
 
       //setting up environment variable
 //      this.environment = environment;
@@ -167,16 +157,21 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
       //reset the robot
       BehaviorAction resetrobot = new BehaviorAction(resetRobotBehavior);
 
-      //find the ball
+      BehaviorAction findBall = null;
 
-//      BehaviorAction findBall = new BehaviorAction(sphereDetctionBehavior)
-//      {
-//         @Override
-//         protected void setBehaviorInput()
-//         {
-//            publishTextToSpeech("Entering sphere detection behavior");
-//         }
-//      };
+      if(BALL_DETECTION)
+      {
+         //find the ball
+
+         findBall = new BehaviorAction(sphereDetctionBehavior)
+         {
+            @Override
+            protected void setBehaviorInput()
+            {
+               publishTextToSpeech("Entering sphere detection behavior");
+            }
+         };
+      }
 
       // walk towards the object
       BehaviorAction walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
@@ -225,12 +220,25 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
          }
       };
 
-      //start adding them to the state factory
-      factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-//      factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-      factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-      factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
-      factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+      if(BALL_DETECTION)
+      {
+         //start adding them to the state factory
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
+         factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+      }
+
+      else
+      {
+         //start adding them to the state factory
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
+         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
+         factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+      }
 
       //return the initial key
       return WalkThroughDoorWOFiducialStates.SETUP_ROBOT;
@@ -267,5 +275,15 @@ public class WalkThroughDoorWOFiducial extends StateMachineBehavior<WalkThroughD
    public void onBehaviorExited()
    {
       publishTextToSpeech("Leaving this behavior");
+   }
+
+   public void setBALL_DETECTION(boolean BALL_DETECTION)
+   {
+      this.BALL_DETECTION = BALL_DETECTION;
+   }
+
+   public boolean getBALL_DETECTION()
+   {
+      return BALL_DETECTION;
    }
 }

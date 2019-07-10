@@ -2,42 +2,25 @@ package us.ihmc.avatar.stepUptest;
 
 import static us.ihmc.robotics.Assert.*;
 
-import boofcv.struct.calib.*;
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
 import us.ihmc.atlas.*;
-import us.ihmc.atlas.behaviors.AtlasKinematicSimWithCamera.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
-import us.ihmc.avatar.environments.*;
 import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
-import us.ihmc.avatar.simulationStarter.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
-import us.ihmc.codecs.generated.*;
-import us.ihmc.codecs.generated.YUVPicture.*;
-import us.ihmc.codecs.yuv.*;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
 import us.ihmc.commonWalkingControlModules.configurations.*;
-import us.ihmc.commonWalkingControlModules.controlModules.TrajectoryStatusMessageHelper.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
 import us.ihmc.communication.packets.*;
-import us.ihmc.communication.producers.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.referenceFrame.tools.*;
-import us.ihmc.euclid.transform.*;
 import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
-import us.ihmc.euclid.tuple3D.interfaces.*;
-import us.ihmc.euclid.tuple4D.*;
-import us.ihmc.euclid.tuple4D.interfaces.*;
 import us.ihmc.footstepPlanning.*;
-import us.ihmc.footstepPlanning.flatGroundPlanning.*;
-import us.ihmc.footstepPlanning.graphSearch.aStar.*;
-import us.ihmc.footstepPlanning.graphSearch.aStar.AStarBestEffortTest.*;
 import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.*;
 import us.ihmc.footstepPlanning.graphSearch.parameters.*;
 import us.ihmc.footstepPlanning.graphSearch.planners.*;
@@ -45,10 +28,7 @@ import us.ihmc.footstepPlanning.simplePlanners.*;
 import us.ihmc.footstepPlanning.tools.*;
 import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.humanoidBehaviors.*;
-import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.*;
 import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.*;
-import us.ihmc.humanoidBehaviors.behaviors.diagnostic.*;
-import us.ihmc.humanoidBehaviors.behaviors.fiducialLocation.*;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.dispatcher.*;
 import us.ihmc.humanoidBehaviors.utilities.*;
@@ -57,19 +37,12 @@ import us.ihmc.humanoidRobotics.communication.packets.behaviors.*;
 import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.footstep.*;
 import us.ihmc.humanoidRobotics.frames.*;
-import us.ihmc.idl.IDLSequence.Double;
-import us.ihmc.jMonkeyEngineToolkit.camera.*;
 import us.ihmc.mecano.frames.*;
 import us.ihmc.mecano.multiBodySystem.interfaces.*;
 import us.ihmc.pubsub.DomainFactory.*;
 import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotDataLogger.*;
 import us.ihmc.robotModels.*;
-import us.ihmc.robotics.*;
-import us.ihmc.robotics.geometry.*;
-import us.ihmc.robotics.kinematics.*;
-import us.ihmc.robotics.math.trajectories.trajectorypoints.*;
-import us.ihmc.robotics.math.trajectories.trajectorypoints.lists.*;
 import us.ihmc.robotics.partNames.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.sensors.*;
@@ -79,27 +52,18 @@ import us.ihmc.sensorProcessing.parameters.*;
 import us.ihmc.simulationConstructionSetTools.bambooTools.*;
 import us.ihmc.simulationConstructionSetTools.util.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.*;
-import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
-import us.ihmc.simulationToolkit.controllers.*;
 import us.ihmc.simulationconstructionset.*;
 import us.ihmc.simulationconstructionset.Robot;
-import us.ihmc.simulationconstructionset.util.simulationRunner.*;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.*;
 import us.ihmc.simulationconstructionset.util.simulationTesting.*;
 
 import us.ihmc.tools.*;
-import us.ihmc.wholeBodyController.*;
 import us.ihmc.yoVariables.registry.*;
 import us.ihmc.yoVariables.variable.*;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.*;
-import java.nio.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.*;
 
 public abstract class AvatarStepUp implements MultiRobotTestInterface
 {
@@ -518,18 +482,18 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       //DoorTimingBehaviorAutomated doorTimingBehaviorAutomated = new DoorTimingBehaviorAutomated(getSimpleRobotName(),ros2Node, yoTime,yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions,yoGraphicsListRegistry);
 
       //WalkThroughDoorBehavior WalkThroughDoor = new WalkThroughDoorBehavior(getSimpleRobotName(),"automateDoorBehavior", ros2Node, yoTime, yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions, yoGraphicsListRegistry);
-      WalkThroughDoorWOFiducial walkThroughDoorWOFiducial = new WalkThroughDoorWOFiducial(getSimpleRobotName(),ros2Node,yoTime, referenceFrames, atlasPrimitiveActions,fullRobotModel, robotModel,yoDoubleSupport,stepUpDoor);
+      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, stepUpDoor);
 
       //FiducialDetectorBehaviorService fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(getSimpleRobotName(), FiducialDetectorBehaviorService.class.getSimpleName(),ros2Node,yoGraphicsListRegistry);
 
       //HumanoidBehaviorTypePacket requestwalkthroughdoor = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR);
-      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR_WO_FIDUCIAL);
+      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
       System.out.println("behavior byte info :- ");
 
       //drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestwalkthroughdoor);
       drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
       //behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR,WalkThroughDoor);
-      behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR_WO_FIDUCIAL,walkThroughDoorWOFiducial);
+      behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
       behaviorDispatcher.start();
    }
 
