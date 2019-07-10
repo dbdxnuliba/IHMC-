@@ -47,7 +47,7 @@ import us.ihmc.yoVariables.variable.YoFramePoint2D;
 public class NummericalICPPlannerTest
 {
    private static final boolean visualizeInPlotter = true;
-   private static final boolean visualizeInSCS = true;
+   private static final boolean visualizeInSCS = false;
 
    private static final double discretization = 0.02;
    private static final double previewTime = 3.0;
@@ -143,7 +143,7 @@ public class NummericalICPPlannerTest
       Point2DBasics initialIcp = new Point2D();
       Point2DBasics finalIcp = new Point2D();
 
-      NummericalICPPlanner icpPlanner = new NummericalICPPlanner(discretization, previewTime, omega, adjustmentTime);
+      NummericalICPPlanner icpPlanner = new NummericalICPPlanner(discretization, previewTime, adjustmentTime);
 
       boolean useAm = true;
       ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory = (am, t) -> {
@@ -153,7 +153,7 @@ public class NummericalICPPlannerTest
             am.set(-0.1, 0.0);
       };
 
-      packSSTest(initialIcp, supportPolygons, supportDurations);
+      packDSTest(initialIcp, supportPolygons, supportDurations);
       CopTrajectory copTrajectory = new CopTrajectory(supportPolygons, supportDurations);
       copTrajectory.accept(finalIcp, previewTime);
 
@@ -161,10 +161,10 @@ public class NummericalICPPlannerTest
       for (int i = 0; i < iterations; i++)
       {
          long startTime = System.nanoTime();
+         icpPlanner.setOmega(omega);
          icpPlanner.setCopTrajectory(copTrajectory);
          icpPlanner.setAngularMomentumTrajectory(angularMomentumTrajectory);
          icpPlanner.setCopConstraints(supportPolygons, supportDurations);
-         icpPlanner.setFinalIcp(finalIcp);
          icpPlanner.setInitialIcp(initialIcp);
          icpPlanner.compute();
          duration = System.nanoTime() - startTime;
@@ -242,14 +242,14 @@ public class NummericalICPPlannerTest
       {
          addToArtifacts("Support" + i, supportPolygons.get(i), Color.GRAY, artifactRagistry);
       }
-      for (double t = 0.0; t < previewTime; t += 0.05)
+      for (double t = 0.0; t < previewTime; t += 0.002)
       {
          copTrajectory.accept(cop, t);
-         addToArtifacts("referenceCop" + (int) (1000 * t), cop, GraphicType.BALL, Color.CYAN, 0.005, artifactRagistry);
+         addToArtifacts("referenceCop" + (int) (1000 * t), cop, GraphicType.BALL, Color.CYAN, 0.001, artifactRagistry);
          icpPlanner.getCop(t, cop);
-         addToArtifacts("cop" + (int) (1000 * t), cop, GraphicType.SOLID_BALL, Color.GREEN, 0.01, artifactRagistry);
+         addToArtifacts("cop" + (int) (1000 * t), cop, GraphicType.BALL, Color.GREEN, 0.001, artifactRagistry);
          icpPlanner.getIcp(t, icp);
-         addToArtifacts("icp" + (int) (1000 * t), icp, GraphicType.SOLID_BALL, Color.BLUE, 0.01, artifactRagistry);
+         addToArtifacts("icp" + (int) (1000 * t), icp, GraphicType.BALL, Color.BLUE, 0.001, artifactRagistry);
       }
       addToArtifacts("initialIcp", initialIcp, GraphicType.BALL_WITH_ROTATED_CROSS, Color.BLUE, 0.03, artifactRagistry);
       addToArtifacts("finalIcp", finalIcp, GraphicType.BALL_WITH_ROTATED_CROSS, Color.WHITE, 0.03, artifactRagistry);
@@ -304,7 +304,7 @@ public class NummericalICPPlannerTest
       Plotter plotter = new Plotter();
       plotter.setViewRange(2.0);
       artifacts.setVisible(true);
-      JFrame frame = new JFrame(NummericalICPPlannerTest.class.getSimpleName());
+      JFrame frame = new JFrame(NummericalICPPlannerTest.class.getSimpleName() + " dt: " + discretization);
       Dimension preferredSize = new Dimension(600, 600);
       frame.setPreferredSize(preferredSize);
       frame.add(plotter.getJPanel(), BorderLayout.CENTER);
