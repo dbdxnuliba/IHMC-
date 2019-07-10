@@ -211,7 +211,7 @@ public class NummericalICPPlanner
 
    public void compute()
    {
-      reverseTimeIntegrate(icps.size() - 2, adjustmentSteps - 1);
+      reverseTimeIntegrate(icps.size() - 2, adjustmentSteps);
       solveInitialCopTrajectory();
       reverseTimeIntegrate(adjustmentSteps - 1, 0);
    }
