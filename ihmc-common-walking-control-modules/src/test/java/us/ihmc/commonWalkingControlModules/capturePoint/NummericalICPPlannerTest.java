@@ -147,7 +147,7 @@ public class NummericalICPPlannerTest
 
       boolean useAm = true;
       ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory = (am, t) -> {
-         if (!useAm || t > adjustmentTime)
+         if (!useAm || t > 0.5)
             am.setToZero();
          else
             am.set(-0.1, 0.0);

@@ -25,7 +25,9 @@ public class NummericalICPPlanner
    /** Weight for maintaining initial ICP continuity */
    private static final double ICP_WEIGHT = 1.0;
    /** Weight for maintaining CoP continuity */
-   private static final double COP_WEIGHT = 0.0001;
+   private static final double COP_WEIGHT = 0.001;
+   /** Whether the continuity at the initial ICP should be an equality constraint */
+   private static final boolean INITIAL_ICP_CONSTRAINT = false;
 
    private double omega;
 
@@ -117,8 +119,9 @@ public class NummericalICPPlanner
       CommonOps.scale(ICP_WEIGHT, WIcp);
 
       // Initialize matrices for CoP equality constraints at start and end
-      Aeq = new DenseMatrix64F(4, 2 * adjustmentSteps);
-      beq = new DenseMatrix64F(4, 1);
+      int equalityConstraints = INITIAL_ICP_CONSTRAINT ? 6 : 4;
+      Aeq = new DenseMatrix64F(equalityConstraints, 2 * adjustmentSteps);
+      beq = new DenseMatrix64F(equalityConstraints, 1);
       Aeq.set(0, 0, 1.0);
       Aeq.set(1, 1, 1.0);
       Aeq.set(2, 2 * adjustmentSteps - 2, 1.0);
@@ -135,7 +138,7 @@ public class NummericalICPPlanner
          FD.set(2 * i + 1, 2 * i + 3, 1.0 / timestep);
       }
       CommonOps.multTransA(FD, FD, FDtFD);
-      CommonOps.scale(COP_WEIGHT, FDtFD);
+      CommonOps.scale(COP_WEIGHT / adjustmentSteps, FDtFD);
    }
 
    public void setOmega(double omega)
@@ -146,8 +149,8 @@ public class NummericalICPPlanner
       double alpha = 1.0 + timestep * omega;
       for (int i = 0; i < adjustmentSteps; i++)
       {
-         AIcp.set(0, 2 * i, -timestep * omega * Math.pow(alpha, adjustmentSteps - i - 1));
-         AIcp.set(1, 2 * i + 1, -timestep * omega * Math.pow(alpha, adjustmentSteps - i - 1));
+         AIcp.set(0, 2 * i, timestep * omega * Math.pow(alpha, adjustmentSteps - i - 1));
+         AIcp.set(1, 2 * i + 1, timestep * omega * Math.pow(alpha, adjustmentSteps - i - 1));
       }
       CommonOps.multTransA(AIcp, WIcp, AtWicp);
       Q.set(FDtFD);
@@ -233,9 +236,9 @@ public class NummericalICPPlanner
 
       // Setup initial ICP continuity objective
       double alpha = 1.0 + timestep * omega;
-      double factor = Math.pow(alpha, adjustmentSteps - 1);
-      bIcp.set(0, 0, -icps.get(adjustmentSteps - 1).getX() + initialIcp.getX() * factor + amY);
-      bIcp.set(1, 0, -icps.get(adjustmentSteps - 1).getY() + initialIcp.getY() * factor - amX);
+      double factor = Math.pow(alpha, adjustmentSteps);
+      bIcp.set(0, 0, icps.get(adjustmentSteps).getX() - (initialIcp.getX() * factor - amY));
+      bIcp.set(1, 0, icps.get(adjustmentSteps).getY() - (initialIcp.getY() * factor + amX));
       NativeCommonOps.mult(AtWicp, bIcp, f);
 
       // Setup equality constraint for initial and final CoP
@@ -243,6 +246,13 @@ public class NummericalICPPlanner
       beq.set(1, cops.get(0).getY());
       beq.set(2, cops.get(adjustmentSteps - 1).getX());
       beq.set(3, cops.get(adjustmentSteps - 1).getY());
+
+      if (INITIAL_ICP_CONSTRAINT)
+      {
+         CommonOps.insert(AIcp, Aeq, 4, 0);
+         beq.set(4, -bIcp.get(0));
+         beq.set(5, -bIcp.get(1));
+      }
 
       try
       {
@@ -271,8 +281,8 @@ public class NummericalICPPlanner
          Point2DBasics icp = icps.get(i);
          Vector2DBasics angularMomentum = angularMomentums.get(i);
 
-         icp.setX(nextIcp.getX() - omega * timestep * (nextIcp.getX() - cop.getX() - angularMomentum.getY()));
-         icp.setY(nextIcp.getY() - omega * timestep * (nextIcp.getY() - cop.getY() + angularMomentum.getX()));
+         icp.setX((nextIcp.getX() + omega * timestep * (cop.getX() + angularMomentum.getY())) / (1.0 + omega * timestep));
+         icp.setY((nextIcp.getY() + omega * timestep * (cop.getY() - angularMomentum.getX())) / (1.0 + omega * timestep));
       }
    }
 
