@@ -381,7 +381,7 @@ public abstract class FootstepPlannerToolboxDataSetTest
 
       for (QuadrupedTimedStepMessage footstepMessage : footstepDataListMessage.getQuadrupedStepList())
       {
-         QuadrupedTimedOrientedStep step = new QuadrupedTimedOrientedStep();
+         QuadrupedTimedStep step = new QuadrupedTimedStep();
          step.setGoalPosition(footstepMessage.getQuadrupedStepMessage().getGoalPosition());
          step.getTimeInterval().setInterval(footstepMessage.getTimeInterval().getStartTime(), footstepMessage.getTimeInterval().getEndTime());
          step.setGroundClearance(footstepMessage.getQuadrupedStepMessage().getGroundClearance());

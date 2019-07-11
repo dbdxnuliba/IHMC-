@@ -3,12 +3,9 @@ package us.ihmc.quadrupedFootstepPlanning.footstepPlanning;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.time.TimeInterval;
 
 import java.util.ArrayList;
@@ -16,7 +13,7 @@ import java.util.Collections;
 
 public class FootstepPlan
 {
-   private final ArrayList<QuadrupedTimedOrientedStep> footsteps = new ArrayList<>();
+   private final ArrayList<QuadrupedTimedStep> footsteps = new ArrayList<>();
    private final FramePose3D lowLevelPlanGoal = new FramePose3D();
 
    public FootstepPlan()
@@ -38,7 +35,7 @@ public class FootstepPlan
       return footsteps.get(footstepIndex);
    }
 
-   public void addFootstep(QuadrupedTimedOrientedStep footstep)
+   public void addFootstep(QuadrupedTimedStep footstep)
    {
       footsteps.add(footstep);
    }
@@ -48,14 +45,14 @@ public class FootstepPlan
       footsteps.addAll(other.footsteps);
    }
 
-   public QuadrupedTimedOrientedStep addFootstep(RobotQuadrant robotQuadrant, FramePoint3D soleFramePoint, double groundClearance, TimeInterval timeInterval)
+   public QuadrupedTimedStep addFootstep(RobotQuadrant robotQuadrant, FramePoint3D soleFramePoint, double groundClearance, TimeInterval timeInterval)
    {
       return addFootstep(robotQuadrant, soleFramePoint, timeInterval.getStartTime(), groundClearance, timeInterval.getEndTime());
    }
 
-   public QuadrupedTimedOrientedStep addFootstep(RobotQuadrant robotQuadrant, FramePoint3D soleFramePoint, double groundClearance, double startTime, double endTime)
+   public QuadrupedTimedStep addFootstep(RobotQuadrant robotQuadrant, FramePoint3D soleFramePoint, double groundClearance, double startTime, double endTime)
    {
-      QuadrupedTimedOrientedStep footstep = new QuadrupedTimedOrientedStep();
+      QuadrupedTimedStep footstep = new QuadrupedTimedStep();
       footstep.setRobotQuadrant(robotQuadrant);
       footstep.setGoalPosition(soleFramePoint);
       footstep.getTimeInterval().setInterval(startTime, endTime);

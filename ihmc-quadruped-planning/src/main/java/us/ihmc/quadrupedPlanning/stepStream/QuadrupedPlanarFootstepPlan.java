@@ -10,7 +10,6 @@ public class QuadrupedPlanarFootstepPlan
 {
    private final EndDependentList<QuadrupedTimedOrientedStep> currentSteps;
    private final PreallocatedList<QuadrupedTimedOrientedStep> plannedSteps;
-
    private final PreallocatedList<QuadrupedTimedOrientedStep> completeStepSequence;
 
    public QuadrupedPlanarFootstepPlan(int planCapacity)

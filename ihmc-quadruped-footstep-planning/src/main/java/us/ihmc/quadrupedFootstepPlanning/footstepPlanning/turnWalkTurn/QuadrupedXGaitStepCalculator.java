@@ -9,14 +9,13 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsBasics;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
-import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedWaypointBasedBodyPathProvider;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapper;
 import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedBodyPathPlan;
+import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedWaypointBasedBodyPathProvider;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.time.TimeIntervalBasics;
@@ -51,10 +50,10 @@ public class QuadrupedXGaitStepCalculator
    private final FramePose2D bodyPathPose = new FramePose2D();
    private PointFootSnapper snapper = null;
 
-   private final EndDependentList<QuadrupedTimedOrientedStep> currentSteps = new EndDependentList<>(new QuadrupedTimedOrientedStep(), new QuadrupedTimedOrientedStep());
-   private final RecyclingArrayList<QuadrupedTimedOrientedStep> stepPlan = new RecyclingArrayList<>(QuadrupedTimedOrientedStep::new);
+   private final EndDependentList<QuadrupedTimedStep> currentSteps = new EndDependentList<>(new QuadrupedTimedStep(), new QuadrupedTimedStep());
+   private final RecyclingArrayList<QuadrupedTimedStep> stepPlan = new RecyclingArrayList<>(QuadrupedTimedStep::new);
 
-   private final RecyclingArrayList<QuadrupedTimedOrientedStep> completeStepSequence = new RecyclingArrayList<>(QuadrupedTimedOrientedStep::new);
+   private final RecyclingArrayList<QuadrupedTimedStep> completeStepSequence = new RecyclingArrayList<>(QuadrupedTimedStep::new);
 
    public QuadrupedXGaitStepCalculator(QuadrupedXGaitSettingsBasics xGaitSettings, YoDouble timestamp, QuadrupedReferenceFrames referenceFrames,
                                        DoubleProvider firstStepDelay, YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
@@ -141,11 +140,10 @@ public class QuadrupedXGaitStepCalculator
       computeOnlinePlan(currentTime);
    }
 
-   public List<QuadrupedTimedOrientedStep> getSteps()
+   public List<QuadrupedTimedStep> getSteps()
    {
       return getCompleteStepSequence(timestamp.getDoubleValue());
    }
-
 
 
    public void computePlan(RobotQuadrant initialStepQuadrant, double timeAtStartOfStep)
@@ -162,12 +160,12 @@ public class QuadrupedXGaitStepCalculator
       // plan steps
       double lastStepStartTime = timeAtStartOfStep;
       RobotQuadrant lastStepQuadrant = initialStepQuadrant.getNextReversedRegularGaitSwingQuadrant();
-      QuadrantDependentList<QuadrupedTimedOrientedStep> lastSteps = new QuadrantDependentList<>();
+      QuadrantDependentList<QuadrupedTimedStep> lastSteps = new QuadrantDependentList<>();
 
       stepPlan.clear();
       while (!bodyAtGoal() || !stepsAreSquare(lastSteps))
       {
-         QuadrupedTimedOrientedStep step = stepPlan.add();
+         QuadrupedTimedStep step = stepPlan.add();
 
          // compute step quadrant
          RobotQuadrant thisStepQuadrant = lastStepQuadrant.getNextRegularGaitSwingQuadrant();
@@ -196,7 +194,6 @@ public class QuadrupedXGaitStepCalculator
          extrapolatePose(xGaitRectanglePose, thisStepEndTime);
 
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
-         step.setStepYaw(xGaitRectanglePose.getYaw());
 
          // compute step goal position by sampling the corner position of the xGait rectangle at touch down
          RobotQuadrant robotQuadrant = step.getRobotQuadrant();
@@ -234,7 +231,7 @@ public class QuadrupedXGaitStepCalculator
          xGaitRectangle.get(robotQuadrant).setZ(0);
       }
 
-      QuadrantDependentList<QuadrupedTimedOrientedStep> lastSteps = new QuadrantDependentList<>();
+      QuadrantDependentList<QuadrupedTimedStep> lastSteps = new QuadrantDependentList<>();
       stepPlan.clear();
 
       RobotEnd thisStepEnd = latestStep.getRobotQuadrant().getOppositeEnd();
@@ -244,7 +241,7 @@ public class QuadrupedXGaitStepCalculator
       while (!bodyAtGoal() || !stepsAreSquare(lastSteps))
       {
          // compute step quadrants and time intervals
-         QuadrupedTimedOrientedStep thisStep = stepPlan.add();
+         QuadrupedTimedStep thisStep = stepPlan.add();
          QuadrupedTimedStep pastStepOnSameEnd = pastSteps.get(thisStepEnd);
          QuadrupedTimedStep pastStepOnOppositeEnd = pastSteps.get(thisStepEnd.getOppositeEnd());
 
@@ -264,7 +261,6 @@ public class QuadrupedXGaitStepCalculator
          double endTime = thisTimeInterval.getEndTime();
          extrapolatePose(xGaitRectanglePose, endTime);
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
-         thisStep.setStepYaw(xGaitRectanglePose.getYaw());
 
          // compute step goal position by sampling the corner position of the xGait rectangle at touchdown
          stepGoalPosition.setIncludingFrame(xGaitRectangle.get(thisStepQuadrant));
@@ -283,12 +279,12 @@ public class QuadrupedXGaitStepCalculator
       }
    }
 
-   private void snapStep(QuadrupedTimedOrientedStep step)
+   private void snapStep(QuadrupedTimedStep step)
    {
       snapStep(step, Double.NEGATIVE_INFINITY);
    }
 
-   private void snapStep(QuadrupedTimedOrientedStep step, double previousStepZValue)
+   private void snapStep(QuadrupedTimedStep step, double previousStepZValue)
    {
       if (snapper != null)
       {
@@ -346,7 +342,7 @@ public class QuadrupedXGaitStepCalculator
       }
    }
 
-   private RecyclingArrayList<QuadrupedTimedOrientedStep> getCompleteStepSequence(double currentTime)
+   private RecyclingArrayList<QuadrupedTimedStep> getCompleteStepSequence(double currentTime)
    {
       completeStepSequence.clear();
       for (RobotEnd robotEnd : RobotEnd.values)
@@ -370,11 +366,11 @@ public class QuadrupedXGaitStepCalculator
    private static final double atGoalEpsilon = 2.0e-3;
    private final FramePoint3D stepPosition = new FramePoint3D();
 
-   private boolean stepsAreSquare(QuadrantDependentList<QuadrupedTimedOrientedStep> lastSteps)
+   private boolean stepsAreSquare(QuadrantDependentList<QuadrupedTimedStep> lastSteps)
    {
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         QuadrupedTimedOrientedStep step = lastSteps.get(robotQuadrant);
+         QuadrupedTimedStep step = lastSteps.get(robotQuadrant);
          if (step == null)
             return false;
 

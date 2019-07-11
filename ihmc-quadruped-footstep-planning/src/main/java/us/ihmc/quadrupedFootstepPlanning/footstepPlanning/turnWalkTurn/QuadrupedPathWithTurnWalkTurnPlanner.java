@@ -6,6 +6,7 @@ import us.ihmc.pathPlanning.bodyPathPlanner.BodyPathPlanner;
 import us.ihmc.pathPlanning.bodyPathPlanner.WaypointDefinedBodyPathPlanner;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.BodyPathPlan;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
+import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.*;
 import us.ihmc.quadrupedFootstepPlanning.pathPlanning.WaypointsForQuadrupedFootstepPlanner;
@@ -149,7 +150,7 @@ public abstract class QuadrupedPathWithTurnWalkTurnPlanner implements QuadrupedB
    public FootstepPlan getPlan()
    {
       FootstepPlan plan = new FootstepPlan();
-      List<QuadrupedTimedOrientedStep> steps = stepCalculator.getSteps();
+      List<QuadrupedTimedStep> steps = stepCalculator.getSteps();
       TimeIntervalTools.sortByStartTime(steps);
       double startTime = steps.get(0).getTimeInterval().getStartTime();
       steps.forEach(step -> step.getTimeInterval().shiftInterval(-startTime));
