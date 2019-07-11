@@ -32,8 +32,9 @@ public class KickBehavior extends AbstractBehavior
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final YoDouble yoTime;
    private final ReferenceFrame midZupFrame;
-   private YoBoolean hasInputBeenSet = new YoBoolean("hasInputBeenSet", registry);
+   private YoBoolean hasInputBeenSet = new YoBoolean("hasInputBeenSet", registry); //the registry is similar to behavior name
    private final FootTrajectoryBehavior footTrajectoryBehavior;
+   private YoBoolean yoprint;
 
    private FramePoint2D objectToKickPose;
 
@@ -54,8 +55,9 @@ public class KickBehavior extends AbstractBehavior
       trajectoryTime.set(0.5);
       ankleZUpFrames = referenceFrames.getAnkleZUpReferenceFrames();
 
-      footTrajectoryBehavior = new FootTrajectoryBehavior(robotName, ros2Node, yoTime, yoDoubleSupport);
+      footTrajectoryBehavior = new FootTrajectoryBehavior(robotName, ros2Node, yoTime, yoDoubleSupport); //this guy also takes in yoDoubleSupport and the yoDoubleSupport is getting updated
       registry.addChild(footTrajectoryBehavior.getYoVariableRegistry());
+      this.yoprint = yoDoubleSupport;
    }
 
    @Override
@@ -70,6 +72,12 @@ public class KickBehavior extends AbstractBehavior
       else
       {
          pipeLine.doControl();
+         int t = 0;
+         if(t%10000 == 0)
+         {
+            System.out.println(yoprint.getValue());
+            t++;
+         }
       }
    }
 
@@ -89,7 +97,7 @@ public class KickBehavior extends AbstractBehavior
 
    private void setupPipeline()
    {
-      final RobotSide kickFoot = RobotSide.LEFT;
+      final RobotSide kickFoot = RobotSide.LEFT; //left foot will be used to emulate kick behavior
 
       // submitFootPosition(kickFoot.getOppositeSide(), new
       // FramePoint(ankleZUpFrames.get(kickFoot), 0.0,
@@ -105,7 +113,7 @@ public class KickBehavior extends AbstractBehavior
       // FramePoint(ankleZUpFrames.get(kickFoot), 0.0,
       // kickFoot.getOppositeSide().negateIfRightSide(0.35), 0));
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.227));
+      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.227)); //negates the value itself
 
       submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), -0.2, kickFoot.negateIfRightSide(0.15), 0.127));
 
@@ -145,7 +153,7 @@ public class KickBehavior extends AbstractBehavior
       desiredFootPose.changeFrame(worldFrame);
       Point3D desiredFootPosition = new Point3D();
       Quaternion desiredFootOrientation = new Quaternion();
-      desiredFootPose.get(desiredFootPosition, desiredFootOrientation);
+      desiredFootPose.get(desiredFootPosition, desiredFootOrientation); //assign the value from wroldframe perspective the position and orientation value
       FootTrajectoryTask task = new FootTrajectoryTask(robotSide, desiredFootPosition, desiredFootOrientation, footTrajectoryBehavior,
                                                        trajectoryTime.getDoubleValue());
       pipeLine.submitSingleTaskStage(task);

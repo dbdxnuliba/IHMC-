@@ -1,7 +1,7 @@
 <GraphGroup>
 	<Cols>1</Cols>
 	<Graph>
-		<Variables>root.atlas.t</Variables>
+		<Variables>root.atlas.t,root.atlas.DRCSimulation.DRCControllerThread.DRCMomentumBasedController.HumanoidHighLevelControllerManager.WalkingControllerState.LinearMomentumRateControlModule.ICPOptimizationController.controllerIsInDoubleSupport</Variables>
 		<GraphConfiguration>
 			<Name>config1</Name>
 			<ScalingMethod>1</ScalingMethod>
@@ -67,9 +67,9 @@ null,
 
 <Current View>Normal View</Current View>
  <Canvas 1> 
- <Camera X>11.231014487237218</Camera X>
- <Camera Y>-13.021608925020908</Camera Y>
- <Camera Z>1.3492959395924844</Camera Z>
+ <Camera X>8.55702850217027</Camera X>
+ <Camera Y>9.340644014157853</Camera Y>
+ <Camera Z>1.7244887383204617</Camera Z>
  <Dolly data> 
  <Position X>2.0</Position X>
  <Position Y>12.0</Position Y>
@@ -93,8 +93,8 @@ null,
 </Track Booleans>
 </Track data>
 <Fix Position>
-<Fix X>2.1429603881843864</Fix X>
-<Fix Y>1.743489216515984</Fix Y>
-<Fix Z>0.2840559151553885</Fix Z>
+<Fix X>5.5965826869020825</Fix X>
+<Fix Y>-3.832726860466094</Fix Y>
+<Fix Z>0.7581689727908166</Fix Z>
 </Fix Position>
 </Canvas 1>

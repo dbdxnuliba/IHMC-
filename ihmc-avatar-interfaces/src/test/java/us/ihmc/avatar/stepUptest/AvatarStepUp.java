@@ -74,14 +74,9 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private int tmpcounter = 0;
 
    public us.ihmc.euclid.tuple3D.Point3D waypointtotransfer;
-   //private AvatarStepUp planner;
+
    private YoVariableRegistry registry = new YoVariableRegistry("testRegistry");
    private AStarFootstepPlanner planner;
-   private YoBoolean walkPaused;
-   private AvatarSimulation avatarSimulation;
-   private Robot[] robots;
-//   protected SimulationTestingParameters simulationTestingParameters;
-//   private IHMCROS2Publisher<VideoPacket> scsCameraPublisher;
 
    private int numberOfFootstepByPlanner;
    private double stepLength = 0.7;
@@ -93,9 +88,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private final AtlasJointMap jointMap = new AtlasJointMap(version,robotModel.getPhysicalProperties());//cannot use getRobotModel its of type DRCRobotModel while AtlasJintMap requires AtlasRobotModel object
    private ArmJointName[] armJoint = getArmJointNames();
    private Random random = new Random(42);
-   //private DRCRobotModel robotModela = getRobotModel();
-   private FullHumanoidRobotModel fullRobotModel;// = getRobotModel().createFullRobotModel();
-   private WalkingControllerParameters walkingControllerParameters;
+   private FullHumanoidRobotModel fullRobotModel;
 
    private final boolean IS_PAUSING_ON = false;  //should be false for now
    private boolean IS_CHEST_ON = false;   //reset to final after testing
@@ -112,11 +105,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private YoGraphicsListRegistry yoGraphicsListRegistry;
    private HumanoidReferenceFrames referenceFrames;
    private YoBoolean yoDoubleSupport;
-   //private FullHumanoidRobotModel fullRobotModel;
    private AtlasPrimitiveActions atlasPrimitiveActions;
-   //private AtomicReference<WalkingStatusMessage> newStatusReference = new AtomicReference<>(null); //creates an atomic reference with the given initial value
    private WalkingStatusMessage newStatusReference = new WalkingStatusMessage();
-   //private WalkingStatusMessage abc =  newStatusReference.get();
    private StepUpDoor stepUpDoor;
 
 
@@ -176,7 +166,6 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
                                            this::checkAndPublishChestTrajectoryMessage);
       //robot = drcSimulationTestHelper.getRobot();
       fullRobotModel = getRobotModel().createFullRobotModel();
-      walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
 
 
       behaviorDispatcher = setupBehaviorDispatcher(getRobotModel().getSimpleRobotName(), fullRobotModel, ros2Node, yoGraphicsListRegistry, registry);
@@ -186,9 +175,9 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       yoDoubleSupport = capturePointUpdatable.getYoDoubleSupport();
 
+
+
       //WholeBodyControllerParameters wholeBodyControllerParameters;
-
-
 
 
       HumanoidRobotSensorInformation sensorInformation = getRobotModel().getSensorInformation();
@@ -203,85 +192,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       atlasPrimitiveActions = new AtlasPrimitiveActions(getSimpleRobotName(), ros2Node, getRobotModel().getFootstepPlannerParameters(),fullRobotModel, atlasRobotModel, referenceFrames, yoTime, robotModel, registry);
    }
-//
-//   @BeforeEach
-//   public void cameraRelatedStuff()
-//   {
-//      scsCameraPublisher = new IHMCROS2Publisher<>(ros2Node, VideoPacket.class);
-//      SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
-//
-//      ROS2Input<RobotConfigurationData> robotConfigurationData = new ROS2Input<>(ros2Node,
-//                                                                                 RobotConfigurationData.class,
-//                                                                                 robotModel.getSimpleRobotName(),
-//                                                                                 HighLevelHumanoidControllerFactory.ROS2_ID);
-//      String cameraName = "camera";
-//      CameraConfiguration cameraConfiguration = new CameraConfiguration(cameraName);
-//      scs.setupCamera(cameraConfiguration);
-//
-//
-//
-//      cameraConfiguration.setCameraMount(cameraName);
-//
-//
-//      int width = 1024;
-//      int height = 544;
-//      int framesPerSecond = 25;
-//      scs.startStreamingVideoData(cameraConfiguration,
-//                                  width,
-//                                  height,
-//                                  new VideoDataServerImageCallback(new VideoPacketCallback()),
-//                                  () -> robotConfigurationData.getLatest().getSyncTimestamp(),
-//                                  framesPerSecond);
-//      //scs.startStreamingVideoData();
-//   }
-//
-//   private static final java.lang.Object hackyLockBecauseJPEGEncoderIsNotThreadsafe = new Object();
-//
-//   class VideoPacketCallback implements VideoDataServer
-//   {
-//      private final YUVPictureConverter converter = new YUVPictureConverter();
-//      private final JPEGEncoder encoder = new JPEGEncoder();
-//
-//      @Override
-//      public void onFrame(VideoSource videoSource,
-//                          BufferedImage bufferedImage,
-//                          long timeStamp,
-//                          Point3DReadOnly cameraPosition,
-//                          QuaternionReadOnly cameraOrientation,
-//                          IntrinsicParameters intrinsicParameters)
-//      {
-//
-//         YUVPicture picture = converter.fromBufferedImage(bufferedImage, YUVSubsamplingType.YUV420);
-//         try
-//         {
-//            ByteBuffer buffer;
-//            synchronized (hackyLockBecauseJPEGEncoderIsNotThreadsafe)
-//            {
-//               buffer = encoder.encode(picture, 75);
-//            }
-//            byte[] data = new byte[buffer.remaining()];
-//            buffer.get(data);
-//            VideoPacket videoPacket = HumanoidMessageTools.createVideoPacket(videoSource,
-//                                                                             timeStamp,
-//                                                                             data,
-//                                                                             cameraPosition,
-//                                                                             cameraOrientation,
-//                                                                             intrinsicParameters);
-//            scsCameraPublisher.publish(videoPacket);
-//         }
-//         catch (IOException e)
-//         {
-//            e.printStackTrace();
-//         }
-//         picture.delete();
-//      }
-//
-//      @Override
-//      public boolean isConnected()
-//      {
-//         return true; // do nothing
-//      }
-//   }
+
 
    private void checkAndPublishChestTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {
@@ -315,7 +226,6 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          fullRobotModel = null;
          //worldFrame = null;
          referenceFrames = null;
-         walkingControllerParameters = null;
          robotDataReceiver = null;
          behaviorDispatcher = null;
          newStatusReference = null;
@@ -387,7 +297,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       CapturePointUpdatable ret = new CapturePointUpdatable(capturabilityBasedStatusSubsrciber, yoGraphicsListRegistry, registry);
 
-      return ret;
+      return ret; // so this is continuously getting updated
    }
 
    //start writing your step up code here now
@@ -398,13 +308,6 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       double swingHeight = 0.15; //maybe needs to be changed
       //walkingStair(stepHeight, swingHeight);
       setPublishers(IS_LEFTARM_ON, IS_RIGHTARM_ON, IS_CHEST_ON, IS_FOOTSTEP_ON, IS_PELVIS_ON, IS_PAUSING_ON,  stepHeight, swingHeight);
-
-   }
-
-   @Test
-   public void stepUpBig() throws SimulationExceededMaximumTimeException
-   {
-      double stepHeight = 0.5;
 
    }
 
@@ -463,36 +366,21 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          pauseWhileWalking(IS_PAUSING_ON);
       }
 
-      WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
-
-//      double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTouchdownTime();
-//      double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
-
       // robot fell
 //      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));
-      //drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0);
       // robot did not fall but did not reach goal
 //      assertreached(footsteps);
-      //if(abc.getWalkingStatus() == 1)
       ThreadTools.sleepForever(); //does not kill the simulation
    }
 
    private void callDoorTiminingBehavior()
    {
-      //DoorTimingBehaviorAutomated doorTimingBehaviorAutomated = new DoorTimingBehaviorAutomated(getSimpleRobotName(),ros2Node, yoTime,yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions,yoGraphicsListRegistry);
 
-      //WalkThroughDoorBehavior WalkThroughDoor = new WalkThroughDoorBehavior(getSimpleRobotName(),"automateDoorBehavior", ros2Node, yoTime, yoDoubleSupport, fullRobotModel, referenceFrames, robotModel, atlasPrimitiveActions, yoGraphicsListRegistry);
       SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, stepUpDoor);
-
-      //FiducialDetectorBehaviorService fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(getSimpleRobotName(), FiducialDetectorBehaviorService.class.getSimpleName(),ros2Node,yoGraphicsListRegistry);
-
-      //HumanoidBehaviorTypePacket requestwalkthroughdoor = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.WALK_THROUGH_DOOR);
       HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
       System.out.println("behavior byte info :- ");
 
-      //drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestwalkthroughdoor);
       drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
-      //behaviorDispatcher.addBehavior(HumanoidBehaviorType.WALK_THROUGH_DOOR,WalkThroughDoor);
       behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
       behaviorDispatcher.start();
    }
@@ -661,30 +549,6 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       //bend.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(yaw.getSequenceId());
       drcSimulationTestHelper.publishToController(straight);
 
-      /*
-
-      ChestTrajectoryMessage yaw = HumanoidMessageTools.createChestTrajectoryMessage(trajectoryTime, desiredChestOrientations[1], dataframe, trajectoryFrame);
-      yaw.getSo3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE.toByte());
-      yaw.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(-1);
-      //bend.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(yaw.getSequenceId());
-      drcSimulationTestHelper.publishToController(yaw);
-
-      ChestTrajectoryMessage roll = HumanoidMessageTools.createChestTrajectoryMessage(trajectoryTime, desiredChestOrientations[2], dataframe, trajectoryFrame);
-      roll.getSo3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE.toByte());
-      roll  .getSo3Trajectory().getQueueingProperties().setPreviousMessageId(-1);
-      //bend.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(yaw.getSequenceId());
-      drcSimulationTestHelper.publishToController(roll);
-      /*
-      ChestTrajectoryMessage straight1 = HumanoidMessageTools.createChestTrajectoryMessage(trajectoryTime, desiredChestOrientations[3], dataframe, trajectoryFrame);
-      straight1.getSo3Trajectory().getQueueingProperties().setExecutionMode(ExecutionMode.QUEUE.toByte());
-      straight1.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(-1);
-      //bend.getSo3Trajectory().getQueueingProperties().setPreviousMessageId(yaw.getSequenceId());
-      drcSimulationTestHelper.publishToController(straight1);
-
-      System.out.println("yaw ID: " + bend.getSequenceId());
-      System.out.println("bend ID:" + bend.getSequenceId());
-      System.out.println("yaw1 ID: " + roll.getSequenceId());
-      System.out.println("yaw2 ID: " + straight.getSequenceId());*/
    }
 
    /**
@@ -791,15 +655,9 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       double swingTime = 2.0;
       double defaultTransferTime = robotModel.getWalkingControllerParameters().getDefaultTransferTime();
 
-      ///create a object for the footstepdtatalistmessage class
-      //FootstepDataListMessage footstepDataListMessage = HumanoidMessageTools.createFootstepDataListMessage(swingTime, defaultTransferTime);
       FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
-      //footstepDataListMessage.setExecutionTiming(ExecutionTiming.CONTROL_ABSOLUTE_TIMINGS.toByte());
-      //footstepDataListMessage.setAreFootstepsAdjustable(false); //try changing this later to see the changes
 
       RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(RobotSide.LEFT, 4);
-
-      //RobotSide side = RobotSide.LEFT;
       RobotSide tempright = RobotSide.RIGHT;
       MovingReferenceFrame soleZUpFramel = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(robotSides[0]); //left side
       MovingReferenceFrame soleZUpFramer = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(tempright); //right side
@@ -812,8 +670,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       double zsole = solereferencel.getPosition().getZ();
 
       boolean LOCAL_DEBUG = false;
-      //add them to a object of class footstepdatalistmessage
-      for (int i = 0 ; i < 4; i++)   //get there in 4 steps - trying making this autonomous in future
+
+      for (int i = 0 ; i < 4; i++)
       {
          //update robot side and variables
          xsole += 0.18;
@@ -895,8 +753,6 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       }
    }
 
-
-
    private void assertreached(FootstepDataListMessage footsteps)
    {
       int numberofsteps = footsteps.getFootstepDataList().size();
@@ -917,39 +773,10 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private DRCRobotModel setTestEnvironment(double stepHeight) throws SimulationExceededMaximumTimeException
    {
 
-     /*
-      //DRCFinalsEnvironment environment = new DRCFinalsEnvironment(true, false, false,false,true);
-      //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
-
-      //Point3D doorPosition = new Point3D(2.0 + 1.0, 0.0, 0.0);
-      //ContactableDoorRobot door = new ContactableDoorRobot("doorRobot", doorPosition);
-      //YoVariableRegistry doorTestRegistry = new YoVariableRegistry("doorTestRegistry");
-      //contactableRobots.add(door);
-      //robots = new Robot[1];
-      //robots[0] = door;
-      //SimulationConstructionSet scs = new SimulationConstructionSet(robots, SimulationConstructionSetParameters.createFromSystemProperties());
-      //scs.addYoVariableRegistry(doorTestRegistry);
-      //door.createAvailableContactPoints(0,15,15,0.02,true);
-      //BlockingSimulationRunner blockingSimulationRunner = new BlockingSimulationRunner(scs, 60);
-      //blockingSimulationRunner.simulateAndBlock(20.0);
-
-      DRCRobotModel robotModel = getRobotModel();
-
-      //pass this reference to the simulator
-      //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
-      //drcSimulationTestHelper = new DRCSimulationStarter(robotModel,wall);
-      //drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, DRCRobotModel atlasRobotModel, adjustableStairsEnvironment);
-      drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
-      drcSimulationTestHelper.createSimulation(className);
-      //PushRobotController pushRobotController = new PushRobotController(drcSimulationTestHelper.getRobot(), robotModel.createFullRobotModel().getChest().getParentJoint().getName(), new Vector3D(0.0, 0.0, 0.15));
-
-      */
       setUpCamera();
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.25);
-
       assertTrue(success);
-
       return robotModel;
    }
 
@@ -979,79 +806,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       public int getMinimumStepsForBestEffortPlan(){return minimumStepsForBestEffortPlan;}
    }
    //public us.ihmc.euclid.tuple3D.Point3D getWaypoint()
-   //@Override
-   //
-   /*
-   public FootstepPlanner getPlanner()
-   {
-      return planner;
-   }*/
 
-/*
-   private void getPinJoints(Robot robot, List<PinJoint> pinJoint) //call the recursivelyAddPinJoints to get a list of all PinJoint(only) and ignore the other types of joints
-   {
-      for(Joint rootJoint : robot.getRootJoints())
-      {
-         recursivelyAddPinJoints(rootJoint, pinJoint);
-      }
-   }
-   private void createTorqueGraphs(SimulationConstructionSet scs, Robot robot)
-   {
-
-      List<PinJoint> pinJoints = new ArrayList<>();
-
-      getPinJoints(robot, pinJoints);
-
-      List<String> torsojoints = new ArrayList<String>();
-      List<String> leftlegjoints = new ArrayList<String>();
-      List<String> rightlegjoints = new ArrayList<String>();
-
-      for (PinJoint joint : pinJoints)
-      {
-         String name = joint.getTauYoVariable().getName();
-
-         if (name.contains("l_leg"))
-         {
-            leftlegjoints.add(name);
-         }
-         else if (name.contains("r_leg"))
-         {
-            rightlegjoints.add(name);
-         }
-         else if (name.contains("back"))
-         {
-            torsojoints.add(name);
-         }
-
-         addGraph(scs, torsojoints);
-         addGraph(scs, leftlegjoints);
-         addGraph(scs, rightlegjoints);
-      }
-   }
-
-      private void addGraph(SimulationConstructionSet scs, List<String> joint)
-      {
-         //scs.setupGraph(joint.toArray(new String[0])); //casting it to string object so that it can be passed to plot graph
-      }
-
-      private void printMinMax(SimulationConstructionSet scs)
-      {
-         StandardSimulationGUI window = scs.getGUI();
-         GraphArrayPanel panel = window.getGraphArrayPanel();
-         ArrayList<YoGraph> graphs = panel.getGraphsOnThisPanel();
-
-         if (graphs.size() != 0)
-         {
-            return;
-         }
-
-         for(YoGraph graph: graphs)
-         {
-            ArrayList<DataEntry> entries = graph. getEntriesOnThisGraph();
-            entries.forEach(entry -> System.out.println(entry.getVariableName() + "Max Torque: [" + Math.max(Math.abs(entry.getMin()), Math.abs(entry.getMax()))+ "]"));
-         }
-      }
-*/
 }
 
 

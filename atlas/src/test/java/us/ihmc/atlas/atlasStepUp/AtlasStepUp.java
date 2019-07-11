@@ -22,14 +22,6 @@ public class AtlasStepUp extends AvatarStepUp
       super.stepUpSmall();
    }
 
-
-   @Override
-   @Test
-   public void stepUpBig() throws SimulationExceededMaximumTimeException
-   {
-      super.stepUpBig();
-   }
-
    @Override
    public DRCRobotModel getRobotModel()
    {

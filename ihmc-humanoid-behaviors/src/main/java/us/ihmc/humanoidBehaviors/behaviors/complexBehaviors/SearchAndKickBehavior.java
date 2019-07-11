@@ -34,16 +34,14 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       //add a stop behavior (checkout behavior dispatcher line179 more details)
    }
 
-   //reset your arms
 
-//   private final boolean TUCK_IN_ARMS = true;
 
    //set waypoint for walk to interactable objects w.r.t to the object location
 
    private Vector3D offsetwaypoint1 = new Vector3D(0.5f,-0.9f,0f); //these indicate that you are kinda swaying but why???
    private Vector3D offsetwaypoint2 = new Vector3D(0.5f,-0.6f,0f);
 
-   private boolean BALL_DETECTION = true;
+   private boolean BALL_DETECTION = false;
 
    private final double standingDistance = 0.4;
 
@@ -52,21 +50,13 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //   private final AtlasPrimitiveActions atlasPrimitiveActions;
    private final SleepBehavior sleepBehavior;
    private final StepUpDoor environment;
-   //environment variable
-//   DefaultCommonAvatarEnvironment environment;
+   private YoBoolean yoDoubleSuport;
 
-
-   //private final OpenDoorBehavior openDoorBehavior;
-//   private final WalkToInteractableObjectBehavior walkToInteractableObjectBehavior;
    private final ResetRobotBehavior resetRobotBehavior;
    private final WalkToLocationBehavior walkToLocationBehavior;
    private final KickBehavior kickTheBall;
    private final SphereDetectionBehavior sphereDetctionBehavior;
 
-
-   //create publishers and subscribers if any
-   //private IHMCROS2Publisher<DoorLocationPacket> doortobehaviorpublisher;
-   //private IHMCROS2Publisher<DoorLocationPacket> doortoUIpublisher;
    private final HumanoidReferenceFrames referenceFrames;
 
 
@@ -82,59 +72,24 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
       kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
       this.environment = environment;
+      this.yoDoubleSuport = yoDoubleSupport;
 
-//      this.atlasPrimitiveActions = atlasPrimitiveActions;
-
-      //setting up environment variable
-//      this.environment = environment;
-      //setting up behaviors
-
-//      walkToInteractableObjectBehavior = new WalkToInteractableObjectBehavior(robotName,yoTime,ros2Node, atlasPrimitiveActions);
       walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
       sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
-      //setting up publisher
-      //doortobehaviorpublisher = createBehaviorOutputPublisher(DoorLocationPacket.class);
-      //doortoUIpublisher = createBehaviorInputPublisher(DoorLocationPacket.class);
 
-      //calling parent setup method which configures the stateMachineFactory()
       setupStateMachine();
    }
 
 
-//   doControl
-//   @Override
-//   public void doControl()
-//   {
-//      // should continuously check if the door is open or not
-//      //Todo replace this with the new behavior service independent of the fiducial detection
-//      if(doorOpenDetectorBehaviorService.newPose != null)
-//      {
-//         Point3D location = new Point3D();
-//         Quaternion orientation = new Quaternion();
-//         doorOpenDetectorBehaviorService.newPose.get(location,orientation);
-//         publishUIPositionCheckerPacket(location, orientation); //dont think this is necessary for now
-//      }
-//
-//      if(isDoorOpen != doorOpenDetectorBehaviorService.isDoorOpen())
-//      {
-//         isDoorOpen = true; // make it more robust by writing = doorOpen##.isdone() which will return true
-//         publishTextToSpeech(" Door is open");
-//      }
-//
-//
-//      //access the door pose
-//      StepUpDoor tmp = new StepUpDoor(0.5,1.7,0.3);
-//      Pose3D doorFramePose = new Pose3D(tmp.getDoorFramePose().getPosition(), tmp.getDoorFramePose().getOrientation());
-//
-//      //over write the new pose3d with a door pose abstracted from the environment
-//      doortobehaviorpublisher.publish(HumanoidMessageTools.createDoorLocationPacket(doorFramePose));
-//      doortoUIpublisher.publish(HumanoidMessageTools.createDoorLocationPacket(doorFramePose));
-//   }
 
-   //Also have setup my own pipeline (refer reset robot behavior)
+   @Override
+   public void doControl()
+   {
+      super.doControl();
+   }
 
-   //OnBehavviorEntered
+
    @Override
    public void onBehaviorEntered()
    {
@@ -142,13 +97,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       super.onBehaviorEntered();
    }
 
-//   protected void setupPipeLine()
-//   {
-//      pipeLine.clearAll();
-//      pipeLine.requestNewStage();
-//      pipeLine.sub
-//   }
-   //ConfigureStateMAchineANdInitialKEy
    @Override
    public WalkThroughDoorWOFiducialStates configureStateMachineAndReturnInitialKey(StateMachineFactory<WalkThroughDoorWOFiducialStates, BehaviorAction> factory)
    {
@@ -197,19 +145,9 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             kickTheBall.setObjectToKickPoint(balltoKickLocation);
          }
 
-//         @Override
-//         public void onExit()
-//         {
-//            publishTextToSpeech("exiting kick behavior");
-//            super.onExit();
-//            //System.out.println("sfhhf");
-//         }
+
       };
 
-      //BehaviorAction kickTheBall = new BehaviorAction(kicktheball);
-      // get to original stance
-      //BehaviorAction resetrobot2 = new BehaviorAction(resetRobotBehavior);
-      //add done state
       BehaviorAction doneState = new BehaviorAction(sleepBehavior)
       {
          @Override
@@ -234,7 +172,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       {
          //start adding them to the state factory
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
          factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
@@ -244,21 +181,11 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       return WalkThroughDoorWOFiducialStates.SETUP_ROBOT;
    }
 
-//   private FramePoint3D offsetPointFromTheObject(Vector3D point)
-//   {
-//      PoseReferenceFrame objectPose = new PoseReferenceFrame("objecPose", ReferenceFrame.getWorldFrame());
-//      objectPose.setPoseAndUpdate(new Pose3D(sphereDetctionBehavior.getBallLocation()));
-//
-//      FramePoint3D ret = new FramePoint3D(objectPose,point);
-//      return ret;
-//
-//   }
 
    private FramePose2D getoffsetPoint()
    {
       FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition()-0.2,
                                                      0.0);
-//                                                     sphereDetctionBehavior.getBallLocation().getY());
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(), 0.0, 0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
       FrameVector2D walkingDirection = new FrameVector2D(referenceFrames.getWorldFrame());
