@@ -31,6 +31,14 @@ public class AtlasCollisionAvoidanceTest extends AvatarCollisionAvoidanceTest
    }
 
    @Test
+   public void testWalkingUpOfMediumStepWithCustomTrajectories() throws SimulationExceededMaximumTimeException
+   {
+      ArrayList<Double> stepHeights = new ArrayList<Double>();
+      stepHeights.add(0.48);
+      super.walkUpToHighStepWithCustomTrajectories(stepHeights);
+   }
+
+   @Test
    public void testWalkingUpAndDownOf2MediumStepsAndASmallStep() throws SimulationExceededMaximumTimeException
    {
       ArrayList<Double> stepHeights = new ArrayList<Double>();
