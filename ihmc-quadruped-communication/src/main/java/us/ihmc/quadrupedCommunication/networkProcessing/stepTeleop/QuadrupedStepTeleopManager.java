@@ -2,25 +2,22 @@ package us.ihmc.quadrupedCommunication.networkProcessing.stepTeleop;
 
 import controller_msgs.msg.dds.*;
 import us.ihmc.commons.Conversions;
-import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedMessageTools;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsBasics;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
-import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedBodyPathMultiplexer;
 import us.ihmc.quadrupedPlanning.footstepChooser.PlanarGroundPointFootSnapper;
 import us.ihmc.quadrupedPlanning.footstepChooser.PlanarRegionBasedPointFootSnapper;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapperParameters;
 import us.ihmc.quadrupedPlanning.stepStream.QuadrupedXGaitStepStream;
+import us.ihmc.quadrupedPlanning.stepStream.bodyPath.QuadrupedBodyPathMultiplexer;
 import us.ihmc.robotics.math.filters.RateLimitedYoFrameVector;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
@@ -51,7 +48,6 @@ public class QuadrupedStepTeleopManager
    private final PlanarRegionBasedPointFootSnapper planarRegionSnapper;
 
    private QuadrupedTimedStepListMessage stepListMessage;
-   private QuadrupedBodyOrientationMessage bodyOrientationMessage;
 
    public QuadrupedStepTeleopManager(QuadrupedXGaitSettingsReadOnly defaultXGaitSettings, PointFootSnapperParameters pointFootSnapperParameters, QuadrupedReferenceFrames referenceFrames, double updateDT,
                                      YoGraphicsListRegistry graphicsListRegistry, YoVariableRegistry parentRegistry)
@@ -139,15 +135,12 @@ public class QuadrupedStepTeleopManager
       bodyPathMultiplexer.setPlanarVelocityForJoystickPath(limitedDesiredVelocity.getX(), limitedDesiredVelocity.getY(), limitedDesiredVelocity.getZ());
 
       stepListMessage = null;
-      bodyOrientationMessage = null;
 
       if (paused.get())
          return;
 
       stepStream.process();
-
       populateStepMessage();
-      populateBodyOrientationMessage();
    }
 
    public void sleep()
@@ -173,11 +166,6 @@ public class QuadrupedStepTeleopManager
       return stepListMessage;
    }
 
-   public QuadrupedBodyOrientationMessage getBodyOrientationMessage()
-   {
-      return bodyOrientationMessage;
-   }
-
    private void populateStepMessage()
    {
       List<? extends QuadrupedTimedStep> steps = stepStream.getSteps();
@@ -188,21 +176,5 @@ public class QuadrupedStepTeleopManager
       }
 
       stepListMessage = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(stepMessages, true);
-   }
-
-   private void populateBodyOrientationMessage()
-   {
-      bodyOrientationMessage = QuadrupedMessageTools.createQuadrupedWorldFrameYawMessage(getPlannedStepsSortedByEndTime(), limitedDesiredVelocity.getZ());
-   }
-
-   private final List<QuadrupedTimedOrientedStep> plannedStepsSortedByEndTime = new ArrayList<>();
-
-   private List<QuadrupedTimedOrientedStep> getPlannedStepsSortedByEndTime()
-   {
-      plannedStepsSortedByEndTime.clear();
-      PreallocatedList<QuadrupedTimedOrientedStep> plannedSteps = stepStream.getFootstepPlan().getPlannedSteps();
-      plannedStepsSortedByEndTime.addAll(plannedSteps);
-      TimeIntervalTools.sortByEndTime(plannedStepsSortedByEndTime);
-      return plannedStepsSortedByEndTime;
    }
 }

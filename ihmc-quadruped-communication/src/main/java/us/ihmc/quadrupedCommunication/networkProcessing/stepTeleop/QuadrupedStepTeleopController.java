@@ -102,7 +102,6 @@ public class QuadrupedStepTeleopController extends QuadrupedToolboxController
    {
       teleopManager.update();
       reportMessage(teleopManager.getStepListMessage());
-      reportMessage(teleopManager.getBodyOrientationMessage());
    }
 
    @Override

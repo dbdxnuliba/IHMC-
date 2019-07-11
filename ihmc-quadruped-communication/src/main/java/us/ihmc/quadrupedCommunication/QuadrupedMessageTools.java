@@ -56,37 +56,6 @@ public class QuadrupedMessageTools
       return message;
    }
 
-   public static QuadrupedBodyOrientationMessage createQuadrupedWorldFrameYawMessage(List<QuadrupedTimedOrientedStep> steps, double desiredYawVelocity)
-   {
-      QuadrupedBodyOrientationMessage message = new QuadrupedBodyOrientationMessage();
-      message.setIsAnOffsetOrientation(false);
-      message.setIsExpressedInAbsoluteTime(true);
-
-      SO3TrajectoryMessage trajectoryMessage = new SO3TrajectoryMessage();
-      for (int i = 0; i < steps.size(); i++)
-      {
-         QuadrupedTimedOrientedStep step = steps.get(i);
-         double yawVelocity = (i == steps.size() - 1) ? 0.0 : desiredYawVelocity;
-         Quaternion orientation = new Quaternion(step.getStepYaw(), 0.0, 0.0);
-         Vector3D velocity = new Vector3D(0.0, 0.0, yawVelocity);
-
-         SO3TrajectoryPointMessage orientationWaypoint = HumanoidMessageTools.createSO3TrajectoryPointMessage(step.getTimeInterval().getEndTime(), orientation, velocity);
-         trajectoryMessage.getTaskspaceTrajectoryPoints().add().set(orientationWaypoint);
-      }
-      trajectoryMessage.getSelectionMatrix().setXSelected(false);
-      trajectoryMessage.getSelectionMatrix().setYSelected(false);
-      trajectoryMessage.getSelectionMatrix().setZSelected(true);
-      message.getSo3Trajectory().set(trajectoryMessage);
-
-      return message;
-   }
-
-   public static QuadrupedTimedStepListMessage createQuadrupedTimedStepListMessage(List<QuadrupedTimedStepMessage> stepMessages)
-   {
-      return createQuadrupedTimedStepListMessage(stepMessages, true);
-   }
-
-
    public static QuadrupedTimedStepListMessage createQuadrupedTimedStepListMessage(List<QuadrupedTimedStepMessage> stepMessages,
                                                                                    boolean isExpressedInAbsoluteTime)
    {

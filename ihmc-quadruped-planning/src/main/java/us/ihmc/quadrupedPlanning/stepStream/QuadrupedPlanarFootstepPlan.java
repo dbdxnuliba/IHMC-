@@ -1,22 +1,21 @@
 package us.ihmc.quadrupedPlanning.stepStream;
 
 import us.ihmc.commons.lists.PreallocatedList;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 
 public class QuadrupedPlanarFootstepPlan
 {
-   private final EndDependentList<QuadrupedTimedOrientedStep> currentSteps;
-   private final PreallocatedList<QuadrupedTimedOrientedStep> plannedSteps;
-   private final PreallocatedList<QuadrupedTimedOrientedStep> completeStepSequence;
+   private final EndDependentList<QuadrupedTimedStep> currentSteps;
+   private final PreallocatedList<QuadrupedTimedStep> plannedSteps;
+   private final PreallocatedList<QuadrupedTimedStep> completeStepSequence;
 
    public QuadrupedPlanarFootstepPlan(int planCapacity)
    {
-      currentSteps = new EndDependentList<>(new QuadrupedTimedOrientedStep(), new QuadrupedTimedOrientedStep());
-      plannedSteps = new PreallocatedList<>(QuadrupedTimedOrientedStep.class, QuadrupedTimedOrientedStep::new, planCapacity);
-      completeStepSequence = new PreallocatedList<>(QuadrupedTimedOrientedStep.class, QuadrupedTimedOrientedStep::new, planCapacity + 2);
+      currentSteps = new EndDependentList<>(new QuadrupedTimedStep(), new QuadrupedTimedStep());
+      plannedSteps = new PreallocatedList<>(QuadrupedTimedStep.class, QuadrupedTimedStep::new, planCapacity);
+      completeStepSequence = new PreallocatedList<>(QuadrupedTimedStep.class, QuadrupedTimedStep::new, planCapacity + 2);
    }
 
    public void initializeCurrentStepsFromPlannedSteps()
@@ -40,17 +39,17 @@ public class QuadrupedPlanarFootstepPlan
       }
    }
 
-   public PreallocatedList<QuadrupedTimedOrientedStep> getPlannedSteps()
+   public PreallocatedList<QuadrupedTimedStep> getPlannedSteps()
    {
       return plannedSteps;
    }
 
-   public EndDependentList<QuadrupedTimedOrientedStep> getCurrentSteps()
+   public EndDependentList<QuadrupedTimedStep> getCurrentSteps()
    {
       return currentSteps;
    }
 
-   public PreallocatedList<QuadrupedTimedOrientedStep> getCompleteStepSequence(double currentTime)
+   public PreallocatedList<QuadrupedTimedStep> getCompleteStepSequence(double currentTime)
    {
       completeStepSequence.clear();
       for (RobotEnd robotEnd : RobotEnd.values)
