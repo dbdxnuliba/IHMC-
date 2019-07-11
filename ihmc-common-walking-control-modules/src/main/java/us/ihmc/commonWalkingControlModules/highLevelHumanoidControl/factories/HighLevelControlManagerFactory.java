@@ -241,7 +241,7 @@ public class HighLevelControlManagerFactory
       MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
       ReferenceFrame shinChild_plusOffset = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent("shinChild_plus_offset",
                                                                                                                   shinChild,
-                                                                                                                  new Vector3D(0.11, 0.0, 0.0));
+                                                                                                                  new Vector3D(0.0, 0.0, 0.0));
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
