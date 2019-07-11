@@ -1,7 +1,6 @@
 package us.ihmc.quadrupedRobotics.controller.states;
 
 import us.ihmc.commons.lists.RecyclingArrayList;
-import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBalanceBasedStepDelayer;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBalanceManager;
@@ -99,7 +98,7 @@ public class QuadrupedStepController implements EventState
       balanceManager.compute();
 
       // update step adjustment and swing speed up
-      RecyclingArrayList<QuadrupedStep> adjustedSteps = balanceManager.computeStepAdjustment(stepMessageHandler.getActiveSteps(),
+      RecyclingArrayList<QuadrupedTimedStep> adjustedSteps = balanceManager.computeStepAdjustment(stepMessageHandler.getActiveSteps(),
                                                                                              stepMessageHandler.isStepPlanAdjustable());
       if (balanceManager.stepHasBeenAdjusted())
       {

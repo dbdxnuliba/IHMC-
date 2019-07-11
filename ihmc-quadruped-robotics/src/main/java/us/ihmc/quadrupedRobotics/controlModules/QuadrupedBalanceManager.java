@@ -18,7 +18,6 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionsListCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyHeightCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedBodyTrajectoryCommand;
-import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.quadrupedRobotics.controller.toolbox.LinearInvertedPendulumModel;
@@ -28,7 +27,6 @@ import us.ihmc.quadrupedRobotics.model.QuadrupedRuntimeEnvironment;
 import us.ihmc.quadrupedRobotics.planning.trajectory.ContinuousDCMPlanner;
 import us.ihmc.quadrupedRobotics.planning.trajectory.DCMPlannerInterface;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
-import us.ihmc.quadrupedRobotics.planning.trajectory.DCMPlanner;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
@@ -96,7 +94,7 @@ public class QuadrupedBalanceManager
 
    private final QuadrupedControllerToolbox controllerToolbox;
 
-   private final RecyclingArrayList<QuadrupedStep> adjustedActiveSteps;
+   private final RecyclingArrayList<QuadrupedTimedStep> adjustedActiveSteps;
 
    private final List<QuadrupedTimedStep> activeSteps = new ArrayList<>();
 
@@ -137,7 +135,7 @@ public class QuadrupedBalanceManager
       momentumRateOfChangeModule = new QuadrupedMomentumRateOfChangeModule(controllerToolbox, registry);
       stepAdjustmentController = new QuadrupedStepAdjustmentController(controllerToolbox, registry);
 
-      adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
+      adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedTimedStep::new);
       adjustedActiveSteps.clear();
 
       if (yoGraphicsListRegistry != null)
@@ -358,9 +356,9 @@ public class QuadrupedBalanceManager
          throw new IllegalArgumentException("Desired DCM Velocity contains NaN");
    }
 
-   public RecyclingArrayList<QuadrupedStep> computeStepAdjustment(ArrayList<YoQuadrupedTimedStep> activeSteps, boolean stepPlanIsAdjustable)
+   public RecyclingArrayList<QuadrupedTimedStep> computeStepAdjustment(ArrayList<YoQuadrupedTimedStep> activeSteps, boolean stepPlanIsAdjustable)
    {
-      RecyclingArrayList<QuadrupedStep> adjustedActiveSteps = stepAdjustmentController
+      RecyclingArrayList<QuadrupedTimedStep> adjustedActiveSteps = stepAdjustmentController
             .computeStepAdjustment(activeSteps, yoDesiredDCMPosition, stepPlanIsAdjustable);
 
       adjustActiveFootstepGraphics(activeSteps);

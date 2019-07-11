@@ -5,7 +5,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
-import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
+import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.supportPolygon.QuadrupedSupportPolygon;
 import us.ihmc.quadrupedRobotics.parameters.QuadrupedFallDetectionParameters;
 import us.ihmc.robotics.controllers.ControllerFailureListener;
@@ -14,7 +14,6 @@ import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.parameters.IntegerParameter;
-import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -99,7 +98,7 @@ public class QuadrupedFallDetector
       controllerFailureListeners.add(controllerFailureListener);
    }
 
-   public void setNextFootstep(RobotQuadrant robotQuadrant, QuadrupedStep timedFootstep)
+   public void setNextFootstep(RobotQuadrant robotQuadrant, QuadrupedTimedStep timedFootstep)
    {
       boolean notNull = timedFootstep != null;
       isUsingNextFootsteps.get(robotQuadrant).set(notNull);

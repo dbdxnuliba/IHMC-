@@ -8,7 +8,7 @@ import us.ihmc.robotics.time.TimeIntervalBasics;
 
 public class QuadrupedTimedOrientedStep extends QuadrupedTimedStep
 {
-   private double stepYaw;
+   private double stepYaw = 0.0;
 
    public QuadrupedTimedOrientedStep()
    {
@@ -22,11 +22,7 @@ public class QuadrupedTimedOrientedStep extends QuadrupedTimedStep
 
    public QuadrupedTimedOrientedStep(RobotQuadrant robotQuadrant, Point3DBasics goalPosition, double groundClearance, TimeIntervalBasics timeInterval, double stepYaw)
    {
-      this();
-      setRobotQuadrant(robotQuadrant);
-      setGoalPosition(goalPosition);
-      setGroundClearance(groundClearance);
-      setTimeInterval(timeInterval);
+      super(robotQuadrant, goalPosition, groundClearance, timeInterval);
       setStepYaw(stepYaw);
    }
 

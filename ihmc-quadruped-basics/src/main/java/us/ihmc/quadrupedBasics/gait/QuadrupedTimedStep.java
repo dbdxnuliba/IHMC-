@@ -1,7 +1,11 @@
 package us.ihmc.quadrupedBasics.gait;
 
+import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.TimeIntervalCommand;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
@@ -9,23 +13,20 @@ import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalBasics;
 import us.ihmc.robotics.time.TimeIntervalProvider;
 
-public class QuadrupedTimedStep extends QuadrupedStep implements TimeIntervalProvider
+public class QuadrupedTimedStep implements TimeIntervalProvider
 {
-   private final TimeInterval timeInterval = new TimeInterval(0.5, 1.0);
+   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private RobotQuadrant robotQuadrant = RobotQuadrant.FRONT_RIGHT;
+   private Point3D goalPosition = new Point3D(0.0, 0.0, 0.0);
+   private double groundClearance = 0.0;
+   private final TimeInterval timeInterval = new TimeInterval();
 
    public QuadrupedTimedStep()
    {
    }
 
-   public QuadrupedTimedStep(RobotQuadrant robotQuadrant, FramePoint3D goalPosition, double groundClearance, TimeIntervalBasics timeInterval)
-   {
-      super(robotQuadrant, goalPosition, groundClearance);
-      setTimeInterval(timeInterval);
-   }
-
    public QuadrupedTimedStep(RobotQuadrant robotQuadrant, Point3DBasics goalPosition, double groundClearance, TimeIntervalBasics timeInterval)
    {
-      this();
       setRobotQuadrant(robotQuadrant);
       setGoalPosition(goalPosition);
       setGroundClearance(groundClearance);
@@ -43,6 +44,54 @@ public class QuadrupedTimedStep extends QuadrupedStep implements TimeIntervalPro
       return timeInterval;
    }
 
+   public RobotQuadrant getRobotQuadrant()
+   {
+      return robotQuadrant;
+   }
+
+   protected Point3DBasics getGoalPositionInternal()
+   {
+      return goalPosition;
+   }
+
+   public Point3DReadOnly getGoalPosition()
+   {
+      return goalPosition;
+   }
+
+   public ReferenceFrame getReferenceFrame()
+   {
+      return worldFrame;
+   }
+
+   public void setRobotQuadrant(RobotQuadrant robotQuadrant)
+   {
+      this.robotQuadrant = robotQuadrant;
+   }
+
+   public void setGoalPosition(Point3DReadOnly goalPosition)
+   {
+      getGoalPositionInternal().set(goalPosition);
+   }
+
+   public void setGoalPosition(FramePoint3D goalPosition)
+   {
+      ReferenceFrame originalFrame = goalPosition.getReferenceFrame();
+      goalPosition.changeFrame(getReferenceFrame());
+      getGoalPositionInternal().set(goalPosition);
+      goalPosition.changeFrame(originalFrame);
+   }
+
+   public double getGroundClearance()
+   {
+      return groundClearance;
+   }
+
+   public void setGroundClearance(double groundClearance)
+   {
+      this.groundClearance = groundClearance;
+   }
+
    public void setTimeInterval(TimeIntervalBasics timeInterval)
    {
       getTimeInterval().set(timeInterval);
@@ -55,25 +104,34 @@ public class QuadrupedTimedStep extends QuadrupedStep implements TimeIntervalPro
 
    public void set(QuadrupedTimedStep other)
    {
-      super.set(other);
+      setRobotQuadrant(other.getRobotQuadrant());
+      setGoalPosition(other.getGoalPosition());
+      setGroundClearance(other.getGroundClearance());
       setTimeInterval(other.getTimeInterval());
    }
 
    public void set(QuadrupedTimedStepCommand command)
    {
-      super.set(command.getStepCommand());
+      setRobotQuadrant(command.getRobotQuadrant());
+      setGoalPosition(command.getGoalPosition());
+      setGroundClearance(command.getGroundClearance());
       setTimeInterval(command.getTimeIntervalCommand());
    }
 
    public void get(QuadrupedTimedStep other)
    {
-      super.get(other);
+      other.setRobotQuadrant(getRobotQuadrant());
+      other.setGoalPosition(getGoalPositionInternal());
+      other.setGroundClearance(getGroundClearance());
       other.setTimeInterval(getTimeInterval());
    }
 
    public boolean epsilonEquals(QuadrupedTimedStep other, double epsilon)
    {
-      return super.epsilonEquals(other, epsilon) && getTimeInterval().epsilonEquals(other.getTimeInterval(), epsilon);
+      return getRobotQuadrant() == other.getRobotQuadrant() &&
+            getGoalPositionInternal().epsilonEquals(other.getGoalPositionInternal(), epsilon) &&
+            MathTools.epsilonEquals(getGroundClearance(), other.getGroundClearance(), epsilon) &&
+            getTimeInterval().epsilonEquals(other.getTimeInterval(), epsilon);
    }
 
    @Override
@@ -87,6 +145,12 @@ public class QuadrupedTimedStep extends QuadrupedStep implements TimeIntervalPro
          return false;
       QuadrupedTimedStep other = (QuadrupedTimedStep) obj;
 
+      if (getRobotQuadrant() != other.getRobotQuadrant())
+         return false;
+      if (getGroundClearance() != other.getGroundClearance())
+         return false;
+      if (!getGoalPosition().epsilonEquals(other.getGoalPosition(), 0.0))
+         return false;
       if (!getTimeInterval().epsilonEquals(other.getTimeInterval(), 0.0))
          return false;
 
@@ -97,6 +161,9 @@ public class QuadrupedTimedStep extends QuadrupedStep implements TimeIntervalPro
    public String toString()
    {
       String string = super.toString();
+      string += "\nrobotQuadrant: " + getRobotQuadrant();
+      string += "\ngoalPosition:" + getGoalPositionInternal();
+      string += "\ngroundClearance: " + getGroundClearance();
       string += "\nstartTime: " + getTimeInterval().getStartTime();
       string += "\nendTime: " + getTimeInterval().getEndTime();
       return string;

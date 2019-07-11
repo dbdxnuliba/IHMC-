@@ -1,5 +1,6 @@
 package us.ihmc.quadrupedRobotics.controlModules;
 
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -7,17 +8,15 @@ import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionsListCommand;
-import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
+import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.controlModules.foot.QuadrupedFootControlModuleParameters;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.quadrupedRobotics.controller.toolbox.LinearInvertedPendulumModel;
-import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedStepCrossoverProjection;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedStepPlanarRegionProjection;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.DeadbandTools;
-import us.ihmc.robotics.math.filters.AccelerationLimitedYoFrameVector3D;
 import us.ihmc.robotics.math.filters.RateLimitedYoFrameVector;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
@@ -66,7 +65,7 @@ public class QuadrupedStepAdjustmentController
 
    private final QuadrupedFootControlModuleParameters footControlModuleParameters;
 
-   private final RecyclingArrayList<QuadrupedStep> adjustedActiveSteps;
+   private final RecyclingArrayList<QuadrupedTimedStep> adjustedActiveSteps;
 
    private final YoDouble controllerTime;
 
@@ -105,7 +104,7 @@ public class QuadrupedStepAdjustmentController
          recursionMultipliers.put(robotQuadrant, recursionMultiplier);
       }
 
-      adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedStep::new);
+      adjustedActiveSteps = new RecyclingArrayList<>(10, QuadrupedTimedStep::new);
       adjustedActiveSteps.clear();
 
       QuadrupedReferenceFrames referenceFrames = controllerToolbox.getReferenceFrames();
@@ -127,8 +126,8 @@ public class QuadrupedStepAdjustmentController
       reachabilityProjection.completedStep(robotQuadrant);
    }
 
-   public RecyclingArrayList<QuadrupedStep> computeStepAdjustment(ArrayList<YoQuadrupedTimedStep> activeSteps, FramePoint3DReadOnly desiredDCMPosition,
-                                                                  boolean stepPlanIsAdjustable)
+   public RecyclingArrayList<QuadrupedTimedStep> computeStepAdjustment(ArrayList<YoQuadrupedTimedStep> activeSteps, FramePoint3DReadOnly desiredDCMPosition,
+                                                                       boolean stepPlanIsAdjustable)
    {
       reachabilityProjection.update();
 
@@ -163,7 +162,7 @@ public class QuadrupedStepAdjustmentController
          if (!rightTimeForAdjustment)
             continue;
 
-         QuadrupedStep adjustedStep = adjustedActiveSteps.add();
+         QuadrupedTimedStep adjustedStep = adjustedActiveSteps.add();
          adjustedStep.set(activeStep);
 
 
