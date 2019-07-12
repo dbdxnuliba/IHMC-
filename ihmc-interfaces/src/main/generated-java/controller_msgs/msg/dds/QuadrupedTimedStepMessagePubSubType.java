@@ -44,7 +44,11 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
 
       current_alignment += controller_msgs.msg.dds.TimeIntervalMessagePubSubType.getMaxCdrSerializedSize(current_alignment);
 
-      current_alignment += controller_msgs.msg.dds.QuadrupedStepMessagePubSubType.getMaxCdrSerializedSize(current_alignment);
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += geometry_msgs.msg.dds.PointPubSubType.getMaxCdrSerializedSize(current_alignment);
+
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
       return current_alignment - initial_alignment;
@@ -64,7 +68,13 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
 
       current_alignment += controller_msgs.msg.dds.TimeIntervalMessagePubSubType.getCdrSerializedSize(data.getTimeInterval(), current_alignment);
 
-      current_alignment += controller_msgs.msg.dds.QuadrupedStepMessagePubSubType.getCdrSerializedSize(data.getQuadrupedStepMessage(), current_alignment);
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += geometry_msgs.msg.dds.PointPubSubType.getCdrSerializedSize(data.getGoalPosition(), current_alignment);
+
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
 
 
       return current_alignment - initial_alignment;
@@ -75,7 +85,11 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
       cdr.write_type_4(data.getSequenceId());
 
       controller_msgs.msg.dds.TimeIntervalMessagePubSubType.write(data.getTimeInterval(), cdr);
-      controller_msgs.msg.dds.QuadrupedStepMessagePubSubType.write(data.getQuadrupedStepMessage(), cdr);
+      cdr.write_type_9(data.getRobotQuadrant());
+
+      geometry_msgs.msg.dds.PointPubSubType.write(data.getGoalPosition(), cdr);
+      cdr.write_type_6(data.getGroundClearance());
+
    }
 
    public static void read(controller_msgs.msg.dds.QuadrupedTimedStepMessage data, us.ihmc.idl.CDR cdr)
@@ -83,7 +97,11 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
       data.setSequenceId(cdr.read_type_4());
       	
       controller_msgs.msg.dds.TimeIntervalMessagePubSubType.read(data.getTimeInterval(), cdr);	
-      controller_msgs.msg.dds.QuadrupedStepMessagePubSubType.read(data.getQuadrupedStepMessage(), cdr);	
+      data.setRobotQuadrant(cdr.read_type_9());
+      	
+      geometry_msgs.msg.dds.PointPubSubType.read(data.getGoalPosition(), cdr);	
+      data.setGroundClearance(cdr.read_type_6());
+      	
 
    }
 
@@ -93,8 +111,10 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
       ser.write_type_4("sequence_id", data.getSequenceId());
       ser.write_type_a("time_interval", new controller_msgs.msg.dds.TimeIntervalMessagePubSubType(), data.getTimeInterval());
 
-      ser.write_type_a("quadruped_step_message", new controller_msgs.msg.dds.QuadrupedStepMessagePubSubType(), data.getQuadrupedStepMessage());
+      ser.write_type_9("robot_quadrant", data.getRobotQuadrant());
+      ser.write_type_a("goal_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getGoalPosition());
 
+      ser.write_type_6("ground_clearance", data.getGroundClearance());
    }
 
    @Override
@@ -103,8 +123,10 @@ public class QuadrupedTimedStepMessagePubSubType implements us.ihmc.pubsub.Topic
       data.setSequenceId(ser.read_type_4("sequence_id"));
       ser.read_type_a("time_interval", new controller_msgs.msg.dds.TimeIntervalMessagePubSubType(), data.getTimeInterval());
 
-      ser.read_type_a("quadruped_step_message", new controller_msgs.msg.dds.QuadrupedStepMessagePubSubType(), data.getQuadrupedStepMessage());
+      data.setRobotQuadrant(ser.read_type_9("robot_quadrant"));
+      ser.read_type_a("goal_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getGoalPosition());
 
+      data.setGroundClearance(ser.read_type_6("ground_clearance"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.QuadrupedTimedStepMessage src, controller_msgs.msg.dds.QuadrupedTimedStepMessage dest)

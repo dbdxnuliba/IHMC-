@@ -62,9 +62,9 @@ public class ManualStepPlanGraphic extends Group
       for (int i = 0; i < message.getQuadrupedStepList().size(); i++)
       {
          QuadrupedTimedStepMessage footstep = message.getQuadrupedStepList().get(i);
-         Color regionColor = colors.get(RobotQuadrant.fromByte(footstep.getQuadrupedStepMessage().getRobotQuadrant()));
+         Color regionColor = colors.get(RobotQuadrant.fromByte(footstep.getRobotQuadrant()));
 
-         footPosition.set(footstep.getQuadrupedStepMessage().getGoalPosition());
+         footPosition.set(footstep.getGoalPosition());
          footPosition.addZ(zOffset);
 
          meshBuilder.addSphere(RADIUS, footPosition, regionColor);

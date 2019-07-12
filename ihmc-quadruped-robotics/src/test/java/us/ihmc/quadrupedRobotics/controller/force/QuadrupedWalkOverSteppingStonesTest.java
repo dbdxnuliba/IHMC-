@@ -80,10 +80,10 @@ public abstract class QuadrupedWalkOverSteppingStonesTest implements QuadrupedMu
 
 
       Point3D finalPoint = new Point3D();
-      finalPoint.scaleAdd(0.25, lastMessage0.getQuadrupedStepMessage().getGoalPosition(), finalPoint);
-      finalPoint.scaleAdd(0.25, lastMessage1.getQuadrupedStepMessage().getGoalPosition(), finalPoint);
-      finalPoint.scaleAdd(0.25, lastMessage2.getQuadrupedStepMessage().getGoalPosition(), finalPoint);
-      finalPoint.scaleAdd(0.25, lastMessage3.getQuadrupedStepMessage().getGoalPosition(), finalPoint);
+      finalPoint.scaleAdd(0.25, lastMessage0.getGoalPosition(), finalPoint);
+      finalPoint.scaleAdd(0.25, lastMessage1.getGoalPosition(), finalPoint);
+      finalPoint.scaleAdd(0.25, lastMessage2.getGoalPosition(), finalPoint);
+      finalPoint.scaleAdd(0.25, lastMessage3.getGoalPosition(), finalPoint);
 
       conductor.addWaypointGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyX(), finalPoint.getX(), 0.2));
       conductor.addWaypointGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyY(), finalPoint.getY(), 0.2));

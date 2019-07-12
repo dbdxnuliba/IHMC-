@@ -2,4 +2,12 @@
 uint32 sequence_id
 
 TimeIntervalMessage time_interval
-QuadrupedStepMessage quadruped_step_message
+
+byte FRONT_LEFT = 0
+byte FRONT_RIGHT = 1
+byte HIND_RIGHT = 2
+byte HIND_LEFT = 3
+
+byte robot_quadrant 255
+geometry_msgs/Point goal_position
+float64 ground_clearance

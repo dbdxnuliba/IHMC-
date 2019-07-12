@@ -102,7 +102,7 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
       Point3D initialPosition = new Point3D(quadrupedTestFactory.getFullRobotModel().getBody().getParentJoint().getFrameAfterJoint().getTransformToRoot().getTranslationVector());
 
       List<QuadrupedTimedStepMessage> steps = getSteps();
-      steps.forEach(step -> step.getQuadrupedStepMessage().getGoalPosition().addZ(stepHeightOffset));
+      steps.forEach(step -> step.getGoalPosition().addZ(stepHeightOffset));
 
       QuadrupedTimedStepListMessage message = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(steps, false);
       message.setOffsetStepsHeightWithExecutionError(true);
@@ -124,7 +124,7 @@ public abstract class QuadrupedScriptedFlatGroundWalkingTest implements Quadrupe
       Vector3D offset = new Vector3D();
       offset.sub(currentPosition, initialPosition);
       offset.setZ(0.0);
-      steps.forEach(step -> step.getQuadrupedStepMessage().getGoalPosition().add(offset));
+      steps.forEach(step -> step.getGoalPosition().add(offset));
       message = QuadrupedMessageTools.createQuadrupedTimedStepListMessage(steps, false);
       message.setOffsetStepsHeightWithExecutionError(true);
       stepTeleopManager.publishTimedStepListToController(message);

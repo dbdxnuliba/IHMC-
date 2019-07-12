@@ -523,11 +523,10 @@ public class QuadrupedUIMessageConverter
 
       for (QuadrupedTimedStepMessage timedStepMessage : footstepDataListMessage.getQuadrupedStepList())
       {
-         QuadrupedStepMessage stepMessage = timedStepMessage.getQuadrupedStepMessage();
          TimeIntervalMessage timeInterval = timedStepMessage.getTimeInterval();
          FramePoint3D stepPosition = new FramePoint3D();
-         stepPosition.set(stepMessage.getGoalPosition());
-         footstepPlan.addFootstep(RobotQuadrant.fromByte(stepMessage.getRobotQuadrant()), stepPosition, stepMessage.getGroundClearance(), timeInterval.getStartTime(), timeInterval.getEndTime());
+         stepPosition.set(timedStepMessage.getGoalPosition());
+         footstepPlan.addFootstep(RobotQuadrant.fromByte(timedStepMessage.getRobotQuadrant()), stepPosition, timedStepMessage.getGroundClearance(), timeInterval.getStartTime(), timeInterval.getEndTime());
       }
 
       return footstepPlan;

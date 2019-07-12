@@ -121,15 +121,15 @@ public class QuadrupedManualFootstepPlanGenerator
 
          frontFootMessage.getTimeInterval().setStartTime(timeDelay);
          frontFootMessage.getTimeInterval().setEndTime(timeDelay + stepDuration);
-         frontFootMessage.getQuadrupedStepMessage().setGroundClearance(swingHeight);
-         frontFootMessage.getQuadrupedStepMessage().setRobotQuadrant(frontQuadrant.toByte());
-         frontFootMessage.getQuadrupedStepMessage().getGoalPosition().set(frontPosition);
+         frontFootMessage.setGroundClearance(swingHeight);
+         frontFootMessage.setRobotQuadrant(frontQuadrant.toByte());
+         frontFootMessage.getGoalPosition().set(frontPosition);
 
          hindFootMessage.getTimeInterval().setStartTime(timeDelay);
          hindFootMessage.getTimeInterval().setEndTime(timeDelay + stepDuration);
-         hindFootMessage.getQuadrupedStepMessage().setGroundClearance(swingHeight);
-         hindFootMessage.getQuadrupedStepMessage().setRobotQuadrant(rearQuadrant.toByte());
-         hindFootMessage.getQuadrupedStepMessage().getGoalPosition().set(rearPosition);
+         hindFootMessage.setGroundClearance(swingHeight);
+         hindFootMessage.setRobotQuadrant(rearQuadrant.toByte());
+         hindFootMessage.getGoalPosition().set(rearPosition);
 
 
          firstFoot = firstFoot.getAcrossBodyQuadrant();
@@ -201,9 +201,9 @@ public class QuadrupedManualFootstepPlanGenerator
 
          firstFootMessage.getTimeInterval().setStartTime(currentTime);
          firstFootMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
-         firstFootMessage.getQuadrupedStepMessage().setGroundClearance(swingHeight);
-         firstFootMessage.getQuadrupedStepMessage().setRobotQuadrant(firstFoot.toByte());
-         firstFootMessage.getQuadrupedStepMessage().getGoalPosition().set(firstPosition);
+         firstFootMessage.setGroundClearance(swingHeight);
+         firstFootMessage.setRobotQuadrant(firstFoot.toByte());
+         firstFootMessage.getGoalPosition().set(firstPosition);
 
 
          if (2 * i + 1 < numberOfSteps)
@@ -227,9 +227,9 @@ public class QuadrupedManualFootstepPlanGenerator
 
             oppositeFootMessage.getTimeInterval().setStartTime(currentTime);
             oppositeFootMessage.getTimeInterval().setEndTime(currentTime + stepDuration);
-            oppositeFootMessage.getQuadrupedStepMessage().setGroundClearance(swingHeight);
-            oppositeFootMessage.getQuadrupedStepMessage().setRobotQuadrant(oppositeQuadrant.toByte());
-            oppositeFootMessage.getQuadrupedStepMessage().getGoalPosition().set(secondPosition);
+            oppositeFootMessage.setGroundClearance(swingHeight);
+            oppositeFootMessage.setRobotQuadrant(oppositeQuadrant.toByte());
+            oppositeFootMessage.getGoalPosition().set(secondPosition);
          }
          else
          {

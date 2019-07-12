@@ -1,14 +1,26 @@
 #ifndef __controller_msgs__msg__QuadrupedTimedStepMessage__idl__
 #define __controller_msgs__msg__QuadrupedTimedStepMessage__idl__
 
-#include "controller_msgs/msg/./QuadrupedStepMessage_.idl"
 #include "controller_msgs/msg/./TimeIntervalMessage_.idl"
+#include "geometry_msgs/msg/./Point_.idl"
 module controller_msgs
 {
   module msg
   {
     module dds
     {
+      const octet FRONT_LEFT =
+      0;
+
+      const octet FRONT_RIGHT =
+      1;
+
+      const octet HIND_RIGHT =
+      2;
+
+      const octet HIND_LEFT =
+      3;
+
 
       @TypeCode(type="controller_msgs::msg::dds_::QuadrupedTimedStepMessage_")
       struct QuadrupedTimedStepMessage
@@ -18,7 +30,10 @@ module controller_msgs
          */
         unsigned long sequence_id;
         controller_msgs::msg::dds::TimeIntervalMessage time_interval;
-        controller_msgs::msg::dds::QuadrupedStepMessage quadruped_step_message;
+        @defaultValue(value=255)
+        octet robot_quadrant;
+        geometry_msgs::msg::dds::Point goal_position;
+        double ground_clearance;
       };
     };
   };

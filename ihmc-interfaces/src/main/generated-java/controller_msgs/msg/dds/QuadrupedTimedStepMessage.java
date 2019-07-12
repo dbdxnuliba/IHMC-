@@ -8,17 +8,23 @@ import us.ihmc.pubsub.TopicDataType;
 
 public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage> implements Settable<QuadrupedTimedStepMessage>, EpsilonComparable<QuadrupedTimedStepMessage>
 {
+   public static final byte FRONT_LEFT = (byte) 0;
+   public static final byte FRONT_RIGHT = (byte) 1;
+   public static final byte HIND_RIGHT = (byte) 2;
+   public static final byte HIND_LEFT = (byte) 3;
    /**
             * Unique ID used to identify this message, should preferably be consecutively increasing.
             */
    public long sequence_id_;
    public controller_msgs.msg.dds.TimeIntervalMessage time_interval_;
-   public controller_msgs.msg.dds.QuadrupedStepMessage quadruped_step_message_;
+   public byte robot_quadrant_ = (byte) 255;
+   public us.ihmc.euclid.tuple3D.Point3D goal_position_;
+   public double ground_clearance_;
 
    public QuadrupedTimedStepMessage()
    {
       time_interval_ = new controller_msgs.msg.dds.TimeIntervalMessage();
-      quadruped_step_message_ = new controller_msgs.msg.dds.QuadrupedStepMessage();
+      goal_position_ = new us.ihmc.euclid.tuple3D.Point3D();
    }
 
    public QuadrupedTimedStepMessage(QuadrupedTimedStepMessage other)
@@ -32,7 +38,11 @@ public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage>
       sequence_id_ = other.sequence_id_;
 
       controller_msgs.msg.dds.TimeIntervalMessagePubSubType.staticCopy(other.time_interval_, time_interval_);
-      controller_msgs.msg.dds.QuadrupedStepMessagePubSubType.staticCopy(other.quadruped_step_message_, quadruped_step_message_);
+      robot_quadrant_ = other.robot_quadrant_;
+
+      geometry_msgs.msg.dds.PointPubSubType.staticCopy(other.goal_position_, goal_position_);
+      ground_clearance_ = other.ground_clearance_;
+
    }
 
    /**
@@ -56,10 +66,28 @@ public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage>
       return time_interval_;
    }
 
-
-   public controller_msgs.msg.dds.QuadrupedStepMessage getQuadrupedStepMessage()
+   public void setRobotQuadrant(byte robot_quadrant)
    {
-      return quadruped_step_message_;
+      robot_quadrant_ = robot_quadrant;
+   }
+   public byte getRobotQuadrant()
+   {
+      return robot_quadrant_;
+   }
+
+
+   public us.ihmc.euclid.tuple3D.Point3D getGoalPosition()
+   {
+      return goal_position_;
+   }
+
+   public void setGroundClearance(double ground_clearance)
+   {
+      ground_clearance_ = ground_clearance;
+   }
+   public double getGroundClearance()
+   {
+      return ground_clearance_;
    }
 
 
@@ -83,7 +111,11 @@ public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage>
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
       if (!this.time_interval_.epsilonEquals(other.time_interval_, epsilon)) return false;
-      if (!this.quadruped_step_message_.epsilonEquals(other.quadruped_step_message_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.robot_quadrant_, other.robot_quadrant_, epsilon)) return false;
+
+      if (!this.goal_position_.epsilonEquals(other.goal_position_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.ground_clearance_, other.ground_clearance_, epsilon)) return false;
+
 
       return true;
    }
@@ -100,7 +132,11 @@ public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage>
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
       if (!this.time_interval_.equals(otherMyClass.time_interval_)) return false;
-      if (!this.quadruped_step_message_.equals(otherMyClass.quadruped_step_message_)) return false;
+      if(this.robot_quadrant_ != otherMyClass.robot_quadrant_) return false;
+
+      if (!this.goal_position_.equals(otherMyClass.goal_position_)) return false;
+      if(this.ground_clearance_ != otherMyClass.ground_clearance_) return false;
+
 
       return true;
    }
@@ -115,8 +151,12 @@ public class QuadrupedTimedStepMessage extends Packet<QuadrupedTimedStepMessage>
       builder.append(this.sequence_id_);      builder.append(", ");
       builder.append("time_interval=");
       builder.append(this.time_interval_);      builder.append(", ");
-      builder.append("quadruped_step_message=");
-      builder.append(this.quadruped_step_message_);
+      builder.append("robot_quadrant=");
+      builder.append(this.robot_quadrant_);      builder.append(", ");
+      builder.append("goal_position=");
+      builder.append(this.goal_position_);      builder.append(", ");
+      builder.append("ground_clearance=");
+      builder.append(this.ground_clearance_);
       builder.append("}");
       return builder.toString();
    }

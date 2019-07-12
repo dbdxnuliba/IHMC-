@@ -3,12 +3,17 @@ package us.ihmc.humanoidRobotics.communication.controllerAPI.command;
 import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 
 public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepCommand, QuadrupedTimedStepMessage>
 {
+   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+
    private long sequenceId;
-   private final QuadrupedStepCommand stepCommand = new QuadrupedStepCommand();
+   private RobotQuadrant robotQuadrant;
+   private FramePoint3D goalPosition = new FramePoint3D();
+   private double groundClearance = 0.0;
    private final TimeIntervalCommand timeIntervalCommand = new TimeIntervalCommand();
 
    public QuadrupedTimedStepCommand()
@@ -20,7 +25,9 @@ public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepComm
    public void clear()
    {
       sequenceId = 0;
-      stepCommand.clear();
+      robotQuadrant = null;
+      groundClearance = 0.0;
+      goalPosition.setToNaN();
       timeIntervalCommand.clear();
    }
 
@@ -28,7 +35,9 @@ public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepComm
    public void setFromMessage(QuadrupedTimedStepMessage message)
    {
       sequenceId = message.getSequenceId();
-      stepCommand.setFromMessage(message.getQuadrupedStepMessage());
+      robotQuadrant = RobotQuadrant.fromByte(message.getRobotQuadrant());
+      groundClearance = message.getGroundClearance();
+      goalPosition.setIncludingFrame(worldFrame, message.getGoalPosition());
       timeIntervalCommand.setFromMessage(message.getTimeInterval());
    }
 
@@ -36,13 +45,10 @@ public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepComm
    public void set(QuadrupedTimedStepCommand other)
    {
       sequenceId = other.sequenceId;
-      stepCommand.set(other.stepCommand);
+      robotQuadrant = other.robotQuadrant;
+      groundClearance = other.groundClearance;
+      goalPosition.setIncludingFrame(other.goalPosition);
       timeIntervalCommand.set(other.timeIntervalCommand);
-   }
-
-   public QuadrupedStepCommand getStepCommand()
-   {
-      return stepCommand;
    }
 
    public TimeIntervalCommand getTimeIntervalCommand()
@@ -52,17 +58,17 @@ public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepComm
 
    public RobotQuadrant getRobotQuadrant()
    {
-      return stepCommand.getRobotQuadrant();
+      return robotQuadrant;
    }
 
    public double getGroundClearance()
    {
-      return stepCommand.getGroundClearance();
+      return groundClearance;
    }
 
    public FramePoint3D getGoalPosition()
    {
-      return stepCommand.getGoalPosition();
+      return goalPosition;
    }
 
    public double getStartTime()
@@ -84,7 +90,7 @@ public class QuadrupedTimedStepCommand implements Command<QuadrupedTimedStepComm
    @Override
    public boolean isCommandValid()
    {
-      return stepCommand.isCommandValid() && timeIntervalCommand.isCommandValid();
+      return robotQuadrant != null && timeIntervalCommand.isCommandValid();
    }
 
    @Override

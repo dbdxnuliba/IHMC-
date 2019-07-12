@@ -1,6 +1,5 @@
 package us.ihmc.exampleSimulations.genericQuadruped.controller.force;
 
-import controller_msgs.msg.dds.QuadrupedStepMessage;
 import controller_msgs.msg.dds.QuadrupedTimedStepMessage;
 import org.junit.jupiter.api.Test;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -147,33 +146,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message1 = new QuadrupedTimedStepMessage();
       message1.getTimeInterval().setStartTime(startTime);
       message1.getTimeInterval().setEndTime(startTime + stepDuration);
-      message1.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message1.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message1.getQuadrupedStepMessage().getGoalPosition().set(goalPosition1);
+      message1.setGroundClearance(0.1);
+      message1.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message1.getGoalPosition().set(goalPosition1);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message2 = new QuadrupedTimedStepMessage();
       message2.getTimeInterval().setStartTime(startTime);
       message2.getTimeInterval().setEndTime(startTime + stepDuration);
-      message2.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message2.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message2.getQuadrupedStepMessage().getGoalPosition().set(goalPosition2);
+      message2.setGroundClearance(0.1);
+      message2.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message2.getGoalPosition().set(goalPosition2);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message3 = new QuadrupedTimedStepMessage();
       message3.getTimeInterval().setStartTime(startTime);
       message3.getTimeInterval().setEndTime(startTime + stepDuration);
-      message3.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message3.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message3.getQuadrupedStepMessage().getGoalPosition().set(goalPosition3);
+      message3.setGroundClearance(0.1);
+      message3.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message3.getGoalPosition().set(goalPosition3);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message4 = new QuadrupedTimedStepMessage();
       message4.getTimeInterval().setStartTime(startTime);
       message4.getTimeInterval().setEndTime(startTime + stepDuration);
-      message4.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message4.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message4.getQuadrupedStepMessage().getGoalPosition().set(goalPosition4);
+      message4.setGroundClearance(0.1);
+      message4.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message4.getGoalPosition().set(goalPosition4);
 
 
 
@@ -181,33 +180,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message5 = new QuadrupedTimedStepMessage();
       message5.getTimeInterval().setStartTime(startTime);
       message5.getTimeInterval().setEndTime(startTime + stepDuration);
-      message5.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message5.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message5.getQuadrupedStepMessage().getGoalPosition().set(goalPosition5);
+      message5.setGroundClearance(0.1);
+      message5.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message5.getGoalPosition().set(goalPosition5);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message6 = new QuadrupedTimedStepMessage();
       message6.getTimeInterval().setStartTime(startTime);
       message6.getTimeInterval().setEndTime(startTime + stepDuration);
-      message6.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message6.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message6.getQuadrupedStepMessage().getGoalPosition().set(goalPosition6);
+      message6.setGroundClearance(0.1);
+      message6.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message6.getGoalPosition().set(goalPosition6);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message7 = new QuadrupedTimedStepMessage();
       message7.getTimeInterval().setStartTime(startTime);
       message7.getTimeInterval().setEndTime(startTime + stepDuration);
-      message7.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message7.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message7.getQuadrupedStepMessage().getGoalPosition().set(goalPosition7);
+      message7.setGroundClearance(0.1);
+      message7.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message7.getGoalPosition().set(goalPosition7);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message8 = new QuadrupedTimedStepMessage();
       message8.getTimeInterval().setStartTime(startTime);
       message8.getTimeInterval().setEndTime(startTime + stepDuration);
-      message8.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message8.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message8.getQuadrupedStepMessage().getGoalPosition().set(goalPosition8);
+      message8.setGroundClearance(0.1);
+      message8.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message8.getGoalPosition().set(goalPosition8);
 
 
 
@@ -215,33 +214,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message9 = new QuadrupedTimedStepMessage();
       message9.getTimeInterval().setStartTime(startTime);
       message9.getTimeInterval().setEndTime(startTime + stepDuration);
-      message9.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message9.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message9.getQuadrupedStepMessage().getGoalPosition().set(goalPosition9);
+      message9.setGroundClearance(0.1);
+      message9.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message9.getGoalPosition().set(goalPosition9);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message10 = new QuadrupedTimedStepMessage();
       message10.getTimeInterval().setStartTime(startTime);
       message10.getTimeInterval().setEndTime(startTime + stepDuration);
-      message10.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message10.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message10.getQuadrupedStepMessage().getGoalPosition().set(goalPosition10);
+      message10.setGroundClearance(0.1);
+      message10.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message10.getGoalPosition().set(goalPosition10);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message11 = new QuadrupedTimedStepMessage();
       message11.getTimeInterval().setStartTime(startTime);
       message11.getTimeInterval().setEndTime(startTime + stepDuration);
-      message11.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message11.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message11.getQuadrupedStepMessage().getGoalPosition().set(goalPosition11);
+      message11.setGroundClearance(0.1);
+      message11.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message11.getGoalPosition().set(goalPosition11);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message12 = new QuadrupedTimedStepMessage();
       message12.getTimeInterval().setStartTime(startTime);
       message12.getTimeInterval().setEndTime(startTime + stepDuration);
-      message12.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message12.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message12.getQuadrupedStepMessage().getGoalPosition().set(goalPosition12);
+      message12.setGroundClearance(0.1);
+      message12.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message12.getGoalPosition().set(goalPosition12);
 
 
 
@@ -251,33 +250,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message13 = new QuadrupedTimedStepMessage();
       message13.getTimeInterval().setStartTime(startTime);
       message13.getTimeInterval().setEndTime(startTime + stepDuration);
-      message13.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message13.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message13.getQuadrupedStepMessage().getGoalPosition().set(goalPosition13);
+      message13.setGroundClearance(0.1);
+      message13.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message13.getGoalPosition().set(goalPosition13);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message14 = new QuadrupedTimedStepMessage();
       message14.getTimeInterval().setStartTime(startTime);
       message14.getTimeInterval().setEndTime(startTime + stepDuration);
-      message14.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message14.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message14.getQuadrupedStepMessage().getGoalPosition().set(goalPosition14);
+      message14.setGroundClearance(0.1);
+      message14.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message14.getGoalPosition().set(goalPosition14);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message15 = new QuadrupedTimedStepMessage();
       message15.getTimeInterval().setStartTime(startTime);
       message15.getTimeInterval().setEndTime(startTime + stepDuration);
-      message15.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message15.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message15.getQuadrupedStepMessage().getGoalPosition().set(goalPosition15);
+      message15.setGroundClearance(0.1);
+      message15.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message15.getGoalPosition().set(goalPosition15);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message16 = new QuadrupedTimedStepMessage();
       message16.getTimeInterval().setStartTime(startTime);
       message16.getTimeInterval().setEndTime(startTime + stepDuration);
-      message16.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message16.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message16.getQuadrupedStepMessage().getGoalPosition().set(goalPosition16);
+      message16.setGroundClearance(0.1);
+      message16.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message16.getGoalPosition().set(goalPosition16);
 
 
 
@@ -285,33 +284,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message17 = new QuadrupedTimedStepMessage();
       message17.getTimeInterval().setStartTime(startTime);
       message17.getTimeInterval().setEndTime(startTime + stepDuration);
-      message17.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message17.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message17.getQuadrupedStepMessage().getGoalPosition().set(goalPosition17);
+      message17.setGroundClearance(0.1);
+      message17.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message17.getGoalPosition().set(goalPosition17);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message18 = new QuadrupedTimedStepMessage();
       message18.getTimeInterval().setStartTime(startTime);
       message18.getTimeInterval().setEndTime(startTime + stepDuration);
-      message18.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message18.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message18.getQuadrupedStepMessage().getGoalPosition().set(goalPosition18);
+      message18.setGroundClearance(0.1);
+      message18.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message18.getGoalPosition().set(goalPosition18);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message19 = new QuadrupedTimedStepMessage();
       message19.getTimeInterval().setStartTime(startTime);
       message19.getTimeInterval().setEndTime(startTime + stepDuration);
-      message19.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message19.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message19.getQuadrupedStepMessage().getGoalPosition().set(goalPosition19);
+      message19.setGroundClearance(0.1);
+      message19.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message19.getGoalPosition().set(goalPosition19);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message20 = new QuadrupedTimedStepMessage();
       message20.getTimeInterval().setStartTime(startTime);
       message20.getTimeInterval().setEndTime(startTime + stepDuration);
-      message20.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message20.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message20.getQuadrupedStepMessage().getGoalPosition().set(goalPosition20);
+      message20.setGroundClearance(0.1);
+      message20.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message20.getGoalPosition().set(goalPosition20);
 
 
 
@@ -319,33 +318,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message21 = new QuadrupedTimedStepMessage();
       message21.getTimeInterval().setStartTime(startTime);
       message21.getTimeInterval().setEndTime(startTime + stepDuration);
-      message21.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message21.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message21.getQuadrupedStepMessage().getGoalPosition().set(goalPosition21);
+      message21.setGroundClearance(0.1);
+      message21.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message21.getGoalPosition().set(goalPosition21);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message22 = new QuadrupedTimedStepMessage();
       message22.getTimeInterval().setStartTime(startTime);
       message22.getTimeInterval().setEndTime(startTime + stepDuration);
-      message22.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message22.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message22.getQuadrupedStepMessage().getGoalPosition().set(goalPosition22);
+      message22.setGroundClearance(0.1);
+      message22.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message22.getGoalPosition().set(goalPosition22);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message23 = new QuadrupedTimedStepMessage();
       message23.getTimeInterval().setStartTime(startTime);
       message23.getTimeInterval().setEndTime(startTime + stepDuration);
-      message23.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message23.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message23.getQuadrupedStepMessage().getGoalPosition().set(goalPosition23);
+      message23.setGroundClearance(0.1);
+      message23.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message23.getGoalPosition().set(goalPosition23);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message24 = new QuadrupedTimedStepMessage();
       message24.getTimeInterval().setStartTime(startTime);
       message24.getTimeInterval().setEndTime(startTime + stepDuration);
-      message24.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message24.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message24.getQuadrupedStepMessage().getGoalPosition().set(goalPosition24);
+      message24.setGroundClearance(0.1);
+      message24.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message24.getGoalPosition().set(goalPosition24);
 
 
 
@@ -355,33 +354,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message25 = new QuadrupedTimedStepMessage();
       message25.getTimeInterval().setStartTime(startTime);
       message25.getTimeInterval().setEndTime(startTime + stepDuration);
-      message25.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message25.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message25.getQuadrupedStepMessage().getGoalPosition().set(goalPosition25);
+      message25.setGroundClearance(0.1);
+      message25.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message25.getGoalPosition().set(goalPosition25);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message26 = new QuadrupedTimedStepMessage();
       message26.getTimeInterval().setStartTime(startTime);
       message26.getTimeInterval().setEndTime(startTime + stepDuration);
-      message26.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message26.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message26.getQuadrupedStepMessage().getGoalPosition().set(goalPosition26);
+      message26.setGroundClearance(0.1);
+      message26.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message26.getGoalPosition().set(goalPosition26);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message27 = new QuadrupedTimedStepMessage();
       message27.getTimeInterval().setStartTime(startTime);
       message27.getTimeInterval().setEndTime(startTime + stepDuration);
-      message27.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message27.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message27.getQuadrupedStepMessage().getGoalPosition().set(goalPosition27);
+      message27.setGroundClearance(0.1);
+      message27.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message27.getGoalPosition().set(goalPosition27);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message28 = new QuadrupedTimedStepMessage();
       message28.getTimeInterval().setStartTime(startTime);
       message28.getTimeInterval().setEndTime(startTime + stepDuration);
-      message28.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message28.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message28.getQuadrupedStepMessage().getGoalPosition().set(goalPosition28);
+      message28.setGroundClearance(0.1);
+      message28.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message28.getGoalPosition().set(goalPosition28);
 
 
 
@@ -390,33 +389,33 @@ public class GenericQuadrupedWalkOverSteppingStonesTest extends QuadrupedWalkOve
       QuadrupedTimedStepMessage message29 = new QuadrupedTimedStepMessage();
       message29.getTimeInterval().setStartTime(startTime);
       message29.getTimeInterval().setEndTime(startTime + stepDuration);
-      message29.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message29.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_LEFT);
-      message29.getQuadrupedStepMessage().getGoalPosition().set(goalPosition29);
+      message29.setGroundClearance(0.1);
+      message29.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_LEFT);
+      message29.getGoalPosition().set(goalPosition29);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message30 = new QuadrupedTimedStepMessage();
       message30.getTimeInterval().setStartTime(startTime);
       message30.getTimeInterval().setEndTime(startTime + stepDuration);
-      message30.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message30.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_RIGHT);
-      message30.getQuadrupedStepMessage().getGoalPosition().set(goalPosition30);
+      message30.setGroundClearance(0.1);
+      message30.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_RIGHT);
+      message30.getGoalPosition().set(goalPosition30);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message31 = new QuadrupedTimedStepMessage();
       message31.getTimeInterval().setStartTime(startTime);
       message31.getTimeInterval().setEndTime(startTime + stepDuration);
-      message31.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message31.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.FRONT_RIGHT);
-      message31.getQuadrupedStepMessage().getGoalPosition().set(goalPosition31);
+      message31.setGroundClearance(0.1);
+      message31.setRobotQuadrant(QuadrupedTimedStepMessage.FRONT_RIGHT);
+      message31.getGoalPosition().set(goalPosition31);
 
       startTime += 0.5 * stepDuration;
       QuadrupedTimedStepMessage message32 = new QuadrupedTimedStepMessage();
       message32.getTimeInterval().setStartTime(startTime);
       message32.getTimeInterval().setEndTime(startTime + stepDuration);
-      message32.getQuadrupedStepMessage().setGroundClearance(0.1);
-      message32.getQuadrupedStepMessage().setRobotQuadrant(QuadrupedStepMessage.HIND_LEFT);
-      message32.getQuadrupedStepMessage().getGoalPosition().set(goalPosition32);
+      message32.setGroundClearance(0.1);
+      message32.setRobotQuadrant(QuadrupedTimedStepMessage.HIND_LEFT);
+      message32.getGoalPosition().set(goalPosition32);
 
 
 

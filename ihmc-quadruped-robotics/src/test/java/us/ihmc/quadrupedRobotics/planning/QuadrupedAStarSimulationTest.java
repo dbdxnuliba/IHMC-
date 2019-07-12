@@ -176,9 +176,9 @@ public abstract class QuadrupedAStarSimulationTest implements QuadrupedMultiRobo
          QuadrupedTimedStepMessage stepMessage = stepMessages.getQuadrupedStepList().add();
          QuadrupedTimedStep step = footstepPlan.getFootstep(i);
 
-         stepMessage.getQuadrupedStepMessage().setRobotQuadrant(step.getRobotQuadrant().toByte());
-         stepMessage.getQuadrupedStepMessage().getGoalPosition().set(step.getGoalPosition());
-         stepMessage.getQuadrupedStepMessage().setGroundClearance(step.getGroundClearance());
+         stepMessage.setRobotQuadrant(step.getRobotQuadrant().toByte());
+         stepMessage.getGoalPosition().set(step.getGoalPosition());
+         stepMessage.setGroundClearance(step.getGroundClearance());
          stepMessage.getTimeInterval().setStartTime(step.getTimeInterval().getStartTime());
          stepMessage.getTimeInterval().setEndTime(step.getTimeInterval().getEndTime());
       }
@@ -195,11 +195,10 @@ public abstract class QuadrupedAStarSimulationTest implements QuadrupedMultiRobo
 
       for (QuadrupedTimedStepMessage timedStepMessage : footstepDataListMessage.getQuadrupedStepList())
       {
-         QuadrupedStepMessage stepMessage = timedStepMessage.getQuadrupedStepMessage();
          TimeIntervalMessage timeInterval = timedStepMessage.getTimeInterval();
          FramePoint3D stepPosition = new FramePoint3D();
-         stepPosition.set(stepMessage.getGoalPosition());
-         footstepPlan.addFootstep(RobotQuadrant.fromByte(stepMessage.getRobotQuadrant()), stepPosition, stepMessage.getGroundClearance(), timeInterval.getStartTime(), timeInterval.getEndTime());
+         stepPosition.set(timedStepMessage.getGoalPosition());
+         footstepPlan.addFootstep(RobotQuadrant.fromByte(timedStepMessage.getRobotQuadrant()), stepPosition, timedStepMessage.getGroundClearance(), timeInterval.getStartTime(), timeInterval.getEndTime());
       }
 
       return footstepPlan;

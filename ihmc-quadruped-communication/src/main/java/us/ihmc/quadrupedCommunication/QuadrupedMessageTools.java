@@ -19,9 +19,9 @@ public class QuadrupedMessageTools
                                                                            TimeInterval timeInterval)
    {
       QuadrupedTimedStepMessage message = new QuadrupedTimedStepMessage();
-      message.getQuadrupedStepMessage().setRobotQuadrant(robotQuadrant.toByte());
-      message.getQuadrupedStepMessage().getGoalPosition().set(goalPosition);
-      message.getQuadrupedStepMessage().setGroundClearance(groundClearance);
+      message.setRobotQuadrant(robotQuadrant.toByte());
+      message.getGoalPosition().set(goalPosition);
+      message.setGroundClearance(groundClearance);
       message.getTimeInterval().setEndTime(timeInterval.getEndTime());
       message.getTimeInterval().setStartTime(timeInterval.getStartTime());
 
@@ -32,9 +32,9 @@ public class QuadrupedMessageTools
                                                                            double startTime, double endTime)
    {
       QuadrupedTimedStepMessage message = new QuadrupedTimedStepMessage();
-      message.getQuadrupedStepMessage().setRobotQuadrant(robotQuadrant.toByte());
-      message.getQuadrupedStepMessage().getGoalPosition().set(goalPosition);
-      message.getQuadrupedStepMessage().setGroundClearance(groundClearance);
+      message.setRobotQuadrant(robotQuadrant.toByte());
+      message.getGoalPosition().set(goalPosition);
+      message.setGroundClearance(groundClearance);
       message.getTimeInterval().setStartTime(startTime);
       message.getTimeInterval().setEndTime(endTime);
 
@@ -44,9 +44,9 @@ public class QuadrupedMessageTools
    public static QuadrupedTimedStepMessage createQuadrupedTimedStepMessage(QuadrupedTimedStep step)
    {
       QuadrupedTimedStepMessage message = new QuadrupedTimedStepMessage();
-      message.getQuadrupedStepMessage().setRobotQuadrant(step.getRobotQuadrant().toByte());
-      message.getQuadrupedStepMessage().getGoalPosition().set(step.getGoalPosition());
-      message.getQuadrupedStepMessage().setGroundClearance(step.getGroundClearance());
+      message.setRobotQuadrant(step.getRobotQuadrant().toByte());
+      message.getGoalPosition().set(step.getGoalPosition());
+      message.setGroundClearance(step.getGroundClearance());
       message.getTimeInterval().setStartTime(step.getTimeInterval().getStartTime());
       message.getTimeInterval().setEndTime(step.getTimeInterval().getEndTime());
 

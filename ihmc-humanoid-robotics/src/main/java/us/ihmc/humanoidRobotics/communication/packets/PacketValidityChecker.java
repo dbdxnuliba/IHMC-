@@ -204,44 +204,6 @@ public abstract class PacketValidityChecker
     * @param message
     * @return null if the packet is valid, or the error message.
     */
-   public static String validateQuadrupedStepMessage(QuadrupedStepMessage message)
-   {
-      ObjectErrorType packetFieldErrorType;
-
-      packetFieldErrorType = ObjectValidityChecker.validateEnum(RobotQuadrant.fromByte(message.getRobotQuadrant()));
-      if (packetFieldErrorType != null)
-      {
-         String messageClassName = message.getClass().getSimpleName();
-         String errorMessage = messageClassName + "'s robotQuadrant field" + packetFieldErrorType.getMessage();
-         return errorMessage;
-      }
-
-      packetFieldErrorType = ObjectValidityChecker.validateTuple3d(message.getGoalPosition());
-      if (packetFieldErrorType != null)
-      {
-         String messageClassName = message.getClass().getSimpleName();
-         String errorMessage = messageClassName + "'s goalPosition field " + packetFieldErrorType.getMessage();
-         return errorMessage;
-      }
-
-      //TODO Check if thats supposed to be checked
-      packetFieldErrorType = ObjectValidityChecker.validateDouble(message.getGroundClearance());
-      if (packetFieldErrorType != null)
-      {
-         String messageClassName = message.getClass().getSimpleName();
-         String errorMessage = messageClassName + "'s groundClearance field " + packetFieldErrorType.getMessage();
-         return errorMessage;
-      }
-
-      return null;
-   }
-
-   /**
-    * Checks the validity of a {@link QuadrupedStepMessage}.
-    *
-    * @param message
-    * @return null if the packet is valid, or the error message.
-    */
    public static String validateTimeIntervalMessage(TimeIntervalMessage message)
    {
       ObjectErrorType packetFieldErrorType;
@@ -273,11 +235,30 @@ public abstract class PacketValidityChecker
     */
    public static String validateQuadrupedTimedStepMessage(QuadrupedTimedStepMessage message)
    {
-      String stepErrorMessage = validateQuadrupedStepMessage(message.getQuadrupedStepMessage());
-      if (stepErrorMessage != null)
+      ObjectErrorType packetFieldErrorType;
+
+      packetFieldErrorType = ObjectValidityChecker.validateEnum(RobotQuadrant.fromByte(message.getRobotQuadrant()));
+      if (packetFieldErrorType != null)
       {
          String messageClassName = message.getClass().getSimpleName();
-         String errorMessage = messageClassName + " step field which " + stepErrorMessage;
+         String errorMessage = messageClassName + "'s robotQuadrant field" + packetFieldErrorType.getMessage();
+         return errorMessage;
+      }
+
+      packetFieldErrorType = ObjectValidityChecker.validateTuple3d(message.getGoalPosition());
+      if (packetFieldErrorType != null)
+      {
+         String messageClassName = message.getClass().getSimpleName();
+         String errorMessage = messageClassName + "'s goalPosition field " + packetFieldErrorType.getMessage();
+         return errorMessage;
+      }
+
+      //TODO Check if thats supposed to be checked
+      packetFieldErrorType = ObjectValidityChecker.validateDouble(message.getGroundClearance());
+      if (packetFieldErrorType != null)
+      {
+         String messageClassName = message.getClass().getSimpleName();
+         String errorMessage = messageClassName + "'s groundClearance field " + packetFieldErrorType.getMessage();
          return errorMessage;
       }
 
