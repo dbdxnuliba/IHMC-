@@ -16,6 +16,11 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
    private final List<Point2DReadOnly> waypoints = new ArrayList<>();
    private final TDoubleList waypointTimes = new TDoubleArrayList();
 
+   public CopTrajectory(SupportSeqence supportSeqence)
+   {
+      this(supportSeqence.getSupportPolygons(), supportSeqence.getSupportDurations());
+   }
+
    public CopTrajectory(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations)
    {
       double time = 0.0;
