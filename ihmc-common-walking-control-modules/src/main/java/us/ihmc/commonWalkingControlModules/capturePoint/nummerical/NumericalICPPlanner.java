@@ -188,17 +188,17 @@ public class NumericalICPPlanner
       {
          for (int i = 0; i < icps.size(); i++)
          {
-            YoArtifactPosition icpViz = new YoArtifactPosition("Icp" + i, (YoFramePoint2D) icps.get(i), GraphicType.BALL, Color.YELLOW, 0.001);
+            YoArtifactPosition icpViz = new YoArtifactPosition("Icp" + i, (YoFramePoint2D) icps.get(i), GraphicType.BALL, Color.ORANGE, 0.002);
             graphicsRegistry.registerArtifact(getClass().getSimpleName(), icpViz);
          }
          for (int i = 0; i < cops.size(); i++)
          {
-            YoArtifactPosition copViz = new YoArtifactPosition("Cop" + i, (YoFramePoint2D) cops.get(i), GraphicType.BALL, Color.GREEN, 0.001);
+            YoArtifactPosition copViz = new YoArtifactPosition("Cop" + i, (YoFramePoint2D) cops.get(i), GraphicType.BALL, Color.GREEN, 0.002);
             graphicsRegistry.registerArtifact(getClass().getSimpleName(), copViz);
          }
          for (int i = 0; i < originalCops.size(); i++)
          {
-            YoArtifactPosition copViz = new YoArtifactPosition("OriginalCop" + i, (YoFramePoint2D) originalCops.get(i), GraphicType.BALL, Color.BLUE, 0.001);
+            YoArtifactPosition copViz = new YoArtifactPosition("OriginalCop" + i, (YoFramePoint2D) originalCops.get(i), GraphicType.BALL, Color.BLUE, 0.002);
             graphicsRegistry.registerArtifact(getClass().getSimpleName(), copViz);
          }
          for (int i = 0; i < constraintPolygons.size(); i++)
