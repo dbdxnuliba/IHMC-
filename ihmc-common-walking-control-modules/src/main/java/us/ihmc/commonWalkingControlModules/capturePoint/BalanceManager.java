@@ -9,7 +9,9 @@ import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.TaskspaceTrajectoryStatusMessage;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.YoPlaneContactState;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.SmoothCMPBasedICPPlanner;
+import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.CopTrajectory;
+import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.NumericalICPPlanner;
+import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.SupportSeqence;
 import us.ihmc.commonWalkingControlModules.captureRegion.PushRecoveryControlModule;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPWithTimeFreezingPlannerParameters;
@@ -35,11 +37,12 @@ import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePose3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
+import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
-import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
@@ -63,12 +66,12 @@ import us.ihmc.yoVariables.variable.YoFrameVector2D;
 public class BalanceManager
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-   private static final boolean ENABLE_DYN_REACHABILITY = true;
+   private static final boolean ENABLE_DYN_REACHABILITY = false;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final BipedSupportPolygons bipedSupportPolygons;
-   private final ICPPlannerWithAngularMomentumOffsetInterface icpPlanner;
+//   private final ICPPlannerWithAngularMomentumOffsetInterface icpPlanner;
    private final MomentumTrajectoryHandler momentumTrajectoryHandler;
    private final PrecomputedICPPlanner precomputedICPPlanner;
    private final DynamicReachabilityCalculator dynamicReachabilityCalculator;
@@ -124,7 +127,7 @@ public class BalanceManager
 
    private final CapturabilityBasedStatus capturabilityBasedStatus = new CapturabilityBasedStatus();
 
-   private final SmoothCMPBasedICPPlanner smoothCMPPlanner;
+//   private final SmoothCMPBasedICPPlanner smoothCMPPlanner;
    private final YoBoolean icpPlannerDone = new YoBoolean("ICPPlannerDone", registry);
 
    private boolean initializeForStanding = false;
@@ -145,6 +148,11 @@ public class BalanceManager
    private final SideDependentList<PlaneContactStateCommand> contactStateCommands = new SideDependentList<>(new PlaneContactStateCommand(),
                                                                                                             new PlaneContactStateCommand());
 
+   private final YoDouble timeInSupportSequence = new YoDouble("TimeInSupportSequence", registry);
+   private CopTrajectory copTrajectory;
+   private final SupportSeqence supportSeqence;
+   private final NumericalICPPlanner nummericalICPPlanner;
+
    public BalanceManager(HighLevelHumanoidControllerToolbox controllerToolbox, WalkingControllerParameters walkingControllerParameters,
                          ICPWithTimeFreezingPlannerParameters icpPlannerParameters, ICPAngularMomentumModifierParameters angularMomentumModifierParameters,
                          YoVariableRegistry parentRegistry)
@@ -153,7 +161,7 @@ public class BalanceManager
       FullHumanoidRobotModel fullRobotModel = controllerToolbox.getFullRobotModel();
 
       YoGraphicsListRegistry yoGraphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
-      SideDependentList<ContactableFoot> contactableFeet = controllerToolbox.getContactableFeet();
+//      SideDependentList<ContactableFoot> contactableFeet = controllerToolbox.getContactableFeet();
 
       double gravityZ = controllerToolbox.getGravityZ();
       double totalMass = TotalMassCalculator.computeSubTreeMass(fullRobotModel.getElevator());
@@ -166,20 +174,20 @@ public class BalanceManager
       bipedSupportPolygons = controllerToolbox.getBipedSupportPolygons();
 
       WalkingMessageHandler walkingMessageHandler = controllerToolbox.getWalkingMessageHandler();
-      SideDependentList<MovingReferenceFrame> soleZUpFrames = referenceFrames.getSoleZUpFrames();
+//      SideDependentList<MovingReferenceFrame> soleZUpFrames = referenceFrames.getSoleZUpFrames();
       momentumTrajectoryHandler = walkingMessageHandler == null ? null : walkingMessageHandler.getMomentumTrajectoryHandler();
-      smoothCMPPlanner = new SmoothCMPBasedICPPlanner(fullRobotModel, bipedSupportPolygons, soleZUpFrames, contactableFeet, momentumTrajectoryHandler, yoTime,
-                                                      registry, yoGraphicsListRegistry, controllerToolbox.getGravityZ(), icpPlannerParameters);
-      smoothCMPPlanner.setDefaultPhaseTimes(walkingControllerParameters.getDefaultSwingTime(), walkingControllerParameters.getDefaultTransferTime());
+//      smoothCMPPlanner = new SmoothCMPBasedICPPlanner(fullRobotModel, bipedSupportPolygons, soleZUpFrames, contactableFeet, momentumTrajectoryHandler, yoTime,
+//                                                      registry, yoGraphicsListRegistry, controllerToolbox.getGravityZ(), icpPlannerParameters);
+//      smoothCMPPlanner.setDefaultPhaseTimes(walkingControllerParameters.getDefaultSwingTime(), walkingControllerParameters.getDefaultTransferTime());
+//
+//      ICPPlannerWithAngularMomentumOffsetWrapper icpWrapper = new ICPPlannerWithAngularMomentumOffsetWrapper(smoothCMPPlanner, soleZUpFrames,
+//                                                                                                             icpPlannerParameters,
+//                                                                                                             angularMomentumModifierParameters);
+//      parentRegistry.addChild(icpWrapper.getYoVariableRegistry());
 
-      ICPPlannerWithAngularMomentumOffsetWrapper icpWrapper = new ICPPlannerWithAngularMomentumOffsetWrapper(smoothCMPPlanner, soleZUpFrames,
-                                                                                                             icpPlannerParameters,
-                                                                                                             angularMomentumModifierParameters);
-      parentRegistry.addChild(icpWrapper.getYoVariableRegistry());
-
-      this.icpPlanner = icpWrapper;
-      this.icpPlanner.setOmega0(controllerToolbox.getOmega0());
-      this.icpPlanner.setFinalTransferDuration(walkingControllerParameters.getDefaultTransferTime());
+//      this.icpPlanner = icpWrapper;
+//      this.icpPlanner.setOmega0(controllerToolbox.getOmega0());
+//      this.icpPlanner.setFinalTransferDuration(walkingControllerParameters.getDefaultTransferTime());
 
       if (walkingMessageHandler != null)
       {
@@ -198,9 +206,11 @@ public class BalanceManager
 
       if (ENABLE_DYN_REACHABILITY)
       {
-         dynamicReachabilityCalculator = new DynamicReachabilityCalculator(icpPlanner, fullRobotModel, centerOfMassFrame,
-                                                                           walkingControllerParameters.getDynamicReachabilityParameters(), registry,
-                                                                           yoGraphicsListRegistry);
+         // TODO:
+         throw new RuntimeException("Reimplement me.");
+//         dynamicReachabilityCalculator = new DynamicReachabilityCalculator(icpPlanner, fullRobotModel, centerOfMassFrame,
+//                                                                           walkingControllerParameters.getDynamicReachabilityParameters(), registry,
+//                                                                           yoGraphicsListRegistry);
       }
       else
       {
@@ -247,11 +257,16 @@ public class BalanceManager
       yoPerfectCoP.setToNaN();
 
       parentRegistry.addChild(registry);
+
+      FrameConvexPolygon2D defaultSupportPolygon = controllerToolbox.getDefaultFootPolygons().get(RobotSide.LEFT);
+      SideDependentList<MovingReferenceFrame> soleFrames = controllerToolbox.getReferenceFrames().getSoleFrames();
+      supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, controllerToolbox.getYoTime(), registry, controllerToolbox.getYoGraphicsListRegistry());
+      nummericalICPPlanner = new NumericalICPPlanner(0.02, 3.0, 0.5, registry, controllerToolbox.getYoGraphicsListRegistry());
+      nummericalICPPlanner.setOmega(controllerToolbox.getOmega0());
    }
 
    public void addFootstepToPlan(Footstep footstep, FootstepTiming timing)
    {
-      icpPlanner.addFootstepToPlan(footstep, timing);
       footsteps.add().set(footstep);
       footstepTimings.add().set(timing);
    }
@@ -287,17 +302,23 @@ public class BalanceManager
 
    public double getCurrentTransferDurationAdjustedForReachability()
    {
-      return icpPlanner.getTransferDuration(0);
+      // TODO:
+      throw new RuntimeException("Reimplement me.");
+//      return icpPlanner.getTransferDuration(0);
    }
 
    public double getCurrentSwingDurationAdjustedForReachability()
    {
-      return icpPlanner.getSwingDuration(0);
+      // TODO:
+      throw new RuntimeException("Reimplement me.");
+//      return icpPlanner.getSwingDuration(0);
    }
 
    public double getNextTransferDurationAdjustedForReachability()
    {
-      return icpPlanner.getTransferDuration(1);
+      // TODO:
+      throw new RuntimeException("Reimplement me.");
+//      return icpPlanner.getTransferDuration(1);
    }
 
    public boolean checkAndUpdateFootstep(Footstep footstep)
@@ -317,35 +338,31 @@ public class BalanceManager
 
    public void clearICPPlan()
    {
-      icpPlanner.clearPlan();
       footsteps.clear();
       footstepTimings.clear();
    }
 
    public void setICPPlanSupportSide(RobotSide supportSide)
    {
-      icpPlanner.setSupportLeg(supportSide);
       this.supportSide = supportSide;
    }
 
    public void setICPPlanTransferToSide(RobotSide transferToSide)
    {
-      icpPlanner.setTransferToSide(transferToSide);
       this.transferToSide = transferToSide;
    }
 
    public void setICPPlanTransferFromSide(RobotSide robotSide)
    {
-      icpPlanner.setTransferFromSide(robotSide);
       this.transferToSide = robotSide != null ? robotSide.getOppositeSide() : null;
    }
 
    public void endTick()
    {
-      if (smoothCMPPlanner != null)
-      {
-         smoothCMPPlanner.endTick();
-      }
+//      if (smoothCMPPlanner != null)
+//      {
+//         smoothCMPPlanner.endTick();
+//      }
    }
 
    private final FramePoint3D copEstimate = new FramePoint3D();
@@ -353,12 +370,19 @@ public class BalanceManager
    {
       controllerToolbox.getCoP(copEstimate);
 
-      if (icpPlanner instanceof ICPPlannerWithAngularMomentumOffsetInterface)
-         icpPlanner.modifyDesiredICPForAngularMomentum(copEstimate, supportLeg);
+//      if (icpPlanner instanceof ICPPlannerWithAngularMomentumOffsetInterface)
+//         icpPlanner.modifyDesiredICPForAngularMomentum(copEstimate, supportLeg);
 
-      icpPlanner.getDesiredCapturePointPosition(desiredCapturePoint2d);
-      icpPlanner.getDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
-      icpPlanner.getDesiredCenterOfPressurePosition(perfectCoP2d);
+//      icpPlanner.getDesiredCapturePointPosition(desiredCapturePoint2d);
+//      icpPlanner.getDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
+//      icpPlanner.getDesiredCenterOfPressurePosition(perfectCoP2d);
+
+      nummericalICPPlanner.getIcp(controllerToolbox.getControlDT(), desiredCapturePoint2d);
+      nummericalICPPlanner.getCop(controllerToolbox.getControlDT(), perfectCoP2d);
+      Point2DBasics tempCapturePoint = new Point2D();
+      nummericalICPPlanner.getIcp(0.0, tempCapturePoint);
+      desiredCapturePointVelocity2d.sub(desiredCapturePoint2d, tempCapturePoint);
+      desiredCapturePointVelocity2d.scale(1.0 / controllerToolbox.getControlDT());
 
       pelvisICPBasedTranslationManager.compute(supportLeg, capturePoint2d);
       pelvisICPBasedTranslationManager.addICPOffset(desiredCapturePoint2d, desiredCapturePointVelocity2d, perfectCoP2d);
@@ -444,9 +468,17 @@ public class BalanceManager
    public void computeICPPlan()
    {
       controllerToolbox.getCapturePoint(capturePoint2d);
-      controllerToolbox.getCoP(copEstimate);
-      icpPlanner.compute(capturePoint2d, yoTime.getDoubleValue());
-      icpPlannerDone.set(icpPlanner.isDone());
+//      controllerToolbox.getCoP(copEstimate);
+//      icpPlanner.compute(capturePoint2d, yoTime.getDoubleValue());
+//      icpPlannerDone.set(icpPlanner.isDone());
+
+      icpPlannerDone.set(supportSeqence.isFirstSupportPhaseOver());
+      timeInSupportSequence.set(supportSeqence.getTimeInSequence());
+
+      nummericalICPPlanner.setCopTrajectory(copTrajectory, timeInSupportSequence.getValue());
+      nummericalICPPlanner.setCopConstraints(supportSeqence.getSupportPolygons(), supportSeqence.getSupportDurations(), timeInSupportSequence.getValue());
+      nummericalICPPlanner.setInitialIcp(desiredCapturePoint2d);
+      nummericalICPPlanner.compute();
    }
 
    public void packFootstepForRecoveringFromDisturbance(RobotSide swingSide, double swingTimeRemaining, Footstep footstepToPack)
@@ -478,7 +510,9 @@ public class BalanceManager
    {
       controllerToolbox.getCapturePoint(capturePoint2d);
 
-      return icpPlanner.estimateTimeRemainingForStateUnderDisturbance(capturePoint2d);
+      // TODO:
+      return 0.0;
+//      return icpPlanner.estimateTimeRemainingForStateUnderDisturbance(capturePoint2d);
    }
 
    public void freezePelvisXYControl()
@@ -503,12 +537,14 @@ public class BalanceManager
 
    public void getNextExitCMP(FramePoint3D entryCMPToPack)
    {
-      icpPlanner.getNextExitCMP(entryCMPToPack);
+      // TODO:
+      entryCMPToPack.setToNaN();
+//      icpPlanner.getNextExitCMP(entryCMPToPack);
    }
 
    public double getTimeRemainingInCurrentState()
    {
-      return icpPlanner.getTimeInCurrentStateRemaining();
+      return supportSeqence.getTimeInSegmentRemaining();
    }
 
    public void goHome()
@@ -533,8 +569,13 @@ public class BalanceManager
       controllerToolbox.getCapturePoint(tempCapturePoint);
       yoDesiredCapturePoint.set(tempCapturePoint);
 
-      icpPlanner.holdCurrentICP(tempCapturePoint);
-      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
+//      icpPlanner.holdCurrentICP(tempCapturePoint);
+//      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
+      desiredCapturePoint2d.set(tempCapturePoint);
+      supportSeqence.reset();
+      supportSeqence.initializeStance();
+      supportSeqence.appendCurrentStance(1.0);
+      copTrajectory = new CopTrajectory(supportSeqence);
 
       initializeForStanding = true;
 
@@ -549,7 +590,8 @@ public class BalanceManager
    public void initializeICPPlanForSingleSupport(double swingTime, double transferTime, double finalTransferTime)
    {
       setFinalTransferTime(finalTransferTime);
-      icpPlanner.initializeForSingleSupport(yoTime.getDoubleValue());
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, true);
+      copTrajectory = new CopTrajectory(supportSeqence);
       initializeForSingleSupport = true;
 
       if (Double.isFinite(swingTime) && Double.isFinite(transferTime) && ENABLE_DYN_REACHABILITY)
@@ -602,7 +644,8 @@ public class BalanceManager
          requestICPPlannerToHoldCurrentCoM();
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
-      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, 0.0, false);
+      copTrajectory = new CopTrajectory(supportSeqence);
       initializeForStanding = true;
 
       icpPlannerDone.set(false);
@@ -616,7 +659,8 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      icpPlanner.initializeForTransfer(yoTime.getDoubleValue());
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, false);
+      copTrajectory = new CopTrajectory(supportSeqence);
       initializeForStanding = true;
 
       icpPlannerDone.set(false);
@@ -630,7 +674,8 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      icpPlanner.initializeForTransfer(yoTime.getDoubleValue());
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, false);
+      copTrajectory = new CopTrajectory(supportSeqence);
 
       initializeForTransfer = true;
 
@@ -743,12 +788,14 @@ public class BalanceManager
       centerOfMassPosition.set(centerOfMassPosition2d, 0.0);
 
       centerOfMassPosition.changeFrame(worldFrame);
-      icpPlanner.holdCurrentICP(centerOfMassPosition);
+      // TODO:
+      throw new RuntimeException("Reimplement me.");
+//      icpPlanner.holdCurrentICP(centerOfMassPosition);
    }
 
    public void setFinalTransferTime(double finalTransferDuration)
    {
-      icpPlanner.setFinalTransferDuration(finalTransferDuration);
+//      icpPlanner.setFinalTransferDuration(finalTransferDuration);
       this.finalTransferDuration = finalTransferDuration;
    }
 
@@ -758,7 +805,7 @@ public class BalanceManager
    public void update()
    {
       computeICPPlan();
-      icpPlanner.getFinalDesiredCapturePointPosition(yoFinalDesiredICP);
+      nummericalICPPlanner.getIcp(supportSeqence.getTimeInSegmentRemaining(), yoFinalDesiredICP);
    }
 
    public CapturabilityBasedStatus updateAndReturnCapturabilityBasedStatus()
@@ -784,7 +831,7 @@ public class BalanceManager
 
    public void updateCurrentICPPlan()
    {
-      icpPlanner.updateCurrentPlan();
+//      icpPlanner.updateCurrentPlan();
    }
 
    public void updateSwingTimeRemaining(double timeRemainingInSwing)
