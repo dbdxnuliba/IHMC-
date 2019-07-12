@@ -14,8 +14,8 @@ import javax.swing.JFrame;
 
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
-import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.CopTrajectory;
-import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.NumericalICPPlanner;
+import us.ihmc.commonWalkingControlModules.capturePoint.numerical.CopTrajectory;
+import us.ihmc.commonWalkingControlModules.capturePoint.numerical.NumericalICPPlanner;
 import us.ihmc.commons.Conversions;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;

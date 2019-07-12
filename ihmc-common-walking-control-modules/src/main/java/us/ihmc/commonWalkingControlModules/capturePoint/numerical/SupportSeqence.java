@@ -1,4 +1,4 @@
-package us.ihmc.commonWalkingControlModules.capturePoint.nummerical;
+package us.ihmc.commonWalkingControlModules.capturePoint.numerical;
 
 import java.awt.Color;
 import java.util.ArrayList;
