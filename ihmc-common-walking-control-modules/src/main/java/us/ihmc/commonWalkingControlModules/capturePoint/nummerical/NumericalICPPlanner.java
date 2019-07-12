@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.capturePoint.nummerical;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.ObjDoubleConsumer;
 
@@ -11,6 +12,7 @@ import org.ejml.ops.CommonOps;
 import gnu.trove.list.TDoubleList;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.PolygonWiggler;
 import us.ihmc.convexOptimization.quadraticProgram.QuadProgSolver;
+import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -20,11 +22,13 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Vector2DBasics;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 import us.ihmc.tools.exceptions.NoConvergenceException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFrameConvexPolygon2D;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 public class NumericalICPPlanner
@@ -50,6 +54,7 @@ public class NumericalICPPlanner
    private final List<Point2DBasics> icps = new ArrayList<>();
    private final List<Point2DBasics> cops = new ArrayList<>();
    private final List<Point2DBasics> originalCops = new ArrayList<>();
+   private final List<ConvexPolygon2DBasics> constraintPolygons = new ArrayList<>();
    private final List<Vector2DBasics> angularMomentums = new ArrayList<>();
 
    // Helper trajectories for interpolating:
@@ -127,9 +132,10 @@ public class NumericalICPPlanner
 
       // Limit to be between 1 (effectively no adjustment) and the total amount of steps
       adjustmentSteps = Math.max(Math.min((int) (adjustmentTimeHorizon / timestep), timeSteps - 1), 1);
-      for (int i = 0; i < adjustmentSteps - 1; i++)
+      for (int i = 0; i < adjustmentSteps; i++)
       {
          originalCops.add(new YoFramePoint2D("OriginalCops" + i, ReferenceFrame.getWorldFrame(), registry));
+         constraintPolygons.add(new YoFrameConvexPolygon2D("ConstraintPolygon" + i, ReferenceFrame.getWorldFrame(), 10, registry));
       }
 
       // Initialize solver matrices
@@ -195,6 +201,12 @@ public class NumericalICPPlanner
             YoArtifactPosition copViz = new YoArtifactPosition("OriginalCop" + i, (YoFramePoint2D) originalCops.get(i), GraphicType.BALL, Color.BLUE, 0.001);
             graphicsRegistry.registerArtifact(getClass().getSimpleName(), copViz);
          }
+         for (int i = 0; i < constraintPolygons.size(); i++)
+         {
+            YoArtifactPolygon constraintViz = new YoArtifactPolygon("ConstraintPolygon" + i, (YoFrameConvexPolygon2D) constraintPolygons.get(i), Color.BLUE, false);
+            graphicsRegistry.registerArtifact(getClass().getSimpleName(), constraintViz);
+            constraintPolygons.get(i).setToNaN();
+         }
       }
       parentRegistry.addChild(registry);
    }
@@ -217,10 +229,15 @@ public class NumericalICPPlanner
 
    public void setCopTrajectory(ObjDoubleConsumer<Point2DBasics> copTrajectory)
    {
+      setCopTrajectory(copTrajectory, 0.0);
+   }
+
+   public void setCopTrajectory(ObjDoubleConsumer<Point2DBasics> copTrajectory, double timeInSequence)
+   {
       // Re-sample the trajectory at the sample rate of this planner:
       for (int i = 0; i < cops.size(); i++)
       {
-         double time = timestep * i;
+         double time = timestep * i + timeInSequence;
          copTrajectory.accept(cops.get(i), time);
          if (i < originalCops.size())
             originalCops.get(i).set(cops.get(i));
@@ -247,13 +264,19 @@ public class NumericalICPPlanner
 
    public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations)
    {
+      setCopConstraints(supportPolygons, supportDurations, 0.0);
+   }
+
+   public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations, double timeInSequence)
+   {
       bin.reshape(0, 1);
       Ain.reshape(0, 2 * adjustmentSteps);
+      Arrays.fill(Ain.data, 0.0);
       int index = 0;
       double supportEnd = supportDurations.get(index);
       for (int step = 0; step < adjustmentSteps; step++)
       {
-         double time = timestep * step;
+         double time = timestep * step + timeInSequence;
          while (time > supportEnd && index < supportDurations.size() - 2)
          {
             index++;
@@ -268,6 +291,8 @@ public class NumericalICPPlanner
          Ain.reshape(currentConstraints + newConstraints, Ain.getNumCols(), true);
          CommonOps.insert(subAin, Ain, currentConstraints, 2 * step);
          CommonOps.insert(subbin, bin, currentConstraints, 0);
+
+         constraintPolygons.get(step).set(supportPolygon);
       }
    }
 
