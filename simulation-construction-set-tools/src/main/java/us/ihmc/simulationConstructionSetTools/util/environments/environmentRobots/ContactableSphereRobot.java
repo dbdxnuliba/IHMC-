@@ -18,7 +18,7 @@ import java.util.*;
 
 public class ContactableSphereRobot extends ContactableRobot
 {
-   private static final double DEFAULT_RADIUS = 0.5;
+   private static final double DEFAULT_RADIUS = 0.10;
    private static final double DEFAULT_MASS = 10.0;
    private static boolean ROLLING = true;
    private ReferenceFrame referenceFrame = ReferenceFrame.getWorldFrame();

@@ -1,5 +1,7 @@
 package us.ihmc.humanoidBehaviors.behaviors.complexBehaviors;
 
+import controller_msgs.msg.dds.*;
+import us.ihmc.communication.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
@@ -7,11 +9,13 @@ import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.SearchAndKickBehavio
 import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
 import us.ihmc.humanoidBehaviors.stateMachine.*;
+import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.stateMachine.factories.*;
 import us.ihmc.ros2.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.wholeBodyController.*;
 import us.ihmc.yoVariables.variable.*;
 
@@ -20,6 +24,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 {
    private final boolean DEBUG = false;
    private boolean isDoorOpen = false;
+   private static Point2D offsetFromSphere;
 
    //create a list of states
    public enum WalkThroughDoorWOFiducialStates
@@ -59,6 +64,8 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
    private final HumanoidReferenceFrames referenceFrames;
 
+   private IHMCROS2Publisher<LocalizationPacket> xposoffsetpublisher;
+
 
    // create a constructor
    public SearchAndKickBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, HumanoidReferenceFrames referenceFrames,
@@ -77,7 +84,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
       sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
-
+      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,LocalizationPacket.class);
       setupStateMachine();
    }
 
@@ -182,10 +189,10 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    }
 
 
-   private FramePose2D getoffsetPoint()
+   private FramePose2D getoffsetPoint() //this is my d
    {
-      FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition()-0.2,
-                                                     0.0);
+      FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition(),
+                                                     0.0); //this is the ball position
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(), 0.0, 0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
       FrameVector2D walkingDirection = new FrameVector2D(referenceFrames.getWorldFrame());
@@ -193,15 +200,43 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       walkingDirection.sub(robotPosition);
       walkingDirection.normalize();
       double walkingYaw = Math.atan2(walkingDirection.getY(), walkingDirection.getX());
-      double x = ballPosition2d.getX() - walkingDirection.getX() * standingDistance;
-      double y = ballPosition2d.getY() - walkingDirection.getY() * standingDistance;
-      FramePose2D poseToWalkTo = new FramePose2D(referenceFrames.getWorldFrame(), new Point2D(x, y), walkingYaw);
+      System.out.println(walkingYaw);
+//      double x = ballPosition2d.getX() - walkingDirection.getX() * standingDistance; //
+//      double y = ballPosition2d.getY() - walkingDirection.getY() * standingDistance; // these two are our distance vector
+      double x;
+      double y;
+      if(ContactableSphereRobot.getDefaultRadius() >= 0.5)
+      {
+         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.25);
+         y = ballPosition2d.getY() - (0.25*Math.tan(walkingYaw));
+      }
+      else if (ContactableSphereRobot.getDefaultRadius() >= 0.25)
+      {
+         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.15);
+         y = ballPosition2d.getY() - (0.15*Math.tan(walkingYaw));
+      }
+
+      else
+      {
+         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.1);
+         y = ballPosition2d.getY() - (0.1*Math.tan(walkingYaw));
+      }
+
+      offsetFromSphere = new Point2D(x,y);
+      xposoffsetpublisher.publish(HumanoidMessageTools.createLocalizationPacket(true,true));
+
+      FramePose2D poseToWalkTo = new FramePose2D(referenceFrames.getWorldFrame(), offsetFromSphere, walkingYaw);
       return poseToWalkTo;
    }
    @Override
    public void onBehaviorExited()
    {
       publishTextToSpeech("Leaving this behavior");
+   }
+
+   public static Point2D getOffsetFromSphere()
+   {
+      return offsetFromSphere;
    }
 
    public void setBALL_DETECTION(boolean BALL_DETECTION)

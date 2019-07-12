@@ -1,8 +1,10 @@
 package us.ihmc.humanoidBehaviors.behaviors.complexBehaviors;
 
+import java.awt.geom.*;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.FootLoadBearingMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -14,6 +16,7 @@ import us.ihmc.humanoidBehaviors.behaviors.AbstractBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.FootLoadBearingBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.FootTrajectoryBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.BehaviorAction;
+import us.ihmc.humanoidBehaviors.communication.*;
 import us.ihmc.humanoidBehaviors.taskExecutor.FootTrajectoryTask;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.walking.LoadBearingRequest;
@@ -24,6 +27,8 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.taskExecutor.PipeLine;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.simulationConstructionSetTools.util.environments.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
@@ -43,6 +48,10 @@ public class KickBehavior extends AbstractBehavior
    private final PipeLine<AbstractBehavior> pipeLine;
    private final YoDouble trajectoryTime;
    private final SideDependentList<MovingReferenceFrame> ankleZUpFrames;
+   protected  final ConcurrentListeningQueue<LocalizationPacket> spherexlocation = new ConcurrentListeningQueue<>(10);
+
+   //create an array of double of x,y,z
+  private double pos[][] = {{0.0,0.25,0.277},{-0.2,0.15,0.127,},{0.3,0.15,0.05},{0.0,0.25,0.127},{0.0,0.25,0.0}};
 
    public KickBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, YoBoolean yoDoubleSupport,
                        FullHumanoidRobotModel fullRobotModel, HumanoidReferenceFrames referenceFrames)
@@ -58,6 +67,8 @@ public class KickBehavior extends AbstractBehavior
       footTrajectoryBehavior = new FootTrajectoryBehavior(robotName, ros2Node, yoTime, yoDoubleSupport); //this guy also takes in yoDoubleSupport and the yoDoubleSupport is getting updated
       registry.addChild(footTrajectoryBehavior.getYoVariableRegistry());
       this.yoprint = yoDoubleSupport;
+      createBehaviorInputSubscriber(LocalizationPacket.class,spherexlocation::put);
+
    }
 
    @Override
@@ -75,7 +86,7 @@ public class KickBehavior extends AbstractBehavior
          int t = 0;
          if(t%10000 == 0)
          {
-            System.out.println(yoprint.getValue());
+            //System.out.println(spherexlocation.getLatestPacket().getPoint2DX());
             t++;
          }
       }
@@ -113,19 +124,61 @@ public class KickBehavior extends AbstractBehavior
       // FramePoint(ankleZUpFrames.get(kickFoot), 0.0,
       // kickFoot.getOppositeSide().negateIfRightSide(0.35), 0));
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.227)); //negates the value itself
+      //this current behavior tends to hit things in net downwards direction.
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), -0.2, kickFoot.negateIfRightSide(0.15), 0.127));
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.3, kickFoot.negateIfRightSide(0.15), 0.05));
+      for(int i=0; i<pos.length; i++)
+      {
+         for(int j=0; j<pos[i].length ; j++)
+         {
+            //set the x value here
+            if(j ==0 && i ==3)
+            {
+               if (ContactableSphereRobot.getDefaultRadius() > 0.5)
+               {
+                  pos[i][j] = 0.25 + ContactableSphereRobot.getDefaultRadius();
+               }
+               else if(ContactableSphereRobot.getDefaultRadius() <= 0.5 && ContactableSphereRobot.getDefaultRadius() >=0.25)
+               {
+                  pos[i][j] = 0.15 + ContactableSphereRobot.getDefaultRadius();
+               }
+               else
+               {
+                  pos[i][j] = 0.1 + ContactableSphereRobot.getDefaultRadius();
+               }
+            }
+            else if(j ==1 && i ==3)
+            {
+               if(ContactableSphereRobot.getDefaultRadius() <0.15)
+               {
+                  pos[i][j] = 0.08;
+               }
 
-      // submitFootPosition(kickFoot, new
-      // FramePoint(objectToKickPose.getReferenceFrame(),
-      // objectToKickPose.getX(), objectToKickPose.getY(), 0.127));
+            }
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.127));
+         }
+      }
 
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0));
+      for(int i = 0 ; i < pos.length; i++)
+      {
+         submitFootPosition(kickFoot,new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()),pos[i]));
+      }
+
+
+
+      //      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.227)); //negates the value itself
+//
+//      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), -0.2, kickFoot.negateIfRightSide(0.15), 0.127));
+//
+//      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kicpollkFoot.getOppositeSide()), 0.3, kickFoot.negateIfRightSide(0.15), 0.05));
+//
+//      // submitFootPosition(kickFoot, new
+//      // FramePoint(objectToKickPose.getReferenceFrame(),
+//      // objectToKickPose.getX(), objectToKickPose.getY(), 0.127));
+//
+//      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0.127));
+//
+//      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrames.get(kickFoot.getOppositeSide()), 0.0, kickFoot.negateIfRightSide(0.25), 0));
 
       final FootLoadBearingBehavior footStateBehavior = new FootLoadBearingBehavior(robotName, ros2Node);
       pipeLine.submitSingleTaskStage(new BehaviorAction(footStateBehavior)

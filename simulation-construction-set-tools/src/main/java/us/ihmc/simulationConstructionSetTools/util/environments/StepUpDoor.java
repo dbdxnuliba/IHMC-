@@ -49,7 +49,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private ContactableSphereRobot sphereRobot;
    private ContactableRollingSphereRobot rollingSphere;
    private
-         
+
    double wallOffSet = 0.8;
 
    double xstart = 0.5;
@@ -78,7 +78,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
       Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
-      initialSpherePosition = doorPosition.getX() + 3.0;
+      initialSpherePosition = doorPosition.getX32() + 3.0;
 
       this.stepLength = stepLength;
       this.wallHeight = wallHeight;
