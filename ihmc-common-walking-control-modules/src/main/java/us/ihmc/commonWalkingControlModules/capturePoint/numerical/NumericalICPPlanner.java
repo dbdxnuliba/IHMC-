@@ -41,6 +41,8 @@ public class NumericalICPPlanner
    private static final boolean INITIAL_COP_CONSTRAINT = false;
    /** Whether the continuity at the initial ICP should be an equality constraint */
    private static final boolean INITIAL_ICP_CONSTRAINT = false;
+   /** The amount by which to shrink any CoP constraint polygons */
+   private static final double COP_SAFETY_DISTANCE = 0.0;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -109,7 +111,7 @@ public class NumericalICPPlanner
    }
 
    public NumericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon, YoVariableRegistry parentRegistry,
-                               YoGraphicsListRegistry graphicsRegistry)
+                              YoGraphicsListRegistry graphicsRegistry)
    {
       this.timestep = timestep;
 
@@ -283,7 +285,7 @@ public class NumericalICPPlanner
             supportEnd += supportDurations.get(index);
          }
          ConvexPolygon2DReadOnly supportPolygon = supportPolygons.get(index);
-         PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, 0.0);
+         PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, COP_SAFETY_DISTANCE);
 
          int currentConstraints = bin.getNumRows();
          int newConstraints = subbin.getNumRows();
