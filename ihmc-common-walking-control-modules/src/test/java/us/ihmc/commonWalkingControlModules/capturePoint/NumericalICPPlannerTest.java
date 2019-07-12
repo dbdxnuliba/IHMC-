@@ -15,7 +15,7 @@ import javax.swing.JFrame;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.CopTrajectory;
-import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.NummericalICPPlanner;
+import us.ihmc.commonWalkingControlModules.capturePoint.nummerical.NumericalICPPlanner;
 import us.ihmc.commons.Conversions;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
@@ -44,7 +44,7 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFrameConvexPolygon2D;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
-public class NummericalICPPlannerTest
+public class NumericalICPPlannerTest
 {
    private static final boolean visualizeInPlotter = true;
    private static final boolean visualizeInSCS = false;
@@ -56,7 +56,7 @@ public class NummericalICPPlannerTest
    private static final int iterations = 100;
 
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-   private static final ArtifactList artifacts = new ArtifactList(NummericalICPPlannerTest.class.getSimpleName());
+   private static final ArtifactList artifacts = new ArtifactList(NumericalICPPlannerTest.class.getSimpleName());
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -136,14 +136,14 @@ public class NummericalICPPlannerTest
       initialICP.set(0.1, 0.3);
    }
 
-   public NummericalICPPlannerTest(SimulationConstructionSet scs, YoGraphicsListRegistry graphicsListRegistry)
+   public NumericalICPPlannerTest(SimulationConstructionSet scs, YoGraphicsListRegistry graphicsListRegistry)
    {
       TDoubleList supportDurations = new TDoubleArrayList();
       List<ConvexPolygon2D> supportPolygons = new ArrayList<>();
       Point2DBasics initialIcp = new Point2D();
       Point2DBasics finalIcp = new Point2D();
 
-      NummericalICPPlanner icpPlanner = new NummericalICPPlanner(discretization, previewTime, adjustmentTime);
+      NumericalICPPlanner icpPlanner = new NumericalICPPlanner(discretization, previewTime, adjustmentTime);
 
       boolean useAm = true;
       ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory = (am, t) -> {
@@ -177,7 +177,7 @@ public class NummericalICPPlannerTest
 
    private void setupGraphics(SimulationConstructionSet scs, YoGraphicsListRegistry graphicsListRegistry, double previewTime, TDoubleList supportDurations,
                               List<ConvexPolygon2D> supportPolygons, Point2DBasics initialIcp, Point2DBasics finalIcp, CopTrajectory copTrajectory,
-                              ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory, NummericalICPPlanner icpPlanner)
+                              ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory, NumericalICPPlanner icpPlanner)
    {
       Point2DBasics cop = new Point2D();
       Point2DBasics icp = new Point2D();
@@ -266,7 +266,7 @@ public class NummericalICPPlannerTest
       YoGraphicsListRegistry graphicsListRegistry = new YoGraphicsListRegistry();
       SimulationConstructionSet scs = visualizeInSCS ? new SimulationConstructionSet(new Robot("Test")) : null;
 
-      new NummericalICPPlannerTest(scs, graphicsListRegistry);
+      new NumericalICPPlannerTest(scs, graphicsListRegistry);
 
       if (scs != null)
       {
@@ -304,7 +304,7 @@ public class NummericalICPPlannerTest
       Plotter plotter = new Plotter();
       plotter.setViewRange(2.0);
       artifacts.setVisible(true);
-      JFrame frame = new JFrame(NummericalICPPlannerTest.class.getSimpleName() + " dt: " + discretization);
+      JFrame frame = new JFrame(NumericalICPPlannerTest.class.getSimpleName() + " dt: " + discretization);
       Dimension preferredSize = new Dimension(600, 600);
       frame.setPreferredSize(preferredSize);
       frame.add(plotter.getJPanel(), BorderLayout.CENTER);

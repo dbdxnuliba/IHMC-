@@ -27,7 +27,7 @@ import us.ihmc.tools.exceptions.NoConvergenceException;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
-public class NummericalICPPlanner
+public class NumericalICPPlanner
 {
    /** Weight for maintaining initial ICP continuity */
    private static final double ICP_WEIGHT = 1.0;
@@ -88,22 +88,22 @@ public class NummericalICPPlanner
    private final DenseMatrix64F subAin = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F subbin = new DenseMatrix64F(0, 0);
 
-   public NummericalICPPlanner(double timestep, double previewTime)
+   public NumericalICPPlanner(double timestep, double previewTime)
    {
       this(timestep, previewTime, 0.0, new YoVariableRegistry("Parent"), null);
    }
 
-   public NummericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon)
+   public NumericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon)
    {
       this(timestep, timeHorizon, adjustmentTimeHorizon, new YoVariableRegistry("Parent"), null);
    }
 
-   public NummericalICPPlanner(double timestep, double previewTime, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicsRegistry)
+   public NumericalICPPlanner(double timestep, double previewTime, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicsRegistry)
    {
       this(timestep, previewTime, 0.0, parentRegistry, graphicsRegistry);
    }
 
-   public NummericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon, YoVariableRegistry parentRegistry,
+   public NumericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon, YoVariableRegistry parentRegistry,
                                YoGraphicsListRegistry graphicsRegistry)
    {
       this.timestep = timestep;
