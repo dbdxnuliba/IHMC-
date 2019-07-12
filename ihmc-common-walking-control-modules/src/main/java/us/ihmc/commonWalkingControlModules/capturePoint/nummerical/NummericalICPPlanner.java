@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.nummerical;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ObjDoubleConsumer;
@@ -11,14 +12,20 @@ import gnu.trove.list.TDoubleList;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.PolygonWiggler;
 import us.ihmc.convexOptimization.quadraticProgram.QuadProgSolver;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Vector2DBasics;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
+import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 import us.ihmc.tools.exceptions.NoConvergenceException;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 public class NummericalICPPlanner
 {
@@ -26,8 +33,12 @@ public class NummericalICPPlanner
    private static final double ICP_WEIGHT = 1.0;
    /** Weight for maintaining CoP continuity */
    private static final double COP_WEIGHT = 0.001;
+   /** Whether the continuity at the initial CoP should be an equality constraint */
+   private static final boolean INITIAL_COP_CONSTRAINT = false;
    /** Whether the continuity at the initial ICP should be an equality constraint */
    private static final boolean INITIAL_ICP_CONSTRAINT = false;
+
+   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private double omega;
 
@@ -38,6 +49,7 @@ public class NummericalICPPlanner
    // Sampled trajectories:
    private final List<Point2DBasics> icps = new ArrayList<>();
    private final List<Point2DBasics> cops = new ArrayList<>();
+   private final List<Point2DBasics> originalCops = new ArrayList<>();
    private final List<Vector2DBasics> angularMomentums = new ArrayList<>();
 
    // Helper trajectories for interpolating:
@@ -78,10 +90,21 @@ public class NummericalICPPlanner
 
    public NummericalICPPlanner(double timestep, double previewTime)
    {
-      this(timestep, previewTime, 0.0);
+      this(timestep, previewTime, 0.0, new YoVariableRegistry("Parent"), null);
    }
 
    public NummericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon)
+   {
+      this(timestep, timeHorizon, adjustmentTimeHorizon, new YoVariableRegistry("Parent"), null);
+   }
+
+   public NummericalICPPlanner(double timestep, double previewTime, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicsRegistry)
+   {
+      this(timestep, previewTime, 0.0, parentRegistry, graphicsRegistry);
+   }
+
+   public NummericalICPPlanner(double timestep, double timeHorizon, double adjustmentTimeHorizon, YoVariableRegistry parentRegistry,
+                               YoGraphicsListRegistry graphicsRegistry)
    {
       this.timestep = timestep;
 
@@ -90,18 +113,24 @@ public class NummericalICPPlanner
          throw new RuntimeException("Invalid parameters.");
 
       for (int i = 0; i < timeSteps; i++)
-         icps.add(new Point2D());
+      {
+         icps.add(new YoFramePoint2D("Icp" + i, ReferenceFrame.getWorldFrame(), registry));
+      }
       for (int i = 0; i < timeSteps - 1; i++)
       {
-         cops.add(new Point2D());
+         cops.add(new YoFramePoint2D("Cop" + i, ReferenceFrame.getWorldFrame(), registry));
          angularMomentums.add(new Vector2D());
       }
 
       icpTrajectory = new SimpleTrajectory(icps, timestep * (icps.size() - 1));
       copTrajectory = new SimpleTrajectory(cops, timestep * (cops.size() - 1));
 
-      // Limit to be between 2 (effectively no adjustment) and the total amount of steps
-      adjustmentSteps = Math.max(Math.min((int) (adjustmentTimeHorizon / timestep), timeSteps - 1), 2);
+      // Limit to be between 1 (effectively no adjustment) and the total amount of steps
+      adjustmentSteps = Math.max(Math.min((int) (adjustmentTimeHorizon / timestep), timeSteps - 1), 1);
+      for (int i = 0; i < adjustmentSteps - 1; i++)
+      {
+         originalCops.add(new YoFramePoint2D("OriginalCops" + i, ReferenceFrame.getWorldFrame(), registry));
+      }
 
       // Initialize solver matrices
       Q = new DenseMatrix64F(2 * adjustmentSteps, 2 * adjustmentSteps);
@@ -119,13 +148,22 @@ public class NummericalICPPlanner
       CommonOps.scale(ICP_WEIGHT, WIcp);
 
       // Initialize matrices for CoP equality constraints at start and end
-      int equalityConstraints = INITIAL_ICP_CONSTRAINT ? 6 : 4;
-      Aeq = new DenseMatrix64F(equalityConstraints, 2 * adjustmentSteps);
-      beq = new DenseMatrix64F(equalityConstraints, 1);
-      Aeq.set(0, 0, 1.0);
-      Aeq.set(1, 1, 1.0);
-      Aeq.set(2, 2 * adjustmentSteps - 2, 1.0);
-      Aeq.set(3, 2 * adjustmentSteps - 1, 1.0);
+      Aeq = new DenseMatrix64F(2, 2 * adjustmentSteps);
+      beq = new DenseMatrix64F(2, 1);
+      Aeq.set(0, 2 * adjustmentSteps - 2, 1.0);
+      Aeq.set(1, 2 * adjustmentSteps - 1, 1.0);
+      if (INITIAL_COP_CONSTRAINT)
+      {
+         Aeq.reshape(Aeq.getNumRows() + 2, Aeq.getNumCols(), true);
+         beq.reshape(beq.getNumRows() + 2, beq.getNumCols(), true);
+         Aeq.set(2, 0, 1.0);
+         Aeq.set(3, 1, 1.0);
+      }
+      if (INITIAL_ICP_CONSTRAINT)
+      {
+         Aeq.reshape(Aeq.getNumRows() + 2, Aeq.getNumCols(), true);
+         beq.reshape(beq.getNumRows() + 2, beq.getNumCols(), true);
+      }
 
       // Initialize finite difference matrices for minimizing CoP velocity
       FD = new DenseMatrix64F(2 * adjustmentSteps - 2, 2 * adjustmentSteps);
@@ -139,6 +177,26 @@ public class NummericalICPPlanner
       }
       CommonOps.multTransA(FD, FD, FDtFD);
       CommonOps.scale(COP_WEIGHT / adjustmentSteps, FDtFD);
+
+      if (graphicsRegistry != null)
+      {
+         for (int i = 0; i < icps.size(); i++)
+         {
+            YoArtifactPosition icpViz = new YoArtifactPosition("Icp" + i, (YoFramePoint2D) icps.get(i), GraphicType.BALL, Color.YELLOW, 0.001);
+            graphicsRegistry.registerArtifact(getClass().getSimpleName(), icpViz);
+         }
+         for (int i = 0; i < cops.size(); i++)
+         {
+            YoArtifactPosition copViz = new YoArtifactPosition("Cop" + i, (YoFramePoint2D) cops.get(i), GraphicType.BALL, Color.GREEN, 0.001);
+            graphicsRegistry.registerArtifact(getClass().getSimpleName(), copViz);
+         }
+         for (int i = 0; i < originalCops.size(); i++)
+         {
+            YoArtifactPosition copViz = new YoArtifactPosition("OriginalCop" + i, (YoFramePoint2D) originalCops.get(i), GraphicType.BALL, Color.BLUE, 0.001);
+            graphicsRegistry.registerArtifact(getClass().getSimpleName(), copViz);
+         }
+      }
+      parentRegistry.addChild(registry);
    }
 
    public void setOmega(double omega)
@@ -164,11 +222,12 @@ public class NummericalICPPlanner
       {
          double time = timestep * i;
          copTrajectory.accept(cops.get(i), time);
+         if (i < originalCops.size())
+            originalCops.get(i).set(cops.get(i));
       }
 
       // Initialize the final ICP to match the final CoP:
-      double previewTime = timestep * (icps.size() - 1);
-      copTrajectory.accept(icps.get(icps.size() - 1), previewTime);
+      icps.get(icps.size() - 1).set(cops.get(cops.size() - 1));
    }
 
    public void setAngularMomentumTrajectory(ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory)
@@ -195,7 +254,7 @@ public class NummericalICPPlanner
       for (int step = 0; step < adjustmentSteps; step++)
       {
          double time = timestep * step;
-         while (time > supportEnd)
+         while (time > supportEnd && index < supportDurations.size() - 2)
          {
             index++;
             supportEnd += supportDurations.get(index);
@@ -222,7 +281,7 @@ public class NummericalICPPlanner
    private void solveInitialCopTrajectory()
    {
       // In this case there is nothing to adjust since the initial and final CoP location are constrained
-      if (adjustmentSteps <= 2)
+      if (adjustmentSteps <= 1)
          return;
 
       // Compute angular momentum adjustment term
@@ -241,17 +300,22 @@ public class NummericalICPPlanner
       bIcp.set(1, 0, icps.get(adjustmentSteps).getY() - (initialIcp.getY() * factor + amX));
       NativeCommonOps.mult(AtWicp, bIcp, f);
 
-      // Setup equality constraint for initial and final CoP
-      beq.set(0, cops.get(0).getX());
-      beq.set(1, cops.get(0).getY());
-      beq.set(2, cops.get(adjustmentSteps - 1).getX());
-      beq.set(3, cops.get(adjustmentSteps - 1).getY());
-
+      // Setup equality constraints
+      beq.set(0, cops.get(adjustmentSteps - 1).getX());
+      beq.set(1, cops.get(adjustmentSteps - 1).getY());
+      int additionalConstraintOffset = 2;
+      if (INITIAL_COP_CONSTRAINT)
+      {
+         beq.set(additionalConstraintOffset, cops.get(0).getX());
+         beq.set(additionalConstraintOffset + 1, cops.get(0).getY());
+         additionalConstraintOffset += 2;
+      }
       if (INITIAL_ICP_CONSTRAINT)
       {
-         CommonOps.insert(AIcp, Aeq, 4, 0);
-         beq.set(4, -bIcp.get(0));
-         beq.set(5, -bIcp.get(1));
+         CommonOps.insert(AIcp, Aeq, additionalConstraintOffset, 0);
+         beq.set(additionalConstraintOffset, -bIcp.get(0));
+         beq.set(additionalConstraintOffset + 1, -bIcp.get(1));
+         additionalConstraintOffset += 2;
       }
 
       try
