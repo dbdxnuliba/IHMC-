@@ -476,7 +476,7 @@ public class BalanceManager
       timeInSupportSequence.set(supportSeqence.getTimeInSequence());
 
       nummericalICPPlanner.setCopTrajectory(copTrajectory, timeInSupportSequence.getValue());
-      nummericalICPPlanner.setCopConstraints(supportSeqence.getSupportPolygons(), supportSeqence.getSupportDurations(), timeInSupportSequence.getValue());
+      nummericalICPPlanner.setCopConstraints(supportSeqence.getSupportPolygons(), supportSeqence.getSupportTimes(), timeInSupportSequence.getValue());
       nummericalICPPlanner.setInitialIcp(desiredCapturePoint2d);
       nummericalICPPlanner.compute();
    }
@@ -572,10 +572,9 @@ public class BalanceManager
 //      icpPlanner.holdCurrentICP(tempCapturePoint);
 //      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
       desiredCapturePoint2d.set(tempCapturePoint);
-      supportSeqence.reset();
-      supportSeqence.initializeStance();
-      supportSeqence.appendCurrentStance(1.0);
-      copTrajectory = new CopTrajectory(supportSeqence);
+      supportSeqence.setStance();
+      copTrajectory = new CopTrajectory(supportSeqence, null, 1.0);
+      copTrajectory.accept(perfectCoP2d, 0.0);
 
       initializeForStanding = true;
 
@@ -590,8 +589,8 @@ public class BalanceManager
    public void initializeICPPlanForSingleSupport(double swingTime, double transferTime, double finalTransferTime)
    {
       setFinalTransferTime(finalTransferTime);
-      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, true);
-      copTrajectory = new CopTrajectory(supportSeqence);
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, true);
+      copTrajectory = new CopTrajectory(supportSeqence, perfectCoP2d, finalTransferTime);
       initializeForSingleSupport = true;
 
       if (Double.isFinite(swingTime) && Double.isFinite(transferTime) && ENABLE_DYN_REACHABILITY)
@@ -644,8 +643,8 @@ public class BalanceManager
          requestICPPlannerToHoldCurrentCoM();
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
-      supportSeqence.setFromFootsteps(footsteps, footstepTimings, 0.0, false);
-      copTrajectory = new CopTrajectory(supportSeqence);
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, false);
+      copTrajectory = new CopTrajectory(supportSeqence, perfectCoP2d, 1.0);
       initializeForStanding = true;
 
       icpPlannerDone.set(false);
@@ -659,8 +658,8 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, false);
-      copTrajectory = new CopTrajectory(supportSeqence);
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, false);
+      copTrajectory = new CopTrajectory(supportSeqence, perfectCoP2d, finalTransferTime);
       initializeForStanding = true;
 
       icpPlannerDone.set(false);
@@ -674,8 +673,8 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      supportSeqence.setFromFootsteps(footsteps, footstepTimings, finalTransferTime, false);
-      copTrajectory = new CopTrajectory(supportSeqence);
+      supportSeqence.setFromFootsteps(footsteps, footstepTimings, false);
+      copTrajectory = new CopTrajectory(supportSeqence, perfectCoP2d, finalTransferTime);
 
       initializeForTransfer = true;
 

@@ -60,12 +60,12 @@ public class NumericalICPPlannerTest
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
-   private static void packDSTest(Point2DBasics initialICP, List<ConvexPolygon2D> supportPolygons, TDoubleList supportDurations)
+   private static void packDSTest(Point2DBasics initialICP, List<ConvexPolygon2D> supportPolygons, TDoubleList supportTimes)
    {
-      supportDurations.add(1.0);
-      supportDurations.add(0.25);
-      supportDurations.add(0.5);
-      supportDurations.add(10.0);
+      supportTimes.add(0.0);
+      supportTimes.add(1.0);
+      supportTimes.add(1.25);
+      supportTimes.add(1.75);
 
       ConvexPolygon2D polygon1 = new ConvexPolygon2D();
       polygon1.addVertex(0.1, 0.2);
@@ -104,13 +104,13 @@ public class NumericalICPPlannerTest
       initialICP.addY(-0.05);
    }
 
-   private static void packSSTest(Point2DBasics initialICP, List<ConvexPolygon2D> supportPolygons, TDoubleList supportDurations)
+   private static void packSSTest(Point2DBasics initialICP, List<ConvexPolygon2D> supportPolygons, TDoubleList supportTimes)
    {
-      supportDurations.add(0.5);
-      supportDurations.add(0.1);
-      supportDurations.add(0.5);
-      supportDurations.add(0.1);
-      supportDurations.add(10.0);
+      supportTimes.add(0.0);
+      supportTimes.add(0.5);
+      supportTimes.add(0.6);
+      supportTimes.add(1.1);
+      supportTimes.add(1.2);
 
       ConvexPolygon2D polygon1 = new ConvexPolygon2D();
       polygon1.addVertex(0.1, 0.2);
@@ -138,7 +138,7 @@ public class NumericalICPPlannerTest
 
    public NumericalICPPlannerTest(SimulationConstructionSet scs, YoGraphicsListRegistry graphicsListRegistry)
    {
-      TDoubleList supportDurations = new TDoubleArrayList();
+      TDoubleList supportTimes = new TDoubleArrayList();
       List<ConvexPolygon2D> supportPolygons = new ArrayList<>();
       Point2DBasics initialIcp = new Point2D();
       Point2DBasics finalIcp = new Point2D();
@@ -153,8 +153,8 @@ public class NumericalICPPlannerTest
             am.set(-0.1, 0.0);
       };
 
-      packDSTest(initialIcp, supportPolygons, supportDurations);
-      CopTrajectory copTrajectory = new CopTrajectory(supportPolygons, supportDurations);
+      packDSTest(initialIcp, supportPolygons, supportTimes);
+      CopTrajectory copTrajectory = new CopTrajectory(supportPolygons, supportTimes, null, 0.5);
       copTrajectory.accept(finalIcp, previewTime);
 
       long duration = 0;
@@ -164,14 +164,14 @@ public class NumericalICPPlannerTest
          icpPlanner.setOmega(omega);
          icpPlanner.setCopTrajectory(copTrajectory);
          icpPlanner.setAngularMomentumTrajectory(angularMomentumTrajectory);
-         icpPlanner.setCopConstraints(supportPolygons, supportDurations);
+         icpPlanner.setCopConstraints(supportPolygons, supportTimes);
          icpPlanner.setInitialIcp(initialIcp);
          icpPlanner.compute();
          duration = System.nanoTime() - startTime;
       }
       System.out.println("Took " + Conversions.nanosecondsToMilliseconds((double) (duration)) + " ms");
 
-      setupGraphics(scs, graphicsListRegistry, previewTime, supportDurations, supportPolygons, initialIcp, finalIcp, copTrajectory, angularMomentumTrajectory,
+      setupGraphics(scs, graphicsListRegistry, previewTime, supportTimes, supportPolygons, initialIcp, finalIcp, copTrajectory, angularMomentumTrajectory,
                     icpPlanner);
    }
 

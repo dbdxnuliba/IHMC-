@@ -16,50 +16,51 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
    private final List<Point2DReadOnly> waypoints = new ArrayList<>();
    private final TDoubleList waypointTimes = new TDoubleArrayList();
 
-   public CopTrajectory(SupportSeqence supportSeqence)
+   public CopTrajectory(SupportSeqence supportSeqence, Point2DReadOnly initialCop, double finalTransferDuration)
    {
-      this(supportSeqence.getSupportPolygons(), supportSeqence.getSupportDurations());
+      this(supportSeqence.getSupportPolygons(), supportSeqence.getSupportTimes(), initialCop, finalTransferDuration);
    }
 
-   public CopTrajectory(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations)
+   public CopTrajectory(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, Point2DReadOnly initialCop,
+                        double finalTransferDuration)
    {
-      double time = 0.0;
-
-      // Initial waypoint at center of initial support.
-      waypoints.add(new Point2D(supportPolygons.get(0).getCentroid()));
-      waypointTimes.add(time);
+      // Initial waypoint.
+      if (initialCop == null)
+         waypoints.add(new Point2D(supportPolygons.get(0).getCentroid()));
+      else
+         waypoints.add(new Point2D(initialCop));
+      waypointTimes.add(0.0);
 
       // Waypoint at end of support is as close to next support center as possible.
-      for (int i = 0; i < supportPolygons.size() - 1; i++)
+      for (int i = 1; i < supportPolygons.size(); i++)
       {
+         ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
          ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
-         ConvexPolygon2DReadOnly nextPolygon = supportPolygons.get(i + 1);
-         Point2DReadOnly nextCentroid = nextPolygon.getCentroid();
-         polygon.orthogonalProjectionCopy(nextCentroid);
-         time += supportDurations.get(i);
-         if (polygon.isPointInside(nextCentroid))
+         Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
+         Point2DReadOnly centroid = polygon.getCentroid();
+
+         if (previousPolygon.isPointInside(centroid))
          {
-            waypoints.add(new Point2D(nextCentroid));
-            waypointTimes.add(time);
+            waypoints.add(new Point2D(centroid));
+            waypointTimes.add(supportTimes.get(i));
          }
-         else if (nextPolygon.isPointInside(polygon.getCentroid()))
+         else if (polygon.isPointInside(lastWaypoint))
          {
-            waypoints.add(new Point2D(polygon.getCentroid()));
-            waypointTimes.add(time);
+            waypoints.add(new Point2D(lastWaypoint));
+            waypointTimes.add(supportTimes.get(i));
          }
          else
          {
-            waypoints.add(new Point2D(polygon.getCentroid()));
-            waypointTimes.add(time);
-            waypoints.add(new Point2D(nextCentroid));
-            waypointTimes.add(time);
+            waypoints.add(new Point2D(lastWaypoint));
+            waypointTimes.add(supportTimes.get(i));
+            waypoints.add(new Point2D(centroid));
+            waypointTimes.add(supportTimes.get(i));
          }
       }
 
       // Last waypoint is at center of final support.
-      time += supportDurations.get(supportDurations.size() - 1);
       waypoints.add(new Point2D(supportPolygons.get(supportPolygons.size() - 1).getCentroid()));
-      waypointTimes.add(time);
+      waypointTimes.add(supportTimes.get(supportTimes.size() - 1) + finalTransferDuration);
    }
 
    @Override

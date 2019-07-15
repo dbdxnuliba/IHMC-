@@ -264,26 +264,23 @@ public class NumericalICPPlanner
       this.initialIcp.set(initialIcp);
    }
 
-   public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations)
+   public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes)
    {
-      setCopConstraints(supportPolygons, supportDurations, 0.0);
+      setCopConstraints(supportPolygons, supportTimes, 0.0);
    }
 
-   public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportDurations, double timeInSequence)
+   public void setCopConstraints(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double timeInSequence)
    {
       bin.reshape(0, 1);
       Ain.reshape(0, 2 * adjustmentSteps);
       Arrays.fill(Ain.data, 0.0);
       int index = 0;
-      double supportEnd = supportDurations.get(index);
       for (int step = 0; step < adjustmentSteps; step++)
       {
          double time = timestep * step + timeInSequence;
-         while (time > supportEnd && index < supportDurations.size() - 2)
-         {
+         while (index < supportTimes.size() - 1 && time > supportTimes.get(index + 1))
             index++;
-            supportEnd += supportDurations.get(index);
-         }
+
          ConvexPolygon2DReadOnly supportPolygon = supportPolygons.get(index);
          PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, COP_SAFETY_DISTANCE);
 
