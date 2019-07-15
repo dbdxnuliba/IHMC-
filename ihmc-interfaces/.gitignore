@@ -6,6 +6,7 @@
 /target
 /pit-reports
 /install
+/log
 
 # Top level directories in sub-projects
 **/classes
