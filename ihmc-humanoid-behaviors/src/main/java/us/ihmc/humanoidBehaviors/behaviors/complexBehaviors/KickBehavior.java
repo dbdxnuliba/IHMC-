@@ -48,7 +48,7 @@ public class KickBehavior extends AbstractBehavior
    private final PipeLine<AbstractBehavior> pipeLine;
    private final YoDouble trajectoryTime;
    private final SideDependentList<MovingReferenceFrame> ankleZUpFrames;
-   protected  final ConcurrentListeningQueue<LocalizationPacket> spherexlocation = new ConcurrentListeningQueue<>(10);
+   //protected  final ConcurrentListeningQueue<ValveLocationPacket> spherexlocation = new ConcurrentListeningQueue<>(10);
 
    //create an array of double of x,y,z
   private double pos[][] = {{0.0,0.25,0.277},{-0.2,0.15,0.127,},{0.3,0.15,0.05},{0.0,0.25,0.127},{0.0,0.25,0.0}};
@@ -67,7 +67,7 @@ public class KickBehavior extends AbstractBehavior
       footTrajectoryBehavior = new FootTrajectoryBehavior(robotName, ros2Node, yoTime, yoDoubleSupport); //this guy also takes in yoDoubleSupport and the yoDoubleSupport is getting updated
       registry.addChild(footTrajectoryBehavior.getYoVariableRegistry());
       this.yoprint = yoDoubleSupport;
-      createBehaviorInputSubscriber(LocalizationPacket.class,spherexlocation::put);
+      //createBehaviorInputSubscriber(ValveLocationPacket.class,spherexlocation::put);
 
    }
 
