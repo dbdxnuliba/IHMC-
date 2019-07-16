@@ -37,6 +37,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final boolean ADD_CYLINDER = false;
    private final boolean ADD_SPHERES = true;
    private final boolean ADD_ROLLING_SPHERE = false;
+   private final boolean ADD_GOAL_POST = true;
 
    private FramePose3D doorframepose = new FramePose3D();
    private final int NUmberofBoxes = 1;
@@ -164,9 +165,22 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
             sphereRobot = new ContactableSphereRobot("sphere" + i,yoGraphicsListRegistry); //not adding contact points
             sphereRobot.setMass(1.0);
             sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.01);
+            Point3D[] contactPointOffset;
             if (sphereRobot.getROLLING() != true);
             {
-               Point3D[] contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 50); //lookup rolling sphere e.g
+               if(ContactableSphereRobot.getDefaultRadius() > 0.5)
+               {
+                  contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 50);
+               }
+               else if (ContactableSphereRobot.getDefaultRadius() >= 0.25 && ContactableSphereRobot.getDefaultRadius() <= 0.5)
+               {
+                  contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 25);
+               }
+               else
+               {
+                  contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 10);
+               }
+
                for (int j = 0; j < contactPointOffset.length; j++)
                {
                   Point3D contactPointoffset = contactPointOffset[i];
@@ -191,6 +205,32 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          contactableRobots.add(rollingSphere);
          rollingSphere.setGravity(0.0);
          setGroundConatactModel(rollingSphere);
+      }
+
+      if(ADD_GOAL_POST)
+      {
+         //make a circular pipe thing that mimicks a goal post
+         //z is the offset from middle
+         Vector3D support1 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),0.5,0.5);  //slant support
+         Vector3D support2 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),-0.5,0.5); //slant support
+         Vector3D topRod = new Vector3D(10 + 0.5,0.0,1.0); //top rod
+         Vector3D support3 = new Vector3D(10 + 0.5,0.5,0.5); //vertical support
+         Vector3D support4 = new Vector3D(10 + 0.5,-0.5,0.5); //vertical support
+
+         YoAppearance app = new YoAppearance();
+
+         CylinderTerrainObject goalPost11 = new CylinderTerrainObject(support1,135,0.0,(Math.sqrt(2)),0.02,app.Black());
+         CylinderTerrainObject goalPost12 = new CylinderTerrainObject(support2,135,0.0,(Math.sqrt(2)),0.02,app.Black());
+         CylinderTerrainObject goalPost13 = new CylinderTerrainObject(topRod,-90.0,-90.0,1.0,0.02,app.Black());
+         CylinderTerrainObject goalPost14 = new CylinderTerrainObject(support3,0.0,0.0,1.0,0.02,app.Black());
+         CylinderTerrainObject goalPost15 = new CylinderTerrainObject(support4,0.0,0.0,1.0,0.02,app.Black());
+
+
+         combinedTerrainObject.addTerrainObject(goalPost11);
+         combinedTerrainObject.addTerrainObject(goalPost12);
+         combinedTerrainObject.addTerrainObject(goalPost13);
+         combinedTerrainObject.addTerrainObject(goalPost14);
+         combinedTerrainObject.addTerrainObject(goalPost15);
       }
    }
 
