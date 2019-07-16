@@ -14,6 +14,7 @@ import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
@@ -48,6 +49,7 @@ public class SupportSeqence
 
    private final ConvexPolygon2D defaultSupportPolygon = new ConvexPolygon2D();
    private final SideDependentList<ConvexPolygon2D> footPolygons = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
+   private final SideDependentList<FramePose3D> footPoses = new SideDependentList<>(new FramePose3D(), new FramePose3D());
 
    private final SideDependentList<PoseReferenceFrame> movingSoleFrames = new SideDependentList<>();
    private final SideDependentList<ConvexPolygon2D> movingPolygons = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
@@ -209,7 +211,7 @@ public class SupportSeqence
       for (RobotSide robotSide : RobotSide.values)
       {
          movingPolygons.get(robotSide).set(footPolygons.get(robotSide));
-         movingSoleFrames.get(robotSide).setPoseAndUpdate(soleFrames.get(robotSide).getTransformToRoot());
+         movingSoleFrames.get(robotSide).setPoseAndUpdate(footPoses.get(robotSide));
          footSupportSequences.get(robotSide).add().set(movingPolygons.get(robotSide));
          footSupportInitialTimes.get(robotSide).add(0.0);
       }
@@ -247,11 +249,18 @@ public class SupportSeqence
          newFootPolygon.applyTransform(newSoleFrame.getTransformToRoot(), false);
 
          // Add touchdown polygon
-         // TODO: add heel strike here
-         //         swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
-
-         swingFootSupports.add().set(newFootPolygon);
-         swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+         if (footstepTiming.getTouchdownDuration() > 0.0)
+         {
+            computeHeelPolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+            swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+            swingFootSupports.add().set(newFootPolygon);
+            swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getTouchdownDuration());
+         }
+         else
+         {
+            swingFootSupports.add().set(newFootPolygon);
+            swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+         }
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -321,28 +330,50 @@ public class SupportSeqence
       result.update();
    }
 
-   private final ConvexPolygon2D toeOffPolygonInSwingFootFrame = new ConvexPolygon2D();
+   private final ConvexPolygon2D partialPolygonInSwingFootFrame = new ConvexPolygon2D();
 
    private void computeToePolygon(ConvexPolygon2D toePolygon, ConvexPolygon2D fullPolygon, PoseReferenceFrame swingFootFrame)
    {
-      toeOffPolygonInSwingFootFrame.set(fullPolygon);
-      toeOffPolygonInSwingFootFrame.applyInverseTransform(swingFootFrame.getTransformToRoot(), false);
+      partialPolygonInSwingFootFrame.set(fullPolygon);
+      partialPolygonInSwingFootFrame.applyInverseTransform(swingFootFrame.getTransformToRoot(), false);
       toePolygon.clear();
 
       double maxX = Double.NEGATIVE_INFINITY;
-      for (int i = 0; i < toeOffPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      for (int i = 0; i < partialPolygonInSwingFootFrame.getNumberOfVertices(); i++)
       {
-         double x = toeOffPolygonInSwingFootFrame.getVertex(i).getX();
+         double x = partialPolygonInSwingFootFrame.getVertex(i).getX();
          maxX = Math.max(maxX, x);
       }
-      for (int i = 0; i < toeOffPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      for (int i = 0; i < partialPolygonInSwingFootFrame.getNumberOfVertices(); i++)
       {
-         Point2DReadOnly vertex = toeOffPolygonInSwingFootFrame.getVertex(i);
+         Point2DReadOnly vertex = partialPolygonInSwingFootFrame.getVertex(i);
          if (Precision.equals(vertex.getX(), maxX, 0.01))
             toePolygon.addVertex(vertex);
       }
       toePolygon.update();
       toePolygon.applyTransform(swingFootFrame.getTransformToRoot(), false);
+   }
+
+   private void computeHeelPolygon(ConvexPolygon2D heelPolygon, ConvexPolygon2D fullPolygon, PoseReferenceFrame swingFootFrame)
+   {
+      partialPolygonInSwingFootFrame.set(fullPolygon);
+      partialPolygonInSwingFootFrame.applyInverseTransform(swingFootFrame.getTransformToRoot(), false);
+      heelPolygon.clear();
+
+      double minX = Double.POSITIVE_INFINITY;
+      for (int i = 0; i < partialPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      {
+         double x = partialPolygonInSwingFootFrame.getVertex(i).getX();
+         minX = Math.min(minX, x);
+      }
+      for (int i = 0; i < partialPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      {
+         Point2DReadOnly vertex = partialPolygonInSwingFootFrame.getVertex(i);
+         if (Precision.equals(vertex.getX(), minX, 0.01))
+            heelPolygon.addVertex(vertex);
+      }
+      heelPolygon.update();
+      heelPolygon.applyTransform(swingFootFrame.getTransformToRoot(), false);
    }
 
    private final FramePoint3D stepLocation = new FramePoint3D();
@@ -371,6 +402,7 @@ public class SupportSeqence
       {
          footPolygons.get(robotSide).set(defaultSupportPolygon);
          footPolygons.get(robotSide).applyTransform(soleFrames.get(robotSide).getTransformToRoot(), false);
+         footPoses.get(robotSide).setFromReferenceFrame(soleFrames.get(robotSide));
       }
    }
 

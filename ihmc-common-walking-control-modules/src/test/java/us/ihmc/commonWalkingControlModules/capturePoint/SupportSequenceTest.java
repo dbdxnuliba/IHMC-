@@ -36,6 +36,7 @@ public class SupportSequenceTest
       footstep.setY(0.1);
       FootstepTiming timing = new FootstepTiming(0.5, 0.2);
       timing.setLiftoffDuration(0.1);
+      timing.setTouchdownDuration(0.1);
 
       List<Footstep> footsteps = Arrays.asList(footstep);
       List<FootstepTiming> timings = Arrays.asList(timing);
@@ -76,7 +77,18 @@ public class SupportSequenceTest
          expectedSupportPolygons.add(polygon);
          expectedSupportTimes.add(0.2);
       }
-      // At time 0.7 the swing foot will have touched down
+      // At time 0.7 the swing foot will have touched down with the heel
+      {
+         ConvexPolygon2D polygon = new ConvexPolygon2D();
+         polygon.addVertex(0.1, 0.15);
+         polygon.addVertex(0.1, -0.15);
+         polygon.addVertex(-0.1, -0.05);
+         polygon.addVertex(-0.1, -0.15);
+         polygon.update();
+         expectedSupportPolygons.add(polygon);
+         expectedSupportTimes.add(0.7);
+      }
+      // At time 0.8 the robot will be in full support
       {
          ConvexPolygon2D polygon = new ConvexPolygon2D();
          polygon.addVertex(0.3, 0.15);
@@ -87,7 +99,7 @@ public class SupportSequenceTest
          polygon.addVertex(0.1, 0.15);
          polygon.update();
          expectedSupportPolygons.add(polygon);
-         expectedSupportTimes.add(0.7);
+         expectedSupportTimes.add(0.8);
       }
 
       List<? extends ConvexPolygon2DReadOnly> supportPolygons = supportSeqence.getSupportPolygons();
