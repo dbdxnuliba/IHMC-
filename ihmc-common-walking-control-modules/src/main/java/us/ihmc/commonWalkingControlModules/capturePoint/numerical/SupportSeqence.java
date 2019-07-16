@@ -12,6 +12,7 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
+import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -56,6 +57,11 @@ public class SupportSeqence
    private final List<YoDouble> polygonStartTimes = new ArrayList<>();
    private final List<ConvexPolygon2DBasics> vizPolygons = new ArrayList<>();
 
+   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time)
+   {
+      this(defaultSupportPolygon, soleFrames, time, null, null);
+   }
+
    public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time,
                          YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
    {
@@ -70,6 +76,9 @@ public class SupportSeqence
          }
       }
 
+      if (parentRegistry != null)
+         parentRegistry.addChild(registry);
+
       for (RobotSide robotSide : RobotSide.values)
       {
          movingSoleFrames.put(robotSide, new PoseReferenceFrame(robotSide.getLowerCaseName() + "MovingSole", ReferenceFrame.getWorldFrame()));
@@ -80,11 +89,76 @@ public class SupportSeqence
       this.defaultSupportPolygon.set(defaultSupportPolygon);
       this.time = time;
       this.soleFrames = soleFrames;
-      parentRegistry.addChild(registry);
-      reset();
+
+      reset(0.0);
    }
 
-   public void reset()
+   /**
+    * Get the list of upcoming support polygons with the first polygon in the list being the current support.
+    *
+    * @return the list of upcoming support polygons.
+    */
+   public List<? extends ConvexPolygon2DReadOnly> getSupportPolygons()
+   {
+      return supportPolygons;
+   }
+
+   /**
+    * Get the times at which the respective support polygons obtained with {@link #getSupportPolygons()} will be active.
+    * The first value in this list should always be 0.0. The time is relative to the start time of the support sequence
+    * (see {@link #getTimeInSequence()}).
+    *
+    * @return the times at which the support polygon will change.
+    */
+   public TDoubleList getSupportTimes()
+   {
+      return supportInitialTimes;
+   }
+
+   /**
+    * Gets the time in the current support sequence. This time is reset when the support sequence is reinitialized (e.g.
+    * at the start of a swing or a transfer). All times provided by this class are relative to the start of the support
+    * sequence.
+    *
+    * @return time that has passed since the start of the support sequence.
+    */
+   public double getTimeInSequence()
+   {
+      return time.getValue() - supportSequenceStartTime.getValue();
+   }
+
+   /**
+    * Indicates whether a swing or transfer has finished. The first support phase can have several support polygons.
+    * This happens if the robot uses toe off or heel strike as this changes the support polygon but does not end the
+    * support phase (swing or transfer).
+    * <p>
+    * Note, that if the robot is standing this will always return {@code true}.
+    *
+    * @return whether the swing / transfer phase at the start of this sequence should be over based on time only.
+    */
+   public boolean isFirstSupportPhaseOver()
+   {
+      if (supportInitialTimes.size() == 1)
+         return true;
+      return getTimeInSequence() >= initialPhaseEnd.getValue();
+   }
+
+   /**
+    * Obtains the time that is remaining in the initial support phase (swing or transfer) of this sequence. Note, that
+    * the initial support phase might have several support polygons (see {@link #isFirstSupportPhaseOver()}).
+    * <p>
+    * Note, that if the robot is standing this will always return {@code 0.0}.
+    *
+    * @return the time that (according to plan) remains in the first phase of this support sequence.
+    */
+   public double getTimeInSegmentRemaining()
+   {
+      if (supportInitialTimes.size() == 1)
+         return 0.0;
+      return initialPhaseEnd.getValue() - getTimeInSequence();
+   }
+
+   private void reset(double sequenceStartTime)
    {
       supportPolygons.clear();
       supportInitialTimes.reset();
@@ -93,8 +167,7 @@ public class SupportSeqence
          footSupportSequences.get(robotSide).clear();
          footSupportInitialTimes.get(robotSide).reset();
       }
-
-      supportSequenceStartTime.set(time.getValue());
+      supportSequenceStartTime.set(sequenceStartTime);
       initializeStance();
    }
 
@@ -111,7 +184,7 @@ public class SupportSeqence
 
    public void setStance()
    {
-      reset();
+      reset(time.getValue());
 
       ConvexPolygon2D supportPolygon = supportPolygons.add();
       supportInitialTimes.add(0.0);
@@ -125,15 +198,15 @@ public class SupportSeqence
       updateViz();
    }
 
-   public void setFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, boolean startingSwing)
+   public void setFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, boolean inSwing)
    {
-      reset();
+      reset(time.getValue());
 
       // Add initial support states of the feet
       if (!footsteps.isEmpty())
       {
          RobotSide firstStepSide = footsteps.get(0).getRobotSide();
-         if (startingSwing)
+         if (inSwing)
             footSupportSequences.get(firstStepSide).add().clearAndUpdate();
          else
             footSupportSequences.get(firstStepSide).add().set(movingPolygons.get(firstStepSide));
@@ -157,15 +230,20 @@ public class SupportSeqence
          RecyclingArrayList<ConvexPolygon2D> swingFootSupports = footSupportSequences.get(stepSide);
 
          // Add swing - no support for foot
-         if (!startingSwing || stepIndex > 0)
+         if (!inSwing || stepIndex > 0)
          {
             double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
 
-            if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
+            if (footstepTiming.getLiftoffDuration() > 0.0)
+            {
+               swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
+               computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+            }
+            else if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
             {
                double toeOffTime = footstepTiming.getTransferTime() / 2.0;
                swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
-               computeToeOffPolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+               computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
             }
 
             swingFootSupports.add().clearAndUpdate();
@@ -178,7 +256,7 @@ public class SupportSeqence
          PoseReferenceFrame newSoleFrame = movingSoleFrames.get(stepSide);
          extractSupportPolygon(footstep, newFootPolygon, defaultSupportPolygon);
          newSoleFrame.setPoseAndUpdate(footstep.getFootstepPose());
-         newFootPolygon.applyTransform(newSoleFrame.getTransformToRoot());
+         newFootPolygon.applyTransform(newSoleFrame.getTransformToRoot(), false);
 
          // Add touchdown polygon
          // TODO: add heel strike here
@@ -188,7 +266,7 @@ public class SupportSeqence
          swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
 
          // Record when the swing or support phase will be over we can check on that from outside.
-         if (stepIndex == 0 && startingSwing)
+         if (stepIndex == 0 && inSwing)
             initialPhaseEnd.set(footstepTiming.getSwingTime());
          else if (stepIndex == 0)
             initialPhaseEnd.set(footstepTiming.getTransferTime());
@@ -199,7 +277,7 @@ public class SupportSeqence
       int rIndex = 0;
       ConvexPolygon2D lPolygon = footSupportSequences.get(RobotSide.LEFT).get(lIndex);
       ConvexPolygon2D rPolygon = footSupportSequences.get(RobotSide.RIGHT).get(rIndex);
-      supportPolygons.add().set(lPolygon, rPolygon);
+      combinePolygons(supportPolygons.add(), lPolygon, rPolygon);
       supportInitialTimes.add(0.0);
 
       while (true)
@@ -239,19 +317,35 @@ public class SupportSeqence
             supportInitialTimes.add(footSupportInitialTimes.get(RobotSide.LEFT).get(lIndex));
          }
 
-         supportPolygons.add().set(lPolygon, rPolygon);
+         combinePolygons(supportPolygons.add(), lPolygon, rPolygon);
       }
 
       updateViz();
    }
 
+   private final List<Point2DReadOnly> vertices = new ArrayList<>();
+
+   private void combinePolygons(ConvexPolygon2DBasics result, ConvexPolygon2DReadOnly polygonA, ConvexPolygon2DReadOnly polygonB)
+   {
+      vertices.clear();
+      for (int i = 0; i < polygonA.getNumberOfVertices(); i++)
+         vertices.add(polygonA.getVertex(i));
+      for (int i = 0; i < polygonB.getNumberOfVertices(); i++)
+         vertices.add(polygonB.getVertex(i));
+      int n = EuclidGeometryPolygonTools.inPlaceGrahamScanConvexHull2D(vertices);
+      result.clear();
+      for (int i = 0; i < n; i++)
+         result.addVertex(vertices.get(i));
+      result.update();
+   }
+
    private final ConvexPolygon2D toeOffPolygonInSwingFootFrame = new ConvexPolygon2D();
 
-   private void computeToeOffPolygon(ConvexPolygon2D toeOffPolygon, ConvexPolygon2D fullPolygon, PoseReferenceFrame swingFootFrame)
+   private void computeToePolygon(ConvexPolygon2D toePolygon, ConvexPolygon2D fullPolygon, PoseReferenceFrame swingFootFrame)
    {
       toeOffPolygonInSwingFootFrame.set(fullPolygon);
       toeOffPolygonInSwingFootFrame.applyInverseTransform(swingFootFrame.getTransformToRoot(), false);
-      toeOffPolygon.clear();
+      toePolygon.clear();
 
       double maxX = Double.NEGATIVE_INFINITY;
       for (int i = 0; i < toeOffPolygonInSwingFootFrame.getNumberOfVertices(); i++)
@@ -263,10 +357,10 @@ public class SupportSeqence
       {
          Point2DReadOnly vertex = toeOffPolygonInSwingFootFrame.getVertex(i);
          if (Precision.equals(vertex.getX(), maxX, 0.01))
-            toeOffPolygon.addVertex(vertex);
+            toePolygon.addVertex(vertex);
       }
-      toeOffPolygon.update();
-      toeOffPolygon.applyTransform(swingFootFrame.getTransformToRoot(), false);
+      toePolygon.update();
+      toePolygon.applyTransform(swingFootFrame.getTransformToRoot(), false);
    }
 
    private final FramePoint3D stepLocation = new FramePoint3D();
@@ -313,40 +407,5 @@ public class SupportSeqence
       {
          newFootPolygon.set(defaultSupportPolygon);
       }
-   }
-
-   public void appendSupportPhase(ConvexPolygon2DReadOnly supportPolygon, double supportDuration)
-   {
-      supportPolygons.add().set(supportPolygon);
-      supportInitialTimes.add(supportDuration);
-   }
-
-   public List<? extends ConvexPolygon2DReadOnly> getSupportPolygons()
-   {
-      return supportPolygons;
-   }
-
-   public TDoubleList getSupportTimes()
-   {
-      return supportInitialTimes;
-   }
-
-   public double getTimeInSequence()
-   {
-      return time.getValue() - supportSequenceStartTime.getValue();
-   }
-
-   public boolean isFirstSupportPhaseOver()
-   {
-      if (supportInitialTimes.size() == 1)
-         return true;
-      return getTimeInSequence() >= initialPhaseEnd.getValue();
-   }
-
-   public double getTimeInSegmentRemaining()
-   {
-      if (supportInitialTimes.size() == 1)
-         return 0.0;
-      return initialPhaseEnd.getValue() - getTimeInSequence();
    }
 }
