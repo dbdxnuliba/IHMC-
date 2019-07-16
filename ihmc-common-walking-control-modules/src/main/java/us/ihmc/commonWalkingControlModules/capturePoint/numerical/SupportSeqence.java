@@ -15,6 +15,7 @@ import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
@@ -22,9 +23,11 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameSE3TrajectoryPoint;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -227,12 +230,8 @@ public class SupportSeqence
 
          // Add swing - no support for foot
          double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
-         if (footstepTiming.getLiftoffDuration() > 0.0)
-         {
-            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
-            computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
-         }
-         else if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
+         boolean liftOffRequestedByFootstep = checkForAndAddLiftOffPolygon(footstep, footstepTiming, stepStartTime);
+         if (!liftOffRequestedByFootstep && shouldDoToeOff(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
          {
             double toeOffTime = footstepTiming.getTransferTime() / 2.0;
             swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
@@ -249,14 +248,8 @@ public class SupportSeqence
          newFootPolygon.applyTransform(newSoleFrame.getTransformToRoot(), false);
 
          // Add touchdown polygon
-         if (footstepTiming.getTouchdownDuration() > 0.0)
-         {
-            computeHeelPolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
-            swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
-            swingFootSupports.add().set(newFootPolygon);
-            swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getTouchdownDuration());
-         }
-         else
+         boolean touchDownRequestedByFootstep = checkForAndAddTouchDownPolygon(footstep, footstepTiming);
+         if (!touchDownRequestedByFootstep)
          {
             swingFootSupports.add().set(newFootPolygon);
             swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
@@ -312,6 +305,66 @@ public class SupportSeqence
       }
 
       updateViz();
+   }
+
+   private boolean checkForAndAddTouchDownPolygon(Footstep footstep, FootstepTiming footstepTiming)
+   {
+      if (footstep.getTrajectoryType() != TrajectoryType.WAYPOINTS)
+         return false;
+      if (footstepTiming.getTouchdownDuration() <= 0.0)
+         return false;
+      if (!Precision.equals(footstep.getSwingTrajectory().get(footstep.getSwingTrajectory().size() - 1).getTime(), footstepTiming.getSwingTime()))
+         return false;
+
+      RobotSide stepSide = footstep.getRobotSide();
+      ReferenceFrame soleFrame = movingSoleFrames.get(stepSide);
+
+      FrameSE3TrajectoryPoint lastWaypoint = footstep.getSwingTrajectory().get(footstep.getSwingTrajectory().size() - 1);
+      tempOrientation.setIncludingFrame(lastWaypoint.getOrientation());
+      tempOrientation.changeFrame(soleFrame);
+      double pitch = tempOrientation.getPitch();
+      if (Math.abs(pitch) < Math.toRadians(5.0))
+         return false;
+
+      if (pitch > 0.0)
+         computeToePolygon(footSupportSequences.get(stepSide).add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+      else
+         computeHeelPolygon(footSupportSequences.get(stepSide).add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+
+      footSupportInitialTimes.get(stepSide).add(last(footSupportInitialTimes.get(stepSide)) + footstepTiming.getSwingTime());
+      footSupportSequences.get(stepSide).add().set(movingPolygons.get(stepSide));
+      footSupportInitialTimes.get(stepSide).add(last(footSupportInitialTimes.get(stepSide)) + footstepTiming.getTouchdownDuration());
+      return true;
+   }
+
+   private final FrameQuaternion tempOrientation = new FrameQuaternion();
+
+   private boolean checkForAndAddLiftOffPolygon(Footstep footstep, FootstepTiming footstepTiming, double stepStartTime)
+   {
+      if (footstep.getTrajectoryType() != TrajectoryType.WAYPOINTS)
+         return false;
+      if (footstepTiming.getLiftoffDuration() <= 0.0)
+         return false;
+      if (!Precision.equals(footstep.getSwingTrajectory().get(0).getTime(), 0.0))
+         return false;
+
+      RobotSide stepSide = footstep.getRobotSide();
+      ReferenceFrame soleFrame = movingSoleFrames.get(stepSide);
+
+      FrameSE3TrajectoryPoint firstWaypoint = footstep.getSwingTrajectory().get(0);
+      tempOrientation.setIncludingFrame(firstWaypoint.getOrientation());
+      tempOrientation.changeFrame(soleFrame);
+      double pitch = tempOrientation.getPitch();
+      if (Math.abs(pitch) < Math.toRadians(5.0))
+         return false;
+
+      if (pitch > 0.0)
+         computeToePolygon(footSupportSequences.get(stepSide).add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+      else
+         computeHeelPolygon(footSupportSequences.get(stepSide).add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+
+      footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
+      return true;
    }
 
    private final List<Point2DReadOnly> vertices = new ArrayList<>();
@@ -378,7 +431,7 @@ public class SupportSeqence
 
    private final FramePoint3D stepLocation = new FramePoint3D();
 
-   private boolean isToeOffStep(ReferenceFrame stanceFrame, ReferenceFrame swingFootFrame)
+   private boolean shouldDoToeOff(ReferenceFrame stanceFrame, ReferenceFrame swingFootFrame)
    {
       stepLocation.setToZero(swingFootFrame);
       stepLocation.changeFrame(stanceFrame);
