@@ -12,8 +12,10 @@ import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
@@ -34,6 +36,8 @@ public class SupportSeqence
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final YoDouble supportSequenceStartTime = new YoDouble("SupportSequenceStartTime", registry);
+   private final YoDouble initialPhaseEnd = new YoDouble("InitialPhaseEnd", registry);
+
    private final DoubleProvider time;
    private final SideDependentList<? extends ReferenceFrame> soleFrames;
 
@@ -155,9 +159,18 @@ public class SupportSeqence
          // Add swing - no support for foot
          if (!startingSwing || stepIndex > 0)
          {
-            swingFootSupports.add().clearAndUpdate();
             double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
+
+            if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
+            {
+               double toeOffTime = footstepTiming.getTransferTime() / 2.0;
+               swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
+               computeToeOffPolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+            }
+
+            swingFootSupports.add().clearAndUpdate();
             swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime());
+
          }
 
          // Update the moving polygon and sole frame to reflect that the step was taken.
@@ -168,8 +181,17 @@ public class SupportSeqence
          newFootPolygon.applyTransform(newSoleFrame.getTransformToRoot());
 
          // Add touchdown polygon
+         // TODO: add heel strike here
+//         swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+
          swingFootSupports.add().set(newFootPolygon);
          swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+
+         // Record when the swing or support phase will be over we can check on that from outside.
+         if (stepIndex == 0 && startingSwing)
+            initialPhaseEnd.set(footstepTiming.getSwingTime());
+         else if (stepIndex == 0)
+            initialPhaseEnd.set(footstepTiming.getTransferTime());
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -221,6 +243,39 @@ public class SupportSeqence
       }
 
       updateViz();
+   }
+
+   private final ConvexPolygon2D toeOffPolygonInSwingFootFrame = new ConvexPolygon2D();
+
+   private void computeToeOffPolygon(ConvexPolygon2D toeOffPolygon, ConvexPolygon2D fullPolygon, PoseReferenceFrame swingFootFrame)
+   {
+      toeOffPolygonInSwingFootFrame.set(fullPolygon);
+      toeOffPolygonInSwingFootFrame.applyInverseTransform(swingFootFrame.getTransformToRoot(), false);
+      toeOffPolygon.clear();
+
+      double maxX = Double.NEGATIVE_INFINITY;
+      for (int i = 0; i < toeOffPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      {
+         double x = toeOffPolygonInSwingFootFrame.getVertex(i).getX();
+         maxX = Math.max(maxX, x);
+      }
+      for (int i = 0; i < toeOffPolygonInSwingFootFrame.getNumberOfVertices(); i++)
+      {
+         Point2DReadOnly vertex = toeOffPolygonInSwingFootFrame.getVertex(i);
+         if (Precision.equals(vertex.getX(), maxX, 0.01))
+            toeOffPolygon.addVertex(vertex);
+      }
+      toeOffPolygon.update();
+      toeOffPolygon.applyTransform(swingFootFrame.getTransformToRoot(), false);
+   }
+
+   private final FramePoint3D stepLocation = new FramePoint3D();
+
+   private boolean isToeOffStep(ReferenceFrame stanceFrame, ReferenceFrame swingFootFrame)
+   {
+      stepLocation.setToZero(swingFootFrame);
+      stepLocation.changeFrame(stanceFrame);
+      return stepLocation.getX() < -0.02;
    }
 
    private static double last(TDoubleList list)
@@ -285,13 +340,13 @@ public class SupportSeqence
    {
       if (supportInitialTimes.size() == 1)
          return true;
-      return getTimeInSequence() >= supportInitialTimes.get(1);
+      return getTimeInSequence() >= initialPhaseEnd.getValue();
    }
 
    public double getTimeInSegmentRemaining()
    {
       if (supportInitialTimes.size() == 1)
          return 0.0;
-      return supportInitialTimes.get(1) - getTimeInSequence();
+      return initialPhaseEnd.getValue() - getTimeInSequence();
    }
 }
