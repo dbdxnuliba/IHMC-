@@ -11,15 +11,21 @@ import org.junit.jupiter.api.Test;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commonWalkingControlModules.capturePoint.numerical.SupportSeqence;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTestTools;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
+import us.ihmc.robotics.math.trajectories.trajectorypoints.FrameSE3TrajectoryPoint;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.robotics.trajectories.TrajectoryType;
 
 public class SupportSequenceTest
 {
@@ -34,9 +40,17 @@ public class SupportSequenceTest
       Footstep footstep = new Footstep(RobotSide.LEFT);
       footstep.setX(0.2);
       footstep.setY(0.1);
+      footstep.setTrajectoryType(TrajectoryType.WAYPOINTS);
       FootstepTiming timing = new FootstepTiming(0.5, 0.2);
       timing.setLiftoffDuration(0.1);
       timing.setTouchdownDuration(0.1);
+
+      RecyclingArrayList<FrameSE3TrajectoryPoint> swingTrajectory = new RecyclingArrayList<>(FrameSE3TrajectoryPoint.class);
+      FrameQuaternion liftOffOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame(), 0.0, Math.toRadians(10.0), 0.0);
+      FrameQuaternion touchDownOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame(), 0.0, Math.toRadians(-10.0), 0.0);
+      swingTrajectory.add().set(new FrameSE3TrajectoryPoint(0.0, new FramePoint3D(), liftOffOrientation, new FrameVector3D(), new FrameVector3D()));
+      swingTrajectory.add().set(new FrameSE3TrajectoryPoint(timing.getSwingTime(), new FramePoint3D(), touchDownOrientation, new FrameVector3D(), new FrameVector3D()));
+      footstep.setSwingTrajectory(swingTrajectory);
 
       List<Footstep> footsteps = Arrays.asList(footstep);
       List<FootstepTiming> timings = Arrays.asList(timing);
