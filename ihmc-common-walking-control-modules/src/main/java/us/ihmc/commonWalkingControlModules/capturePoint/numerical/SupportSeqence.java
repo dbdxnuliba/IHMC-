@@ -2,12 +2,14 @@ package us.ihmc.commonWalkingControlModules.capturePoint.numerical;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math3.util.Precision;
 
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
+import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
@@ -54,6 +56,7 @@ public class SupportSeqence
    private final ConvexPolygon2D defaultSupportPolygon = new ConvexPolygon2D();
    private final SideDependentList<ConvexPolygon2D> footPolygonsInSole = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
    private final SideDependentList<FramePose3D> footPoses = new SideDependentList<>(new FramePose3D(), new FramePose3D());
+   private final BipedSupportPolygons bipedSupportPolygons;
 
    private final SideDependentList<PoseReferenceFrame> movingSoleFrames = new SideDependentList<>();
    private final SideDependentList<ConvexPolygon2D> movingPolygonsInSole = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
@@ -66,11 +69,11 @@ public class SupportSeqence
 
    public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time)
    {
-      this(defaultSupportPolygon, soleFrames, time, null, null);
+      this(defaultSupportPolygon, soleFrames, time, null, null, null);
    }
 
    public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time,
-                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
+                         BipedSupportPolygons bipedSupportPolygons, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
    {
       if (graphicRegistry != null)
       {
@@ -94,6 +97,7 @@ public class SupportSeqence
       }
 
       this.defaultSupportPolygon.set(defaultSupportPolygon);
+      this.bipedSupportPolygons = bipedSupportPolygons;
       this.time = time;
       this.soleFrames = soleFrames;
    }
@@ -177,38 +181,50 @@ public class SupportSeqence
       return swingPhaseEndTime.getValue() - getTimeInSequence();
    }
 
-   public void setStance()
+   /**
+    * Starts a support sequence that will not contain footsteps. This initializes the timing.
+    */
+   public void startSequence()
    {
+      transferPhaseEndTime.set(UNSET_TIME);
+      swingPhaseEndTime.set(UNSET_TIME);
       supportSequenceStartTime.set(time.getValue());
-      initializeStance();
-      reset();
-
-      ConvexPolygon2D supportPolygon = supportPolygons.add();
-      supportInitialTimes.add(0.0);
-      supportPolygon.clear();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         supportPolygon.addVertices(changeFrameToWorld(footPolygonsInSole.get(robotSide), soleFrames.get(robotSide)));
-      }
-      supportPolygon.update();
-
-      updateViz();
    }
 
-   public void setFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
+   /**
+    * Starts a support sequence that will contain footsteps. This initializes the timing.
+    *
+    * @param initialTiming the timing of the first footstep to do checks on when it should be completed.
+    */
+   public void startSequence(FootstepTiming initialTiming)
    {
       // Record when the swing and support phase will be over we can check on that from outside.
-      FootstepTiming firstFootstepTiming = footstepTimings.get(0);
-      transferPhaseEndTime.set(firstFootstepTiming.getTransferTime());
-      swingPhaseEndTime.set(firstFootstepTiming.getStepTime());
-
+      transferPhaseEndTime.set(initialTiming.getTransferTime());
+      swingPhaseEndTime.set(initialTiming.getStepTime());
       supportSequenceStartTime.set(time.getValue());
-      initializeStance();
-      updateFromFootsteps(footsteps, footstepTimings);
    }
 
-   public void updateFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
+   /**
+    * Updates the support sequence. This can be called every tick to prevent the support state from becoming invalid in
+    * case the robot would drift.
+    */
+   public void update()
    {
+      update(Collections.emptyList(), Collections.emptyList());
+   }
+
+   /**
+    * Updates the support sequence with the given footstep parameters. This can be called every tick.
+    *
+    * @param footsteps to be added to the sequence.
+    * @param footstepTimings respective timings.
+    */
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
+   {
+      if (!footsteps.isEmpty() && transferPhaseEndTime.getValue() == UNSET_TIME)
+         throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
+
+      initializeStance();
       reset();
 
       // Add initial support states of the feet and set the moving polygons
@@ -429,7 +445,7 @@ public class SupportSeqence
    {
       stepLocation.setToZero(swingFootFrame);
       stepLocation.changeFrame(stanceFrame);
-      return stepLocation.getX() < -0.02;
+      return stepLocation.getX() < -0.05;
    }
 
    private void reset()
@@ -447,7 +463,10 @@ public class SupportSeqence
    {
       for (RobotSide robotSide : RobotSide.values)
       {
-         footPolygonsInSole.get(robotSide).set(defaultSupportPolygon);
+         if (bipedSupportPolygons == null)
+            footPolygonsInSole.get(robotSide).set(defaultSupportPolygon);
+         else
+            footPolygonsInSole.get(robotSide).set(bipedSupportPolygons.getFootPolygonInSoleFrame(robotSide));
          footPoses.get(robotSide).setFromReferenceFrame(soleFrames.get(robotSide));
       }
    }
