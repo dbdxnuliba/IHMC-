@@ -1,8 +1,6 @@
 #!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-echo "$SCRIPT_DIR"
-
 
 if [ -z "$ROS2_SETUP_PATH" ]
 then
@@ -32,6 +30,7 @@ colcon build --symlink-install
 
 retVal=$?
 if [ $retVal -eq 0 ]; then
-    echo "[HINT] Remember to source the file $CURRENT_DIR/install/setup.bash"
+    echo "Done!"
+    echo "[HINT] Remember to source the file $SCRIPT_DIR/install/setup.bash"
 fi
 
