@@ -24,7 +24,7 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 public class SupportSequenceTest
 {
    @Test
-   public void testSupportSequenceInDS()
+   public void testSupportSequence()
    {
       MutableDouble time = new MutableDouble();
       ConvexPolygon2D defaultSupportPolygon = createDefaultSupportPolygon();
@@ -39,7 +39,7 @@ public class SupportSequenceTest
 
       List<Footstep> footsteps = Arrays.asList(footstep);
       List<FootstepTiming> timings = Arrays.asList(timing);
-      supportSeqence.setFromFootsteps(footsteps, timings, false);
+      supportSeqence.setFromFootsteps(footsteps, timings);
 
       List<ConvexPolygon2D> expectedSupportPolygons = new ArrayList<>();
       TDoubleList expectedSupportTimes = new TDoubleArrayList();
@@ -88,60 +88,6 @@ public class SupportSequenceTest
          polygon.update();
          expectedSupportPolygons.add(polygon);
          expectedSupportTimes.add(0.7);
-      }
-
-      List<? extends ConvexPolygon2DReadOnly> supportPolygons = supportSeqence.getSupportPolygons();
-      TDoubleList supportTimes = supportSeqence.getSupportTimes();
-      for (int i = 0; i < supportPolygons.size(); i++)
-      {
-         EuclidGeometryTestTools.assertConvexPolygon2DGeometricallyEquals(expectedSupportPolygons.get(i), supportPolygons.get(i), 1.0e-1);
-         Assert.assertEquals(expectedSupportTimes.get(i), supportTimes.get(i), 1.0e-10);
-      }
-   }
-
-   @Test
-   public void testSupportSequenceInSS()
-   {
-      MutableDouble time = new MutableDouble();
-      ConvexPolygon2D defaultSupportPolygon = createDefaultSupportPolygon();
-      SideDependentList<PoseReferenceFrame> soleFrames = createSoleFrames();
-      SupportSeqence supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, () -> time.getValue());
-
-      Footstep footstep = new Footstep(RobotSide.LEFT);
-      footstep.setX(0.2);
-      footstep.setY(0.1);
-      FootstepTiming timing = new FootstepTiming(0.5, 0.2);
-      timing.setLiftoffDuration(0.1);
-
-      List<Footstep> footsteps = Arrays.asList(footstep);
-      List<FootstepTiming> timings = Arrays.asList(timing);
-      supportSeqence.setFromFootsteps(footsteps, timings, true);
-
-      List<ConvexPolygon2D> expectedSupportPolygons = new ArrayList<>();
-      TDoubleList expectedSupportTimes = new TDoubleArrayList();
-      // At time 0.0 only the right foot should remain in contact
-      {
-         ConvexPolygon2D polygon = new ConvexPolygon2D();
-         polygon.addVertex(0.1, -0.05);
-         polygon.addVertex(0.1, -0.15);
-         polygon.addVertex(-0.1, -0.05);
-         polygon.addVertex(-0.1, -0.15);
-         polygon.update();
-         expectedSupportPolygons.add(polygon);
-         expectedSupportTimes.add(0.0);
-      }
-      // At time 0.5 the swing foot will have touched down
-      {
-         ConvexPolygon2D polygon = new ConvexPolygon2D();
-         polygon.addVertex(0.3, 0.15);
-         polygon.addVertex(0.3, 0.05);
-         polygon.addVertex(0.1, -0.15);
-         polygon.addVertex(-0.1, -0.15);
-         polygon.addVertex(-0.1, -0.05);
-         polygon.addVertex(0.1, 0.15);
-         polygon.update();
-         expectedSupportPolygons.add(polygon);
-         expectedSupportTimes.add(0.5);
       }
 
       List<? extends ConvexPolygon2DReadOnly> supportPolygons = supportSeqence.getSupportPolygons();

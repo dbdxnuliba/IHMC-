@@ -37,7 +37,8 @@ public class SupportSeqence
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final YoDouble supportSequenceStartTime = new YoDouble("SupportSequenceStartTime", registry);
-   private final YoDouble initialPhaseEnd = new YoDouble("InitialPhaseEnd", registry);
+   private final YoDouble transferPhaseEndTime = new YoDouble("TransferPhaseEndTime", registry);
+   private final YoDouble swingPhaseEndTime = new YoDouble("SwingPhaseEndTime", registry);
 
    private final DoubleProvider time;
    private final SideDependentList<? extends ReferenceFrame> soleFrames;
@@ -89,8 +90,6 @@ public class SupportSeqence
       this.defaultSupportPolygon.set(defaultSupportPolygon);
       this.time = time;
       this.soleFrames = soleFrames;
-
-      reset(0.0);
    }
 
    /**
@@ -128,63 +127,55 @@ public class SupportSeqence
    }
 
    /**
-    * Indicates whether a swing or transfer has finished. The first support phase can have several support polygons.
-    * This happens if the robot uses toe off or heel strike as this changes the support polygon but does not end the
-    * support phase (swing or transfer).
+    * Indicates whether the first transfer in this sequence has finished. The first support phase can have several
+    * support polygons. This happens if the robot uses toe off or heel strike as this changes the support polygon but
+    * does not end the support phase (swing or transfer).
     * <p>
     * Note, that if the robot is standing this will always return {@code true}.
     *
-    * @return whether the swing / transfer phase at the start of this sequence should be over based on time only.
+    * @return whether the first transfer phase at the start of this sequence should be over based on time only.
     */
-   public boolean isFirstSupportPhaseOver()
+   public boolean isDoubleSupportPhaseOver()
    {
       if (supportInitialTimes.size() == 1)
          return true;
-      return getTimeInSequence() >= initialPhaseEnd.getValue();
+      return getTimeInSequence() >= transferPhaseEndTime.getValue();
    }
 
    /**
-    * Obtains the time that is remaining in the initial support phase (swing or transfer) of this sequence. Note, that
-    * the initial support phase might have several support polygons (see {@link #isFirstSupportPhaseOver()}).
+    * Indicates whether the first single support in this sequence has finished.
+    * <p>
+    * Note, that if the robot is standing this will always return {@code true}.
+    *
+    * @return whether the first single support phase at the start of this sequence should be over based on time only.
+    */
+   public boolean isSingleSupportPhaseOver()
+   {
+      if (supportInitialTimes.size() == 1)
+         return true;
+      return getTimeInSequence() >= swingPhaseEndTime.getValue();
+   }
+
+   /**
+    * Obtains the time that is remaining until the first single support phase in this sequence should end according to
+    * plan (see {@link #isSingleSupportPhaseOver()}).
     * <p>
     * Note, that if the robot is standing this will always return {@code 0.0}.
     *
-    * @return the time that (according to plan) remains in the first phase of this support sequence.
+    * @return the time that (according to plan) remains until first foot touchdown.
     */
-   public double getTimeInSegmentRemaining()
+   public double getTimeUntilTouchdown()
    {
       if (supportInitialTimes.size() == 1)
          return 0.0;
-      return initialPhaseEnd.getValue() - getTimeInSequence();
-   }
-
-   private void reset(double sequenceStartTime)
-   {
-      supportPolygons.clear();
-      supportInitialTimes.reset();
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         footSupportSequences.get(robotSide).clear();
-         footSupportInitialTimes.get(robotSide).reset();
-      }
-      supportSequenceStartTime.set(sequenceStartTime);
-      initializeStance();
-   }
-
-   public void initializeStance()
-   {
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         footPolygons.get(robotSide).set(defaultSupportPolygon);
-         footPolygons.get(robotSide).applyTransform(soleFrames.get(robotSide).getTransformToRoot(), false);
-         movingPolygons.get(robotSide).set(footPolygons.get(robotSide));
-         movingSoleFrames.get(robotSide).setPoseAndUpdate(soleFrames.get(robotSide).getTransformToRoot());
-      }
+      return swingPhaseEndTime.getValue() - getTimeInSequence();
    }
 
    public void setStance()
    {
-      reset(time.getValue());
+      supportSequenceStartTime.set(time.getValue());
+      initializeStance();
+      reset();
 
       ConvexPolygon2D supportPolygon = supportPolygons.add();
       supportInitialTimes.add(0.0);
@@ -198,27 +189,30 @@ public class SupportSeqence
       updateViz();
    }
 
-   public void setFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, boolean inSwing)
+   public void setFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
    {
-      reset(time.getValue());
+      // Record when the swing and support phase will be over we can check on that from outside.
+      FootstepTiming firstFootstepTiming = footstepTimings.get(0);
+      transferPhaseEndTime.set(firstFootstepTiming.getTransferTime());
+      swingPhaseEndTime.set(firstFootstepTiming.getStepTime());
 
-      // Add initial support states of the feet
-      if (!footsteps.isEmpty())
-      {
-         RobotSide firstStepSide = footsteps.get(0).getRobotSide();
-         if (inSwing)
-            footSupportSequences.get(firstStepSide).add().clearAndUpdate();
-         else
-            footSupportSequences.get(firstStepSide).add().set(movingPolygons.get(firstStepSide));
-         footSupportSequences.get(firstStepSide.getOppositeSide()).add().set(movingPolygons.get(firstStepSide.getOppositeSide()));
-      }
-      else
-      {
-         for (RobotSide robotSide : RobotSide.values)
-            footSupportSequences.get(robotSide).add().set(movingPolygons.get(robotSide));
-      }
+      supportSequenceStartTime.set(time.getValue());
+      initializeStance();
+      updateFromFootsteps(footsteps, footstepTimings);
+   }
+
+   public void updateFromFootsteps(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
+   {
+      reset();
+
+      // Add initial support states of the feet and set the moving polygons
       for (RobotSide robotSide : RobotSide.values)
+      {
+         movingPolygons.get(robotSide).set(footPolygons.get(robotSide));
+         movingSoleFrames.get(robotSide).setPoseAndUpdate(soleFrames.get(robotSide).getTransformToRoot());
+         footSupportSequences.get(robotSide).add().set(movingPolygons.get(robotSide));
          footSupportInitialTimes.get(robotSide).add(0.0);
+      }
 
       // Assemble the individual foot support trajectories
       for (int stepIndex = 0; stepIndex < footsteps.size(); stepIndex++)
@@ -230,26 +224,20 @@ public class SupportSeqence
          RecyclingArrayList<ConvexPolygon2D> swingFootSupports = footSupportSequences.get(stepSide);
 
          // Add swing - no support for foot
-         if (!inSwing || stepIndex > 0)
+         double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
+         if (footstepTiming.getLiftoffDuration() > 0.0)
          {
-            double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
-
-            if (footstepTiming.getLiftoffDuration() > 0.0)
-            {
-               swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
-               computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
-            }
-            else if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
-            {
-               double toeOffTime = footstepTiming.getTransferTime() / 2.0;
-               swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
-               computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
-            }
-
-            swingFootSupports.add().clearAndUpdate();
-            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime());
-
+            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
+            computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
          }
+         else if (isToeOffStep(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
+         {
+            double toeOffTime = footstepTiming.getTransferTime() / 2.0;
+            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
+            computeToePolygon(swingFootSupports.add(), movingPolygons.get(stepSide), movingSoleFrames.get(stepSide));
+         }
+         swingFootSupports.add().clearAndUpdate();
+         swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime());
 
          // Update the moving polygon and sole frame to reflect that the step was taken.
          ConvexPolygon2D newFootPolygon = movingPolygons.get(stepSide);
@@ -260,16 +248,10 @@ public class SupportSeqence
 
          // Add touchdown polygon
          // TODO: add heel strike here
-//         swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
+         //         swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
 
          swingFootSupports.add().set(newFootPolygon);
          swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
-
-         // Record when the swing or support phase will be over we can check on that from outside.
-         if (stepIndex == 0 && inSwing)
-            initialPhaseEnd.set(footstepTiming.getSwingTime());
-         else if (stepIndex == 0)
-            initialPhaseEnd.set(footstepTiming.getTransferTime());
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -372,9 +354,24 @@ public class SupportSeqence
       return stepLocation.getX() < -0.02;
    }
 
-   private static double last(TDoubleList list)
+   private void reset()
    {
-      return list.get(list.size() - 1);
+      supportPolygons.clear();
+      supportInitialTimes.reset();
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         footSupportSequences.get(robotSide).clear();
+         footSupportInitialTimes.get(robotSide).reset();
+      }
+   }
+
+   private void initializeStance()
+   {
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         footPolygons.get(robotSide).set(defaultSupportPolygon);
+         footPolygons.get(robotSide).applyTransform(soleFrames.get(robotSide).getTransformToRoot(), false);
+      }
    }
 
    private void updateViz()
@@ -407,5 +404,10 @@ public class SupportSeqence
       {
          newFootPolygon.set(defaultSupportPolygon);
       }
+   }
+
+   private static double last(TDoubleList list)
+   {
+      return list.get(list.size() - 1);
    }
 }
