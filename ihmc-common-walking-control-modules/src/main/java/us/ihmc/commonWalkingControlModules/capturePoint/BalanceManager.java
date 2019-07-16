@@ -154,7 +154,7 @@ public class BalanceManager
 
    private final YoBoolean inSingleSupport = new YoBoolean("InSingleSupport", registry);
    private final YoDouble timeInSupportSequence = new YoDouble("TimeInSupportSequence", registry);
-   private CopTrajectory copTrajectory;
+   private final CopTrajectory copTrajectory = new CopTrajectory();
    private final SupportSeqence supportSeqence;
    private final NumericalICPPlanner nummericalICPPlanner;
 
@@ -477,7 +477,7 @@ public class BalanceManager
 //      icpPlannerDone.set(icpPlanner.isDone());
 
       supportSeqence.update(footsteps, footstepTimings);
-      copTrajectory = new CopTrajectory(supportSeqence, initialReferenceCop, finalTransferDuration);
+      copTrajectory.set(supportSeqence, initialReferenceCop, finalTransferDuration);
 
       // TODO: Add something that updates the initialReferenceCop when not walking.
 
@@ -587,6 +587,7 @@ public class BalanceManager
 //      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
       desiredCapturePoint2d.set(tempCapturePoint);
       initialReferenceCop.set(bipedSupportPolygons.getSupportPolygonInWorld().getCentroid());
+      copTrajectory.set(initialReferenceCop);
       supportSeqence.startSequence();
       inSingleSupport.set(false);
 
@@ -672,9 +673,7 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      // TODO: fix this
-      if (copTrajectory != null)
-         copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
+      copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
       supportSeqence.startSequence();
       inSingleSupport.set(false);
       initializeForStanding = true;

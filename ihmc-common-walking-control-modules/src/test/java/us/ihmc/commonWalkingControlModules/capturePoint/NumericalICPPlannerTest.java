@@ -154,7 +154,8 @@ public class NumericalICPPlannerTest
       };
 
       packDSTest(initialIcp, supportPolygons, supportTimes);
-      CopTrajectory copTrajectory = new CopTrajectory(supportPolygons, supportTimes, null, 0.5);
+      CopTrajectory copTrajectory = new CopTrajectory();
+      copTrajectory.set(supportPolygons, supportTimes, 0.5);
       copTrajectory.accept(finalIcp, previewTime);
 
       long duration = 0;
