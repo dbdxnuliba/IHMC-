@@ -26,8 +26,6 @@ public class SearchForDoorBehavior extends AbstractBehavior
       super(robotName, yoNamePrefix, ros2Node);
       createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationQueue::put); //instantiating a subscriber for behavior input and consuming the DoorLocation info
                                                                                        // to the doorLocationQueue abd then this doorLocationQueue object is used everywhere else in this code
-     
-
    }
 
    @Override

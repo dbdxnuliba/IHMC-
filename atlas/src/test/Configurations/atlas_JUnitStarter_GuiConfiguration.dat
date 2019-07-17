@@ -1,5 +1,53 @@
 <GraphGroup>
 	<Cols>1</Cols>
+	<Graph>
+		<Variables>root.atlas.t,root.atlas.DRCSimulation.DRCControllerThread.DRCMomentumBasedController.HumanoidHighLevelControllerManager.WalkingControllerState.LinearMomentumRateControlModule.ICPOptimizationController.controllerIsInDoubleSupport</Variables>
+		<GraphConfiguration>
+			<Name>config1</Name>
+			<ScalingMethod>1</ScalingMethod>
+			<PlotType>100</PlotType>
+			<ShowBaseLines>true</ShowBaseLines>
+			<BaseLines>0.0,</BaseLines>
+			<MaxScaling>1.0</MaxScaling>
+			<MinScaling>0.0</MinScaling>
+		</GraphConfig>
+	</Graph>
+	<Graph>
+		<Variables>root.atlas.gc_l_leg_akx_6_ForceInSensorFrameZ</Variables>
+		<GraphConfiguration>
+			<Name>config2</Name>
+			<ScalingMethod>1</ScalingMethod>
+			<PlotType>100</PlotType>
+			<ShowBaseLines>true</ShowBaseLines>
+			<BaseLines>0.0,</BaseLines>
+			<MaxScaling>1.0</MaxScaling>
+			<MinScaling>0.0</MinScaling>
+		</GraphConfig>
+	</Graph>
+	<Graph>
+		<Variables>root.atlas.DRCSimulation.DRCEstimatorThread.l_footStateEstimatorWrenchBasedFootSwitch.l_footStateEstimatorForceZ</Variables>
+		<GraphConfiguration>
+			<Name>config3</Name>
+			<ScalingMethod>1</ScalingMethod>
+			<PlotType>100</PlotType>
+			<ShowBaseLines>true</ShowBaseLines>
+			<BaseLines>0.0,</BaseLines>
+			<MaxScaling>1.0</MaxScaling>
+			<MinScaling>0.0</MinScaling>
+		</GraphConfig>
+	</Graph>
+	<Graph>
+		<Variables>root.atlas.gc_l_leg_akx_6_ForceInSensorFrameX,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameX,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameZ,root.atlas.gc_r_leg_akx_0_ForceInSensorFrameY</Variables>
+		<GraphConfiguration>
+			<Name>config4</Name>
+			<ScalingMethod>1</ScalingMethod>
+			<PlotType>100</PlotType>
+			<ShowBaseLines>true</ShowBaseLines>
+			<BaseLines>0.0,</BaseLines>
+			<MaxScaling>1.0</MaxScaling>
+			<MinScaling>0.0</MinScaling>
+		</GraphConfig>
+	</Graph>
 </GraphGroup>
 <Entry Boxes Tab Pane>
 </Entry Boxes Tab Pane>
@@ -19,9 +67,9 @@ null,
 
 <Current View>Normal View</Current View>
  <Canvas 1> 
- <Camera X>10.0</Camera X>
- <Camera Y>2.0</Camera Y>
- <Camera Z>1.37</Camera Z>
+ <Camera X>9.112530952783185</Camera X>
+ <Camera Y>9.889882735322189</Camera Y>
+ <Camera Z>2.8845325342327244</Camera Z>
  <Dolly data> 
  <Position X>2.0</Position X>
  <Position Y>12.0</Position Y>
@@ -45,8 +93,8 @@ null,
 </Track Booleans>
 </Track data>
 <Fix Position>
-<Fix X>0.0</Fix X>
-<Fix Y>0.0</Fix Y>
-<Fix Z>0.89</Fix Z>
+<Fix X>3.301107568572691</Fix X>
+<Fix Y>-3.6062394909788082</Fix Y>
+<Fix Z>0.6334557391155822</Fix Z>
 </Fix Position>
 </Canvas 1>

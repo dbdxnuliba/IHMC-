@@ -6,6 +6,7 @@ import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
+import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.*;
 import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.SearchAndKickBehavior.*;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
@@ -48,7 +49,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private Vector3D offsetwaypoint1 = new Vector3D(0.5f,-0.9f,0f); //these indicate that you are kinda swaying but why???
    private Vector3D offsetwaypoint2 = new Vector3D(0.5f,-0.6f,0f);
 
-   private boolean BALL_DETECTION = true;
+   private boolean BALL_DETECTION = false;
 
    private final double standingDistance = 0.4;
 
@@ -56,18 +57,19 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    //define the behavior that will be required
 //   private final AtlasPrimitiveActions atlasPrimitiveActions;
    private final SleepBehavior sleepBehavior;
-   //private final StepUpDoor environment;
+   private final StepUpDoor environment;
    private YoBoolean yoDoubleSuport;
-   private Pose3D spherePose = new Pose3D();
+   private Pose3D doorPose = new Pose3D();
 
    private final ResetRobotBehavior resetRobotBehavior;
    private final WalkToLocationBehavior walkToLocationBehavior;
    private final KickBehavior kickTheBall;
-   private final SphereDetectionBehavior sphereDetctionBehavior;
+//   private final SphereDetectionBehavior sphereDetctionBehavior;
+   private final SearchForDoorBehavior doorLocationBehavior;
 
    private final HumanoidReferenceFrames referenceFrames;
 
-   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
+//   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
 
    private final ConcurrentListeningQueue<ValveLocationPacket> sphereLocation = new ConcurrentListeningQueue<>(10);
 
@@ -77,21 +79,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
                                 FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
                                 YoBoolean yoDoubleSupport)
    {
-      super(robotName, "SearchAndKickBehavior",WalkThroughDoorWOFiducialStates.class,yoTime, ros2Node);
-      this.referenceFrames = referenceFrames;
-      //      pipeLine = new PipeLine<>(yoTime);
-
-      sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
-      kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
-
-      this.yoDoubleSuport = yoDoubleSupport;
-
-      walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
-      resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
-      sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
-      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
-      createBehaviorInputSubscriber(ValveLocationPacket.class,sphereLocation::put);
-      setupStateMachine();
+      this(robotName,ros2Node,yoTime,referenceFrames,fullHumanoidRobotModel,wholeBodyControllerParameters,yoDoubleSupport,null);
    }
 
 
@@ -105,12 +93,13 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
       kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
-      //this.environment = environment;
+      this.environment = environment;
       this.yoDoubleSuport = yoDoubleSupport;
 
       walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
-      sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
+//      sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
+      doorLocationBehavior = new SearchForDoorBehavior(robotName,"DoorBehavior", ros2Node,null);
 
       setupStateMachine();
    }
@@ -120,23 +109,23 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    @Override
    public void doControl()
    {
-      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
-      if(sphereLocation.isNewPacketAvailable())
-      {
-         receivedSphereLocation(sphereLocation.getLatestPacket());
-      }
+//      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
+//      if(sphereLocation.isNewPacketAvailable())
+//      {
+//         receivedSphereLocation(sphereLocation.getLatestPacket());
+//      }
       super.doControl();
    }
 
-   public void receivedSphereLocation(ValveLocationPacket sphereLocationPacket)
-   {
-      setSphereLocation(sphereLocationPacket.getValvePoseInWorld());
-   }
+//   public void receivedSphereLocation(ValveLocationPacket sphereLocationPacket)
+//   {
+//      setSphereLocation(sphereLocationPacket.getValvePoseInWorld());
+//   }
 
-   public void setSphereLocation(Pose3D spherePosePacket)
-   {
-      spherePose = spherePosePacket;
-   }
+//   public void setSphereLocation(Pose3D spherePosePacket)
+//   {
+//      spherePose = spherePosePacket;
+//   }
 
    @Override
    public void onBehaviorEntered()
@@ -159,7 +148,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       {
          //find the ball
 
-         findBall = new BehaviorAction(sphereDetctionBehavior)
+         findBall = new BehaviorAction(doorLocationBehavior)
          {
             @Override
             protected void setBehaviorInput()
@@ -232,10 +221,20 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
    private FramePose2D getoffsetPoint() //this is my d
    {
+      FramePoint2D ballPosition2d;
+      if(!BALL_DETECTION)
+      {
+          ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition(),
+                                                                   0.0); //this is the ball position
+      }
 //      FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition(),
 //                                                     0.0); //this is the ball position
-      FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(),spherePose.getPosition().getX(),
-                                                     spherePose.getPosition().getY());
+      else
+      {
+         ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(),doorLocationBehavior.getLocation().getPosition().getX(),
+                                                        doorLocationBehavior.getLocation().getPosition().getY());
+      }
+
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(), 0.0, 0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
       FrameVector2D walkingDirection = new FrameVector2D(referenceFrames.getWorldFrame());
