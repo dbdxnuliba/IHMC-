@@ -39,8 +39,6 @@ import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePose3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.euclid.tuple2D.Point2D;
-import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -107,7 +105,9 @@ public class BalanceManager
    private final FramePoint2D desiredCapturePoint2d = new FramePoint2D();
    private final FrameVector2D desiredCapturePointVelocity2d = new FrameVector2D();
    private final FramePoint2D perfectCoP2d = new FramePoint2D();
+
    private final FramePoint2D initialReferenceCop = new FramePoint2D();
+   private final FramePoint2D tempReferenceCop = new FramePoint2D();
 
    private final YoBoolean blendICPTrajectories = new YoBoolean("blendICPTrajectories", registry);
 
@@ -383,11 +383,10 @@ public class BalanceManager
 //      icpPlanner.getDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
 //      icpPlanner.getDesiredCenterOfPressurePosition(perfectCoP2d);
 
+      desiredCapturePointVelocity2d.set(desiredCapturePoint2d);
       nummericalICPPlanner.getIcp(controllerToolbox.getControlDT(), desiredCapturePoint2d);
       nummericalICPPlanner.getCop(controllerToolbox.getControlDT(), perfectCoP2d);
-      Point2DBasics tempCapturePoint = new Point2D();
-      nummericalICPPlanner.getIcp(0.0, tempCapturePoint);
-      desiredCapturePointVelocity2d.sub(desiredCapturePoint2d, tempCapturePoint);
+      desiredCapturePointVelocity2d.scaleAdd(-1.0, desiredCapturePoint2d);
       desiredCapturePointVelocity2d.scale(1.0 / controllerToolbox.getControlDT());
 
       pelvisICPBasedTranslationManager.compute(supportLeg, capturePoint2d);
@@ -477,9 +476,9 @@ public class BalanceManager
 //      icpPlannerDone.set(icpPlanner.isDone());
 
       supportSeqence.update(footsteps, footstepTimings);
-      copTrajectory.set(supportSeqence, initialReferenceCop, finalTransferDuration);
-
-      // TODO: Add something that updates the initialReferenceCop when not walking.
+      tempReferenceCop.setIncludingFrame(initialReferenceCop);
+      tempReferenceCop.changeFrameAndProjectToXYPlane(worldFrame);
+      copTrajectory.set(supportSeqence, tempReferenceCop, finalTransferDuration);
 
       if (inSingleSupport.getValue())
          icpPlannerDone.set(supportSeqence.isSingleSupportPhaseOver());
@@ -586,8 +585,8 @@ public class BalanceManager
 //      icpPlanner.holdCurrentICP(tempCapturePoint);
 //      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
       desiredCapturePoint2d.set(tempCapturePoint);
-      initialReferenceCop.set(bipedSupportPolygons.getSupportPolygonInWorld().getCentroid());
-      copTrajectory.set(initialReferenceCop);
+      tempReferenceCop.set(bipedSupportPolygons.getSupportPolygonInWorld().getCentroid());
+      copTrajectory.set(tempReferenceCop);
       supportSeqence.startSequence();
       inSingleSupport.set(false);
 
@@ -657,7 +656,7 @@ public class BalanceManager
          requestICPPlannerToHoldCurrentCoM();
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
-      copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
+      initialReferenceCop.setToZero(controllerToolbox.getReferenceFrames().getMidFeetZUpFrame());
       supportSeqence.startSequence();
       inSingleSupport.set(false);
       initializeForStanding = true;
@@ -673,7 +672,9 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
+      initialReferenceCop.setReferenceFrame(worldFrame);
       copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
+      initialReferenceCop.changeFrameAndProjectToXYPlane(controllerToolbox.getReferenceFrames().getMidFeetZUpFrame());
       supportSeqence.startSequence();
       inSingleSupport.set(false);
       initializeForStanding = true;
@@ -689,7 +690,10 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
+      initialReferenceCop.setReferenceFrame(worldFrame);
       copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
+      ReferenceFrame stanceFrame = controllerToolbox.getReferenceFrames().getSoleZUpFrame(footsteps.get(0).getRobotSide().getOppositeSide());
+      initialReferenceCop.changeFrameAndProjectToXYPlane(stanceFrame);
       supportSeqence.startSequence(footstepTimings.get(0));
       inSingleSupport.set(false);
 
