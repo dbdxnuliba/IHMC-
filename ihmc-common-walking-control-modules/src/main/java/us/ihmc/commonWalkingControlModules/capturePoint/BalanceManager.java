@@ -675,7 +675,7 @@ public class BalanceManager
       initialReferenceCop.setReferenceFrame(worldFrame);
       copTrajectory.accept(initialReferenceCop, supportSeqence.getTimeInSequence());
       initialReferenceCop.changeFrameAndProjectToXYPlane(controllerToolbox.getReferenceFrames().getMidFeetZUpFrame());
-      supportSeqence.startSequence();
+      supportSeqence.startSequence(finalTransferTime);
       inSingleSupport.set(false);
       initializeForStanding = true;
 
