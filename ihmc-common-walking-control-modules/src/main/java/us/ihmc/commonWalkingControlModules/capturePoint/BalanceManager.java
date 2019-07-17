@@ -267,7 +267,7 @@ public class BalanceManager
       SideDependentList<MovingReferenceFrame> soleFrames = controllerToolbox.getReferenceFrames().getSoleFrames();
       supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, controllerToolbox.getYoTime(), bipedSupportPolygons, registry,
                                           controllerToolbox.getYoGraphicsListRegistry());
-      nummericalICPPlanner = new NumericalICPPlanner(0.02, 3.0, 0.0, registry, controllerToolbox.getYoGraphicsListRegistry());
+      nummericalICPPlanner = new NumericalICPPlanner(0.02, 3.0, 0.2, registry, controllerToolbox.getYoGraphicsListRegistry());
       nummericalICPPlanner.setOmega(controllerToolbox.getOmega0());
    }
 

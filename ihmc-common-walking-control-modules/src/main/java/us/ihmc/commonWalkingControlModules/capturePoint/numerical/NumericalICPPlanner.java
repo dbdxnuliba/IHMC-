@@ -36,7 +36,9 @@ public class NumericalICPPlanner
    /** Weight for maintaining initial ICP continuity */
    private static final double ICP_WEIGHT = 1.0;
    /** Weight for maintaining CoP continuity */
-   private static final double COP_WEIGHT = 0.001;
+   private static final double COP_CONTINUITY_WEIGHT = 0.001;
+   /** Weight for keeping the CoP trajectory close to the reference */
+   private static final double COP_REFERENCE_WEIGHT = 0.01;
    /** Whether the continuity at the initial CoP should be an equality constraint */
    private static final boolean INITIAL_COP_CONSTRAINT = false;
    /** Whether the continuity at the initial ICP should be an equality constraint */
@@ -65,6 +67,7 @@ public class NumericalICPPlanner
 
    // Matrices for QP solver:
    private final DenseMatrix64F Q;
+   private final DenseMatrix64F Qconst;
    private final DenseMatrix64F x;
    private final DenseMatrix64F f;
    private final QuadProgSolver solver = new QuadProgSolver();
@@ -83,6 +86,10 @@ public class NumericalICPPlanner
    // min (FD * x)' * COP_WEIGHT * (FD * x)
    private final DenseMatrix64F FD;
    private final DenseMatrix64F FDtFD;
+
+   // Objective matrices for keeping the CoPs close to the reference:
+   private final DenseMatrix64F WCop;
+   private final DenseMatrix64F fCop;
 
    // Constraint matrices for initial and final CoP location:
    private final DenseMatrix64F Aeq;
@@ -142,6 +149,7 @@ public class NumericalICPPlanner
 
       // Initialize solver matrices
       Q = new DenseMatrix64F(2 * adjustmentSteps, 2 * adjustmentSteps);
+      Qconst = new DenseMatrix64F(2 * adjustmentSteps, 2 * adjustmentSteps);
       x = new DenseMatrix64F(2 * adjustmentSteps, 1);
       f = new DenseMatrix64F(2 * adjustmentSteps, 1);
       bin = new DenseMatrix64F(0, 1);
@@ -184,7 +192,13 @@ public class NumericalICPPlanner
          FD.set(2 * i + 1, 2 * i + 3, 1.0 / timestep);
       }
       CommonOps.multTransA(FD, FD, FDtFD);
-      CommonOps.scale(COP_WEIGHT / adjustmentSteps, FDtFD);
+      CommonOps.scale(COP_CONTINUITY_WEIGHT / adjustmentSteps, FDtFD);
+
+      // Initialize the matrices for driving the CoP trajectory to the reference
+      WCop = new DenseMatrix64F(2 * adjustmentSteps, 2 * adjustmentSteps);
+      fCop = new DenseMatrix64F(2 * adjustmentSteps, 1);
+      CommonOps.setIdentity(WCop);
+      CommonOps.scale(COP_REFERENCE_WEIGHT, WCop);
 
       if (graphicsRegistry != null)
       {
@@ -225,8 +239,8 @@ public class NumericalICPPlanner
          AIcp.set(1, 2 * i + 1, timestep * omega * Math.pow(alpha, adjustmentSteps - i - 1));
       }
       CommonOps.multTransA(AIcp, WIcp, AtWicp);
-      Q.set(FDtFD);
-      CommonOps.multAdd(AtWicp, AIcp, Q);
+      Qconst.set(FDtFD);
+      CommonOps.multAdd(AtWicp, AIcp, Qconst);
    }
 
    public void setCopTrajectory(ObjDoubleConsumer<Point2DBasics> copTrajectory)
@@ -308,13 +322,15 @@ public class NumericalICPPlanner
       if (adjustmentSteps <= 1)
          return;
 
-      // Compute angular momentum adjustment term
+      // Compute angular momentum adjustment term and pack the CoP reference objective matrix
       double amX = 0.0;
       double amY = 0.0;
       for (int i = 0; i < adjustmentSteps; i++)
       {
          amX += AIcp.get(0, i) * angularMomentums.get(i).getX();
          amY += AIcp.get(1, i) * angularMomentums.get(i).getY();
+         fCop.set(2 * i, -cops.get(i).getX() * COP_REFERENCE_WEIGHT);
+         fCop.set(2 * i + 1, -cops.get(i).getY() * COP_REFERENCE_WEIGHT);
       }
 
       // Setup initial ICP continuity objective
@@ -341,6 +357,10 @@ public class NumericalICPPlanner
          beq.set(additionalConstraintOffset + 1, -bIcp.get(1));
          additionalConstraintOffset += 2;
       }
+
+      // Add CoP reference objective to matrices
+      CommonOps.add(f, fCop, f);
+      CommonOps.add(Qconst, WCop, Q);
 
       try
       {
