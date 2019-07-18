@@ -1,0 +1,3 @@
+# Step settings
+StepUpPlannerStepParameters left_step_parameters
+StepUpPlannerStepParameters right_step_parameters
