@@ -49,7 +49,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private Vector3D offsetwaypoint1 = new Vector3D(0.5f,-0.9f,0f); //these indicate that you are kinda swaying but why???
    private Vector3D offsetwaypoint2 = new Vector3D(0.5f,-0.6f,0f);
 
-   private boolean BALL_DETECTION = false;
+   private boolean BALL_DETECTION = true;
 
    private final double standingDistance = 0.4;
 
