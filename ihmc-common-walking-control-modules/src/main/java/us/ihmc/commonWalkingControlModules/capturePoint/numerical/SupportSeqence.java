@@ -217,6 +217,30 @@ public class SupportSeqence
    }
 
    /**
+    * Updates the current foot poses and the footholds of the robot to match the actual sole poses and footholds.
+    */
+   public void initializeStance()
+   {
+      for (RobotSide robotSide : RobotSide.values)
+         initializeStance(robotSide);
+   }
+
+   /**
+    * For the given side updates the current foot pose and the foothold of the robot to match the actual sole pose and
+    * foothold.
+    *
+    * @param robotSide to be updated.
+    */
+   public void initializeStance(RobotSide robotSide)
+   {
+      if (bipedSupportPolygons == null)
+         footPolygonsInSole.get(robotSide).set(defaultSupportPolygon);
+      else
+         footPolygonsInSole.get(robotSide).set(bipedSupportPolygons.getFootPolygonInSoleFrame(robotSide));
+      footPoses.get(robotSide).setFromReferenceFrame(soleFrames.get(robotSide));
+   }
+
+   /**
     * Updates the support sequence. This can be called every tick to prevent the support state from becoming invalid in
     * case the robot would drift.
     */
@@ -248,55 +272,40 @@ public class SupportSeqence
          footSupportInitialTimes.get(robotSide).add(0.0);
       }
 
-      // If we are performing a final transfer only consider a potential touchdown here
-      boolean isFinalTransfer = !footsteps.isEmpty() && swingPhaseEndTime.getValue() == UNSET_TIME;
-      if (isFinalTransfer)
+      // Assemble the individual foot support trajectories for regular walking
+      double stepStartTime = 0.0;
+      for (int stepIndex = 0; stepIndex < footsteps.size(); stepIndex++)
       {
-         FootstepTiming footstepTiming = footstepTimings.get(0);
-         Footstep footstep = footsteps.get(0);
+         FootstepTiming footstepTiming = footstepTimings.get(stepIndex);
+         Footstep footstep = footsteps.get(stepIndex);
          RobotSide stepSide = footstep.getRobotSide();
+         TDoubleArrayList swingFootInitialTimes = footSupportInitialTimes.get(stepSide);
+         RecyclingArrayList<ConvexPolygon2D> swingFootSupports = footSupportSequences.get(stepSide);
+
+         // Add swing - no support for foot
+         boolean liftOffRequestedByFootstep = checkForAndAddLiftOffPolygon(footstep, footstepTiming, stepStartTime);
+         if (!liftOffRequestedByFootstep && shouldDoToeOff(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
+         {
+            double toeOffTime = footstepTiming.getTransferTime() / 2.0;
+            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
+            computeToePolygon(swingFootSupports.add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
+         }
+         swingFootSupports.add().clearAndUpdate();
+         swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime());
 
          // Update the moving polygon and sole frame to reflect that the step was taken.
          extractSupportPolygon(footstep, movingPolygonsInSole.get(stepSide), defaultSupportPolygon);
          movingSoleFrames.get(stepSide).setPoseAndUpdate(footstep.getFootstepPose());
 
-         checkForAndAddTouchDownPolygon(footstep, footstepTiming, false);
-      }
-      else
-      {
-         // Assemble the individual foot support trajectories for regular walking
-         for (int stepIndex = 0; stepIndex < footsteps.size(); stepIndex++)
+         // Add touchdown polygon
+         boolean touchDownRequestedByFootstep = checkForAndAddTouchDownPolygon(footstep, footstepTiming, stepStartTime);
+         if (!touchDownRequestedByFootstep)
          {
-            FootstepTiming footstepTiming = footstepTimings.get(stepIndex);
-            Footstep footstep = footsteps.get(stepIndex);
-            RobotSide stepSide = footstep.getRobotSide();
-            TDoubleArrayList swingFootInitialTimes = footSupportInitialTimes.get(stepSide);
-            RecyclingArrayList<ConvexPolygon2D> swingFootSupports = footSupportSequences.get(stepSide);
-
-            // Add swing - no support for foot
-            double stepStartTime = Math.max(last(swingFootInitialTimes), last(footSupportInitialTimes.get(stepSide.getOppositeSide())));
-            boolean liftOffRequestedByFootstep = checkForAndAddLiftOffPolygon(footstep, footstepTiming, stepStartTime);
-            if (!liftOffRequestedByFootstep && shouldDoToeOff(movingSoleFrames.get(stepSide.getOppositeSide()), movingSoleFrames.get(stepSide)))
-            {
-               double toeOffTime = footstepTiming.getTransferTime() / 2.0;
-               swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
-               computeToePolygon(swingFootSupports.add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
-            }
-            swingFootSupports.add().clearAndUpdate();
-            swingFootInitialTimes.add(stepStartTime + footstepTiming.getTransferTime());
-
-            // Update the moving polygon and sole frame to reflect that the step was taken.
-            extractSupportPolygon(footstep, movingPolygonsInSole.get(stepSide), defaultSupportPolygon);
-            movingSoleFrames.get(stepSide).setPoseAndUpdate(footstep.getFootstepPose());
-
-            // Add touchdown polygon
-            boolean touchDownRequestedByFootstep = checkForAndAddTouchDownPolygon(footstep, footstepTiming, true);
-            if (!touchDownRequestedByFootstep)
-            {
-               swingFootSupports.add().set(changeFrameToWorld(movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide)));
-               swingFootInitialTimes.add(last(swingFootInitialTimes) + footstepTiming.getSwingTime());
-            }
+            swingFootSupports.add().set(changeFrameToWorld(movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide)));
+            swingFootInitialTimes.add(stepStartTime + footstepTiming.getStepTime());
          }
+
+         stepStartTime += footstepTiming.getStepTime();
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -350,7 +359,7 @@ public class SupportSeqence
       updateViz();
    }
 
-   private boolean checkForAndAddTouchDownPolygon(Footstep footstep, FootstepTiming footstepTiming, boolean addPartialFoothold)
+   private boolean checkForAndAddTouchDownPolygon(Footstep footstep, FootstepTiming footstepTiming, double stepStartTime)
    {
       if (footstep.getTrajectoryType() != TrajectoryType.WAYPOINTS)
          return false;
@@ -369,17 +378,16 @@ public class SupportSeqence
       if (Math.abs(pitch) < Math.toRadians(5.0))
          return false;
 
-      if (addPartialFoothold)
-      {
-         if (pitch > 0.0)
-            computeToePolygon(footSupportSequences.get(stepSide).add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
-         else
-            computeHeelPolygon(footSupportSequences.get(stepSide).add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
-         footSupportInitialTimes.get(stepSide).add(last(footSupportInitialTimes.get(stepSide)) + footstepTiming.getSwingTime());
-      }
+      TDoubleArrayList swingFootInitialTimes = footSupportInitialTimes.get(stepSide);
+
+      if (pitch > 0.0)
+         computeToePolygon(footSupportSequences.get(stepSide).add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
+      else
+         computeHeelPolygon(footSupportSequences.get(stepSide).add(), movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide));
+      swingFootInitialTimes.add(stepStartTime + footstepTiming.getStepTime());
 
       footSupportSequences.get(stepSide).add().set(changeFrameToWorld(movingPolygonsInSole.get(stepSide), movingSoleFrames.get(stepSide)));
-      footSupportInitialTimes.get(stepSide).add(last(footSupportInitialTimes.get(stepSide)) + footstepTiming.getTouchdownDuration());
+      swingFootInitialTimes.add(stepStartTime + footstepTiming.getStepTime() + footstepTiming.getTouchdownDuration());
       return true;
    }
 
@@ -488,18 +496,6 @@ public class SupportSeqence
       {
          footSupportSequences.get(robotSide).clear();
          footSupportInitialTimes.get(robotSide).reset();
-      }
-   }
-
-   private void initializeStance()
-   {
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         if (bipedSupportPolygons == null)
-            footPolygonsInSole.get(robotSide).set(defaultSupportPolygon);
-         else
-            footPolygonsInSole.get(robotSide).set(bipedSupportPolygons.getFootPolygonInSoleFrame(robotSide));
-         footPoses.get(robotSide).setFromReferenceFrame(soleFrames.get(robotSide));
       }
    }
 
