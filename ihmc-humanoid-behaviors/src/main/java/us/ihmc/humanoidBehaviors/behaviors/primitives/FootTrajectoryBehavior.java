@@ -49,7 +49,6 @@ public class FootTrajectoryBehavior extends AbstractBehavior
    @Override
    public void doControl()
    {
-      //while the foot is in motion ensure the robot is balanced
       if (!hasPacketBeenSent.getBooleanValue() && (outgoingFootTrajectoryMessage != null))
       {
          sendFootPosePacketToController();
@@ -57,8 +56,7 @@ public class FootTrajectoryBehavior extends AbstractBehavior
 
       if (hasPacketBeenSent.getBooleanValue() && !isPaused.getBooleanValue() && !isAborted.getBooleanValue())
       {
-         if (Double.isNaN(startTime.getDoubleValue()) && !doubleSupport.getBooleanValue()) //this is where he checks if the robot is in doublesupport stance or not
-            //he gets updated and that too pretty frequently
+         if (Double.isNaN(startTime.getDoubleValue()) && !doubleSupport.getBooleanValue())
          {
             startTime.set(yoTime.getDoubleValue());
          }

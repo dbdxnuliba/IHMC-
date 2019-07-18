@@ -59,14 +59,7 @@ public class AtlasStraightLegWalkingTest extends AvatarStraightLegWalkingTest
    {
       super.testWalkingOverStairs();
    }
-   /*
-   @Override
-   @Test
-   public void testsinglestep() throws Exception
-   {
 
-   }
-   */
    @Override
    @Disabled
    @Test

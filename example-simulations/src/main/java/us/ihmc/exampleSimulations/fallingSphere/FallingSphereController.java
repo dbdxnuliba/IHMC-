@@ -11,9 +11,9 @@ public class FallingSphereController implements RobotController
    private final YoVariableRegistry registry = new YoVariableRegistry("FallingSphereController");
 
 
-   private final ContactableRollingSphereRobot robot;
+   private final FallingSphereRobot robot;
    
-   public FallingSphereController(ContactableRollingSphereRobot robot)
+   public FallingSphereController(FallingSphereRobot robot)
    {
       this.robot = robot;
    }

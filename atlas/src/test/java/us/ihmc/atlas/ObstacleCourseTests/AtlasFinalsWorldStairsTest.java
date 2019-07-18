@@ -77,7 +77,7 @@ public class AtlasFinalsWorldStairsTest
 
       FootContactPoints<RobotSide> simulationContactPoints = new AdditionalSimulationContactPoints<>(RobotSide.values, 10, 2, true, true);
       AtlasRobotModel robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false, simulationContactPoints);
-      DRCFinalsEnvironment environment = new DRCFinalsEnvironment(true, false, false, false, true);
+      DRCFinalsEnvironment environment = new DRCFinalsEnvironment(false, false, false, false, true);
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, environment);
       drcSimulationTestHelper.setStartingLocation(selectedLocation);
       drcSimulationTestHelper.createSimulation("DRCWalkingUpStairsTest");

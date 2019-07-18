@@ -2,7 +2,6 @@ package us.ihmc.ihmcPerception.fiducialDetector;
 
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -21,7 +20,6 @@ import controller_msgs.msg.dds.VideoPacket;
 import georegression.geometry.ConvertRotation3D_F64;
 import georegression.struct.EulerType;
 import georegression.struct.se.Se3_F64;
-import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.*;
 import us.ihmc.communication.producers.JPEGDecompressor;
 import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -36,7 +34,6 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.robotics.math.filters.GlitchFilteredYoBoolean;
 import us.ihmc.robotics.referenceFrames.TransformReferenceFrame;
-import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.yoVariables.listener.VariableChangedListener;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -89,7 +86,7 @@ public class FiducialDetectorFromCameraImages
 
    private final YoFramePose3D cameraPose = new YoFramePose3D(prefix + "CameraPoseWorld", ReferenceFrame.getWorldFrame(), registry);
    private final YoFramePose3D locatedFiducialPoseInWorldFrame = new YoFramePose3D(prefix + "LocatedPoseWorldFrame", ReferenceFrame.getWorldFrame(), registry);
-   private YoFramePose3D reportedFiducialPoseInWorldFrame = new YoFramePose3D(prefix + "ReportedPoseWorldFrame", ReferenceFrame.getWorldFrame(),
+   private final YoFramePose3D reportedFiducialPoseInWorldFrame = new YoFramePose3D(prefix + "ReportedPoseWorldFrame", ReferenceFrame.getWorldFrame(),
                                                                                     registry);
 
    public FiducialDetectorFromCameraImages(RigidBodyTransform transformFromReportedToFiducialFrame, YoVariableRegistry parentRegistry,
@@ -199,8 +196,8 @@ public class FiducialDetectorFromCameraImages
    {
       detector.setIntrinsic(intrinsicParameters);
       //increase brightness for sim
-      RescaleOp rescaleOp = new RescaleOp(1.9f, 35, null);
-      rescaleOp.filter(bufferedImage, bufferedImage);  // Source and destination are the same.
+      //RescaleOp rescaleOp = new RescaleOp(1.9f, 35, null);
+      //rescaleOp.filter(bufferedImage, bufferedImage);  // Source and destination are the same.
       if (DEBUG)
       {
          if (frame == null)
@@ -332,10 +329,6 @@ public class FiducialDetectorFromCameraImages
 
    public void getReportedFiducialPoseWorldFrame(FramePose3D framePoseToPack)
    {
-      //StepUpDoor doorframepose = new StepUpDoor();
-      //doorframepose.getDoorFramePose();
-      //reportedFiducialPoseInWorldFrame = new YoFramePose3D(prefix + "ReportedPoseWorldFrame", ReferenceFrame.getWorldFrame(),
-     //                                                      registry);
       framePoseToPack.setIncludingFrame(reportedFiducialPoseInWorldFrame);
    }
 

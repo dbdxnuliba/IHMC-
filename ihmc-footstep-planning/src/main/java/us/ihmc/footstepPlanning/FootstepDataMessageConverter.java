@@ -27,7 +27,7 @@ public class FootstepDataMessageConverter
       FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
       footstepDataListMessage.setDefaultSwingDuration(swingTime);
       footstepDataListMessage.setDefaultTransferDuration(transferTime);
-//      footstepDataListMessage.setOffsetFootstepsHeightWithExecutionError(true);
+      footstepDataListMessage.setOffsetFootstepsHeightWithExecutionError(true);
 
       for (int i = 0; i < footstepPlan.getNumberOfSteps(); i++)
       {

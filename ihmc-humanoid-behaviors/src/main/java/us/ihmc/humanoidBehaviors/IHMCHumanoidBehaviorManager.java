@@ -279,8 +279,6 @@ public class IHMCHumanoidBehaviorManager
 
       dispatcher.addBehavior(HumanoidBehaviorType.EXAMPLE_BEHAVIOR, new ExampleComplexBehaviorStateMachine(robotName, ros2Node, yoTime, atlasPrimitiveActions));
 
-      dispatcher.addBehavior(HumanoidBehaviorType.TEST_OPENDOORDETECTOR, new TestDoorOpenBehaviorService(robotName,"doorOpen", ros2Node, yoGraphicsListRegistry));
-      
       dispatcher.addBehavior(HumanoidBehaviorType.LOCATE_FIDUCIAL, new LocateGoalBehavior(robotName, ros2Node, fiducialDetectorBehaviorService));
       dispatcher.addBehavior(HumanoidBehaviorType.FOLLOW_FIDUCIAL_50, new FollowFiducialBehavior(robotName, ros2Node, yoTime, wholeBodyControllerParameters,
                                                                                                  referenceFrames, fiducialDetectorBehaviorService));

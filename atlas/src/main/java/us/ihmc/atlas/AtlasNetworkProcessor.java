@@ -52,11 +52,11 @@ public class AtlasNetworkProcessor
          DRCRobotModel model;
 
          DRCNetworkModuleParameters networkModuleParams = new DRCNetworkModuleParameters();
-         networkModuleParams.enableBehaviorModule(false);
-         networkModuleParams.enableBehaviorVisualizer(false);
+         networkModuleParams.enableBehaviorModule(true);
+         networkModuleParams.enableBehaviorVisualizer(true);
          networkModuleParams.enableSensorModule(true);
          networkModuleParams.enableRobotEnvironmentAwerenessModule(false);
-         networkModuleParams.enableHeightQuadTreeToolbox(false);
+         networkModuleParams.enableHeightQuadTreeToolbox(true);
          networkModuleParams.enableMocapModule(false);
          networkModuleParams.enableFootstepPlanningToolbox(false);
          networkModuleParams.enableFootstepPlanningToolboxVisualizer(false);

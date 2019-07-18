@@ -79,7 +79,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
    private static final boolean ADD_SOCCER_BALL = false;
    public static final double SOCCER_BALL_RADIUS = 0.0762;
 
-   private static final boolean ADD_FIDUCIAL_BOX_ROBOT = true;
+   private static final boolean ADD_FIDUCIAL_BOX_ROBOT = false;
 
    // private static final double FLOOR_THICKNESS = 0.001;
 
@@ -97,7 +97,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
    {
       combinedTerrainObject3D = new CombinedTerrainObject3D("DRCDemo01NavigationEnvironment");
 
-     /* addCalibrationCube();
+      addCalibrationCube();
       combinedTerrainObject3D.addTerrainObject(setUpPath1Rocks3D("Path1 Rocks"));
 
       // setUpPath2SmallCones(combinedTerrainObject);
@@ -112,7 +112,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
       combinedTerrainObject3D.addTerrainObject(setUpPath6Barriers("Path6 Barriers"));
       combinedTerrainObject3D.addTerrainObject(setUpPath7Stairs("Path7 Stairs"));
       combinedTerrainObject3D.addTerrainObject(setUpPath8RampsWithSteppingStones("Path8 Ramps with Stepping Stones"));
-*/
+
       if (setUpGround)
       {
          combinedTerrainObject3D.addTerrainObject(setUpGround("Ground"));
@@ -131,16 +131,6 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
 
          robot.setPosition(2.0, 0.0, 1.25);
          robot.setYawPitchRoll(0.0, -Math.PI / 2.0, 0.0);
-
-         environmentRobots.add(robot);
-         
-         
-         FloatingFiducialBoxRobot robot1 = new FloatingFiducialBoxRobot(Fiducial.FIDUCIAL50,"2");
-
-         robot1.setPosition(-2, 0.0, 1.25);
-         robot1.setYawPitchRoll(0.0, -Math.PI / 2.0, 0.0);
-
-         environmentRobots.add(robot1);
       }
 //      if (ADD_LIMBO_BAR)
 //      {
@@ -1206,7 +1196,7 @@ public class DefaultCommonAvatarEnvironment implements CommonAvatarEnvironmentIn
       setUpCinderBlockSquare(combinedTerrainObject, point[0], point[1], h, deg);
    }
 
-   public CombinedTerrainObject3D setUpPath5NarrowDoor(String name)
+   private CombinedTerrainObject3D setUpPath5NarrowDoor(String name)
    {
       CombinedTerrainObject3D combinedTerrainObject = new CombinedTerrainObject3D(name);
 

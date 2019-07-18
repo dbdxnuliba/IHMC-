@@ -94,8 +94,6 @@ public abstract class AvatarStraightLegWalkingTest implements MultiRobotTestInte
       footstepListMessage.setAreFootstepsAdjustable(true);
       footstepListMessage.setOffsetFootstepsWithExecutionError(true);
 
-      //System.out.println(footstepListMessage);
-      // simulation related stuff below this
       drcSimulationTestHelper.publishToController(footstepListMessage);
 
       double timeOverrunFactor = 1.1;
@@ -124,31 +122,28 @@ public abstract class AvatarStraightLegWalkingTest implements MultiRobotTestInte
 
          footsteps.add(dataMessage);
 
-
          robotSide = robotSide.getOppositeSide();
       }
-   // the very last foot landing
+
       FootstepDataMessage dataMessage = HumanoidMessageTools
             .createFootstepDataMessage(robotSide, new Point3D(xLocation, robotSide.negateIfRightSide(width / 2.0), 0.0), new Quaternion());
       dataMessage.setSwingDuration(swingDuration);
       dataMessage.setTransferDuration(transferDuration);
 
       footsteps.add(dataMessage);
-      //System.out.println(footsteps);
-      return footsteps;
 
+      return footsteps;
    }
 
 
    @Test
    public void testWalkingOverCinderBlockField() throws Exception
    {
-      // creates the environment
       CinderBlockFieldEnvironment cinderBlockFieldEnvironment = new CinderBlockFieldEnvironment();
       FootstepDataListMessage footsteps = generateFootstepsForCinderBlockField(cinderBlockFieldEnvironment.getCinderBlockPoses());
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), cinderBlockFieldEnvironment);
-      //drcSimulationTestHelper.createSimulation("EndToEndCinderBlockFieldTest");
+
       drcSimulationTestHelper.createSimulation("EndToEndCinderBlockFieldTest");
 
       ThreadTools.sleep(1000);

@@ -486,5 +486,4 @@ public class StateMachineFactory<K extends Enum<K>, S extends State>
    {
       return new StateMachine<K, S>(initialStateKey, states, stateTransitions, stateChangedListeners, clock, namePrefix, registry);
    }
-   
 }

@@ -116,7 +116,6 @@ public final class StateTransition<K extends Enum<K>> implements Iterable<K>
       for (int i = 0; i < toStateKeys.size(); i++)
       {
          K to = toStateKeys.get(i);
-       
          List<StateTransitionCondition> toStateConditions = allConditions.get(to);
 
          for (int j = 0; j < toStateConditions.size(); j++)

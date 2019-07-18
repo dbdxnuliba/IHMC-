@@ -3,8 +3,6 @@ package controller_msgs.msg.dds;
 import us.ihmc.communication.packets.Packet;
 import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
-
-import java.awt.geom.*;
 import java.util.function.Supplier;
 import us.ihmc.pubsub.TopicDataType;
 
@@ -19,30 +17,9 @@ public class LocalizationPacket extends Packet<LocalizationPacket> implements Se
    public long sequence_id_;
    public boolean reset_;
    public boolean toggle_;
-   public Point2D point2D;
 
    public LocalizationPacket()
    {
-      point2D = new Point2D()
-      {
-         @Override
-         public double getX()
-         {
-            return 0;
-         }
-
-         @Override
-         public double getY()
-         {
-            return 0;
-         }
-
-         @Override
-         public void setLocation(double v, double v1)
-         {
-
-         }
-      };
    }
 
    public LocalizationPacket(LocalizationPacket other)
@@ -59,16 +36,6 @@ public class LocalizationPacket extends Packet<LocalizationPacket> implements Se
 
       toggle_ = other.toggle_;
 
-   }
-
-   public double getPoint2DX()
-   {
-      return point2D.getX();
-   }
-
-   public double getPoint2DY()
-   {
-      return point2D.getY();
    }
 
    /**

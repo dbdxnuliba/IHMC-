@@ -27,7 +27,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 public class KickBallBehavior extends AbstractBehavior
 {
    private static final boolean CREATE_COACTIVE_ELEMENT = true;
-   private static final boolean USE_BLOB_FILTERING = false;
+   private static final boolean USE_BLOB_FILTERING = true;
 
    private enum KickState
    {
