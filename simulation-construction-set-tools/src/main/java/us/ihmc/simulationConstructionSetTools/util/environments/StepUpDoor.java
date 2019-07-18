@@ -2,12 +2,14 @@ package us.ihmc.simulationConstructionSetTools.util.environments;
 
 import com.github.quickhull3d.*;
 import javafx.geometry.*;
+import javafx.geometry.Point2D;
 import us.ihmc.euclid.axisAngle.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 //import us.ihmc.euclid.shape.*;
 import us.ihmc.euclid.shape.primitives.*;
 import us.ihmc.euclid.transform.*;
+import us.ihmc.euclid.tuple2D.*;
 import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.appearance.*;
@@ -38,6 +40,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final boolean ADD_SPHERES = false;
    private final boolean ADD_ROLLING_SPHERE = false;
    private final boolean ADD_GOAL_POST = true;
+   private final boolean ENABLE_GOAL_POST_ORIENTATION = true;
 
    private FramePose3D doorframepose = new FramePose3D();
    private final int NUmberofBoxes = 1;
@@ -52,6 +55,12 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private Point3D GoalPostPosition = null;
    private static Point3D fiducialPosition;
    private static Point3D doorPosition;
+
+//   private final Point3D positionOfGoalPost = new Point3D(6.72,-1.78,0.0); //goalpostposition
+   private final Vector2D position = new Vector2D(6.72, -1.78);
+   private final Orientation2D orientation2D = new Orientation2D(1.0);
+
+   private final Pose2D poseOfGoalPost = new Pose2D(position,orientation2D);
 
    double wallOffSet = 0.8;
 
@@ -213,30 +222,54 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
       if(ADD_GOAL_POST)
       {
-         //make a circular pipe thing that mimicks a goal post
-         //z is the offset from middle
+         //z,x,y is the offset from middle
          //eventually change this to a form of constructor that given one single point it can build all that stuff
-         Vector3D support1 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),0.5,0.5);  //slant support
-         Vector3D support2 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),-0.5,0.5); //slant support
-         Vector3D topRod = new Vector3D(10 + 0.5,0.0,1.0); //top rod
-         Vector3D support3 = new Vector3D(10 + 0.5,0.5,0.5); //vertical support
-         Vector3D support4 = new Vector3D(10 + 0.5,-0.5,0.5); //vertical support
+         //say you x,y,z from the user which is the midpoint of top rod'sprojection on ground
+         Vector3D support1;
+         Vector3D support2;
+         Vector3D support3;
+         Vector3D support4;
+         Vector3D topRod;
+         double heightOffTheGround = 1.0; //lsin(theta)
+         final double desiredBendAngleofSlantSupports = (Math.PI)/4; //theta (keep it as 45 degrees!! else the formulas gets messed up)
+         double rodLength = heightOffTheGround/Math.sin(desiredBendAngleofSlantSupports); //l value
+         double supportOffsetFromCenterofTopRod = 0.5;
+         double initialoffset = 10;
+         if(!ENABLE_GOAL_POST_ORIENTATION)
+         {
 
+            support1 = new Vector3D(initialoffset + (rodLength*Math.cos(desiredBendAngleofSlantSupports))/2.0,supportOffsetFromCenterofTopRod,heightOffTheGround/2.0);  //slant support
+            support2 = new Vector3D(initialoffset + (rodLength*Math.cos(desiredBendAngleofSlantSupports))/2.0,-supportOffsetFromCenterofTopRod,0.5); //slant support
+            topRod = new Vector3D(initialoffset ,0.0,heightOffTheGround); //top rod
+            support3 = new Vector3D(initialoffset ,supportOffsetFromCenterofTopRod,heightOffTheGround/2.0); //vertical support
+            support4 = new Vector3D(initialoffset ,-supportOffsetFromCenterofTopRod,heightOffTheGround/2.0); //vertical support
+         }
+         else
+         {
+            topRod = new Vector3D(poseOfGoalPost.getX(),poseOfGoalPost.getY(),heightOffTheGround);//the z-value of 1.0 being the height(length is the height value in constructor) is fixed. can make it variable afterwards too
+            support3 = new Vector3D(poseOfGoalPost.getX(),poseOfGoalPost.getY() + supportOffsetFromCenterofTopRod,heightOffTheGround/2.0);
+            support4 = new Vector3D(poseOfGoalPost.getX(),poseOfGoalPost.getY() - supportOffsetFromCenterofTopRod,heightOffTheGround/2.0);
+            support1 = new Vector3D(poseOfGoalPost.getX()+(rodLength*Math.cos(desiredBendAngleofSlantSupports))/2.0,poseOfGoalPost.getY() + supportOffsetFromCenterofTopRod,heightOffTheGround/2.0);
+            support2 = new Vector3D(poseOfGoalPost.getX()+(rodLength*Math.cos(desiredBendAngleofSlantSupports))/2.0,poseOfGoalPost.getY() - supportOffsetFromCenterofTopRod,heightOffTheGround/2.0);
+         }
          GoalPostPosition = new Point3D(topRod.getX(),topRod.getY(),0.0);
+
          YoAppearance app = new YoAppearance();
+         final double pitchDownDegreesForSlantRods = 135;
+         final double pitchDownDegreesForTopRods = 90;
+         double yawDegree = poseOfGoalPost.getOrientation().getYaw();
+         CylinderTerrainObject goalPost1_1 = new CylinderTerrainObject(support1,pitchDownDegreesForSlantRods,0.0 + yawDegree,rodLength,0.02,app.Black());
+         CylinderTerrainObject goalPost1_2 = new CylinderTerrainObject(support2,pitchDownDegreesForSlantRods,0.0 + yawDegree,rodLength,0.02,app.Black());
+         CylinderTerrainObject goalPost1_3 = new CylinderTerrainObject(topRod,pitchDownDegreesForTopRods,-90.0 + yawDegree,1.0,0.02,app.Black());
+         CylinderTerrainObject goalPost1_4 = new CylinderTerrainObject(support3,0.0,0.0,1.0,0.02,app.Black());
+         CylinderTerrainObject goalPost1_5 = new CylinderTerrainObject(support4,0.0,0.0,1.0,0.02,app.Black());
 
-         CylinderTerrainObject goalPost11 = new CylinderTerrainObject(support1,135,0.0,(Math.sqrt(2)),0.02,app.Black());
-         CylinderTerrainObject goalPost12 = new CylinderTerrainObject(support2,135,0.0,(Math.sqrt(2)),0.02,app.Black());
-         CylinderTerrainObject goalPost13 = new CylinderTerrainObject(topRod,-90.0,-90.0,1.0,0.02,app.Black());
-         CylinderTerrainObject goalPost14 = new CylinderTerrainObject(support3,0.0,0.0,1.0,0.02,app.Black());
-         CylinderTerrainObject goalPost15 = new CylinderTerrainObject(support4,0.0,0.0,1.0,0.02,app.Black());
 
-
-         combinedTerrainObject.addTerrainObject(goalPost11);
-         combinedTerrainObject.addTerrainObject(goalPost12);
-         combinedTerrainObject.addTerrainObject(goalPost13);
-         combinedTerrainObject.addTerrainObject(goalPost14);
-         combinedTerrainObject.addTerrainObject(goalPost15);
+         combinedTerrainObject.addTerrainObject(goalPost1_1);
+         combinedTerrainObject.addTerrainObject(goalPost1_2);
+         combinedTerrainObject.addTerrainObject(goalPost1_3);
+         combinedTerrainObject.addTerrainObject(goalPost1_4);
+         combinedTerrainObject.addTerrainObject(goalPost1_5);
       }
    }
 
