@@ -9,6 +9,7 @@ import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
+import us.ihmc.avatar.stepUptest.AvatarStepUp.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
@@ -55,6 +56,7 @@ import us.ihmc.simulationConstructionSetTools.util.environments.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
 import us.ihmc.simulationconstructionset.*;
 import us.ihmc.simulationconstructionset.Robot;
+import us.ihmc.simulationconstructionset.util.*;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.*;
 import us.ihmc.simulationconstructionset.util.simulationTesting.*;
 
@@ -67,6 +69,12 @@ import java.util.List;
 
 public abstract class AvatarStepUp implements MultiRobotTestInterface
 {
+   public enum StartingLocation
+   {
+      START_FROM_SCRATCH,
+      START_FROM_FIDUCIAL
+   }
+
 
    private final boolean DEBUG = true;
    private final boolean step_up_door = true;
@@ -89,42 +97,66 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private ArmJointName[] armJoint = getArmJointNames();
    private Random random = new Random(42);
    private FullHumanoidRobotModel fullRobotModel;
+   private final double stepHeight = 0.3;
 
-   private final boolean IS_PAUSING_ON = false;  //should be false for now
-   private boolean IS_CHEST_ON = false;   //reset to final after testing
-   private final boolean IS_LEFTARM_ON = false;
-   private final boolean IS_RIGHTARM_ON = false;
-   private final boolean IS_PELVIS_ON = true;
-   private final boolean IS_FOOTSTEP_ON = true;
+   private YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
+   private StepUpDoor stepUpDoor =new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);;
+   private boolean IS_PAUSING_ON;// = false;  //should be false for now
+   private boolean IS_CHEST_ON;// = false;   //reset to final after testing
+   private boolean IS_LEFTARM_ON;// = false;
+   private boolean IS_RIGHTARM_ON;// = false;
+   private boolean IS_PELVIS_ON;// = true;
+   private boolean IS_FOOTSTEP_ON;// = true;
+   private Pose3D startingPoint = new Pose3D(0.5,0.0,0.0,0.0,0.0,0.0);
+   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX(),0.5,0.0,0.0,0.0,0.0);
+
+   private OffsetAndYawRobotInitialSetup pos1 = new OffsetAndYawRobotInitialSetup(startingPoint.getX(),startingPoint.getY(),startingPoint.getZ(),startingPoint.getYaw());
+   private OffsetAndYawRobotInitialSetup pos2 = new OffsetAndYawRobotInitialSetup(startingFromFiducial.getX(),startingFromFiducial.getY(),startingFromFiducial.getZ(),startingFromFiducial.getYaw());
+   private OffsetAndYawRobotInitialSetup startingPos;
+
+   private final boolean startWithoutBeingTriggeredFromMessagePacket = true;
+
 
    private BehaviorDispatcher<HumanoidBehaviorType> behaviorDispatcher;
    private Ros2Node ros2Node;
    private HumanoidFloatingRootJointRobot robot;
    private YoDouble yoTime;
    private HumanoidRobotDataReceiver robotDataReceiver;
-   private YoGraphicsListRegistry yoGraphicsListRegistry;
+
    private HumanoidReferenceFrames referenceFrames;
    private YoBoolean yoDoubleSupport;
    private AtlasPrimitiveActions atlasPrimitiveActions;
    private WalkingStatusMessage newStatusReference = new WalkingStatusMessage();
-   private StepUpDoor stepUpDoor;
+
+   private StartingLocation startFromHere; //look at how to initialize this before the BeforeEach annotations
 
 
 
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
-   //private final AtlasR
 
+   public final HashMap<String, OffsetAndYawRobotInitialSetup> initalLocation = new HashMap<>();
+
+
+
+   //private final AtlasR
+   //before each sequence is in accordance with their appearance
    @BeforeEach
    public  void showMemoryUsageBeforeTest()
    {
       MemoryTools.printCurrentMemoryUsageAndReturnUsedMemoryInMB(getClass().getSimpleName() + " before test.");
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
+
    }
+
+
 
    @BeforeEach
    public void setup()
    {
+
+      addMapping(StartingLocation.START_FROM_SCRATCH,pos1);
+      addMapping(StartingLocation.START_FROM_FIDUCIAL,pos2);
       FootstepPlannerParameters parameters = new BestEffortPlannerParameters(3);
       SideDependentList<ConvexPolygon2D> footPolygons = PlannerTools.createDefaultFootPolygons();
       ParameterBasedNodeExpansion expansion = new ParameterBasedNodeExpansion(parameters);
@@ -133,27 +165,34 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       String className = getClass().getSimpleName();
 
-      double stepHeight = 0.3;
+
       if(Walls_with_stairs)
       {
          Wallswithstairs wall = new Wallswithstairs(0.5, 1.7, stepHeight);
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, wall);
       }
 
-      yoGraphicsListRegistry = new YoGraphicsListRegistry();
+//      yoGraphicsListRegistry = new YoGraphicsListRegistry();
       if(step_up_door)
       {
-         stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);
+//         stepUpDoor = new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);
 //         yoGraphicsListRegistry.registerYoGraphicsList(stepUpDoor.getSphereRobot().getYoGraphicsList());
          drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, stepUpDoor);
       }
 
+      /** This is where you change the starting position. Tried writing a set method being called in Atlas class but the trigger code structure does allow setting before simulation initialisation this leading to null pointer exception **/
+      startFromHere = StartingLocation.START_FROM_FIDUCIAL;
 
 
       DRCRobotModel robotModel = getRobotModel();
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(version,RobotTarget.SCS, false);
 
-      drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
+//      drcSimulationTestHelper.setStartingLocation(new OffsetAndYawRobotInitialSetup(0.5, 0.0, 0.0, 0.0)); //setting starting location
+//      drcSimulationTestHelper.setStartingLocation(getStartingLocationOffset(startFromHere));
+//
+//      drcSimulationTestHelper.setStartingLocation(getStartingLocationOffset(StartingLocation.START_FROM_FIDUCIAL));
+
+      drcSimulationTestHelper.setStartingLocation(setStartingLocationOffset(startFromHere));
       drcSimulationTestHelper.createSimulation(className);
 
       registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -193,14 +232,20 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       atlasPrimitiveActions = new AtlasPrimitiveActions(getSimpleRobotName(), ros2Node, getRobotModel().getFootstepPlannerParameters(),fullRobotModel, atlasRobotModel, referenceFrames, yoTime, robotModel, registry);
    }
 
+   public OffsetAndYawRobotInitialSetup  setStartingLocationOffset(StartingLocation startFromHere)
+   {
+      startingPos = getStartingLocationOffset(startFromHere);
+      return startingPos;
+   }
 
    private void checkAndPublishChestTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {
       if (message.takeNextData().getWalkingStatus() != 0)
       {
          if(tmpcounter == 0)
+         {callDoorTiminingBehavior();}
          //createAndPublishChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //call your door opening behavior form this code point
-         callDoorTiminingBehavior();
+
          tmpcounter++;
       }
    }
@@ -256,6 +301,19 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    {
       return 6;
    }
+
+   private void addMapping(AvatarStepUp.StartingLocation startingLocation, OffsetAndYawRobotInitialSetup initialPosofRobot)
+   {
+      initalLocation.put(startingLocation.toString(),initialPosofRobot);
+   }
+
+   public OffsetAndYawRobotInitialSetup getStartingLocationOffset(StartingLocation tmp)
+   {
+      OffsetAndYawRobotInitialSetup startPosition = initalLocation.get(tmp.toString());
+      return startPosition;
+   }
+
+
 
 
    private BehaviorDispatcher<HumanoidBehaviorType> setupBehaviorDispatcher(String robotName, FullHumanoidRobotModel fullRobotModel, Ros2Node ros2Node,
@@ -331,6 +389,15 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       FootstepDataListMessage footsteps = createFootSteps(robotModel, stepHeight, swingHeight);
 
+      if(startWithoutBeingTriggeredFromMessagePacket == true)
+      {
+         if(tmpcounter == 0)
+         {
+            callDoorTiminingBehavior();
+         }
+         tmpcounter++;
+      }
+
       if(leftArm)
       {
          ArmTrajectoryMessage leftArmTrajectoryMessages = createArmLeftTrajectory();
@@ -372,6 +439,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 //      assertreached(footsteps);
       ThreadTools.sleepForever(); //does not kill the simulation
    }
+
 
    private void callDoorTiminingBehavior()
    {
@@ -770,13 +838,45 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       BoundingBox3D boundingBox3D = BoundingBox3D.createUsingCenterAndPlusMinusVector(midpoint, bounds);
       drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox3D);
    }
-   private DRCRobotModel setTestEnvironment(double stepHeight) throws SimulationExceededMaximumTimeException
+
+   public void setIS_CHEST_ON(boolean IS_CHEST_ON)
+   {
+      this.IS_CHEST_ON = IS_CHEST_ON;
+   }
+
+   public void setIS_FOOTSTEP_ON(boolean IS_FOOTSTEP_ON)
+   {
+      this.IS_FOOTSTEP_ON = IS_FOOTSTEP_ON;
+   }
+
+   public void setIS_LEFTARM_ON(boolean IS_LEFTARM_ON)
+   {
+      this.IS_LEFTARM_ON = IS_LEFTARM_ON;
+   }
+
+   public void setIS_PAUSING_ON(boolean IS_PAUSING_ON)
+   {
+      this.IS_PAUSING_ON = IS_PAUSING_ON;
+   }
+
+   public void setIS_PELVIS_ON(boolean IS_PELVIS_ON)
+   {
+      this.IS_PELVIS_ON = IS_PELVIS_ON;
+   }
+
+   public void setIS_RIGHTARM_ON(boolean IS_RIGHTARM_ON)
+   {
+      this.IS_RIGHTARM_ON = IS_RIGHTARM_ON;
+   }
+
+   private DRCRobotModel setTestEnvironment(double stepHeight)  throws SimulationExceededMaximumTimeException
    {
 
       setUpCamera();
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.25);
       assertTrue(success);
+//      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(50.0); //change this line to manually click on simulate button
       return robotModel;
    }
 

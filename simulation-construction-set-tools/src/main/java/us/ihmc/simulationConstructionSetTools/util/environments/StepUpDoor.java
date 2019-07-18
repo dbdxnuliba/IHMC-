@@ -35,7 +35,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
-   private final boolean ADD_SPHERES = true;
+   private final boolean ADD_SPHERES = false;
    private final boolean ADD_ROLLING_SPHERE = false;
    private final boolean ADD_GOAL_POST = true;
 
@@ -49,7 +49,9 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>(); //list of external contact points
    private ContactableSphereRobot sphereRobot;
    private ContactableRollingSphereRobot rollingSphere;
-   private
+   private Point3D GoalPostPosition = null;
+   private static Point3D fiducialPosition;
+   private static Point3D doorPosition;
 
    double wallOffSet = 0.8;
 
@@ -67,7 +69,9 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       this.wallHeight = wallHeight;
       this.stepUpHeight = stepUpHeight;
       initialSpherePosition = 0.0;
-      System.out.println("This constructor has been deprecated");
+      fiducialPosition = null;
+      doorPosition = null;
+      System.out.println("*******************************This constructor has been deprecated. Calls to this Function will lead to erroneous behavior***********************");
    }
 
 
@@ -76,8 +80,8 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    {
       double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
 
-      Point3D doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
-      Point3D fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
+      doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
+      fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
       initialSpherePosition = doorPosition.getX32() + 3.0;
 
@@ -211,12 +215,14 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       {
          //make a circular pipe thing that mimicks a goal post
          //z is the offset from middle
+         //eventually change this to a form of constructor that given one single point it can build all that stuff
          Vector3D support1 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),0.5,0.5);  //slant support
          Vector3D support2 = new Vector3D(10 + (Math.sqrt(2)*1/Math.sqrt(2)),-0.5,0.5); //slant support
          Vector3D topRod = new Vector3D(10 + 0.5,0.0,1.0); //top rod
          Vector3D support3 = new Vector3D(10 + 0.5,0.5,0.5); //vertical support
          Vector3D support4 = new Vector3D(10 + 0.5,-0.5,0.5); //vertical support
 
+         GoalPostPosition = new Point3D(topRod.getX(),topRod.getY(),0.0);
          YoAppearance app = new YoAppearance();
 
          CylinderTerrainObject goalPost11 = new CylinderTerrainObject(support1,135,0.0,(Math.sqrt(2)),0.02,app.Black());
@@ -234,9 +240,19 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       }
    }
 
+   public static Point3D getFiducialPosition()
+   {
+      return fiducialPosition;
+   }
+
    public Point3D getBallLocation()
    {
       return new Point3D(getInitialSpherePosition()-ContactableSphereRobot.getDefaultRadius(),0.0,ContactableSphereRobot.getDefaultRadius());
+   }
+
+   public Point3D getGoalPostPosition()
+   {
+      return GoalPostPosition;
    }
 
    public static CombinedTerrainObject3D setUpGround(String name)

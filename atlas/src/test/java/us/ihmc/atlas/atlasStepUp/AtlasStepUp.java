@@ -15,11 +15,27 @@ public class AtlasStepUp extends AvatarStepUp
    //FootContactPoints<RobotSide> simulationContactPoints = new AdditionalSimulationContactPoints<>(RobotSide.values, 8, 3 , true, true);
    private final AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);//, simulationContactPoints);
 
+//   @BeforeEach
+//   public void setup()
+//   {
+//
+//
+//   }
    @Override
    @Test
    public void stepUpSmall() throws SimulationExceededMaximumTimeException
    {
+//      setStartingLocationOffset(StartingLocation.START_FROM_FIDUCIAL);
+
+      //setStartingLocationOffset(StartingLocation.START_FROM_FIDUCIAL);
+      setIS_CHEST_ON(false);
+      setIS_FOOTSTEP_ON(false);
+      setIS_LEFTARM_ON(false);
+      setIS_PAUSING_ON(false);
+      setIS_PELVIS_ON(false);
+      setIS_RIGHTARM_ON(false);
       super.stepUpSmall();
+
    }
 
    @Override
