@@ -245,6 +245,17 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       //return the initial key
       return WalkThroughDoorWOFiducialStates.SETUP_ROBOT;
    }
+//
+//   private boolean checkIfRobotIsAheadofBall()
+//   {
+//      FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0);
+//      robotPosition.changeFrame(referenceFrames.getWorldFrame());
+//      FramePoint2D initialSpherePoistion = new FramePoint2D(referenceFrames.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
+//      FrameVector2D whereToWalk = new FrameVector2D(referenceFrames.getWorldFrame());
+//      whereToWalk.set()
+//
+//      return true;
+//   }
 
    private FramePose2D getPositionwrtGoalPost()
    {
@@ -271,7 +282,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //      xprime = offsetFromSphere.getX()+ (offsetFromSphere.getX() - (offsetFromSphere.getX()*Math.cos(walkingYaw))) + 0.1;
 //      yprime = offsetFromSphere.getY() - offsetFromSphere.getY()*Math.sin(walkingYaw);
       xprime = offsetFromSphere.getX() + (distanceFromSphereBeforeYawMotion - distanceFromSphereBeforeYawMotion*Math.cos(walkingYaw));
-      yprime = offsetFromSphere.getY() + (distanceFromSphereBeforeYawMotion*Math.sin(walkingYaw));
+      yprime = offsetFromSphere.getY() - (distanceFromSphereBeforeYawMotion*Math.sin(walkingYaw));
 
       offsetFromSphereForGoalPost = new Point2D(xprime,yprime);
       FramePose2D poseTowalkTowrtGoalPost = new FramePose2D(referenceFrames.getWorldFrame(),offsetFromSphereForGoalPost,walkingYaw);
@@ -281,6 +292,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
    private FramePose2D getoffsetPoint() //this is my d variable
    {
+      //use walk to interactactable behavior which by deffult assume two waypoints
       FramePoint2D ballPosition2d;
       if(!BALL_DETECTION)
       {
@@ -301,6 +313,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       this.walkingDirectionForYawMotion = walkingDirection;
       //walkingDirection.getX() and getY() will give you the d value
       walkingDirection.normalize();
+      System.out.println("determing if X is positive or negative" +walkingDirection.getX()); //should be negative
       double walkingYaw = Math.atan2(walkingDirection.getY(), walkingDirection.getX());
       if(DEBUG)
       {

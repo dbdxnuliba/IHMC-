@@ -18,20 +18,14 @@ import java.util.*;
 
 public class ContactableSphereRobot extends ContactableRobot
 {
-   private static final double DEFAULT_RADIUS = 0.50;
+   private static final double DEFAULT_RADIUS = 0.30;
    private static final double DEFAULT_MASS = 10.0;
-   private static boolean ROLLING = true;
-   private ReferenceFrame referenceFrame = ReferenceFrame.getWorldFrame();
-
+   private static boolean ROLLING = false;
    private final FloatingJoint floatingJoint;
    private final Sphere3D originalSphere3d, currentSphere3d;
    private YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
    private final YoVariableRegistry registry = new YoVariableRegistry("RollingSphere");
-//   private ArrayList<YoGraphicPosition> yoGraphicPositionsList;
-//   private ArrayList<YoGraphicVector> yoGraphicVectorList;
-//   private ArrayList<YoGraphic> testing = new ArrayList<>();
    private YoGraphicsList yoGraphicsList = new YoGraphicsList("init");
-  // private ArrayList<YoGraphicsList> = new ArrayList<>();
    private YoGraphicPosition yoGraphicPosition;// = new YoGraphicPosition("init", new YoFramePoint3D(0.0,0.0,0.0,referenceFrame), 0.01, YoAppearance.Red());
    private YoGraphicVector yoGraphicVector;// =  new YoGraphicVector("initf", new YoFramePoint3D(0.0,0.0,0.0,referenceFrame), new YoFrameVector3D(0.0,0.0,0.0,referenceFrame), 1.0/50.0);
 
@@ -47,17 +41,7 @@ public class ContactableSphereRobot extends ContactableRobot
       this(name, DEFAULT_RADIUS,DEFAULT_MASS,YoAppearance.EarthTexture());
    }
 
-   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry1)
-   {
-      this(name, DEFAULT_RADIUS,DEFAULT_MASS,YoAppearance.EarthTexture(), yoGraphicsListRegistry1);
-   }
-
-//   public ContactableSphereRobot(String name, YoGraphicsListRegistry yoGraphicsListRegistry1)
-//   {
-//      this(name, DEFAULT_RADIUS, DEFAULT_MASS, YoAppearance.EarthTexture(), yoGraphicsListRegistry1);
-//   }
-
-   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color)//, YoGraphicsListRegistry yoGraphicsListRegistry1)
+   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color)
    {
       super(name);
 
@@ -69,62 +53,6 @@ public class ContactableSphereRobot extends ContactableRobot
 
       originalSphere3d = new Sphere3D(radius);
       currentSphere3d = new Sphere3D(radius);
-   }
-//      YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
-//      this.yoGraphicsListRegistry1 = yoGraphicsListRegistry1;
-//
-//
-//
-//      if(ROLLING)
-//      {
-//         int N = 8; //8;
-//
-//         for (int i = 0; i < N; i++)
-//         {
-//            double latitude = -Math.PI / 2.0 + (i * Math.PI) / N;
-//
-//            int nForThisLatitude = (int) ((Math.cos(latitude) * N) + 0.5);
-//
-//            for (int j = 0; j < nForThisLatitude; j++)
-//            {
-//               double longitude = (j * 2.0 * Math.PI) / nForThisLatitude;
-//
-//               double z = DEFAULT_RADIUS * Math.sin(latitude);
-//               double x = DEFAULT_RADIUS * Math.cos(latitude) * Math.cos(longitude);
-//               double y = DEFAULT_RADIUS * Math.cos(latitude) * Math.sin(longitude);
-//
-//               // System.out.println("x,y,z: " + x + ", " + y + ", " + z);
-//               String gcName = "gc" + i + "_" + j;
-//               GroundContactPoint gc = new GroundContactPoint(gcName, new Vector3D(x, y, z), this);
-//               floatingJoint.addGroundContactPoint(gc);
-//
-//               YoGraphicPosition yoGraphicPosition = new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());
-//               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
-//
-//
-//               YoGraphicVector yoGraphicVector = new YoGraphicVector(gcName + "Force", gc.getYoPosition(), gc.getYoForce(), 1.0/50.0);
-//               yoGraphicsListRegistry1.registerYoGraphic("FallingSphereForces", yoGraphicVector);
-//
-//               this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
-//            }
-//         }
-//      }
-//   }
-   //called by the constructor
-   public ContactableSphereRobot(String name, double radius, double mass, AppearanceDefinition color, YoGraphicsListRegistry yoGraphicsListRegistry)//, YoGraphicsListRegistry yoGraphicsListRegistry1)
-   {
-      super(name);
-
-      floatingJoint = new FloatingJoint("base", new Vector3D(0.0, 0.0, 0.0), this);
-
-      sphereLink = ball(radius, mass, color);
-      floatingJoint.setLink(sphereLink);
-      this.addRootJoint(floatingJoint);
-
-      originalSphere3d = new Sphere3D(radius);
-      currentSphere3d = new Sphere3D(radius);
-      //      YoGraphicsListRegistry yoGraphicsListRegistry1 = new YoGraphicsListRegistry();
-      //this.yoGraphicsListRegistry1 = yoGraphicsListRegistry1;
 
       if(ROLLING)
       {
@@ -144,36 +72,18 @@ public class ContactableSphereRobot extends ContactableRobot
                double x = DEFAULT_RADIUS * Math.cos(latitude) * Math.cos(longitude);
                double y = DEFAULT_RADIUS * Math.cos(latitude) * Math.sin(longitude);
 
-               // System.out.println("x,y,z: " + x + ", " + y + ", " + z);
                String gcName = "gc" + i + "_" + j;
                GroundContactPoint gc = new GroundContactPoint(gcName, new Vector3D(x, y, z), this);
                floatingJoint.addGroundContactPoint(gc);
 
                yoGraphicPosition= new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());
                yoGraphicsListRegistry1.registerYoGraphic("FallingSphereGCPoints", yoGraphicPosition);
-               //yoGraphicPositionsList.add(new YoGraphicPosition(gcName + "Position", gc.getYoPosition(), 0.01, YoAppearance.Red());)
-//               yoGraphicsList.add(yoGraphicPosition);
-               //yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicsList);
-
 
                yoGraphicVector = new YoGraphicVector(gcName + "Force", gc.getYoPosition(), gc.getYoForce(), 1.0/50.0);
                yoGraphicsListRegistry1.registerYoGraphic("FallingSphereForces", yoGraphicVector);
-               //yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicVector);
-//               yoGraphicsList.add(yoGraphicVector);
-
-
-               //this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
-//               addYoGraphicsListRegistry(yoGraphicsListRegistry1);
-               //yoGraphicsListRegistry1.addGraphicsUpdatable();
             }
-//            yoGraphicsListRegistry1.registerYoGraphicsList(testing);
-//            addYoGraphicsListRegistry();
          }
          this.getRobotsYoVariableRegistry().addChild(registry);
-
-//         yoGraphicsListRegistry1.registerYoGraphicsList(yoGraphicsList); //register the list here
-         //yoGraphicsListRegistry1.registerYoGraphicsLists();
-         //addYoGraphicsListRegistry(yoGraphicsListRegistry1);
          this.addYoGraphicsListRegistry(yoGraphicsListRegistry1);
       }
    }

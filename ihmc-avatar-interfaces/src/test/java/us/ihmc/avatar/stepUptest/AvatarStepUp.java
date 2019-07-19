@@ -100,7 +100,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private final double stepHeight = 0.3;
 
    private YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-   private StepUpDoor stepUpDoor =new StepUpDoor(0.5,1.7,stepHeight,yoGraphicsListRegistry);;
+   private StepUpDoor stepUpDoor =new StepUpDoor(0.5,1.7,stepHeight);
    private boolean IS_PAUSING_ON;// = false;  //should be false for now
    private boolean IS_CHEST_ON;// = false;   //reset to final after testing
    private boolean IS_LEFTARM_ON;// = false;

@@ -37,7 +37,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
-   private final boolean ADD_SPHERES = false;
+   private final boolean ADD_SPHERES = true;
    private final boolean ADD_ROLLING_SPHERE = false;
    private final boolean ADD_GOAL_POST = true;
    private final boolean ENABLE_GOAL_POST_ORIENTATION = true;
@@ -57,8 +57,8 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private static Point3D doorPosition;
 
 //   private final Point3D positionOfGoalPost = new Point3D(6.72,-1.78,0.0); //goalpostposition
-   private final Vector2D position = new Vector2D(6.72, -1.78);
-   private final Orientation2D orientation2D = new Orientation2D(1.0);
+   private final Vector2D position = new Vector2D(10, 0.0);
+   private final Orientation2D orientation2D = new Orientation2D(0.0);
 
    private final Pose2D poseOfGoalPost = new Pose2D(position,orientation2D);
 
@@ -72,27 +72,28 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    double forceVectorScale = 1.0 / 50.0;
 
 
-   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
-   {
-      this.stepLength = stepLength;
-      this.wallHeight = wallHeight;
-      this.stepUpHeight = stepUpHeight;
-      initialSpherePosition = 0.0;
-      fiducialPosition = null;
-      doorPosition = null;
-      System.out.println("*******************************This constructor has been deprecated. Calls to this Function will lead to erroneous behavior***********************");
-   }
+//   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
+//   {
+//      this.stepLength = stepLength;
+//      this.wallHeight = wallHeight;
+//      this.stepUpHeight = stepUpHeight;
+//      initialSpherePosition = 0.0;
+//      fiducialPosition = null;
+//      doorPosition = null;
+//      System.out.println("*******************************This constructor has been deprecated. Calls to this Function will lead to erroneous behavior***********************");
+//   }
 
 
 
-   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight, YoGraphicsListRegistry yoGraphicsListRegistry)
+   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)//, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
 
       doorPosition = new Point3D(wallInitialOffSet + stepLength + 1.5, 0.5, 0.0);
       fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
-      initialSpherePosition = doorPosition.getX32() + 3.0;
+      initialSpherePosition = doorPosition.getX() + 3.0;
+
 
       this.stepLength = stepLength;
       this.wallHeight = wallHeight;
@@ -175,7 +176,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
          for(int i = 0; i < NumberofSpheres; i++)
          {
-            sphereRobot = new ContactableSphereRobot("sphere" + i,yoGraphicsListRegistry); //not adding contact points
+            sphereRobot = new ContactableSphereRobot("sphere" + i);
             sphereRobot.setMass(1.0);
             sphereRobot.setPosition(initialSpherePosition, 0.0, ContactableSphereRobot.getDefaultRadius() + 0.01);
             Point3D[] contactPointOffset;
@@ -187,7 +188,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
                }
                else if (ContactableSphereRobot.getDefaultRadius() >= 0.25 && ContactableSphereRobot.getDefaultRadius() <= 0.5)
                {
-                  contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 25);
+                  contactPointOffset = SpiralBasedAlgorithm.generatePointsOnSphere(ContactableSphereRobot.getDefaultRadius(), 10);
                }
                else
                {
@@ -257,10 +258,10 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          YoAppearance app = new YoAppearance();
          final double pitchDownDegreesForSlantRods = 135;
          final double pitchDownDegreesForTopRods = 90;
-         double yawDegree = poseOfGoalPost.getOrientation().getYaw();
-         CylinderTerrainObject goalPost1_1 = new CylinderTerrainObject(support1,pitchDownDegreesForSlantRods,0.0 + yawDegree,rodLength,0.02,app.Black());
-         CylinderTerrainObject goalPost1_2 = new CylinderTerrainObject(support2,pitchDownDegreesForSlantRods,0.0 + yawDegree,rodLength,0.02,app.Black());
-         CylinderTerrainObject goalPost1_3 = new CylinderTerrainObject(topRod,pitchDownDegreesForTopRods,-90.0 + yawDegree,1.0,0.02,app.Black());
+//         double yawDegree = poseOfGoalPost.getOrientation().getYaw();
+         CylinderTerrainObject goalPost1_1 = new CylinderTerrainObject(support1,pitchDownDegreesForSlantRods,0.0,rodLength,0.02,app.Black());
+         CylinderTerrainObject goalPost1_2 = new CylinderTerrainObject(support2,pitchDownDegreesForSlantRods,0.0, rodLength,0.02,app.Black());
+         CylinderTerrainObject goalPost1_3 = new CylinderTerrainObject(topRod,pitchDownDegreesForTopRods,-90.0,1.0,0.02,app.Black());
          CylinderTerrainObject goalPost1_4 = new CylinderTerrainObject(support3,0.0,0.0,1.0,0.02,app.Black());
          CylinderTerrainObject goalPost1_5 = new CylinderTerrainObject(support4,0.0,0.0,1.0,0.02,app.Black());
 
@@ -348,6 +349,11 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    public double getInitialSpherePosition()
    {
       return initialSpherePosition;
+   }
+
+   public Point2D getInitialSpherePos()
+   {
+      return new Point2D(initialSpherePosition,0.0);
    }
 
 

@@ -32,7 +32,7 @@ public abstract class AvatarSphereDectionBehaviorTest implements MultiRobotTestI
 //   private YoBoolean yoDoubeSupport = new YoBoolean();
 //   private YoDouble yoTime;
    private YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-   private StepUpDoor environment = new StepUpDoor(0.5,1.7,0.3, yoGraphicsListRegistry);
+   private StepUpDoor environment = new StepUpDoor(0.5,1.7,0.3);
 
 
    @BeforeEach
