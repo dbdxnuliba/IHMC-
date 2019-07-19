@@ -250,7 +250,8 @@ public class SupportSeqence
    }
 
    /**
-    * Updates the support sequence with the given footstep parameters. This can be called every tick.
+    * Updates the support sequence with the given footstep parameters. This can be called every tick. This method will
+    * retain all contact state since the sequence was started and update all contact switches in the future.
     *
     * @param footsteps to be added to the sequence.
     * @param footstepTimings respective timings.
@@ -306,6 +307,22 @@ public class SupportSeqence
          }
 
          stepStartTime += footstepTiming.getStepTime();
+      }
+
+      // Clean up the list of foot supports: remove any contact states that where re-added but where in the past and therefore not cleared.
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         RecyclingArrayList<ConvexPolygon2D> footSupportSequence = footSupportSequences.get(robotSide);
+         TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
+         for (int index = 1; index < footSupportTimes.size(); index++)
+         {
+            if (footSupportTimes.get(index - 1) >= footSupportTimes.get(index))
+            {
+               footSupportSequence.remove(index);
+               footSupportTimes.removeAt(index);
+               index--;
+            }
+         }
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -492,10 +509,18 @@ public class SupportSeqence
    {
       supportPolygons.clear();
       supportInitialTimes.reset();
+
       for (RobotSide robotSide : RobotSide.values)
       {
-         footSupportSequences.get(robotSide).clear();
-         footSupportInitialTimes.get(robotSide).reset();
+         RecyclingArrayList<ConvexPolygon2D> footSupportSequence = footSupportSequences.get(robotSide);
+         TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
+
+         // Only clear the foot support sequence for the future (and present) and maintain the sequence that is in the past.
+         while (!footSupportTimes.isEmpty() && last(footSupportTimes) >= getTimeInSequence())
+         {
+            footSupportSequence.remove(footSupportSequence.size() - 1);
+            footSupportTimes.removeAt(footSupportTimes.size() - 1);
+         }
       }
    }
 
