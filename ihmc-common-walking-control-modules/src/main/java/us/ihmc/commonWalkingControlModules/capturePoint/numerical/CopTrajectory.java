@@ -21,6 +21,13 @@ import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
 {
+   /**
+    * Distance for checks whether CoP waypoint is within a support. This should be small but positive to make sure that
+    * a toe off polygon for example is considered connected to the full foot polygon causing the CoP to move there
+    * instead of jump.
+    */
+   private static final double EPSILON = 0.001;
+
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final RecyclingArrayList<Point2D> waypoints = new RecyclingArrayList<>(50, Point2D.class);
@@ -90,12 +97,12 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
          Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
          Point2DReadOnly centroid = polygon.getCentroid();
 
-         if (previousPolygon.isPointInside(centroid))
+         if (previousPolygon.isPointInside(centroid, EPSILON))
          {
             waypoints.add().set(centroid);
             waypointTimes.add(supportTimes.get(i));
          }
-         else if (polygon.isPointInside(lastWaypoint))
+         else if (polygon.isPointInside(lastWaypoint, EPSILON))
          {
             waypoints.add().set(lastWaypoint);
             waypointTimes.add(supportTimes.get(i));
