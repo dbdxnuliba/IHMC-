@@ -108,9 +108,9 @@ public abstract class AvatarSphereDectionBehaviorTest implements MultiRobotTestI
 
       else if(SEARCH_AND_KICK_BEHAVIOR)
       {
-         SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(),ros2Node, drcBehaviorTestHelper.getYoTime(),humanoidReferenceFrames, fullHumanoidRobotModel,getRobotModel(), yoDoubleSupport,environment);
+//         SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(),ros2Node, drcBehaviorTestHelper.getYoTime(),humanoidReferenceFrames, fullHumanoidRobotModel,getRobotModel(), yoDoubleSupport,environment);
          //skpetical about the above line
-         searchAndKickBehavior.initialize();
+//         searchAndKickBehavior.initialize();
       }
 
       //BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());

@@ -303,7 +303,7 @@ public class IHMCHumanoidBehaviorManager
       dispatcher.addBehavior(HumanoidBehaviorType.TEST_STATEMACHINE,
                              new BasicStateMachineBehavior(robotName, "StateMachineTest", yoTime, ros2Node, atlasPrimitiveActions));
 
-      dispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, new SearchAndKickBehavior(robotName,ros2Node,yoTime,referenceFrames,fullRobotModel,wholeBodyControllerParameters,yoDoubleSupport));
+      dispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, new SearchAndKickBehavior(robotName,ros2Node,yoTime,referenceFrames,fullRobotModel,wholeBodyControllerParameters,yoDoubleSupport,atlasPrimitiveActions));
 
       // 04/24/2017 GW: removed since this caused trouble with opencv: "Cannot load org/opencv/opencv_java320"
       //      BlobFilteredSphereDetectionBehavior blobFilteredSphereDetectionBehavior = new BlobFilteredSphereDetectionBehavior(behaviorCommunicationBridge,

@@ -108,7 +108,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private boolean IS_PELVIS_ON;// = true;
    private boolean IS_FOOTSTEP_ON;// = true;
    private Pose3D startingPoint = new Pose3D(0.5,0.0,0.0,0.0,0.0,0.0);
-   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX(),0.5,0.0,0.0,0.0,0.0);
+   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX()+5,-0.5,0.0,0.0,0.0,0.0);
 
    private OffsetAndYawRobotInitialSetup pos1 = new OffsetAndYawRobotInitialSetup(startingPoint.getX(),startingPoint.getY(),startingPoint.getZ(),startingPoint.getYaw());
    private OffsetAndYawRobotInitialSetup pos2 = new OffsetAndYawRobotInitialSetup(startingFromFiducial.getX(),startingFromFiducial.getY(),startingFromFiducial.getZ(),startingFromFiducial.getYaw());
@@ -433,6 +433,11 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          pauseWhileWalking(IS_PAUSING_ON);
       }
 
+      if(tmpcounter == 0)
+         //createAndPublishChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //call your door opening behavior form this code point
+         callDoorTiminingBehavior();
+      tmpcounter++;
+
       // robot fell
 //      Assert.assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(footsteps.getFootstepDataList().size() * stepTime +2.0*initialFinalTransfer + 12.0));
       // robot did not fall but did not reach goal
@@ -444,10 +449,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private void callDoorTiminingBehavior()
    {
 
-      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, stepUpDoor);
+      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
       HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
-      System.out.println("behavior byte info :- ");
-
       drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
       behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
       behaviorDispatcher.start();

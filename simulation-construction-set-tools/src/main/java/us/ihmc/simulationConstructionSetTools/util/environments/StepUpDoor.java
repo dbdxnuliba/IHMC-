@@ -17,6 +17,7 @@ import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.robotics.geometry.*;
 import us.ihmc.simulationConstructionSetTools.robotController.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
+import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.*;
 import us.ihmc.simulationConstructionSetTools.util.ground.*;
 import us.ihmc.simulationconstructionset.*;
 import us.ihmc.simulationconstructionset.util.*;
@@ -52,7 +53,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private final ArrayList<ExternalForcePoint> contactPoints = new ArrayList<ExternalForcePoint>(); //list of external contact points
    private ContactableSphereRobot sphereRobot;
    private ContactableRollingSphereRobot rollingSphere;
-   private Point3D GoalPostPosition = null;
+   private Point3D GoalPostPosition;
    private static Point3D fiducialPosition;
    private static Point3D doorPosition;
 
@@ -303,7 +304,6 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       combinedTerrainObject.addTerrainObject(newBox);
       RotatableBoxTerrainObject newBox2 = new RotatableBoxTerrainObject(new Box3D(location, 200, 200, 0.75), YoAppearance.DarkGray()); //37.5cm up and down
       combinedTerrainObject.addTerrainObject(newBox2);
-
       return combinedTerrainObject;
    }
 
