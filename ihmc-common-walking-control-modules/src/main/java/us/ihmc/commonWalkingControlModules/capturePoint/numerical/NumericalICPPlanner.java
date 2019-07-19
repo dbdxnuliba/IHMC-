@@ -37,7 +37,7 @@ public class NumericalICPPlanner
    /** Weight for maintaining initial ICP continuity */
    private static final double ICP_WEIGHT = 1.0;
    /** Weight for maintaining CoP continuity */
-   private static final double COP_CONTINUITY_WEIGHT = 0.001;
+   private static final double COP_CONTINUITY_WEIGHT = 0.00001;
    /** Weight for keeping the CoP trajectory close to the reference */
    private static final double COP_REFERENCE_WEIGHT = 0.01;
    /** Whether the continuity at the initial CoP should be an equality constraint */
