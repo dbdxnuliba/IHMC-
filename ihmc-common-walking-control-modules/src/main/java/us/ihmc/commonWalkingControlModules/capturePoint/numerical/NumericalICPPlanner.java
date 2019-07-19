@@ -11,6 +11,7 @@ import org.ejml.ops.CommonOps;
 
 import gnu.trove.list.TDoubleList;
 import us.ihmc.commonWalkingControlModules.polygonWiggling.PolygonWiggler;
+import us.ihmc.commons.MathTools;
 import us.ihmc.convexOptimization.quadraticProgram.QuadProgSolver;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DBasics;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
@@ -397,6 +398,14 @@ public class NumericalICPPlanner
    public void getIcp(double time, Point2DBasics icpToPack)
    {
       icpTrajectory.accept(icpToPack, time);
+   }
+
+   public void getIcpVelocity(double time, Vector2DBasics icpVelocityToPack)
+   {
+      int index = (int) (time / timestep);
+      index = MathTools.clamp(index, 0, icps.size() - 2);
+      icpVelocityToPack.sub(icps.get(index + 1), icps.get(index));
+      icpVelocityToPack.scale(1.0 / timestep);
    }
 
    public void getCop(double time, Point2DBasics copToPack)

@@ -388,11 +388,9 @@ public class BalanceManager
 //      icpPlanner.getDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
 //      icpPlanner.getDesiredCenterOfPressurePosition(perfectCoP2d);
 
-      desiredCapturePointVelocity2d.set(desiredCapturePoint2d);
       nummericalICPPlanner.getIcp(controllerToolbox.getControlDT(), desiredCapturePoint2d);
+      nummericalICPPlanner.getIcpVelocity(controllerToolbox.getControlDT(), desiredCapturePointVelocity2d);
       nummericalICPPlanner.getCop(controllerToolbox.getControlDT(), perfectCoP2d);
-      desiredCapturePointVelocity2d.scaleAdd(-1.0, desiredCapturePoint2d);
-      desiredCapturePointVelocity2d.scale(1.0 / controllerToolbox.getControlDT());
 
       pelvisICPBasedTranslationManager.compute(supportLeg, capturePoint2d);
       pelvisICPBasedTranslationManager.addICPOffset(desiredCapturePoint2d, desiredCapturePointVelocity2d, perfectCoP2d);
