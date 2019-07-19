@@ -154,7 +154,7 @@ public class BalanceManager
 
    private final YoBoolean inSingleSupport = new YoBoolean("InSingleSupport", registry);
    private final YoDouble timeInSupportSequence = new YoDouble("TimeInSupportSequence", registry);
-   private final CopTrajectory copTrajectory = new CopTrajectory();
+   private final CopTrajectory copTrajectory;
    private final SupportSeqence supportSeqence;
    private final NumericalICPPlanner nummericalICPPlanner;
 
@@ -269,6 +269,7 @@ public class BalanceManager
                                           controllerToolbox.getYoGraphicsListRegistry());
       nummericalICPPlanner = new NumericalICPPlanner(0.02, 3.0, 0.2, registry, controllerToolbox.getYoGraphicsListRegistry());
       nummericalICPPlanner.setOmega(controllerToolbox.getOmega0());
+      copTrajectory = new CopTrajectory(registry, controllerToolbox.getYoGraphicsListRegistry());
    }
 
    public void addFootstepToPlan(Footstep footstep, FootstepTiming timing)
