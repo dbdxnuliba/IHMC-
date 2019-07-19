@@ -1,0 +1,40 @@
+#ifndef __controller_msgs__msg__StepUpPlannerPhase__idl__
+#define __controller_msgs__msg__StepUpPlannerPhase__idl__
+
+#include "geometry_msgs/msg/./Pose_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerPhase_")
+      struct StepUpPlannerPhase
+      {
+        /**
+         * Position and orientation of the left foot. In case of SWING state this is ignored
+         */
+        geometry_msgs::msg::dds::Pose left_foot_pose;
+        /**
+         * Position and orientation of the left foot. In case of SWING state this is ignored
+         */
+        geometry_msgs::msg::dds::Pose right_foot_pose;
+        /**
+         * Phase desired duration
+         */
+        double desired_duration;
+        /**
+         * Phase minimum duration
+         */
+        double minimum_duration;
+        /**
+         * Phase maximum duration
+         */
+        double maximum_duration;
+      };
+    };
+  };
+};
+
+#endif

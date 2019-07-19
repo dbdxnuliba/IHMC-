@@ -1,0 +1,35 @@
+#ifndef __controller_msgs__msg__StepUpPlannerErrorMessage__idl__
+#define __controller_msgs__msg__StepUpPlannerErrorMessage__idl__
+
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerErrorMessage_")
+      struct StepUpPlannerErrorMessage
+      {
+        /**
+         * Description of the error
+         */
+        string error_description;
+        /**
+         * (0) No Error. Using this message to ack a parameter message
+         * (1) Parameters error
+         * (2) Parameters not set
+         * (3) Request error
+         * (4) Error in the solver
+         */
+        octet error_code;
+        /**
+         * Send back the ID of the received parameters message
+         */
+        unsigned long sequence_id_received;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,54 @@
+#ifndef __controller_msgs__msg__StepUpPlannerRequestMessage__idl__
+#define __controller_msgs__msg__StepUpPlannerRequestMessage__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerControlElement_.idl"
+#include "controller_msgs/msg/./StepUpPlannerPhase_.idl"
+#include "geometry_msgs/msg/./Vector3_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerRequestMessage_")
+      struct StepUpPlannerRequestMessage
+      {
+        /**
+         * Pose of each foot and timings. The number should correspond to the one specified in the StepUpPlannerPhaseParameters message
+         */
+        sequence<controller_msgs::msg::dds::StepUpPlannerPhase, 20> phases;
+        /**
+         * Position of the CoM to be reached at the end of the final phase
+         */
+        geometry_msgs::msg::dds::Vector3 desired_com_position;
+        /**
+         * Velocity of the CoM to be reached at the end of the final phase
+         */
+        geometry_msgs::msg::dds::Vector3 desired_com_velocity;
+        /**
+         * Initial CoM position
+         */
+        geometry_msgs::msg::dds::Vector3 initial_com_position;
+        /**
+         * Initial CoM velocity
+         */
+        geometry_msgs::msg::dds::Vector3 initial_com_velocity;
+        /**
+         * Desired value for the final left control
+         */
+        controller_msgs::msg::dds::StepUpPlannerControlElement left_desired_final_control;
+        /**
+         * Desired value for the final right control
+         */
+        controller_msgs::msg::dds::StepUpPlannerControlElement right_desired_final_control;
+        /**
+         * Desired leg length
+         */
+        double desired_leg_length;
+      };
+    };
+  };
+};
+
+#endif

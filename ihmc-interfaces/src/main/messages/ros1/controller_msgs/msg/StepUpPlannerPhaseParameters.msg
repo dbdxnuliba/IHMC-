@@ -1,0 +1,6 @@
+# Step settings
+controller_msgs/StepUpPlannerStepParameters left_step_parameters
+
+controller_msgs/StepUpPlannerStepParameters right_step_parameters
+
+

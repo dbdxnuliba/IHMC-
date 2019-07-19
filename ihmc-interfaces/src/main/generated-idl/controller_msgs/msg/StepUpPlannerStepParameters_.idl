@@ -1,0 +1,38 @@
+#ifndef __controller_msgs__msg__StepUpPlannerStepParameters__idl__
+#define __controller_msgs__msg__StepUpPlannerStepParameters__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerVector2_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+      /**
+       * Definition of states
+       */
+      const octet STAND =
+      0;
+
+      const octet SWING =
+      1;
+
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerStepParameters_")
+      struct StepUpPlannerStepParameters
+      {
+        /**
+         * Type of step
+         */
+        octet state;
+        /**
+         * Vertices of the left foot for every phase
+         * (in case of SWING state this is ignored)
+         */
+        sequence<controller_msgs::msg::dds::StepUpPlannerVector2, 10> foot_vertices;
+      };
+    };
+  };
+};
+
+#endif

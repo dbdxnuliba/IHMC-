@@ -1,0 +1,61 @@
+#ifndef __controller_msgs__msg__StepUpPlannerParametersMessage__idl__
+#define __controller_msgs__msg__StepUpPlannerParametersMessage__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerCostWeights_.idl"
+#include "controller_msgs/msg/./StepUpPlannerPhaseParameters_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerParametersMessage_")
+      struct StepUpPlannerParametersMessage
+      {
+        /**
+         * Phases definition
+         */
+        sequence<controller_msgs::msg::dds::StepUpPlannerPhaseParameters, 20> phases_settings;
+        /**
+         * Number of control cycles per phase
+         */
+        unsigned long long phase_length;
+        /**
+         * Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
+         */
+        octet solver_verbosity;
+        /**
+         * Maximum distance between the CoM and the foot
+         */
+        double max_leg_length;
+        /**
+         * Ipopt internal linear solver
+         */
+        string ipopt_linear_solver;
+        /**
+         * Percentage of the last phase in which weighting the error from the desired value
+         */
+        double final_state_anticipation;
+        /**
+         * Static friction coefficient
+         */
+        double static_friction_coefficient;
+        /**
+         * Torsional friction coefficient
+         */
+        double torsional_friction_coefficient;
+        /**
+         * The weights for the cost function
+         */
+        controller_msgs::msg::dds::StepUpPlannerCostWeights cost_weights;
+        /**
+         * Unique ID used to identify this message, should preferably be consecutively increasing.
+         */
+        unsigned long sequence_id;
+      };
+    };
+  };
+};
+
+#endif
