@@ -1,0 +1,24 @@
+#ifndef __controller_msgs__msg__StepUpPlannerRespondMessage__idl__
+#define __controller_msgs__msg__StepUpPlannerRespondMessage__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerPhaseResult_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerRespondMessage_")
+      struct StepUpPlannerRespondMessage
+      {
+        /**
+         * The various trajectories are split in every different phase
+         */
+        sequence<controller_msgs::msg::dds::StepUpPlannerPhaseResult, 20> phases_result;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,22 @@
+#ifndef __controller_msgs__msg__StepUpPlannerControlElement__idl__
+#define __controller_msgs__msg__StepUpPlannerControlElement__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerVector2_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerControlElement_")
+      struct StepUpPlannerControlElement
+      {
+        double multiplier;
+        controller_msgs::msg::dds::StepUpPlannerVector2 cop;
+      };
+    };
+  };
+};
+
+#endif

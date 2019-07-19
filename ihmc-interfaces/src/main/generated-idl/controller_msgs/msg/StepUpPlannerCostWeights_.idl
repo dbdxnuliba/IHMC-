@@ -1,0 +1,51 @@
+#ifndef __controller_msgs__msg__StepUpPlannerCostWeights__idl__
+#define __controller_msgs__msg__StepUpPlannerCostWeights__idl__
+
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerCostWeights_")
+      struct StepUpPlannerCostWeights
+      {
+        /**
+         * CoP weight
+         */
+        double cop;
+        /**
+         * Weight for a proxy of the exerted torques
+         */
+        double torques;
+        /**
+         * Weight on the control amplitude
+         */
+        double control_multipliers;
+        /**
+         * Weight on the final control value
+         */
+        double final_control;
+        /**
+         * Weight on the maximum control amplitude
+         */
+        double max_control_multiplier;
+        /**
+         * Weight on the final state error
+         */
+        double final_state;
+        /**
+         * Weight on the control variation
+         */
+        double control_variations;
+        /**
+         * Weight on the difference from the desired phase duration
+         */
+        double durations_difference;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,25 @@
+#ifndef __controller_msgs__msg__StepUpPlannerPhaseParameters__idl__
+#define __controller_msgs__msg__StepUpPlannerPhaseParameters__idl__
+
+#include "controller_msgs/msg/./StepUpPlannerStepParameters_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      @TypeCode(type="controller_msgs::msg::dds_::StepUpPlannerPhaseParameters_")
+      struct StepUpPlannerPhaseParameters
+      {
+        /**
+         * Step settings
+         */
+        controller_msgs::msg::dds::StepUpPlannerStepParameters left_step_parameters;
+        controller_msgs::msg::dds::StepUpPlannerStepParameters right_step_parameters;
+      };
+    };
+  };
+};
+
+#endif
