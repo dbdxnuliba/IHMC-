@@ -515,7 +515,7 @@ public class SupportSeqence
    private double computeTouchdownPitch(Footstep footstep)
    {
       tempOrientation.setIncludingFrame(last(footstep.getSwingTrajectory()).getOrientation());
-      tempOrientation.changeFrame(movingSoleFrames.get(footstep.getRobotSide()));
+      tempOrientation.changeFrame(footstep.getSoleReferenceFrame());
       return tempOrientation.getPitch();
    }
 
