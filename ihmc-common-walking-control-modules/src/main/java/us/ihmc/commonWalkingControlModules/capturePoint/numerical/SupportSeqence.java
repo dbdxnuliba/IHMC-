@@ -258,6 +258,20 @@ public class SupportSeqence
     */
    public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
    {
+      update(footsteps, footstepTimings, null, null);
+   }
+
+   /**
+    * Updates the support sequence with the given footstep parameters. This can be called every tick. This method will
+    * retain all contact state since the sequence was started and update all contact switches in the future.
+    *
+    * @param footsteps to be added to the sequence.
+    * @param footstepTimings respective timings.
+    * @param lastFootstep the last executed footstep in case it contained a touchdown.
+    * @param lastFootstepTiming respective timing.
+    */
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming)
+   {
       if (!footsteps.isEmpty() && transferPhaseEndTime.getValue() == UNSET_TIME)
          throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
 
@@ -271,6 +285,18 @@ public class SupportSeqence
          movingSoleFrames.get(robotSide).setPoseAndUpdate(footPoses.get(robotSide));
          footSupportSequences.get(robotSide).add().set(changeFrameToWorld(movingPolygonsInSole.get(robotSide), movingSoleFrames.get(robotSide)));
          footSupportInitialTimes.get(robotSide).add(0.0);
+      }
+
+      // In case there is a last footstep we might still be finishing up its touchdown. If that is the case add it.
+      if (lastFootstep != null)
+      {
+         RobotSide stepSide = lastFootstep.getRobotSide();
+
+         // Update the moving polygon and sole frame to reflect that the last step was finished.
+         extractSupportPolygon(lastFootstep, movingPolygonsInSole.get(stepSide), defaultSupportPolygon);
+         movingSoleFrames.get(stepSide).setPoseAndUpdate(lastFootstep.getFootstepPose());
+
+         checkForAndAddTouchDownPolygon(lastFootstep, lastFootstepTiming, -lastFootstepTiming.getStepTime());
       }
 
       // Assemble the individual foot support trajectories for regular walking
@@ -541,8 +567,7 @@ public class SupportSeqence
       for (int i = 0; i < max; i++)
       {
          vizPolygons.get(i).set(supportPolygons.get(i));
-         double lastStart = i == 0 ? 0.0 : polygonStartTimes.get(i - 1).getValue();
-         polygonStartTimes.get(i).set(lastStart + supportInitialTimes.get(i));
+         polygonStartTimes.get(i).set(supportInitialTimes.get(i));
       }
       for (int i = max; i < vizPolygons.size(); i++)
       {

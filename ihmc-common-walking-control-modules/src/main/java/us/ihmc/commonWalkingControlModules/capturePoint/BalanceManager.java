@@ -152,6 +152,10 @@ public class BalanceManager
    private final List<Footstep> footsteps = new ArrayList<>();
    private final List<FootstepTiming> footstepTimings = new ArrayList<>();
 
+   private final YoBoolean hasLastFootstep = new YoBoolean("HasLastFootstep", registry);
+   private final Footstep lastFootstep = new Footstep();
+   private final FootstepTiming lastFootstepTiming = new FootstepTiming();
+
    private final YoBoolean inSingleSupport = new YoBoolean("InSingleSupport", registry);
    private final YoDouble timeInSupportSequence = new YoDouble("TimeInSupportSequence", registry);
    private final CopTrajectory copTrajectory;
@@ -476,7 +480,11 @@ public class BalanceManager
 //      icpPlanner.compute(capturePoint2d, yoTime.getDoubleValue());
 //      icpPlannerDone.set(icpPlanner.isDone());
 
-      supportSeqence.update(footsteps, footstepTimings);
+      if (hasLastFootstep.getValue())
+         supportSeqence.update(footsteps, footstepTimings, lastFootstep, lastFootstepTiming);
+      else
+         supportSeqence.update(footsteps, footstepTimings);
+
       tempReferenceCop.setIncludingFrame(initialReferenceCop);
       tempReferenceCop.changeFrameAndProjectToXYPlane(worldFrame);
       copTrajectory.set(supportSeqence, tempReferenceCop, finalTransferDuration);
@@ -493,6 +501,13 @@ public class BalanceManager
       nummericalICPPlanner.compute();
 
       nummericalICPPlanner.getIcp(supportSeqence.getTimeUntilTouchdown(), yoFinalDesiredICP);
+   }
+
+   public void footstepDone(Footstep footstep, FootstepTiming footstepTiming)
+   {
+      lastFootstep.set(footstep);
+      lastFootstepTiming.set(footstepTiming);
+      hasLastFootstep.set(true);
    }
 
    public void packFootstepForRecoveringFromDisturbance(RobotSide swingSide, double swingTimeRemaining, Footstep footstepToPack)
@@ -662,6 +677,7 @@ public class BalanceManager
       inSingleSupport.set(false);
       initializeForStanding = true;
 
+      hasLastFootstep.set(false);
       icpPlannerDone.set(false);
    }
 

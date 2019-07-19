@@ -22,7 +22,6 @@ import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -313,6 +312,7 @@ public class WalkingSingleSupportState extends SingleSupportState
       super.onExit();
 
       balanceManager.minimizeAngularMomentumRateZ(false);
+      balanceManager.footstepDone(nextFootstep, footstepTiming);
 
       actualFootPoseInWorld.setToZero(fullRobotModel.getSoleFrame(swingSide));
       actualFootPoseInWorld.changeFrame(worldFrame);
