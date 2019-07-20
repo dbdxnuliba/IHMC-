@@ -310,7 +310,6 @@ public class SupportSeqence
          movingPolygonsInSole.get(robotSide).set(footPolygonsInSole.get(robotSide));
          FrameConvexPolygon2D initialFootSupport = footSupportSequences.get(robotSide).add();
          initialFootSupport.setIncludingFrame(stepFrame, movingPolygonsInSole.get(robotSide));
-         initialFootSupport.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
          footSupportInitialTimes.get(robotSide).add(0.0);
       }
 
@@ -326,7 +325,6 @@ public class SupportSeqence
 
          FrameConvexPolygon2D fullSupport = footSupportSequences.get(stepSide).add();
          fullSupport.setIncludingFrame(stepFrame, movingPolygonsInSole.get(stepSide));
-         fullSupport.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
          footSupportInitialTimes.get(stepSide).add(lastFootstepTiming.getTouchdownDuration());
       }
 
@@ -445,7 +443,6 @@ public class SupportSeqence
       {
          touchdownPolygon.setIncludingFrame(stepFrame, movingPolygonsInSole.get(stepSide));
       }
-      touchdownPolygon.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame()); // TODO
       footInitialTimes.add(stepStartTime + footstepTiming.getStepTime());
 
       // In case there was a partial touchdown polygon we need to add the full support after the touchdown is finished.
@@ -453,7 +450,6 @@ public class SupportSeqence
       {
          FrameConvexPolygon2D fullSupportPolygon = footSupports.add();
          fullSupportPolygon.setIncludingFrame(stepFrame, movingPolygonsInSole.get(stepSide));
-         fullSupportPolygon.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame()); // TODO
          footInitialTimes.add(stepStartTime + footstepTiming.getStepTime() + footstepTiming.getTouchdownDuration());
       }
    }
@@ -473,7 +469,6 @@ public class SupportSeqence
          else
             computeHeelPolygon(liftoffPolygon, movingPolygonsInSole.get(stepSide), stepFrame);
          footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
-         liftoffPolygon.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame()); // TODO
       }
       else if (shouldDoToeOff(last(stepFrames.get(stepSide.getOppositeSide())), stepFrame))
       {
@@ -481,7 +476,6 @@ public class SupportSeqence
          FrameConvexPolygon2D liftoffPolygon = footSupportSequences.get(stepSide).add();
          computeToePolygon(liftoffPolygon, movingPolygonsInSole.get(stepSide), stepFrame);
          footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
-         liftoffPolygon.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame()); // TODO
       }
    }
 
