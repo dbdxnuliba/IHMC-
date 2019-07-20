@@ -39,7 +39,6 @@ import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.trajectories.TrajectoryType;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameConvexPolygon2D;
@@ -51,11 +50,9 @@ public class SupportSeqence
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
-   private final YoDouble supportSequenceStartTime = new YoDouble("SupportSequenceStartTime", registry);
    private final YoDouble transferPhaseEndTime = new YoDouble("TransferPhaseEndTime", registry);
    private final YoDouble swingPhaseEndTime = new YoDouble("SwingPhaseEndTime", registry);
 
-   private final DoubleProvider time;
    private final SideDependentList<? extends ReferenceFrame> soleFrames;
 
    private final RecyclingArrayList<ConvexPolygon2D> supportPolygons = new RecyclingArrayList<>(INITIAL_CAPACITY, ConvexPolygon2D.class);
@@ -79,12 +76,12 @@ public class SupportSeqence
     */
    private final SideDependentList<RecyclingArrayList<PoseReferenceFrame>> stepFrames = new SideDependentList<>();
 
-   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time)
+   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames)
    {
-      this(defaultSupportPolygon, soleFrames, time, null, null, null);
+      this(defaultSupportPolygon, soleFrames, null, null, null);
    }
 
-   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames, DoubleProvider time,
+   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames,
                          BipedSupportPolygons bipedSupportPolygons, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
    {
       if (graphicRegistry != null)
@@ -120,7 +117,6 @@ public class SupportSeqence
 
       this.defaultSupportPolygon.set(defaultSupportPolygon);
       this.bipedSupportPolygons = bipedSupportPolygons;
-      this.time = time;
       this.soleFrames = soleFrames;
    }
 
@@ -147,18 +143,6 @@ public class SupportSeqence
    }
 
    /**
-    * Gets the time in the current support sequence. This time is reset when the support sequence is reinitialized (e.g.
-    * at the start of a swing or a transfer). All times provided by this class are relative to the start of the support
-    * sequence.
-    *
-    * @return time that has passed since the start of the support sequence.
-    */
-   public double getTimeInSequence()
-   {
-      return time.getValue() - supportSequenceStartTime.getValue();
-   }
-
-   /**
     * Indicates whether the first transfer in this sequence has finished. The first support phase can have several
     * support polygons. This happens if the robot uses toe off or heel strike as this changes the support polygon but
     * does not end the support phase (swing or transfer).
@@ -167,11 +151,11 @@ public class SupportSeqence
     *
     * @return whether the first transfer phase at the start of this sequence should be over based on time only.
     */
-   public boolean isDoubleSupportPhaseOver()
+   public boolean isDoubleSupportPhaseOver(double timeInSequence)
    {
       if (transferPhaseEndTime.getValue() == UNSET_TIME)
          return true;
-      return getTimeInSequence() >= transferPhaseEndTime.getValue();
+      return timeInSequence >= transferPhaseEndTime.getValue();
    }
 
    /**
@@ -181,11 +165,11 @@ public class SupportSeqence
     *
     * @return whether the first single support phase at the start of this sequence should be over based on time only.
     */
-   public boolean isSingleSupportPhaseOver()
+   public boolean isSingleSupportPhaseOver(double timeInSequence)
    {
       if (swingPhaseEndTime.getValue() == UNSET_TIME)
          return true;
-      return getTimeInSequence() >= swingPhaseEndTime.getValue();
+      return timeInSequence >= swingPhaseEndTime.getValue();
    }
 
    /**
@@ -196,11 +180,11 @@ public class SupportSeqence
     *
     * @return the time that (according to plan) remains until first foot touchdown.
     */
-   public double getTimeUntilTouchdown()
+   public double getTimeUntilTouchdown(double timeInSequence)
    {
       if (supportInitialTimes.size() == 1)
          return 0.0;
-      return swingPhaseEndTime.getValue() - getTimeInSequence();
+      return swingPhaseEndTime.getValue() - timeInSequence;
    }
 
    /**
@@ -210,7 +194,6 @@ public class SupportSeqence
    {
       transferPhaseEndTime.set(UNSET_TIME);
       swingPhaseEndTime.set(UNSET_TIME);
-      supportSequenceStartTime.set(time.getValue());
       reset();
    }
 
@@ -223,7 +206,6 @@ public class SupportSeqence
    {
       transferPhaseEndTime.set(initialTiming.getTransferTime());
       swingPhaseEndTime.set(initialTiming.getStepTime());
-      supportSequenceStartTime.set(time.getValue());
       reset();
    }
 
@@ -237,7 +219,6 @@ public class SupportSeqence
    {
       transferPhaseEndTime.set(transferTime);
       swingPhaseEndTime.set(UNSET_TIME);
-      supportSequenceStartTime.set(time.getValue());
       reset();
    }
 
@@ -271,7 +252,7 @@ public class SupportSeqence
     */
    public void update()
    {
-      update(Collections.emptyList(), Collections.emptyList());
+      update(Collections.emptyList(), Collections.emptyList(), 0.0);
    }
 
    /**
@@ -281,9 +262,9 @@ public class SupportSeqence
     * @param footsteps to be added to the sequence.
     * @param footstepTimings respective timings.
     */
-   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, double timeInSequence)
    {
-      update(footsteps, footstepTimings, null, null);
+      update(footsteps, footstepTimings, null, null, timeInSequence);
    }
 
    /**
@@ -295,13 +276,14 @@ public class SupportSeqence
     * @param lastFootstep the last executed footstep in case it contained a touchdown.
     * @param lastFootstepTiming respective timing.
     */
-   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming)
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming,
+                      double timeInSequence)
    {
       if (!footsteps.isEmpty() && transferPhaseEndTime.getValue() == UNSET_TIME)
          throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
 
       initializeStance();
-      resetFuture();
+      resetFuture(timeInSequence);
 
       // Add initial support states of the feet and set the moving polygons
       for (RobotSide robotSide : RobotSide.values)
@@ -635,7 +617,7 @@ public class SupportSeqence
       }
    }
 
-   private void resetFuture()
+   private void resetFuture(double timeInSequence)
    {
       supportPolygons.clear();
       supportInitialTimes.reset();
@@ -646,7 +628,7 @@ public class SupportSeqence
          TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
 
          // Only clear the foot support sequence for the future and maintain the sequence that is in the past.
-         while (!footSupportTimes.isEmpty() && last(footSupportTimes) > getTimeInSequence())
+         while (!footSupportTimes.isEmpty() && last(footSupportTimes) > timeInSequence)
          {
             footSupportSequence.remove(footSupportSequence.size() - 1);
             footSupportTimes.removeAt(footSupportTimes.size() - 1);

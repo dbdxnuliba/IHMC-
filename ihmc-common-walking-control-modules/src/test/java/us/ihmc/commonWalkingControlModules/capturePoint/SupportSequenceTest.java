@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.mutable.MutableDouble;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
@@ -32,10 +31,9 @@ public class SupportSequenceTest
    @Test
    public void testSupportSequence()
    {
-      MutableDouble time = new MutableDouble();
       ConvexPolygon2D defaultSupportPolygon = createDefaultSupportPolygon();
       SideDependentList<PoseReferenceFrame> soleFrames = createSoleFrames();
-      SupportSeqence supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, () -> time.getValue());
+      SupportSeqence supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames);
 
       Footstep footstep = new Footstep(RobotSide.LEFT);
       footstep.setX(0.2);
@@ -55,7 +53,7 @@ public class SupportSequenceTest
       List<Footstep> footsteps = Arrays.asList(footstep);
       List<FootstepTiming> timings = Arrays.asList(timing);
       supportSeqence.startSequence(timings.get(0));
-      supportSeqence.update(footsteps, timings);
+      supportSeqence.update(footsteps, timings, 0.0);
 
       List<ConvexPolygon2D> expectedSupportPolygons = new ArrayList<>();
       TDoubleList expectedSupportTimes = new TDoubleArrayList();
