@@ -211,6 +211,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(UNSET_TIME);
       swingPhaseEndTime.set(UNSET_TIME);
       supportSequenceStartTime.set(time.getValue());
+      reset();
    }
 
    /**
@@ -223,6 +224,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(initialTiming.getTransferTime());
       swingPhaseEndTime.set(initialTiming.getStepTime());
       supportSequenceStartTime.set(time.getValue());
+      reset();
    }
 
    /**
@@ -236,6 +238,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(transferTime);
       swingPhaseEndTime.set(UNSET_TIME);
       supportSequenceStartTime.set(time.getValue());
+      reset();
    }
 
    /**
@@ -298,7 +301,7 @@ public class SupportSeqence
          throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
 
       initializeStance();
-      reset();
+      resetFuture();
 
       // Add initial support states of the feet and set the moving polygons
       for (RobotSide robotSide : RobotSide.values)
@@ -624,22 +627,41 @@ public class SupportSeqence
    {
       supportPolygons.clear();
       supportInitialTimes.reset();
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         footSupportSequences.get(robotSide).clear();
+         footSupportInitialTimes.get(robotSide).reset();
+         stepFrames.get(robotSide).clear();
+      }
+   }
+
+   private void resetFuture()
+   {
+      supportPolygons.clear();
+      supportInitialTimes.reset();
 
       for (RobotSide robotSide : RobotSide.values)
       {
          RecyclingArrayList<FrameConvexPolygon2D> footSupportSequence = footSupportSequences.get(robotSide);
          TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
 
-         // Only clear the foot support sequence for the future (and present) and maintain the sequence that is in the past.
-         while (!footSupportTimes.isEmpty() && last(footSupportTimes) >= getTimeInSequence())
+         // Only clear the foot support sequence for the future and maintain the sequence that is in the past.
+         while (!footSupportTimes.isEmpty() && last(footSupportTimes) > getTimeInSequence())
          {
             footSupportSequence.remove(footSupportSequence.size() - 1);
             footSupportTimes.removeAt(footSupportTimes.size() - 1);
          }
 
-         // TODO: everything in the past should be transformed to the most recent step frame.
-         for (int i = 0; i < footSupportSequence.size(); i++)
-            footSupportSequence.get(i).changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
+         // Everything in the past needs to be transformed to a fixed frame.
+         ReferenceFrame fixedFrame = soleFrames.get(robotSide);
+         for (int i = footSupportSequence.size() - 1; i >= 0; i--)
+         {
+            // If we encounter an empty polygon the foot was not in contact and moved.
+            // Everything before this point should be fixed in world.
+            if (footSupportSequence.get(i).isEmpty())
+               fixedFrame = ReferenceFrame.getWorldFrame();
+            footSupportSequence.get(i).changeFrameAndProjectToXYPlane(fixedFrame);
+         }
          stepFrames.get(robotSide).clear();
       }
    }
