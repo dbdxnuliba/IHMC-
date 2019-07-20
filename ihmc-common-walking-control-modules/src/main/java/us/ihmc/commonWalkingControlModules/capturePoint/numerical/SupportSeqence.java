@@ -21,13 +21,20 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePose3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameConvexPolygon2DReadOnly;
+import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
+import us.ihmc.euclid.tuple2D.interfaces.Tuple2DReadOnly;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPolygon;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
+import us.ihmc.robotics.EuclidCoreMissingTools;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
@@ -69,12 +76,7 @@ public class SupportSeqence
    private final List<ConvexPolygon2DBasics> vizPolygons = new ArrayList<>();
 
    /**
-    * A list of frames that is used to record the step poses:
-    * <p>
-    * Each step gets one of these frames where the frame will be oriented like the step but located at the centroid of
-    * the touchdown polygon. E.g. in case of a heel strike the step frame will be located at the heel. All consecutive
-    * foot polygons (such as full support and toe off polygon) will be stored in this frame such that they move together
-    * in case the foot touches down in the wrong location.
+    * Each step gets one of these frames. It is located at the sole frame of the foot when it is in full support.
     */
    private final SideDependentList<RecyclingArrayList<PoseReferenceFrame>> stepFrames = new SideDependentList<>();
 
@@ -309,18 +311,26 @@ public class SupportSeqence
          initialFootSupport.setIncludingFrame(movingSoleFrames.get(robotSide), movingPolygonsInSole.get(robotSide));
          initialFootSupport.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
          footSupportInitialTimes.get(robotSide).add(0.0);
+
+         // Record the initial step frames. In case there is a step touching down this frame will be updated.
+         PoseReferenceFrame stepFrame = stepFrames.get(robotSide).add();
+         stepFrame.setPoseAndUpdate(soleFrames.get(robotSide).getTransformToRoot());
       }
 
-      // In case there is a last footstep we might still be finishing up its touchdown. If that is the case add it.
-      if (lastFootstep != null)
+      // In case there is a last footstep we might still be finishing up its touchdown.
+      if (lastFootstep != null && checkForTouchdown(lastFootstep, lastFootstepTiming))
       {
          RobotSide stepSide = lastFootstep.getRobotSide();
+         PoseReferenceFrame stepFrame = last(stepFrames.get(stepSide));
 
-         // Update the moving polygon and sole frame to reflect that the last step was finished.
+         computeAdjustedSole(footPoses.get(stepSide), lastFootstep.getFootstepPose(), movingPolygonsInSole.get(stepSide).getCentroid());
+         stepFrame.setPoseAndUpdate(footPoses.get(stepSide));
          extractSupportPolygon(lastFootstep, movingPolygonsInSole.get(stepSide), defaultSupportPolygon);
-         movingSoleFrames.get(stepSide).setPoseAndUpdate(lastFootstep.getFootstepPose());
 
-         addTouchdownPolygon(lastFootstep, lastFootstepTiming, -lastFootstepTiming.getStepTime());
+         FrameConvexPolygon2D fullSupport = footSupportSequences.get(stepSide).add();
+         fullSupport.setIncludingFrame(stepFrame, movingPolygonsInSole.get(stepSide));
+         fullSupport.changeFrameAndProjectToXYPlane(ReferenceFrame.getWorldFrame());
+         footSupportInitialTimes.get(stepSide).add(lastFootstepTiming.getTouchdownDuration());
       }
 
       // Assemble the individual foot support trajectories for regular walking
@@ -587,6 +597,33 @@ public class SupportSeqence
             heelPolygon.addVertex(vertex);
       }
       heelPolygon.update();
+   }
+
+   private final Quaternion orientationError = new Quaternion();
+   private final Quaternion rotation = new Quaternion();
+   private final Vector3DReadOnly zAxis = new Vector3D(0.0, 0.0, 1.0);
+
+   /**
+    * This method projects the sole frame onto the x-y plane of the foothold pose. It preserves the heel location of the
+    * sole and attempts to avoid modifying the yaw of the sole in world.
+    *
+    * @param solePose to be projected (modified)
+    * @param footholdPose defines the x-y plane
+    * @param soleToHeel heel location in sole frame
+    */
+   private void computeAdjustedSole(FixedFramePose3DBasics solePose, FramePose3DReadOnly footholdPose, Tuple2DReadOnly soleToHeel)
+   {
+      solePose.checkReferenceFrameMatch(footholdPose);
+
+      orientationError.set(solePose.getOrientation());
+      orientationError.multiplyConjugateThis(footholdPose.getOrientation());
+      EuclidCoreMissingTools.projectRotationOnAxis(orientationError, zAxis, rotation);
+      rotation.conjugate();
+
+      solePose.appendTranslation(soleToHeel.getX(), soleToHeel.getY(), 0.0);
+      solePose.appendRotation(orientationError);
+      solePose.appendRotation(rotation);
+      solePose.appendTranslation(-soleToHeel.getX(), -soleToHeel.getY(), 0.0);
    }
 
    private final FramePoint3D stepLocation = new FramePoint3D();
