@@ -321,6 +321,12 @@ public class SupportSeqence
          Footstep footstep = footsteps.get(stepIndex);
          RobotSide stepSide = footstep.getRobotSide();
 
+         // This would indicate an issue in the controller logic:
+         if (stepIndex == 0 && transferPhaseEndTime.getValue() != footstepTiming.getTransferTime())
+            throw new RuntimeException("Can not change the transfer time wile executing a step.");
+         if (stepIndex == 0 && swingPhaseEndTime.getValue() != footstepTiming.getStepTime())
+            throw new RuntimeException("Can not change the swing time wile executing a step.");
+
          // Add swing - no support for foot
          addLiftOffPolygon(footstep, footstepTiming, stepStartTime);
          footSupportSequences.get(stepSide).add().clearAndUpdate();
