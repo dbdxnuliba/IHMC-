@@ -45,6 +45,7 @@ module controller_msgs
         /**
          * Desired leg length
          */
+        @defaultValue(value=1.5)
         double desired_leg_length;
       };
     };

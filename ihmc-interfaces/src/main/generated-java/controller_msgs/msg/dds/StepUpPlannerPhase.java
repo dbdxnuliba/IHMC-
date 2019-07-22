@@ -19,15 +19,15 @@ public class StepUpPlannerPhase extends Packet<StepUpPlannerPhase> implements Se
    /**
             * Phase desired duration
             */
-   public double desired_duration_;
+   public double desired_duration_ = 0.8;
    /**
             * Phase minimum duration
             */
-   public double minimum_duration_;
+   public double minimum_duration_ = 0.5;
    /**
             * Phase maximum duration
             */
-   public double maximum_duration_;
+   public double maximum_duration_ = 2.0;
 
    public StepUpPlannerPhase()
    {

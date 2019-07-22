@@ -20,4 +20,4 @@ StepUpPlannerControlElement left_desired_final_control
 StepUpPlannerControlElement right_desired_final_control
 
 # Desired leg length
-float64 desired_leg_length
+float64 desired_leg_length 1.5

@@ -6,7 +6,7 @@ string error_description
 # (2) Parameters not set
 # (3) Request error
 # (4) Error in the solver
-uint8 error_code
+uint8 error_code 0
 
 # Send back the ID of the received parameters message
 uint32 sequence_id_received
