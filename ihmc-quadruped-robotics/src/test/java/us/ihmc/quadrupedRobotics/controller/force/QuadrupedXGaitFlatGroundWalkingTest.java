@@ -203,7 +203,7 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
 
    private void testWalkingInASemiCircle(double endPhaseShift, double walkingSpeed, double angularVelocity)
    {
-      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
+//      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
       double radius = Math.abs(walkingSpeed / angularVelocity);
       double expectedSemiCircleWalkTime = Math.PI / Math.abs(angularVelocity);
@@ -317,7 +317,7 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
       stepTeleopManager.setStepDuration(QuadrupedSpeed.MEDIUM, QuadrupedGait.PACE.getEndPhaseShift(), getPacingStepDuration());
       stepTeleopManager.setEndDoubleSupportDuration(QuadrupedSpeed.MEDIUM, QuadrupedGait.PACE.getEndPhaseShift(), getPacingEndDoubleSupportDuration());
 
-      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
+//      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
       double radius = Math.abs(walkingSpeed / angularVelocity);
       double expectedSemiCircleWalkTime = Math.PI / Math.abs(angularVelocity);

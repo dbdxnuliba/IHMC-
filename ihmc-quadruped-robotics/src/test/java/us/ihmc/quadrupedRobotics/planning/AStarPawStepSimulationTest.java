@@ -118,7 +118,7 @@ public abstract class AStarPawStepSimulationTest implements QuadrupedMultiRobotT
       conductor = quadrupedTestFactory.createTestConductor();
       variables = new QuadrupedTestYoVariables(conductor.getScs());
       stepTeleopManager = quadrupedTestFactory.getRemoteStepTeleopManager();
-      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
+//      stepTeleopManager.setShiftPlanBasedOnStepAdjustment(false);
 
       stepTeleopManager.getXGaitSettings().setQuadrupedSpeed(QuadrupedSpeed.FAST);
 

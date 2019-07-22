@@ -77,7 +77,7 @@ public class QuadrupedStepController implements EventState
    @Override
    public void doAction(double timeInState)
    {
-      stepMessageHandler.updateActiveSteps();
+      stepMessageHandler.process();
 
       List<? extends QuadrupedTimedStep> activeSteps = stepDelayer.delayStepsIfNecessary(stepMessageHandler.getActiveSteps(),
                                                                                          stepMessageHandler.getStepSequence(),

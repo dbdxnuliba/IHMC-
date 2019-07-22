@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
+import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -16,10 +17,18 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTim
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedPreplannedStepStream;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepMode;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepStream;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
+import us.ihmc.robotics.stateMachine.core.StateMachine;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
@@ -34,7 +43,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public class QuadrupedStepMessageHandler
 {
    private static final double timeEpsilonForStepSelection = 0.05;
-   private static final int STEP_QUEUE_SIZE = 200;
+   public static final int STEP_QUEUE_SIZE = 200;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -57,9 +66,11 @@ public class QuadrupedStepMessageHandler
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
 
+   private final QuadrupedPreplannedStepStream preplannedStepStream;
+
    private final double controlDt;
 
-   public QuadrupedStepMessageHandler(YoDouble robotTimestamp, double controlDt, YoVariableRegistry parentRegistry)
+   public QuadrupedStepMessageHandler(YoDouble robotTimestamp, double controlDt, QuadrupedReferenceFrames referenceFrames, YoVariableRegistry parentRegistry)
    {
       this.robotTimestamp = robotTimestamp;
       this.controlDt = controlDt;
@@ -76,16 +87,15 @@ public class QuadrupedStepMessageHandler
       // the look-ahead step adjustment was doing integer division which was 1.0 for step 0 and 0.0 after, so effectively having a one step recovery
       // TODO tune this value
       numberOfStepsToRecover.set(1);
+      this.preplannedStepStream = new QuadrupedPreplannedStepStream(robotTimestamp, registry);
 
       parentRegistry.addChild(registry);
    }
 
    public boolean isStepPlanAvailable()
    {
-      return !isPaused.getBooleanValue() && !receivedStepSequence.isEmpty();
+      return !isPaused.getBooleanValue() && preplannedStepStream.isStepPlanAvailable();
    }
-
-   private final TimeInterval tempTimeInterval = new TimeInterval();
 
    public void handleQuadrupedTimedStepListCommand(QuadrupedTimedStepListCommand command)
    {
@@ -101,36 +111,29 @@ public class QuadrupedStepMessageHandler
          pauseTime.set(Double.NaN);
       }
 
-      double currentTime = robotTimestamp.getDoubleValue();
-      boolean isExpressedInAbsoluteTime = command.isExpressedInAbsoluteTime();
-      RecyclingArrayList<QuadrupedTimedStepCommand> stepCommands = command.getStepCommands();
+      preplannedStepStream.acceptStepCommand(command);
+   }
 
-      stepPlanIsAdjustable.set(command.isStepPlanAdjustable());
-      offsettingHeightPlanWithStepError.set(command.getOffsetStepsHeightWithExecutionError());
+   public void initialize()
+   {
+      isPaused.set(false);
+      pauseTime.set(Double.NaN);
 
+      preplannedStepStream.onEntry();
+   }
+
+   public void process()
+   {
+      preplannedStepStream.doAction();
+
+      PreallocatedList<? extends QuadrupedTimedStep> steps = preplannedStepStream.getSteps();
       receivedStepSequence.clear();
-      for (int i = 0; i < Math.min(stepCommands.size(), STEP_QUEUE_SIZE); i++)
+      for (int i = 0; i < steps.size(); i++)
       {
-         double timeShift = isExpressedInAbsoluteTime ? 0.0 : currentTime + initialTransferDurationForShifting.getDoubleValue();
-         double touchdownTime = stepCommands.get(i).getTimeIntervalCommand().getEndTime();
-         if (touchdownTime + timeShift >= currentTime)
-         {
-            QuadrupedTimedStepCommand stepCommand = stepCommands.get(i);
-            QuadrupedTimedStep mostRecentStepOnThatQuadrant = mostRecentCompletedStep.get(stepCommand.getRobotQuadrant());
-            stepCommand.getTimeIntervalCommand().getTimeInterval(tempTimeInterval);
-            tempTimeInterval.shiftInterval(timeShift);
-
-            if (TimeIntervalTools.doIntervalsOverlap(mostRecentStepOnThatQuadrant.getTimeInterval(), tempTimeInterval))
-               continue;
-
-            receivedStepSequence.add();
-            YoQuadrupedTimedStep step = receivedStepSequence.get(receivedStepSequence.size() - 1);
-            step.set(stepCommand);
-            step.getTimeInterval().shiftInterval(timeShift);
-         }
+         receivedStepSequence.add().set(steps.get(i));
       }
 
-      receivedStepSequence.sort(TimeIntervalTools.endTimeComparator);
+      updateActiveSteps();
    }
 
    private static boolean isValidStepPlan(QuadrupedTimedStepListCommand command)
@@ -242,12 +245,6 @@ public class QuadrupedStepMessageHandler
    {
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          clearFootTrajectory(robotQuadrant);
-   }
-
-   public void initialize()
-   {
-      isPaused.set(false);
-      pauseTime.set(Double.NaN);
    }
 
    public boolean isDoneWithStepSequence()

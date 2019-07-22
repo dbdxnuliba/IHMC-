@@ -165,7 +165,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       deactivateAccelerationIntegrationInWBC = runtimeEnvironment.getHighLevelControllerParameters().deactivateAccelerationIntegrationInTheWBC();
 
       // Initialize input providers.
-      stepMessageHandler = new QuadrupedStepMessageHandler(runtimeEnvironment.getRobotTimestamp(), runtimeEnvironment.getControlDT(), registry);
+      stepMessageHandler = new QuadrupedStepMessageHandler(runtimeEnvironment.getRobotTimestamp(), runtimeEnvironment.getControlDT(), controllerToolbox.getReferenceFrames(), registry);
       commandConsumer = new QuadrupedStepCommandConsumer(commandInputManager, stepMessageHandler, controllerToolbox, controlManagerFactory);
 
       // step planner

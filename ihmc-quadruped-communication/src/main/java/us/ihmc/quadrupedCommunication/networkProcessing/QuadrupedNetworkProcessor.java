@@ -12,7 +12,6 @@ import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapperParameters;
 import us.ihmc.quadrupedCommunication.networkProcessing.pawPlanning.PawPlanningModule;
 import us.ihmc.quadrupedCommunication.networkProcessing.reaUpdater.QuadrupedREAStateUpdater;
-import us.ihmc.quadrupedCommunication.networkProcessing.stepTeleop.QuadrupedStepTeleopModule;
 import us.ihmc.robotEnvironmentAwareness.updaters.LIDARBasedREAModule;
 import us.ihmc.robotModels.FullQuadrupedRobotModelFactory;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
@@ -24,8 +23,6 @@ import java.util.List;
 
 public class QuadrupedNetworkProcessor
 {
-   private QuadrupedStepTeleopModule stepTeleopModule;
-
    public static final int footstepPlanningPort = 8007;
 
    private final List<QuadrupedToolboxModule> modules = new ArrayList<>();
@@ -55,7 +52,6 @@ public class QuadrupedNetworkProcessor
    {
       tryToStartModule(() -> setupFootstepPlanningModule(robotModel, pawPlannerParameters, xGaitSettings, pointFootSnapperParameters, logModelProvider,
                                                          params, pubSubImplementation));
-      tryToStartModule(() -> setupStepTeleopModule(robotModel, xGaitSettings, pointFootSnapperParameters, logModelProvider, params, pubSubImplementation));
       tryToStartModule(() -> setupRobotEnvironmentAwarenessModule(params, pubSubImplementation));
       tryToStartModule(() -> setupREAStateUpdater(robotModel.getRobotDescription().getName(), params));
 
@@ -70,12 +66,6 @@ public class QuadrupedNetworkProcessor
       }
    }
 
-   public void setShiftPlanBasedOnStepAdjustment(boolean shift)
-   {
-      if (stepTeleopModule != null)
-         stepTeleopModule.setShiftPlanBasedOnStepAdjustment(shift);
-   }
-
    public void close()
    {
       for (int i = 0; i < modules.size(); i++)
@@ -84,17 +74,6 @@ public class QuadrupedNetworkProcessor
       }
       if (supportPublisher != null)
          supportPublisher.close();
-   }
-
-   private void setupStepTeleopModule(FullQuadrupedRobotModelFactory modelFactory, QuadrupedXGaitSettingsReadOnly xGaitSettings,
-                                      PointFootSnapperParameters pointFootSnapperParameters, LogModelProvider logModelProvider,
-                                      QuadrupedNetworkModuleParameters params, DomainFactory.PubSubImplementation pubSubImplementation)
-   {
-      if (!params.isStepTeleopModuleEnabled())
-         return;
-      stepTeleopModule = new QuadrupedStepTeleopModule(modelFactory, xGaitSettings, pointFootSnapperParameters, logModelProvider,
-                                                       params.visualizeStepTeleopModuleEnabled(), params.logStepTeleopModuleEnabled(), pubSubImplementation);
-      modules.add(stepTeleopModule);
    }
 
    private void setupFootstepPlanningModule(FullQuadrupedRobotModelFactory modelFactory, PawStepPlannerParametersBasics pawPlannerParameters,
