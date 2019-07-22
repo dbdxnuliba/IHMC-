@@ -1,6 +1,7 @@
 package us.ihmc.quadrupedPlanning.stepStream;
 
 import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
@@ -46,7 +47,7 @@ public class QuadrupedXGaitTools
    {
       double endPhaseShift = previousQuadrant.isQuadrantInFront() ? 180.0 - xGaitSettings.getEndPhaseShift() : xGaitSettings.getEndPhaseShift();
       double endTimeDifference = xGaitSettings.getEndDoubleSupportDuration() + xGaitSettings.getStepDuration();
-      endTimeDifference *= Math.max(Math.min(endPhaseShift, 180.0), 0.0) / 180.0;
+      endTimeDifference *= EuclidCoreTools.clamp(endPhaseShift, 0.0, 180.0) / 180.0;
 
       return endTimeDifference;
    }
