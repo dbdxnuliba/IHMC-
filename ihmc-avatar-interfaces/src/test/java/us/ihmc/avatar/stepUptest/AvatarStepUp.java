@@ -4,6 +4,7 @@ import static us.ihmc.robotics.Assert.*;
 
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
+import org.lwjgl.*;
 import us.ihmc.atlas.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
@@ -98,7 +99,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private Random random = new Random(42);
    private FullHumanoidRobotModel fullRobotModel;
    private final double stepHeight = 0.3;
-
+   private static YoVariable ankkleTau;
    private YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
    private StepUpDoor stepUpDoor =new StepUpDoor(0.5,1.7,stepHeight);
    private boolean IS_PAUSING_ON;// = false;  //should be false for now
@@ -108,7 +109,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private boolean IS_PELVIS_ON;// = true;
    private boolean IS_FOOTSTEP_ON;// = true;
    private Pose3D startingPoint = new Pose3D(0.5,0.0,0.0,0.0,0.0,0.0);
-   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX()+5,-0.5,0.0,0.0,0.0,0.0);
+   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX()+7,0.5,0.0,0.0,0.0,0.0);
 
    private OffsetAndYawRobotInitialSetup pos1 = new OffsetAndYawRobotInitialSetup(startingPoint.getX(),startingPoint.getY(),startingPoint.getZ(),startingPoint.getYaw());
    private OffsetAndYawRobotInitialSetup pos2 = new OffsetAndYawRobotInitialSetup(startingFromFiducial.getX(),startingFromFiducial.getY(),startingFromFiducial.getZ(),startingFromFiducial.getYaw());
@@ -209,12 +210,12 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       behaviorDispatcher = setupBehaviorDispatcher(getRobotModel().getSimpleRobotName(), fullRobotModel, ros2Node, yoGraphicsListRegistry, registry);
 
+
+
       CapturePointUpdatable capturePointUpdatable = createCapturePointUpdateable(drcSimulationTestHelper, registry, yoGraphicsListRegistry);
       behaviorDispatcher.addUpdatable(capturePointUpdatable);
 
       yoDoubleSupport = capturePointUpdatable.getYoDoubleSupport();
-
-
 
       //WholeBodyControllerParameters wholeBodyControllerParameters;
 
@@ -230,6 +231,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       referenceFrames = robotDataReceiver.getReferenceFrames();
 
       atlasPrimitiveActions = new AtlasPrimitiveActions(getSimpleRobotName(), ros2Node, getRobotModel().getFootstepPlannerParameters(),fullRobotModel, atlasRobotModel, referenceFrames, yoTime, robotModel, registry);
+      ankkleTau =  behaviorDispatcher.getYoVariableRegistry().getVariable("tau_l_leg");
    }
 
    public OffsetAndYawRobotInitialSetup  setStartingLocationOffset(StartingLocation startFromHere)
@@ -449,10 +451,11 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private void callDoorTiminingBehavior()
    {
 
-      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
+      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor,ankkleTau);
       HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
       drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
       behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
+      assertreachedforkick();
       behaviorDispatcher.start();
    }
 
@@ -840,6 +843,13 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       BoundingBox3D boundingBox3D = BoundingBox3D.createUsingCenterAndPlusMinusVector(midpoint, bounds);
       drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox3D);
+   }
+//
+   private static void assertreachedforkick()
+   {
+//      OneDoFJointBasics AnkleJoint = fullRobotModel.getLegJoint(RobotSide.LEFT,LegJointName.ANKLE_PITCH);
+//      System.out.println("AnkleJoint.getTau() : " + AnkleJoint.getTau());
+      //System.out.println(ankkleTau.getValueAsDouble());
    }
 
    public void setIS_CHEST_ON(boolean IS_CHEST_ON)

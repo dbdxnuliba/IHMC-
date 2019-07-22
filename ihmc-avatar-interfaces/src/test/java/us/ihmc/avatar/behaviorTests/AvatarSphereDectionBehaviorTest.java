@@ -26,8 +26,8 @@ public abstract class AvatarSphereDectionBehaviorTest implements MultiRobotTestI
 {
    private static final SimulationTestingParameters simulationTestingParameters = new SimulationTestingParameters();
    private DRCBehaviorTestHelper drcBehaviorTestHelper;
-   private final boolean KICK_BALL_BEHAVIOR = false;
-   private final boolean SEARCH_AND_KICK_BEHAVIOR = true;
+   private final boolean KICK_BALL_BEHAVIOR = true;
+   private final boolean SEARCH_AND_KICK_BEHAVIOR = false;
 
 //   private YoBoolean yoDoubeSupport = new YoBoolean();
 //   private YoDouble yoTime;
@@ -68,7 +68,7 @@ public abstract class AvatarSphereDectionBehaviorTest implements MultiRobotTestI
    @BeforeEach
    public void setUp()
    {
-      drcBehaviorTestHelper = new DRCBehaviorTestHelper(environment, getSimpleRobotName(), DRCObstacleCourseStartingLocation.DEFAULT,
+      drcBehaviorTestHelper = new DRCBehaviorTestHelper(environment, getSimpleRobotName(), DRCObstacleCourseStartingLocation.OFFSET_FOR_KICK,
                                                         simulationTestingParameters, getRobotModel()); //starts at (0 x,y,z and 0 YawPitchRoll)
 
 
@@ -102,8 +102,10 @@ public abstract class AvatarSphereDectionBehaviorTest implements MultiRobotTestI
 
       if(KICK_BALL_BEHAVIOR)
       {
-         KickBallBehavior kickBallBehavior = new KickBallBehavior(getSimpleRobotName(),ros2Node,drcBehaviorTestHelper.getYoTime(),yoDoubleSupport,fullHumanoidRobotModel,humanoidReferenceFrames,getRobotModel());
-         kickBallBehavior.initialize();
+         //KickBallBehavior kickBallBehavior = new KickBallBehavior(getSimpleRobotName(),ros2Node,drcBehaviorTestHelper.getYoTime(),yoDoubleSupport,fullHumanoidRobotModel,humanoidReferenceFrames,getRobotModel());
+         //kickBallBehavior.initialize();
+         KickBehavior kick = new KickBehavior(getSimpleRobotName(),ros2Node,drcBehaviorTestHelper.getYoTime(),yoDoubleSupport,fullHumanoidRobotModel,humanoidReferenceFrames);
+         kick.initialize();
       }
 
       else if(SEARCH_AND_KICK_BEHAVIOR)
