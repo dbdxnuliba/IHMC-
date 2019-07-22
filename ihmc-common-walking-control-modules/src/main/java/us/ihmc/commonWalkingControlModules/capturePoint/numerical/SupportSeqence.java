@@ -50,9 +50,6 @@ public class SupportSeqence
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
-   private final YoDouble transferPhaseEndTime = new YoDouble("TransferPhaseEndTime", registry);
-   private final YoDouble swingPhaseEndTime = new YoDouble("SwingPhaseEndTime", registry);
-
    private final SideDependentList<? extends ReferenceFrame> soleFrames;
 
    private final RecyclingArrayList<ConvexPolygon2D> supportPolygons = new RecyclingArrayList<>(INITIAL_CAPACITY, ConvexPolygon2D.class);
@@ -144,89 +141,6 @@ public class SupportSeqence
    }
 
    /**
-    * Indicates whether the first transfer in this sequence has finished. The first support phase can have several
-    * support polygons. This happens if the robot uses toe off or heel strike as this changes the support polygon but
-    * does not end the support phase (swing or transfer).
-    * <p>
-    * Note, that if the robot is standing this will always return {@code true}.
-    *
-    * @return whether the first transfer phase at the start of this sequence should be over based on time only.
-    */
-   public boolean isDoubleSupportPhaseOver(double timeInSequence)
-   {
-      if (transferPhaseEndTime.getValue() == UNSET_TIME)
-         return true;
-      return timeInSequence >= transferPhaseEndTime.getValue();
-   }
-
-   /**
-    * Indicates whether the first single support in this sequence has finished.
-    * <p>
-    * Note, that if the robot is standing this will always return {@code true}.
-    *
-    * @return whether the first single support phase at the start of this sequence should be over based on time only.
-    */
-   public boolean isSingleSupportPhaseOver(double timeInSequence)
-   {
-      if (swingPhaseEndTime.getValue() == UNSET_TIME)
-         return true;
-      return timeInSequence >= swingPhaseEndTime.getValue();
-   }
-
-   /**
-    * Obtains the time that is remaining until the first single support phase in this sequence should end according to
-    * plan (see {@link #isSingleSupportPhaseOver()}).
-    * <p>
-    * Note, that if the robot is standing this will always return {@code 0.0}.
-    *
-    * @return the time that (according to plan) remains until first foot touchdown.
-    */
-   public double getTimeUntilTouchdown(double timeInSequence)
-   {
-      if (supportInitialTimes.size() == 1)
-         return 0.0;
-      return swingPhaseEndTime.getValue() - timeInSequence;
-   }
-
-   /**
-    * Starts a support sequence that will not contain footsteps. This initializes the timing.
-    */
-   public void startSequence()
-   {
-      transferPhaseEndTime.set(UNSET_TIME);
-      swingPhaseEndTime.set(UNSET_TIME);
-      reset();
-      initializeStance();
-   }
-
-   /**
-    * Starts a support sequence that will contain footsteps. This initializes the timing.
-    *
-    * @param initialTiming the timing of the first footstep to do checks on when it should be completed.
-    */
-   public void startSequence(FootstepTiming initialTiming)
-   {
-      transferPhaseEndTime.set(initialTiming.getTransferTime());
-      swingPhaseEndTime.set(initialTiming.getStepTime());
-      reset();
-      initializeStance();
-   }
-
-   /**
-    * Starts a support sequence that will only perform a transfer without steps. This could be a final transfer for
-    * example.
-    *
-    * @param initialTiming the timing of the first footstep to do checks on when it should be completed.
-    */
-   public void startSequence(double transferTime)
-   {
-      transferPhaseEndTime.set(transferTime);
-      swingPhaseEndTime.set(UNSET_TIME);
-      reset();
-      initializeStance();
-   }
-
-   /**
     * Updates the current foot poses and the footholds of the robot to match the actual sole poses and footholds.
     */
    public void initializeStance()
@@ -287,9 +201,6 @@ public class SupportSeqence
     */
    public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming)
    {
-      if (!footsteps.isEmpty() && transferPhaseEndTime.getValue() == UNSET_TIME)
-         throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
-
       reset();
 
       // Add initial support states of the feet and set the moving polygons
@@ -331,12 +242,6 @@ public class SupportSeqence
          FootstepTiming footstepTiming = footstepTimings.get(stepIndex);
          Footstep footstep = footsteps.get(stepIndex);
          RobotSide stepSide = footstep.getRobotSide();
-
-         // This would indicate an issue in the controller logic:
-         if (stepIndex == 0 && transferPhaseEndTime.getValue() != footstepTiming.getTransferTime())
-            throw new RuntimeException("Can not change the transfer time wile executing a step.");
-         if (stepIndex == 0 && swingPhaseEndTime.getValue() != footstepTiming.getStepTime())
-            throw new RuntimeException("Can not change the swing time wile executing a step.");
 
          // Add swing - no support for foot
          addLiftOffPolygon(footstep, footstepTiming, stepStartTime);

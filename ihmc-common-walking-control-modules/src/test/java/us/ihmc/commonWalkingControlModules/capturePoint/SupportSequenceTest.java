@@ -52,7 +52,7 @@ public class SupportSequenceTest
 
       List<Footstep> footsteps = Arrays.asList(footstep);
       List<FootstepTiming> timings = Arrays.asList(timing);
-      supportSeqence.startSequence(timings.get(0));
+      supportSeqence.initializeStance();
       supportSeqence.update(footsteps, timings);
 
       List<ConvexPolygon2D> expectedSupportPolygons = new ArrayList<>();

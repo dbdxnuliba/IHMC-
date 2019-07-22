@@ -157,6 +157,8 @@ public class BalanceManager
    private final FootstepTiming lastFootstepTiming = new FootstepTiming();
 
    private final YoBoolean inSingleSupport = new YoBoolean("InSingleSupport", registry);
+   private final YoBoolean inFinalTransfer = new YoBoolean("InFinalTransfer", registry);
+   private final FootstepTiming currentTiming = new FootstepTiming();
    private final YoDouble timeInSupportSequence = new YoDouble("TimeInSupportSequence", registry);
    private final CopTrajectory copTrajectory;
    private final SupportSeqence supportSeqence;
@@ -478,16 +480,23 @@ public class BalanceManager
       nummericalICPPlanner.setInitialIcp(desiredCapturePoint2d);
       nummericalICPPlanner.compute();
 
-      nummericalICPPlanner.getIcp(supportSeqence.getTimeUntilTouchdown(timeInSupportSequence.getValue()), yoFinalDesiredICP);
+      if (footstepTimings.isEmpty())
+         yoFinalDesiredICP.setToNaN();
+      else
+         nummericalICPPlanner.getIcp(currentTiming.getStepTime() - timeInSupportSequence.getValue(), yoFinalDesiredICP);
 
       // If this condition is false we are experiencing a late touchdown or a delayed liftoff. Do not advance the time in support sequence!
       if (footsteps.isEmpty() || !icpPlannerDone.getValue())
          timeInSupportSequence.add(controllerToolbox.getControlDT());
 
-      if (inSingleSupport.getValue())
-         icpPlannerDone.set(supportSeqence.isSingleSupportPhaseOver(timeInSupportSequence.getValue()));
+      if (inFinalTransfer.getValue())
+         icpPlannerDone.set(timeInSupportSequence.getValue() >= finalTransferDuration);
+      else if (footstepTimings.isEmpty())
+         icpPlannerDone.set(true);
+      else if (inSingleSupport.getValue())
+         icpPlannerDone.set(timeInSupportSequence.getValue() >= currentTiming.getStepTime());
       else
-         icpPlannerDone.set(supportSeqence.isDoubleSupportPhaseOver(timeInSupportSequence.getValue()));
+         icpPlannerDone.set(timeInSupportSequence.getValue() >= currentTiming.getTransferTime());
 
       copTrajectory.accept(initialReferenceCop, timeInSupportSequence.getValue());
    }
@@ -562,7 +571,9 @@ public class BalanceManager
 
    public double getTimeRemainingInCurrentState()
    {
-      return supportSeqence.getTimeUntilTouchdown(timeInSupportSequence.getValue());
+      if (footstepTimings.isEmpty())
+         return 0.0;
+      return currentTiming.getStepTime() - timeInSupportSequence.getValue();
    }
 
    public void goHome()
@@ -591,9 +602,10 @@ public class BalanceManager
 //      icpPlanner.initializeForStanding(yoTime.getDoubleValue());
       desiredCapturePoint2d.set(tempCapturePoint);
       initialReferenceCop.set(bipedSupportPolygons.getSupportPolygonInWorld().getCentroid());
-      supportSeqence.startSequence();
+      supportSeqence.initializeStance();
       timeInSupportSequence.set(0.0);
       inSingleSupport.set(false);
+      inFinalTransfer.set(false);
 
       initializeForStanding = true;
 
@@ -609,6 +621,7 @@ public class BalanceManager
    {
       setFinalTransferTime(finalTransferTime);
       inSingleSupport.set(true);
+      inFinalTransfer.set(false);
       supportSeqence.changeFootFrame(footsteps.get(0).getRobotSide(), worldFrame);
       initializeForSingleSupport = true;
 
@@ -662,9 +675,10 @@ public class BalanceManager
          requestICPPlannerToHoldCurrentCoM();
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
-      supportSeqence.startSequence();
+      supportSeqence.initializeStance();
       timeInSupportSequence.set(0.0);
       inSingleSupport.set(false);
+      inFinalTransfer.set(false);
       initializeForStanding = true;
 
       hasLastFootstep.set(false);
@@ -679,9 +693,10 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      supportSeqence.startSequence(finalTransferTime);
+      supportSeqence.initializeStance();
       timeInSupportSequence.set(0.0);
       inSingleSupport.set(false);
+      inFinalTransfer.set(true);
       initializeForStanding = true;
 
       icpPlannerDone.set(false);
@@ -695,8 +710,10 @@ public class BalanceManager
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
       setFinalTransferTime(finalTransferTime);
-      supportSeqence.startSequence(footstepTimings.get(0));
+      supportSeqence.initializeStance();
+      currentTiming.set(footstepTimings.get(0));
       timeInSupportSequence.set(0.0);
+      inFinalTransfer.set(false);
       inSingleSupport.set(false);
 
       initializeForTransfer = true;
