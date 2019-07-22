@@ -20,6 +20,7 @@ controller_msgs/StepUpPlannerControlElement left_desired_final_control
 controller_msgs/StepUpPlannerControlElement right_desired_final_control
 
 # Desired leg length
+# Field default value 1.5
 float64 desired_leg_length
 
 

@@ -11,35 +11,35 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
    /**
             * CoP weight
             */
-   public double cop_;
+   public double cop_ = 1.0;
    /**
             * Weight for a proxy of the exerted torques
             */
-   public double torques_;
+   public double torques_ = 1.0;
    /**
             * Weight on the control amplitude
             */
-   public double control_multipliers_;
+   public double control_multipliers_ = 1.0;
    /**
             * Weight on the final control value
             */
-   public double final_control_;
+   public double final_control_ = 1.0;
    /**
             * Weight on the maximum control amplitude
             */
-   public double max_control_multiplier_;
+   public double max_control_multiplier_ = 1.0;
    /**
             * Weight on the final state error
             */
-   public double final_state_;
+   public double final_state_ = 10.0;
    /**
             * Weight on the control variation
             */
-   public double control_variations_;
+   public double control_variations_ = 1.0;
    /**
             * Weight on the difference from the desired phase duration
             */
-   public double durations_difference_;
+   public double durations_difference_ = 1.0;
 
    public StepUpPlannerCostWeights()
    {

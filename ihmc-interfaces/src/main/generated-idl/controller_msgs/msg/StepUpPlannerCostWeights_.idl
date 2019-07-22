@@ -14,34 +14,42 @@ module controller_msgs
         /**
          * CoP weight
          */
+        @defaultValue(value=1.0)
         double cop;
         /**
          * Weight for a proxy of the exerted torques
          */
+        @defaultValue(value=1.0)
         double torques;
         /**
          * Weight on the control amplitude
          */
+        @defaultValue(value=1.0)
         double control_multipliers;
         /**
          * Weight on the final control value
          */
+        @defaultValue(value=1.0)
         double final_control;
         /**
          * Weight on the maximum control amplitude
          */
+        @defaultValue(value=1.0)
         double max_control_multiplier;
         /**
          * Weight on the final state error
          */
+        @defaultValue(value=10.0)
         double final_state;
         /**
          * Weight on the control variation
          */
+        @defaultValue(value=1.0)
         double control_variations;
         /**
          * Weight on the difference from the desired phase duration
          */
+        @defaultValue(value=1.0)
         double durations_difference;
       };
     };

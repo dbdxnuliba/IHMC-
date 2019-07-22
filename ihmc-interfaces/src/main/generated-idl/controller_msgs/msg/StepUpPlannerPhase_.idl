@@ -23,14 +23,17 @@ module controller_msgs
         /**
          * Phase desired duration
          */
+        @defaultValue(value=0.8)
         double desired_duration;
         /**
          * Phase minimum duration
          */
+        @defaultValue(value=0.5)
         double minimum_duration;
         /**
          * Phase maximum duration
          */
+        @defaultValue(value=2.0)
         double maximum_duration;
       };
     };

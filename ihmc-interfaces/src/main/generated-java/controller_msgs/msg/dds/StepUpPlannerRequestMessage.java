@@ -39,7 +39,7 @@ public class StepUpPlannerRequestMessage extends Packet<StepUpPlannerRequestMess
    /**
             * Desired leg length
             */
-   public double desired_leg_length_;
+   public double desired_leg_length_ = 1.5;
 
    public StepUpPlannerRequestMessage()
    {

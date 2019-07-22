@@ -60,6 +60,14 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
 
       return current_alignment - initial_alignment;
    }
@@ -103,6 +111,19 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getComMessageTopic().length() + 1;
+
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getFootstepMessageTopic().length() + 1;
+
 
       return current_alignment - initial_alignment;
    }
@@ -132,6 +153,20 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType.write(data.getCostWeights(), cdr);
       cdr.write_type_4(data.getSequenceId());
 
+      cdr.write_type_7(data.getSendComMessage());
+
+      if(data.getComMessageTopic().length() <= 255)
+      cdr.write_type_d(data.getComMessageTopic());else
+          throw new RuntimeException("com_message_topic field exceeds the maximum length");
+
+      cdr.write_type_12(data.getMaxComMessageLength());
+
+      cdr.write_type_7(data.getSendFootstepMessage());
+
+      if(data.getFootstepMessageTopic().length() <= 255)
+      cdr.write_type_d(data.getFootstepMessageTopic());else
+          throw new RuntimeException("footstep_message_topic field exceeds the maximum length");
+
    }
 
    public static void read(controller_msgs.msg.dds.StepUpPlannerParametersMessage data, us.ihmc.idl.CDR cdr)
@@ -153,6 +188,14 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType.read(data.getCostWeights(), cdr);	
       data.setSequenceId(cdr.read_type_4());
       	
+      data.setSendComMessage(cdr.read_type_7());
+      	
+      cdr.read_type_d(data.getComMessageTopic());	
+      data.setMaxComMessageLength(cdr.read_type_12());
+      	
+      data.setSendFootstepMessage(cdr.read_type_7());
+      	
+      cdr.read_type_d(data.getFootstepMessageTopic());	
 
    }
 
@@ -170,6 +213,11 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.write_type_a("cost_weights", new controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType(), data.getCostWeights());
 
       ser.write_type_4("sequence_id", data.getSequenceId());
+      ser.write_type_7("send_com_message", data.getSendComMessage());
+      ser.write_type_d("com_message_topic", data.getComMessageTopic());
+      ser.write_type_12("max_com_message_length", data.getMaxComMessageLength());
+      ser.write_type_7("send_footstep_message", data.getSendFootstepMessage());
+      ser.write_type_d("footstep_message_topic", data.getFootstepMessageTopic());
    }
 
    @Override
@@ -186,6 +234,11 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.read_type_a("cost_weights", new controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType(), data.getCostWeights());
 
       data.setSequenceId(ser.read_type_4("sequence_id"));
+      data.setSendComMessage(ser.read_type_7("send_com_message"));
+      ser.read_type_d("com_message_topic", data.getComMessageTopic());
+      data.setMaxComMessageLength(ser.read_type_12("max_com_message_length"));
+      data.setSendFootstepMessage(ser.read_type_7("send_footstep_message"));
+      ser.read_type_d("footstep_message_topic", data.getFootstepMessageTopic());
    }
 
    public static void staticCopy(controller_msgs.msg.dds.StepUpPlannerParametersMessage src, controller_msgs.msg.dds.StepUpPlannerParametersMessage dest)
