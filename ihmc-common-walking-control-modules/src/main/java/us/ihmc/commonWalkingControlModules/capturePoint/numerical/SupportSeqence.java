@@ -62,6 +62,7 @@ public class SupportSeqence
    private final SideDependentList<ConvexPolygon2D> footPolygonsInSole = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
    private final SideDependentList<FramePose3D> footPoses = new SideDependentList<>(new FramePose3D(), new FramePose3D());
    private final BipedSupportPolygons bipedSupportPolygons;
+   private final FramePose3D tempPose = new FramePose3D();
 
    private final SideDependentList<ConvexPolygon2D> movingPolygonsInSole = new SideDependentList<>(new ConvexPolygon2D(), new ConvexPolygon2D());
 
@@ -195,6 +196,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(UNSET_TIME);
       swingPhaseEndTime.set(UNSET_TIME);
       reset();
+      initializeStance();
    }
 
    /**
@@ -207,6 +209,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(initialTiming.getTransferTime());
       swingPhaseEndTime.set(initialTiming.getStepTime());
       reset();
+      initializeStance();
    }
 
    /**
@@ -220,6 +223,7 @@ public class SupportSeqence
       transferPhaseEndTime.set(transferTime);
       swingPhaseEndTime.set(UNSET_TIME);
       reset();
+      initializeStance();
    }
 
    /**
@@ -243,7 +247,12 @@ public class SupportSeqence
          footPolygonsInSole.get(robotSide).set(defaultSupportPolygon);
       else
          footPolygonsInSole.get(robotSide).set(bipedSupportPolygons.getFootPolygonInSoleFrame(robotSide));
-      footPoses.get(robotSide).setFromReferenceFrame(soleFrames.get(robotSide));
+      footPoses.get(robotSide).setToZero(soleFrames.get(robotSide));
+   }
+
+   public void changeFootFrame(RobotSide robotSide, ReferenceFrame referenceFrame)
+   {
+      footPoses.get(robotSide).changeFrame(referenceFrame);
    }
 
    /**
@@ -252,7 +261,7 @@ public class SupportSeqence
     */
    public void update()
    {
-      update(Collections.emptyList(), Collections.emptyList(), 0.0);
+      update(Collections.emptyList(), Collections.emptyList());
    }
 
    /**
@@ -262,9 +271,9 @@ public class SupportSeqence
     * @param footsteps to be added to the sequence.
     * @param footstepTimings respective timings.
     */
-   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, double timeInSequence)
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings)
    {
-      update(footsteps, footstepTimings, null, null, timeInSequence);
+      update(footsteps, footstepTimings, null, null);
    }
 
    /**
@@ -276,21 +285,21 @@ public class SupportSeqence
     * @param lastFootstep the last executed footstep in case it contained a touchdown.
     * @param lastFootstepTiming respective timing.
     */
-   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming,
-                      double timeInSequence)
+   public void update(List<Footstep> footsteps, List<FootstepTiming> footstepTimings, Footstep lastFootstep, FootstepTiming lastFootstepTiming)
    {
       if (!footsteps.isEmpty() && transferPhaseEndTime.getValue() == UNSET_TIME)
          throw new RuntimeException("If updating with footsteps the sequence must be started with step timings.");
 
-      initializeStance();
-      resetFuture(timeInSequence);
+      reset();
 
       // Add initial support states of the feet and set the moving polygons
       for (RobotSide robotSide : RobotSide.values)
       {
          // Record the initial step frames. In case there is a step touching down this frame will be updated.
          PoseReferenceFrame stepFrame = stepFrames.get(robotSide).add();
-         stepFrame.setPoseAndUpdate(soleFrames.get(robotSide).getTransformToRoot());
+         tempPose.setIncludingFrame(footPoses.get(robotSide));
+         tempPose.changeFrame(stepFrame.getParent());
+         stepFrame.setPoseAndUpdate(tempPose);
 
          movingPolygonsInSole.get(robotSide).set(footPolygonsInSole.get(robotSide));
          FrameConvexPolygon2D initialFootSupport = footSupportSequences.get(robotSide).add();
@@ -304,8 +313,10 @@ public class SupportSeqence
          RobotSide stepSide = lastFootstep.getRobotSide();
          PoseReferenceFrame stepFrame = last(stepFrames.get(stepSide));
 
-         computeAdjustedSole(footPoses.get(stepSide), lastFootstep.getFootstepPose(), movingPolygonsInSole.get(stepSide).getCentroid());
-         stepFrame.setPoseAndUpdate(footPoses.get(stepSide));
+         tempPose.setIncludingFrame(footPoses.get(stepSide));
+         tempPose.changeFrame(ReferenceFrame.getWorldFrame());
+         computeAdjustedSole(tempPose, lastFootstep.getFootstepPose(), movingPolygonsInSole.get(stepSide).getCentroid());
+         stepFrame.setPoseAndUpdate(tempPose);
          extractSupportPolygon(lastFootstep, movingPolygonsInSole.get(stepSide), defaultSupportPolygon);
 
          FrameConvexPolygon2D fullSupport = footSupportSequences.get(stepSide).add();
@@ -339,22 +350,6 @@ public class SupportSeqence
          addTouchdownPolygon(footstep, footstepTiming, stepStartTime);
 
          stepStartTime += footstepTiming.getStepTime();
-      }
-
-      // Clean up the list of foot supports: remove any contact states that where re-added but where in the past and therefore not cleared.
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         RecyclingArrayList<FrameConvexPolygon2D> footSupportSequence = footSupportSequences.get(robotSide);
-         TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
-         for (int index = 1; index < footSupportTimes.size(); index++)
-         {
-            if (footSupportTimes.get(index - 1) >= footSupportTimes.get(index))
-            {
-               footSupportSequence.remove(index);
-               footSupportTimes.removeAt(index);
-               index--;
-            }
-         }
       }
 
       // Convert the foot support trajectories to a full support trajectory
@@ -623,37 +618,6 @@ public class SupportSeqence
       }
    }
 
-   private void resetFuture(double timeInSequence)
-   {
-      supportPolygons.clear();
-      supportInitialTimes.reset();
-
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         RecyclingArrayList<FrameConvexPolygon2D> footSupportSequence = footSupportSequences.get(robotSide);
-         TDoubleArrayList footSupportTimes = footSupportInitialTimes.get(robotSide);
-
-         // Only clear the foot support sequence for the future and maintain the sequence that is in the past.
-         while (!footSupportTimes.isEmpty() && last(footSupportTimes) > timeInSequence)
-         {
-            footSupportSequence.remove(footSupportSequence.size() - 1);
-            footSupportTimes.removeAt(footSupportTimes.size() - 1);
-         }
-
-         // Everything in the past needs to be transformed to a fixed frame.
-         ReferenceFrame fixedFrame = soleFrames.get(robotSide);
-         for (int i = footSupportSequence.size() - 1; i >= 0; i--)
-         {
-            // If we encounter an empty polygon the foot was not in contact and moved.
-            // Everything before this point should be fixed in world.
-            if (footSupportSequence.get(i).isEmpty())
-               fixedFrame = ReferenceFrame.getWorldFrame();
-            footSupportSequence.get(i).changeFrameAndProjectToXYPlane(fixedFrame);
-         }
-         stepFrames.get(robotSide).clear();
-      }
-   }
-
    private void updateViz()
    {
       int max = Math.min(vizPolygons.size(), supportPolygons.size());
@@ -683,11 +647,6 @@ public class SupportSeqence
       {
          footSupportPolygon.set(defaultSupportPolygon);
       }
-   }
-
-   private static double last(TDoubleList list)
-   {
-      return list.get(list.size() - 1);
    }
 
    private static <T> T last(List<T> list)

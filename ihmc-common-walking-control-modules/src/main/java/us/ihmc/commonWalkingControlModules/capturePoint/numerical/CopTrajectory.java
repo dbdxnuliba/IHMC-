@@ -8,6 +8,7 @@ import java.util.function.ObjDoubleConsumer;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -68,30 +69,29 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
       updateViz();
    }
 
-   public void set(SupportSeqence supportSeqence, Point2DReadOnly initialCop, double finalTransferDuration)
+   public void set(List<ConvexPolygon2D> supportPolygons, TDoubleList supportTimes, double finalTransferDuration)
    {
-      set(supportSeqence.getSupportPolygons(), supportSeqence.getSupportTimes(), initialCop, finalTransferDuration);
+      update(supportPolygons, supportTimes, finalTransferDuration, 0.0, supportPolygons.get(0).getCentroid());
    }
 
-   public void set(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration)
+   public void update(SupportSeqence supportSeqence, double finalTransferDuration, double timeInSequence, Point2DReadOnly initialCop)
    {
-      set(supportPolygons, supportTimes, null, finalTransferDuration);
+      update(supportSeqence.getSupportPolygons(), supportSeqence.getSupportTimes(), finalTransferDuration, timeInSequence, initialCop);
    }
 
-   public void set(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, Point2DReadOnly initialCop, double finalTransferDuration)
+   public void update(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, double timeInSequence, Point2DReadOnly initialCop)
    {
       clear();
 
-      // Initial waypoint.
-      if (initialCop == null)
-         waypoints.add().set(supportPolygons.get(0).getCentroid());
-      else
-         waypoints.add().set(initialCop);
-      waypointTimes.add(0.0);
+      waypoints.add().set(initialCop);
+      waypointTimes.add(timeInSequence);
 
       // Waypoint at end of support is as close to next support center as possible.
       for (int i = 1; i < supportPolygons.size(); i++)
       {
+         if (supportTimes.get(i) <= timeInSequence)
+            continue;
+
          ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
          ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
          Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
@@ -141,11 +141,8 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
    @Override
    public void accept(Point2DBasics copToPack, double time)
    {
-      if (time <= waypointTimes.get(0))
-      {
-         copToPack.set(waypoints.get(0));
-         return;
-      }
+      if (time < waypointTimes.get(0))
+         throw new RuntimeException("Requested at time " + time + " but first waypoint was at " + waypointTimes.get(0));
 
       if (time >= waypointTimes.get(waypoints.size() - 1))
       {
