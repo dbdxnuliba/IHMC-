@@ -62,10 +62,6 @@ public class NumericalICPPlanner
    private final List<ConvexPolygon2DBasics> constraintPolygons = new ArrayList<>();
    private final List<Vector2DBasics> angularMomentums = new ArrayList<>();
 
-   // Helper trajectories for interpolating:
-   private final SimpleTrajectory icpTrajectory;
-   private final SimpleTrajectory copTrajectory;
-
    // Matrices for QP solver:
    private final DenseMatrix64F Q;
    private final DenseMatrix64F Qconst;
@@ -136,9 +132,6 @@ public class NumericalICPPlanner
          cops.add(new YoFramePoint2D("Cop" + i, ReferenceFrame.getWorldFrame(), registry));
          angularMomentums.add(new Vector2D());
       }
-
-      icpTrajectory = new SimpleTrajectory(icps, timestep * (icps.size() - 1));
-      copTrajectory = new SimpleTrajectory(cops, timestep * (cops.size() - 1));
 
       // Limit to be between 1 (effectively no adjustment) and the total amount of steps
       adjustmentSteps = Math.max(Math.min((int) (adjustmentTimeHorizon / timestep), timeSteps - 1), 1);
@@ -397,7 +390,11 @@ public class NumericalICPPlanner
 
    public void getIcp(double time, Point2DBasics icpToPack)
    {
-      icpTrajectory.accept(icpToPack, time);
+      int index = (int) (time / timestep);
+      index = MathTools.clamp(index, 0, icps.size() - 2);
+      double alpha = (time - timestep * index) / timestep;
+      alpha = MathTools.clamp(alpha, 0.0, 1.0);
+      icpToPack.interpolate(icps.get(index), icps.get(index + 1), alpha);
    }
 
    public void getIcpVelocity(double time, Vector2DBasics icpVelocityToPack)
@@ -410,6 +407,10 @@ public class NumericalICPPlanner
 
    public void getCop(double time, Point2DBasics copToPack)
    {
-      copTrajectory.accept(copToPack, time);
+      int index = (int) (time / timestep);
+      index = MathTools.clamp(index, 0, cops.size() - 2);
+      double alpha = (time - timestep * index) / timestep;
+      alpha = MathTools.clamp(alpha, 0.0, 1.0);
+      copToPack.interpolate(cops.get(index), cops.get(index + 1), alpha);
    }
 }
