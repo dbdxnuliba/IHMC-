@@ -54,6 +54,7 @@ import us.ihmc.robotics.geometry.ConvexPolygonScaler;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.TotalMassCalculator;
+import us.ihmc.robotics.time.ExecutionTimer;
 import us.ihmc.sensorProcessing.frames.CommonHumanoidReferenceFrames;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -378,14 +379,8 @@ public class BalanceManager
    private final FramePoint3D copEstimate = new FramePoint3D();
    public void compute(RobotSide supportLeg, double desiredCoMHeightAcceleration, boolean keepCoPInsideSupportPolygon, boolean controlHeightWithMomentum)
    {
+      controllerToolbox.getCapturePoint(capturePoint2d);
       controllerToolbox.getCoP(copEstimate);
-
-//      if (icpPlanner instanceof ICPPlannerWithAngularMomentumOffsetInterface)
-//         icpPlanner.modifyDesiredICPForAngularMomentum(copEstimate, supportLeg);
-
-//      icpPlanner.getDesiredCapturePointPosition(desiredCapturePoint2d);
-//      icpPlanner.getDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
-//      icpPlanner.getDesiredCenterOfPressurePosition(perfectCoP2d);
 
       nummericalICPPlanner.getIcp(controllerToolbox.getControlDT(), desiredCapturePoint2d);
       nummericalICPPlanner.getIcpVelocity(controllerToolbox.getControlDT(), desiredCapturePointVelocity2d);
@@ -472,11 +467,6 @@ public class BalanceManager
 
    public void computeICPPlan()
    {
-      controllerToolbox.getCapturePoint(capturePoint2d);
-//      controllerToolbox.getCoP(copEstimate);
-//      icpPlanner.compute(capturePoint2d, yoTime.getDoubleValue());
-//      icpPlannerDone.set(icpPlanner.isDone());
-
       // If this condition is false we are experiencing a late touchdown or a delayed liftoff. Do not advance the time in support sequence!
       if (footsteps.isEmpty() || !icpPlannerDone.getValue())
          timeInSupportSequence.add(controllerToolbox.getControlDT());
@@ -840,12 +830,15 @@ public class BalanceManager
       this.finalTransferDuration = finalTransferDuration;
    }
 
+   private final ExecutionTimer icpPlannerTimer = new ExecutionTimer("IcpPlanner", registry);
    /**
     * Update the basics: capture point, omega0, and the support polygons.
     */
    public void update()
    {
+      icpPlannerTimer.startMeasurement();
       computeICPPlan();
+      icpPlannerTimer.stopMeasurement();
    }
 
    public CapturabilityBasedStatus updateAndReturnCapturabilityBasedStatus()
