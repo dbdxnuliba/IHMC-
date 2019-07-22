@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class EndDependentList<V> extends EnumMap<RobotEnd, V> implements Iterable<V>
 {
@@ -20,6 +21,13 @@ public class EndDependentList<V> extends EnumMap<RobotEnd, V> implements Iterabl
       super(RobotEnd.class);
       this.put(RobotEnd.HIND, hindObject);
       this.put(RobotEnd.FRONT, frontObject);
+   }
+
+   public EndDependentList(Supplier<V> supplier)
+   {
+      super(RobotEnd.class);
+      this.put(RobotEnd.HIND, supplier.get());
+      this.put(RobotEnd.FRONT, supplier.get());
    }
 
    /**
