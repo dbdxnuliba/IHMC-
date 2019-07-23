@@ -81,7 +81,7 @@ public class QuadrupedUIMessagerAPI
    private static final TypedTopicTheme<QuadrupedTimedStepListMessage> StepsListMessage = apiFactory.createTypedTopicTheme("StepsListMessage");
    private static final TypedTopicTheme<SoleTrajectoryMessage> SoleTrajectoryMessage = apiFactory.createTypedTopicTheme("SoleTrajectoryMessage");
    private static final TypedTopicTheme<QuadrupedBodyTrajectoryMessage> DesiredBodyTrajectory = apiFactory.createTypedTopicTheme("DesiredBodyTrajectory");
-   private static final TypedTopicTheme<QuadrupedTeleopDesiredVelocity> DesiredTeleopVelocityMessage = apiFactory.createTypedTopicTheme("DesiredTeleopVelocityMessage");
+   private static final TypedTopicTheme<QuadrupedTeleopMessage> DesiredTeleopVelocityMessage = apiFactory.createTypedTopicTheme("DesiredTeleopVelocityMessage");
    private static final TypedTopicTheme<RobotQuadrant> LoadBearingRequest = apiFactory.createTypedTopicTheme("LoadBearingRequest");
 
    private static final TypedTopicTheme<Boolean> Show = apiFactory.createTypedTopicTheme("Show");
@@ -142,7 +142,7 @@ public class QuadrupedUIMessagerAPI
    public static final Topic<Boolean> AbortWalkingTopic = Root.child(Command).child(StepTeleop).topic(Stop);
    public static final Topic<RobotQuadrant> LoadBearingRequestTopic = Root.child(Command).child(StepTeleop).topic(LoadBearingRequest);
 
-   public static final Topic<QuadrupedTeleopDesiredVelocity> DesiredTeleopVelocity = Root.child(Command).child(StepTeleop).topic(DesiredTeleopVelocityMessage);
+   public static final Topic<QuadrupedTeleopMessage> DesiredTeleopVelocity = Root.child(Command).child(StepTeleop).topic(DesiredTeleopVelocityMessage);
    public static final Topic<QuadrupedBodyTrajectoryMessage> DesiredBodyTrajectoryTopic = Root.child(Command).child(BodyTeleop).topic(DesiredBodyTrajectory);
 
    /* Footstep Planning */

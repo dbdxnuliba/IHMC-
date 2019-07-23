@@ -109,32 +109,4 @@ public class QuadrupedTestBehaviors
          }
       };
    }
-
-   public static void executeBodyPathPlan(GoalOrientedTestConductor conductor, QuadrupedTestYoVariables variables,
-                                          RemoteQuadrupedTeleopManager stepTeleopManager, double positionDelta, double yawDelta,
-                                          EuclideanTrajectoryPointMessage... points)
-   {
-      QuadrupedBodyPathPlanMessage bodyPathPlanMessage = new QuadrupedBodyPathPlanMessage();
-      bodyPathPlanMessage.setIsExpressedInAbsoluteTime(false);
-      Object<EuclideanTrajectoryPointMessage> bodyPathPoints = new Object<> (4, EuclideanTrajectoryPointMessage.class, new EuclideanTrajectoryPointMessagePubSubType());
-
-      for (int i = 0; i < points.length; i++)
-      {
-         EuclideanTrajectoryPointMessage point = points[i];
-         bodyPathPoints.add().set(point);
-         conductor.addWaypointGoal(createBodyPathWaypointGoal(variables, point, positionDelta, yawDelta));
-      }
-      bodyPathPlanMessage.body_path_points_ = bodyPathPoints;
-
-      double trajectoryEndTime = points[points.length - 1].getTime() + 0.05;
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, trajectoryEndTime));
-
-      stepTeleopManager.submitBodyPathPlan(bodyPathPlanMessage);
-      stepTeleopManager.requestXGait();
-      conductor.simulate();
-
-      stepTeleopManager.requestStanding();
-      conductor.addTerminalGoal(QuadrupedTestGoals.timeInFuture(variables, 0.5));
-      conductor.simulate();
-   }
 }

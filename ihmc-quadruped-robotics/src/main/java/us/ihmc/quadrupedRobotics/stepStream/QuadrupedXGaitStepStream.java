@@ -1,24 +1,20 @@
 package us.ihmc.quadrupedRobotics.stepStream;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.apache.commons.math3.util.Precision;
 import us.ihmc.commons.lists.PreallocatedList;
-import us.ihmc.commons.lists.SupplierBuilder;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
-import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
@@ -152,6 +148,11 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
    public void onExit()
    {
       desiredVelocity.setToNaN();
+   }
+
+   public void setDesiredVelocity(Tuple3DReadOnly desiredVelocity)
+   {
+      setDesiredVelocity(desiredVelocity.getX(), desiredVelocity.getY(), desiredVelocity.getZ());
    }
 
    public void setDesiredVelocity(double xVelocity, double yVelocity, double yawVelocity)

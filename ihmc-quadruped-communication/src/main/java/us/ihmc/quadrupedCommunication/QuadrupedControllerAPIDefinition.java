@@ -38,7 +38,7 @@ public class QuadrupedControllerAPIDefinition
       quadrupedCommands.add(PauseWalkingCommand.class);
       quadrupedCommands.add(AbortWalkingCommand.class);
       quadrupedCommands.add(QuadrupedFootLoadBearingCommand.class);
-      quadrupedCommands.add(QuadrupedTeleopDesiredVelocityCommand.class);
+      quadrupedCommands.add(QuadrupedTeleopCommand.class);
 
 //      quadrupedCommands.add(StopAllTrajectoryCommand.class); // TODO
 //      quadrupedCommands.add(GoHomeCommand.class); // TODO

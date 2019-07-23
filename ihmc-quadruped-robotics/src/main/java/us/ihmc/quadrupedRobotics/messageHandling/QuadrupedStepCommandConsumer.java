@@ -3,6 +3,7 @@ package us.ihmc.quadrupedRobotics.messageHandling;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.CommandConsumerWithDelayBuffers;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
+import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBalanceManager;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedBodyOrientationManager;
 import us.ihmc.quadrupedRobotics.controlModules.QuadrupedControlManagerFactory;
@@ -46,9 +47,9 @@ public class QuadrupedStepCommandConsumer
       {
          stepMessageHandler.handleQuadrupedTimedStepListCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedTimedStepListCommand.class));
       }
-      if(commandConsumerWithDelayBuffers.isNewCommandAvailable(QuadrupedTeleopDesiredVelocityCommand.class))
+      if(commandConsumerWithDelayBuffers.isNewCommandAvailable(QuadrupedTeleopCommand.class))
       {
-         stepMessageHandler.handleTeleopDesiredVelocityCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedTeleopDesiredVelocityCommand.class));
+         stepMessageHandler.handleTeleopDesiredVelocityCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedTeleopCommand.class));
       }
       if (commandConsumerWithDelayBuffers.isNewCommandAvailable(SoleTrajectoryCommand.class))
       {

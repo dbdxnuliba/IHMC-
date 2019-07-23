@@ -297,10 +297,9 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
          // triggers go (-1.0, 1.0). If this is remapped to not be a trigger, this needs to be updated
          double yawRate = 0.5 * (leftTurnChannel.getValue() - rightTurnChannel.getValue()) * maxVelocityYaw.getValue();
 
-         QuadrupedTeleopDesiredVelocity desiredVelocity = new QuadrupedTeleopDesiredVelocity();
-         desiredVelocity.setDesiredXVelocity(xVelocity);
-         desiredVelocity.setDesiredYVelocity(yVelocity);
-         desiredVelocity.setDesiredYawVelocity(yawRate);
+         QuadrupedTeleopMessage desiredVelocity = new QuadrupedTeleopMessage();
+         desiredVelocity.setRequestWalk(true);
+         desiredVelocity.getDesiredVelocity().set(xVelocity, yVelocity, yawRate);
          messager.submitMessage(QuadrupedUIMessagerAPI.DesiredTeleopVelocity, desiredVelocity);
       }
    }

@@ -51,14 +51,8 @@ public class RemoteQuadrupedTeleopManager
    private final IHMCROS2Publisher<QuadrupedBodyHeightMessage> bodyHeightPublisher;
    private final IHMCROS2Publisher<QuadrupedBodyTrajectoryMessage> bodyPosePublisher;
 
-   private final IHMCROS2Publisher<QuadrupedTeleopDesiredVelocity> desiredVelocityPublisher;
-
-   private final IHMCROS2Publisher<ToolboxStateMessage> stepTeleopStatePublisher;
+   private final IHMCROS2Publisher<QuadrupedTeleopMessage> desiredVelocityPublisher;
    private final IHMCROS2Publisher<ToolboxStateMessage> pawPlannerStatePublisher;
-
-   private final IHMCROS2Publisher<QuadrupedXGaitSettingsPacket> stepXGaitSettingsPublisher;
-   private final IHMCROS2Publisher<PlanarRegionsListMessage> planarRegionsListTeleopPublisher;
-   private final IHMCROS2Publisher<QuadrupedBodyPathPlanMessage> bodyPathPublisher;
 
    private final IHMCROS2Publisher<QuadrupedXGaitSettingsPacket> plannerXGaitSettingsPublisher;
    private final IHMCROS2Publisher<PawStepPlanningRequestPacket> planningRequestPublisher;
@@ -99,14 +93,9 @@ public class RemoteQuadrupedTeleopManager
       bodyHeightPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
       bodyPosePublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyTrajectoryMessage.class, controllerSubGenerator);
 
-      desiredVelocityPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTeleopDesiredVelocity.class, stepTeleopSubGenerator);
+      desiredVelocityPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTeleopMessage.class, controllerSubGenerator);
 
-      stepTeleopStatePublisher = ROS2Tools.createPublisher(ros2Node, ToolboxStateMessage.class, stepTeleopSubGenerator);
       pawPlannerStatePublisher = ROS2Tools.createPublisher(ros2Node, ToolboxStateMessage.class, footstepPlannerSubGenerator);
-
-      planarRegionsListTeleopPublisher = ROS2Tools.createPublisher(ros2Node, PlanarRegionsListMessage.class, stepTeleopSubGenerator);
-      stepXGaitSettingsPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedXGaitSettingsPacket.class, stepTeleopSubGenerator);
-      bodyPathPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyPathPlanMessage.class, stepTeleopSubGenerator);
 
       plannerXGaitSettingsPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedXGaitSettingsPacket.class, footstepPlannerSubGenerator);
       planningRequestPublisher = ROS2Tools.createPublisher(ros2Node, PawStepPlanningRequestPacket.class, footstepPlannerSubGenerator);
@@ -133,8 +122,8 @@ public class RemoteQuadrupedTeleopManager
 
    public void publishXGaitSettings(QuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
-      stepXGaitSettingsPublisher.publish(xGaitSettings.getAsPacket());
       plannerXGaitSettingsPublisher.publish(xGaitSettings.getAsPacket());
+      this.xGaitSettings.set(xGaitSettings);
    }
 
    public void publishPlanningRequest(PawStepPlanningRequestPacket packet)
@@ -145,7 +134,7 @@ public class RemoteQuadrupedTeleopManager
 
    public void setDesiredVelocity(double desiredVelocityX, double desiredVelocityY, double desiredVelocityZ)
    {
-      desiredVelocityPublisher.publish(QuadrupedMessageTools.createQuadrupedTeleopDesiredVelocity(desiredVelocityX, desiredVelocityY, desiredVelocityZ));
+      desiredVelocityPublisher.publish(QuadrupedMessageTools.createQuadrupedTeleopDesiredVelocity(desiredVelocityX, desiredVelocityY, desiredVelocityZ, xGaitSettings));
    }
 
    public void requestStandPrep()
@@ -180,13 +169,16 @@ public class RemoteQuadrupedTeleopManager
 
    public void requestXGait()
    {
-      stepTeleopStatePublisher.publish(MessageTools.createToolboxStateMessage(ToolboxState.WAKE_UP));
+      setDesiredVelocity(0.0, 0.0, 0.0);
    }
 
    public void requestStanding()
    {
+      QuadrupedTeleopMessage teleopMessage = new QuadrupedTeleopMessage();
+      teleopMessage.setRequestWalk(false);
+      desiredVelocityPublisher.publish(teleopMessage);
+
       requestStopWalking();
-      stepTeleopStatePublisher.publish(MessageTools.createToolboxStateMessage(ToolboxState.SLEEP));
    }
 
    public void setDesiredBodyHeight(double desiredBodyHeight)
@@ -227,12 +219,6 @@ public class RemoteQuadrupedTeleopManager
    public void submitPlanarRegionsList(PlanarRegionsList planarRegionsList)
    {
       planarRegionsListControllerPublisher.publish(PlanarRegionMessageConverter.convertToPlanarRegionsListMessage(planarRegionsList));
-      planarRegionsListTeleopPublisher.publish(PlanarRegionMessageConverter.convertToPlanarRegionsListMessage(planarRegionsList));
-   }
-
-   public void submitBodyPathPlan(QuadrupedBodyPathPlanMessage message)
-   {
-      bodyPathPublisher.publish(message);
    }
 
    public void setEndDoubleSupportDuration(QuadrupedSpeed speed, double endPhaseShift, double endDoubleSupportDuration)

@@ -8,8 +8,8 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedOrientedStep;
-import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedBasics.gait.*;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 
@@ -139,14 +139,13 @@ public class QuadrupedMessageTools
       return message;
    }
 
-   public static QuadrupedTeleopDesiredVelocity createQuadrupedTeleopDesiredVelocity(double xVelocity, double yVelocity, double yawVelocity)
+   public static QuadrupedTeleopMessage createQuadrupedTeleopDesiredVelocity(double xVelocity, double yVelocity, double yawVelocity, QuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
-      QuadrupedTeleopDesiredVelocity message = new QuadrupedTeleopDesiredVelocity();
-      message.setDesiredXVelocity(xVelocity);
-      message.setDesiredYVelocity(yVelocity);
-      message.setDesiredYawVelocity(yawVelocity);
-
-      return message;
+      QuadrupedTeleopMessage teleopMessage = new QuadrupedTeleopMessage();
+      teleopMessage.setRequestWalk(true);
+      teleopMessage.getDesiredVelocity().set(xVelocity, yVelocity, yawVelocity);
+      teleopMessage.getXGaitSettings().set(xGaitSettings.getAsPacket());
+      return teleopMessage;
    }
 
    public static QuadrupedFootLoadBearingMessage createLoadBearingMessage(RobotQuadrant robotQuadrant)

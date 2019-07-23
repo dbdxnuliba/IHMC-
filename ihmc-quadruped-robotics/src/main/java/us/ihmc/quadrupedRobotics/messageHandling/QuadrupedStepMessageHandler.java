@@ -9,6 +9,10 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PauseWalkingCommand;
+import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
@@ -105,9 +109,16 @@ public class QuadrupedStepMessageHandler
       preplannedStepStream.acceptStepCommand(command);
    }
 
-   public void handleTeleopDesiredVelocityCommand(QuadrupedTeleopDesiredVelocityCommand command)
+   public void handleTeleopDesiredVelocityCommand(QuadrupedTeleopCommand command)
    {
-      xGaitStepStream.setDesiredVelocity(command.getDesiredXVelocity(), command.getDesiredYVelocity(), command.getDesiredYawVelocity());
+      if(command.isRequestWalk())
+      {
+         xGaitStepStream.onExit();
+      }
+      else
+      {
+         xGaitStepStream.setDesiredVelocity(command.getDesiredVelocity());
+      }
    }
 
    public void initialize()
