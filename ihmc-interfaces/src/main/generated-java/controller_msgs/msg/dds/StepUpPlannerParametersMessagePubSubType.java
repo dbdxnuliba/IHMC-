@@ -62,8 +62,12 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
@@ -114,7 +118,10 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getComMessageTopic().length() + 1;
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getComMessagesTopic().length() + 1;
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
@@ -122,7 +129,10 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getFootstepMessageTopic().length() + 1;
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getFootstepMessagesTopic().length() + 1;
 
 
       return current_alignment - initial_alignment;
@@ -153,19 +163,23 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType.write(data.getCostWeights(), cdr);
       cdr.write_type_4(data.getSequenceId());
 
-      cdr.write_type_7(data.getSendComMessage());
+      cdr.write_type_7(data.getIncludeComMessages());
 
-      if(data.getComMessageTopic().length() <= 255)
-      cdr.write_type_d(data.getComMessageTopic());else
-          throw new RuntimeException("com_message_topic field exceeds the maximum length");
+      cdr.write_type_7(data.getSendComMessages());
+
+      if(data.getComMessagesTopic().length() <= 255)
+      cdr.write_type_d(data.getComMessagesTopic());else
+          throw new RuntimeException("com_messages_topic field exceeds the maximum length");
 
       cdr.write_type_12(data.getMaxComMessageLength());
 
-      cdr.write_type_7(data.getSendFootstepMessage());
+      cdr.write_type_7(data.getIncludeFootstepMessages());
 
-      if(data.getFootstepMessageTopic().length() <= 255)
-      cdr.write_type_d(data.getFootstepMessageTopic());else
-          throw new RuntimeException("footstep_message_topic field exceeds the maximum length");
+      cdr.write_type_7(data.getSendFootstepMessages());
+
+      if(data.getFootstepMessagesTopic().length() <= 255)
+      cdr.write_type_d(data.getFootstepMessagesTopic());else
+          throw new RuntimeException("footstep_messages_topic field exceeds the maximum length");
 
    }
 
@@ -188,14 +202,18 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType.read(data.getCostWeights(), cdr);	
       data.setSequenceId(cdr.read_type_4());
       	
-      data.setSendComMessage(cdr.read_type_7());
+      data.setIncludeComMessages(cdr.read_type_7());
       	
-      cdr.read_type_d(data.getComMessageTopic());	
+      data.setSendComMessages(cdr.read_type_7());
+      	
+      cdr.read_type_d(data.getComMessagesTopic());	
       data.setMaxComMessageLength(cdr.read_type_12());
       	
-      data.setSendFootstepMessage(cdr.read_type_7());
+      data.setIncludeFootstepMessages(cdr.read_type_7());
       	
-      cdr.read_type_d(data.getFootstepMessageTopic());	
+      data.setSendFootstepMessages(cdr.read_type_7());
+      	
+      cdr.read_type_d(data.getFootstepMessagesTopic());	
 
    }
 
@@ -213,11 +231,13 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.write_type_a("cost_weights", new controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType(), data.getCostWeights());
 
       ser.write_type_4("sequence_id", data.getSequenceId());
-      ser.write_type_7("send_com_message", data.getSendComMessage());
-      ser.write_type_d("com_message_topic", data.getComMessageTopic());
+      ser.write_type_7("include_com_messages", data.getIncludeComMessages());
+      ser.write_type_7("send_com_messages", data.getSendComMessages());
+      ser.write_type_d("com_messages_topic", data.getComMessagesTopic());
       ser.write_type_12("max_com_message_length", data.getMaxComMessageLength());
-      ser.write_type_7("send_footstep_message", data.getSendFootstepMessage());
-      ser.write_type_d("footstep_message_topic", data.getFootstepMessageTopic());
+      ser.write_type_7("include_footstep_messages", data.getIncludeFootstepMessages());
+      ser.write_type_7("send_footstep_messages", data.getSendFootstepMessages());
+      ser.write_type_d("footstep_messages_topic", data.getFootstepMessagesTopic());
    }
 
    @Override
@@ -234,11 +254,13 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.read_type_a("cost_weights", new controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType(), data.getCostWeights());
 
       data.setSequenceId(ser.read_type_4("sequence_id"));
-      data.setSendComMessage(ser.read_type_7("send_com_message"));
-      ser.read_type_d("com_message_topic", data.getComMessageTopic());
+      data.setIncludeComMessages(ser.read_type_7("include_com_messages"));
+      data.setSendComMessages(ser.read_type_7("send_com_messages"));
+      ser.read_type_d("com_messages_topic", data.getComMessagesTopic());
       data.setMaxComMessageLength(ser.read_type_12("max_com_message_length"));
-      data.setSendFootstepMessage(ser.read_type_7("send_footstep_message"));
-      ser.read_type_d("footstep_message_topic", data.getFootstepMessageTopic());
+      data.setIncludeFootstepMessages(ser.read_type_7("include_footstep_messages"));
+      data.setSendFootstepMessages(ser.read_type_7("send_footstep_messages"));
+      ser.read_type_d("footstep_messages_topic", data.getFootstepMessagesTopic());
    }
 
    public static void staticCopy(controller_msgs.msg.dds.StepUpPlannerParametersMessage src, controller_msgs.msg.dds.StepUpPlannerParametersMessage dest)

@@ -27,7 +27,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    /**
             * Ipopt internal linear solver
             */
-   public java.lang.StringBuilder ipopt_linear_solver_ = mumps;
+   public java.lang.StringBuilder ipopt_linear_solver_;
    /**
             * Percentage of the last phase in which weighting the error from the desired value
             */
@@ -49,33 +49,41 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
             */
    public long sequence_id_;
    /**
-            * Send a CenterOfMassTrajectoryMessage as well
+            * Include a set of CenterOfMassTrajectoryMessages in the respond
             */
-   public boolean send_com_message_;
+   public boolean include_com_messages_;
+   /**
+            * Send the CenterOfMassTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public boolean send_com_messages_;
    /**
             * Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
             */
-   public java.lang.StringBuilder com_message_topic_;
+   public java.lang.StringBuilder com_messages_topic_;
    /**
             * Maximum number of points to be defined in a single CenterOfMassTrajectoryMessage
             */
    public long max_com_message_length_ = 50;
    /**
+            * Include a set of FootstepDataListMessage as well
+            */
+   public boolean include_footstep_messages_;
+   /**
             * Send a FootstepDataListMessage as well
             */
-   public boolean send_footstep_message_;
+   public boolean send_footstep_messages_;
    /**
-            * Topic name of IHMC controller accepting the FootstepDataListMessage
+            * Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
             */
-   public java.lang.StringBuilder footstep_message_topic_;
+   public java.lang.StringBuilder footstep_messages_topic_;
 
    public StepUpPlannerParametersMessage()
    {
       phases_settings_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters> (20, new controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType());
       ipopt_linear_solver_ = new java.lang.StringBuilder(255);
       cost_weights_ = new controller_msgs.msg.dds.StepUpPlannerCostWeights();
-      com_message_topic_ = new java.lang.StringBuilder(255);
-      footstep_message_topic_ = new java.lang.StringBuilder(255);
+      com_messages_topic_ = new java.lang.StringBuilder(255);
+      footstep_messages_topic_ = new java.lang.StringBuilder(255);
 
    }
 
@@ -106,17 +114,21 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       controller_msgs.msg.dds.StepUpPlannerCostWeightsPubSubType.staticCopy(other.cost_weights_, cost_weights_);
       sequence_id_ = other.sequence_id_;
 
-      send_com_message_ = other.send_com_message_;
+      include_com_messages_ = other.include_com_messages_;
 
-      com_message_topic_.setLength(0);
-      com_message_topic_.append(other.com_message_topic_);
+      send_com_messages_ = other.send_com_messages_;
+
+      com_messages_topic_.setLength(0);
+      com_messages_topic_.append(other.com_messages_topic_);
 
       max_com_message_length_ = other.max_com_message_length_;
 
-      send_footstep_message_ = other.send_footstep_message_;
+      include_footstep_messages_ = other.include_footstep_messages_;
 
-      footstep_message_topic_.setLength(0);
-      footstep_message_topic_.append(other.footstep_message_topic_);
+      send_footstep_messages_ = other.send_footstep_messages_;
+
+      footstep_messages_topic_.setLength(0);
+      footstep_messages_topic_.append(other.footstep_messages_topic_);
 
    }
 
@@ -268,42 +280,57 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    }
 
    /**
-            * Send a CenterOfMassTrajectoryMessage as well
+            * Include a set of CenterOfMassTrajectoryMessages in the respond
             */
-   public void setSendComMessage(boolean send_com_message)
+   public void setIncludeComMessages(boolean include_com_messages)
    {
-      send_com_message_ = send_com_message;
+      include_com_messages_ = include_com_messages;
    }
    /**
-            * Send a CenterOfMassTrajectoryMessage as well
+            * Include a set of CenterOfMassTrajectoryMessages in the respond
             */
-   public boolean getSendComMessage()
+   public boolean getIncludeComMessages()
    {
-      return send_com_message_;
+      return include_com_messages_;
+   }
+
+   /**
+            * Send the CenterOfMassTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public void setSendComMessages(boolean send_com_messages)
+   {
+      send_com_messages_ = send_com_messages;
+   }
+   /**
+            * Send the CenterOfMassTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public boolean getSendComMessages()
+   {
+      return send_com_messages_;
    }
 
    /**
             * Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
             */
-   public void setComMessageTopic(java.lang.String com_message_topic)
+   public void setComMessagesTopic(java.lang.String com_messages_topic)
    {
-      com_message_topic_.setLength(0);
-      com_message_topic_.append(com_message_topic);
+      com_messages_topic_.setLength(0);
+      com_messages_topic_.append(com_messages_topic);
    }
 
    /**
             * Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
             */
-   public java.lang.String getComMessageTopicAsString()
+   public java.lang.String getComMessagesTopicAsString()
    {
-      return getComMessageTopic().toString();
+      return getComMessagesTopic().toString();
    }
    /**
             * Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
             */
-   public java.lang.StringBuilder getComMessageTopic()
+   public java.lang.StringBuilder getComMessagesTopic()
    {
-      return com_message_topic_;
+      return com_messages_topic_;
    }
 
    /**
@@ -322,42 +349,57 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    }
 
    /**
-            * Send a FootstepDataListMessage as well
+            * Include a set of FootstepDataListMessage as well
             */
-   public void setSendFootstepMessage(boolean send_footstep_message)
+   public void setIncludeFootstepMessages(boolean include_footstep_messages)
    {
-      send_footstep_message_ = send_footstep_message;
+      include_footstep_messages_ = include_footstep_messages;
    }
    /**
-            * Send a FootstepDataListMessage as well
+            * Include a set of FootstepDataListMessage as well
             */
-   public boolean getSendFootstepMessage()
+   public boolean getIncludeFootstepMessages()
    {
-      return send_footstep_message_;
-   }
-
-   /**
-            * Topic name of IHMC controller accepting the FootstepDataListMessage
-            */
-   public void setFootstepMessageTopic(java.lang.String footstep_message_topic)
-   {
-      footstep_message_topic_.setLength(0);
-      footstep_message_topic_.append(footstep_message_topic);
+      return include_footstep_messages_;
    }
 
    /**
-            * Topic name of IHMC controller accepting the FootstepDataListMessage
+            * Send a FootstepDataListMessage as well
             */
-   public java.lang.String getFootstepMessageTopicAsString()
+   public void setSendFootstepMessages(boolean send_footstep_messages)
    {
-      return getFootstepMessageTopic().toString();
+      send_footstep_messages_ = send_footstep_messages;
    }
    /**
-            * Topic name of IHMC controller accepting the FootstepDataListMessage
+            * Send a FootstepDataListMessage as well
             */
-   public java.lang.StringBuilder getFootstepMessageTopic()
+   public boolean getSendFootstepMessages()
    {
-      return footstep_message_topic_;
+      return send_footstep_messages_;
+   }
+
+   /**
+            * Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
+            */
+   public void setFootstepMessagesTopic(java.lang.String footstep_messages_topic)
+   {
+      footstep_messages_topic_.setLength(0);
+      footstep_messages_topic_.append(footstep_messages_topic);
+   }
+
+   /**
+            * Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
+            */
+   public java.lang.String getFootstepMessagesTopicAsString()
+   {
+      return getFootstepMessagesTopic().toString();
+   }
+   /**
+            * Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
+            */
+   public java.lang.StringBuilder getFootstepMessagesTopic()
+   {
+      return footstep_messages_topic_;
    }
 
 
@@ -402,15 +444,19 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       if (!this.cost_weights_.epsilonEquals(other.cost_weights_, epsilon)) return false;
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_com_message_, other.send_com_message_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.include_com_messages_, other.include_com_messages_, epsilon)) return false;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.com_message_topic_, other.com_message_topic_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_com_messages_, other.send_com_messages_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.com_messages_topic_, other.com_messages_topic_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.max_com_message_length_, other.max_com_message_length_, epsilon)) return false;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_footstep_message_, other.send_footstep_message_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.include_footstep_messages_, other.include_footstep_messages_, epsilon)) return false;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.footstep_message_topic_, other.footstep_message_topic_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_footstep_messages_, other.send_footstep_messages_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.footstep_messages_topic_, other.footstep_messages_topic_, epsilon)) return false;
 
 
       return true;
@@ -443,15 +489,19 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       if (!this.cost_weights_.equals(otherMyClass.cost_weights_)) return false;
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
-      if(this.send_com_message_ != otherMyClass.send_com_message_) return false;
+      if(this.include_com_messages_ != otherMyClass.include_com_messages_) return false;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.com_message_topic_, otherMyClass.com_message_topic_)) return false;
+      if(this.send_com_messages_ != otherMyClass.send_com_messages_) return false;
+
+      if (!us.ihmc.idl.IDLTools.equals(this.com_messages_topic_, otherMyClass.com_messages_topic_)) return false;
 
       if(this.max_com_message_length_ != otherMyClass.max_com_message_length_) return false;
 
-      if(this.send_footstep_message_ != otherMyClass.send_footstep_message_) return false;
+      if(this.include_footstep_messages_ != otherMyClass.include_footstep_messages_) return false;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.footstep_message_topic_, otherMyClass.footstep_message_topic_)) return false;
+      if(this.send_footstep_messages_ != otherMyClass.send_footstep_messages_) return false;
+
+      if (!us.ihmc.idl.IDLTools.equals(this.footstep_messages_topic_, otherMyClass.footstep_messages_topic_)) return false;
 
 
       return true;
@@ -483,16 +533,20 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       builder.append(this.cost_weights_);      builder.append(", ");
       builder.append("sequence_id=");
       builder.append(this.sequence_id_);      builder.append(", ");
-      builder.append("send_com_message=");
-      builder.append(this.send_com_message_);      builder.append(", ");
-      builder.append("com_message_topic=");
-      builder.append(this.com_message_topic_);      builder.append(", ");
+      builder.append("include_com_messages=");
+      builder.append(this.include_com_messages_);      builder.append(", ");
+      builder.append("send_com_messages=");
+      builder.append(this.send_com_messages_);      builder.append(", ");
+      builder.append("com_messages_topic=");
+      builder.append(this.com_messages_topic_);      builder.append(", ");
       builder.append("max_com_message_length=");
       builder.append(this.max_com_message_length_);      builder.append(", ");
-      builder.append("send_footstep_message=");
-      builder.append(this.send_footstep_message_);      builder.append(", ");
-      builder.append("footstep_message_topic=");
-      builder.append(this.footstep_message_topic_);
+      builder.append("include_footstep_messages=");
+      builder.append(this.include_footstep_messages_);      builder.append(", ");
+      builder.append("send_footstep_messages=");
+      builder.append(this.send_footstep_messages_);      builder.append(", ");
+      builder.append("footstep_messages_topic=");
+      builder.append(this.footstep_messages_topic_);
       builder.append("}");
       return builder.toString();
    }

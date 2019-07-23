@@ -14,7 +14,6 @@ uint8 solver_verbosity
 float64 max_leg_length
 
 # Ipopt internal linear solver
-# Field default value mumps
 string ipopt_linear_solver
 
 # Percentage of the last phase in which weighting the error from the desired value
@@ -35,20 +34,26 @@ controller_msgs/StepUpPlannerCostWeights cost_weights
 # Unique ID used to identify this message, should preferably be consecutively increasing.
 uint32 sequence_id
 
-# Send a CenterOfMassTrajectoryMessage as well
-bool send_com_message
+# Include a set of CenterOfMassTrajectoryMessages in the respond
+bool include_com_messages
+
+# Send the CenterOfMassTrajectoryMessages directly (the topic name has also to be specified)
+bool send_com_messages
 
 # Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
-string com_message_topic
+string com_messages_topic
 
 # Maximum number of points to be defined in a single CenterOfMassTrajectoryMessage
 # Field default value 50
 uint64 max_com_message_length
 
-# Send a FootstepDataListMessage as well
-bool send_footstep_message
+# Include a set of FootstepDataListMessage as well
+bool include_footstep_messages
 
-# Topic name of IHMC controller accepting the FootstepDataListMessage
-string footstep_message_topic
+# Send a FootstepDataListMessage as well
+bool send_footstep_messages
+
+# Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
+string footstep_messages_topic
 
 
