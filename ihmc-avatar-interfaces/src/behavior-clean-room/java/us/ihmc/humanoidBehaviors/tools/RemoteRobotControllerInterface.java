@@ -49,32 +49,45 @@ public class RemoteRobotControllerInterface
    private final SwingOverPlanarRegionsTrajectoryExpander swingOverPlanarRegionsTrajectoryExpander;
    private final ROS2Input<HighLevelStateChangeStatusMessage> controllerState;
 
+   private final Ros2Node ros2Node;
+   private final String robotName;
+
    public RemoteRobotControllerInterface(Ros2Node ros2Node, DRCRobotModel robotModel)
    {
-      String robotName = robotModel.getSimpleRobotName();
-      ROS2ModuleIdentifier controllerId = ROS2Tools.HUMANOID_CONTROLLER;
+      this.ros2Node = ros2Node;
+      robotName = robotModel.getSimpleRobotName();
 
-      footTrajectoryMessagePublisher = new IHMCROS2Publisher<>(ros2Node, FootTrajectoryMessage.class, robotName, controllerId);
-      armTrajectoryMessagePublisher = new IHMCROS2Publisher<>(ros2Node, ArmTrajectoryMessage.class, robotName, controllerId);
-      chestOrientationTrajectoryMessagePublisher = new IHMCROS2Publisher<>(ros2Node, ChestTrajectoryMessage.class, robotName, controllerId);
-      pelvisOrientationTrajectoryMessagePublisher = new IHMCROS2Publisher<>(ros2Node, PelvisOrientationTrajectoryMessage.class, robotName, controllerId);
-      pelvisTrajectoryMessagePublisher = new IHMCROS2Publisher<>(ros2Node, PelvisTrajectoryMessage.class, robotName, controllerId);
-      goHomeMessagePublisher = new IHMCROS2Publisher<>(ros2Node, GoHomeMessage.class, robotName, controllerId);
-      footstepDataListPublisher = new IHMCROS2Publisher<>(ros2Node, FootstepDataListMessage.class, robotName, controllerId);
-      pausePublisher = new IHMCROS2Publisher<>(ros2Node, PauseWalkingMessage.class, robotName, controllerId);
+      footTrajectoryMessagePublisher = createControllerPublisher(FootTrajectoryMessage.class);
+      armTrajectoryMessagePublisher = createControllerPublisher(ArmTrajectoryMessage.class);
+      chestOrientationTrajectoryMessagePublisher = createControllerPublisher(ChestTrajectoryMessage.class);
+      pelvisOrientationTrajectoryMessagePublisher = createControllerPublisher(PelvisOrientationTrajectoryMessage.class);
+      pelvisTrajectoryMessagePublisher = createControllerPublisher(PelvisTrajectoryMessage.class);
+      goHomeMessagePublisher = createControllerPublisher(GoHomeMessage.class);
+      footstepDataListPublisher = createControllerPublisher(FootstepDataListMessage.class);
+      pausePublisher = createControllerPublisher(PauseWalkingMessage.class);
 
-      new ROS2Callback<>(ros2Node, WalkingStatusMessage.class, robotName, controllerId, this::acceptWalkingStatus);
+      new ROS2Callback<>(ros2Node, WalkingStatusMessage.class, robotName, ROS2Tools.HUMANOID_CONTROLLER, this::acceptWalkingStatus);
 
       HighLevelStateChangeStatusMessage initialState = new HighLevelStateChangeStatusMessage();
       initialState.setInitialHighLevelControllerName(HighLevelControllerName.DO_NOTHING_BEHAVIOR.toByte());
       initialState.setEndHighLevelControllerName(HighLevelControllerName.WALKING.toByte());
-      controllerState = new ROS2Input<>(ros2Node, HighLevelStateChangeStatusMessage.class, robotName, controllerId, initialState, this::acceptStatusChange);
+      controllerState = new ROS2Input<>(ros2Node,
+                                        HighLevelStateChangeStatusMessage.class,
+                                        robotName,
+                                        ROS2Tools.HUMANOID_CONTROLLER,
+                                        initialState,
+                                        this::acceptStatusChange);
 
       YoVariableRegistry registry = new YoVariableRegistry("swingOver");
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
       swingOverPlanarRegionsTrajectoryExpander = new SwingOverPlanarRegionsTrajectoryExpander(robotModel.getWalkingControllerParameters(),
                                                                                               registry,
                                                                                               yoGraphicsListRegistry);
+   }
+
+   private <T> IHMCROS2Publisher<T> createControllerPublisher(Class<T> messageClass)
+   {
+      return new IHMCROS2Publisher<>(ros2Node, messageClass, robotName, ROS2Tools.HUMANOID_CONTROLLER);
    }
 
    private boolean acceptStatusChange(HighLevelStateChangeStatusMessage message)
