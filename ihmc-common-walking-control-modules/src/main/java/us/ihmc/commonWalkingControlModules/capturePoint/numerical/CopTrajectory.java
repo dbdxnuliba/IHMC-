@@ -17,6 +17,7 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
+import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
@@ -79,7 +80,8 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
       update(supportSeqence.getSupportPolygons(), supportSeqence.getSupportTimes(), finalTransferDuration, timeInSequence, initialCop);
    }
 
-   public void update(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, double timeInSequence, Point2DReadOnly initialCop)
+   public void update(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, double timeInSequence,
+                      Point2DReadOnly initialCop)
    {
       clear();
 
@@ -93,9 +95,26 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
             continue;
 
          ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
+
+         // Here, we might need to re-add a centroid.
+         double previousSupportDuration = supportTimes.get(i) - supportTimes.get(i - 1);
+         double time = supportTimes.get(i - 1) + previousSupportDuration / 2.0;
+         if (waypoints.size() == 1 && time > timeInSequence)
+         {
+            if (i > 1)
+            {
+               ConvexPolygon2DReadOnly previousPreviousPolygon = supportPolygons.get(i - 2);
+               if (!previousPreviousPolygon.isPointInside(previousPolygon.getCentroid()))
+               {
+                  waypoints.add().set(previousPolygon.getCentroid());
+                  waypointTimes.add(time);
+               }
+            }
+         }
+
          ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
-         Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
          Point2DReadOnly centroid = polygon.getCentroid();
+         Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
 
          if (previousPolygon.isPointInside(centroid, EPSILON))
          {
@@ -106,9 +125,15 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
          {
             waypoints.add().set(lastWaypoint);
             waypointTimes.add(supportTimes.get(i));
+
+            // Add a waypoint at the centroid anyway but only after the next polygon is available.
+            double supportDuration = i < supportTimes.size() - 1 ? supportTimes.get(i + 1) - supportTimes.get(i) : finalTransferDuration;
+            waypoints.add().set(centroid);
+            waypointTimes.add(supportTimes.get(i) + supportDuration / 2.0);
          }
          else
          {
+            LogTools.warn("Discontinuous support sequence! Expect bad plans.");
             waypoints.add().set(lastWaypoint);
             waypointTimes.add(supportTimes.get(i));
             waypoints.add().set(centroid);
