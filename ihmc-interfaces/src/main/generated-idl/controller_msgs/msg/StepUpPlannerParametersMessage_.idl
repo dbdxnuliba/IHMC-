@@ -35,7 +35,6 @@ module controller_msgs
         /**
          * Ipopt internal linear solver
          */
-        @defaultValue(value=mumps)
         string ipopt_linear_solver;
         /**
          * Percentage of the last phase in which weighting the error from the desired value
@@ -61,26 +60,34 @@ module controller_msgs
          */
         unsigned long sequence_id;
         /**
-         * Send a CenterOfMassTrajectoryMessage as well
+         * Include a set of CenterOfMassTrajectoryMessages in the respond
          */
-        boolean send_com_message;
+        boolean include_com_messages;
+        /**
+         * Send the CenterOfMassTrajectoryMessages directly (the topic name has also to be specified)
+         */
+        boolean send_com_messages;
         /**
          * Topic name of IHMC controller accepting the CenterOfMassTrajectoryMessage
          */
-        string com_message_topic;
+        string com_messages_topic;
         /**
          * Maximum number of points to be defined in a single CenterOfMassTrajectoryMessage
          */
         @defaultValue(value=50)
         unsigned long long max_com_message_length;
         /**
+         * Include a set of FootstepDataListMessage as well
+         */
+        boolean include_footstep_messages;
+        /**
          * Send a FootstepDataListMessage as well
          */
-        boolean send_footstep_message;
+        boolean send_footstep_messages;
         /**
-         * Topic name of IHMC controller accepting the FootstepDataListMessage
+         * Topic name of IHMC controller accepting the FootstepDataListMessage (the topic name has also to be specified)
          */
-        string footstep_message_topic;
+        string footstep_messages_topic;
       };
     };
   };

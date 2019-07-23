@@ -12,10 +12,20 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
             * The various trajectories are split in every different phase
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult>  phases_result_;
+   /**
+            * A collection of messages containing the CoM trajectory (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage>  com_messages_;
+   /**
+            * A collection of messages containing the footsteps (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.FootstepDataListMessage>  foostep_messages_;
 
    public StepUpPlannerRespondMessage()
    {
       phases_result_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult> (20, new controller_msgs.msg.dds.StepUpPlannerPhaseResultPubSubType());
+      com_messages_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage> (20, new controller_msgs.msg.dds.CenterOfMassTrajectoryMessagePubSubType());
+      foostep_messages_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.FootstepDataListMessage> (20, new controller_msgs.msg.dds.FootstepDataListMessagePubSubType());
 
    }
 
@@ -28,6 +38,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    public void set(StepUpPlannerRespondMessage other)
    {
       phases_result_.set(other.phases_result_);
+      com_messages_.set(other.com_messages_);
+      foostep_messages_.set(other.foostep_messages_);
    }
 
 
@@ -37,6 +49,24 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult>  getPhasesResult()
    {
       return phases_result_;
+   }
+
+
+   /**
+            * A collection of messages containing the CoM trajectory (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage>  getComMessages()
+   {
+      return com_messages_;
+   }
+
+
+   /**
+            * A collection of messages containing the footsteps (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.FootstepDataListMessage>  getFoostepMessages()
+   {
+      return foostep_messages_;
    }
 
 
@@ -64,6 +94,21 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
          {  if (!this.phases_result_.get(i).epsilonEquals(other.phases_result_.get(i), epsilon)) return false; }
       }
 
+      if (this.com_messages_.size() != other.com_messages_.size()) { return false; }
+      else
+      {
+         for (int i = 0; i < this.com_messages_.size(); i++)
+         {  if (!this.com_messages_.get(i).epsilonEquals(other.com_messages_.get(i), epsilon)) return false; }
+      }
+
+      if (this.foostep_messages_.size() != other.foostep_messages_.size()) { return false; }
+      else
+      {
+         for (int i = 0; i < this.foostep_messages_.size(); i++)
+         {  if (!this.foostep_messages_.get(i).epsilonEquals(other.foostep_messages_.get(i), epsilon)) return false; }
+      }
+
+
       return true;
    }
 
@@ -77,6 +122,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       StepUpPlannerRespondMessage otherMyClass = (StepUpPlannerRespondMessage) other;
 
       if (!this.phases_result_.equals(otherMyClass.phases_result_)) return false;
+      if (!this.com_messages_.equals(otherMyClass.com_messages_)) return false;
+      if (!this.foostep_messages_.equals(otherMyClass.foostep_messages_)) return false;
 
       return true;
    }
@@ -88,7 +135,11 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
 
       builder.append("StepUpPlannerRespondMessage {");
       builder.append("phases_result=");
-      builder.append(this.phases_result_);
+      builder.append(this.phases_result_);      builder.append(", ");
+      builder.append("com_messages=");
+      builder.append(this.com_messages_);      builder.append(", ");
+      builder.append("foostep_messages=");
+      builder.append(this.foostep_messages_);
       builder.append("}");
       return builder.toString();
    }
