@@ -5,11 +5,13 @@ import static us.ihmc.robotics.Assert.*;
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
 import org.lwjgl.*;
+import std_msgs.*;
 import us.ihmc.atlas.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
+import us.ihmc.avatar.ros.messages.*;
 import us.ihmc.avatar.stepUptest.AvatarStepUp.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.*;
@@ -62,9 +64,12 @@ import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulatio
 import us.ihmc.simulationconstructionset.util.simulationTesting.*;
 
 import us.ihmc.tools.*;
+import us.ihmc.utilities.ros.subscriber.*;
 import us.ihmc.yoVariables.registry.*;
 import us.ihmc.yoVariables.variable.*;
 
+import java.lang.*;
+import java.lang.String;
 import java.util.*;
 import java.util.List;
 
@@ -116,7 +121,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private OffsetAndYawRobotInitialSetup startingPos;
 
    private final boolean startWithoutBeingTriggeredFromMessagePacket = true;
-
+//   private AbstractRosTopicSubscriber
 
    private BehaviorDispatcher<HumanoidBehaviorType> behaviorDispatcher;
    private Ros2Node ros2Node;
@@ -196,6 +201,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       drcSimulationTestHelper.setStartingLocation(setStartingLocationOffset(startFromHere));
       drcSimulationTestHelper.createSimulation(className);
 
+
       registry = new YoVariableRegistry(getClass().getSimpleName());
       this.yoTime = new YoDouble("yoTime",registry);
 
@@ -204,6 +210,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
                                            WalkingStatusMessage.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                            this::checkAndPublishChestTrajectoryMessage);
+      //ROS2Tools.createCallbackSubscription(ros2Node, Float64Message.class,ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),this::checkAndPublishChestTrajectoryMessage);
+//      ROS2Tools.createQueuedSubscription(ros2Node, Float64Message.class, "abc");
       //robot = drcSimulationTestHelper.getRobot();
       fullRobotModel = getRobotModel().createFullRobotModel();
 
@@ -231,7 +239,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       referenceFrames = robotDataReceiver.getReferenceFrames();
 
       atlasPrimitiveActions = new AtlasPrimitiveActions(getSimpleRobotName(), ros2Node, getRobotModel().getFootstepPlannerParameters(),fullRobotModel, atlasRobotModel, referenceFrames, yoTime, robotModel, registry);
-      ankkleTau =  behaviorDispatcher.getYoVariableRegistry().getVariable("tau_l_leg");
+      //ankkleTau =  behaviorDispatcher.getYoVariableRegistry().getVariable("tau_l_leg");
+      ankkleTau = drcSimulationTestHelper.getYoVariable("l_leg_akyLowLevelDesiredAccelerationHHLCM");
    }
 
    public OffsetAndYawRobotInitialSetup  setStartingLocationOffset(StartingLocation startFromHere)
@@ -245,7 +254,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       if (message.takeNextData().getWalkingStatus() != 0)
       {
          if(tmpcounter == 0)
-         {callDoorTiminingBehavior();}
+//         {callDoorTiminingBehavior();}
          //createAndPublishChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //call your door opening behavior form this code point
 
          tmpcounter++;
@@ -292,6 +301,11 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    protected ArmJointName[] getArmJointNames()
    {
       return jointMap.getArmJointNames();
+   }
+
+   protected static double getDesiredAccAkxValue()
+   {
+      return ankkleTau.getValueAsDouble();
    }
 
    protected int getArmTrajectoryPoints()
@@ -367,8 +381,75 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       double stepHeight = 0.3;
       double swingHeight = 0.15; //maybe needs to be changed
       //walkingStair(stepHeight, swingHeight);
-      setPublishers(IS_LEFTARM_ON, IS_RIGHTARM_ON, IS_CHEST_ON, IS_FOOTSTEP_ON, IS_PELVIS_ON, IS_PAUSING_ON,  stepHeight, swingHeight);
+//      LegJointName[] leg_names = getLegJointNames();
+//      for(int i = 0 ; i< leg_names.length; i++)
+//      {
+//         System.out.println("***********************" + leg_names[i].toString());
+//      }
 
+      setPublishers(IS_LEFTARM_ON, IS_RIGHTARM_ON, IS_CHEST_ON, IS_FOOTSTEP_ON, IS_PELVIS_ON, IS_PAUSING_ON,  stepHeight, swingHeight);
+   }
+
+   public static void startListening()
+   {
+      boolean condition = true;
+      int t = 0;
+      double value;
+      do
+      {
+         value = getDesiredAccAkxValue();
+         if(t%100000000 == 0)
+         {
+            if(value <= -30.0)
+            {
+               condition = false;
+            }
+         }
+         t++;
+//         if ()
+      }
+      while (condition);
+      if(!condition)
+      {
+         assertreachedforkick(condition);
+      }
+//      outer:
+//      if (t > 0)
+//         {
+//            System.out.println(getDesiredAccAkxValue());
+//            while(getDesiredAccAkxValue() < 0)
+//            {
+//               t++;
+//
+//            }
+//            t++;
+//            continue outer;
+//         }
+//      while(condition)
+//      {
+         //System.out.println(SearchAndKickBehavior.getDesiredAccAkxValue());
+//         value = SearchAndKickBehavior.getDesiredAccAkxValue();
+//         if(value <0)
+//         {
+//            System.out.println(SearchAndKickBehavior.getDesiredAccAkxValue());
+//         }
+//      }
+//      ThreadTools.startAThread(new Runnable()
+//      {
+//         @Override
+//         public void run()
+//         {
+//            double value;
+//            while(true)
+//            {
+//               value = SearchAndKickBehavior.getDesiredAccAkxValue();
+//               while (value < 0)
+//               {
+//                  System.out.println(SearchAndKickBehavior.getDesiredAccAkxValue());
+//               }
+//            }
+//         }
+//      }, "Torque Names");
    }
 
 
@@ -379,7 +460,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
     * @param chest - set true for chest trajectory
     * @param isfootstepsON - set true to initialize preset footsteps till the steps and then the AStarfootstep planner kicks in
     * @param pelvis - set true for setting nomial pelvis height
-    * @param pauseWhileWalking - set true to puase just before the hole and complete bending action
+    * @param pauseWhileWalking - set true to pause just before the hole in the wall and complete bending action
     * @param stepHeight - environment parameter
     * @param swingHeight - swing phase parameter
     * @throws SimulationExceededMaximumTimeException
@@ -396,6 +477,9 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
          if(tmpcounter == 0)
          {
             callDoorTiminingBehavior();
+            System.out.println("******************************************************************************************************");
+            startListening();
+
          }
          tmpcounter++;
       }
@@ -437,7 +521,7 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
       if(tmpcounter == 0)
          //createAndPublishChestTrajectory(ReferenceFrame.getWorldFrame(),drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame()); //call your door opening behavior form this code point
-         callDoorTiminingBehavior();
+//         startListening();
       tmpcounter++;
 
       // robot fell
@@ -455,8 +539,10 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
       drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
       behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
-      assertreachedforkick();
+//      startListening();
+//      assertreachedforkick();
       behaviorDispatcher.start();
+
    }
 
    /**
@@ -845,11 +931,13 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
       drcSimulationTestHelper.assertRobotsRootJointIsInBoundingBox(boundingBox3D);
    }
 //
-   private static void assertreachedforkick()
+   private static void  assertreachedforkick(boolean value)
    {
-//      OneDoFJointBasics AnkleJoint = fullRobotModel.getLegJoint(RobotSide.LEFT,LegJointName.ANKLE_PITCH);
-//      System.out.println("AnkleJoint.getTau() : " + AnkleJoint.getTau());
-      //System.out.println(ankkleTau.getValueAsDouble());
+      // If i am triggered it means the ball has been kicked currently
+//      final boolean success = false;
+      System.out.println("Hey I am in the terminal Loop");
+      assertTrue(value);
+
    }
 
    public void setIS_CHEST_ON(boolean IS_CHEST_ON)

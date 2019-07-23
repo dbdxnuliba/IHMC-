@@ -1,7 +1,9 @@
 package us.ihmc.humanoidBehaviors.behaviors.complexBehaviors;
 
 import controller_msgs.msg.dds.*;
+import std_msgs.msg.dds.*;
 import us.ihmc.communication.*;
+import us.ihmc.communication.packets.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple2D.*;
@@ -25,6 +27,8 @@ import us.ihmc.wholeBodyController.*;
 import us.ihmc.yoVariables.variable.*;
 
 import javax.annotation.*;
+import java.lang.*;
+import java.lang.String;
 
 //wrtie a code to kick things
 public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
@@ -79,11 +83,12 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private final SphereDetectionBehavior sphereDetctionBehavior;
    private FrameVector2D walkingDirectionForYawMotion;
    private boolean IS_ROBOT_AHEAD_OR_BACK;
-   private YoVariable ankletau;
+   private static YoVariable ankletau;
 
    private final HumanoidReferenceFrames referenceFrames;
 
-   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
+//   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
+//   private IHMCROS2Publisher<Float64> ankle;
 
    private final ConcurrentListeningQueue<ValveLocationPacket> sphereLocation = new ConcurrentListeningQueue<>(10);
 
@@ -106,7 +111,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //      pipeLine = new PipeLine<>(yoTime);
       this.atlasPrimitiveActions = atlasPrimitiveActions;
       this.model = fullHumanoidRobotModel;
-      this.ankletau = abc;
+//      this.ankletau = abc;
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
       kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
       this.environment = environment;
@@ -118,7 +123,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //      walkwithOffset = new WalkToInteractableObjectBehavior(robotName,yoTime,ros2Node,atlasPrimitiveActions);
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
       sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
-
+//      ankle = createPublisher(Float64.class,"ankle");
       setupStateMachine();
    }
 
@@ -127,22 +132,44 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    @Override
    public void doControl()
    {
-      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
-      OneDoFJointBasics AnkleJoint = model.getLegJoint(RobotSide.LEFT, LegJointName.ANKLE_PITCH);
-      YoVariable abc = getYoVariableRegistry().getVariable("tau_l_leg_akx");
-      //abc.getValueAsDouble();
-      int t = 0;
-      if(t % 1000 == 0)
-      {
-         //System.out.println("AnkleJoint.getTau() : " + AnkleJoint.getTau());
-         t++;
-      }
+//      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
+//      OneDoFJointBasics AnkleJoint = model.getLegJoint(RobotSide.LEFT, LegJointName.ANKLE_PITCH);
+//      YoVariable abc = getYoVariableRegistry().getVariable("tau_l_leg_akx");
+//      //abc.getValueAsDouble();
+//      int t = 0;
+//      if(t % 10000 == 0)
+//      {
+//         //System.out.println("AnkleJoint.getTau() : " + AnkleJoint.getTau());
+////         System.out.println(ankletau);
+//         if(ankletau.getValueAsDouble() < 0)
+//         {
+//            setankleVal();
+//         }
+//         t++;
+//      }
+
       if(sphereLocation.isNewPacketAvailable())
       {
          receivedSphereLocation(sphereLocation.getLatestPacket());
       }
+//      Float64 tmp = new Float64();
+//      tmp.data_ = ankletau.getValueAsDouble();
+//      ankle.publish(tmp);
       super.doControl();
+
    }
+
+//   public static double getDesiredAccAkxValue()
+//   {
+//      return ankletau.getValueAsDouble();
+//   }
+//   private double setankleVal()
+//   {
+//      ankletau.setValueFromDouble(getDesiredAccAkxValue());
+//      return 0.0;
+//   }
+
+
 
    public void receivedSphereLocation(ValveLocationPacket sphereLocationPacket)
    {
@@ -184,7 +211,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             }
          };
       }
-      System.out.println(ankletau.getName());
       checkIfRobotIsAheadofBall();
       getoffsetPoint();
       BehaviorAction walktowardstheObject;
@@ -349,6 +375,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       }
 
       //return the initial key
+
       return WalkThroughDoorWOFiducialStates.SETUP_ROBOT;
    }
 

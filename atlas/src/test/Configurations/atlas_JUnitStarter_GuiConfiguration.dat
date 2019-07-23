@@ -1,7 +1,7 @@
 <GraphGroup>
 	<Cols>1</Cols>
 	<Graph>
-		<Variables>root.FloatingFiducialBoxRobot_4.t</Variables>
+		<Variables>root.FloatingFiducialBoxRobot_4.t,root.atlas.DRCSimulation.DRCControllerThread.DRCMomentumBasedController.HumanoidHighLevelControllerManager.LowLevelOneDoFJointDesiredDataHumanoidHighLevelControllerManager.l_leg_akxLowLevelDesiredAccelerationHHLCM</Variables>
 		<GraphConfiguration>
 			<Name>config1</Name>
 			<ScalingMethod>1</ScalingMethod>
@@ -31,9 +31,9 @@ null,
 
 <Current View>Normal View</Current View>
  <Canvas 1> 
- <Camera X>6.353271365572844</Camera X>
- <Camera Y>-5.058911458282223</Camera Y>
- <Camera Z>1.7965768217004103</Camera Z>
+ <Camera X>10.679241635245539</Camera X>
+ <Camera Y>3.174090829306331</Camera Y>
+ <Camera Z>0.644017640192293</Camera Z>
  <Dolly data> 
  <Position X>2.0</Position X>
  <Position Y>12.0</Position Y>
@@ -57,8 +57,8 @@ null,
 </Track Booleans>
 </Track data>
 <Fix Position>
-<Fix X>8.94006961593349</Fix X>
-<Fix Y>5.545180265066435</Fix Y>
-<Fix Z>0.23692350335205892</Fix Z>
+<Fix X>11.34600211434734</Fix X>
+<Fix Y>-7.541011129995234</Fix Y>
+<Fix Z>-0.9470508206934927</Fix Z>
 </Fix Position>
 </Canvas 1>
