@@ -3,16 +3,17 @@ package us.ihmc.quadrupedRobotics.messageHandling;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PauseWalkingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedPreplannedStepStream;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
@@ -50,12 +51,11 @@ public class QuadrupedStepMessageHandler
    private final YoPreallocatedList<YoQuadrupedTimedStep> receivedStepSequence;
    private final QuadrantDependentList<YoQuadrupedTimedStep> mostRecentCompletedStep = new QuadrantDependentList<>();
 
-   private final YoBoolean stepPlanIsAdjustable = new YoBoolean("stepPlanIsAdjustable", registry);
-
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
 
    private final QuadrupedPreplannedStepStream preplannedStepStream;
+   private final QuadrupedXGaitStepStream xGaitStepStream;
 
    private final double controlDt;
 
@@ -76,14 +76,16 @@ public class QuadrupedStepMessageHandler
       // the look-ahead step adjustment was doing integer division which was 1.0 for step 0 and 0.0 after, so effectively having a one step recovery
       // TODO tune this value
       numberOfStepsToRecover.set(1);
+
       this.preplannedStepStream = new QuadrupedPreplannedStepStream(robotTimestamp, registry);
+      this.xGaitStepStream = new QuadrupedXGaitStepStream(referenceFrames, robotTimestamp, controlDt, new QuadrupedXGaitSettings(), registry);
 
       parentRegistry.addChild(registry);
    }
 
    public boolean isStepPlanAvailable()
    {
-      return !isPaused.getBooleanValue() && preplannedStepStream.isStepPlanAvailable();
+      return !isPaused.getBooleanValue() && (preplannedStepStream.isStepPlanAvailable() || xGaitStepStream.isStepPlanAvailable());
    }
 
    public void handleQuadrupedTimedStepListCommand(QuadrupedTimedStepListCommand command)
@@ -103,20 +105,25 @@ public class QuadrupedStepMessageHandler
       preplannedStepStream.acceptStepCommand(command);
    }
 
+   public void handleTeleopDesiredVelocityCommand(QuadrupedTeleopDesiredVelocityCommand command)
+   {
+      xGaitStepStream.setDesiredVelocity(command.getDesiredXVelocity(), command.getDesiredYVelocity(), command.getDesiredYawVelocity());
+   }
+
    public void initialize()
    {
       isPaused.set(false);
       pauseTime.set(Double.NaN);
 
-      preplannedStepStream.onEntry();
+      xGaitStepStream.onEntry();
       process();
    }
 
    public void process()
    {
-      preplannedStepStream.doAction();
+      xGaitStepStream.doAction();
 
-      PreallocatedList<? extends QuadrupedTimedStep> steps = preplannedStepStream.getSteps();
+      PreallocatedList<? extends QuadrupedTimedStep> steps = xGaitStepStream.getSteps();
       receivedStepSequence.clear();
       for (int i = 0; i < steps.size(); i++)
       {
@@ -136,10 +143,10 @@ public class QuadrupedStepMessageHandler
          QuadrupedTimedStepCommand stepCommand = stepCommands.get(i);
          for (int j = i + 1; j < command.getNumberOfSteps(); j++)
          {
-            if(stepCommands.get(j).getRobotQuadrant() == stepCommands.get(i).getRobotQuadrant())
+            if (stepCommands.get(j).getRobotQuadrant() == stepCommands.get(i).getRobotQuadrant())
             {
                QuadrupedTimedStepCommand nextStepCommand = stepCommands.get(j);
-               if(nextStepCommand.getGoalPosition().distance(stepCommand.getGoalPosition()) > maximumStepTranslation)
+               if (nextStepCommand.getGoalPosition().distance(stepCommand.getGoalPosition()) > maximumStepTranslation)
                {
                   return false;
                }
@@ -152,6 +159,11 @@ public class QuadrupedStepMessageHandler
       }
 
       return true;
+   }
+
+   public void onStopWalking()
+   {
+      xGaitStepStream.onExit();
    }
 
    public void clearSteps()
@@ -363,22 +375,6 @@ public class QuadrupedStepMessageHandler
          if (currentTime >= endTime)
             receivedStepSequence.get(i).getTimeInterval().setEndTime(currentTime + controlDt);
       }
-   }
-
-   public QuadrupedTimedStep getNextStep()
-   {
-      for (int i = 0; i < receivedStepSequence.size(); i++)
-      {
-         double currentTime = robotTimestamp.getDoubleValue();
-         double endTime = receivedStepSequence.get(i).getTimeInterval().getEndTime();
-
-         if (currentTime < endTime)
-         {
-            return receivedStepSequence.get(i);
-         }
-      }
-
-      return null;
    }
 
    public void reset()

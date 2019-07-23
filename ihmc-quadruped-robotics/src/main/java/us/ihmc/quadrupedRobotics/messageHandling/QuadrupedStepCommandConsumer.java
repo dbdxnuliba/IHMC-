@@ -46,6 +46,10 @@ public class QuadrupedStepCommandConsumer
       {
          stepMessageHandler.handleQuadrupedTimedStepListCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedTimedStepListCommand.class));
       }
+      if(commandConsumerWithDelayBuffers.isNewCommandAvailable(QuadrupedTeleopDesiredVelocityCommand.class))
+      {
+         stepMessageHandler.handleTeleopDesiredVelocityCommand(commandConsumerWithDelayBuffers.pollNewestCommand(QuadrupedTeleopDesiredVelocityCommand.class));
+      }
       if (commandConsumerWithDelayBuffers.isNewCommandAvailable(SoleTrajectoryCommand.class))
       {
          stepMessageHandler.handleSoleTrajectoryCommand(commandConsumerWithDelayBuffers.pollNewCommands(SoleTrajectoryCommand.class));
