@@ -1,55 +1,6 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories;
 
-import static us.ihmc.humanoidRobotics.communication.packets.PacketValidityChecker.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import controller_msgs.msg.dds.AbortWalkingMessage;
-import controller_msgs.msg.dds.AdjustFootstepMessage;
-import controller_msgs.msg.dds.ArmDesiredAccelerationsMessage;
-import controller_msgs.msg.dds.ArmTrajectoryMessage;
-import controller_msgs.msg.dds.AutomaticManipulationAbortMessage;
-import controller_msgs.msg.dds.CapturabilityBasedStatus;
-import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-import controller_msgs.msg.dds.ChestHybridJointspaceTaskspaceTrajectoryMessage;
-import controller_msgs.msg.dds.ChestTrajectoryMessage;
-import controller_msgs.msg.dds.ClearDelayQueueMessage;
-import controller_msgs.msg.dds.ControllerCrashNotificationPacket;
-import controller_msgs.msg.dds.FootLoadBearingMessage;
-import controller_msgs.msg.dds.FootTrajectoryMessage;
-import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.FootstepStatusMessage;
-import controller_msgs.msg.dds.GoHomeMessage;
-import controller_msgs.msg.dds.HandHybridJointspaceTaskspaceTrajectoryMessage;
-import controller_msgs.msg.dds.HandLoadBearingMessage;
-import controller_msgs.msg.dds.HandTrajectoryMessage;
-import controller_msgs.msg.dds.HeadHybridJointspaceTaskspaceTrajectoryMessage;
-import controller_msgs.msg.dds.HeadTrajectoryMessage;
-import controller_msgs.msg.dds.HighLevelStateChangeStatusMessage;
-import controller_msgs.msg.dds.HighLevelStateMessage;
-import controller_msgs.msg.dds.JointspaceTrajectoryStatusMessage;
-import controller_msgs.msg.dds.ManipulationAbortedStatus;
-import controller_msgs.msg.dds.MomentumTrajectoryMessage;
-import controller_msgs.msg.dds.NeckDesiredAccelerationsMessage;
-import controller_msgs.msg.dds.NeckTrajectoryMessage;
-import controller_msgs.msg.dds.PauseWalkingMessage;
-import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
-import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
-import controller_msgs.msg.dds.PelvisTrajectoryMessage;
-import controller_msgs.msg.dds.PlanOffsetStatus;
-import controller_msgs.msg.dds.PlanarRegionsListMessage;
-import controller_msgs.msg.dds.PrepareForLocomotionMessage;
-import controller_msgs.msg.dds.SpineDesiredAccelerationsMessage;
-import controller_msgs.msg.dds.SpineTrajectoryMessage;
-import controller_msgs.msg.dds.StopAllTrajectoryMessage;
-import controller_msgs.msg.dds.TaskspaceTrajectoryStatusMessage;
-import controller_msgs.msg.dds.TextToSpeechPacket;
-import controller_msgs.msg.dds.WalkingControllerFailureStatusMessage;
-import controller_msgs.msg.dds.WalkingStatusMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.commonWalkingControlModules.controllerAPI.input.ControllerNetworkSubscriber.MessageValidator;
 import us.ihmc.commonWalkingControlModules.controllerAPI.input.MessageCollector.MessageIDExtractor;
 import us.ihmc.communication.ROS2Tools;
@@ -57,37 +8,10 @@ import us.ihmc.communication.ROS2Tools.MessageTopicNameGenerator;
 import us.ihmc.communication.ROS2Tools.ROS2TopicQualifier;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.euclid.interfaces.Settable;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.AbortWalkingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.AdjustFootstepCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ArmDesiredAccelerationsCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ArmTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.AutomaticManipulationAbortCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CenterOfMassTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestHybridJointspaceTaskspaceTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ClearDelayQueueCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootLoadBearingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootstepDataListCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.GoHomeCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HandHybridJointspaceTaskspaceTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HandLoadBearingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HandTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HeadHybridJointspaceTaskspaceTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HeadTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.HighLevelControllerStateCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.MomentumTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.NeckDesiredAccelerationsCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.NeckTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PauseWalkingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisHeightTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisOrientationTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionsListCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PrepareForLocomotionCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SpineDesiredAccelerationsCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SpineTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
+
+import java.util.*;
+
+import static us.ihmc.humanoidRobotics.communication.packets.PacketValidityChecker.*;
 
 public class ControllerAPIDefinition
 {
@@ -97,52 +21,18 @@ public class ControllerAPIDefinition
    static
    {
       List<Class<? extends Command<?, ?>>> commands = new ArrayList<>();
-      commands.add(ArmTrajectoryCommand.class);
-      commands.add(HandTrajectoryCommand.class);
-      commands.add(FootTrajectoryCommand.class);
-      commands.add(HeadTrajectoryCommand.class);
-      commands.add(NeckTrajectoryCommand.class);
-      commands.add(NeckDesiredAccelerationsCommand.class);
-      commands.add(ChestTrajectoryCommand.class);
-      commands.add(SpineTrajectoryCommand.class);
-      commands.add(PelvisTrajectoryCommand.class);
-      commands.add(PelvisOrientationTrajectoryCommand.class);
-      commands.add(PelvisHeightTrajectoryCommand.class);
-      commands.add(StopAllTrajectoryCommand.class);
-      commands.add(FootstepDataListCommand.class);
-      commands.add(AdjustFootstepCommand.class);
-      commands.add(GoHomeCommand.class);
-      commands.add(FootLoadBearingCommand.class);
-      commands.add(ArmDesiredAccelerationsCommand.class);
-      commands.add(AutomaticManipulationAbortCommand.class);
-      commands.add(HighLevelControllerStateCommand.class);
-      commands.add(AbortWalkingCommand.class);
-      commands.add(PrepareForLocomotionCommand.class);
-      commands.add(PauseWalkingCommand.class);
-      commands.add(SpineDesiredAccelerationsCommand.class);
-      commands.add(HandLoadBearingCommand.class);
-      commands.add(HandHybridJointspaceTaskspaceTrajectoryCommand.class);
-      commands.add(HeadHybridJointspaceTaskspaceTrajectoryCommand.class);
-      commands.add(ChestHybridJointspaceTaskspaceTrajectoryCommand.class);
-      commands.add(ClearDelayQueueCommand.class);
-      commands.add(MomentumTrajectoryCommand.class);
-      commands.add(CenterOfMassTrajectoryCommand.class);
-      commands.add(PlanarRegionsListCommand.class);
+      for (ControllerCommand controllerCommand : ControllerCommand.values)
+      {
+         commands.add(controllerCommand.getCommandClass());
+      }
 
       controllerSupportedCommands = Collections.unmodifiableList(commands);
 
       List<Class<? extends Settable<?>>> statusMessages = new ArrayList<>();
-      statusMessages.add(CapturabilityBasedStatus.class);
-      statusMessages.add(FootstepStatusMessage.class);
-      statusMessages.add(PlanOffsetStatus.class);
-      statusMessages.add(WalkingStatusMessage.class);
-      statusMessages.add(WalkingControllerFailureStatusMessage.class);
-      statusMessages.add(ManipulationAbortedStatus.class);
-      statusMessages.add(HighLevelStateChangeStatusMessage.class);
-      statusMessages.add(TextToSpeechPacket.class);
-      statusMessages.add(ControllerCrashNotificationPacket.class);
-      statusMessages.add(JointspaceTrajectoryStatusMessage.class);
-      statusMessages.add(TaskspaceTrajectoryStatusMessage.class);
+      for (ControllerStatus controllerStatus : ControllerStatus.values)
+      {
+         statusMessages.add(controllerStatus.getStatusClass());
+      }
 
       controllerSupportedStatusMessages = Collections.unmodifiableList(statusMessages);
    }
