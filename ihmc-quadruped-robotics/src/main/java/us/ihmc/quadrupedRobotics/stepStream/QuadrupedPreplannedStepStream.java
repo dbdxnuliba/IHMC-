@@ -14,6 +14,7 @@ import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
 import java.util.Comparator;
@@ -26,6 +27,7 @@ public class QuadrupedPreplannedStepStream implements QuadrupedStepStream
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final YoDouble timestamp;
+   private final YoBoolean stepPlanIsAdjustable = new YoBoolean("stepPlanIsAdjustable", registry);
    private final DoubleProvider initialTransferDurationForShifting = new DoubleParameter("initialTransferDurationForShifting", registry, 1.0);
    private final AtomicReference<QuadrupedTimedStepListCommand> stepListCommand = new AtomicReference<>();
    private final PreallocatedList<QuadrupedTimedStep> stepList = new PreallocatedList<>(QuadrupedTimedStep.class,
@@ -61,6 +63,7 @@ public class QuadrupedPreplannedStepStream implements QuadrupedStepStream
          step.getTimeInterval().shiftInterval(timeShift);
       }
 
+      stepPlanIsAdjustable.set(stepListCommand.isStepPlanAdjustable());
       stepList.sort(TimeIntervalTools.startTimeComparator);
    }
 
@@ -133,6 +136,11 @@ public class QuadrupedPreplannedStepStream implements QuadrupedStepStream
    public boolean isStepPlanAvailable()
    {
       return stepListCommand.get() != null;
+   }
+
+   public boolean isStepPlanAdjustable()
+   {
+      return stepPlanIsAdjustable.getBooleanValue();
    }
 
    public void acceptStepCommand(QuadrupedTimedStepListCommand stepListMessage)

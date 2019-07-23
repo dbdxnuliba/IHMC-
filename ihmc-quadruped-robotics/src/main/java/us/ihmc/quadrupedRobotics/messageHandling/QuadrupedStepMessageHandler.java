@@ -1,44 +1,33 @@
 package us.ihmc.quadrupedRobotics.messageHandling;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang3.mutable.MutableBoolean;
-
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PauseWalkingCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
-import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedPreplannedStepStream;
-import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepMode;
-import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepStream;
-import us.ihmc.quadrupedRobotics.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.stateMachine.core.StateMachine;
-import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
-import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.BooleanProvider;
-import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class QuadrupedStepMessageHandler
 {
@@ -120,6 +109,7 @@ public class QuadrupedStepMessageHandler
       pauseTime.set(Double.NaN);
 
       preplannedStepStream.onEntry();
+      process();
    }
 
    public void process()
@@ -261,12 +251,13 @@ public class QuadrupedStepMessageHandler
 
    public boolean isStepPlanAdjustable()
    {
-      return stepPlanIsAdjustable.getBooleanValue();
+      return preplannedStepStream.isStepPlanAdjustable();
    }
 
    public void onTouchDown(RobotQuadrant robotQuadrant)
    {
       touchdownTrigger.get(robotQuadrant).setTrue();
+      preplannedStepStream.onTouchDown(robotQuadrant);
    }
 
    public void shiftPlanTimeBasedOnTouchdown(RobotQuadrant robotQuadrant, double currentTime)
