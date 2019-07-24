@@ -7,7 +7,7 @@ uint64 phase_length
 
 # Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
 # Field default value 1
-uint8 solver_verbosity
+uint64 solver_verbosity
 
 # Maximum distance between the CoM and the foot
 # Field default value 2.0

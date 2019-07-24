@@ -5,7 +5,7 @@ StepUpPlannerPhaseParameters[<=20] phases_settings
 uint64 phase_length 30
 
 # Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
-uint8 solver_verbosity 1
+uint64 solver_verbosity 1
 
 # Maximum distance between the CoM and the foot
 float64 max_leg_length 2.0

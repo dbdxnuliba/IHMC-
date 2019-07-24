@@ -45,7 +45,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
           current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType.getMaxCdrSerializedSize(current_alignment);}
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
@@ -93,7 +93,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
@@ -146,7 +146,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       cdr.write_type_12(data.getPhaseLength());
 
-      cdr.write_type_9(data.getSolverVerbosity());
+      cdr.write_type_12(data.getSolverVerbosity());
 
       cdr.write_type_6(data.getMaxLegLength());
 
@@ -188,7 +188,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       cdr.read_type_e(data.getPhasesSettings());	
       data.setPhaseLength(cdr.read_type_12());
       	
-      data.setSolverVerbosity(cdr.read_type_9());
+      data.setSolverVerbosity(cdr.read_type_12());
       	
       data.setMaxLegLength(cdr.read_type_6());
       	
@@ -222,7 +222,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
    {
       ser.write_type_e("phases_settings", data.getPhasesSettings());
       ser.write_type_12("phase_length", data.getPhaseLength());
-      ser.write_type_9("solver_verbosity", data.getSolverVerbosity());
+      ser.write_type_12("solver_verbosity", data.getSolverVerbosity());
       ser.write_type_6("max_leg_length", data.getMaxLegLength());
       ser.write_type_d("ipopt_linear_solver", data.getIpoptLinearSolver());
       ser.write_type_6("final_state_anticipation", data.getFinalStateAnticipation());
@@ -245,7 +245,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
    {
       ser.read_type_e("phases_settings", data.getPhasesSettings());
       data.setPhaseLength(ser.read_type_12("phase_length"));
-      data.setSolverVerbosity(ser.read_type_9("solver_verbosity"));
+      data.setSolverVerbosity(ser.read_type_12("solver_verbosity"));
       data.setMaxLegLength(ser.read_type_6("max_leg_length"));
       ser.read_type_d("ipopt_linear_solver", data.getIpoptLinearSolver());
       data.setFinalStateAnticipation(ser.read_type_6("final_state_anticipation"));

@@ -19,7 +19,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    /**
             * Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
             */
-   public byte solver_verbosity_ = (byte) 1;
+   public long solver_verbosity_ = 1;
    /**
             * Maximum distance between the CoM and the foot
             */
@@ -159,14 +159,14 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    /**
             * Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
             */
-   public void setSolverVerbosity(byte solver_verbosity)
+   public void setSolverVerbosity(long solver_verbosity)
    {
       solver_verbosity_ = solver_verbosity;
    }
    /**
             * Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
             */
-   public byte getSolverVerbosity()
+   public long getSolverVerbosity()
    {
       return solver_verbosity_;
    }
