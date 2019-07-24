@@ -62,7 +62,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    //set waypoint for walk to interactable objects w.r.t to the object location
 
    private double distanceFromSphereBeforeYawMotion;
-   private boolean BALL_DETECTION = false;
+   private boolean BALL_DETECTION = true;
 
    private final SleepBehavior sleepBehavior;
    private final StepUpDoor environment;
@@ -163,11 +163,20 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             {
                publishTextToSpeech("Entering door/sphere detection behavior");
             }
+
+            @Override
+            public void onExit()
+            {
+               if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
+               {
+                  super.isDone();
+               }
+               super.onExit();
+            }
          };
       }
 
-      checkIfRobotIsAheadofBall();
-      getoffsetPoint();
+
       BehaviorAction walktowardstheObject;
       BehaviorAction walkTosphere1 = null;
 
@@ -175,9 +184,11 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       {
          walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
          {
+
             @Override protected void setBehaviorInput ()
             {
-
+               checkIfRobotIsAheadofBall();
+               getoffsetPoint();
                publishTextToSpeech("Directly Walking towards Sphere");
                FramePose2D pose1 = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(offsetFromSphere.getX()-0.15,offsetFromSphere.getY()),getWalkingYawofgetoffsetPoint());
                walkToLocationBehavior.setTarget(pose1);
@@ -187,11 +198,14 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       }
       else
       {
-         getDistanceFromSphereBeforeYawMotion();
+
          walkTosphere1 = new BehaviorAction(walkToOffsetPoint1)
          {
             @Override protected void setBehaviorInput()
             {
+               checkIfRobotIsAheadofBall();
+               getoffsetPoint();
+               getDistanceFromSphereBeforeYawMotion();
                publishTextToSpeech("Entering walkToWayPoint1");
                //need to write a method to calculate these waypoints.
                walkToOffsetPoint1.setTarget(getWaypoint());
@@ -294,26 +308,31 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
       if(BALL_DETECTION)
       {
-         //start adding them to the state factory
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
-         factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+         // behind the ball
+         if(!IS_ROBOT_AHEAD_OR_BACK)
+         {
+            //behind the ball
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST,yawAction,WalkThroughDoorWOFiducialStates.KICK_ACTION);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
+            factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+         }
+         else
+         {
+            //between the ball and the goal post
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1,walkTosphere1, WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST, yawAction,WalkThroughDoorWOFiducialStates.PELVIS_UP);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_UP, pelvisUpMotion,WalkThroughDoorWOFiducialStates.KICK_ACTION);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.PELVIS_DOWN);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisDownMotion,WalkThroughDoorWOFiducialStates.DONE);
+            factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
+         }
       }
 
-      else if(IS_ROBOT_AHEAD_OR_BACK)
-      {
-         //start adding them to the state factory
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1,walkTosphere1, WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST, yawAction,WalkThroughDoorWOFiducialStates.PELVIS_UP);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_UP, pelvisUpMotion,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.PELVIS_DOWN);
-         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisDownMotion,WalkThroughDoorWOFiducialStates.DONE);
-         factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
-      }
       else
       {
          //start adding them to the state factory
