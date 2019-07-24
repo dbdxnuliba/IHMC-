@@ -26,7 +26,7 @@ module controller_msgs
          * Solver verbosity (0 to disable printing, 1 prints the timing, >1 increase IPOPT printing level
          */
         @defaultValue(value=1)
-        octet solver_verbosity;
+        unsigned long long solver_verbosity;
         /**
          * Maximum distance between the CoM and the foot
          */
