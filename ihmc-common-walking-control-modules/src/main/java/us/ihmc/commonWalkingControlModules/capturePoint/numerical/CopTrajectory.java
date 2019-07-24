@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ObjDoubleConsumer;
 
-import org.apache.commons.math3.util.Precision;
-
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.lists.RecyclingArrayList;
@@ -32,6 +30,27 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
     * instead of jump.
     */
    private static final double EPSILON = 0.001;
+
+   /**
+    * Nominally a cop waypoint is added at the centroid of each support at the time the support becomes active. In some
+    * cases this is not possible: when touching down on the heel and going to a full foothold the centroid of the
+    * foothold will not yet be available to transition to until the support has changed. If the future CoP trajectory
+    * will not pass by the centroid of the foot by this (normalized) distance the centroid will be added at half the
+    * time spent in the corresponding support.
+    * <p>
+    * Example 1: Heel (t = 0.0), Foot (t = 1.0), Toe (t = 2.0)<br>
+    * Here, the cop trajectory will pass by the centroid of the foot. No additional waypoint is added. The waypoints
+    * will be as follows:<br>
+    * - Centroid of Heel (t = 0.0)<br>
+    * - Centroid of Toe (t = 2.0)<br>
+    * <p>
+    * Example 2: Heel (t = 0.0), Foot (t = 1.0), Heel (t = 2.0)<br>
+    * Here, an additional waypoint is added. The waypoints will be as follows:<br>
+    * - Centroid of Heel (t = 0.0)<br>
+    * - Centroid of Foot (t = 1.5) (note, this can not be 1.0 since the foot would just be touching down)<br>
+    * - Centroid of Heel (t = 2.0)<br>
+    */
+   private static final double CENTROID_EPSILON = 0.2;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -88,81 +107,92 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
    {
       clear();
 
-      waypoints.add().set(supportPolygons.get(0).getCentroid());
-      waypointTimes.add(0.0);
+      waypoints.add().set(initialCop);
+      waypointTimes.add(timeInSequence);
 
       // Waypoint at end of support is as close to next support center as possible.
       for (int i = 1; i < supportPolygons.size(); i++)
       {
-         ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
-         ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
-         Point2DReadOnly centroid = polygon.getCentroid();
-         Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
+         if (supportTimes.get(i) <= timeInSequence)
+            continue;
 
-         if (previousPolygon.isPointInside(centroid, EPSILON))
-         {
-            waypoints.add().set(centroid);
-            waypointTimes.add(supportTimes.get(i));
-         }
-         else if (polygon.isPointInside(lastWaypoint, EPSILON))
-         {
-            waypoints.add().set(lastWaypoint);
-            waypointTimes.add(supportTimes.get(i));
+         if (waypoints.size() == 1 && i > 1)
+            addInitialPolygon(supportPolygons, supportTimes, finalTransferDuration, i - 1);
 
-            // Check if the next polygon needs to be added. Consider going from heel to foot to heel. In that case we would like to add the
-            // foot centroid. However, when going from heel to foot to toe we do not.
-            if (i < supportPolygons.size() - 1)
-            {
-               ConvexPolygon2DReadOnly nextPolygon = supportPolygons.get(i + 1);
-               Point2DReadOnly nextCentroid = nextPolygon.getCentroid();
-
-               // If this distance is small the trajectory will pass by the centroid of the polygon we are looking at.
-               double distance = EuclidGeometryTools.distanceFromPoint2DToLineSegment2D(centroid, lastWaypoint, nextCentroid);
-               if (distance * distance > 0.1 * polygon.getArea())
-               {
-                  // We are not passing close by the centroid. This means we should add it halfway through the next support phase
-                  double supportDuration = i < supportTimes.size() - 1 ? supportTimes.get(i + 1) - supportTimes.get(i) : finalTransferDuration;
-                  waypoints.add().set(centroid);
-                  waypointTimes.add(supportTimes.get(i) + supportDuration / 2.0);
-               }
-            }
-         }
-         else
-         {
-            LogTools.warn("Discontinuous support sequence! Expect bad plans.");
-            waypoints.add().set(lastWaypoint);
-            waypointTimes.add(supportTimes.get(i));
-            waypoints.add().set(centroid);
-            waypointTimes.add(supportTimes.get(i));
-         }
+         addPolygon(supportPolygons, supportTimes, finalTransferDuration, i);
       }
 
       // Last waypoint is at center of final support.
       waypoints.add().set(supportPolygons.get(supportPolygons.size() - 1).getCentroid());
       waypointTimes.add(supportTimes.get(supportTimes.size() - 1) + finalTransferDuration);
 
-      // Add in the initial CoP at the specified time:
-      int index = 0;
-      while (index < waypointTimes.size() && waypointTimes.get(index) < timeInSequence)
-         index++;
+      updateViz();
+   }
 
-      if (index == waypointTimes.size())
+   private void addPolygon(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, int i)
+   {
+      ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
+      ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
+      Point2DReadOnly centroid = polygon.getCentroid();
+      Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
+
+      if (previousPolygon.isPointInside(centroid, EPSILON))
       {
-         waypoints.add().set(initialCop);
-         waypointTimes.add(timeInSequence);
+         waypoints.add().set(centroid);
+         waypointTimes.add(supportTimes.get(i));
       }
-      else if (Precision.equals(timeInSequence, waypointTimes.get(index)))
+      else if (polygon.isPointInside(lastWaypoint, EPSILON))
       {
-         waypoints.get(index).set(initialCop);
-         waypointTimes.replace(index, timeInSequence);
+         waypoints.add().set(lastWaypoint);
+         waypointTimes.add(supportTimes.get(i));
+         addCentroidIfNeeded(supportPolygons, supportTimes, finalTransferDuration, i, polygon, centroid, lastWaypoint);
       }
       else
       {
-         waypoints.insertAtIndex(index).set(initialCop);
-         waypointTimes.insert(index, timeInSequence);
+         LogTools.warn("Discontinuous support sequence! Expect bad plans.");
+         waypoints.add().set(lastWaypoint);
+         waypointTimes.add(supportTimes.get(i));
+         waypoints.add().set(centroid);
+         waypointTimes.add(supportTimes.get(i));
       }
+   }
 
-      updateViz();
+   private void addInitialPolygon(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, int i)
+   {
+      ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
+      ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
+      Point2DReadOnly centroid = polygon.getCentroid();
+      Point2DReadOnly lastWaypoint = previousPolygon.getCentroid();
+
+      if (!previousPolygon.isPointInside(centroid, EPSILON) && polygon.isPointInside(lastWaypoint, EPSILON))
+      {
+         addCentroidIfNeeded(supportPolygons, supportTimes, finalTransferDuration, i, polygon, centroid, lastWaypoint);
+      }
+   }
+
+   /**
+    * See javadoc of {@link #CENTROID_EPSILON}
+    */
+   private void addCentroidIfNeeded(List<? extends ConvexPolygon2DReadOnly> supportPolygons, TDoubleList supportTimes, double finalTransferDuration, int i,
+                                    ConvexPolygon2DReadOnly polygon, Point2DReadOnly centroid, Point2DReadOnly lastWaypoint)
+   {
+      // Check if the next polygon needs to be added. Consider going from heel to foot to heel. In that case we would like to add the
+      // foot centroid. However, when going from heel to foot to toe we do not.
+      if (i < supportPolygons.size() - 1)
+      {
+         ConvexPolygon2DReadOnly nextPolygon = supportPolygons.get(i + 1);
+         Point2DReadOnly nextCentroid = nextPolygon.getCentroid();
+
+         // If this distance is small the trajectory will pass by the centroid of the polygon we are looking at.
+         double distance = EuclidGeometryTools.distanceFromPoint2DToLineSegment2D(centroid, lastWaypoint, nextCentroid);
+         if (distance * distance > CENTROID_EPSILON * polygon.getArea())
+         {
+            // We are not passing close by the centroid. This means we should add it halfway through the next support phase
+            double supportDuration = i < supportTimes.size() - 1 ? supportTimes.get(i + 1) - supportTimes.get(i) : finalTransferDuration;
+            waypoints.add().set(centroid);
+            waypointTimes.add(supportTimes.get(i) + supportDuration / 2.0);
+         }
+      }
    }
 
    private void updateViz()
