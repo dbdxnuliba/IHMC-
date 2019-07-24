@@ -109,15 +109,15 @@ public class QuadrupedStepMessageHandler
       preplannedStepStream.acceptStepCommand(command);
    }
 
-   public void handleTeleopDesiredVelocityCommand(QuadrupedTeleopCommand command)
+   public void acceptTeleopCommand(QuadrupedTeleopCommand command)
    {
-      if(command.isRequestWalk())
+      if(!command.isWalkingRequested())
       {
          xGaitStepStream.onExit();
       }
       else
       {
-         xGaitStepStream.setDesiredVelocity(command.getDesiredVelocity());
+         xGaitStepStream.acceptTeleopCommand(command);
       }
    }
 
@@ -274,7 +274,7 @@ public class QuadrupedStepMessageHandler
 
    public boolean isStepPlanAdjustable()
    {
-      return preplannedStepStream.isStepPlanAdjustable();
+      return xGaitStepStream.areStepsAdjustable();
    }
 
    public void onTouchDown(RobotQuadrant robotQuadrant)

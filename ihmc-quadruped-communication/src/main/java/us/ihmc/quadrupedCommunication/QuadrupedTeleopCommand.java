@@ -11,6 +11,7 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
 {
    private long sequenceId;
    private boolean requestWalk;
+   private boolean areStepsAdjustable;
    private final Vector3D desiredVelocity = new Vector3D();
    private final QuadrupedXGaitSettings xGaitSettings = new QuadrupedXGaitSettings();
 
@@ -19,6 +20,7 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    {
       sequenceId = 0;
       requestWalk = false;
+      areStepsAdjustable = true;
       desiredVelocity.setToZero();
    }
 
@@ -26,6 +28,7 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    public void setFromMessage(QuadrupedTeleopMessage message)
    {
       sequenceId = message.getSequenceId();
+      areStepsAdjustable = message.getAreStepsAdjustable();
       requestWalk = message.getRequestWalk();
       desiredVelocity.set(message.getDesiredVelocity());
       xGaitSettings.set(message.getXGaitSettings());
@@ -53,13 +56,20 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    public void set(QuadrupedTeleopCommand other)
    {
       this.sequenceId = other.sequenceId;
+      this.requestWalk = other.requestWalk;
+      this.areStepsAdjustable = other.areStepsAdjustable;
       this.desiredVelocity.set(other.desiredVelocity);
       this.xGaitSettings.set(other.xGaitSettings);
    }
 
-   public boolean isRequestWalk()
+   public boolean isWalkingRequested()
    {
       return requestWalk;
+   }
+
+   public boolean areStepsAdjustable()
+   {
+      return areStepsAdjustable;
    }
 
    public Tuple3DReadOnly getDesiredVelocity()
@@ -67,7 +77,7 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
       return desiredVelocity;
    }
 
-   public QuadrupedXGaitSettingsReadOnly getxGaitSettings()
+   public QuadrupedXGaitSettingsReadOnly getXGaitSettings()
    {
       return xGaitSettings;
    }

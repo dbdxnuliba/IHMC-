@@ -44,6 +44,8 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
       current_alignment += geometry_msgs.msg.dds.Vector3PubSubType.getMaxCdrSerializedSize(current_alignment);
 
       current_alignment += controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.getMaxCdrSerializedSize(current_alignment);
@@ -67,6 +69,9 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
       current_alignment += geometry_msgs.msg.dds.Vector3PubSubType.getCdrSerializedSize(data.getDesiredVelocity(), current_alignment);
 
       current_alignment += controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.getCdrSerializedSize(data.getXGaitSettings(), current_alignment);
@@ -81,6 +86,8 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
 
       cdr.write_type_7(data.getRequestWalk());
 
+      cdr.write_type_7(data.getAreStepsAdjustable());
+
       geometry_msgs.msg.dds.Vector3PubSubType.write(data.getDesiredVelocity(), cdr);
       controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.write(data.getXGaitSettings(), cdr);
    }
@@ -90,6 +97,8 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
       data.setSequenceId(cdr.read_type_4());
       	
       data.setRequestWalk(cdr.read_type_7());
+      	
+      data.setAreStepsAdjustable(cdr.read_type_7());
       	
       geometry_msgs.msg.dds.Vector3PubSubType.read(data.getDesiredVelocity(), cdr);	
       controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.read(data.getXGaitSettings(), cdr);	
@@ -101,6 +110,7 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
       ser.write_type_7("request_walk", data.getRequestWalk());
+      ser.write_type_7("are_steps_adjustable", data.getAreStepsAdjustable());
       ser.write_type_a("desired_velocity", new geometry_msgs.msg.dds.Vector3PubSubType(), data.getDesiredVelocity());
 
       ser.write_type_a("x_gait_settings", new controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType(), data.getXGaitSettings());
@@ -112,6 +122,7 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    {
       data.setSequenceId(ser.read_type_4("sequence_id"));
       data.setRequestWalk(ser.read_type_7("request_walk"));
+      data.setAreStepsAdjustable(ser.read_type_7("are_steps_adjustable"));
       ser.read_type_a("desired_velocity", new geometry_msgs.msg.dds.Vector3PubSubType(), data.getDesiredVelocity());
 
       ser.read_type_a("x_gait_settings", new controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType(), data.getXGaitSettings());

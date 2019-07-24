@@ -4,10 +4,10 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
+import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
@@ -15,6 +15,7 @@ import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
@@ -37,6 +38,7 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
    private final ArrayList<QuadrupedTimedStep> xGaitPreviewSteps = new ArrayList<>();
    private final PreallocatedList<QuadrupedTimedStep> stepSequence = new PreallocatedList<>(QuadrupedTimedStep.class, QuadrupedTimedStep::new, NUMBER_OF_PREVIOUS_STEPS + 2);
 
+   private final YoBoolean areStepsAdjustable = new YoBoolean("areStepsAdjustable", registry);
    private final YoDouble bodyYaw = new YoDouble("bodyYaw", registry);
    private final YoFrameVector3D desiredVelocity = new YoFrameVector3D("desiredVelocity", ReferenceFrame.getWorldFrame(), registry);
    private final QuadrantDependentList<MutableBoolean> touchdownFlag = new QuadrantDependentList<>(MutableBoolean::new);
@@ -102,19 +104,15 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       bodyYaw.add(desiredVelocity.getZ() * controlDT);
 
       // extend duration of current steps that have delayed touchdown
-      for (RobotEnd end : RobotEnd.values)
-      {
-         QuadrupedTimedStep currentStep = xGaitCurrentSteps.get(end);
-         RobotQuadrant quadrant = currentStep.getRobotQuadrant();
-         if (touchdownFlag.get(quadrant).isFalse() && currentStep.getTimeInterval().getEndTime() > timestamp.getDoubleValue())
-         {
-            currentStep.getTimeInterval().setEndTime(timestamp.getDoubleValue());
-         }
-      }
-
-      // update xgait preview steps
-      double currentYaw = bodyYaw.getDoubleValue();
-      xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, xGaitCurrentSteps, desiredVelocity, currentTime, currentYaw, xGaitSettings);
+//      for (RobotEnd end : RobotEnd.values)
+//      {
+//         QuadrupedTimedStep currentStep = xGaitCurrentSteps.get(end);
+//         RobotQuadrant quadrant = currentStep.getRobotQuadrant();
+//         if (touchdownFlag.get(quadrant).isFalse() && currentStep.getTimeInterval().getEndTime() < timestamp.getDoubleValue())
+//         {
+//            currentStep.getTimeInterval().setEndTime(timestamp.getDoubleValue());
+//         }
+//      }
 
       // update current steps
       for (int i = 0; i < xGaitPreviewSteps.size(); i++)
@@ -125,6 +123,10 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
             xGaitCurrentSteps.get(xGaitPreviewStep.getRobotQuadrant().getEnd()).set(xGaitPreviewStep);
          }
       }
+
+      // update xgait preview steps
+      double currentYaw = bodyYaw.getDoubleValue();
+      xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, xGaitCurrentSteps, desiredVelocity, currentTime, currentYaw, xGaitSettings);
 
       // update step sequence
       stepSequence.clear();
@@ -150,14 +152,16 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       desiredVelocity.setToNaN();
    }
 
-   public void setDesiredVelocity(Tuple3DReadOnly desiredVelocity)
+   public void acceptTeleopCommand(QuadrupedTeleopCommand teleopCommand)
    {
-      setDesiredVelocity(desiredVelocity.getX(), desiredVelocity.getY(), desiredVelocity.getZ());
+      this.desiredVelocity.set(teleopCommand.getDesiredVelocity());
+      this.xGaitSettings.set(teleopCommand.getXGaitSettings());
+      this.areStepsAdjustable.set(teleopCommand.areStepsAdjustable());
    }
 
-   public void setDesiredVelocity(double xVelocity, double yVelocity, double yawVelocity)
+   public boolean areStepsAdjustable()
    {
-      this.desiredVelocity.set(xVelocity, yVelocity, yawVelocity);
+      return areStepsAdjustable.getValue();
    }
 
    public boolean isStepPlanAvailable()
