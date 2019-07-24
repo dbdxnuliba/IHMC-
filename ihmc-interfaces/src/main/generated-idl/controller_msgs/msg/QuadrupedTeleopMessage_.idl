@@ -27,6 +27,11 @@ module controller_msgs
          */
         boolean request_walk;
         /**
+         * Defines if the step list is adjustable
+         */
+        @defaultValue(value=True)
+        boolean are_steps_adjustable;
+        /**
          * Desired planar velocities in m/s and rad/s. X and Y correspond to forward and lateral velocities. Z corresponds to yaw velocity
          */
         geometry_msgs::msg::dds::Vector3 desired_velocity;

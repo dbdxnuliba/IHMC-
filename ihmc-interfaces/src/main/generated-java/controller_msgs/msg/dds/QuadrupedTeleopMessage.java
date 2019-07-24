@@ -22,6 +22,10 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
             */
    public boolean request_walk_;
    /**
+            * Defines if the step list is adjustable
+            */
+   public boolean are_steps_adjustable_ = true;
+   /**
             * Desired planar velocities in m/s and rad/s. X and Y correspond to forward and lateral velocities. Z corresponds to yaw velocity
             */
    public us.ihmc.euclid.tuple3D.Vector3D desired_velocity_;
@@ -47,6 +51,8 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
       sequence_id_ = other.sequence_id_;
 
       request_walk_ = other.request_walk_;
+
+      are_steps_adjustable_ = other.are_steps_adjustable_;
 
       geometry_msgs.msg.dds.Vector3PubSubType.staticCopy(other.desired_velocity_, desired_velocity_);
       controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.staticCopy(other.x_gait_settings_, x_gait_settings_);
@@ -82,6 +88,21 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
    public boolean getRequestWalk()
    {
       return request_walk_;
+   }
+
+   /**
+            * Defines if the step list is adjustable
+            */
+   public void setAreStepsAdjustable(boolean are_steps_adjustable)
+   {
+      are_steps_adjustable_ = are_steps_adjustable;
+   }
+   /**
+            * Defines if the step list is adjustable
+            */
+   public boolean getAreStepsAdjustable()
+   {
+      return are_steps_adjustable_;
    }
 
 
@@ -124,6 +145,8 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.request_walk_, other.request_walk_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.are_steps_adjustable_, other.are_steps_adjustable_, epsilon)) return false;
+
       if (!this.desired_velocity_.epsilonEquals(other.desired_velocity_, epsilon)) return false;
       if (!this.x_gait_settings_.epsilonEquals(other.x_gait_settings_, epsilon)) return false;
 
@@ -143,6 +166,8 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
 
       if(this.request_walk_ != otherMyClass.request_walk_) return false;
 
+      if(this.are_steps_adjustable_ != otherMyClass.are_steps_adjustable_) return false;
+
       if (!this.desired_velocity_.equals(otherMyClass.desired_velocity_)) return false;
       if (!this.x_gait_settings_.equals(otherMyClass.x_gait_settings_)) return false;
 
@@ -159,6 +184,8 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
       builder.append(this.sequence_id_);      builder.append(", ");
       builder.append("request_walk=");
       builder.append(this.request_walk_);      builder.append(", ");
+      builder.append("are_steps_adjustable=");
+      builder.append(this.are_steps_adjustable_);      builder.append(", ");
       builder.append("desired_velocity=");
       builder.append(this.desired_velocity_);      builder.append(", ");
       builder.append("x_gait_settings=");
