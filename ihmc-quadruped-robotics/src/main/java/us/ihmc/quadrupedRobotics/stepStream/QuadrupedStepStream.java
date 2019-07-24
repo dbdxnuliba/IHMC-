@@ -15,5 +15,9 @@ public interface QuadrupedStepStream
 
    PreallocatedList<? extends QuadrupedTimedStep> getSteps();
 
+   boolean areStepsAdjustable();
+
    void onTouchDown(RobotQuadrant quadrant);
+
+   void onLiftOff(RobotQuadrant quadrant);
 }

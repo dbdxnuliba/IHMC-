@@ -77,6 +77,7 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       touchdownFlag.get(quadrant).setTrue();
    }
 
+   @Override
    public void onLiftOff(RobotQuadrant quadrant)
    {
       touchdownFlag.get(quadrant).setFalse();
@@ -179,6 +180,7 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       this.areStepsAdjustable.set(teleopCommand.areStepsAdjustable());
    }
 
+   @Override
    public boolean areStepsAdjustable()
    {
       return areStepsAdjustable.getValue();

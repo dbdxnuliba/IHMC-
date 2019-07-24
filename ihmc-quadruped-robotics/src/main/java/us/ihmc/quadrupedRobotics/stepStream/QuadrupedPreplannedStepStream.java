@@ -133,12 +133,18 @@ public class QuadrupedPreplannedStepStream implements QuadrupedStepStream
       }
    }
 
+   @Override
+   public void onLiftOff(RobotQuadrant quadrant)
+   {
+   }
+
    public boolean isStepPlanAvailable()
    {
       return stepListCommand.get() != null;
    }
 
-   public boolean isStepPlanAdjustable()
+   @Override
+   public boolean areStepsAdjustable()
    {
       return stepPlanIsAdjustable.getBooleanValue();
    }

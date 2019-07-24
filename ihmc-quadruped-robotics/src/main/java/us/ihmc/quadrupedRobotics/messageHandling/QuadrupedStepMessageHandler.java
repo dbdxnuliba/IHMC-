@@ -17,6 +17,7 @@ import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedPreplannedStepStream;
+import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepStreamManager;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
@@ -58,8 +59,7 @@ public class QuadrupedStepMessageHandler
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
 
-   private final QuadrupedPreplannedStepStream preplannedStepStream;
-   private final QuadrupedXGaitStepStream xGaitStepStream;
+   private final QuadrupedStepStreamManager stepStreamManager;
 
    private final double controlDt;
 
@@ -81,15 +81,13 @@ public class QuadrupedStepMessageHandler
       // TODO tune this value
       numberOfStepsToRecover.set(1);
 
-      this.preplannedStepStream = new QuadrupedPreplannedStepStream(robotTimestamp, registry);
-      this.xGaitStepStream = new QuadrupedXGaitStepStream(referenceFrames, robotTimestamp, controlDt, new QuadrupedXGaitSettings(), registry);
-
+      this.stepStreamManager = new QuadrupedStepStreamManager(robotTimestamp, referenceFrames, controlDt, new QuadrupedXGaitSettings(), registry);
       parentRegistry.addChild(registry);
    }
 
    public boolean isStepPlanAvailable()
    {
-      return !isPaused.getBooleanValue() && (preplannedStepStream.isStepPlanAvailable() || xGaitStepStream.isStepPlanAvailable());
+      return !isPaused.getBooleanValue() && stepStreamManager.isStepPlanAvailable();
    }
 
    public void handleQuadrupedTimedStepListCommand(QuadrupedTimedStepListCommand command)
@@ -106,19 +104,12 @@ public class QuadrupedStepMessageHandler
          pauseTime.set(Double.NaN);
       }
 
-      preplannedStepStream.acceptStepCommand(command);
+      stepStreamManager.acceptTimedStepListCommand(command);
    }
 
    public void acceptTeleopCommand(QuadrupedTeleopCommand command)
    {
-      if(!command.isWalkingRequested())
-      {
-         xGaitStepStream.onExit();
-      }
-      else
-      {
-         xGaitStepStream.acceptTeleopCommand(command);
-      }
+      stepStreamManager.acceptTeleopCommand(command);
    }
 
    public void initialize()
@@ -126,15 +117,15 @@ public class QuadrupedStepMessageHandler
       isPaused.set(false);
       pauseTime.set(Double.NaN);
 
-      xGaitStepStream.onEntry();
+      stepStreamManager.onEntry();
       process();
    }
 
    public void process()
    {
-      xGaitStepStream.doAction();
+      stepStreamManager.doAction();
 
-      PreallocatedList<? extends QuadrupedTimedStep> steps = xGaitStepStream.getSteps();
+      PreallocatedList<? extends QuadrupedTimedStep> steps = stepStreamManager.getSteps();
       receivedStepSequence.clear();
       for (int i = 0; i < steps.size(); i++)
       {
@@ -174,7 +165,7 @@ public class QuadrupedStepMessageHandler
 
    public void onStopWalking()
    {
-      xGaitStepStream.onExit();
+      stepStreamManager.onExit();
    }
 
    public void clearSteps()
@@ -274,19 +265,18 @@ public class QuadrupedStepMessageHandler
 
    public boolean isStepPlanAdjustable()
    {
-      return xGaitStepStream.areStepsAdjustable();
+      return stepStreamManager.areStepsAdjustable();
    }
 
    public void onTouchDown(RobotQuadrant robotQuadrant)
    {
       touchdownTrigger.get(robotQuadrant).setTrue();
-      preplannedStepStream.onTouchDown(robotQuadrant);
-      xGaitStepStream.onTouchDown(robotQuadrant);
+      stepStreamManager.onTouchDown(robotQuadrant);
    }
 
    public void onLiftOff(RobotQuadrant quadrant)
    {
-      xGaitStepStream.onLiftOff(quadrant);
+      stepStreamManager.onLiftOff(quadrant);
    }
 
    public void shiftPlanTimeBasedOnTouchdown(RobotQuadrant robotQuadrant, double currentTime)
