@@ -243,6 +243,8 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       tempPoint.changeFrame(worldFrame);
       upcomingGroundPlanePositions.get(quadrant).setMatchingFrame(tempPoint);
 
+      stepMessageHandler.onLiftOff(quadrant);
+
       onLiftOffTriggered.set(true);
 
       // report footstep status message

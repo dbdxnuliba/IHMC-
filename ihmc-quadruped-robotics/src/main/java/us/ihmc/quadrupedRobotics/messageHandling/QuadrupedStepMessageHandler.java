@@ -281,6 +281,12 @@ public class QuadrupedStepMessageHandler
    {
       touchdownTrigger.get(robotQuadrant).setTrue();
       preplannedStepStream.onTouchDown(robotQuadrant);
+      xGaitStepStream.onTouchDown(robotQuadrant);
+   }
+
+   public void onLiftOff(RobotQuadrant quadrant)
+   {
+      xGaitStepStream.onLiftOff(quadrant);
    }
 
    public void shiftPlanTimeBasedOnTouchdown(RobotQuadrant robotQuadrant, double currentTime)

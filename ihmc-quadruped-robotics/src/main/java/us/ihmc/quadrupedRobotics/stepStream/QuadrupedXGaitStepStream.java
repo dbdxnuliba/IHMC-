@@ -44,6 +44,7 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
    private final QuadrantDependentList<MutableBoolean> touchdownFlag = new QuadrantDependentList<>(MutableBoolean::new);
    private final YoDouble timestamp;
    private final double controlDT;
+   private final YoBoolean isWalking = new YoBoolean("isWalking", registry);
 
    public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, YoDouble timestamp, double controlDT, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
                                    YoVariableRegistry parentRegistry)
@@ -76,6 +77,11 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       touchdownFlag.get(quadrant).setTrue();
    }
 
+   public void onLiftOff(RobotQuadrant quadrant)
+   {
+      touchdownFlag.get(quadrant).setFalse();
+   }
+
    @Override
    public void onEntry()
    {
@@ -104,15 +110,11 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       bodyYaw.add(desiredVelocity.getZ() * controlDT);
 
       // extend duration of current steps that have delayed touchdown
-//      for (RobotEnd end : RobotEnd.values)
-//      {
-//         QuadrupedTimedStep currentStep = xGaitCurrentSteps.get(end);
-//         RobotQuadrant quadrant = currentStep.getRobotQuadrant();
-//         if (touchdownFlag.get(quadrant).isFalse() && currentStep.getTimeInterval().getEndTime() < timestamp.getDoubleValue())
-//         {
-//            currentStep.getTimeInterval().setEndTime(timestamp.getDoubleValue());
-//         }
-//      }
+      double delayTime = calculateDelayTime();
+      for (int i = 0; i < xGaitPreviewSteps.size(); i++)
+      {
+         xGaitPreviewSteps.get(i).getTimeInterval().shiftInterval(delayTime);
+      }
 
       // update current steps
       for (int i = 0; i < xGaitPreviewSteps.size(); i++)
@@ -146,14 +148,32 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
       }
    }
 
+   private double calculateDelayTime()
+   {
+      double previewStepDelayTime = 0.0;
+      for (RobotEnd end : RobotEnd.values)
+      {
+         QuadrupedTimedStep currentStep = xGaitCurrentSteps.get(end);
+         RobotQuadrant quadrant = currentStep.getRobotQuadrant();
+         if (touchdownFlag.get(quadrant).isFalse() && currentStep.getTimeInterval().getEndTime() < timestamp.getDoubleValue())
+         {
+            double currentStepDelay = timestamp.getDoubleValue() - currentStep.getTimeInterval().getEndTime();
+            currentStep.getTimeInterval().shiftInterval(currentStepDelay);
+            previewStepDelayTime = Math.max(currentStepDelay, previewStepDelayTime);
+         }
+      }
+      return previewStepDelayTime;
+   }
+
    @Override
    public void onExit()
    {
-      desiredVelocity.setToNaN();
+      desiredVelocity.setToZero();
    }
 
    public void acceptTeleopCommand(QuadrupedTeleopCommand teleopCommand)
    {
+      this.isWalking.set(teleopCommand.isWalkingRequested());
       this.desiredVelocity.set(teleopCommand.getDesiredVelocity());
       this.xGaitSettings.set(teleopCommand.getXGaitSettings());
       this.areStepsAdjustable.set(teleopCommand.areStepsAdjustable());
@@ -166,6 +186,6 @@ public class QuadrupedXGaitStepStream implements QuadrupedStepStream
 
    public boolean isStepPlanAvailable()
    {
-      return !desiredVelocity.containsNaN();
+      return isWalking.getBooleanValue();
    }
 }
