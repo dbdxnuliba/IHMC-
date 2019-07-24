@@ -38,7 +38,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
-   private final boolean ADD_SPHERES = true;
+   private final boolean ADD_SPHERES = false;
    private final boolean ADD_ROLLING_SPHERE = false;
    private final boolean ADD_GOAL_POST = true;
    private final boolean ENABLE_GOAL_POST_ORIENTATION = true;
@@ -58,7 +58,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    private static Point3D doorPosition;
 
 //   private final Point3D positionOfGoalPost = new Point3D(6.72,-1.78,0.0); //goalpostposition
-   private final Vector2D position = new Vector2D(10, 0.0);
+   private final Vector2D position = new Vector2D(10, -0.5);
    private final Orientation2D orientation2D = new Orientation2D(0.0);
 
    private final Pose2D poseOfGoalPost = new Pose2D(position,orientation2D);
@@ -71,19 +71,6 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    double doorAngle = -1.5708;
 
    double forceVectorScale = 1.0 / 50.0;
-
-
-//   public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)
-//   {
-//      this.stepLength = stepLength;
-//      this.wallHeight = wallHeight;
-//      this.stepUpHeight = stepUpHeight;
-//      initialSpherePosition = 0.0;
-//      fiducialPosition = null;
-//      doorPosition = null;
-//      System.out.println("*******************************This constructor has been deprecated. Calls to this Function will lead to erroneous behavior***********************");
-//   }
-
 
 
    public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)//, YoGraphicsListRegistry yoGraphicsListRegistry)

@@ -34,7 +34,6 @@ import java.lang.String;
 public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
 {
    private final boolean DEBUG = false;
-   private boolean isDoorOpen = false;
    private static Point2D offsetFromSphere;
    private static Point2D offsetFromSphereForGoalPost;
 
@@ -55,9 +54,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       //add a stop behavior (checkout behavior dispatcher line179 more details)
    }
 
-   //TODO get the pelvis abit before kicking to avoid collision
-   //TODO write a Unit test to detect failure of the kick
-   //TODO use ankle troque sensors for the same
    //TODO clean up this code and ready for PR
    //TODO write a new environment made up plannar regions to test planner dependent behaviors
 
@@ -88,7 +84,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private final HumanoidReferenceFrames referenceFrames;
 
 //   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
-//   private IHMCROS2Publisher<Float64> ankle;
 
    private final ConcurrentListeningQueue<ValveLocationPacket> sphereLocation = new ConcurrentListeningQueue<>(10);
 
@@ -98,20 +93,18 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
                                 FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
                                 YoBoolean yoDoubleSupport, AtlasPrimitiveActions atlasPrimitiveActions)
    {
-      this(robotName,ros2Node,yoTime,referenceFrames,fullHumanoidRobotModel,wholeBodyControllerParameters,yoDoubleSupport, atlasPrimitiveActions, null,null);
+      this(robotName,ros2Node,yoTime,referenceFrames,fullHumanoidRobotModel,wholeBodyControllerParameters,yoDoubleSupport, atlasPrimitiveActions, null);
    }
 
 
    public SearchAndKickBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, HumanoidReferenceFrames referenceFrames,
                                 FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
-                                YoBoolean yoDoubleSupport, AtlasPrimitiveActions atlasPrimitiveActions, StepUpDoor environment,YoVariable abc)
+                                YoBoolean yoDoubleSupport, AtlasPrimitiveActions atlasPrimitiveActions, StepUpDoor environment)
    {
       super(robotName, "SearchAndKickBehavior",WalkThroughDoorWOFiducialStates.class,yoTime, ros2Node);
       this.referenceFrames = referenceFrames;
-//      pipeLine = new PipeLine<>(yoTime);
       this.atlasPrimitiveActions = atlasPrimitiveActions;
       this.model = fullHumanoidRobotModel;
-//      this.ankletau = abc;
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
       kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
       this.environment = environment;
@@ -119,11 +112,8 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       yawAccordingToGoalPost = new WalkToLocationBehavior(robotName,ros2Node,fullHumanoidRobotModel,referenceFrames,wholeBodyControllerParameters.getWalkingControllerParameters());
       walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
       walkToOffsetPoint1 = new WalkToLocationBehavior(robotName,ros2Node,fullHumanoidRobotModel,referenceFrames,wholeBodyControllerParameters.getWalkingControllerParameters());
-
-//      walkwithOffset = new WalkToInteractableObjectBehavior(robotName,yoTime,ros2Node,atlasPrimitiveActions);
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
       sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
-//      ankle = createPublisher(Float64.class,"ankle");
       setupStateMachine();
    }
 
@@ -132,44 +122,16 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    @Override
    public void doControl()
    {
-//      xposoffsetpublisher = new IHMCROS2Publisher<>(ros2Node,ValveLocationPacket.class);
-//      OneDoFJointBasics AnkleJoint = model.getLegJoint(RobotSide.LEFT, LegJointName.ANKLE_PITCH);
-//      YoVariable abc = getYoVariableRegistry().getVariable("tau_l_leg_akx");
-//      //abc.getValueAsDouble();
-//      int t = 0;
-//      if(t % 10000 == 0)
-//      {
-//         //System.out.println("AnkleJoint.getTau() : " + AnkleJoint.getTau());
-////         System.out.println(ankletau);
-//         if(ankletau.getValueAsDouble() < 0)
-//         {
-//            setankleVal();
-//         }
-//         t++;
-//      }
+
 
       if(sphereLocation.isNewPacketAvailable())
       {
          receivedSphereLocation(sphereLocation.getLatestPacket());
       }
-//      Float64 tmp = new Float64();
-//      tmp.data_ = ankletau.getValueAsDouble();
-//      ankle.publish(tmp);
+
       super.doControl();
 
    }
-
-//   public static double getDesiredAccAkxValue()
-//   {
-//      return ankletau.getValueAsDouble();
-//   }
-//   private double setankleVal()
-//   {
-//      ankletau.setValueFromDouble(getDesiredAccAkxValue());
-//      return 0.0;
-//   }
-
-
 
    public void receivedSphereLocation(ValveLocationPacket sphereLocationPacket)
    {
@@ -232,9 +194,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       }
       else
       {
-         //YoVariable abc =   //.getVariable("tau_l_leg_akx");
-         //System.out.println(abc.getValueAsDouble());
-
          getDistanceFromSphereBeforeYawMotion();
          walkTosphere1 = new BehaviorAction(walkToOffsetPoint1)
          {
@@ -353,12 +312,10 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       {
          //start adding them to the state factory
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1);
-//         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walkTosphere, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1,walkTosphere1, WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST, yawAction,WalkThroughDoorWOFiducialStates.PELVIS_UP);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_UP, pelvisUpMotion,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-         //         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.PELVIS_DOWN);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisDownMotion,WalkThroughDoorWOFiducialStates.DONE);
          factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
@@ -369,7 +326,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT, walktowardstheObject, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST, yawAction,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-//         factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.KICK_ACTION);
          factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
          factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
       }
@@ -417,58 +373,33 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       FrameVector2D walkingDirection = new FrameVector2D(referenceFrames.getWorldFrame());
       walkingDirection.set(ballPosition2d);
       walkingDirection.sub(robotPosition);
-      //calcutating d value
+      //calculating d value
       distanceFromSphereBeforeYawMotion = Math.sqrt(Math.pow(walkingDirection.getX(),2.0) + Math.pow(walkingDirection.getY(),2.0));
       return distanceFromSphereBeforeYawMotion;
    }
 
    private FramePose2D getWaypoint()
    {
-      int counter = 1;
-      FramePose2D ret;
-      double walkingYaw;
-      //JUST TO BE SURE check again
-      if(IS_ROBOT_AHEAD_OR_BACK && counter ==1)
+      FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.5);
+      robotPosition.changeFrame(referenceFrames.getWorldFrame());
+      FramePoint2D spherePos = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
+      FrameVector2D vector1 = new FrameVector2D(referenceFrames.getWorldFrame());
+      vector1.set(spherePos);
+      vector1.sub(robotPosition);
+      vector1.normalize();
+      double walkingYaw = Math.atan2(vector1.getY(),vector1.getX());
+      double x11 = spherePos.getX() - 1.5; // -3.0 can be set as a saftey factor
+      double y11;
+      if((robotPosition.getY() - spherePos.getY()) < 0)
       {
-         FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.5);
-         robotPosition.changeFrame(referenceFrames.getWorldFrame());
-         FramePoint2D spherePos = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
-         FrameVector2D vector1 = new FrameVector2D(referenceFrames.getWorldFrame());
-         vector1.set(spherePos);
-         vector1.sub(robotPosition);
-         vector1.normalize();
-         walkingYaw = Math.atan2(vector1.getY(),vector1.getX());
-         double x11 = spherePos.getX() - 1.5; // -3.0 can be set as a saftey factor
-         double y11;
-         if((robotPosition.getY() - spherePos.getY()) < 0)
-         {
-            y11 = spherePos.getY() - 1.0;
-         }
-         else
-         {
-            y11 = spherePos.getY() + 1.0;
-         }
-
-         ret = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(x11,y11),walkingYaw);
-         System.out.println("x11 :" + x11 + "y11" + y11);
-         counter++;
+         y11 = spherePos.getY() - 1.0;
       }
-
-      else // in this code you never enter the else loop
+      else
       {
-         FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.5);
-         robotPosition.changeFrame(referenceFrames.getWorldFrame());
-         FramePoint2D spherePos = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
-         FrameVector2D vector2 = new FrameVector2D(referenceFrames.getWorldFrame());
-         vector2.set(spherePos);
-         vector2.sub(robotPosition);
-         vector2.normalize();
-         double x12 = spherePos.getX() - 0.15; //
-         double y12 = spherePos.getY();
-         walkingYaw = Math.atan2(vector2.getY(),vector2.getX());
-         ret = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(x12,y12),walkingYaw);
-         counter++;
+         y11 = spherePos.getY() + 1.0;
       }
+      FramePose2D ret = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(x11,y11),walkingYaw);
+      System.out.println("x11 :" + x11 + "y11" + y11);
       return ret;
    }
 
@@ -529,18 +460,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       this.walkingDirectionForYawMotion = walkingDirection;
       //walkingDirection.getX() and getY() will give you the d value
       walkingDirection.normalize();
-//      System.out.println("determing if X is positive or negative" +walkingDirection.getX()); //should be negative
-//      if(walkingDirection.getX() < 0)
-//      {
-//         setIS_ROBOT_AHEAD_OR_BACK(true); //true means ahead of ball
-//      }
-//      else
-//      {
-//         setIS_ROBOT_AHEAD_OR_BACK(false);
-//      }
-//
-//      System.out.println("Robot ahead should be printed true : "+ IS_ROBOT_AHEAD_OR_BACK);
-
       double walkingYaw = Math.atan2(walkingDirection.getY(), walkingDirection.getX());
       this.walkingYawofgetoffsetPoint = walkingYaw;
       if(DEBUG)
@@ -573,11 +492,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       FramePose2D poseToWalkTo = new FramePose2D(referenceFrames.getWorldFrame(), offsetFromSphere, walkingYaw);
       return poseToWalkTo;
    }
-//
-//   public void setIS_ROBOT_AHEAD_OR_BACK(boolean IS_ROBOT_AHEAD_OR_BACK)
-//   {
-//      this.IS_ROBOT_AHEAD_OR_BACK = IS_ROBOT_AHEAD_OR_BACK;
-//   }
 
    @Override
    public void onBehaviorExited()
@@ -598,15 +512,5 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    public double getWalkingYawofgetoffsetPoint()
    {
       return walkingYawofgetoffsetPoint;
-   }
-
-   public void setBALL_DETECTION(boolean BALL_DETECTION)
-   {
-      this.BALL_DETECTION = BALL_DETECTION;
-   }
-
-   public boolean getBALL_DETECTION()
-   {
-      return BALL_DETECTION;
    }
 }
