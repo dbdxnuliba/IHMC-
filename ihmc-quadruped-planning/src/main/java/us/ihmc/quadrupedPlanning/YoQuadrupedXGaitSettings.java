@@ -12,9 +12,10 @@ public class YoQuadrupedXGaitSettings implements QuadrupedXGaitSettingsBasics
    private final YoDouble stanceLength = new YoDouble("stanceLength", registry);
    private final YoDouble stanceWidth = new YoDouble("stanceWidth", registry);
    private final YoDouble stepGroundClearance = new YoDouble("stepGroundClearance", registry);
+
    private final YoDouble maxHorizontalSpeedFraction = new YoDouble("maxHorizontalSpeedFraction", registry);
    private final YoDouble maxYawSpeedFraction = new YoDouble("maxYawSpeedFraction", registry);
-   private final YoEnum<QuadrupedSpeed> quadrupedSpeed = YoEnum.create("quadrupedSpeed", QuadrupedSpeed.class, registry);
+   private final YoEnum<QuadrupedSpeed> quadrupedSpeed = YoEnum.create("quadrupedSpeed", "quadrupedSpeed", QuadrupedSpeed.class, registry, true);
 
    private final QuadrupedGaitTimingsBasics paceSlowSettings;
    private final QuadrupedGaitTimingsBasics paceMediumSettings;
