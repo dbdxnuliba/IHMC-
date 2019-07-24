@@ -19,6 +19,10 @@ module controller_msgs
          */
         sequence<controller_msgs::msg::dds::StepUpPlannerPhaseResult, 20> phases_result;
         /**
+         * The total duration of the generated trajectories
+         */
+        double total_duration;
+        /**
          * A collection of messages containing the CoM trajectory (0 elements in case not required in the parameters message)
          */
         sequence<controller_msgs::msg::dds::CenterOfMassTrajectoryMessage, 20> com_messages;

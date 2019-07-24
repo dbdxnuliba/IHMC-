@@ -11,7 +11,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    /**
             * Phases definition
             */
-   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters>  phases_settings_;
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters>  phases_parameters_;
    /**
             * Number of control cycles per phase
             */
@@ -79,7 +79,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
    public StepUpPlannerParametersMessage()
    {
-      phases_settings_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters> (20, new controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType());
+      phases_parameters_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters> (20, new controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType());
       ipopt_linear_solver_ = new java.lang.StringBuilder(255);
       cost_weights_ = new controller_msgs.msg.dds.StepUpPlannerCostWeights();
       com_messages_topic_ = new java.lang.StringBuilder(255);
@@ -95,7 +95,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
    public void set(StepUpPlannerParametersMessage other)
    {
-      phases_settings_.set(other.phases_settings_);
+      phases_parameters_.set(other.phases_parameters_);
       phase_length_ = other.phase_length_;
 
       solver_verbosity_ = other.solver_verbosity_;
@@ -136,9 +136,9 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    /**
             * Phases definition
             */
-   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters>  getPhasesSettings()
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseParameters>  getPhasesParameters()
    {
-      return phases_settings_;
+      return phases_parameters_;
    }
 
    /**
@@ -420,11 +420,11 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       if(other == null) return false;
       if(other == this) return true;
 
-      if (this.phases_settings_.size() != other.phases_settings_.size()) { return false; }
+      if (this.phases_parameters_.size() != other.phases_parameters_.size()) { return false; }
       else
       {
-         for (int i = 0; i < this.phases_settings_.size(); i++)
-         {  if (!this.phases_settings_.get(i).epsilonEquals(other.phases_settings_.get(i), epsilon)) return false; }
+         for (int i = 0; i < this.phases_parameters_.size(); i++)
+         {  if (!this.phases_parameters_.get(i).epsilonEquals(other.phases_parameters_.get(i), epsilon)) return false; }
       }
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.phase_length_, other.phase_length_, epsilon)) return false;
@@ -471,7 +471,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
       StepUpPlannerParametersMessage otherMyClass = (StepUpPlannerParametersMessage) other;
 
-      if (!this.phases_settings_.equals(otherMyClass.phases_settings_)) return false;
+      if (!this.phases_parameters_.equals(otherMyClass.phases_parameters_)) return false;
       if(this.phase_length_ != otherMyClass.phase_length_) return false;
 
       if(this.solver_verbosity_ != otherMyClass.solver_verbosity_) return false;
@@ -513,8 +513,8 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       StringBuilder builder = new StringBuilder();
 
       builder.append("StepUpPlannerParametersMessage {");
-      builder.append("phases_settings=");
-      builder.append(this.phases_settings_);      builder.append(", ");
+      builder.append("phases_parameters=");
+      builder.append(this.phases_parameters_);      builder.append(", ");
       builder.append("phase_length=");
       builder.append(this.phase_length_);      builder.append(", ");
       builder.append("solver_verbosity=");

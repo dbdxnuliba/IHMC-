@@ -86,9 +86,9 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       int initial_alignment = current_alignment;
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
-      for(int i0 = 0; i0 < data.getPhasesSettings().size(); ++i0)
+      for(int i0 = 0; i0 < data.getPhasesParameters().size(); ++i0)
       {
-          current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType.getCdrSerializedSize(data.getPhasesSettings().get(i0), current_alignment);}
+          current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType.getCdrSerializedSize(data.getPhasesParameters().get(i0), current_alignment);}
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
@@ -140,9 +140,9 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
    public static void write(controller_msgs.msg.dds.StepUpPlannerParametersMessage data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getPhasesSettings().size() <= 20)
-      cdr.write_type_e(data.getPhasesSettings());else
-          throw new RuntimeException("phases_settings field exceeds the maximum length");
+      if(data.getPhasesParameters().size() <= 20)
+      cdr.write_type_e(data.getPhasesParameters());else
+          throw new RuntimeException("phases_parameters field exceeds the maximum length");
 
       cdr.write_type_12(data.getPhaseLength());
 
@@ -185,7 +185,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
    public static void read(controller_msgs.msg.dds.StepUpPlannerParametersMessage data, us.ihmc.idl.CDR cdr)
    {
-      cdr.read_type_e(data.getPhasesSettings());	
+      cdr.read_type_e(data.getPhasesParameters());	
       data.setPhaseLength(cdr.read_type_12());
       	
       data.setSolverVerbosity(cdr.read_type_12());
@@ -220,7 +220,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
    @Override
    public final void serialize(controller_msgs.msg.dds.StepUpPlannerParametersMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_e("phases_settings", data.getPhasesSettings());
+      ser.write_type_e("phases_parameters", data.getPhasesParameters());
       ser.write_type_12("phase_length", data.getPhaseLength());
       ser.write_type_12("solver_verbosity", data.getSolverVerbosity());
       ser.write_type_6("max_leg_length", data.getMaxLegLength());
@@ -243,7 +243,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.StepUpPlannerParametersMessage data)
    {
-      ser.read_type_e("phases_settings", data.getPhasesSettings());
+      ser.read_type_e("phases_parameters", data.getPhasesParameters());
       data.setPhaseLength(ser.read_type_12("phase_length"));
       data.setSolverVerbosity(ser.read_type_12("solver_verbosity"));
       data.setMaxLegLength(ser.read_type_6("max_leg_length"));
