@@ -1,5 +1,5 @@
 # Phases definition
-StepUpPlannerPhaseParameters[<=20] phases_settings
+StepUpPlannerPhaseParameters[<=20] phases_parameters
 
 # Number of control cycles per phase
 uint64 phase_length 30

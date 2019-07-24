@@ -1,5 +1,5 @@
 # Phases definition
-controller_msgs/StepUpPlannerPhaseParameters[] phases_settings
+controller_msgs/StepUpPlannerPhaseParameters[] phases_parameters
 
 # Number of control cycles per phase
 # Field default value 30

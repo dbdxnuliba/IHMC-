@@ -43,6 +43,8 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 20; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseResultPubSubType.getMaxCdrSerializedSize(current_alignment);}
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 20; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.CenterOfMassTrajectoryMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
@@ -67,6 +69,9 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       {
           current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseResultPubSubType.getCdrSerializedSize(data.getPhasesResult().get(i0), current_alignment);}
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
       for(int i0 = 0; i0 < data.getComMessages().size(); ++i0)
       {
@@ -87,6 +92,8 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       cdr.write_type_e(data.getPhasesResult());else
           throw new RuntimeException("phases_result field exceeds the maximum length");
 
+      cdr.write_type_6(data.getTotalDuration());
+
       if(data.getComMessages().size() <= 20)
       cdr.write_type_e(data.getComMessages());else
           throw new RuntimeException("com_messages field exceeds the maximum length");
@@ -100,6 +107,8 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
    public static void read(controller_msgs.msg.dds.StepUpPlannerRespondMessage data, us.ihmc.idl.CDR cdr)
    {
       cdr.read_type_e(data.getPhasesResult());	
+      data.setTotalDuration(cdr.read_type_6());
+      	
       cdr.read_type_e(data.getComMessages());	
       cdr.read_type_e(data.getFoostepMessages());	
 
@@ -109,6 +118,7 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
    public final void serialize(controller_msgs.msg.dds.StepUpPlannerRespondMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_e("phases_result", data.getPhasesResult());
+      ser.write_type_6("total_duration", data.getTotalDuration());
       ser.write_type_e("com_messages", data.getComMessages());
       ser.write_type_e("foostep_messages", data.getFoostepMessages());
    }
@@ -117,6 +127,7 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.StepUpPlannerRespondMessage data)
    {
       ser.read_type_e("phases_result", data.getPhasesResult());
+      data.setTotalDuration(ser.read_type_6("total_duration"));
       ser.read_type_e("com_messages", data.getComMessages());
       ser.read_type_e("foostep_messages", data.getFoostepMessages());
    }

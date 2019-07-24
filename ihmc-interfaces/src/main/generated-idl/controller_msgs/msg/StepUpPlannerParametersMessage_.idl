@@ -16,7 +16,7 @@ module controller_msgs
         /**
          * Phases definition
          */
-        sequence<controller_msgs::msg::dds::StepUpPlannerPhaseParameters, 20> phases_settings;
+        sequence<controller_msgs::msg::dds::StepUpPlannerPhaseParameters, 20> phases_parameters;
         /**
          * Number of control cycles per phase
          */

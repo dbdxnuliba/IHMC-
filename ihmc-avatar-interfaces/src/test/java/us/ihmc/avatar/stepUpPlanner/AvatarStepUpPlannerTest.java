@@ -19,6 +19,7 @@ import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import controller_msgs.msg.dds.StepUpPlannerStepParameters;
 import controller_msgs.msg.dds.StepUpPlannerVector2;
 import us.ihmc.avatar.MultiRobotTestInterface;
+import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
@@ -94,9 +95,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    protected void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
    {
 
-      SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 0.6);
+      SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 1.0);
+      OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(0.6, 0.0, 0.0, 0.0);
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
+      drcSimulationTestHelper.setStartingLocation(offset);
       drcSimulationTestHelper.createSimulation("WalkingUpToHighPlatformtest");
       Point3D cameraFix = new Point3D(1.1281, 0.0142, 1.0528);
       Point3D cameraPosition = new Point3D(0.2936, -5.531, 1.7983);
@@ -135,7 +138,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       while (!parametersAcked && loop < 10)
       {
-         ThreadTools.sleep(100);
+         ThreadTools.sleep(200);
          LogTools.info("Waiting to recieve parameters ack.");
 
          if (loop == 5)
@@ -168,7 +171,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
       assertTrue(loop != 20);
 
-      //      StepUpPlannerRequestMessage requestMessage = fillRequestMessage(stepHeight);
+
+      for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
+      {
+         drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
+      }
 
 
       //      FootstepDataListMessage footsteps = createFootstepsForHighStepUp(environment.getStepsCenter());
@@ -182,11 +189,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       //            drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
       //
       //      int numberOfSteps = footsteps.getFootstepDataList().size();
-      //      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(numberOfSteps * stepTime + 2.0 * initialFinalTransfer + 3.0);
-      //
-      //      printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
-      //
-      //      assertReachedGoal(footsteps);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(receivedRespond.getTotalDuration() * 1.2);
+
+      printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
+
+      assertReachedGoal(receivedRespond.getFoostepMessages().getLast());
    }
 
    private void publishParameters(StepUpPlannerParametersMessage parametersMessage)
@@ -319,18 +326,18 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          StepUpPlannerPhaseParameters newSettings = new StepUpPlannerPhaseParameters();
          newSettings.getLeftStepParameters().set(leftSteps.get(p));
          newSettings.getRightStepParameters().set(rightSteps.get(p));
-         msg.getPhasesSettings().add().set(newSettings);
+         msg.getPhasesParameters().add().set(newSettings);
       }
       
       msg.setPhaseLength(30);
       msg.setSolverVerbosity(1);
       msg.setMaxLegLength(1.2);
-      msg.setIpoptLinearSolver("ma27");
+      //      msg.setIpoptLinearSolver("ma27");
       msg.setFinalStateAnticipation(0.3);
       msg.setStaticFrictionCoefficient(0.5);
       msg.setTorsionalFrictionCoefficient(0.1);
 
-      double N = msg.getPhaseLength() * msg.getPhasesSettings().size();
+      double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
 
       StepUpPlannerCostWeights weights = new StepUpPlannerCostWeights();
       
@@ -341,7 +348,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       weights.setMaxControlMultiplier(0.1);
       weights.setFinalState(10.0);
       weights.setControlVariations(1.0/N);
-      weights.setDurationsDifference(5.0/msg.getPhasesSettings().size());
+      weights.setDurationsDifference(5.0 / msg.getPhasesParameters().size());
       
 
       msg.getCostWeights().set(weights);

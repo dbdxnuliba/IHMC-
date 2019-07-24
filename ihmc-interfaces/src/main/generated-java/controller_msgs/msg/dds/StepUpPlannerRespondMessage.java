@@ -13,6 +13,10 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult>  phases_result_;
    /**
+            * The total duration of the generated trajectories
+            */
+   public double total_duration_;
+   /**
             * A collection of messages containing the CoM trajectory (0 elements in case not required in the parameters message)
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage>  com_messages_;
@@ -38,6 +42,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    public void set(StepUpPlannerRespondMessage other)
    {
       phases_result_.set(other.phases_result_);
+      total_duration_ = other.total_duration_;
+
       com_messages_.set(other.com_messages_);
       foostep_messages_.set(other.foostep_messages_);
    }
@@ -49,6 +55,21 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult>  getPhasesResult()
    {
       return phases_result_;
+   }
+
+   /**
+            * The total duration of the generated trajectories
+            */
+   public void setTotalDuration(double total_duration)
+   {
+      total_duration_ = total_duration;
+   }
+   /**
+            * The total duration of the generated trajectories
+            */
+   public double getTotalDuration()
+   {
+      return total_duration_;
    }
 
 
@@ -94,6 +115,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
          {  if (!this.phases_result_.get(i).epsilonEquals(other.phases_result_.get(i), epsilon)) return false; }
       }
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.total_duration_, other.total_duration_, epsilon)) return false;
+
       if (this.com_messages_.size() != other.com_messages_.size()) { return false; }
       else
       {
@@ -122,6 +145,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       StepUpPlannerRespondMessage otherMyClass = (StepUpPlannerRespondMessage) other;
 
       if (!this.phases_result_.equals(otherMyClass.phases_result_)) return false;
+      if(this.total_duration_ != otherMyClass.total_duration_) return false;
+
       if (!this.com_messages_.equals(otherMyClass.com_messages_)) return false;
       if (!this.foostep_messages_.equals(otherMyClass.foostep_messages_)) return false;
 
@@ -136,6 +161,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       builder.append("StepUpPlannerRespondMessage {");
       builder.append("phases_result=");
       builder.append(this.phases_result_);      builder.append(", ");
+      builder.append("total_duration=");
+      builder.append(this.total_duration_);      builder.append(", ");
       builder.append("com_messages=");
       builder.append(this.com_messages_);      builder.append(", ");
       builder.append("foostep_messages=");
