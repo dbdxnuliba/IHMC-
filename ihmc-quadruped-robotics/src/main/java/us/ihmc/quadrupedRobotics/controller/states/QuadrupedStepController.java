@@ -148,7 +148,6 @@ public class QuadrupedStepController implements EventState
    @Override
    public void onExit()
    {
-      stepMessageHandler.onStopWalking();
    }
 
    public YoVariableRegistry getYoVariableRegistry()

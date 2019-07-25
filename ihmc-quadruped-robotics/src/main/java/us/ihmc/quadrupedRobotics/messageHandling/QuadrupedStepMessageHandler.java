@@ -163,11 +163,6 @@ public class QuadrupedStepMessageHandler
       return true;
    }
 
-   public void onStopWalking()
-   {
-      stepStreamManager.onExit();
-   }
-
    public void clearSteps()
    {
       receivedStepSequence.clear();
@@ -265,7 +260,7 @@ public class QuadrupedStepMessageHandler
 
    public boolean isStepPlanAdjustable()
    {
-      return stepStreamManager.areStepsAdjustable();
+      return true;
    }
 
    public void onTouchDown(RobotQuadrant robotQuadrant)
