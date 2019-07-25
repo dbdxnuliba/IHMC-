@@ -37,7 +37,7 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
    public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, YoDouble timestamp, double controlDT, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
                                    YoVariableRegistry parentRegistry)
    {
-      super(timestamp);
+      super("xgait_", timestamp);
       this.xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, registry);
 
       for (int i = 0; i < NUMBER_OF_PREVIEW_STEPS; i++)
@@ -77,14 +77,31 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
    @Override
    public void doActionInternal(QuadrupedTeleopCommand teleopCommand)
    {
-      desiredVelocity.set(teleopCommand.getDesiredVelocity());
-      xGaitSettings.set(teleopCommand.getXGaitSettings());
+      if(teleopCommand != null)
+      {
+         desiredVelocity.set(teleopCommand.getDesiredVelocity());
+         xGaitSettings.set(teleopCommand.getXGaitSettings());
+      }
 
       // update body orientation
       bodyYaw.add(desiredVelocity.getZ() * controlDT);
 
       // update xgait preview steps
       xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, currentSteps, desiredVelocity, timestamp.getDoubleValue(), bodyYaw.getDoubleValue(), xGaitSettings);
+
+      // add steps to sequence
+      stepSequence.clear();
+      for(RobotEnd end : RobotEnd.values)
+      {
+         if(currentSteps.get(end).getTimeInterval().getEndTime() >= timestamp.getDoubleValue())
+         {
+            stepSequence.add().set(currentSteps.get(end));
+         }
+      }
+      for (int i = 0; i < xGaitPreviewSteps.size(); i++)
+      {
+         stepSequence.add().set(xGaitPreviewSteps.get(i));
+      }
    }
 
    @Override

@@ -22,7 +22,7 @@ public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<Quadruped
 
    public QuadrupedPreplannedStepStream(YoDouble timestamp, YoVariableRegistry parentRegistry)
    {
-      super(timestamp);
+      super("preplanned_", timestamp);
       parentRegistry.addChild(registry);
    }
 
@@ -38,8 +38,6 @@ public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<Quadruped
          step.set(stepCommands.get(i));
          step.getTimeInterval().shiftInterval(timeShift);
       }
-
-      stepSequence.sort(TimeIntervalTools.startTimeComparator);
    }
 
    @Override

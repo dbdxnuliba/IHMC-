@@ -1,6 +1,5 @@
 package us.ihmc.quadrupedRobotics.stepStream;
 
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableObject;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.communication.controllerAPI.command.Command;
@@ -9,7 +8,6 @@ import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -17,6 +15,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class QuadrupedStepStream<T extends Command> implements Consumer<T>
 {
@@ -31,18 +30,24 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
                                                                                               getPlanCapacity());
 
    /** Flags indicating touchdown status */
-   protected final QuadrantDependentList<MutableBoolean> touchdownFlags = new QuadrantDependentList<>(MutableBoolean::new);
+   protected final QuadrantDependentList<YoBoolean> touchdownFlags = new QuadrantDependentList<>();
 
    /** Latest step stream command */
    private final MutableObject<T> command = new MutableObject<>();
 
    protected final YoDouble timestamp;
 
-   protected final YoBoolean stopRequested = new YoBoolean("stopRequested", registry);
+   protected final YoBoolean stopRequested;
 
-   public QuadrupedStepStream(YoDouble timestamp)
+   public QuadrupedStepStream(String namePrefix, YoDouble timestamp)
    {
       this.timestamp = timestamp;
+      this.stopRequested = new YoBoolean(namePrefix + "StopRequested", registry);
+
+      for(RobotQuadrant quadrant : RobotQuadrant.values)
+      {
+         touchdownFlags.put(quadrant, new YoBoolean(namePrefix + quadrant.getShortName() + "_touchdown", registry));
+      }
    }
 
    /**
@@ -55,7 +60,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
 
       for(RobotQuadrant quadrant : RobotQuadrant.values)
       {
-         touchdownFlags.get(quadrant).setTrue();
+         touchdownFlags.get(quadrant).set(true);
       }
 
       T command = this.command.getValue();
@@ -101,7 +106,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
          // remove completed steps
          for (int i = stepSequence.size() - 1; i >= 0; i--)
          {
-            if(touchdownFlags.get(stepSequence.get(i).getRobotQuadrant()).isTrue())
+            if(touchdownFlags.get(stepSequence.get(i).getRobotQuadrant()).getValue())
             {
                stepSequence.remove(i);
             }
@@ -110,6 +115,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
       else
       {
          doActionInternal(command.getValue());
+         stepSequence.sort(TimeIntervalTools.startTimeComparator);
       }
    }
 
@@ -125,7 +131,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
       {
          QuadrupedTimedStep currentStep = currentSteps.get(end);
 
-         boolean stepIsActive = touchdownFlags.get(currentStep.getRobotQuadrant()).isFalse();
+         boolean stepIsActive = !touchdownFlags.get(currentStep.getRobotQuadrant()).getBooleanValue();
          if (stepIsActive && currentStep.getTimeInterval().getEndTime() < timestamp.getDoubleValue())
          {
             double delay = timestamp.getDoubleValue() - currentStep.getTimeInterval().getEndTime();
@@ -152,12 +158,12 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
 
    public void onTouchDown(RobotQuadrant quadrant)
    {
-      touchdownFlags.get(quadrant).setTrue();
+      touchdownFlags.get(quadrant).set(true);
    }
 
    public void onLiftOff(RobotQuadrant quadrant)
    {
-      touchdownFlags.get(quadrant).setFalse();
+      touchdownFlags.get(quadrant).set(false);
    }
 
    @Override
