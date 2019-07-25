@@ -136,12 +136,12 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       publishParameters(parameters);
       int loop = 0;
       
-      while (!parametersAcked && loop < 10)
+      while (!parametersAcked && loop < 20)
       {
-         ThreadTools.sleep(200);
-         LogTools.info("Waiting to recieve parameters ack.");
+         ThreadTools.sleep(500);
+         LogTools.info("Waiting to receive parameters ack.");
 
-         if (loop == 5)
+         if (loop == 10)
          {
             LogTools.warn("Sending parameters again.");
             publishParameters(parameters);
@@ -158,8 +158,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       while (receivedRespond == null && loop < 20)
       {
-         ThreadTools.sleep(200);
-         LogTools.info("Waiting to recieve respond.");
+         ThreadTools.sleep(500);
+         LogTools.info("Waiting to receive respond.");
 
          if (loop == 10)
          {
@@ -176,6 +176,19 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       {
          drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
       }
+
+      drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(0));
+
+      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i)
+      {
+         drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
+      }
+
+      //      for (int i = 0; i < receivedRespond.getComMessages().size(); ++i)
+      //      {
+      //         drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
+      //         ThreadTools.sleep(500);
+      //      }
 
 
       //      FootstepDataListMessage footsteps = createFootstepsForHighStepUp(environment.getStepsCenter());
