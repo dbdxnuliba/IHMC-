@@ -85,8 +85,9 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private static YoVariable ankletau;
 
    private Pose3D goalPostPose;
-
+   private boolean pelvis_up;
    private final HumanoidReferenceFrames referenceFrames;
+   private FramePose3D tmpGFP = new FramePose3D();
 
 //   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
 
@@ -138,7 +139,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    @Override
    public void onBehaviorEntered()
    {
-      publishTextToSpeech("Search and Kick ball behavior");
+      publishTextToSpeech("Search and Kick Behavior");
       super.onBehaviorEntered();
    }
 
@@ -162,69 +163,58 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             protected void setBehaviorInput()
             {
                publishTextToSpeech("Entering door/sphere detection behavior");
+
             }
 
             @Override
             public void onExit()
             {
+               publishTextToSpeech("Received Sphere/Door Location and entering the walking behavior");
+
                if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
                {
-                  super.isDone();
+                  publishTextToSpeech("Detected fiducial");
+
                }
                super.onExit();
             }
          };
       }
 
-
-      BehaviorAction walktowardstheObject;
-      BehaviorAction walkTosphere1 = null;
-
-      if(!IS_ROBOT_AHEAD_OR_BACK)
+      BehaviorAction walkTosphere1 = new BehaviorAction(walkToOffsetPoint1)
       {
-         walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
+         @Override protected void setBehaviorInput()
+         {
+            //               checkIfRobotIsAheadofBall();
+            //               getoffsetPoint();
+            //               checkIfRobotIsAheadofBall();
+            checkIfRobotIsAheadofBall();
+            getDistanceFromSphereBeforeYawMotion();
+            getoffsetPoint();
+            publishTextToSpeech("Entering walkToWayPoint1");
+            //need to write a method to calculate these waypoints.
+            walkToOffsetPoint1.setTarget(getWaypoint());
+
+            if(IS_ROBOT_AHEAD_OR_BACK)
+            {
+               walkToOffsetPoint1.setTarget(getWaypoint());
+               IS_ROBOT_AHEAD_OR_BACK = false;
+            }
+         }
+      };
+
+
+         BehaviorAction walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
          {
 
             @Override protected void setBehaviorInput ()
             {
-               checkIfRobotIsAheadofBall();
-               getoffsetPoint();
+
                publishTextToSpeech("Directly Walking towards Sphere");
                FramePose2D pose1 = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(offsetFromSphere.getX()-0.15,offsetFromSphere.getY()),getWalkingYawofgetoffsetPoint());
                walkToLocationBehavior.setTarget(pose1);
             }
          };
-
-      }
-      else
-      {
-
-         walkTosphere1 = new BehaviorAction(walkToOffsetPoint1)
-         {
-            @Override protected void setBehaviorInput()
-            {
-               checkIfRobotIsAheadofBall();
-               getoffsetPoint();
-               getDistanceFromSphereBeforeYawMotion();
-               publishTextToSpeech("Entering walkToWayPoint1");
-               //need to write a method to calculate these waypoints.
-               walkToOffsetPoint1.setTarget(getWaypoint());
-            }
-         };
-
-         walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
-         {
-            @Override protected void setBehaviorInput()
-            {
-               publishTextToSpeech("Entering walkToWayPoint2");
-               //need to write a method to calculate these waypoints.
-               FramePose2D pose2 = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(offsetFromSphere.getX()-0.15,offsetFromSphere.getY()),getWalkingYawofgetoffsetPoint());
-               walkToLocationBehavior.setTarget(pose2);
-            }
-
-         };
-
-      }
 
       // get in position by yawing the robot in accordance to the goal post orientation
       BehaviorAction yawAction = new BehaviorAction(yawAccordingToGoalPost)
@@ -234,8 +224,11 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
          {
             publishTextToSpeech("Entering yaw Motion Action");
             yawAccordingToGoalPost.setTarget(getPositionwrtGoalPost());
+            pelvis_up = true;
          }
       };
+
+
 
       //get pelvis to normal position
       BehaviorAction pelvisUpMotion = new BehaviorAction(atlasPrimitiveActions.pelvisHeightTrajectoryBehavior)
@@ -243,17 +236,27 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
          @Override
          public void setBehaviorInput()
          {
-            publishTextToSpeech("Straightning legs");
+//            publishTextToSpeech("Getting pelvis up by 10 cms");
             ReferenceFrame pelvisFrame = referenceFrames.getPelvisZUpFrame();
             FramePoint3D point = new FramePoint3D(pelvisFrame);
             point.changeFrame(referenceFrames.getWorldFrame());
             double nomialPelvisHeight = point.getZ();
             PelvisHeightTrajectoryMessage pelvisHeightTrajectoryMessage = new PelvisHeightTrajectoryMessage();
             EuclideanTrajectoryPointMessage waypoint = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-            waypoint.getPosition().setZ(nomialPelvisHeight + 0.05);
             pelvisHeightTrajectoryMessage.setEnableUserPelvisControl(true);
             pelvisHeightTrajectoryMessage.setEnableUserPelvisControlDuringWalking(true);
+            if(pelvis_up)
+            {
+               waypoint.getPosition().setZ(nomialPelvisHeight + 0.05);
+               publishTextToSpeech("going up");
+            }
+            else
+            {
+               waypoint.getPosition().setZ(nomialPelvisHeight);
+               publishTextToSpeech("going down");
+            }
             atlasPrimitiveActions.pelvisHeightTrajectoryBehavior.setInput(pelvisHeightTrajectoryMessage);
+            pelvis_up = false;
          }
 
       };
@@ -274,28 +277,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
       };
 
-      //take pelvis down
-
-      BehaviorAction pelvisDownMotion = new BehaviorAction(atlasPrimitiveActions.pelvisHeightTrajectoryBehavior)
-      {
-         @Override
-         public void setBehaviorInput()
-         {
-            publishTextToSpeech("Straightning legs");
-            ReferenceFrame pelvisFrame = referenceFrames.getPelvisZUpFrame();
-            FramePoint3D point = new FramePoint3D(pelvisFrame);
-            point.changeFrame(referenceFrames.getWorldFrame());
-            double nomialPelvisHeight = point.getZ();
-            PelvisHeightTrajectoryMessage pelvisHeightTrajectoryMessage = new PelvisHeightTrajectoryMessage();
-            EuclideanTrajectoryPointMessage waypoint = pelvisHeightTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-            waypoint.getPosition().setZ(nomialPelvisHeight);
-            pelvisHeightTrajectoryMessage.setEnableUserPelvisControl(true);
-            pelvisHeightTrajectoryMessage.setEnableUserPelvisControlDuringWalking(true);
-            atlasPrimitiveActions.pelvisHeightTrajectoryBehavior.setInput(pelvisHeightTrajectoryMessage);
-         }
-
-      };
-
       BehaviorAction doneState = new BehaviorAction(sleepBehavior)
       {
          @Override
@@ -309,28 +290,31 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       if(BALL_DETECTION)
       {
          // behind the ball
-         if(!IS_ROBOT_AHEAD_OR_BACK)
-         {
-            //behind the ball
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST,yawAction,WalkThroughDoorWOFiducialStates.KICK_ACTION);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.DONE);
+//         if(!IS_ROBOT_AHEAD_OR_BACK) //i cannot do this dynamically
+//         {
+//            //behind the ball
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject,WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST,yawAction,WalkThroughDoorWOFiducialStates.PELVIS_UP);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_UP, pelvisUpMotion,WalkThroughDoorWOFiducialStates.KICK_ACTION);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.PELVIS_DOWN);
+//            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisUpMotion,WalkThroughDoorWOFiducialStates.DONE);
             factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
-         }
-         else
-         {
+//         }
+//         else //one of these will be initialized. Other wont be
+//         {
             //between the ball and the goal post
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1,walkTosphere1, WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SETUP_ROBOT,resetrobot,WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.SEARCH_FOR_SPHERE,findBall,WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_POINT_1,walkTosphere1, WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT); //added waypoint1
             factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.WALK_TO_THE_OBJECT,walktowardstheObject, WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST);
             factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.YAW_AS_PER_GOAL_POST, yawAction,WalkThroughDoorWOFiducialStates.PELVIS_UP);
             factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_UP, pelvisUpMotion,WalkThroughDoorWOFiducialStates.KICK_ACTION);
             factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.KICK_ACTION,kick,WalkThroughDoorWOFiducialStates.PELVIS_DOWN);
-            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisDownMotion,WalkThroughDoorWOFiducialStates.DONE);
+            factory.addStateAndDoneTransition(WalkThroughDoorWOFiducialStates.PELVIS_DOWN,pelvisUpMotion,WalkThroughDoorWOFiducialStates.DONE);
             factory.addState(WalkThroughDoorWOFiducialStates.DONE,doneState);
-         }
+//         }
       }
 
       else
@@ -351,29 +335,22 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private boolean checkIfRobotIsAheadofBall()
    {
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0); //ensure that the 'y' of robot position in sim and AvatarStepUp hve to be same
-      //need to rectify this somehow
-//      System.out.println("checking robot X position :" +robotPosition.getX() + "\n");
-
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
-//      FramePoint2D initialSpherePoistion = new FramePoint2D(referenceFrames.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
       FramePoint2D initialSpherePoistion = new FramePoint2D(referenceFrames.getWorldFrame(),sphereLocationDetectionBehavior.getLocation().getPosition().getX(),
                                                             sphereLocationDetectionBehavior.getLocation().getPosition().getY());
-//      System.out.println("checking initial sphere X position : " + initialSpherePoistion.getX() + "\n");
       FrameVector2D whereToWalk = new FrameVector2D(referenceFrames.getWorldFrame());
       whereToWalk.set(initialSpherePoistion);
       whereToWalk.sub(robotPosition); //robotpos - initialSpherePosition
       double direction = Math.atan2(whereToWalk.getY(),whereToWalk.getX());
-//      System.out.println("whereToWalk.getY() : " + whereToWalk.getY());
-//      System.out.println("whereToWalk.getX() : " + whereToWalk.getX());
-
-//      System.out.println("%%%%: "+ direction);
       if(robotPosition.getX() - initialSpherePoistion.getX() > 0)
       {
          this.IS_ROBOT_AHEAD_OR_BACK = true; //true means ahead of ball
+         publishTextToSpeech("I am between the ball and the goal post");
       }
       else
       {
          this.IS_ROBOT_AHEAD_OR_BACK =false;
+         publishTextToSpeech("I am behind the ball");
       }
       return IS_ROBOT_AHEAD_OR_BACK;
    }
@@ -381,8 +358,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
    private double getDistanceFromSphereBeforeYawMotion()
    {
-//      FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePos().getX(),
-//                                                     environment.getInitialSpherePos().getY());
       FramePoint2D ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(),sphereLocationDetectionBehavior.getLocation().getPosition().getX(),
                                                      sphereLocationDetectionBehavior.getLocation().getPosition().getY());
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(), 0.0, 0.0);
@@ -399,7 +374,6 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    {
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
-//      FramePoint2D spherePos = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getInitialSpherePos().getX(),environment.getInitialSpherePos().getY());
       FramePoint2D spherePos = new FramePoint2D(ReferenceFrame.getWorldFrame(),sphereLocationDetectionBehavior.getLocation().getPosition().getX(),
                                                 sphereLocationDetectionBehavior.getLocation().getPosition().getY());
       FrameVector2D vector1 = new FrameVector2D(referenceFrames.getWorldFrame());
@@ -418,7 +392,10 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
          y11 = spherePos.getY() + 1.0;
       }
       FramePose2D ret = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(x11,y11),walkingYaw);
-//      System.out.println("x11 :" + x11 + "y11" + y11);
+      if(!IS_ROBOT_AHEAD_OR_BACK)
+      {
+         ret = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(robotPosition),0.0);
+      }
       return ret;
    }
 
@@ -427,14 +404,12 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private FramePose2D getPositionwrtGoalPost()
    {
 //      FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getGoalPostPosition().getX(),environment.getGoalPostPosition().getY());
-      if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
-      {
-         publishTextToSpeech("Detected fiducial for Yaw motion ");
-      }
+//      if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
+//      {
+//         publishTextToSpeech("Detected fiducial for Yaw motion ");
+//      }
 
-      FramePose3D tmpGFP = new FramePose3D();
       fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpGFP);
-
       goalPostPose = new Pose3D(tmpGFP);
       FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),goalPostPose.getPosition().getX(),goalPostPose.getPosition().getY());
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0);
@@ -444,15 +419,15 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       walkingDirection.sub(robotPosition);
       FrameVector2D tmp = getWalkingDirectionForYawMotion();
       //calcutating d value
-      double distanceFromSphereBeforeYawMotion1 = Math.sqrt(Math.pow(tmp.getX(),2.0) + Math.pow(tmp.getY(),2.0));
+      double distanceFromSphereBeforeYawMotion1 = Math.sqrt(Math.pow(tmp.getX(),2.0) + Math.pow(tmp.getY(),2.0)); //the issue is most probably with the tmp value
 //      walkingDirection.set(robotPosition);
 //      walkingDirection.sub(goalPostPosition);
       walkingDirection.normalize();
       double walkingYaw = Math.atan2(walkingDirection.getY(), walkingDirection.getX());
-      if(DEBUG)
-      {
+//      if(DEBUG)
+//      {
          System.out.println("goal Post Position :" + goalPostPosition.getX() + goalPostPosition.getY());
-      }
+//      }
 
       double xprime;
       double yprime;
@@ -501,18 +476,18 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       double SphereRadius = 0.25;
       if(SphereRadius >= 0.5)
       {
-         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.25);
+         x = ballPosition2d.getX() - (SphereRadius+ 0.25);
          y = ballPosition2d.getY() - (0.25*Math.tan(walkingYaw));
       }
       else if (SphereRadius >= 0.25)
       {
-         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.15);
+         x = ballPosition2d.getX() - (SphereRadius + 0.15);
          y = ballPosition2d.getY() - (0.15*Math.tan(walkingYaw));
       }
 
       else
       {
-         x = ballPosition2d.getX() - (ContactableSphereRobot.getDefaultRadius() + 0.1);
+         x = ballPosition2d.getX() - (SphereRadius + 0.1);
          y = ballPosition2d.getY() - (0.1*Math.tan(walkingYaw));
       }
 
