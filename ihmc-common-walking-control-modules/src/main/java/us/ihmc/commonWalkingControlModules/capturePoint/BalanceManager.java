@@ -473,6 +473,9 @@ public class BalanceManager
       else
          supportSeqence.update(footsteps, footstepTimings);
 
+      if (lastFootstepTiming.getTouchdownDuration() > controllerToolbox.getControlDT())
+         lastFootstepTiming.setTouchdownDuration(lastFootstepTiming.getTouchdownDuration() - controllerToolbox.getControlDT());
+
       copTrajectory.update(supportSeqence, finalTransferDuration, timeInSupportSequence.getValue(), initialReferenceCop);
 
       nummericalICPPlanner.setCopTrajectory(copTrajectory, timeInSupportSequence.getValue());
