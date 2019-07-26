@@ -83,12 +83,6 @@ public class KickBehavior extends AbstractBehavior
       else
       {
          pipeLine.doControl();
-         int t = 0;
-         if(t%10000 == 0)
-         {
-            //System.out.println(spherexlocation.getLatestPacket().getPoint2DX());
-            t++;
-         }
       }
    }
 
@@ -153,9 +147,7 @@ public class KickBehavior extends AbstractBehavior
                {
                   pos[i][j] = 0.08;
                }
-
             }
-
          }
       }
 
@@ -189,7 +181,6 @@ public class KickBehavior extends AbstractBehavior
          {
             FootLoadBearingMessage message = HumanoidMessageTools.createFootLoadBearingMessage(kickFoot, LoadBearingRequest.LOAD);
             footStateBehavior.setInput(message);
-
          }
       });
    }
