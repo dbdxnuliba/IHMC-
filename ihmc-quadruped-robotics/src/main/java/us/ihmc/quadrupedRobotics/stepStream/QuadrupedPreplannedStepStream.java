@@ -5,16 +5,10 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTim
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.messageHandling.QuadrupedStepMessageHandler;
-import us.ihmc.robotics.robotSide.RobotEnd;
-import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<QuadrupedTimedStepListCommand>
 {
