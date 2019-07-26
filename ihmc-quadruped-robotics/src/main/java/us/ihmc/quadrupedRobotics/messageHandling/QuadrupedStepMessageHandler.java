@@ -47,14 +47,10 @@ public class QuadrupedStepMessageHandler
    private final YoInteger numberOfStepsToRecover = new YoInteger("numberOfStepsToRecover", registry);
    private final BooleanProvider shiftTimesBasedOnLateTouchdown = new BooleanParameter("shiftTimesBasedOnLateTouchdown", registry, true);
    private final YoDouble initialTransferDurationForShifting = new YoDouble("initialTransferDurationForShifting", registry);
-   private final YoBoolean isPaused = new YoBoolean("isPaused", registry);
-   private final YoDouble pauseTime = new YoDouble("pauseTime", registry);
 
    private final ArrayList<YoQuadrupedTimedStep> activeSteps = new ArrayList<>();
    private final YoDouble robotTimestamp;
-   private final QuadrantDependentList<MutableBoolean> touchdownTrigger = new QuadrantDependentList<>(MutableBoolean::new);
    private final YoPreallocatedList<YoQuadrupedTimedStep> receivedStepSequence;
-   private final QuadrantDependentList<YoQuadrupedTimedStep> mostRecentCompletedStep = new QuadrantDependentList<>();
 
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
@@ -74,7 +70,6 @@ public class QuadrupedStepMessageHandler
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
          upcomingFootTrajectoryCommandList.put(robotQuadrant, new RecyclingArrayDeque<>(SoleTrajectoryCommand.class, SoleTrajectoryCommand::set));
-         this.mostRecentCompletedStep.put(robotQuadrant, new YoQuadrupedTimedStep(robotQuadrant.getShortName() + "_LastCompletedStep", registry));
       }
 
       // the look-ahead step adjustment was doing integer division which was 1.0 for step 0 and 0.0 after, so effectively having a one step recovery
@@ -87,7 +82,7 @@ public class QuadrupedStepMessageHandler
 
    public boolean isStepPlanAvailable()
    {
-      return !isPaused.getBooleanValue() && stepStreamManager.isStepPlanAvailable();
+      return stepStreamManager.isStepPlanAvailable();
    }
 
    public void handleQuadrupedTimedStepListCommand(QuadrupedTimedStepListCommand command)
@@ -95,13 +90,6 @@ public class QuadrupedStepMessageHandler
       if (!isValidStepPlan(command))
       {
          return;
-      }
-
-      // if paused, resume when new steps are received
-      if (isPaused.getBooleanValue())
-      {
-         isPaused.set(false);
-         pauseTime.set(Double.NaN);
       }
 
       stepStreamManager.acceptTimedStepListCommand(command);
@@ -114,9 +102,6 @@ public class QuadrupedStepMessageHandler
 
    public void initialize()
    {
-      isPaused.set(false);
-      pauseTime.set(Double.NaN);
-
       stepStreamManager.onEntry();
       process();
    }
@@ -201,33 +186,6 @@ public class QuadrupedStepMessageHandler
 
    public void handlePauseWalkingCommand(PauseWalkingCommand pauseWalkingCommand)
    {
-      if(isPaused.getBooleanValue() == pauseWalkingCommand.isPauseRequested())
-      {
-         return;
-      }
-
-      this.isPaused.set(pauseWalkingCommand.isPauseRequested());
-
-      if (pauseWalkingCommand.isPauseRequested())
-      {
-         pauseTime.set(robotTimestamp.getDoubleValue());
-      }
-      else
-      {
-         double earliestStartTime = Double.POSITIVE_INFINITY;
-         for (int i = 0; i < receivedStepSequence.size(); i++)
-         {
-            double startTime = receivedStepSequence.get(i).getTimeInterval().getStartTime();
-            if (startTime < earliestStartTime)
-               earliestStartTime = startTime;
-         }
-
-         double timeShift = robotTimestamp.getDoubleValue() + initialTransferDurationForShifting.getDoubleValue() - earliestStartTime;
-         for (int i = 0; i < receivedStepSequence.size(); i++)
-         {
-            receivedStepSequence.get(i).getTimeInterval().shiftInterval(timeShift);
-         }
-      }
    }
 
    public void clearUpcomingSteps()
@@ -248,13 +206,6 @@ public class QuadrupedStepMessageHandler
 
    public boolean isDoneWithStepSequence()
    {
-      // if paused, wait for current steps to finish
-      if (isPaused.getBooleanValue() && activeSteps.isEmpty())
-      {
-         return true;
-      }
-
-      // otherwise only done when step queue is empty
       return receivedStepSequence.isEmpty();
    }
 
@@ -265,7 +216,6 @@ public class QuadrupedStepMessageHandler
 
    public void onTouchDown(RobotQuadrant robotQuadrant)
    {
-      touchdownTrigger.get(robotQuadrant).setTrue();
       stepStreamManager.onTouchDown(robotQuadrant);
    }
 
@@ -343,39 +293,16 @@ public class QuadrupedStepMessageHandler
 
    public void updateActiveSteps()
    {
-      // remove steps with a triggered touchdown
-      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
-      {
-         if (touchdownTrigger.get(robotQuadrant).isTrue())
-         {
-            int index = getIndexOfFirstStep(robotQuadrant, timeEpsilonForStepSelection);
-            if (index != -1)
-            {
-               QuadrupedTimedStep completedStep = receivedStepSequence.remove(index);
-               mostRecentCompletedStep.get(completedStep.getRobotQuadrant()).set(completedStep);
-            }
-
-            touchdownTrigger.get(robotQuadrant).setFalse();
-         }
-      }
-
       activeSteps.clear();
-
       double currentTime = robotTimestamp.getDoubleValue();
-      double activeStepTimeThreshold = isPaused.getBooleanValue() ? pauseTime.getDoubleValue() : currentTime;
 
       for (int i = 0; i < receivedStepSequence.size(); i++)
       {
          double startTime = receivedStepSequence.get(i).getTimeInterval().getStartTime();
-         double endTime = receivedStepSequence.get(i).getTimeInterval().getEndTime();
-
-         // add all steps by start time
-         if (activeStepTimeThreshold >= startTime)
+         if (currentTime >= startTime)
+         {
             activeSteps.add(receivedStepSequence.get(i));
-
-         // extend timing of steps with expired end time
-         if (currentTime >= endTime)
-            receivedStepSequence.get(i).getTimeInterval().setEndTime(currentTime + controlDt);
+         }
       }
    }
 
