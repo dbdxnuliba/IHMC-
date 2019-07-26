@@ -81,8 +81,11 @@ public class QuadrupedStepStreamManager
 
    public void acceptTeleopCommand(QuadrupedTeleopCommand teleopCommand)
    {
-      xGaitStepStream.accept(teleopCommand);
-      if(!teleopCommand.isWalkingRequested())
+      if(teleopCommand.isWalkingRequested())
+      {
+         xGaitStepStream.accept(teleopCommand);
+      }
+      else
       {
          xGaitStepStream.requestStop();
       }

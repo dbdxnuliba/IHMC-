@@ -4,6 +4,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.communication.controllerAPI.command.Command;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
@@ -13,16 +14,14 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public abstract class QuadrupedStepStream<T extends Command> implements Consumer<T>
 {
    protected final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    /** Current or most recently completed steps on each end */
-   protected final EndDependentList<QuadrupedTimedStep> currentSteps = new EndDependentList<>(QuadrupedTimedStep::new);
+   protected final EndDependentList<YoQuadrupedTimedStep> currentSteps = new EndDependentList<>();
 
    /** Entire step sequence, including current steps */
    protected final PreallocatedList<QuadrupedTimedStep> stepSequence = new PreallocatedList<>(QuadrupedTimedStep.class,
@@ -43,6 +42,9 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
    {
       this.timestamp = timestamp;
       this.stopRequested = new YoBoolean(namePrefix + "StopRequested", registry);
+
+      this.currentSteps.set(RobotEnd.FRONT, new YoQuadrupedTimedStep("frontCurrentStep", registry));
+      this.currentSteps.set(RobotEnd.HIND, new YoQuadrupedTimedStep("hindCurrentStep", registry));
 
       for(RobotQuadrant quadrant : RobotQuadrant.values)
       {
@@ -97,7 +99,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
          QuadrupedTimedStep step = stepSequence.get(i);
          if(step.getTimeInterval().getStartTime() <= timestamp.getDoubleValue())
          {
-            currentSteps.set(step.getRobotQuadrant().getEnd(), step);
+            currentSteps.get(step.getRobotQuadrant().getEnd()).set(step);
          }
       }
 
@@ -116,6 +118,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
       {
          doActionInternal(command.getValue());
          stepSequence.sort(TimeIntervalTools.startTimeComparator);
+         command.setValue(null);
       }
    }
 
@@ -153,6 +156,7 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
    public void requestStop()
    {
       stopRequested.set(true);
+      command.setValue(null);
       TimeIntervalTools.removeStartTimesGreaterThan(timestamp.getDoubleValue(), stepSequence);
    }
 

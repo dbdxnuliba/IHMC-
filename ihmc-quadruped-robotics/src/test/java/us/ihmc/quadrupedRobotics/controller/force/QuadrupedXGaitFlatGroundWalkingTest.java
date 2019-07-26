@@ -208,16 +208,15 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
       double radius = Math.abs(walkingSpeed / angularVelocity);
       double expectedSemiCircleWalkTime = Math.PI / Math.abs(angularVelocity);
 
-      stepTeleopManager.requestXGait();
+//      stepTeleopManager.requestXGait();
       stepTeleopManager.setEndPhaseShift(endPhaseShift);
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, angularVelocity);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), expectedSemiCircleWalkTime * 1.5);
       conductor.addWaypointGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), Math.signum(angularVelocity) * Math.PI / 2, 0.1));
       conductor.addTerminalGoal(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyX(), 0.0, 0.2));
-      conductor.addTerminalGoal(YoVariableTestGoal.or(
-            YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), -Math.PI, 0.2),
-            YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), Math.PI, 0.2)));
+      conductor.addTerminalGoal(YoVariableTestGoal.or(YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), -Math.PI, 0.2),
+                                                      YoVariableTestGoal.doubleWithinEpsilon(variables.getRobotBodyYaw(), Math.PI, 0.2)));
 
       if(Math.signum(walkingSpeed) > 0.0)
       {
@@ -322,7 +321,7 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
       double radius = Math.abs(walkingSpeed / angularVelocity);
       double expectedSemiCircleWalkTime = Math.PI / Math.abs(angularVelocity);
 
-      stepTeleopManager.requestXGait();
+//      stepTeleopManager.requestXGait();
       stepTeleopManager.setEndPhaseShift(0.0);
       stepTeleopManager.setQuadrupedSpeed(QuadrupedSpeed.MEDIUM);
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, angularVelocity);
