@@ -167,6 +167,12 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             }
 
             @Override
+            public boolean isDone()
+            {
+               return super.isDone() && fiducialDetectorBehaviorService.getGoalHasBeenLocated();
+            }
+
+            @Override
             public void onExit()
             {
                publishTextToSpeech("Received Sphere/Door Location and entering the walking behavior");
