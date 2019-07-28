@@ -8,7 +8,11 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
+import controller_msgs.msg.dds.EuclideanTrajectoryPointMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.QueueableMessage;
 import controller_msgs.msg.dds.StepUpPlannerCostWeights;
 import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
@@ -156,20 +160,13 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       publishRequest(request);
       loop = 0;
       
-      while (receivedRespond == null && loop < 20)
+      while (receivedRespond == null && loop < 50)
       {
          ThreadTools.sleep(500);
          LogTools.info("Waiting to receive respond.");
-
-         if (loop == 10)
-         {
-            LogTools.warn("Sending request again.");
-            publishRequest(request);
-         }
-
          ++loop;
       }
-      assertTrue(loop != 20);
+      assertTrue(loop != 50);
 
 
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
@@ -180,12 +177,15 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       LogTools.info("Publishing CoM message with ID:"
             + receivedRespond.getComMessages().get(0).getEuclideanTrajectory().getQueueingProperties().getMessageId());
       drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(0));
+      drcSimulationTestHelper.publishToController(generatePelvisHeightMessageFromCoMMessage(receivedRespond.getComMessages().get(0)));
 
-      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i)
+      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i) //this is necessary because the messages are not consumed by the controller yet and they are stacked instead f queued
       {
          LogTools.info("Publishing CoM message with ID:"
                + receivedRespond.getComMessages().get(i).getEuclideanTrajectory().getQueueingProperties().getMessageId());
          drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
+         drcSimulationTestHelper.publishToController(generatePelvisHeightMessageFromCoMMessage(receivedRespond.getComMessages().get(i)));
+
       }
 
       //      for (int i = 0; i < receivedRespond.getComMessages().size(); ++i)
@@ -348,7 +348,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       msg.setPhaseLength(30);
       msg.setSolverVerbosity(1);
-      msg.setMaxLegLength(1.5);
+      msg.setMaxLegLength(0.9);
       //      msg.setIpoptLinearSolver("ma27");
       msg.setFinalStateAnticipation(0.3);
       msg.setStaticFrictionCoefficient(0.5);
@@ -359,12 +359,12 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       StepUpPlannerCostWeights weights = new StepUpPlannerCostWeights();
       
       weights.setCop(10.0/N);
-      weights.setTorques(1.0/N);
+      weights.setTorques(0.1 / N);
       weights.setControlMultipliers(0.1/N);
       weights.setFinalControl(1.0);
       weights.setMaxControlMultiplier(0.1);
       weights.setFinalState(10.0);
-      weights.setControlVariations(1.0/N);
+      weights.setControlVariations(10.0 / N);
       weights.setDurationsDifference(5.0 / msg.getPhasesParameters().size());
       
 
@@ -390,9 +390,15 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       FramePose3D comPose = new FramePose3D(initialCoMFrame);
       comPose.changeFrame(ReferenceFrame.getWorldFrame());
 
-      msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), comPose.getZ());
+      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
+      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
+      double initialPelvisHeight = pelvisFrame.getZ() * 0.9;
+      LogTools.info("Initial height: " + initialPelvisHeight);
+
+      msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialPelvisHeight);
       msg.getInitialComVelocity().setToZero();
-      msg.getDesiredComPosition().set(comPose.getX() + 0.6, comPose.getY(), comPose.getZ() + stepHeight);
+      msg.getDesiredComPosition().set(comPose.getX() + 0.6, comPose.getY(), initialPelvisHeight + stepHeight);
       msg.getDesiredComVelocity().setToZero();
       
       FrameQuaternion identityQuaternion = new FrameQuaternion();
@@ -457,7 +463,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(0.8);
 
-      msg.setDesiredLegLength(comPose.getPositionDistance(initialLeftPose.getPosition()));
+      msg.setDesiredLegLength(0.85);
 
       msg.getLeftDesiredFinalControl().getCop().setX(0.0);
       msg.getLeftDesiredFinalControl().getCop().setY(0.0);
@@ -473,6 +479,30 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       msg.getRightDesiredFinalControl().setMultiplier(desiredRightMultiplier);
       
+      return msg;
+   }
+
+   private PelvisHeightTrajectoryMessage generatePelvisHeightMessageFromCoMMessage(CenterOfMassTrajectoryMessage comMessage)
+   {
+      PelvisHeightTrajectoryMessage msg = new PelvisHeightTrajectoryMessage();
+
+      msg.setEnableUserPelvisControl(true);
+      msg.setEnableUserPelvisControlDuringWalking(true);
+
+      QueueableMessage queueingProperties = msg.getEuclideanTrajectory().getQueueingProperties();
+      QueueableMessage comQueueingProperties = comMessage.getEuclideanTrajectory().getQueueingProperties();
+      queueingProperties.setExecutionMode(comQueueingProperties.getExecutionMode());
+      queueingProperties.setMessageId(comQueueingProperties.getMessageId() + 1);
+      queueingProperties.setPreviousMessageId(comQueueingProperties.getPreviousMessageId() + 1);
+
+      for (int i = 0; i < comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().size(); ++i)
+      {
+         EuclideanTrajectoryPointMessage point = msg.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
+         point.getPosition().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getPosition().getZ());
+         point.setTime(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getTime());
+         point.getLinearVelocity().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getLinearVelocity().getZ());
+      }
+
       return msg;
    }
 
