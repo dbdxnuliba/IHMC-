@@ -177,10 +177,14 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
       }
 
+      LogTools.info("Publishing CoM message with ID:"
+            + receivedRespond.getComMessages().get(0).getEuclideanTrajectory().getQueueingProperties().getMessageId());
       drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(0));
 
       for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i)
       {
+         LogTools.info("Publishing CoM message with ID:"
+               + receivedRespond.getComMessages().get(i).getEuclideanTrajectory().getQueueingProperties().getMessageId());
          drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
       }
 
@@ -344,7 +348,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       msg.setPhaseLength(30);
       msg.setSolverVerbosity(1);
-      msg.setMaxLegLength(1.2);
+      msg.setMaxLegLength(1.5);
       //      msg.setIpoptLinearSolver("ma27");
       msg.setFinalStateAnticipation(0.3);
       msg.setStaticFrictionCoefficient(0.5);
@@ -453,7 +457,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(0.8);
 
-      msg.setDesiredLegLength(comPose.getPositionDistance(initialLeftPose.getPosition()) * 0.8);
+      msg.setDesiredLegLength(comPose.getPositionDistance(initialLeftPose.getPosition()));
 
       msg.getLeftDesiredFinalControl().getCop().setX(0.0);
       msg.getLeftDesiredFinalControl().getCop().setY(0.0);
