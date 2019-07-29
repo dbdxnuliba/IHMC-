@@ -188,24 +188,6 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       }
 
-      //      for (int i = 0; i < receivedRespond.getComMessages().size(); ++i)
-      //      {
-      //         drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
-      //         ThreadTools.sleep(500);
-      //      }
-
-
-      //      FootstepDataListMessage footsteps = createFootstepsForHighStepUp(environment.getStepsCenter());
-      //      PelvisHeightTrajectoryMessage pelvisHeightTrajectory = createPelvisTrajectoryForHighStepUp(environment.getStepsCenter());
-
-      //      WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
-      //      double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
-      //      double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
-      //
-      //      drcSimulationTestHelper.publishToController(footsteps);
-      //            drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
-      //
-      //      int numberOfSteps = footsteps.getFootstepDataList().size();
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(receivedRespond.getTotalDuration() * 1.2);
 
       printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
@@ -295,10 +277,10 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
       
-      double rearOfFoot = -steppingParameters.getFootLength() / 2.0 * 0.6;
-      double frontOfFoot = steppingParameters.getFootLength() / 2.0 * 0.6;
-      double toeWidth = steppingParameters.getToeWidth() * 0.6;
-      double heelWidth = steppingParameters.getFootWidth() * 0.6;
+      double rearOfFoot = -steppingParameters.getFootLength() / 2.0 * 0.5;
+      double frontOfFoot = steppingParameters.getFootLength() / 2.0 * 0.5;
+      double toeWidth = steppingParameters.getToeWidth() * 0.5;
+      double heelWidth = steppingParameters.getFootWidth() * 0.5;
       
       for (int i = 0; i < 5; ++i) {
          StepUpPlannerStepParameters newStep = new StepUpPlannerStepParameters();
@@ -359,12 +341,12 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       StepUpPlannerCostWeights weights = new StepUpPlannerCostWeights();
       
       weights.setCop(10.0 / N);
-      weights.setTorques(10.0 / N);
+      weights.setTorques(10.0 / N); //100 gives a smaller average torque but higher peak torque
       weights.setControlMultipliers(0.1/N);
       weights.setFinalControl(1.0);
       weights.setMaxControlMultiplier(0.1);
       weights.setFinalState(10.0);
-      weights.setControlVariations(10.0 / N);
+      weights.setControlVariations(100.0 / N);
       weights.setDurationsDifference(5.0 / msg.getPhasesParameters().size());
       
 
@@ -393,7 +375,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialCoMHeight);
       msg.getInitialComVelocity().setToZero();
-      msg.getDesiredComPosition().set(comPose.getX() + 0.65, comPose.getY(), initialCoMHeight + stepHeight);
+      msg.getDesiredComPosition().set(comPose.getX() + 0.6, comPose.getY(), initialCoMHeight + stepHeight);
       msg.getDesiredComVelocity().setToZero();
       
       FrameQuaternion identityQuaternion = new FrameQuaternion();
@@ -426,7 +408,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       newPhase = msg.getPhases().add();
       newPhase.getRightFootPose().set(r1);
-      newPhase.setMinimumDuration(0.5);
+      newPhase.setMinimumDuration(0.9);
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(1.2);
 
@@ -438,13 +420,13 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       newPhase.getLeftFootPose().set(l2);
       newPhase.getRightFootPose().set(r1);
       newPhase.setMinimumDuration(0.5);
-      newPhase.setMaximumDuration(2.0);
+      newPhase.setMaximumDuration(1.5);
       newPhase.setDesiredDuration(0.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(l2);
       newPhase.setMinimumDuration(0.5);
-      newPhase.setMaximumDuration(2.0);
+      newPhase.setMaximumDuration(1.5);
       newPhase.setDesiredDuration(1.2);
 
       r2.set(r1);
