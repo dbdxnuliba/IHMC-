@@ -169,7 +169,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             @Override
             public boolean isDone()
             {
-               return super.isDone() && fiducialDetectorBehaviorService.getGoalHasBeenLocated();
+               return super.isDone();// && fiducialDetectorBehaviorService.getGoalHasBeenLocated();
             }
 
             @Override
@@ -399,7 +399,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //      }
 
       fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpGFP);
-      goalPostPose = new Pose3D(tmpGFP);
+      goalPostPose = new Pose3D(2.0,0.0,1.25,0.0,0.0,0.0); //insert the tmpGFP here
       FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),goalPostPose.getPosition().getX(),goalPostPose.getPosition().getY());
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());

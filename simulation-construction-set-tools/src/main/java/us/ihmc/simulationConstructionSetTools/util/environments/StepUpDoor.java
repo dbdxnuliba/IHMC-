@@ -1,8 +1,10 @@
 package us.ihmc.simulationConstructionSetTools.util.environments;
 
 import com.github.quickhull3d.*;
+import controller_msgs.msg.dds.*;
 import javafx.geometry.*;
 import javafx.geometry.Point2D;
+import us.ihmc.communication.*;
 import us.ihmc.euclid.axisAngle.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
@@ -14,6 +16,8 @@ import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.appearance.*;
 import us.ihmc.graphicsDescription.yoGraphics.*;
+import us.ihmc.humanoidRobotics.communication.packets.*;
+import us.ihmc.jMonkeyEngineToolkit.jme.util.*;
 import us.ihmc.robotics.geometry.*;
 import us.ihmc.simulationConstructionSetTools.robotController.*;
 import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
@@ -38,7 +42,7 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
 
    private final boolean ADD_BOXES = false;
    private final boolean ADD_CYLINDER = false;
-   private final boolean ADD_SPHERES = false;
+   private final boolean ADD_SPHERES = true;
    private final boolean ADD_ROLLING_SPHERE = false;
    private final boolean ADD_GOAL_POST = true;
    private final boolean ENABLE_GOAL_POST_ORIENTATION = true;
@@ -73,6 +77,19 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    double forceVectorScale = 1.0 / 50.0;
 
 
+//   private ReferenceFrame ballFrame = new ReferenceFrame("doorFrame", ReferenceFrame.getWorldFrame())
+//   {
+//      @Override
+//      protected void updateTransformToParent(RigidBodyTransform transformToParent)
+//      {
+////         sphereRobot.getBodyTransformToWorld(transformToParent);
+//         transformToParent.set(ReferenceFrame.getWorldFrame().getTransformToWorldFrame());
+//      }
+//   };
+
+
+
+
    public StepUpDoor(double stepLength, double wallHeight, double stepUpHeight)//, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       double wallInitialOffSet = 1.0 + 2.5* stepLength; // this means that the wall is ahead of the steps by one stepLength to allow you just suffcient space to use footstep planner tool
@@ -81,6 +98,9 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
       fiducialPosition = new Point3D(wallInitialOffSet + stepLength + 1.25, 0.0, 1.25);
 
       initialSpherePosition = doorPosition.getX() + 3.0;
+
+//      IHMCROS2Publisher<DoorLocationPacket> publisher = ROS2Tools.createPublisher(ROS2N ros2Node, DoorLocationPacket.class,
+//                                                                                  IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(coactiveBehaviorsNetworkManager.getRobotName()));
 
 
       this.stepLength = stepLength;
@@ -156,6 +176,11 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
          }
       }
 
+//      ballFrame.update();
+//      System.out.println(ballFrame.getTransformToDesiredFrame(ReferenceFrame.getWorldFrame()));
+//      DoorLocationPacket doorLocationPacket = HumanoidMessageTools.createDoorLocationPacket();
+//      //HumanoidMessageTools.createDoorLocationPacket(ballFrame.getTransformToDesiredFrame(ReferenceFrame.getWorldFrame()));
+//      publisher.publish(doorLocationPacket);
 
 
       if(ADD_SPHERES)
@@ -390,6 +415,11 @@ public class StepUpDoor extends DefaultCommonAvatarEnvironment implements Common
    public void addSelectableListenerToSelectables(SelectableObjectListener selectedListener)
    {
    }
-
+//   public static void main(String[] args)
+//   {
+//      StepUpDoor abc = new StepUpDoor(0.0,0.0,0.0);
+//   }
 
 }
+
+

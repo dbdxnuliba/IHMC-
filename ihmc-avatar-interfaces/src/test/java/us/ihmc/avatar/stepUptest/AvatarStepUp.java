@@ -4,17 +4,11 @@ import static us.ihmc.robotics.Assert.*;
 
 import controller_msgs.msg.dds.*;
 import org.junit.jupiter.api.*;
-import org.lwjgl.*;
-import std_msgs.*;
 import us.ihmc.atlas.*;
 import us.ihmc.avatar.*;
 import us.ihmc.avatar.drcRobot.*;
-import us.ihmc.avatar.factory.*;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
-import us.ihmc.avatar.ros.messages.*;
-import us.ihmc.avatar.stepUptest.AvatarStepUp.*;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
-import us.ihmc.commonWalkingControlModules.configurations.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
@@ -114,7 +108,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private boolean IS_PELVIS_ON;// = true;
    private boolean IS_FOOTSTEP_ON;// = true;
    private Pose3D startingPoint = new Pose3D(0.5,0.0,0.0,0.0,0.0,0.0);
-   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX()+7,0.5,0.0,0.0,0.0,0.0);
+//   private Pose3D startingFromFiducial = new Pose3D(StepUpDoor.getFiducialPosition().getX(),0.0,0.0,0.0,0.0,0.0);
+private Pose3D startingFromFiducial = new Pose3D(7.25 - (0.15 + 0.25) ,0.0,0.0,0.0,0.0,0.0);
 
    private OffsetAndYawRobotInitialSetup pos1 = new OffsetAndYawRobotInitialSetup(startingPoint.getX(),startingPoint.getY(),startingPoint.getZ(),startingPoint.getYaw());
    private OffsetAndYawRobotInitialSetup pos2 = new OffsetAndYawRobotInitialSetup(startingFromFiducial.getX(),startingFromFiducial.getY(),startingFromFiducial.getZ(),startingFromFiducial.getYaw());
@@ -492,12 +487,22 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
    private void callDoorTiminingBehavior()
    {
 
-      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
-      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
-      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
-      behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
+//      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
+//      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
+//      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
+//      behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);
 //      startListening();
 //      assertreachedforkick();
+
+//      KickBehavior kick = new KickBehavior(getSimpleRobotName(),ros2Node,yoTime,yoDoubleSupport,fullRobotModel,referenceFrames);
+      DynamicKick kick = new DynamicKick(getSimpleRobotName(),ros2Node, yoTime, yoDoubleSupport, referenceFrames);
+      HumanoidBehaviorTypePacket requestKick = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.KICK);
+      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class,IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestKick);
+      behaviorDispatcher.addBehavior(HumanoidBehaviorType.KICK,kick);
+
+      FramePoint2D tmp = new FramePoint2D(ReferenceFrame.getWorldFrame());
+      kick.setObjectToKickPose(tmp);
+//      kick.initialize();
       behaviorDispatcher.start();
 
    }
@@ -940,8 +945,8 @@ public abstract class AvatarStepUp implements MultiRobotTestInterface
 
    private void setUpCamera()
    {
-      Point3D cameraFix = new Point3D(0.0,0.0,0.89);
-      Point3D cameraPosition = new Point3D(10.0,2.0,1.37);
+      Point3D cameraFix = new Point3D(2.0104,2.1257,-0.6112);
+      Point3D cameraPosition = new Point3D(14.623,-4.3291,2.2043);
       drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
    }
 

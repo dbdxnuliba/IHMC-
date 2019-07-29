@@ -34,6 +34,7 @@ public enum HumanoidBehaviorType
    TEST_GC_GENERATION,
    TEST_SMOOTH_ICP_PLANNER,
    SEARCH_AND_KICK_BEHAVIOR,
+   KICK,
    @Deprecated
    PUSH_AND_WALK,
    COLLABORATIVE_TASK,

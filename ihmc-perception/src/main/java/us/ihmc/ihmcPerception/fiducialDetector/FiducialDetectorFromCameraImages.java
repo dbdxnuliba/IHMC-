@@ -1,12 +1,11 @@
 package us.ihmc.ihmcPerception.fiducialDetector;
 
 import java.awt.FlowLayout;
-<<<<<<< Updated upstream
+
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-=======
+
 import java.awt.image.*;
->>>>>>> Stashed changes
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
