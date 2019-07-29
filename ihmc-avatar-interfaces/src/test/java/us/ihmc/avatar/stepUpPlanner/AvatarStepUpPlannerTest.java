@@ -295,10 +295,10 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
       
-      double rearOfFoot  = -steppingParameters.getFootLength() / 2.0;
-      double frontOfFoot = steppingParameters.getFootLength() / 2.0;
-      double toeWidth = steppingParameters.getToeWidth();
-      double heelWidth = steppingParameters.getFootWidth();
+      double rearOfFoot = -steppingParameters.getFootLength() / 2.0 * 0.6;
+      double frontOfFoot = steppingParameters.getFootLength() / 2.0 * 0.6;
+      double toeWidth = steppingParameters.getToeWidth() * 0.6;
+      double heelWidth = steppingParameters.getFootWidth() * 0.6;
       
       for (int i = 0; i < 5; ++i) {
          StepUpPlannerStepParameters newStep = new StepUpPlannerStepParameters();
@@ -348,7 +348,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       msg.setPhaseLength(30);
       msg.setSolverVerbosity(1);
-      msg.setMaxLegLength(0.9);
+      msg.setMaxLegLength(1.10);
       //      msg.setIpoptLinearSolver("ma27");
       msg.setFinalStateAnticipation(0.3);
       msg.setStaticFrictionCoefficient(0.5);
@@ -358,8 +358,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       StepUpPlannerCostWeights weights = new StepUpPlannerCostWeights();
       
-      weights.setCop(10.0/N);
-      weights.setTorques(0.1 / N);
+      weights.setCop(10.0 / N);
+      weights.setTorques(10.0 / N);
       weights.setControlMultipliers(0.1/N);
       weights.setFinalControl(1.0);
       weights.setMaxControlMultiplier(0.1);
@@ -389,16 +389,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
       FramePose3D comPose = new FramePose3D(initialCoMFrame);
       comPose.changeFrame(ReferenceFrame.getWorldFrame());
+      double initialCoMHeight = comPose.getZ() * 0.9;
 
-      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
-      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-      double initialPelvisHeight = pelvisFrame.getZ() * 0.9;
-      LogTools.info("Initial height: " + initialPelvisHeight);
-
-      msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialPelvisHeight);
+      msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialCoMHeight);
       msg.getInitialComVelocity().setToZero();
-      msg.getDesiredComPosition().set(comPose.getX() + 0.6, comPose.getY(), initialPelvisHeight + stepHeight);
+      msg.getDesiredComPosition().set(comPose.getX() + 0.65, comPose.getY(), initialCoMHeight + stepHeight);
       msg.getDesiredComVelocity().setToZero();
       
       FrameQuaternion identityQuaternion = new FrameQuaternion();
@@ -463,7 +458,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(0.8);
 
-      msg.setDesiredLegLength(0.85);
+      msg.setDesiredLegLength(1.05);
 
       msg.getLeftDesiredFinalControl().getCop().setX(0.0);
       msg.getLeftDesiredFinalControl().getCop().setY(0.0);
@@ -486,6 +481,15 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    {
       PelvisHeightTrajectoryMessage msg = new PelvisHeightTrajectoryMessage();
 
+      ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
+      FramePose3D comPose = new FramePose3D(initialCoMFrame);
+      comPose.changeFrame(ReferenceFrame.getWorldFrame());
+
+      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
+      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
+      double heightDifference = (comPose.getPosition().getZ() - pelvisFrame.getPosition().getZ());
+
       msg.setEnableUserPelvisControl(true);
       msg.setEnableUserPelvisControlDuringWalking(true);
 
@@ -498,7 +502,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       for (int i = 0; i < comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().size(); ++i)
       {
          EuclideanTrajectoryPointMessage point = msg.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-         point.getPosition().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getPosition().getZ());
+         point.getPosition().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getPosition().getZ() - heightDifference);
          point.setTime(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getTime());
          point.getLinearVelocity().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getLinearVelocity().getZ());
       }
