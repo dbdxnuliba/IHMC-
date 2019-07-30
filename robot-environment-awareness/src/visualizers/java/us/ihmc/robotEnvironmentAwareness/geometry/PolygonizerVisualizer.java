@@ -59,6 +59,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMeshBuilder;
@@ -422,7 +423,7 @@ public class PolygonizerVisualizer extends Application
    {
       JavaFXMeshBuilder meshBuilder = new JavaFXMeshBuilder();
       Point3DReadOnly planeOrigin = rawData.getOrigin();
-      Quaternion planeOrientation = rawData.getOrientation();
+      QuaternionReadOnly planeOrientation = rawData.getOrientation();
 
       for (ConcaveHullVariables intermediateVariables : concaveHullFactoryResult.getIntermediateVariables())
       {
