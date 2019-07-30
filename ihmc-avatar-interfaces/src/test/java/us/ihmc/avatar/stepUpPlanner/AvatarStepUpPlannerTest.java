@@ -180,7 +180,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(0));
       drcSimulationTestHelper.publishToController(generatePelvisHeightMessageFromCoMMessage(receivedRespond.getComMessages().get(0)));
 
-      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i) //this is necessary because the messages are not consumed by the controller yet and they are stacked instead f queued
+      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i) //this is necessary because the messages are not consumed by the controller yet and they are stacked instead of being queued
       {
          LogTools.info("Publishing CoM message with ID:"
                + receivedRespond.getComMessages().get(i).getEuclideanTrajectory().getQueueingProperties().getMessageId());
@@ -332,7 +332,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          msg.getPhasesParameters().add().set(newSettings);
       }
       
-      msg.setPhaseLength(30);
+      msg.setPhaseLength(20);
       msg.setSolverVerbosity(1);
       msg.setMaxLegLength(1.10);
       //      msg.setIpoptLinearSolver("ma27");
@@ -344,8 +344,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       StepUpPlannerCostWeights weights = new StepUpPlannerCostWeights();
       
-      weights.setCop(10.0 / N);
-      weights.setTorques(1.0 / N); //100 gives a smaller average torque but higher peak torque
+      weights.setCop(1.0 / N);
+      weights.setTorques(0.1 / N);
       weights.setMaxTorques(1.0);
       weights.setControlMultipliers(0.1/N);
       weights.setFinalControl(1.0);
