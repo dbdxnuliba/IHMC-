@@ -145,7 +145,7 @@ public class NumericalICPPlannerTest
 
       NumericalICPPlanner icpPlanner = new NumericalICPPlanner(discretization, previewTime, adjustmentTime);
 
-      boolean useAm = true;
+      boolean useAm = false;
       ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory = (am, t) -> {
          if (!useAm || t > 0.5)
             am.setToZero();
@@ -211,12 +211,8 @@ public class NumericalICPPlannerTest
          for (double t = 0.0; t < previewTime; t += 0.001)
          {
             int supportIndex = 0;
-            double supportEndTime = supportDurations.get(0);
-            while (t > supportEndTime)
-            {
+            while (supportIndex < supportDurations.size() - 1 && t > supportDurations.get(supportIndex + 1))
                supportIndex++;
-               supportEndTime += supportDurations.get(supportIndex);
-            }
             supportPolygon.set(supportPolygons.get(supportIndex));
 
             copTrajectory.accept(cop, t);

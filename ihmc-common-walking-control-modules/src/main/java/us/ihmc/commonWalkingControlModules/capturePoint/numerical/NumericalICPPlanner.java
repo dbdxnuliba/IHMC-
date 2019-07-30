@@ -288,25 +288,26 @@ public class NumericalICPPlanner
       Ain.reshape(0, 2 * adjustmentSteps);
       Arrays.fill(Ain.data, 0.0);
       int index = 0;
-
-      // TODO: loop the other way around to save a lot of computation
-      for (int step = 0; step < adjustmentSteps; step++)
+      for (int polygonIndex = 0; polygonIndex < supportPolygons.size(); polygonIndex++)
       {
-         double time = timestep * step + timeInSequence;
-         while (index < supportTimes.size() - 1 && time > supportTimes.get(index + 1))
-            index++;
-
-         ConvexPolygon2DReadOnly supportPolygon = supportPolygons.get(index);
+         ConvexPolygon2DReadOnly supportPolygon = supportPolygons.get(polygonIndex);
          PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, COP_SAFETY_DISTANCE);
 
-         int currentConstraints = bin.getNumRows();
-         int newConstraints = subbin.getNumRows();
-         bin.reshape(currentConstraints + newConstraints, 1, true);
-         Ain.reshape(currentConstraints + newConstraints, Ain.getNumCols(), true);
-         CommonOps.insert(subAin, Ain, currentConstraints, 2 * step);
-         CommonOps.insert(subbin, bin, currentConstraints, 0);
+         boolean onLastPolygon = polygonIndex == supportTimes.size() - 1;
+         while (onLastPolygon || timestep * index + timeInSequence < supportTimes.get(polygonIndex + 1))
+         {
+            int currentConstraints = bin.getNumRows();
+            int newConstraints = subbin.getNumRows();
+            bin.reshape(currentConstraints + newConstraints, 1, true);
+            Ain.reshape(currentConstraints + newConstraints, Ain.getNumCols(), true);
+            CommonOps.insert(subAin, Ain, currentConstraints, 2 * index);
+            CommonOps.insert(subbin, bin, currentConstraints, 0);
 
-         constraintPolygons.get(step).set(supportPolygon);
+            constraintPolygons.get(index).set(supportPolygon);
+
+            if (index++ == adjustmentSteps - 1)
+               return;
+         }
       }
    }
 
