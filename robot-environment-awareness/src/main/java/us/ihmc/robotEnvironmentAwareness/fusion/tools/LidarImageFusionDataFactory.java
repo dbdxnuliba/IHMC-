@@ -30,11 +30,8 @@ public class LidarImageFusionDataFactory
 
    private static final boolean enableConnectivity = true;
 
-   private final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
-   private final int matType = opencv_core.CV_8UC3;
-
-   private int imageWidth;
-   private int imageHeight;
+   private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
+   private static final int matType = opencv_core.CV_8UC3;
 
    private BufferedImage segmentedContour;
    private BufferedImage projectedPointCloud;
@@ -47,12 +44,12 @@ public class LidarImageFusionDataFactory
 
    public LidarImageFusionData createLidarImageFusionData(Point3D[] pointCloud, int[] colors, BufferedImage bufferedImage)
    {
-      imageWidth = bufferedImage.getWidth();
-      imageHeight = bufferedImage.getHeight();
+      int imageWidth = bufferedImage.getWidth();
+      int imageHeight = bufferedImage.getHeight();
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
-      int[] labels = calculateNewLabelsSLIC(bufferedImage);
+      int[] labels = calculateNewLabelsSLIC(bufferedImage, imageWidth, imageHeight, imageSegmentationParameters.get());
       List<SegmentedImageRawData> fusionDataSegments = segmentRawPointCloudIntoSuperpixels(projectedPointCloud, labels, pointCloud, colors, imageHeight, imageWidth, cameraPosition.get(),
                                                                                            cameraOrientation.get(), intrinsicParameters.get(),
                                                                                            segmentationRawDataFilteringParameters.get());
@@ -60,12 +57,43 @@ public class LidarImageFusionDataFactory
       return new LidarImageFusionData(fusionDataSegments, imageWidth, imageHeight);
    }
 
-   private int[] calculateNewLabelsSLIC(BufferedImage bufferedImage)
+   public BufferedImage getSegmentedContourBufferedImage()
    {
-      int pixelSize = imageSegmentationParameters.get().getPixelSize();
-      double ruler = imageSegmentationParameters.get().getPixelRuler();
-      int iterate = imageSegmentationParameters.get().getIterate();
-      int elementSize = imageSegmentationParameters.get().getMinElementSize();
+      return segmentedContour;
+   }
+
+   public BufferedImage getProjectedPointCloudBufferedImage()
+   {
+      return projectedPointCloud;
+   }
+
+   public void setIntrinsicParameters(IntrinsicParameters intrinsicParameters)
+   {
+      this.intrinsicParameters.set(intrinsicParameters);
+   }
+
+   public void setImageSegmentationParameters(ImageSegmentationParameters imageSegmentationParameters)
+   {
+      this.imageSegmentationParameters.set(imageSegmentationParameters);
+   }
+
+   public void setSegmentationRawDataFilteringParameters(SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+   {
+      this.segmentationRawDataFilteringParameters.set(segmentationRawDataFilteringParameters);
+   }
+
+   public void setCameraPose(Point3D position, Quaternion orientation)
+   {
+      cameraPosition.set(position);
+      cameraOrientation.set(orientation);
+   }
+
+   private static int[] calculateNewLabelsSLIC(BufferedImage bufferedImage, int imageWidth, int imageHeight, ImageSegmentationParameters imageSegmentationParameters)
+   {
+      int pixelSize = imageSegmentationParameters.getPixelSize();
+      double ruler = imageSegmentationParameters.getPixelRuler();
+      int iterate = imageSegmentationParameters.getIterate();
+      int elementSize = imageSegmentationParameters.getMinElementSize();
 
       Mat imageMat = convertBufferedImageToMat(bufferedImage);
       Mat convertedMat = new Mat();
@@ -183,7 +211,7 @@ public class LidarImageFusionDataFactory
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.
     */
-   private Mat convertBufferedImageToMat(BufferedImage bufferedImage)
+   private static Mat convertBufferedImageToMat(BufferedImage bufferedImage)
    {
       Mat imageMat = new Mat(bufferedImage.getHeight(), bufferedImage.getWidth(), matType);
       int r, g, b;
@@ -213,34 +241,5 @@ public class LidarImageFusionDataFactory
       return u + v * imageWidth;
    }
 
-   public BufferedImage getSegmentedContourBufferedImage()
-   {
-      return segmentedContour;
-   }
 
-   public BufferedImage getProjectedPointCloudBufferedImage()
-   {
-      return projectedPointCloud;
-   }
-
-   public void setIntrinsicParameters(IntrinsicParameters intrinsicParameters)
-   {
-      this.intrinsicParameters.set(intrinsicParameters);
-   }
-
-   public void setImageSegmentationParameters(ImageSegmentationParameters imageSegmentationParameters)
-   {
-      this.imageSegmentationParameters.set(imageSegmentationParameters);
-   }
-
-   public void setSegmentationRawDataFilteringParameters(SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
-   {
-      this.segmentationRawDataFilteringParameters.set(segmentationRawDataFilteringParameters);
-   }
-
-   public void setCameraPose(Point3D position, Quaternion orientation)
-   {
-      cameraPosition.set(position);
-      cameraOrientation.set(orientation);
-   }
 }
