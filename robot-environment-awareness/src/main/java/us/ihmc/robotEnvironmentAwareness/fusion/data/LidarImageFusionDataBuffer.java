@@ -70,12 +70,10 @@ public class LidarImageFusionDataBuffer
          numberOfPoints--;
       }
 
-      Point3D[] pointCloud = new Point3D[numberOfPoints];
-      int[] colors = new int[numberOfPoints];
+      ColoredPixel[] coloredPixels = new ColoredPixel[numberOfPoints];
       for (int i = 0; i < numberOfPoints; i++)
       {
-         pointCloud[i] = pointCloudBuffer[i];
-         colors[i] = colorBuffer[i];
+         coloredPixels[i] = new ColoredPixel(pointCloudBuffer[i], colorBuffer[i]);
       }
 
       lidarImageFusionDataFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
@@ -83,7 +81,7 @@ public class LidarImageFusionDataBuffer
       lidarImageFusionDataFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
       lidarImageFusionDataFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      LidarImageFusionData data = lidarImageFusionDataFactory.createLidarImageFusionData(pointCloud, colors, latestBufferedImage.get());
+      LidarImageFusionData data = lidarImageFusionDataFactory.createLidarImageFusionData(coloredPixels, latestBufferedImage.get());
 
       newBuffer.set(data);
    }
