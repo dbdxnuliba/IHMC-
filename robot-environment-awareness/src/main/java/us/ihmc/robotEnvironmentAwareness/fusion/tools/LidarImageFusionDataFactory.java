@@ -17,7 +17,7 @@ import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionData;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.SegmentationRawData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.SegmentedImageRawData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 
@@ -49,7 +49,7 @@ public class LidarImageFusionDataFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateNewLabelsSLIC(bufferedImage);
-      List<SegmentationRawData> fusionDataSegments = createListOfSegmentationRawData(labels, pointCloud, colors);
+      List<SegmentedImageRawData> fusionDataSegments = segmentRawPointCloudIntoSuperpixels(labels, pointCloud, colors);
 
       return new LidarImageFusionData(fusionDataSegments, imageWidth, imageHeight);
    }
@@ -82,18 +82,18 @@ public class LidarImageFusionDataFactory
       return labels;
    }
 
-   private List<SegmentationRawData> createListOfSegmentationRawData(int[] labels, Point3D[] pointCloud, int[] colors)
+   private List<SegmentedImageRawData> segmentRawPointCloudIntoSuperpixels(int[] labels, Point3D[] pointCloud, int[] colors)
    {
       if (labels.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labels.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
 
-      List<SegmentationRawData> fusionDataSegments = new ArrayList<SegmentationRawData>();
+      List<SegmentedImageRawData> fusionDataSegments = new ArrayList<SegmentedImageRawData>();
 
       // create.
       TIntArrayList labelList = new TIntArrayList(labels);
       int numberOfLabels = labelList.max() + 1;
       for (int i = 0; i < numberOfLabels; i++)
-         fusionDataSegments.add(new SegmentationRawData(i));
+         fusionDataSegments.add(new SegmentedImageRawData(i));
 
       // projection.
       for (int i = 0; i < pointCloud.length; i++)
@@ -138,7 +138,7 @@ public class LidarImageFusionDataFactory
          }
       }
       // update and calculate normal.
-      for (SegmentationRawData fusionDataSegment : fusionDataSegments)
+      for (SegmentedImageRawData fusionDataSegment : fusionDataSegments)
       {
          if (segmentationRawDataFilteringParameters.get().isEnableFilterFlyingPoint())
             fusionDataSegment.filteringFlyingPoints(segmentationRawDataFilteringParameters.get().getFlyingPointThreshold(),

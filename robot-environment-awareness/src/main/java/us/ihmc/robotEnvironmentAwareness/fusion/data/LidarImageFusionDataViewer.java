@@ -54,7 +54,7 @@ public class LidarImageFusionDataViewer
 
       for (int i = 0; i < numberOfSegment; i++)
       {
-         SegmentationRawData data = lidarImageFusionData.getFusionDataSegment(i);
+         SegmentedImageRawData data = lidarImageFusionData.getFusionDataSegment(i);
          SegmentationNodeData segmentationNodeData = new SegmentationNodeData(data);
 
          PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, segmentationNodeData.getNormal(),
@@ -68,7 +68,7 @@ public class LidarImageFusionDataViewer
       {
          int randomID = new Random().nextInt();
          Color regionColor = getRegionColor(randomID);
-         SegmentationRawData data = lidarImageFusionData.getFusionDataSegment(i);
+         SegmentedImageRawData data = lidarImageFusionData.getFusionDataSegment(i);
          Point3D center = data.getCenter();
          Vector3D normal = data.getNormal();
          Point3D centerEnd = new Point3D(normal);
