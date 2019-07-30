@@ -131,27 +131,12 @@ public class LidarImageFusionDataFactory
                                                                                                  coloredPixel, imageHeight, imageWidth, cameraPosition,
                                                                                                  cameraOrientation, intrinsicParameters));
 
-      // TODO clean this up
       // register adjacent labels.
       for (int widthIndex = 1; widthIndex < imageWidth - 1; widthIndex++)
       {
          for (int heightIndex = 1; heightIndex < imageHeight - 1; heightIndex++)
          {
-            int currentLabelId = labelIds[getLabelIdIndex(widthIndex, heightIndex, imageWidth)];
-            int[] idOfAdjacentPixels = new int[4];
-            idOfAdjacentPixels[0] = labelIds[getLabelIdIndex(widthIndex, heightIndex - 1, imageWidth)]; // N
-            idOfAdjacentPixels[1] = labelIds[getLabelIdIndex(widthIndex, heightIndex + 1, imageWidth)]; // S
-            idOfAdjacentPixels[2] = labelIds[getLabelIdIndex(widthIndex - 1, heightIndex, imageWidth)]; // W
-            idOfAdjacentPixels[3] = labelIds[getLabelIdIndex(widthIndex + 1, heightIndex, imageWidth)]; // E
-
-            for (int labelOfAdjacentPixel : idOfAdjacentPixels)
-            {
-               if (currentLabelId != labelOfAdjacentPixel)
-               {
-                  if (!segmentedSuperPixels.get(currentLabelId).contains(labelOfAdjacentPixel))
-                     segmentedSuperPixels.get(currentLabelId).addAdjacentSegmentLabel(labelOfAdjacentPixel);
-               }
-            }
+            registerAdjacentPixelIds(segmentedSuperPixels, widthIndex, heightIndex, labelIds, imageWidth);
          }
       }
 
@@ -159,7 +144,6 @@ public class LidarImageFusionDataFactory
       segmentedSuperPixels.parallelStream().forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters));
 
 
-      // TODO figure out how to parallellize this
       // set segment center in 2D.
       int[] totalU = new int[numberOfLabels];
       int[] totalV = new int[numberOfLabels];
@@ -198,7 +182,6 @@ public class LidarImageFusionDataFactory
          return;
 
       int labelId = labelIds[getLabelIdIndex(pixelIndices[0], pixelIndices[1], imageWidth)];
-      // TODO does this need to be a copied point?
       segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(coloredPixel.getPoint()));
 
       if (enableDisplayProjectedPointCloud)
@@ -208,6 +191,25 @@ public class LidarImageFusionDataFactory
    private static boolean isPixelOutOfBounds(int[] pixelIndices, int imageHeight, int imageWidth)
    {
       return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
+   }
+
+   private static void registerAdjacentPixelIds(List<SegmentedImageRawData> segmentedSuperPixelsToPack, int widthIndex, int heightIndex, int[] labelIds, int imageWidth)
+   {
+      int currentLabelId = labelIds[getLabelIdIndex(widthIndex, heightIndex, imageWidth)];
+      int[] idOfAdjacentPixels = new int[4];
+      idOfAdjacentPixels[0] = labelIds[getLabelIdIndex(widthIndex, heightIndex - 1, imageWidth)]; // N
+      idOfAdjacentPixels[1] = labelIds[getLabelIdIndex(widthIndex, heightIndex + 1, imageWidth)]; // S
+      idOfAdjacentPixels[2] = labelIds[getLabelIdIndex(widthIndex - 1, heightIndex, imageWidth)]; // W
+      idOfAdjacentPixels[3] = labelIds[getLabelIdIndex(widthIndex + 1, heightIndex, imageWidth)]; // E
+
+      for (int labelOfAdjacentPixel : idOfAdjacentPixels)
+      {
+         if (currentLabelId != labelOfAdjacentPixel)
+         {
+            if (!segmentedSuperPixelsToPack.get(currentLabelId).contains(labelOfAdjacentPixel))
+               segmentedSuperPixelsToPack.get(currentLabelId).addAdjacentSegmentLabel(labelOfAdjacentPixel);
+         }
+      }
    }
 
    private static void updateSuperpixelAndCalculateNormal(SegmentedImageRawData fusionDataSegment, SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)

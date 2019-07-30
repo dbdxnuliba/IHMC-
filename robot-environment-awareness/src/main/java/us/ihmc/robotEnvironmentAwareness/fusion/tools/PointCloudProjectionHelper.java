@@ -64,10 +64,10 @@ public class PointCloudProjectionHelper
    public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly point, IntrinsicParameters param, Point3DReadOnly cameraPosition,
                                                           QuaternionReadOnly cameraOrientation)
    {
-      Point3D pointToCamera = new Point3D(point);
+      Point3D pointInCamera = new Point3D(point);
       RigidBodyTransform transformWorldToCamera = new RigidBodyTransform(cameraOrientation, cameraPosition);
-      pointToCamera.applyInverseTransform(transformWorldToCamera);
-      return projectMultisensePointCloudOnImage(pointToCamera, param);
+      pointInCamera.applyInverseTransform(transformWorldToCamera);
+      return projectMultisensePointCloudOnImage(pointInCamera, param);
    }
 
    public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly point, IntrinsicParameters param)
