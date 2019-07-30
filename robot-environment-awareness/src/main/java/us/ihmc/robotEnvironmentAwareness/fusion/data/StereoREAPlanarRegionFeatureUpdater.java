@@ -58,7 +58,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
       customRegionMergingParameters = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingParameters, new CustomRegionMergeParameters());
    }
 
-   public void updateLatestLidarImageFusionData(LidarImageFusionData lidarImageFusionData)
+   public void updateLatestLidarImageFusionData(FusedSuperPixelImage lidarImageFusionData)
    {
       planarRegionSegmentationCalculator.updateFusionData(lidarImageFusionData, segmentationRawDataFilteringParameters.get(),
                                                           planarRegionPropagationParameters.get());

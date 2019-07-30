@@ -3,10 +3,8 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,7 +15,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
@@ -25,10 +22,8 @@ import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
-import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
-import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
 
-public class LidarImageFusionDataViewer
+public class FusedSuperPixelImageViewer
 {
    protected final JavaFXMultiColorMeshBuilder meshBuilder;
 
@@ -42,10 +37,10 @@ public class LidarImageFusionDataViewer
    private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
 
 
-   public LidarImageFusionDataViewer(SharedMemoryJavaFXMessager messager)
+   public FusedSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)
    {
-      messager.registerTopicListener(LidarImageFusionAPI.FusionDataState, lidarImageFusionData ->
-            executorService.submit(() -> unpackFusionData(lidarImageFusionData)));
+      messager.registerTopicListener(LidarImageFusionAPI.FusionDataState, fusedSuperPixelImage ->
+            executorService.submit(() -> unpackFusedSuperPixelImage(fusedSuperPixelImage)));
 
       meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(2048));
 
@@ -60,22 +55,22 @@ public class LidarImageFusionDataViewer
          clearSolution.set(true);
    }
 
-   private synchronized void unpackFusionData(LidarImageFusionData lidarImageFusionData)
+   private synchronized void unpackFusedSuperPixelImage(FusedSuperPixelImage fusedSuperPixelImage)
    {
       clear();
       double lineWidth = 0.01;
       meshBuilder.clear();
 
-      if (lidarImageFusionData == null)
+      if (fusedSuperPixelImage == null)
          return;
 
-      int numberOfSegment = lidarImageFusionData.getNumberOfImageSegments();
+      int numberOfSegment = fusedSuperPixelImage.getNumberOfImageSegments();
 
       List<PlanarRegionSegmentationRawData> planarRegionSegmentationRawDataList = new ArrayList<>();
 
       for (int i = 0; i < numberOfSegment; i++)
       {
-         SegmentedImageRawData data = lidarImageFusionData.getFusionDataSegment(i);
+         RawSuperPixelData data = fusedSuperPixelImage.getFusionDataSegment(i);
          SegmentationNodeData segmentationNodeData = new SegmentationNodeData(data);
 
          PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, segmentationNodeData.getNormal(),
@@ -89,7 +84,7 @@ public class LidarImageFusionDataViewer
       {
          int randomID = new Random().nextInt();
          Color regionColor = getRegionColor(randomID);
-         SegmentedImageRawData data = lidarImageFusionData.getFusionDataSegment(i);
+         RawSuperPixelData data = fusedSuperPixelImage.getFusionDataSegment(i);
          Point3DReadOnly center = data.getCenter();
          Vector3DReadOnly normal = data.getNormal();
          Point3D centerEnd = new Point3D(normal);

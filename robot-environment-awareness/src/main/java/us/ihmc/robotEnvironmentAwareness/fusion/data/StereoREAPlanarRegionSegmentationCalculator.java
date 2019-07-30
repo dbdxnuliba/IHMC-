@@ -20,14 +20,14 @@ public class StereoREAPlanarRegionSegmentationCalculator
    private static final int MINIMAM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGIEON = 3;
    private static final int MINIMUM_NUMBER_OF_LABELS_FOR_BIG_SEGMENT = 7;
 
-   private final AtomicReference<LidarImageFusionData> data = new AtomicReference<LidarImageFusionData>(null);
+   private final AtomicReference<FusedSuperPixelImage> data = new AtomicReference<FusedSuperPixelImage>(null);
    private int numberOfLabels = 0;
    private final List<SegmentationNodeData> segments = new ArrayList<SegmentationNodeData>();
    private List<PlanarRegionSegmentationRawData> regionsNodeData = new ArrayList<>();
 
    private final Random random = new Random(0612L);
 
-   public void updateFusionData(LidarImageFusionData lidarImageFusionData, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
+   public void updateFusionData(FusedSuperPixelImage lidarImageFusionData, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
                                 PlanarRegionPropagationParameters propagationParameters)
    {
       lidarImageFusionData.updateSparsity(rawDataFilteringParameters);
@@ -70,8 +70,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
          int[] adjacentLabels = data.get().getAdjacentLabels(segment.getLabels());
          for (int adjacentLabel : adjacentLabels)
          {
-            SegmentedImageRawData adjacentData = data.get().getFusionDataSegment(adjacentLabel);
-            if (adjacentData.getId() == SegmentedImageRawData.DEFAULT_SEGMENT_ID)
+            RawSuperPixelData adjacentData = data.get().getFusionDataSegment(adjacentLabel);
+            if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
             {
                segment.extend(adjacentData, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
                               planarRegionPropagationParameters.isUpdateExtendedData(), planarRegionPropagationParameters.getExtendingRadiusThreshold());
@@ -107,7 +107,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
    {
       int nonIDLabel = selectRandomNonIdentifiedLabel();
 
-      if (nonIDLabel == SegmentedImageRawData.DEFAULT_SEGMENT_ID)
+      if (nonIDLabel == RawSuperPixelData.DEFAULT_SEGMENT_ID)
       {
          return false;
       }
@@ -126,7 +126,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
     */
    private SegmentationNodeData createSegmentNodeData(int seedLabel, int segmentId)
    {
-      SegmentedImageRawData seedImageSegment = data.get().getFusionDataSegment(seedLabel);
+      RawSuperPixelData seedImageSegment = data.get().getFusionDataSegment(seedLabel);
       seedImageSegment.setId(segmentId);
       SegmentationNodeData newSegment = new SegmentationNodeData(seedImageSegment);
 
@@ -142,9 +142,9 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
          for (int adjacentLabel : adjacentLabels)
          {
-            SegmentedImageRawData candidate = data.get().getFusionDataSegment(adjacentLabel);
+            RawSuperPixelData candidate = data.get().getFusionDataSegment(adjacentLabel);
 
-            if (candidate.getId() != SegmentedImageRawData.DEFAULT_SEGMENT_ID || candidate.isSparse())
+            if (candidate.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidate.isSparse())
             {
                continue;
             }
@@ -173,8 +173,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
          {
             for(int label : labels.toArray())
             {
-               SegmentedImageRawData rawData = data.get().getFusionDataSegment(label);
-               rawData.setId(SegmentedImageRawData.DEFAULT_SEGMENT_ID);
+               RawSuperPixelData rawData = data.get().getFusionDataSegment(label);
+               rawData.setId(RawSuperPixelData.DEFAULT_SEGMENT_ID);
             }
             return null;
          }
@@ -189,8 +189,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
       for (int i = 0; i < MAXIMUM_NUMBER_OF_TRIALS_TO_FIND_UN_ID_LABEL; i++)
       {
          randomSeedLabel = random.nextInt(numberOfLabels - 1);
-         SegmentedImageRawData fusionDataSegment = data.get().getFusionDataSegment(randomSeedLabel);
-         if (fusionDataSegment.getId() == SegmentedImageRawData.DEFAULT_SEGMENT_ID && !fusionDataSegment.isSparse())
+         RawSuperPixelData fusionDataSegment = data.get().getFusionDataSegment(randomSeedLabel);
+         if (fusionDataSegment.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID && !fusionDataSegment.isSparse())
             return randomSeedLabel;
       }
       return -1;

@@ -27,7 +27,7 @@ public class SegmentationNodeData
    private final List<Point3D> pointsInSegment = new ArrayList<>();
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
    
-   public SegmentationNodeData(SegmentedImageRawData seedImageSegment)
+   public SegmentationNodeData(RawSuperPixelData seedImageSegment)
    {
       id = seedImageSegment.getId();
       labels.add(seedImageSegment.getImageSegmentLabel());
@@ -40,7 +40,7 @@ public class SegmentationNodeData
       pointsInSegment.addAll(seedImageSegment.getPoints());
    }
 
-   public void merge(SegmentedImageRawData fusionDataSegment)
+   public void merge(RawSuperPixelData fusionDataSegment)
    {
       labels.add(fusionDataSegment.getImageSegmentLabel());
       labelCenters.add(fusionDataSegment.getCenter());
@@ -75,7 +75,7 @@ public class SegmentationNodeData
       }
    }
 
-   public void extend(SegmentedImageRawData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
+   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
    {
       for (Point3D point : fusionDataSegment.getPoints())
       {
@@ -137,7 +137,7 @@ public class SegmentationNodeData
    /**
     * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.
     */
-   public boolean isCoplanar(SegmentedImageRawData fusionDataSegment, double threshold, boolean isBigSegment)
+   public boolean isCoplanar(RawSuperPixelData fusionDataSegment, double threshold, boolean isBigSegment)
    {
       Point3D nodeDataCenter = new Point3D(center);
       Vector3D nodeDataNormal = new Vector3D(normal);
@@ -169,7 +169,7 @@ public class SegmentationNodeData
          return false;
    }
 
-   public boolean isParallel(SegmentedImageRawData fusionDataSegment, double threshold)
+   public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)
    {
       if (Math.abs(fusionDataSegment.getNormal().dot(normal)) > threshold)
          return true;

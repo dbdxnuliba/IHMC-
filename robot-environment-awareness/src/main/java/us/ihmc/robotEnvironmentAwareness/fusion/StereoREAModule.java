@@ -16,8 +16,8 @@ import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.packets.BoundingBoxParametersMessage;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionData;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionDataBuffer;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImage;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageBuffer;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.StereoREAPlanarRegionFeatureUpdater;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.PointCloudProjectionHelper;
 import us.ihmc.robotEnvironmentAwareness.updaters.REAPlanarRegionPublicNetworkProvider;
@@ -32,7 +32,7 @@ public class StereoREAModule implements Runnable
 
    private final AtomicReference<Boolean> enable;
    private final AtomicReference<Boolean> isRunning = new AtomicReference<Boolean>(false);
-   private final LidarImageFusionDataBuffer lidarImageFusionDataBuffer;
+   private final FusedSuperPixelImageBuffer lidarImageFusionDataBuffer;
    private final StereoREAPlanarRegionFeatureUpdater planarRegionFeatureUpdater;
 
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
@@ -41,7 +41,7 @@ public class StereoREAModule implements Runnable
    {
       this.messager = messager;
       this.reaMessager = reaMessager;
-      lidarImageFusionDataBuffer = new LidarImageFusionDataBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
+      lidarImageFusionDataBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
       planarRegionFeatureUpdater = new StereoREAPlanarRegionFeatureUpdater(reaMessager, messager);
 
       enable = messager.createInput(LidarImageFusionAPI.EnableREA, false);
@@ -99,7 +99,7 @@ public class StereoREAModule implements Runnable
 
       lidarImageFusionDataBuffer.updateNewBuffer();
 
-      LidarImageFusionData newBuffer = lidarImageFusionDataBuffer.pollNewBuffer();
+      FusedSuperPixelImage newBuffer = lidarImageFusionDataBuffer.pollNewBuffer();
       messager.submitMessage(LidarImageFusionAPI.FusionDataState, newBuffer);
 
       planarRegionFeatureUpdater.updateLatestLidarImageFusionData(newBuffer);

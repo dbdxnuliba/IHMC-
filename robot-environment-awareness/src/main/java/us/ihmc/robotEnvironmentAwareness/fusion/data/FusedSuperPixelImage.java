@@ -9,13 +9,13 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFi
 /**
  * This data set is to hold a list of SegmentationRawData.
  */
-public class LidarImageFusionData
+public class FusedSuperPixelImage
 {
    private final int imageWidth;
    private final int imageHeight;
-   private final ArrayList<SegmentedImageRawData> fusionDataSegments = new ArrayList<SegmentedImageRawData>();
+   private final ArrayList<RawSuperPixelData> fusionDataSegments = new ArrayList<RawSuperPixelData>();
 
-   public LidarImageFusionData(List<SegmentedImageRawData> fusionDataSegments, int imageWidth, int imageHeight)
+   public FusedSuperPixelImage(List<RawSuperPixelData> fusionDataSegments, int imageWidth, int imageHeight)
    {
       this.fusionDataSegments.addAll(fusionDataSegments);
       this.imageWidth = imageWidth;
@@ -27,7 +27,7 @@ public class LidarImageFusionData
       return fusionDataSegments.size();
    }
 
-   public SegmentedImageRawData getFusionDataSegment(int label)
+   public RawSuperPixelData getFusionDataSegment(int label)
    {
       return fusionDataSegments.get(label);
    }
@@ -53,7 +53,7 @@ public class LidarImageFusionData
 
    public boolean allIdentified()
    {
-      for (SegmentedImageRawData fusionDataSegment : fusionDataSegments)
+      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
       {
          if (fusionDataSegment.getId() == -1)
             return false;
@@ -68,7 +68,7 @@ public class LidarImageFusionData
    {
       double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
       double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
-      for (SegmentedImageRawData fusionDataSegment : fusionDataSegments)
+      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
       {
          double alpha = 1 - fusionDataSegment.getSegmentCenter().getY() / imageHeight;
          double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
@@ -80,14 +80,14 @@ public class LidarImageFusionData
    {
       if (rawDataFilteringParameters.isEnableFilterCentrality())
       {
-         for (SegmentedImageRawData fusionDataSegment : fusionDataSegments)
+         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
          {
             fusionDataSegment.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());
          }
       }
       if (rawDataFilteringParameters.isEnableFilterEllipticity())
       {
-         for (SegmentedImageRawData fusionDataSegment : fusionDataSegments)
+         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
          {
             fusionDataSegment.filteringEllipticity(rawDataFilteringParameters.getEllipticityMinimumLength(),
                                                    rawDataFilteringParameters.getEllipticityThreshold());

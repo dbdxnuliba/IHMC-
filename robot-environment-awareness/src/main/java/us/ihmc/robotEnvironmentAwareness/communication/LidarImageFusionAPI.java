@@ -15,7 +15,7 @@ import us.ihmc.messager.MessagerAPIFactory.MessagerAPI;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
 import us.ihmc.messager.MessagerAPIFactory.TopicTheme;
 import us.ihmc.messager.MessagerAPIFactory.TypedTopicTheme;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
@@ -69,7 +69,7 @@ public class LidarImageFusionAPI
 
    public static final Topic<Image32> ImageState = ModuleCategory.child(Image).topic(Data);
    public static final Topic<BufferedImage> ImageResultState = ModuleCategory.child(Image).child(Result).topic(Data);
-   public static final Topic<LidarImageFusionData> FusionDataState = ModuleCategory.child(StereoREA).child(FusionData).topic(Data);
+   public static final Topic<FusedSuperPixelImage> FusionDataState = ModuleCategory.child(StereoREA).child(FusionData).topic(Data);
    
    public static final Topic<Point3D> CameraPositionState = ModuleCategory.child(Camera).topic(Position);
    public static final Topic<Quaternion> CameraOrientationState = ModuleCategory.child(Camera).topic(Orientation);

@@ -20,7 +20,7 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
  * The data has its own id and basic planar region information such as center and normal.
  * The adjacent score is to determine which segments are adjacent sufficiently.
  */
-public class SegmentedImageRawData
+public class RawSuperPixelData
 {
    private static final boolean useParallelStreamsForFiltering = true;
 
@@ -44,7 +44,7 @@ public class SegmentedImageRawData
    private static final int numberOfAdjacentPixels = 10;
    private final TIntArrayList adjacentScore = new TIntArrayList();
 
-   public SegmentedImageRawData(int labelID)
+   public RawSuperPixelData(int labelID)
    {
       imageSegmentLabel = labelID;
    }

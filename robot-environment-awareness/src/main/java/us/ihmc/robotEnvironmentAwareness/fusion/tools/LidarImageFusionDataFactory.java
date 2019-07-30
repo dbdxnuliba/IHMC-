@@ -19,8 +19,8 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionData;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.SegmentedImageRawData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImage;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 
@@ -45,7 +45,7 @@ public class LidarImageFusionDataFactory
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public LidarImageFusionData createLidarImageFusionData(ColoredPixel[] pointCloud, BufferedImage bufferedImage)
+   public FusedSuperPixelImage createFusedSuperPixelImage(ColoredPixel[] pointCloud, BufferedImage bufferedImage)
    {
       int imageWidth = bufferedImage.getWidth();
       int imageHeight = bufferedImage.getHeight();
@@ -53,11 +53,11 @@ public class LidarImageFusionDataFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateSuperPixelLabels(bufferedImage, imageSegmentationParameters.get());
-      List<SegmentedImageRawData> superPixels = populateSuperPixelsWithRawPointCloud(projectedPointCloud, labels, pointCloud, imageHeight, imageWidth, cameraPosition.get(),
-                                                                                            cameraOrientation.get(), intrinsicParameters.get(),
-                                                                                            segmentationRawDataFilteringParameters.get());
+      List<RawSuperPixelData> superPixels = populateSuperPixelsWithRawPointCloud(projectedPointCloud, labels, pointCloud, imageHeight, imageWidth, cameraPosition.get(),
+                                                                                 cameraOrientation.get(), intrinsicParameters.get(),
+                                                                                 segmentationRawDataFilteringParameters.get());
 
-      return new LidarImageFusionData(superPixels, imageWidth, imageHeight);
+      return new FusedSuperPixelImage(superPixels, imageWidth, imageHeight);
    }
 
    public BufferedImage getSegmentedContourBufferedImage()
@@ -112,21 +112,21 @@ public class LidarImageFusionDataFactory
       return labelMat.getIntBuffer().array();
    }
 
-   private static List<SegmentedImageRawData> populateSuperPixelsWithRawPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
-                                                                                   ColoredPixel[] pointCloud, int imageHeight, int imageWidth,
-                                                                                   Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
-                                                                                   IntrinsicParameters intrinsicParameters,
-                                                                                   SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+   private static List<RawSuperPixelData> populateSuperPixelsWithRawPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
+                                                                               ColoredPixel[] pointCloud, int imageHeight, int imageWidth,
+                                                                               Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
+                                                                               IntrinsicParameters intrinsicParameters,
+                                                                               SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
       if (labelIds.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labelIds.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
 
-      List<SegmentedImageRawData> segmentedSuperPixels = new ArrayList<>();
+      List<RawSuperPixelData> segmentedSuperPixels = new ArrayList<>();
 
       // create all the segmented super pixels.
       int numberOfLabels = max(labelIds) + 1;
       for (int labelId = 0; labelId < numberOfLabels; labelId++)
-         segmentedSuperPixels.add(new SegmentedImageRawData(labelId));
+         segmentedSuperPixels.add(new RawSuperPixelData(labelId));
 
       // projection from point cloud into segmented image.
       Stream.of(pointCloud).parallel().forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, segmentedSuperPixels, labelIds,
@@ -143,7 +143,7 @@ public class LidarImageFusionDataFactory
       }
 
       // update and calculate normal.
-      Stream<SegmentedImageRawData> pixelStream = computeNormalsInParallel ? segmentedSuperPixels.parallelStream() : segmentedSuperPixels.stream();
+      Stream<RawSuperPixelData> pixelStream = computeNormalsInParallel ? segmentedSuperPixels.parallelStream() : segmentedSuperPixels.stream();
       pixelStream.forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters));
 
 
@@ -171,7 +171,7 @@ public class LidarImageFusionDataFactory
       return segmentedSuperPixels;
    }
 
-   private static void projectColoredPixelIntoSuperPixel(BufferedImage projectedPointCloudToPack, List<SegmentedImageRawData> segmentedSuperPixelToPack,
+   private static void projectColoredPixelIntoSuperPixel(BufferedImage projectedPointCloudToPack, List<RawSuperPixelData> segmentedSuperPixelToPack,
                                                          int[] labelIds, ColoredPixel coloredPixel, int imageHeight, int imageWidth, Point3DReadOnly cameraPosition,
                                                          QuaternionReadOnly cameraOrientation, IntrinsicParameters intrinsicParameters)
    {
@@ -196,7 +196,7 @@ public class LidarImageFusionDataFactory
       return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
    }
 
-   private static void registerAdjacentPixelIds(List<SegmentedImageRawData> segmentedSuperPixelsToPack, int widthIndex, int heightIndex, int[] labelIds, int imageWidth)
+   private static void registerAdjacentPixelIds(List<RawSuperPixelData> segmentedSuperPixelsToPack, int widthIndex, int heightIndex, int[] labelIds, int imageWidth)
    {
       int currentLabelId = labelIds[getLabelIdIndex(widthIndex, heightIndex, imageWidth)];
       int[] idOfAdjacentPixels = new int[4];
@@ -215,7 +215,7 @@ public class LidarImageFusionDataFactory
       }
    }
 
-   private static void updateSuperpixelAndCalculateNormal(SegmentedImageRawData fusionDataSegment, SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+   private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData fusionDataSegment, SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
       if (segmentationRawDataFilteringParameters.isEnableFilterFlyingPoint())
          fusionDataSegment.filterOutFlyingPoints(segmentationRawDataFilteringParameters.getFlyingPointThreshold(),
