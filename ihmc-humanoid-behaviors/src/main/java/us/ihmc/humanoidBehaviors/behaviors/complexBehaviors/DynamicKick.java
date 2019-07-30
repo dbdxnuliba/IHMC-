@@ -39,6 +39,7 @@ public class DynamicKick extends AbstractBehavior
    private final YoDouble trajectoryTime;
    private HumanoidReferenceFrames referenceFrames;
    private double counter = 1.0;
+   private double tuningParam = 0.5;
 
 //   private FootTrajectoryTask[] tasks = new FootTrajectoryTask[6];
 
@@ -51,7 +52,7 @@ public class DynamicKick extends AbstractBehavior
       this.yoTime = yoTime;
       footTrajectoryBehavior = new FootTrajectoryBehavior(robotName,ros2Node,yoTime,yoDoubleSupport);
       trajectoryTime = new YoDouble("kickTrajectoryTime",registry);
-      trajectoryTime.set(0.25);
+      trajectoryTime.set(tuningParam/2);
       this.yoDoubleSupport = yoDoubleSupport;
       this.ankleZUpFrame = referenceFrames.getAnkleZUpReferenceFrames();
       pelvisTrajectoryBehavior = new PelvisTrajectoryBehavior(robotName,ros2Node,yoTime);
@@ -132,7 +133,7 @@ public class DynamicKick extends AbstractBehavior
 
 
       //bend torso forward and also take pelvisx a bit back
-      final double chestTrajectoryTime = 0.5;
+      final double chestTrajectoryTime = tuningParam;
       FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
       chestOrientation.setYawPitchRollIncludingFrame(referenceFrames.getWorldFrame(),0.0, Math.toRadians(30.0), 0.0);
       ChestTrajectoryMessage chestTrajectoryMessage = HumanoidMessageTools.createChestTrajectoryMessage(chestTrajectoryTime, chestOrientation,referenceFrames.getWorldFrame(),referenceFrames.getPelvisZUpFrame());
@@ -168,12 +169,12 @@ public class DynamicKick extends AbstractBehavior
 
       //get both your hands up simultaneously swiftly
       jointAngles = new double[] {0,Math.toRadians(-90.0),Math.toRadians(75), Math.toRadians(60.0),0,0,0};
-      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT, 0.2, jointAngles);
+      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT, tuningParam/2.5, jointAngles);
       leftArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
       pipeLine.submitTaskForPallelPipesStage(armTrajectoryBehavior , leftArmTask);
 
       jointAngles = new double[] {0,Math.toRadians(90.0),Math.toRadians(75), Math.toRadians(-60.0),0,0,0};
-      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT, 0.2, jointAngles);
+      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT, tuningParam/2.5, jointAngles);
       rightArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
       pipeLine.submitTaskForPallelPipesStage(armTrajectoryBehavior ,rightArmTask);
 
