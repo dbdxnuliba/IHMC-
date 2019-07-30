@@ -14,4 +14,6 @@ public interface SuperPixel
    void setNormal(Vector3DReadOnly normal);
 
    void setStandardDeviation(Vector3DReadOnly standardDeviation);
+
+   void setNormalQuality(double variance, int consensus);
 }

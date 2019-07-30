@@ -34,7 +34,8 @@ public class RawSuperPixelData implements SuperPixel
    private final Vector3D normal = new Vector3D();
 
    private final Vector3D standardDeviationVector = new Vector3D();
-   private double standardDeviation = Double.NaN;
+   private double normalVariance = Double.NaN;
+   private int normalConsensus = Integer.MAX_VALUE;
 
    private boolean isSparse = true;
 
@@ -141,8 +142,15 @@ public class RawSuperPixelData implements SuperPixel
    {
       if (!standardDeviationVector.containsNaN())
          isSparse = standardDeviationVector.getZ() > threshold;
-      else if (Double.isFinite(standardDeviation) && standardDeviation > threshold)
-         isSparse = true;
+   }
+
+   public void updateSparsityFromNormalQuality(double varianceThreshold, int minimumConsensus)
+   {
+      if (Double.isFinite(normalVariance))
+      {
+         if (normalVariance > varianceThreshold || normalConsensus < minimumConsensus)
+            isSparse = true;
+      }
    }
 
    /**
@@ -237,6 +245,12 @@ public class RawSuperPixelData implements SuperPixel
    public void setStandardDeviation(Vector3DReadOnly standardDeviation)
    {
       this.standardDeviationVector.set(standardDeviation);
+   }
+
+   public void setNormalQuality(double normalVariance, int normalConsensus)
+   {
+      this.normalVariance = normalVariance;
+      this.normalConsensus = normalConsensus;
    }
 
    public Point3DReadOnly getCenter()

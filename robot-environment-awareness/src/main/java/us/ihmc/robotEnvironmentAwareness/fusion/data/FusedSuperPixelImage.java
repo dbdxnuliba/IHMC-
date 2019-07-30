@@ -81,6 +81,7 @@ public class FusedSuperPixelImage
       double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
 
       superPixelData.updateSparsity(threshold);
+      superPixelData.updateSparsityFromNormalQuality(rawDataFilteringParameters.getMinNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
          superPixelData.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());

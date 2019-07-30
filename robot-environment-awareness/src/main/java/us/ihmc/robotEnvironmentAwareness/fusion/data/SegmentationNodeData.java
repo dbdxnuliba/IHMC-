@@ -22,6 +22,8 @@ public class SegmentationNodeData implements SuperPixel
    private final Vector3D normal = new Vector3D();
    private final Point3D center = new Point3D();
    private final Vector3D standardDeviation = new Vector3D();
+   private double normalVariance = Double.NaN;
+   private int normalConsensus = Integer.MIN_VALUE;
 
    private double weight = 0.0;
 
@@ -125,6 +127,12 @@ public class SegmentationNodeData implements SuperPixel
    public void setStandardDeviation(Vector3DReadOnly standardDeviation)
    {
       this.standardDeviation.set(standardDeviation);
+   }
+
+   public void setNormalQuality(double normalVariance, int normalConsensus)
+   {
+      this.normalVariance = normalVariance;
+      this.normalConsensus = normalConsensus;
    }
 
    public List<Point3D> getPointsInSegment()
