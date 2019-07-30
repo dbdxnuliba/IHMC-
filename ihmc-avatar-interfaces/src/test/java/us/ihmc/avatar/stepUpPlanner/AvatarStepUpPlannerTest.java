@@ -95,6 +95,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    private int numberOfExceptions = 0;
    private static final int NUMBER_OF_EXCEPTIONS_TO_PRINT = 5;
    boolean parametersAcked = false;
+   boolean abort = false;
 
    protected void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
    {
@@ -140,7 +141,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       publishParameters(parameters);
       int loop = 0;
       
-      while (!parametersAcked && loop < 20)
+      while (!parametersAcked && loop < 20 && !abort)
       {
          ThreadTools.sleep(500);
          LogTools.info("Waiting to receive parameters ack.");
@@ -153,20 +154,20 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
          ++loop;
       }
-      assertTrue(loop != 10);
+      assertTrue(loop != 10 && !abort);
 
       StepUpPlannerRequestMessage request = fillRequestMessage(stepHeight);
       LogTools.info("Sending request.");
       publishRequest(request);
       loop = 0;
       
-      while (receivedRespond == null && loop < 50)
+      while (receivedRespond == null && loop < 50 && !abort)
       {
          ThreadTools.sleep(500);
          LogTools.info("Waiting to receive respond.");
          ++loop;
       }
-      assertTrue(loop != 50);
+      assertTrue(loop != 50 && !abort);
 
 
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
@@ -257,6 +258,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          {
             LogTools.error("Recevied error: " + incomingData.getErrorDescriptionAsString());
             assertTrue(false);
+            abort = true;
          }
          else
          {
