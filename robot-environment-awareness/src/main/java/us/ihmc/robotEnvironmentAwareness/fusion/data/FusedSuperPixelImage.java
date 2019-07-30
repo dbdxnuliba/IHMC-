@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
@@ -11,6 +12,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFi
  */
 public class FusedSuperPixelImage
 {
+   private static final boolean filterInParallel = true;
    private final int imageWidth;
    private final int imageHeight;
    private final ArrayList<RawSuperPixelData> fusionDataSegments = new ArrayList<RawSuperPixelData>();
@@ -66,34 +68,28 @@ public class FusedSuperPixelImage
     */
    public void updateSparsity(SegmentationRawDataFilteringParameters rawDataFilteringParameters)
    {
-      double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
-      double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
-      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
-      {
-         double alpha = 1 - fusionDataSegment.getSegmentCenter().getY() / imageHeight;
-         double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
-         fusionDataSegment.updateSparsity(threshold);
-      }
+      Stream<RawSuperPixelData> superPixelStream = filterInParallel ? fusionDataSegments.parallelStream() : fusionDataSegments.stream();
+      superPixelStream.forEach(superPixelData -> updateSparsity(superPixelData, rawDataFilteringParameters, imageHeight));
    }
 
-   public void filteringSegmentationData(SegmentationRawDataFilteringParameters rawDataFilteringParameters)
+   private static void updateSparsity(RawSuperPixelData superPixelData, SegmentationRawDataFilteringParameters rawDataFilteringParameters, int imageHeight)
    {
+      double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
+      double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
+
+      double alpha = 1 - superPixelData.getSegmentCenter().getY() / imageHeight;
+      double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
+
+      superPixelData.updateSparsity(threshold);
+
       if (rawDataFilteringParameters.isEnableFilterCentrality())
-      {
-         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
-         {
-            fusionDataSegment.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());
-         }
-      }
+         superPixelData.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());
+
       if (rawDataFilteringParameters.isEnableFilterEllipticity())
-      {
-         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
-         {
-            fusionDataSegment.filteringEllipticity(rawDataFilteringParameters.getEllipticityMinimumLength(),
-                                                   rawDataFilteringParameters.getEllipticityThreshold());
-         }
-      }
+         superPixelData.filteringEllipticity(rawDataFilteringParameters.getEllipticityMinimumLength(), rawDataFilteringParameters.getEllipticityThreshold());
    }
+
+
 
    public int getImageWidth()
    {

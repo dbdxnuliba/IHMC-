@@ -5,16 +5,12 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
-import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
-import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 /**
  * This data set includes points which are in a superpixel.
@@ -37,7 +33,8 @@ public class RawSuperPixelData implements SuperPixel
    private final Point3D center = new Point3D();
    private final Vector3D normal = new Vector3D();
 
-   private final Vector3D standardDeviation = new Vector3D();
+   private final Vector3D standardDeviationVector = new Vector3D();
+   private double standardDeviation = Double.NaN;
 
    private boolean isSparse = true;
 
@@ -48,6 +45,7 @@ public class RawSuperPixelData implements SuperPixel
    public RawSuperPixelData(int labelID)
    {
       imageSegmentLabel = labelID;
+      standardDeviationVector.setToNaN();
    }
 
    public boolean contains(int otherLabel)
@@ -141,7 +139,10 @@ public class RawSuperPixelData implements SuperPixel
 
    public void updateSparsity(double threshold)
    {
-      isSparse = standardDeviation.getZ() > threshold;
+      if (!standardDeviationVector.containsNaN())
+         isSparse = standardDeviationVector.getZ() > threshold;
+      else if (Double.isFinite(standardDeviation) && standardDeviation > threshold)
+         isSparse = true;
    }
 
    /**
@@ -182,10 +183,10 @@ public class RawSuperPixelData implements SuperPixel
     */
    public void filteringEllipticity(double minLength, double threshold)
    {
-      if (!isSparse)
+      if (!isSparse && !standardDeviationVector.containsNaN())
       {
-         double lengthPrimary = standardDeviation.getX();
-         double lengthSecondary = standardDeviation.getY();
+         double lengthPrimary = standardDeviationVector.getX();
+         double lengthSecondary = standardDeviationVector.getY();
          if (lengthSecondary < minLength || lengthSecondary > lengthPrimary * threshold)
          {
             isSparse = true;
@@ -235,7 +236,7 @@ public class RawSuperPixelData implements SuperPixel
 
    public void setStandardDeviation(Vector3DReadOnly standardDeviation)
    {
-      this.standardDeviation.set(standardDeviation);
+      this.standardDeviationVector.set(standardDeviation);
    }
 
    public Point3DReadOnly getCenter()

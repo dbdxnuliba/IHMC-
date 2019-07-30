@@ -31,7 +31,6 @@ public class StereoREAPlanarRegionSegmentationCalculator
                                 PlanarRegionPropagationParameters propagationParameters)
    {
       lidarImageFusionData.updateSparsity(rawDataFilteringParameters);
-      lidarImageFusionData.filteringSegmentationData(rawDataFilteringParameters);
       data.set(lidarImageFusionData);
       numberOfLabels = lidarImageFusionData.getNumberOfImageSegments();
       planarRegionPropagationParameters.set(propagationParameters);
