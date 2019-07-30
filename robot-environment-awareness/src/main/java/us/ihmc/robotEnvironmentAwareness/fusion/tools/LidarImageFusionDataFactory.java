@@ -222,7 +222,7 @@ public class LidarImageFusionDataFactory
                                                  segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors());
 
       fusionDataSegment.updateAdjacency();
-      SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment);
+      SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment, fusionDataSegment.getPoints());
    }
 
    /**

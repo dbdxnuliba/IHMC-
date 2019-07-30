@@ -8,12 +8,12 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
-import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
-public class SegmentationNodeData
+public class SegmentationNodeData implements SuperPixel
 {
-   private static final boolean USE_PCA_TO_UPDATE = true;
+   private static final boolean USE_PCA_TO_MERGE = true;
    private int id = PlanarRegion.NO_REGION_ID;
    private final TIntArrayList labels = new TIntArrayList();
    private final List<Point3DReadOnly> labelCenters = new ArrayList<>();
@@ -21,12 +21,12 @@ public class SegmentationNodeData
 
    private final Vector3D normal = new Vector3D();
    private final Point3D center = new Point3D();
+   private final Vector3D standardDeviation = new Vector3D();
 
    private double weight = 0.0;
 
    private final List<Point3D> pointsInSegment = new ArrayList<>();
-   private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-   
+
    public SegmentationNodeData(RawSuperPixelData seedImageSegment)
    {
       id = seedImageSegment.getId();
@@ -48,16 +48,9 @@ public class SegmentationNodeData
 
       pointsInSegment.addAll(fusionDataSegment.getPoints());
 
-      if(USE_PCA_TO_UPDATE)
+      if(USE_PCA_TO_MERGE)
       {
-         fusionDataSegment.getPoints().stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
-         pca.compute();
-
-         pca.getMean(center);
-         pca.getThirdVector(normal);
-
-         if (normal.getZ() < 0.0)
-            normal.negate();
+         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
       }
       else
       {
@@ -95,17 +88,7 @@ public class SegmentationNodeData
 
       if (updateNodeData)
       {
-         PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-
-         pca.clear();
-         pointsInSegment.stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
-         pca.compute();
-
-         pca.getMean(center);
-         pca.getThirdVector(normal);
-
-         if (normal.getZ() < 0.0)
-            normal.negate();
+         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
       }
    }
 
@@ -119,14 +102,29 @@ public class SegmentationNodeData
       return labels;
    }
 
-   public Vector3D getNormal()
+   public Vector3DReadOnly getNormal()
    {
       return normal;
    }
 
-   public Point3D getCenter()
+   public Point3DReadOnly getCenter()
    {
       return center;
+   }
+
+   public void setCenter(Point3DReadOnly center)
+   {
+      this.center.set(center);
+   }
+
+   public void setNormal(Vector3DReadOnly normal)
+   {
+      this.normal.set(normal);
+   }
+
+   public void setStandardDeviation(Vector3DReadOnly standardDeviation)
+   {
+      this.standardDeviation.set(standardDeviation);
    }
 
    public List<Point3D> getPointsInSegment()

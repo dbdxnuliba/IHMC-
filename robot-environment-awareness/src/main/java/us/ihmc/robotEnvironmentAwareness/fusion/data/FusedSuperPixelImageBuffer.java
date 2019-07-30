@@ -42,7 +42,7 @@ public class FusedSuperPixelImageBuffer
 
       latestCameraPosition = messager.createInput(LidarImageFusionAPI.CameraPositionState, new Point3D());
       latestCameraOrientation = messager.createInput(LidarImageFusionAPI.CameraOrientationState, new Quaternion());
-      latestCameraIntrinsicParameters = messager.createInput(LidarImageFusionAPI.CameraIntrinsicParametersState, new IntrinsicParameters());
+      latestCameraIntrinsicParameters = messager.createInput(LidarImageFusionAPI.CameraIntrinsicParametersState, intrinsic);
    }
 
    public FusedSuperPixelImage pollNewBuffer()
@@ -50,10 +50,14 @@ public class FusedSuperPixelImageBuffer
       return newBuffer.getAndSet(null);
    }
 
+   // TODO make this automatically update when the point cloud is received.
    public void updateNewBuffer()
    {
-      StereoVisionPointCloudMessage pointCloudMessage = latestStereoVisionPointCloudMessage.get();
+      updateNewBuffer(latestStereoVisionPointCloudMessage.get());
+   }
 
+   public void updateNewBuffer(StereoVisionPointCloudMessage pointCloudMessage)
+   {
       Point3D[] pointCloudBuffer = MessageTools.unpackScanPoint3ds(pointCloudMessage);
       int[] colorBuffer = pointCloudMessage.getColors().toArray();
       Random random = new Random();

@@ -13,6 +13,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 /**
@@ -20,7 +21,7 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
  * The data has its own id and basic planar region information such as center and normal.
  * The adjacent score is to determine which segments are adjacent sufficiently.
  */
-public class RawSuperPixelData
+public class RawSuperPixelData implements SuperPixel
 {
    private static final boolean useParallelStreamsForFiltering = true;
 
