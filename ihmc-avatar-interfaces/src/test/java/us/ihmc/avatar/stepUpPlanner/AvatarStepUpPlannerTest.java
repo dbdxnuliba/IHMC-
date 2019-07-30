@@ -276,11 +276,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
-      double reduction = 0.7;
-      double rearOfFoot = -steppingParameters.getFootLength() / 2.0 * reduction;
-      double frontOfFoot = steppingParameters.getFootLength() / 2.0 * reduction;
-      double toeWidth = steppingParameters.getToeWidth() * reduction;
-      double heelWidth = steppingParameters.getFootWidth() * reduction;
+      double scale = 0.7;
+      double rearOfFoot = -steppingParameters.getFootLength() / 2.0;
+      double frontOfFoot = steppingParameters.getFootLength() / 2.0;
+      double toeWidth = steppingParameters.getToeWidth();
+      double heelWidth = steppingParameters.getFootWidth();
       
       for (int i = 0; i < 5; ++i) {
          StepUpPlannerStepParameters newStep = new StepUpPlannerStepParameters();
@@ -302,6 +302,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          newVertex.setY(heelWidth/2.0);
          newStep.getFootVertices().add().set(newVertex);
          
+         newStep.setScale(scale);
+
          leftSteps.add(new StepUpPlannerStepParameters(newStep));
          rightSteps.add(new StepUpPlannerStepParameters(newStep));
       }
