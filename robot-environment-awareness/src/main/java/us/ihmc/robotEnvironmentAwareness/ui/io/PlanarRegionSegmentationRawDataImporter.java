@@ -14,6 +14,8 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Point3D32;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.Vector3D32;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.geometry.PointMean;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
@@ -111,8 +113,8 @@ public class PlanarRegionSegmentationRawDataImporter
          bufferedReader.close();
 
          int regionId = regionToLoad.getRegionId();
-         Vector3D normal = regionToLoad.getNormal();
-         Point3D origin = regionToLoad.getOrigin();
+         Vector3DReadOnly normal = regionToLoad.getNormal();
+         Point3DReadOnly origin = regionToLoad.getOrigin();
          return new PlanarRegionSegmentationRawData(regionId, normal, origin, loadedPoints);
       }
       catch (IOException e)

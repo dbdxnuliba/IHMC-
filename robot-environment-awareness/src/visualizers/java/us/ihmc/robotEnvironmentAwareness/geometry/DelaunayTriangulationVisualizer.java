@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 
 import com.vividsolutions.jts.geom.MultiPoint;
@@ -29,6 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
@@ -146,8 +148,8 @@ public class DelaunayTriangulationVisualizer extends Application
 
       int regionId = rawData.getRegionId();
       JavaFXMultiColorMeshBuilder meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(16));
-      Point3D planeOrigin = rawData.getOrigin();
-      Quaternion planeOrientation = rawData.getOrientation();
+      Point3DReadOnly planeOrigin = rawData.getOrigin();
+      QuaternionReadOnly planeOrientation = rawData.getOrientation();
       Color regionColor = OcTreeMeshBuilder.getRegionColor(regionId);
 
       for (QuadEdge edge : edges)
@@ -169,8 +171,8 @@ public class DelaunayTriangulationVisualizer extends Application
 
       int regionId = rawData.getRegionId();
       JavaFXMultiColorMeshBuilder meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(16));
-      Point3D planeOrigin = rawData.getOrigin();
-      Quaternion planeOrientation = rawData.getOrientation();
+      Point3DReadOnly planeOrigin = rawData.getOrigin();
+      QuaternionReadOnly planeOrientation = rawData.getOrientation();
       Color regionColor = OcTreeMeshBuilder.getRegionColor(regionId);
 
       for (QuadEdge edge : primaryEdges)
@@ -192,8 +194,8 @@ public class DelaunayTriangulationVisualizer extends Application
       List<QuadEdge> orderedBorderEdges = SimpleConcaveHullFactory.computeIntermediateVariables(delaunayTriangles, null).getOrderedBorderEdges();
 
       JavaFXMultiColorMeshBuilder meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(16));
-      Point3D planeOrigin = rawData.getOrigin();
-      Quaternion planeOrientation = rawData.getOrientation();
+      Point3DReadOnly planeOrigin = rawData.getOrigin();
+      QuaternionReadOnly planeOrientation = rawData.getOrientation();
 
       double startHue = 0.0;
       double endHue = 240.0;

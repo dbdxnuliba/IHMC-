@@ -16,6 +16,8 @@ import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 
 public class PlanarRegionIntersectionCalculator
 {
@@ -117,10 +119,10 @@ public class PlanarRegionIntersectionCalculator
    private static Line3D computeIntersectionLine3d(PlanarRegionSegmentationRawData currentRegion, PlanarRegionSegmentationRawData currentNeighbor,
                                                    double minRegionAngleDifference)
    {
-      Point3D origin1 = currentRegion.getOrigin();
-      Vector3D normal1 = currentRegion.getNormal();
-      Point3D origin2 = currentNeighbor.getOrigin();
-      Vector3D normal2 = currentNeighbor.getNormal();
+      Point3DReadOnly origin1 = currentRegion.getOrigin();
+      Vector3DReadOnly normal1 = currentRegion.getNormal();
+      Point3DReadOnly origin2 = currentNeighbor.getOrigin();
+      Vector3DReadOnly normal2 = currentNeighbor.getNormal();
 
       Point3D pointOnIntersection = new Point3D();
       Vector3D intersectionDirection = new Vector3D();

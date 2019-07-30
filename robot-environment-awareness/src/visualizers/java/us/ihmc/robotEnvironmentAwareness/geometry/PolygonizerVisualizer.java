@@ -57,6 +57,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.javaFXToolkit.cameraControllers.FocusBasedCameraMouseEventHandler;
 import us.ihmc.javaFXToolkit.scenes.View3DFactory;
@@ -420,7 +421,7 @@ public class PolygonizerVisualizer extends Application
    private Node createBorderVerticesGraphics(PlanarRegionSegmentationRawData rawData, ConcaveHullFactoryResult concaveHullFactoryResult)
    {
       JavaFXMeshBuilder meshBuilder = new JavaFXMeshBuilder();
-      Point3D planeOrigin = rawData.getOrigin();
+      Point3DReadOnly planeOrigin = rawData.getOrigin();
       Quaternion planeOrientation = rawData.getOrientation();
 
       for (ConcaveHullVariables intermediateVariables : concaveHullFactoryResult.getIntermediateVariables())

@@ -19,6 +19,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.jOctoMap.node.NormalOcTreeNode;
 import us.ihmc.robotEnvironmentAwareness.communication.converters.REAPlanarRegionsConverter;
 import us.ihmc.robotEnvironmentAwareness.communication.packets.PlanarRegionSegmentationMessage;
@@ -108,17 +109,17 @@ public class PlanarRegionSegmentationRawData
       return pointCloud.size();
    }
 
-   public Point3D getOrigin()
+   public Point3DReadOnly getOrigin()
    {
       return origin;
    }
 
-   public Vector3D getNormal()
+   public Vector3DReadOnly getNormal()
    {
       return normal;
    }
 
-   public Quaternion getOrientation()
+   public QuaternionReadOnly getOrientation()
    {
       return orientation;
    }
