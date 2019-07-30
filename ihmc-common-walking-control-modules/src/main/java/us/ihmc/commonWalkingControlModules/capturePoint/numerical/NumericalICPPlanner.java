@@ -259,10 +259,15 @@ public class NumericalICPPlanner
 
    public void setAngularMomentumTrajectory(ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory)
    {
+      setAngularMomentumTrajectory(angularMomentumTrajectory, 0.0);
+   }
+
+   public void setAngularMomentumTrajectory(ObjDoubleConsumer<Vector2DBasics> angularMomentumTrajectory, double timeInSequence)
+   {
       // Re-sample the trajectory at the sample rate of this planner:
       for (int i = 0; i < angularMomentums.size(); i++)
       {
-         double time = timestep * i;
+         double time = timestep * i + timeInSequence;
          angularMomentumTrajectory.accept(angularMomentums.get(i), time);
       }
    }
@@ -283,6 +288,8 @@ public class NumericalICPPlanner
       Ain.reshape(0, 2 * adjustmentSteps);
       Arrays.fill(Ain.data, 0.0);
       int index = 0;
+
+      // TODO: loop the other way around to save a lot of computation
       for (int step = 0; step < adjustmentSteps; step++)
       {
          double time = timestep * step + timeInSequence;
