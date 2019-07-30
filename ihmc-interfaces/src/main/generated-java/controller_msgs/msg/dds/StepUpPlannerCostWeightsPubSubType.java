@@ -56,6 +56,8 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
 
       return current_alignment - initial_alignment;
    }
@@ -93,6 +95,9 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -102,6 +107,8 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
       cdr.write_type_6(data.getCop());
 
       cdr.write_type_6(data.getTorques());
+
+      cdr.write_type_6(data.getMaxTorques());
 
       cdr.write_type_6(data.getControlMultipliers());
 
@@ -123,6 +130,8 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
       	
       data.setTorques(cdr.read_type_6());
       	
+      data.setMaxTorques(cdr.read_type_6());
+      	
       data.setControlMultipliers(cdr.read_type_6());
       	
       data.setFinalControl(cdr.read_type_6());
@@ -143,6 +152,7 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
    {
       ser.write_type_6("cop", data.getCop());
       ser.write_type_6("torques", data.getTorques());
+      ser.write_type_6("max_torques", data.getMaxTorques());
       ser.write_type_6("control_multipliers", data.getControlMultipliers());
       ser.write_type_6("final_control", data.getFinalControl());
       ser.write_type_6("max_control_multiplier", data.getMaxControlMultiplier());
@@ -156,6 +166,7 @@ public class StepUpPlannerCostWeightsPubSubType implements us.ihmc.pubsub.TopicD
    {
       data.setCop(ser.read_type_6("cop"));
       data.setTorques(ser.read_type_6("torques"));
+      data.setMaxTorques(ser.read_type_6("max_torques"));
       data.setControlMultipliers(ser.read_type_6("control_multipliers"));
       data.setFinalControl(ser.read_type_6("final_control"));
       data.setMaxControlMultiplier(ser.read_type_6("max_control_multiplier"));

@@ -4,6 +4,9 @@ float64 cop 1.0
 # Weight for a proxy of the exerted torques
 float64 torques 1.0
 
+# Weight for a proxy of the maximum exerted torques
+float64 max_torques 1.0
+
 # Weight on the control amplitude
 float64 control_multipliers 1.0
 
