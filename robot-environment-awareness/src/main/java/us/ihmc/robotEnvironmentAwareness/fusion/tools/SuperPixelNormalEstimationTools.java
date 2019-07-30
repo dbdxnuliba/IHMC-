@@ -5,12 +5,18 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SegmentedImageRawData;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
+import java.util.stream.Stream;
+
 public class SuperPixelNormalEstimationTools
 {
+   private static final boolean addPointsInParallel = true;
+
    public static void updateUsingPCA(SegmentedImageRawData superPixel)
    {
       PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-      superPixel.getPoints().parallelStream().forEach(pca::addDataPoint);
+      Stream<Point3D> pointStream = addPointsInParallel ? superPixel.getPoints().parallelStream() : superPixel.getPoints().stream();
+      pointStream.forEach(pca::addDataPoint);
+
       pca.compute();
 
       Point3D center = new Point3D();

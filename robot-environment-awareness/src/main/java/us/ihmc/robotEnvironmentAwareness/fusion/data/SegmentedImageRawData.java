@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
@@ -21,6 +22,8 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
  */
 public class SegmentedImageRawData
 {
+   private static final boolean useParallelStreamsForFiltering = true;
+
    public static final int DEFAULT_SEGMENT_ID = -1;
    private int id = DEFAULT_SEGMENT_ID;
 
@@ -34,8 +37,6 @@ public class SegmentedImageRawData
    private final Vector3D normal = new Vector3D();
 
    private final Vector3D standardDeviation = new Vector3D();
-
-   private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
    private boolean isSparse = true;
 
@@ -110,13 +111,14 @@ public class SegmentedImageRawData
       return false;
       */
 
+      Stream<Point3D> pointStream = useParallelStreamsForFiltering ? otherPoints.parallelStream() : otherPoints.stream();
       // subtract 1 to remove self
-      int numberOfNeighbors = ((int) otherPoints.parallelStream().filter(otherPoint -> point.distance(otherPoint) < minDistanceToNeighbor).count()) - 1;
+      int numberOfNeighbors = ((int) pointStream.filter(otherPoint -> point.distance(otherPoint) < minDistanceToNeighbor).count()) - 1;
 
       return numberOfNeighbors > requiredNumberOfNeighbors;
    }
 
-   public void updateUsingPCA()
+   public void updateAdjacency()
    {
       if (useAdjacentScore)
       {
@@ -134,18 +136,6 @@ public class SegmentedImageRawData
             }
          }
       }
-
-      pca.clear();
-      points.parallelStream().forEach(pca::addDataPoint);
-      pca.compute();
-
-      pca.getMean(center);
-      pca.getThirdVector(normal);
-
-      if (normal.getZ() < 0.0)
-         normal.negate();
-
-      pca.getStandardDeviation(standardDeviation);
    }
 
    public void updateSparsity(double threshold)
@@ -163,7 +153,8 @@ public class SegmentedImageRawData
    {
       if (!isSparse)
       {
-         if (points.parallelStream().filter(point -> center.distance(point) < radius).count() < threshold * getWeight())
+         Stream<Point3D> pointStream = useParallelStreamsForFiltering ? points.parallelStream() : points.stream();
+         if (pointStream.filter(point -> center.distance(point) < radius).count() < threshold * getWeight())
             isSparse = true;
 
 //         int numberOfInliers = 0;

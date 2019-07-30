@@ -220,7 +220,9 @@ public class LidarImageFusionDataFactory
       if (segmentationRawDataFilteringParameters.isEnableFilterFlyingPoint())
          fusionDataSegment.filterOutFlyingPoints(segmentationRawDataFilteringParameters.getFlyingPointThreshold(),
                                                  segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors());
-      fusionDataSegment.updateUsingPCA();
+
+      fusionDataSegment.updateAdjacency();
+      SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment);
    }
 
    /**
