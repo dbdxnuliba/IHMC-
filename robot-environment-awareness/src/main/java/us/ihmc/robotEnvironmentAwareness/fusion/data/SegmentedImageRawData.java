@@ -82,33 +82,36 @@ public class SegmentedImageRawData
       List<Point3D> filteredPoints = new ArrayList<>();
       for (Point3D point : points)
       {
-         double closestDistance = Double.POSITIVE_INFINITY;
-         int numberOfNeighbors = 0;
-         for (Point3D otherPoint : points)
-         {
-            if (point == otherPoint)
-               continue;
-
-            double distance = point.distance(otherPoint);
-
-            if (distance < closestDistance)
-            {
-               closestDistance = distance;
-            }
-            if (distance < maxDistanceToNeighbor)
-            {
-               numberOfNeighbors++;
-            }
-
-            if (closestDistance < maxDistanceToNeighbor && numberOfNeighbors > minimumNumberOfNeighbors)
-            {
-               filteredPoints.add(point);
-               break;
-            }
-         }
+         if (isPointCloseEnoughToOtherPoints(maxDistanceToNeighbor, minimumNumberOfNeighbors, point, points))
+            filteredPoints.add(point);
       }
       points.clear();
       points.addAll(filteredPoints);
+   }
+
+   private static boolean isPointCloseEnoughToOtherPoints(double minDistanceToNeighbor, int requiredNumberOfNeighbors, Point3D point, List<Point3D> otherPoints)
+   {
+      requiredNumberOfNeighbors = Math.max(requiredNumberOfNeighbors, 0);
+      /*
+      int numberOfNeighbors = 0;
+      for (Point3D otherPoint : otherPoints)
+      {
+         if (point == otherPoint)
+            continue;
+
+         if (point.distance(otherPoint) < minDistanceToNeighbor)
+            numberOfNeighbors++;
+
+         if (numberOfNeighbors > requiredNumberOfNeighbors)
+            return true;
+      }
+      return false;
+      */
+
+      // subtract 1 to remove self
+      int numberOfNeighbors = ((int) otherPoints.parallelStream().filter(otherPoint -> point.distance(otherPoint) < minDistanceToNeighbor).count()) - 1;
+
+      return numberOfNeighbors > requiredNumberOfNeighbors;
    }
 
    public void updateUsingPCA()
@@ -158,18 +161,21 @@ public class SegmentedImageRawData
    {
       if (!isSparse)
       {
-         int numberOfInliers = 0;
-         for (Point3D point : points)
-         {
-            double distance = center.distance(point);
-            if (distance < radius)
-               numberOfInliers++;
-         }
-
-         if (numberOfInliers < threshold * getWeight())
-         {
+         if (points.parallelStream().filter(point -> center.distance(point) < radius).count() < threshold * getWeight())
             isSparse = true;
-         }
+
+//         int numberOfInliers = 0;
+//         for (Point3D point : points)
+//         {
+//            double distance = center.distance(point);
+//            if (distance < radius)
+//               numberOfInliers++;
+//         }
+//
+//         if (numberOfInliers < threshold * getWeight())
+//         {
+//            isSparse = true;
+//         }
       }
    }
 

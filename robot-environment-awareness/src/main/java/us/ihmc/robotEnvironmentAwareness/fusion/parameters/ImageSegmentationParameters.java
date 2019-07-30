@@ -52,7 +52,7 @@ public class ImageSegmentationParameters
       return pixelRuler;
    }
 
-   public int getIterate()
+   public int getNumberOfIterations()
    {
       return iterate;
    }

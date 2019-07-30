@@ -8,7 +8,7 @@ public class ImageSegmentationParametersProperty extends ParametersProperty<Imag
 {
    private final IntegerField pixelSize = new IntegerField(ImageSegmentationParameters::getPixelSize, (p, v) -> p.setPixelSize(v));
    private final DoubleField pixelRuler = new DoubleField(ImageSegmentationParameters::getPixelRuler, (p, v) -> p.setPixelRuler(v));
-   private final IntegerField iterate = new IntegerField(ImageSegmentationParameters::getIterate, (p, v) -> p.setIterate(v));
+   private final IntegerField iterate = new IntegerField(ImageSegmentationParameters::getNumberOfIterations, (p, v) -> p.setIterate(v));
    private final BooleanField enableConnectivity = new BooleanField(ImageSegmentationParameters::getEnableConnectivity, (p, v) -> p.setEnableConnectivity(v));
    private final IntegerField minElementSize = new IntegerField(ImageSegmentationParameters::getMinElementSize, (p, v) -> p.setMinElementSize(v));
 
