@@ -40,12 +40,6 @@ public class NumericalICPPlanner
    private static final double COP_CONTINUITY_WEIGHT = 0.00001;
    /** Weight for keeping the CoP trajectory close to the reference */
    private static final double COP_REFERENCE_WEIGHT = 0.01;
-   /** Whether the continuity at the initial CoP should be an equality constraint */
-   private static final boolean INITIAL_COP_CONSTRAINT = false;
-   /** Whether the continuity at the initial ICP should be an equality constraint */
-   private static final boolean INITIAL_ICP_CONSTRAINT = false;
-   /** The amount by which to shrink any CoP constraint polygons */
-   private static final double COP_SAFETY_DISTANCE = 0.0;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -162,18 +156,6 @@ public class NumericalICPPlanner
       beq = new DenseMatrix64F(2, 1);
       Aeq.set(0, 2 * adjustmentSteps - 2, 1.0);
       Aeq.set(1, 2 * adjustmentSteps - 1, 1.0);
-      if (INITIAL_COP_CONSTRAINT)
-      {
-         Aeq.reshape(Aeq.getNumRows() + 2, Aeq.getNumCols(), true);
-         beq.reshape(beq.getNumRows() + 2, beq.getNumCols(), true);
-         Aeq.set(2, 0, 1.0);
-         Aeq.set(3, 1, 1.0);
-      }
-      if (INITIAL_ICP_CONSTRAINT)
-      {
-         Aeq.reshape(Aeq.getNumRows() + 2, Aeq.getNumCols(), true);
-         beq.reshape(beq.getNumRows() + 2, beq.getNumCols(), true);
-      }
 
       // Initialize finite difference matrices for minimizing CoP velocity
       FD = new DenseMatrix64F(2 * adjustmentSteps - 2, 2 * adjustmentSteps);
@@ -213,7 +195,8 @@ public class NumericalICPPlanner
          }
          for (int i = 0; i < constraintPolygons.size(); i++)
          {
-            YoArtifactPolygon constraintViz = new YoArtifactPolygon("ConstraintPolygon" + i, (YoFrameConvexPolygon2D) constraintPolygons.get(i), Color.BLUE, false);
+            YoArtifactPolygon constraintViz = new YoArtifactPolygon("ConstraintPolygon" + i, (YoFrameConvexPolygon2D) constraintPolygons.get(i), Color.BLUE,
+                                                                    false);
             graphicsRegistry.registerArtifact(getClass().getSimpleName(), constraintViz);
             constraintPolygons.get(i).setToNaN();
          }
@@ -291,7 +274,7 @@ public class NumericalICPPlanner
       for (int polygonIndex = 0; polygonIndex < supportPolygons.size(); polygonIndex++)
       {
          ConvexPolygon2DReadOnly supportPolygon = supportPolygons.get(polygonIndex);
-         PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, COP_SAFETY_DISTANCE);
+         PolygonWiggler.convertToInequalityConstraints(supportPolygon, subAin, subbin, 0.0);
 
          boolean onLastPolygon = polygonIndex == supportTimes.size() - 1;
          while (onLastPolygon || timestep * index + timeInSequence < supportTimes.get(polygonIndex + 1))
@@ -345,20 +328,6 @@ public class NumericalICPPlanner
       // Setup equality constraints
       beq.set(0, cops.get(adjustmentSteps - 1).getX());
       beq.set(1, cops.get(adjustmentSteps - 1).getY());
-      int additionalConstraintOffset = 2;
-      if (INITIAL_COP_CONSTRAINT)
-      {
-         beq.set(additionalConstraintOffset, cops.get(0).getX());
-         beq.set(additionalConstraintOffset + 1, cops.get(0).getY());
-         additionalConstraintOffset += 2;
-      }
-      if (INITIAL_ICP_CONSTRAINT)
-      {
-         CommonOps.insert(AIcp, Aeq, additionalConstraintOffset, 0);
-         beq.set(additionalConstraintOffset, -bIcp.get(0));
-         beq.set(additionalConstraintOffset + 1, -bIcp.get(1));
-         additionalConstraintOffset += 2;
-      }
 
       // Add CoP reference objective to matrices
       CommonOps.add(f, fCop, f);

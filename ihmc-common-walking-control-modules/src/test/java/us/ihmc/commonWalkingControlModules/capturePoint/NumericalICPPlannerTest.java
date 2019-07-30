@@ -239,7 +239,7 @@ public class NumericalICPPlannerTest
       {
          addToArtifacts("Support" + i, supportPolygons.get(i), Color.GRAY, artifactRagistry);
       }
-      for (double t = 0.0; t < previewTime; t += 0.002)
+      for (double t = 0.0; t < previewTime; t += discretization)
       {
          copTrajectory.accept(cop, t);
          addToArtifacts("referenceCop" + (int) (1000 * t), cop, GraphicType.BALL, Color.CYAN, 0.001, artifactRagistry);
