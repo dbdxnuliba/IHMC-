@@ -45,6 +45,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 10; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.getMaxCdrSerializedSize(current_alignment);}
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
 
       return current_alignment - initial_alignment;
    }
@@ -66,6 +68,9 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       {
           current_alignment += controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.getCdrSerializedSize(data.getFootVertices().get(i0), current_alignment);}
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -78,6 +83,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       cdr.write_type_e(data.getFootVertices());else
           throw new RuntimeException("foot_vertices field exceeds the maximum length");
 
+      cdr.write_type_6(data.getScale());
+
    }
 
    public static void read(controller_msgs.msg.dds.StepUpPlannerStepParameters data, us.ihmc.idl.CDR cdr)
@@ -85,6 +92,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       data.setState(cdr.read_type_9());
       	
       cdr.read_type_e(data.getFootVertices());	
+      data.setScale(cdr.read_type_6());
+      	
 
    }
 
@@ -93,6 +102,7 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
    {
       ser.write_type_9("state", data.getState());
       ser.write_type_e("foot_vertices", data.getFootVertices());
+      ser.write_type_6("scale", data.getScale());
    }
 
    @Override
@@ -100,6 +110,7 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
    {
       data.setState(ser.read_type_9("state"));
       ser.read_type_e("foot_vertices", data.getFootVertices());
+      data.setScale(ser.read_type_6("scale"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.StepUpPlannerStepParameters src, controller_msgs.msg.dds.StepUpPlannerStepParameters dest)

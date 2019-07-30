@@ -22,6 +22,10 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
             * (in case of SWING state this is ignored)
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerVector2>  foot_vertices_;
+   /**
+            * Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
+            */
+   public double scale_ = 1.0;
 
    public StepUpPlannerStepParameters()
    {
@@ -40,6 +44,8 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       state_ = other.state_;
 
       foot_vertices_.set(other.foot_vertices_);
+      scale_ = other.scale_;
+
    }
 
    /**
@@ -65,6 +71,21 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerVector2>  getFootVertices()
    {
       return foot_vertices_;
+   }
+
+   /**
+            * Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
+            */
+   public void setScale(double scale)
+   {
+      scale_ = scale;
+   }
+   /**
+            * Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
+            */
+   public double getScale()
+   {
+      return scale_;
    }
 
 
@@ -94,6 +115,8 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
          {  if (!this.foot_vertices_.get(i).epsilonEquals(other.foot_vertices_.get(i), epsilon)) return false; }
       }
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.scale_, other.scale_, epsilon)) return false;
+
 
       return true;
    }
@@ -110,6 +133,8 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       if(this.state_ != otherMyClass.state_) return false;
 
       if (!this.foot_vertices_.equals(otherMyClass.foot_vertices_)) return false;
+      if(this.scale_ != otherMyClass.scale_) return false;
+
 
       return true;
    }
@@ -123,7 +148,9 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       builder.append("state=");
       builder.append(this.state_);      builder.append(", ");
       builder.append("foot_vertices=");
-      builder.append(this.foot_vertices_);
+      builder.append(this.foot_vertices_);      builder.append(", ");
+      builder.append("scale=");
+      builder.append(this.scale_);
       builder.append("}");
       return builder.toString();
    }

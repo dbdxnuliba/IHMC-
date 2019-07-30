@@ -30,6 +30,11 @@ module controller_msgs
          * (in case of SWING state this is ignored)
          */
         sequence<controller_msgs::msg::dds::StepUpPlannerVector2, 10> foot_vertices;
+        /**
+         * Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
+         */
+        @defaultValue(value=1.0)
+        double scale;
       };
     };
   };
