@@ -24,7 +24,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 
-public class LidarImageFusionDataFactory
+public class FusedSuperPixelImageFactory
 {
    private static final boolean computeNormalsInParallel = true;
 

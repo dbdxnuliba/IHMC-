@@ -32,7 +32,7 @@ public class StereoREAModule implements Runnable
 
    private final AtomicReference<Boolean> enable;
    private final AtomicReference<Boolean> isRunning = new AtomicReference<Boolean>(false);
-   private final FusedSuperPixelImageBuffer lidarImageFusionDataBuffer;
+   private final FusedSuperPixelImageBuffer fusedSuperPixelImageBuffer;
    private final StereoREAPlanarRegionFeatureUpdater planarRegionFeatureUpdater;
 
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
@@ -41,7 +41,7 @@ public class StereoREAModule implements Runnable
    {
       this.messager = messager;
       this.reaMessager = reaMessager;
-      lidarImageFusionDataBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
+      fusedSuperPixelImageBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
       planarRegionFeatureUpdater = new StereoREAPlanarRegionFeatureUpdater(reaMessager, messager);
 
       enable = messager.createInput(LidarImageFusionAPI.EnableREA, false);
@@ -75,12 +75,12 @@ public class StereoREAModule implements Runnable
 
    public void updateLatestStereoVisionPointCloudMessage(StereoVisionPointCloudMessage message)
    {
-      lidarImageFusionDataBuffer.updateLatestStereoVisionPointCloudMessage(message);
+      fusedSuperPixelImageBuffer.updateLatestStereoVisionPointCloudMessage(message);
    }
 
    public void updateLatestBufferedImage(BufferedImage bufferedImage)
    {
-      lidarImageFusionDataBuffer.updateLatestBufferedImage(bufferedImage);
+      fusedSuperPixelImageBuffer.updateLatestBufferedImage(bufferedImage);
    }
 
    @Override
@@ -97,9 +97,9 @@ public class StereoREAModule implements Runnable
       isRunning.set(true);
       long runningStartTime = System.nanoTime();
 
-      lidarImageFusionDataBuffer.updateNewBuffer();
+      fusedSuperPixelImageBuffer.updateNewBuffer();
 
-      FusedSuperPixelImage newBuffer = lidarImageFusionDataBuffer.pollNewBuffer();
+      FusedSuperPixelImage newBuffer = fusedSuperPixelImageBuffer.pollNewBuffer();
       messager.submitMessage(LidarImageFusionAPI.FusionDataState, newBuffer);
 
       planarRegionFeatureUpdater.updateLatestLidarImageFusionData(newBuffer);

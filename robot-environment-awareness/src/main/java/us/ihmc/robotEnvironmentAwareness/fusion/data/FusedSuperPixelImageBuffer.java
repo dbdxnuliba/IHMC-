@@ -13,11 +13,11 @@ import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.LidarImageFusionDataFactory;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.FusedSuperPixelImageFactory;
 
 public class FusedSuperPixelImageBuffer
 {
-   private final LidarImageFusionDataFactory lidarImageFusionDataFactory = new LidarImageFusionDataFactory();
+   private final FusedSuperPixelImageFactory fusedSuperPixelImageFactory = new FusedSuperPixelImageFactory();
 
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
    private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
@@ -80,12 +80,12 @@ public class FusedSuperPixelImageBuffer
          coloredPixels[i] = new ColoredPixel(pointCloudBuffer[i], colorBuffer[i]);
       }
 
-      lidarImageFusionDataFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
-      lidarImageFusionDataFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
-      lidarImageFusionDataFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
-      lidarImageFusionDataFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
+      fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
+      fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
+      fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+      fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      FusedSuperPixelImage data = lidarImageFusionDataFactory.createFusedSuperPixelImage(coloredPixels, latestBufferedImage.get());
+      FusedSuperPixelImage data = fusedSuperPixelImageFactory.createFusedSuperPixelImage(coloredPixels, latestBufferedImage.get());
 
       newBuffer.set(data);
    }
