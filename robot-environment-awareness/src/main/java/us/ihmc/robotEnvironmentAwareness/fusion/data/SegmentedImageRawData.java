@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import gnu.trove.list.array.TIntArrayList;
+import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
+import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -75,7 +77,7 @@ public class SegmentedImageRawData
       points.add(point);
    }
 
-   public void filterOutFlyingPoints(double threshold, int neighborsThreshold)
+   public void filterOutFlyingPoints(double maxDistanceToNeighbor, int minimumNumberOfNeighbors)
    {
       List<Point3D> filteredPoints = new ArrayList<>();
       for (Point3D point : points)
@@ -84,47 +86,52 @@ public class SegmentedImageRawData
          int numberOfNeighbors = 0;
          for (Point3D otherPoint : points)
          {
+            if (point == otherPoint)
+               continue;
+
             double distance = point.distance(otherPoint);
 
             if (distance < closestDistance)
             {
-               if (point != otherPoint)
-                  closestDistance = distance;
+               closestDistance = distance;
             }
-            if (distance < threshold)
+            if (distance < maxDistanceToNeighbor)
             {
                numberOfNeighbors++;
             }
+
+            if (closestDistance < maxDistanceToNeighbor && numberOfNeighbors > minimumNumberOfNeighbors)
+            {
+               filteredPoints.add(point);
+               break;
+            }
          }
-         if (closestDistance < threshold && numberOfNeighbors > neighborsThreshold)
-            filteredPoints.add(point);
       }
       points.clear();
       points.addAll(filteredPoints);
    }
 
-   public void update()
+   public void updateUsingPCA()
    {
       if (useAdjacentScore)
       {
-         TIntArrayList newAdjacentSegmentLabels = new TIntArrayList();
-         TIntArrayList newAdjacentScore = new TIntArrayList();
-         for (int i = 0; i < adjacentSegmentLabels.size(); i++)
+         int i = 0;
+         while (i < adjacentSegmentLabels.size())
          {
             if (adjacentScore.get(i) > numberOfAdjacentPixels)
             {
-               newAdjacentSegmentLabels.add(adjacentSegmentLabels.get(i));
-               newAdjacentScore.add(adjacentScore.get(i));
+               i++;
+            }
+            else
+            {
+               adjacentSegmentLabels.remove(i);
+               adjacentScore.remove(i);
             }
          }
-         adjacentSegmentLabels.clear();
-         adjacentSegmentLabels.addAll(newAdjacentSegmentLabels);
-         adjacentScore.clear();
-         adjacentScore.addAll(newAdjacentScore);
       }
 
       pca.clear();
-      points.stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
+      points.parallelStream().forEach(pca::addDataPoint);
       pca.compute();
 
       pca.getMean(center);
