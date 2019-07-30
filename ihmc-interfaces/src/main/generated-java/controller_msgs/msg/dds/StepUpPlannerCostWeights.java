@@ -17,6 +17,10 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
             */
    public double torques_ = 1.0;
    /**
+            * Weight for a proxy of the maximum exerted torques
+            */
+   public double max_torques_ = 1.0;
+   /**
             * Weight on the control amplitude
             */
    public double control_multipliers_ = 1.0;
@@ -56,6 +60,8 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
       cop_ = other.cop_;
 
       torques_ = other.torques_;
+
+      max_torques_ = other.max_torques_;
 
       control_multipliers_ = other.control_multipliers_;
 
@@ -99,6 +105,21 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
    public double getTorques()
    {
       return torques_;
+   }
+
+   /**
+            * Weight for a proxy of the maximum exerted torques
+            */
+   public void setMaxTorques(double max_torques)
+   {
+      max_torques_ = max_torques;
+   }
+   /**
+            * Weight for a proxy of the maximum exerted torques
+            */
+   public double getMaxTorques()
+   {
+      return max_torques_;
    }
 
    /**
@@ -213,6 +234,8 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.torques_, other.torques_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.max_torques_, other.max_torques_, epsilon)) return false;
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.control_multipliers_, other.control_multipliers_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.final_control_, other.final_control_, epsilon)) return false;
@@ -242,6 +265,8 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
 
       if(this.torques_ != otherMyClass.torques_) return false;
 
+      if(this.max_torques_ != otherMyClass.max_torques_) return false;
+
       if(this.control_multipliers_ != otherMyClass.control_multipliers_) return false;
 
       if(this.final_control_ != otherMyClass.final_control_) return false;
@@ -268,6 +293,8 @@ public class StepUpPlannerCostWeights extends Packet<StepUpPlannerCostWeights> i
       builder.append(this.cop_);      builder.append(", ");
       builder.append("torques=");
       builder.append(this.torques_);      builder.append(", ");
+      builder.append("max_torques=");
+      builder.append(this.max_torques_);      builder.append(", ");
       builder.append("control_multipliers=");
       builder.append(this.control_multipliers_);      builder.append(", ");
       builder.append("final_control=");

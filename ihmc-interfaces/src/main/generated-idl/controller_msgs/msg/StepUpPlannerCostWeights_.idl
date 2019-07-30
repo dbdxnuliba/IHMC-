@@ -22,6 +22,11 @@ module controller_msgs
         @defaultValue(value=1.0)
         double torques;
         /**
+         * Weight for a proxy of the maximum exerted torques
+         */
+        @defaultValue(value=1.0)
+        double max_torques;
+        /**
          * Weight on the control amplitude
          */
         @defaultValue(value=1.0)

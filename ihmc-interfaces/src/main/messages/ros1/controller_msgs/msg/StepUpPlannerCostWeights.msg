@@ -6,6 +6,10 @@ float64 cop
 # Field default value 1.0
 float64 torques
 
+# Weight for a proxy of the maximum exerted torques
+# Field default value 1.0
+float64 max_torques
+
 # Weight on the control amplitude
 # Field default value 1.0
 float64 control_multipliers
