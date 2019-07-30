@@ -75,7 +75,7 @@ public class SegmentedImageRawData
       points.add(point);
    }
 
-   public void filteringFlyingPoints(double threshold, int neighborsThreshold)
+   public void filterOutFlyingPoints(double threshold, int neighborsThreshold)
    {
       List<Point3D> filteredPoints = new ArrayList<>();
       for (Point3D point : points)
