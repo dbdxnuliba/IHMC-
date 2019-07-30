@@ -6,6 +6,8 @@ import java.util.List;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
@@ -14,8 +16,8 @@ public class SegmentationNodeData
    private static final boolean USE_PCA_TO_UPDATE = true;
    private int id = PlanarRegion.NO_REGION_ID;
    private final TIntArrayList labels = new TIntArrayList();
-   private final List<Point3D> labelCenters = new ArrayList<>();
-   private final List<Vector3D> labelNormals = new ArrayList<>();
+   private final List<Point3DReadOnly> labelCenters = new ArrayList<>();
+   private final List<Vector3DReadOnly> labelNormals = new ArrayList<>();
 
    private final Vector3D normal = new Vector3D();
    private final Point3D center = new Point3D();
@@ -146,7 +148,7 @@ public class SegmentationNodeData
          int closestLabel = -1;
          for (int i = 0; i < labelCenters.size(); i++)
          {
-            Point3D labelCenter = labelCenters.get(i);
+            Point3DReadOnly labelCenter = labelCenters.get(i);
             cur = labelCenter.distance(fusionDataSegment.getCenter());
             if (cur < min)
             {
@@ -175,14 +177,14 @@ public class SegmentationNodeData
          return false;
    }
 
-   public static double distancePlaneToPoint(Vector3D normalVector, Point3D center, Point3D point)
+   private static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
    {
-      Vector3D centerVector = new Vector3D(center);
-      double constantD = -normalVector.dot(centerVector);
+      Vector3D centerVector = new Vector3D(planeCenter);
+      double constantD = -planeNormal.dot(centerVector);
 
-      if (normalVector.lengthSquared() == 0)
+      if (planeNormal.lengthSquared() == 0)
          System.out.println("normalVector.lengthSquared() == 0");
       Vector3D pointVector = new Vector3D(point);
-      return Math.abs(normalVector.dot(pointVector) + constantD) / Math.sqrt(normalVector.lengthSquared());
+      return Math.abs(planeNormal.dot(pointVector) + constantD) / Math.sqrt(planeNormal.lengthSquared());
    }
 }

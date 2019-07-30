@@ -26,6 +26,8 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFi
 
 public class LidarImageFusionDataFactory
 {
+   private static final boolean computeNormalsInParallel = true;
+
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = true;
 
@@ -141,7 +143,8 @@ public class LidarImageFusionDataFactory
       }
 
       // update and calculate normal.
-      segmentedSuperPixels.parallelStream().forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters));
+      Stream<SegmentedImageRawData> pixelStream = computeNormalsInParallel ? segmentedSuperPixels.parallelStream() : segmentedSuperPixels.stream();
+      pixelStream.forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters));
 
 
       // set segment center in 2D.

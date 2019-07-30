@@ -3,6 +3,11 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javafx.collections.ObservableList;
@@ -10,40 +15,56 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
+import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
+import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
 
 public class LidarImageFusionDataViewer
 {
-   private final AtomicReference<LidarImageFusionData> lidarImageFusionDataToRender;
-
    protected final JavaFXMultiColorMeshBuilder meshBuilder;
 
    private final AtomicReference<MeshView> meshToRender = new AtomicReference<>(null);
    private final Group root = new Group();
    protected final ObservableList<Node> children = root.getChildren();
-   private final AtomicReference<Boolean> clear = new AtomicReference<>(false);
+
+   private final AtomicBoolean showSolution = new AtomicBoolean(true);
+   private final AtomicBoolean clearSolution = new AtomicBoolean(false);
+
+   private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
+
 
    public LidarImageFusionDataViewer(SharedMemoryJavaFXMessager messager)
    {
-      lidarImageFusionDataToRender = messager.createInput(LidarImageFusionAPI.FusionDataState, null);
+      messager.registerTopicListener(LidarImageFusionAPI.FusionDataState, lidarImageFusionData ->
+            executorService.submit(() -> unpackFusionData(lidarImageFusionData)));
 
       meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(2048));
 
-      messager.registerTopicListener(LidarImageFusionAPI.ShowFusionData, (content) -> unpackFusionData());
+      messager.registerTopicListener(LidarImageFusionAPI.ShowFusionData, this::handleShowSolution);
    }
 
-   private void unpackFusionData()
+
+   private void handleShowSolution(boolean show)
+   {
+      showSolution.set(show);
+      if (!show)
+         clearSolution.set(true);
+   }
+
+   private synchronized void unpackFusionData(LidarImageFusionData lidarImageFusionData)
    {
       clear();
       double lineWidth = 0.01;
       meshBuilder.clear();
-      LidarImageFusionData lidarImageFusionData = lidarImageFusionDataToRender.get();
 
       if (lidarImageFusionData == null)
          return;
@@ -69,8 +90,8 @@ public class LidarImageFusionDataViewer
          int randomID = new Random().nextInt();
          Color regionColor = getRegionColor(randomID);
          SegmentedImageRawData data = lidarImageFusionData.getFusionDataSegment(i);
-         Point3D center = data.getCenter();
-         Vector3D normal = data.getNormal();
+         Point3DReadOnly center = data.getCenter();
+         Vector3DReadOnly normal = data.getNormal();
          Point3D centerEnd = new Point3D(normal);
          centerEnd.scaleAdd(0.1, center);
          if (data.isSparse())
@@ -93,10 +114,12 @@ public class LidarImageFusionDataViewer
    {
       MeshView newScanMeshView = meshToRender.getAndSet(null);
 
-      if (clear.getAndSet(false))
+      if (clearSolution.getAndSet(false))
+      {
          children.clear();
+      }
 
-      if (newScanMeshView != null)
+      if (newScanMeshView != null && showSolution.get())
       {
          children.add(newScanMeshView);
       }
@@ -104,7 +127,7 @@ public class LidarImageFusionDataViewer
 
    public void clear()
    {
-      clear.set(true);
+      clearSolution.set(true);
    }
 
    public Node getRoot()

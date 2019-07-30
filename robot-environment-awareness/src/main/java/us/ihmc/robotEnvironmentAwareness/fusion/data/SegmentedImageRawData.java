@@ -10,6 +10,8 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 /**
@@ -229,12 +231,27 @@ public class SegmentedImageRawData
       return (double) points.size();
    }
 
-   public Point3D getCenter()
+   public void setCenter(Point3DReadOnly center)
+   {
+      this.center.set(center);
+   }
+
+   public void setNormal(Vector3DReadOnly normal)
+   {
+      this.normal.set(normal);
+   }
+
+   public void setStandardDeviation(Vector3DReadOnly standardDeviation)
+   {
+      this.standardDeviation.set(standardDeviation);
+   }
+
+   public Point3DReadOnly getCenter()
    {
       return center;
    }
 
-   public Vector3D getNormal()
+   public Vector3DReadOnly getNormal()
    {
       return normal;
    }
