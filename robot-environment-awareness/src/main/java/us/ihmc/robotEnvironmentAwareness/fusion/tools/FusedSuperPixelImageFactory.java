@@ -23,6 +23,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 
 public class FusedSuperPixelImageFactory
 {
@@ -42,6 +43,7 @@ public class FusedSuperPixelImageFactory
    private final AtomicReference<IntrinsicParameters> intrinsicParameters = new AtomicReference<>(PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
    private final AtomicReference<ImageSegmentationParameters> imageSegmentationParameters = new AtomicReference<>(null);
    private final AtomicReference<SegmentationRawDataFilteringParameters> segmentationRawDataFilteringParameters = new AtomicReference<>(null);
+   private final AtomicReference<SuperPixelNormalEstimationParameters> normalEstimationParameters = new AtomicReference<>(null);
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
@@ -55,7 +57,8 @@ public class FusedSuperPixelImageFactory
       int[] labels = calculateSuperPixelLabels(bufferedImage, imageSegmentationParameters.get());
       List<RawSuperPixelData> superPixels = populateSuperPixelsWithRawPointCloud(projectedPointCloud, labels, pointCloud, imageHeight, imageWidth, cameraPosition.get(),
                                                                                  cameraOrientation.get(), intrinsicParameters.get(),
-                                                                                 segmentationRawDataFilteringParameters.get());
+                                                                                 segmentationRawDataFilteringParameters.get(),
+                                                                                 normalEstimationParameters.get());
 
       return new FusedSuperPixelImage(superPixels, imageWidth, imageHeight);
    }
@@ -83,6 +86,11 @@ public class FusedSuperPixelImageFactory
    public void setSegmentationRawDataFilteringParameters(SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
       this.segmentationRawDataFilteringParameters.set(segmentationRawDataFilteringParameters);
+   }
+
+   public void setSuperPixelNormalEstimationParameters(SuperPixelNormalEstimationParameters normalEstimationParameters)
+   {
+      this.normalEstimationParameters.set(normalEstimationParameters);
    }
 
    public void setCameraPose(Point3D position, Quaternion orientation)
@@ -116,7 +124,8 @@ public class FusedSuperPixelImageFactory
                                                                                ColoredPixel[] pointCloud, int imageHeight, int imageWidth,
                                                                                Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
                                                                                IntrinsicParameters intrinsicParameters,
-                                                                               SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+                                                                               SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters,
+                                                                               SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       if (labelIds.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labelIds.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
@@ -144,7 +153,8 @@ public class FusedSuperPixelImageFactory
 
       // update and calculate normal.
       Stream<RawSuperPixelData> pixelStream = computeNormalsInParallel ? segmentedSuperPixels.parallelStream() : segmentedSuperPixels.stream();
-      pixelStream.forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters));
+      pixelStream.forEach(fusionDataSegment -> updateSuperpixelAndCalculateNormal(fusionDataSegment, segmentationRawDataFilteringParameters,
+                                                                                  normalEstimationParameters));
 
 
       // set segment center in 2D.
@@ -215,14 +225,20 @@ public class FusedSuperPixelImageFactory
       }
    }
 
-   private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData fusionDataSegment, SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+   private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData fusionDataSegment,
+                                                          SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters,
+                                                          SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       if (segmentationRawDataFilteringParameters.isEnableFilterFlyingPoint())
          fusionDataSegment.filterOutFlyingPoints(segmentationRawDataFilteringParameters.getFlyingPointThreshold(),
                                                  segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors());
 
       fusionDataSegment.updateAdjacency();
-      SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment, fusionDataSegment.getPoints());
+
+      if (normalEstimationParameters.updateUsingPCA())
+         SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment, fusionDataSegment.getPoints());
+      else
+         SuperPixelNormalEstimationTools.updateUsingRansac(fusionDataSegment, fusionDataSegment.getPoints(), normalEstimationParameters);
    }
 
    /**

@@ -8,11 +8,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class StereoREAPlanarRegionSegmentationCalculator
 {
    private PlanarRegionPropagationParameters planarRegionPropagationParameters = new PlanarRegionPropagationParameters();
+   private SuperPixelNormalEstimationParameters normalEstimationParameters = new SuperPixelNormalEstimationParameters();
    private SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters = new SegmentationRawDataFilteringParameters();
 
    private static final int NUMBER_OF_ITERATE = 1000;
@@ -28,13 +30,14 @@ public class StereoREAPlanarRegionSegmentationCalculator
    private final Random random = new Random(0612L);
 
    public void updateFusionData(FusedSuperPixelImage lidarImageFusionData, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
-                                PlanarRegionPropagationParameters propagationParameters)
+                                PlanarRegionPropagationParameters propagationParameters, SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       lidarImageFusionData.updateSparsity(rawDataFilteringParameters);
       data.set(lidarImageFusionData);
       numberOfLabels = lidarImageFusionData.getNumberOfImageSegments();
       planarRegionPropagationParameters.set(propagationParameters);
       segmentationRawDataFilteringParameters.set(rawDataFilteringParameters);
+      this.normalEstimationParameters.set(normalEstimationParameters);
    }
 
    public void initialize()
@@ -73,7 +76,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
             if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
             {
                segment.extend(adjacentData, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
-                              planarRegionPropagationParameters.isUpdateExtendedData(), planarRegionPropagationParameters.getExtendingRadiusThreshold());
+                              planarRegionPropagationParameters.isUpdateExtendedData(), planarRegionPropagationParameters.getExtendingRadiusThreshold(),
+                              normalEstimationParameters);
             }
 
          }
@@ -125,6 +129,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
     */
    private SegmentationNodeData createSegmentNodeData(int seedLabel, int segmentId)
    {
+      // TODO speed this guy up
       RawSuperPixelData seedImageSegment = data.get().getFusionDataSegment(seedLabel);
       seedImageSegment.setId(segmentId);
       SegmentationNodeData newSegment = new SegmentationNodeData(seedImageSegment);
@@ -158,7 +163,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
             if (isParallel && isCoplanar)
             {
                candidate.setId(segmentId);
-               newSegment.merge(candidate);
+               newSegment.merge(candidate, normalEstimationParameters);
                isPropagating = true;
             }
          }

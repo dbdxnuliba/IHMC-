@@ -8,6 +8,8 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 
@@ -42,7 +44,7 @@ public class SegmentationNodeData implements SuperPixel
       pointsInSegment.addAll(seedImageSegment.getPoints());
    }
 
-   public void merge(RawSuperPixelData fusionDataSegment)
+   public void merge(RawSuperPixelData fusionDataSegment, SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       labels.add(fusionDataSegment.getImageSegmentLabel());
       labelCenters.add(fusionDataSegment.getCenter());
@@ -50,9 +52,12 @@ public class SegmentationNodeData implements SuperPixel
 
       pointsInSegment.addAll(fusionDataSegment.getPoints());
 
-      if(USE_PCA_TO_MERGE)
+      if (USE_PCA_TO_MERGE)
       {
-         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
+         if (normalEstimationParameters.updateUsingPCA())
+            SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
+         else
+            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
       }
       else
       {
@@ -70,7 +75,8 @@ public class SegmentationNodeData implements SuperPixel
       }
    }
 
-   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
+   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold,
+                      SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       for (Point3D point : fusionDataSegment.getPoints())
       {
@@ -90,7 +96,10 @@ public class SegmentationNodeData implements SuperPixel
 
       if (updateNodeData)
       {
-         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
+         if (normalEstimationParameters.updateUsingPCA())
+            SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
+         else
+            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
       }
    }
 

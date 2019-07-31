@@ -12,6 +12,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomPlanarRegionHandler;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomRegionMergeParameters;
@@ -37,6 +38,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
    private final AtomicReference<CustomRegionMergeParameters> customRegionMergingParameters;
 
    private final AtomicReference<SegmentationRawDataFilteringParameters> segmentationRawDataFilteringParameters;
+   private final AtomicReference<SuperPixelNormalEstimationParameters> normalEstimationParameters;
    private final AtomicReference<PlanarRegionPropagationParameters> planarRegionPropagationParameters;
    private final AtomicReference<ConcaveHullFactoryParameters> concaveHullFactoryParameters;
    private final AtomicReference<PolygonizerParameters> polygonizerParameters;
@@ -54,6 +56,8 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
       intersectionEstimationParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsIntersectionParameters, new IntersectionEstimationParameters());
       segmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
                                                                     new SegmentationRawDataFilteringParameters());
+      normalEstimationParameters = messager.createInput(LidarImageFusionAPI.NormalEstimationParameters,
+                                                                    new SuperPixelNormalEstimationParameters());
       planarRegionPropagationParameters = messager.createInput(LidarImageFusionAPI.PlanarRegionPropagationParameters, new PlanarRegionPropagationParameters());
       customRegionMergingParameters = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingParameters, new CustomRegionMergeParameters());
    }
@@ -61,7 +65,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
    public void updateLatestLidarImageFusionData(FusedSuperPixelImage lidarImageFusionData)
    {
       planarRegionSegmentationCalculator.updateFusionData(lidarImageFusionData, segmentationRawDataFilteringParameters.get(),
-                                                          planarRegionPropagationParameters.get());
+                                                          planarRegionPropagationParameters.get(), normalEstimationParameters.get());
       planarRegionSegmentationCalculator.initialize();
    }
 

@@ -20,6 +20,7 @@ import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
 import us.ihmc.jOctoMap.tools.IncrementalCovariance3D;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixel;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 import java.util.List;
@@ -55,10 +56,9 @@ public class SuperPixelNormalEstimationTools
       superPixel.setStandardDeviation(standardDeviation);
    }
 
-   public static void updateUsingRansac(RawSuperPixelData currentNode, NormalEstimationParameters parameters)
-   {
-            List<Point3D> points = currentNode.getPoints();
 
+   public static void updateUsingRansac(SuperPixel currentNode, List<Point3D> points, SuperPixelNormalEstimationParameters parameters)
+   {
       if (points.size() < 2)
          return;
 
@@ -98,9 +98,9 @@ public class SuperPixelNormalEstimationTools
       return points.get(RandomNumbers.nextInt(ThreadLocalRandom.current(), 0, points.size() - 1));
    }
 
-   private static boolean peekBestNormal(RawSuperPixelData superPixel, Vector3DReadOnly currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
+   private static boolean peekBestNormal(SuperPixel superPixel, Vector3DReadOnly currentNormal, MutableDouble currentVariance, MutableInt currentConsensus,
                                          Vector3DBasics candidateNormal, MutableDouble candidateVariance, MutableInt candidateConsensus,
-                                         NormalEstimationParameters parameters)
+                                         SuperPixelNormalEstimationParameters parameters)
    {
       if (isCandidateNormalBetter(currentVariance, currentConsensus, candidateVariance, candidateConsensus, parameters))
       {
@@ -117,7 +117,7 @@ public class SuperPixelNormalEstimationTools
    }
 
    private static boolean isCandidateNormalBetter(MutableDouble currentVariance, MutableInt currentConsensus, MutableDouble candidateVariance,
-                                                  MutableInt candidateConsensus, NormalEstimationParameters parameters)
+                                                  MutableInt candidateConsensus, SuperPixelNormalEstimationParameters parameters)
    {
       double minConsensusRatio = parameters.getMinConsensusRatio();
       double maxAverageDeviationRatio = parameters.getMaxAverageDeviationRatio();

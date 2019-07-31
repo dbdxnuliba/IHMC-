@@ -20,6 +20,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 
 public class LidarImageFusionAPI
 {
@@ -41,6 +42,7 @@ public class LidarImageFusionAPI
    private static final CategoryTheme Socket = apiFactory.createCategoryTheme("Socket");
    private static final CategoryTheme ImageSegmentation = apiFactory.createCategoryTheme("ImageSegmentation");
    private static final CategoryTheme DataFiltering = apiFactory.createCategoryTheme("DataFiltering");
+   private static final CategoryTheme NormalEstimation = apiFactory.createCategoryTheme("NormalEstimation");
    private static final CategoryTheme StereoREA = apiFactory.createCategoryTheme("StereoREA");
    private static final CategoryTheme FusionData = apiFactory.createCategoryTheme("RawData");
    private static final CategoryTheme Result = apiFactory.createCategoryTheme("Result");
@@ -91,6 +93,7 @@ public class LidarImageFusionAPI
    public static final Topic<Boolean> RunStereoREA = UICategory.child(StereoREA).topic(Request);
 
    public static final Topic<SegmentationRawDataFilteringParameters> SegmentationRawDataFilteringParameters = UICategory.child(DataFiltering).topic(Parameters);
+   public static final Topic<SuperPixelNormalEstimationParameters> NormalEstimationParameters = UICategory.child(NormalEstimation).topic(Parameters);
    public static final Topic<ImageSegmentationParameters> ImageSegmentationParameters = UICategory.child(ImageSegmentation).topic(Parameters);
    public static final Topic<PlanarRegionPropagationParameters> PlanarRegionPropagationParameters = UICategory.child(StereoREA).topic(Parameters);
 
