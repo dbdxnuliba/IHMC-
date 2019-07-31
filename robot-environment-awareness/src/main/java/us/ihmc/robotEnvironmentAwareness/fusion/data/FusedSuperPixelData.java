@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -14,6 +15,8 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 public class FusedSuperPixelData implements SuperPixelData
 {
+   private static final boolean addInParallel = true;
+
    private static final boolean USE_PCA_TO_UPDATE = true;
    private int id = PlanarRegion.NO_REGION_ID;
    private final TIntArrayList labels = new TIntArrayList();
@@ -30,6 +33,7 @@ public class FusedSuperPixelData implements SuperPixelData
    private double weight = 0.0;
 
    private final List<Point3D> pointsInSegment = new ArrayList<>();
+   private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
    public FusedSuperPixelData(RawSuperPixelData seedImageSegment)
    {
@@ -91,8 +95,16 @@ public class FusedSuperPixelData implements SuperPixelData
 
       if (USE_PCA_TO_UPDATE)
       {
-         // FIXME should this be points in segment?
-         SuperPixelNormalEstimationTools.updateUsingPCA(this, fusionDataSegment.getPoints());
+//         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
+         Stream<Point3D> pointStream = addInParallel ? fusionDataSegment.getPoints().parallelStream() : fusionDataSegment.getPoints().stream();
+         pointStream.forEach(pca::addDataPoint);
+         pca.compute();
+
+         pca.getMean(center);
+         pca.getThirdVector(normal);
+
+         if (normal.getZ() < 0.0)
+            normal.negate();
       }
       else
       {
