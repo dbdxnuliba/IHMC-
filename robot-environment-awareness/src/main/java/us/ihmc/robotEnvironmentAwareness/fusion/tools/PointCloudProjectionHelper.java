@@ -7,6 +7,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 
 public class PointCloudProjectionHelper
 {
@@ -59,8 +60,8 @@ public class PointCloudProjectionHelper
    /**
     * Point cloud projection from camera transform which is not same with world frame.
     */
-   public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, IntrinsicParameters param, Point3DBasics cameraPosition,
-                                                          QuaternionBasics cameraOrientation)
+   public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, IntrinsicParameters param, Point3DReadOnly cameraPosition,
+                                                          QuaternionReadOnly cameraOrientation)
    {
       Point3D pointToCamera = new Point3D(pointToProject);
       RigidBodyTransform transformWorldToCamera = new RigidBodyTransform(cameraOrientation, cameraPosition);

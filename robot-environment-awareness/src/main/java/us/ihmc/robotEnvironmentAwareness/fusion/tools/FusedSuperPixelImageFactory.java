@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.bytedeco.javacpp.indexer.UByteRawIndexer;
 import org.bytedeco.opencv.global.opencv_core;
@@ -17,6 +18,7 @@ import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
@@ -25,6 +27,8 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFi
 
 public class FusedSuperPixelImageFactory
 {
+   private static final boolean projectInParallel = false;
+
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = true;
 
@@ -97,24 +101,9 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      for (int i = 0; i < coloredPixels.length; i++)
-      {
-         Point3DReadOnly point = coloredPixels[i].getPoint();
-         if (point == null)
-            break;
-         int[] pixel = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(point, intrinsicParameters.get(), cameraPosition.get(),
-                                                                                     cameraOrientation.get());
-
-         if (pixel[0] < 0 || pixel[0] >= imageWidth || pixel[1] < 0 || pixel[1] >= imageHeight)
-            continue;
-
-         int arrayIndex = getLabelIdIndex(pixel[0], pixel[1], imageWidth);
-         int label = labelIds[arrayIndex];
-         rawSuperPixels.get(label).addPoint(new Point3D(point));
-
-         if (enableDisplayProjectedPointCloud)
-            projectedPointCloud.setRGB(pixel[0], pixel[1], coloredPixels[i].getColor());
-      }
+      Stream<ColoredPixel> coloredPixelStream = projectInParallel ? Stream.of(coloredPixels).parallel() : Stream.of(coloredPixels);
+      coloredPixelStream.forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloud, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth,
+                                                                                   cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get()));
 
       // register adjacent labels.
       for (int u = 1; u < imageWidth - 1; u++)
@@ -157,6 +146,32 @@ public class FusedSuperPixelImageFactory
 
       return rawSuperPixels;
    }
+
+   private static void projectColoredPixelIntoSuperPixel(BufferedImage projectedPointCloudToPack, List<RawSuperPixelData> segmentedSuperPixelToPack,
+                                                         int[] labelIds, ColoredPixel coloredPixel, int imageHeight, int imageWidth, Point3DReadOnly cameraPosition,
+                                                         QuaternionReadOnly cameraOrientation, IntrinsicParameters intrinsicParameters)
+   {
+      if (coloredPixel == null)
+         return;
+
+      int[] pixelIndices = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(coloredPixel.getPoint(), intrinsicParameters, cameraPosition,
+                                                                                         cameraOrientation);
+
+      if (isPixelOutOfBounds(pixelIndices, imageHeight, imageWidth))
+         return;
+
+      int labelId = labelIds[getLabelIdIndex(pixelIndices[0], pixelIndices[1], imageWidth)];
+      segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(coloredPixel.getPoint()));
+
+      if (enableDisplayProjectedPointCloud)
+         projectedPointCloudToPack.setRGB(pixelIndices[0], pixelIndices[1], coloredPixel.getColor());
+   }
+
+   private static boolean isPixelOutOfBounds(int[] pixelIndices, int imageHeight, int imageWidth)
+   {
+      return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
+   }
+
 
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.
