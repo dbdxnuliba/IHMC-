@@ -73,25 +73,12 @@ public class RawSuperPixelImage
          double alpha = 1 - fusionDataSegment.getSegmentCenter().getY() / imageHeight;
          double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
          fusionDataSegment.updateSparsity(threshold);
-      }
-   }
 
-   public void filteringSegmentationData(SegmentationRawDataFilteringParameters rawDataFilteringParameters)
-   {
-      if (rawDataFilteringParameters.isEnableFilterCentrality())
-      {
-         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
-         {
+         if (rawDataFilteringParameters.isEnableFilterCentrality())
             fusionDataSegment.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());
-         }
-      }
-      if (rawDataFilteringParameters.isEnableFilterEllipticity())
-      {
-         for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
-         {
+         if (rawDataFilteringParameters.isEnableFilterEllipticity())
             fusionDataSegment.filteringEllipticity(rawDataFilteringParameters.getEllipticityMinimumLength(),
                                                    rawDataFilteringParameters.getEllipticityThreshold());
-         }
       }
    }
 

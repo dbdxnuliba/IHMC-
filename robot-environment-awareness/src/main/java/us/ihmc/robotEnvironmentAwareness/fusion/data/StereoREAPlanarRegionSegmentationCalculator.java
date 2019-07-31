@@ -31,7 +31,6 @@ public class StereoREAPlanarRegionSegmentationCalculator
                                 PlanarRegionPropagationParameters propagationParameters)
    {
       rawSuperPixelImage.updateSparsity(rawDataFilteringParameters);
-      rawSuperPixelImage.filteringSegmentationData(rawDataFilteringParameters);
       data.set(rawSuperPixelImage);
       numberOfLabels = rawSuperPixelImage.getNumberOfImageSegments();
       planarRegionPropagationParameters.set(propagationParameters);
