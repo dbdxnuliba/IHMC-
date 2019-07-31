@@ -2,12 +2,8 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
-import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
 
 /**
  * This data set is to hold a list of SegmentationRawData.
@@ -47,7 +43,7 @@ public class RawSuperPixelImage
 
       for (int label : labels.toArray())
       {
-         uncompressedAdjacentLabels.addAll(fusionDataSegments.get(label).getAdjacentSegmentLabels());
+         uncompressedAdjacentLabels.addAll(fusionDataSegments.get(label).getAdjacentPixelLabels());
       }
 
       for (int label : uncompressedAdjacentLabels.toArray())

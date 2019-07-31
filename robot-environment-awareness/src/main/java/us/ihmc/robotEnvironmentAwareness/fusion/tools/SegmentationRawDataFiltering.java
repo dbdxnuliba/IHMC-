@@ -59,12 +59,17 @@ public class SegmentationRawDataFiltering
 
       double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
       double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
-      rawSuperPixel.updateSparsity(threshold);
+      updateSparsity(rawSuperPixel, threshold);
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
          SegmentationRawDataFiltering.updateSparsityFromCentrality(rawSuperPixel, rawDataFilteringParameters);
       if (rawDataFilteringParameters.isEnableFilterEllipticity())
          SegmentationRawDataFiltering.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
+   }
+
+   private static void updateSparsity(RawSuperPixelData rawSuperPixelData, double threshold)
+   {
+      rawSuperPixelData.setIsSparse(rawSuperPixelData.getStandardDeviation().getZ() > threshold);
    }
 
    /**

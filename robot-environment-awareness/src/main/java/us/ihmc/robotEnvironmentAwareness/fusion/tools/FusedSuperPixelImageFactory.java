@@ -174,11 +174,10 @@ public class FusedSuperPixelImageFactory
    {
       SegmentationRawDataFiltering.filterOutFlyingPoints(rawSuperPixel, segmentationRawDataFilteringParameters);
 
-      rawSuperPixel.update();
+      rawSuperPixel.updateAdjacency();
 
       SuperPixelNormalEstimationTools.updateUsingPCA(rawSuperPixel, rawSuperPixel.getPoints(), StereoREAParallelParameters.addPointsToRawPCAInParallel);
    }
-
 
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.
@@ -249,7 +248,7 @@ public class FusedSuperPixelImageFactory
          if (currentLabelId != labelOfAdjacentPixel)
          {
             if (!segmentedSuperPixelsToPack.get(currentLabelId).contains(labelOfAdjacentPixel))
-               segmentedSuperPixelsToPack.get(currentLabelId).addAdjacentSegmentLabel(labelOfAdjacentPixel);
+               segmentedSuperPixelsToPack.get(currentLabelId).addAdjacentPixel(labelOfAdjacentPixel);
          }
       }
    }
