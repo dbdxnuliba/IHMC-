@@ -14,7 +14,6 @@ import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_ximgproc.SuperpixelSLIC;
 
 import boofcv.struct.calib.IntrinsicParameters;
-import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -33,8 +32,8 @@ public class FusedSuperPixelImageFactory
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = true;
 
-   private final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
-   private final int matType = opencv_core.CV_8UC3;
+   private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
+   private static final int matType = opencv_core.CV_8UC3;
 
    private int imageWidth;
    private int imageHeight;
@@ -56,9 +55,11 @@ public class FusedSuperPixelImageFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateNewLabelsSLIC(bufferedImage);
-      List<RawSuperPixelData> fusionDataSegments = createListOfSegmentationRawData(labels, coloredPixels);
+      List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, coloredPixels, imageHeight, imageWidth,
+                                                                                        cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get(),
+                                                                                        segmentationRawDataFilteringParameters.get());
 
-      return new RawSuperPixelImage(fusionDataSegments, imageWidth, imageHeight);
+      return new RawSuperPixelImage(rawSuperPixels, imageWidth, imageHeight);
    }
 
    private int[] calculateNewLabelsSLIC(BufferedImage bufferedImage)
@@ -89,7 +90,11 @@ public class FusedSuperPixelImageFactory
       return labels;
    }
 
-   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labelIds, ColoredPixel[] coloredPixels)
+   private static List<RawSuperPixelData> populateRawSuperPixelsWithPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
+                                                                               ColoredPixel[] coloredPixels, int imageHeight, int imageWidth,
+                                                                               Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
+                                                                               IntrinsicParameters intrinsicParameters,
+                                                                               SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
       if (labelIds.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labelIds.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
@@ -103,21 +108,21 @@ public class FusedSuperPixelImageFactory
 
       // projection.
       Stream<ColoredPixel> coloredPixelStream = StereoREAParallelParameters.projectColoredPixelsToSuperPixelsInParallel ? Stream.of(coloredPixels).parallel() : Stream.of(coloredPixels);
-      coloredPixelStream.forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloud, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth,
-                                                                                   cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get()));
+      coloredPixelStream.forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth,
+                                                                                   cameraPosition, cameraOrientation, intrinsicParameters));
 
       // register adjacent labels.
-      for (int u = 1; u < imageWidth - 1; u++)
+      for (int widthIndex = 1; widthIndex < imageWidth - 1; widthIndex++)
       {
-         for (int v = 1; v < imageHeight - 1; v++)
+         for (int heightIndex = 1; heightIndex < imageHeight - 1; heightIndex++)
          {
-            registerAdjacentPixelIds(rawSuperPixels, u, v, labelIds, imageWidth);
+            registerAdjacentPixelIds(rawSuperPixels, widthIndex, heightIndex, labelIds, imageWidth);
          }
       }
 
       // update and calculate normal.
       Stream<RawSuperPixelData> superPixelStream = StereoREAParallelParameters.updateRawSuperPixelNormalsInParallel ? rawSuperPixels.parallelStream() : rawSuperPixels.stream();
-      superPixelStream.forEach(superPixel -> updateSuperpixelAndCalculateNormal(superPixel, segmentationRawDataFilteringParameters.get()));
+      superPixelStream.forEach(superPixel -> updateSuperpixelAndCalculateNormal(superPixel, segmentationRawDataFilteringParameters));
 
       // set segment center in 2D.
       int[] totalU = new int[numberOfLabels];
@@ -183,10 +188,9 @@ public class FusedSuperPixelImageFactory
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.
     */
-   private Mat convertBufferedImageToMat(BufferedImage bufferedImage)
+   private static Mat convertBufferedImageToMat(BufferedImage bufferedImage)
    {
       Mat imageMat = new Mat(bufferedImage.getHeight(), bufferedImage.getWidth(), matType);
-      int r, g, b;
       UByteRawIndexer indexer = imageMat.createIndexer();
       for (int y = 0; y < bufferedImage.getHeight(); y++)
       {
@@ -194,13 +198,9 @@ public class FusedSuperPixelImageFactory
          {
             int rgb = bufferedImage.getRGB(x, y);
 
-            r = (byte) ((rgb >> 0) & 0xFF);
-            g = (byte) ((rgb >> 8) & 0xFF);
-            b = (byte) ((rgb >> 16) & 0xFF);
-
-            indexer.put(y, x, 0, r);
-            indexer.put(y, x, 1, g);
-            indexer.put(y, x, 2, b);
+            indexer.put(y, x, 0, (byte) ((rgb /*>> 0*/) & 0xFF));
+            indexer.put(y, x, 1, (byte) ((rgb >> 8) & 0xFF));
+            indexer.put(y, x, 2, (byte) ((rgb >> 16) & 0xFF));
          }
       }
       indexer.release();
