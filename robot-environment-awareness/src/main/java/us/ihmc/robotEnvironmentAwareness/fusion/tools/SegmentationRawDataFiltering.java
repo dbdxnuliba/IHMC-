@@ -84,18 +84,21 @@ public class SegmentationRawDataFiltering
    {
       if (!rawSuperPixelData.isSparse())
       {
-         int numberOfInliers = 0;
-         for (Point3DReadOnly point : rawSuperPixelData.getPoints())
-         {
-            double distance = rawSuperPixelData.getCenter().distance(point);
-            if (distance < radius)
-               numberOfInliers++;
-         }
-
-         if (numberOfInliers < threshold * rawSuperPixelData.getWeight())
-         {
+         Stream<Point3D> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPoints().parallelStream() : rawSuperPixelData.getPoints().stream();
+         if (pointStream.filter(point -> rawSuperPixelData.getCenter().distance(point) < radius).count() < threshold * rawSuperPixelData.getWeight())
             rawSuperPixelData.setIsSparse(true);
-         }
+//         int numberOfInliers = 0;
+//         for (Point3DReadOnly point : rawSuperPixelData.getPoints())
+//         {
+//            double distance = rawSuperPixelData.getCenter().distance(point);
+//            if (distance < radius)
+//               numberOfInliers++;
+//         }
+//
+//         if (numberOfInliers < threshold * rawSuperPixelData.getWeight())
+//         {
+//            rawSuperPixelData.setIsSparse(true);
+//         }
       }
    }
 
