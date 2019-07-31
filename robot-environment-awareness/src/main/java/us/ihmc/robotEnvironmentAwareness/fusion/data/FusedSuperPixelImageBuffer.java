@@ -70,12 +70,10 @@ public class FusedSuperPixelImageBuffer
          numberOfPoints--;
       }
 
-      Point3D[] pointCloud = new Point3D[numberOfPoints];
-      int[] colors = new int[numberOfPoints];
+      ColoredPixel[] coloredPixels = new ColoredPixel[numberOfPoints];
       for (int i = 0; i < numberOfPoints; i++)
       {
-         pointCloud[i] = pointCloudBuffer[i];
-         colors[i] = colorBuffer[i];
+         coloredPixels[i] = new ColoredPixel(pointCloudBuffer[i], colorBuffer[i]);
       }
 
       fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
@@ -83,7 +81,7 @@ public class FusedSuperPixelImageBuffer
       fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
       fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      RawSuperPixelImage data = fusedSuperPixelImageFactory.createLidarImageFusionData(pointCloud, colors, latestBufferedImage.get());
+      RawSuperPixelImage data = fusedSuperPixelImageFactory.createLidarImageFusionData(coloredPixels, latestBufferedImage.get());
 
       newBuffer.set(data);
    }

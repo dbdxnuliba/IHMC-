@@ -15,7 +15,9 @@ import org.bytedeco.opencv.opencv_ximgproc.SuperpixelSLIC;
 import boofcv.struct.calib.IntrinsicParameters;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
@@ -41,7 +43,7 @@ public class FusedSuperPixelImageFactory
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public RawSuperPixelImage createLidarImageFusionData(Point3D[] pointCloud, int[] colors, BufferedImage bufferedImage)
+   public RawSuperPixelImage createLidarImageFusionData(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
    {
       imageWidth = bufferedImage.getWidth();
       imageHeight = bufferedImage.getHeight();
@@ -49,7 +51,7 @@ public class FusedSuperPixelImageFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateNewLabelsSLIC(bufferedImage);
-      List<RawSuperPixelData> fusionDataSegments = createListOfSegmentationRawData(labels, pointCloud, colors);
+      List<RawSuperPixelData> fusionDataSegments = createListOfSegmentationRawData(labels, coloredPixels);
 
       return new RawSuperPixelImage(fusionDataSegments, imageWidth, imageHeight);
    }
@@ -82,7 +84,7 @@ public class FusedSuperPixelImageFactory
       return labels;
    }
 
-   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labelIds, Point3D[] pointCloud, int[] colors)
+   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labelIds, ColoredPixel[] coloredPixels)
    {
       if (labelIds.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labelIds.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
@@ -95,9 +97,9 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      for (int i = 0; i < pointCloud.length; i++)
+      for (int i = 0; i < coloredPixels.length; i++)
       {
-         Point3D point = pointCloud[i];
+         Point3DReadOnly point = coloredPixels[i].getPoint();
          if (point == null)
             break;
          int[] pixel = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(point, intrinsicParameters.get(), cameraPosition.get(),
@@ -111,7 +113,7 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.get(label).addPoint(new Point3D(point));
 
          if (enableDisplayProjectedPointCloud)
-            projectedPointCloud.setRGB(pixel[0], pixel[1], colors[i]);
+            projectedPointCloud.setRGB(pixel[0], pixel[1], coloredPixels[i].getColor());
       }
 
       // register adjacent labels.

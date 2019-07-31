@@ -5,6 +5,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
 
 public class PointCloudProjectionHelper
@@ -31,43 +32,43 @@ public class PointCloudProjectionHelper
     * This method is to pack a pixel value (u, v) that is a point projected onto image.
     * The author recommends to use parameter set of 'P' which placed in `CameraInfo` of Multisense.
     */
-   public static void projectMultisensePointCloudOnImage(Point3DBasics point, Point2DBasics pixel, IntrinsicParameters param)
+   public static void projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, Point2DBasics pixelToPack, IntrinsicParameters param)
    {
       int[] pixelArray = new int[2];
-      pixelArray = projectMultisensePointCloudOnImage(point, param);
+      pixelArray = projectMultisensePointCloudOnImage(pointToProject, param);
 
-      pixel.set(pixelArray[0], pixelArray[1]);
+      pixelToPack.set(pixelArray[0], pixelArray[1]);
    }
 
-   public static void projectMultisensePointCloudOnImage(Point3DBasics point, Point2DBasics pixel)
+   public static void projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, Point2DBasics pixel)
    {
-      projectMultisensePointCloudOnImage(point, pixel, multisenseOnCartIntrinsicParameters, defaultOffsetU, defaultOffsetV);
+      projectMultisensePointCloudOnImage(pointToProject, pixel, multisenseOnCartIntrinsicParameters, defaultOffsetU, defaultOffsetV);
    }
 
-   public static void projectMultisensePointCloudOnImage(Point3DBasics point, Point2DBasics pixel, int offsetU, int offsetV)
+   public static void projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, Point2DBasics pixelToPack, int offsetU, int offsetV)
    {
-      projectMultisensePointCloudOnImage(point, pixel, multisenseOnCartIntrinsicParameters, offsetU, offsetV);
+      projectMultisensePointCloudOnImage(pointToProject, pixelToPack, multisenseOnCartIntrinsicParameters, offsetU, offsetV);
    }
 
-   public static void projectMultisensePointCloudOnImage(Point3DBasics point, Point2DBasics pixel, IntrinsicParameters param, int offsetU, int offsetV)
+   public static void projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, Point2DBasics pixelToPack, IntrinsicParameters param, int offsetU, int offsetV)
    {
-      projectMultisensePointCloudOnImage(point, pixel, param);
-      pixel.add(offsetU, offsetV);
+      projectMultisensePointCloudOnImage(pointToProject, pixelToPack, param);
+      pixelToPack.add(offsetU, offsetV);
    }
 
    /**
     * Point cloud projection from camera transform which is not same with world frame.
     */
-   public static int[] projectMultisensePointCloudOnImage(Point3DBasics point, IntrinsicParameters param, Point3DBasics cameraPosition,
+   public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly pointToProject, IntrinsicParameters param, Point3DBasics cameraPosition,
                                                           QuaternionBasics cameraOrientation)
    {
-      Point3D pointToCamera = new Point3D(point);
+      Point3D pointToCamera = new Point3D(pointToProject);
       RigidBodyTransform transformWorldToCamera = new RigidBodyTransform(cameraOrientation, cameraPosition);
       pointToCamera.applyInverseTransform(transformWorldToCamera);
       return projectMultisensePointCloudOnImage(pointToCamera, param);
    }
 
-   public static int[] projectMultisensePointCloudOnImage(Point3DBasics point, IntrinsicParameters param)
+   public static int[] projectMultisensePointCloudOnImage(Point3DReadOnly point, IntrinsicParameters param)
    {
       double fx = param.getFx();
       double fy = param.getFy();
