@@ -23,7 +23,7 @@ public class RawSuperPixelData implements SuperPixelData
 
    private final int imageSegmentLabel;
    private final List<AdjacentPixelData> adjacentPixelsData = new ArrayList<>();
-   private final List<Point3D> points = new ArrayList<>();
+   private final List<Point3DReadOnly> points = new ArrayList<>();
 
    private final Point2D segmentCenterInImage = new Point2D();
 
@@ -110,7 +110,7 @@ public class RawSuperPixelData implements SuperPixelData
       adjacentPixelsData.add(new AdjacentPixelData(adjacentPixelLabel, 1));
    }
 
-   public void addPoint(Point3D point)
+   public void addPoint(Point3DReadOnly point)
    {
       points.add(point);
    }
@@ -179,7 +179,7 @@ public class RawSuperPixelData implements SuperPixelData
       return imageSegmentLabel;
    }
 
-   public List<Point3D> getPoints()
+   public List<Point3DReadOnly> getPoints()
    {
       return points;
    }

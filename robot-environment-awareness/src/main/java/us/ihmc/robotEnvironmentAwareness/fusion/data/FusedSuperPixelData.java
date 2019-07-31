@@ -33,7 +33,7 @@ public class FusedSuperPixelData implements SuperPixelData
 
    private double weight = 0.0;
 
-   private final List<Point3D> pointsInSegment = new ArrayList<>();
+   private final List<Point3DReadOnly> pointsInSegment = new ArrayList<>();
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
    public FusedSuperPixelData(RawSuperPixelData seedImageSegment)
@@ -97,7 +97,7 @@ public class FusedSuperPixelData implements SuperPixelData
       if (USE_PCA_TO_UPDATE)
       {
 //         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
-         Stream<Point3D> pointStream = addInParallel ? fusionDataSegment.getPoints().parallelStream() : fusionDataSegment.getPoints().stream();
+         Stream<Point3DReadOnly> pointStream = addInParallel ? fusionDataSegment.getPoints().parallelStream() : fusionDataSegment.getPoints().stream();
          pointStream.forEach(pca::addDataPoint);
          pca.compute();
 
@@ -125,12 +125,12 @@ public class FusedSuperPixelData implements SuperPixelData
 
    public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
    {
-      for (Point3D point : fusionDataSegment.getPoints())
+      for (Point3DReadOnly point : fusionDataSegment.getPoints())
       {
          double distance = distancePlaneToPoint(normal, center, point);
          if (distance < threshold)
          {
-            for (Point3D pointInSegment : pointsInSegment)
+            for (Point3DReadOnly pointInSegment : pointsInSegment)
             {
                if (pointInSegment.distance(point) < extendingThreshold)
                {
@@ -157,7 +157,7 @@ public class FusedSuperPixelData implements SuperPixelData
       return labels;
    }
 
-   public List<Point3D> getPointsInSegment()
+   public List<Point3DReadOnly> getPointsInSegment()
    {
       return pointsInSegment;
    }

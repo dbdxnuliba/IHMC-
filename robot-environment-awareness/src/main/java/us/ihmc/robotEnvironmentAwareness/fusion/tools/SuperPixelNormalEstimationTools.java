@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixelData;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
@@ -10,10 +11,10 @@ import java.util.stream.Stream;
 
 public class SuperPixelNormalEstimationTools
 {
-   public static void updateUsingPCA(SuperPixelData superPixel, List<Point3D> points, boolean addPointsInParallel)
+   public static void updateUsingPCA(SuperPixelData superPixel, List<Point3DReadOnly> points, boolean addPointsInParallel)
    {
       PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-      Stream<Point3D> pointStream = addPointsInParallel ? points.parallelStream() : points.stream();
+      Stream<Point3DReadOnly> pointStream = addPointsInParallel ? points.parallelStream() : points.stream();
       pointStream.forEach(pca::addDataPoint);
 
       pca.compute();

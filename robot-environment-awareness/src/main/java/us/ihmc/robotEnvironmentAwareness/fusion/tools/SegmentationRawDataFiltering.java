@@ -21,9 +21,9 @@ public class SegmentationRawDataFiltering
       double flyingPointThreshold = segmentationRawDataFilteringParameters.getFlyingPointThreshold();
       int minimumNeighborOfFlyingPointNeighbors = segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors();
 
-      List<Point3D> points = rawSuperPixel.getPoints();
-      List<Point3D> filteredPoints = new ArrayList<>();
-      for (Point3D point : points)
+      List<Point3DReadOnly> points = rawSuperPixel.getPoints();
+      List<Point3DReadOnly> filteredPoints = new ArrayList<>();
+      for (Point3DReadOnly point : points)
       {
          if (isPointCloseEnoughToOtherPoints(flyingPointThreshold, minimumNeighborOfFlyingPointNeighbors, point, points))
             filteredPoints.add(point);
@@ -33,10 +33,11 @@ public class SegmentationRawDataFiltering
       points.addAll(filteredPoints);
    }
 
-   private static boolean isPointCloseEnoughToOtherPoints(double minDistanceToNeighbor, int requiredNumberOfNeighbors, Point3DReadOnly point, List<Point3D> otherPoints)
+   private static boolean isPointCloseEnoughToOtherPoints(double minDistanceToNeighbor, int requiredNumberOfNeighbors, Point3DReadOnly point,
+                                                          List<Point3DReadOnly> otherPoints)
    {
       requiredNumberOfNeighbors = Math.max(requiredNumberOfNeighbors, 0);
-      Stream<Point3D> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? otherPoints.parallelStream() : otherPoints.stream();
+      Stream<Point3DReadOnly> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? otherPoints.parallelStream() : otherPoints.stream();
       // subtract 1 to remove self
       int numberOfNeighbors = ((int) pointStream.filter(otherPoint -> point.distance(otherPoint) < minDistanceToNeighbor).count()) - 1;
       return numberOfNeighbors > requiredNumberOfNeighbors;
@@ -89,7 +90,7 @@ public class SegmentationRawDataFiltering
    {
       if (!rawSuperPixelData.isSparse())
       {
-         Stream<Point3D> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPoints().parallelStream() : rawSuperPixelData.getPoints().stream();
+         Stream<Point3DReadOnly> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPoints().parallelStream() : rawSuperPixelData.getPoints().stream();
          if (pointStream.filter(point -> rawSuperPixelData.getCenter().distance(point) < radius).count() < threshold * rawSuperPixelData.getWeight())
             rawSuperPixelData.setIsSparse(true);
 //         int numberOfInliers = 0;

@@ -90,7 +90,7 @@ public class FusedSuperPixelImageViewer
          }
 
          meshBuilder.addLine(center, centerEnd, lineWidth, regionColor);
-         for (Point3D point : data.getPoints())
+         for (Point3DReadOnly point : data.getPoints())
             meshBuilder.addTetrahedron(0.02, point, regionColor);
       }
 
