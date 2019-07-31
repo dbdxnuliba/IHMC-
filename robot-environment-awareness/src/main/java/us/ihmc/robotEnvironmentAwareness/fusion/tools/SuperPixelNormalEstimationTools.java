@@ -67,6 +67,9 @@ public class SuperPixelNormalEstimationTools
       else
          currentCenterLocation.set(getRandomStartPoint(points));
 
+      currentPixel.setNormal(currentNormal);
+      currentPixel.setCenter(currentCenterLocation);
+
       // Need to be recomputed as the neighbors may have changed
       MutableInt currentConsensus = new MutableInt();
       MutableDouble currentVariance = new MutableDouble();
