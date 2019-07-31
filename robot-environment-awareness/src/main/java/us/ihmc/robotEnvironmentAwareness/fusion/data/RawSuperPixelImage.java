@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
 
 /**
  * This data set is to hold a list of SegmentationRawData.
@@ -27,6 +28,11 @@ public class RawSuperPixelImage
    public int getNumberOfImageSegments()
    {
       return fusionDataSegments.size();
+   }
+
+   public List<RawSuperPixelData> getSuperPixelData()
+   {
+      return fusionDataSegments;
    }
 
    public RawSuperPixelData getFusionDataSegment(int label)
@@ -61,31 +67,6 @@ public class RawSuperPixelImage
             return false;
       }
       return true;
-   }
-
-   /**
-    * Scaled threshold is used according to the v value of the segment center.
-    */
-   public void updateSparsity(SegmentationRawDataFilteringParameters rawDataFilteringParameters)
-   {
-      Stream<RawSuperPixelData> superPixelStream = StereoREAParallelParameters.updateSparsityInParallel ? fusionDataSegments.parallelStream() : fusionDataSegments.stream();
-      superPixelStream.forEach(superPixel -> updateSparsity(superPixel, rawDataFilteringParameters, imageHeight));
-   }
-
-   private static void updateSparsity(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters, int imageHeight)
-   {
-      double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
-      double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
-
-      double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
-      double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
-      rawSuperPixel.updateSparsity(threshold);
-
-      if (rawDataFilteringParameters.isEnableFilterCentrality())
-         rawSuperPixel.filteringCentrality(rawDataFilteringParameters.getCentralityRadius(), rawDataFilteringParameters.getCentralityThreshold());
-      if (rawDataFilteringParameters.isEnableFilterEllipticity())
-         rawSuperPixel.filteringEllipticity(rawDataFilteringParameters.getEllipticityMinimumLength(),
-                                                rawDataFilteringParameters.getEllipticityThreshold());
    }
 
    public int getImageWidth()

@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -10,6 +11,8 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 /**
@@ -60,6 +63,11 @@ public class RawSuperPixelData implements SuperPixelData
    public Vector3DReadOnly getNormal()
    {
       return normal;
+   }
+
+   public Vector3DReadOnly getStandardDeviation()
+   {
+      return standardDeviation;
    }
 
    @Override
@@ -118,34 +126,6 @@ public class RawSuperPixelData implements SuperPixelData
       points.add(point);
    }
 
-   public void filteringFlyingPoints(double threshold, int neighborsThreshold)
-   {
-      List<Point3D> filteredPoints = new ArrayList<>();
-      for (Point3D point : points)
-      {
-         double closestDistance = Double.POSITIVE_INFINITY;
-         int numberOfNeighbors = 0;
-         for (Point3D otherPoint : points)
-         {
-            double distance = point.distance(otherPoint);
-
-            if (distance < closestDistance)
-            {
-               if (point != otherPoint)
-                  closestDistance = distance;
-            }
-            if (distance < threshold)
-            {
-               numberOfNeighbors++;
-            }
-         }
-         if (closestDistance < threshold && numberOfNeighbors > neighborsThreshold)
-            filteredPoints.add(point);
-      }
-      points.clear();
-      points.addAll(filteredPoints);
-   }
-
    public void update()
    {
       if (useAdjacentScore)
@@ -172,51 +152,6 @@ public class RawSuperPixelData implements SuperPixelData
       isSparse = standardDeviation.getZ() > threshold;
    }
 
-   /**
-    * Not to be sparse,
-    * The number of points inside the area within a radius from the center should be over the ratio to all points in segment.
-    * @param radius
-    * @param threshold
-    */
-   public void filteringCentrality(double radius, double threshold)
-   {
-      if (!isSparse)
-      {
-         int numberOfInliers = 0;
-         for (Point3D point : points)
-         {
-            double distance = center.distance(point);
-            if (distance < radius)
-               numberOfInliers++;
-         }
-
-         if (numberOfInliers < threshold * getWeight())
-         {
-            isSparse = true;
-         }
-      }
-   }
-
-   /**
-    * Not to be sparse,
-    * Secondary axis should be over the minLength.
-    * Secondary axis should be within threshold * primary axis length.
-    * @param minLength
-    * @param threshold
-    */
-   public void filteringEllipticity(double minLength, double threshold)
-   {
-      if (!isSparse)
-      {
-         double lengthPrimary = standardDeviation.getX();
-         double lengthSecondary = standardDeviation.getY();
-         if (lengthSecondary < minLength || lengthSecondary > lengthPrimary * threshold)
-         {
-            isSparse = true;
-         }
-      }
-   }
-
    public void setId(int id)
    {
       this.id = id;
@@ -235,6 +170,11 @@ public class RawSuperPixelData implements SuperPixelData
    public boolean isSparse()
    {
       return isSparse;
+   }
+
+   public void setIsSparse(boolean isSparse)
+   {
+      this.isSparse = isSparse;
    }
 
    public int[] getAdjacentSegmentLabels()

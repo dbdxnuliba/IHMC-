@@ -172,14 +172,13 @@ public class FusedSuperPixelImageFactory
    private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData rawSuperPixel,
                                                           SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
-      if (segmentationRawDataFilteringParameters.isEnableFilterFlyingPoint())
-         rawSuperPixel.filteringFlyingPoints(segmentationRawDataFilteringParameters.getFlyingPointThreshold(),
-                                                 segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors());
+      SegmentationRawDataFiltering.filterOutFlyingPoints(rawSuperPixel, segmentationRawDataFilteringParameters);
 
       rawSuperPixel.update();
 
       SuperPixelNormalEstimationTools.updateUsingPCA(rawSuperPixel, rawSuperPixel.getPoints(), StereoREAParallelParameters.addPointsToRawPCAInParallel);
    }
+
 
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.

@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class StereoREAPlanarRegionSegmentationCalculator
@@ -30,7 +31,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
    public void updateFusionData(RawSuperPixelImage rawSuperPixelImage, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
                                 PlanarRegionPropagationParameters propagationParameters)
    {
-      rawSuperPixelImage.updateSparsity(rawDataFilteringParameters);
+      SegmentationRawDataFiltering.updateSparsity(rawSuperPixelImage, rawDataFilteringParameters);
       data.set(rawSuperPixelImage);
       numberOfLabels = rawSuperPixelImage.getNumberOfImageSegments();
       planarRegionPropagationParameters.set(propagationParameters);
