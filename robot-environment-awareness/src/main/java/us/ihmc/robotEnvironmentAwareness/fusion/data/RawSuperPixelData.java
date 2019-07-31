@@ -8,6 +8,8 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
 /**
@@ -15,7 +17,7 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
  * The data has its own id and basic planar region information such as center and normal.
  * The adjacent score is to determine which segments are adjacent sufficiently.
  */
-public class RawSuperPixelData
+public class RawSuperPixelData implements SuperPixelData
 {
    public static final int DEFAULT_SEGMENT_ID = -1;
    private int id = DEFAULT_SEGMENT_ID;
@@ -30,6 +32,8 @@ public class RawSuperPixelData
    private final Vector3D normal = new Vector3D();
 
    private final Vector3D standardDeviation = new Vector3D();
+   private double normalVariance = Double.NaN;
+   private int normalConsensus = Integer.MIN_VALUE;
 
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
@@ -42,6 +46,47 @@ public class RawSuperPixelData
    public RawSuperPixelData(int labelID)
    {
       imageSegmentLabel = labelID;
+
+      center.setToNaN();
+      normal.setToNaN();
+      standardDeviation.setToNaN();
+   }
+
+   @Override
+   public Point3DReadOnly getCenter()
+   {
+      return center;
+   }
+
+   @Override
+   public Vector3DReadOnly getNormal()
+   {
+      return normal;
+   }
+
+   @Override
+   public void setCenter(Point3DReadOnly center)
+   {
+      this.center.set(center);
+   }
+
+   @Override
+   public void setNormal(Vector3DReadOnly normal)
+   {
+      this.normal.set(normal);
+   }
+
+   @Override
+   public void setStandardDeviation(Vector3DReadOnly standardDeviation)
+   {
+      this.standardDeviation.set(standardDeviation);
+   }
+
+   @Override
+   public void setNormalQuality(double normalVariance, int normalConsensus)
+   {
+      this.normalVariance = normalVariance;
+      this.normalConsensus = normalConsensus;
    }
 
    public boolean contains(int otherLabel)
@@ -216,15 +261,7 @@ public class RawSuperPixelData
       return (double) points.size();
    }
 
-   public Point3D getCenter()
-   {
-      return center;
-   }
 
-   public Vector3D getNormal()
-   {
-      return normal;
-   }
 
    public int getId()
    {

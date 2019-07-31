@@ -12,6 +12,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
@@ -69,8 +71,8 @@ public class FusedSuperPixelImageViewer
          int randomID = new Random().nextInt();
          Color regionColor = getRegionColor(randomID);
          RawSuperPixelData data = rawSuperPixelImage.getFusionDataSegment(i);
-         Point3D center = data.getCenter();
-         Vector3D normal = data.getNormal();
+         Point3DReadOnly center = data.getCenter();
+         Vector3DReadOnly normal = data.getNormal();
          Point3D centerEnd = new Point3D(normal);
          centerEnd.scaleAdd(0.1, center);
          if (data.isSparse())

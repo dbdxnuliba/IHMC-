@@ -6,19 +6,25 @@ import java.util.List;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
-public class FusedSuperPixelData
+public class FusedSuperPixelData implements SuperPixelData
 {
    private static final boolean USE_PCA_TO_UPDATE = true;
    private int id = PlanarRegion.NO_REGION_ID;
    private final TIntArrayList labels = new TIntArrayList();
-   private final List<Point3D> labelCenters = new ArrayList<>();
-   private final List<Vector3D> labelNormals = new ArrayList<>();
+   private final List<Point3DReadOnly> labelCenters = new ArrayList<>();
+   private final List<Vector3DReadOnly> labelNormals = new ArrayList<>();
 
    private final Vector3D normal = new Vector3D();
    private final Point3D center = new Point3D();
+
+   private final Vector3D standardDeviation = new Vector3D();
+   private double normalVariance = Double.NaN;
+   private int normalConsensus = Integer.MIN_VALUE;
 
    private double weight = 0.0;
 
@@ -36,6 +42,43 @@ public class FusedSuperPixelData
       center.set(seedImageSegment.getCenter());
 
       pointsInSegment.addAll(seedImageSegment.getPoints());
+   }
+
+   @Override
+   public Point3DReadOnly getCenter()
+   {
+      return center;
+   }
+
+   @Override
+   public Vector3DReadOnly getNormal()
+   {
+      return normal;
+   }
+
+   @Override
+   public void setCenter(Point3DReadOnly center)
+   {
+      this.center.set(center);
+   }
+
+   @Override
+   public void setNormal(Vector3DReadOnly normal)
+   {
+      this.normal.set(normal);
+   }
+
+   @Override
+   public void setStandardDeviation(Vector3DReadOnly standardDeviation)
+   {
+      this.standardDeviation.set(standardDeviation);
+   }
+
+   @Override
+   public void setNormalQuality(double normalVariance, int normalConsensus)
+   {
+      this.normalVariance = normalVariance;
+      this.normalConsensus = normalConsensus;
    }
 
    public void merge(RawSuperPixelData fusionDataSegment)
@@ -117,16 +160,6 @@ public class FusedSuperPixelData
       return labels;
    }
 
-   public Vector3D getNormal()
-   {
-      return normal;
-   }
-
-   public Point3D getCenter()
-   {
-      return center;
-   }
-
    public List<Point3D> getPointsInSegment()
    {
       return pointsInSegment;
@@ -146,7 +179,7 @@ public class FusedSuperPixelData
          int closestLabel = -1;
          for (int i = 0; i < labelCenters.size(); i++)
          {
-            Point3D labelCenter = labelCenters.get(i);
+            Point3DReadOnly labelCenter = labelCenters.get(i);
             cur = labelCenter.distance(fusionDataSegment.getCenter());
             if (cur < min)
             {
@@ -169,13 +202,13 @@ public class FusedSuperPixelData
 
    public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)
    {
-      if (Math.abs(fusionDataSegment.getNormal().dot(normal)) > threshold)
+      if (Math.abs(fusionDataSegment.getNormal().dot(getNormal())) > threshold)
          return true;
       else
          return false;
    }
 
-   public static double distancePlaneToPoint(Vector3D normalVector, Point3D center, Point3D point)
+   private static double distancePlaneToPoint(Vector3DReadOnly normalVector, Point3DReadOnly center, Point3DReadOnly point)
    {
       Vector3D centerVector = new Vector3D(center);
       double constantD = -normalVector.dot(centerVector);
