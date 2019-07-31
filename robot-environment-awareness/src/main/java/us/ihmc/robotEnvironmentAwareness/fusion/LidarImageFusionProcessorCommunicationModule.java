@@ -6,6 +6,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,6 +18,7 @@ import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import controller_msgs.msg.dds.VideoPacket;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Callback;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
@@ -56,6 +59,9 @@ public class LidarImageFusionProcessorCommunicationModule
    private final ExceptionHandlingThreadScheduler scheduler;
    private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 1500;
 
+   private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
+
+
    private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
@@ -80,7 +86,7 @@ public class LidarImageFusionProcessorCommunicationModule
       selectedObjecTypes = messager.createInput(LidarImageFusionAPI.SelectedObjecTypes, new ArrayList<ObjectType>());
       socketHostIPAddress = messager.createInput(LidarImageFusionAPI.ObjectDetectionModuleAddress);
 
-      messager.registerTopicListener(LidarImageFusionAPI.RunStereoREA, (content) -> stereoREAModule.singleRun());
+      messager.registerTopicListener(LidarImageFusionAPI.RunStereoREA, run -> executorService.submit(stereoREAModule::singleRun));
 
       scheduler = new ExceptionHandlingThreadScheduler(this.getClass().getSimpleName(), t -> {
          LogTools.error(t.getMessage());
