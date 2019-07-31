@@ -13,11 +13,11 @@ import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.LidarImageFusionDataFactory;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.FusedSuperPixelImageFactory;
 
-public class LidarImageFusionDataBuffer
+public class FusedSuperPixelImageBuffer
 {
-   private final LidarImageFusionDataFactory lidarImageFusionDataFactory = new LidarImageFusionDataFactory();
+   private final FusedSuperPixelImageFactory fusedSuperPixelImageFactory = new FusedSuperPixelImageFactory();
 
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
    private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
@@ -30,9 +30,9 @@ public class LidarImageFusionDataBuffer
 
    private final AtomicReference<SegmentationRawDataFilteringParameters> latestSegmentationRawDataFilteringParameters;
    private final AtomicReference<ImageSegmentationParameters> latestImageSegmentationParaeters;
-   private final AtomicReference<LidarImageFusionData> newBuffer = new AtomicReference<>(null);
+   private final AtomicReference<RawSuperPixelImage> newBuffer = new AtomicReference<>(null);
 
-   public LidarImageFusionDataBuffer(Messager messager, IntrinsicParameters intrinsic)
+   public FusedSuperPixelImageBuffer(Messager messager, IntrinsicParameters intrinsic)
    {
       //intrinsicParameters = intrinsic;
       bufferSize = messager.createInput(LidarImageFusionAPI.StereoBufferSize, 50000);
@@ -45,7 +45,7 @@ public class LidarImageFusionDataBuffer
       latestCameraIntrinsicParameters = messager.createInput(LidarImageFusionAPI.CameraIntrinsicParametersState, new IntrinsicParameters());
    }
 
-   public LidarImageFusionData pollNewBuffer()
+   public RawSuperPixelImage pollNewBuffer()
    {
       return newBuffer.getAndSet(null);
    }
@@ -78,12 +78,12 @@ public class LidarImageFusionDataBuffer
          colors[i] = colorBuffer[i];
       }
 
-      lidarImageFusionDataFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
-      lidarImageFusionDataFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
-      lidarImageFusionDataFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
-      lidarImageFusionDataFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
+      fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
+      fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
+      fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+      fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      LidarImageFusionData data = lidarImageFusionDataFactory.createLidarImageFusionData(pointCloud, colors, latestBufferedImage.get());
+      RawSuperPixelImage data = fusedSuperPixelImageFactory.createLidarImageFusionData(pointCloud, colors, latestBufferedImage.get());
 
       newBuffer.set(data);
    }

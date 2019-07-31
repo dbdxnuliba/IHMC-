@@ -18,9 +18,9 @@ import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
-public class LidarImageFusionDataViewer
+public class FusedSuperPixelImageViewer
 {
-   private final AtomicReference<LidarImageFusionData> lidarImageFusionDataToRender;
+   private final AtomicReference<RawSuperPixelImage> lidarImageFusionDataToRender;
 
    protected final JavaFXMultiColorMeshBuilder meshBuilder;
 
@@ -29,7 +29,7 @@ public class LidarImageFusionDataViewer
    protected final ObservableList<Node> children = root.getChildren();
    private final AtomicReference<Boolean> clear = new AtomicReference<>(false);
 
-   public LidarImageFusionDataViewer(SharedMemoryJavaFXMessager messager)
+   public FusedSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)
    {
       lidarImageFusionDataToRender = messager.createInput(LidarImageFusionAPI.FusionDataState, null);
 
@@ -43,23 +43,23 @@ public class LidarImageFusionDataViewer
       clear();
       double lineWidth = 0.01;
       meshBuilder.clear();
-      LidarImageFusionData lidarImageFusionData = lidarImageFusionDataToRender.get();
+      RawSuperPixelImage rawSuperPixelImage = lidarImageFusionDataToRender.get();
 
-      if (lidarImageFusionData == null)
+      if (rawSuperPixelImage == null)
          return;
 
-      int numberOfSegment = lidarImageFusionData.getNumberOfImageSegments();
+      int numberOfSegment = rawSuperPixelImage.getNumberOfImageSegments();
 
       List<PlanarRegionSegmentationRawData> planarRegionSegmentationRawDataList = new ArrayList<>();
 
       for (int i = 0; i < numberOfSegment; i++)
       {
-         SegmentationRawData data = lidarImageFusionData.getFusionDataSegment(i);
-         SegmentationNodeData segmentationNodeData = new SegmentationNodeData(data);
+         RawSuperPixelData data = rawSuperPixelImage.getFusionDataSegment(i);
+         FusedSuperPixelData fusedSuperPixelData = new FusedSuperPixelData(data);
 
-         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, segmentationNodeData.getNormal(),
-                                                                                                               segmentationNodeData.getCenter(),
-                                                                                                               segmentationNodeData.getPointsInSegment());
+         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, fusedSuperPixelData.getNormal(),
+                                                                                                               fusedSuperPixelData.getCenter(),
+                                                                                                               fusedSuperPixelData.getPointsInSegment());
 
          planarRegionSegmentationRawDataList.add(planarRegionSegmentationRawData);
       }
@@ -68,7 +68,7 @@ public class LidarImageFusionDataViewer
       {
          int randomID = new Random().nextInt();
          Color regionColor = getRegionColor(randomID);
-         SegmentationRawData data = lidarImageFusionData.getFusionDataSegment(i);
+         RawSuperPixelData data = rawSuperPixelImage.getFusionDataSegment(i);
          Point3D center = data.getCenter();
          Vector3D normal = data.getNormal();
          Point3D centerEnd = new Point3D(normal);

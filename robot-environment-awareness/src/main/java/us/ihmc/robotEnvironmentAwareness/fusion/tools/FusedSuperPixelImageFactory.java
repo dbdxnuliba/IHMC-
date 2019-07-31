@@ -16,12 +16,12 @@ import boofcv.struct.calib.IntrinsicParameters;
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.LidarImageFusionData;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.SegmentationRawData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 
-public class LidarImageFusionDataFactory
+public class FusedSuperPixelImageFactory
 {
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = true;
@@ -41,7 +41,7 @@ public class LidarImageFusionDataFactory
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public LidarImageFusionData createLidarImageFusionData(Point3D[] pointCloud, int[] colors, BufferedImage bufferedImage)
+   public RawSuperPixelImage createLidarImageFusionData(Point3D[] pointCloud, int[] colors, BufferedImage bufferedImage)
    {
       imageWidth = bufferedImage.getWidth();
       imageHeight = bufferedImage.getHeight();
@@ -49,9 +49,9 @@ public class LidarImageFusionDataFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateNewLabelsSLIC(bufferedImage);
-      List<SegmentationRawData> fusionDataSegments = createListOfSegmentationRawData(labels, pointCloud, colors);
+      List<RawSuperPixelData> fusionDataSegments = createListOfSegmentationRawData(labels, pointCloud, colors);
 
-      return new LidarImageFusionData(fusionDataSegments, imageWidth, imageHeight);
+      return new RawSuperPixelImage(fusionDataSegments, imageWidth, imageHeight);
    }
 
    private int[] calculateNewLabelsSLIC(BufferedImage bufferedImage)
@@ -82,18 +82,18 @@ public class LidarImageFusionDataFactory
       return labels;
    }
 
-   private List<SegmentationRawData> createListOfSegmentationRawData(int[] labels, Point3D[] pointCloud, int[] colors)
+   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labels, Point3D[] pointCloud, int[] colors)
    {
       if (labels.length != imageWidth * imageHeight)
          throw new RuntimeException("newLabels length is different with size of image " + labels.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
 
-      List<SegmentationRawData> fusionDataSegments = new ArrayList<SegmentationRawData>();
+      List<RawSuperPixelData> fusionDataSegments = new ArrayList<RawSuperPixelData>();
 
       // create.
       TIntArrayList labelList = new TIntArrayList(labels);
       int numberOfLabels = labelList.max() + 1;
       for (int i = 0; i < numberOfLabels; i++)
-         fusionDataSegments.add(new SegmentationRawData(i));
+         fusionDataSegments.add(new RawSuperPixelData(i));
 
       // projection.
       for (int i = 0; i < pointCloud.length; i++)
@@ -138,7 +138,7 @@ public class LidarImageFusionDataFactory
          }
       }
       // update and calculate normal.
-      for (SegmentationRawData fusionDataSegment : fusionDataSegments)
+      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
       {
          if (segmentationRawDataFilteringParameters.get().isEnableFilterFlyingPoint())
             fusionDataSegment.filteringFlyingPoints(segmentationRawDataFilteringParameters.get().getFlyingPointThreshold(),

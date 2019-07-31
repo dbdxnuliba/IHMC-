@@ -9,7 +9,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
-public class SegmentationNodeData
+public class FusedSuperPixelData
 {
    private static final boolean USE_PCA_TO_UPDATE = true;
    private int id = PlanarRegion.NO_REGION_ID;
@@ -25,7 +25,7 @@ public class SegmentationNodeData
    private final List<Point3D> pointsInSegment = new ArrayList<>();
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
    
-   public SegmentationNodeData(SegmentationRawData seedImageSegment)
+   public FusedSuperPixelData(RawSuperPixelData seedImageSegment)
    {
       id = seedImageSegment.getId();
       labels.add(seedImageSegment.getImageSegmentLabel());
@@ -38,7 +38,7 @@ public class SegmentationNodeData
       pointsInSegment.addAll(seedImageSegment.getPoints());
    }
 
-   public void merge(SegmentationRawData fusionDataSegment)
+   public void merge(RawSuperPixelData fusionDataSegment)
    {
       labels.add(fusionDataSegment.getImageSegmentLabel());
       labelCenters.add(fusionDataSegment.getCenter());
@@ -73,7 +73,7 @@ public class SegmentationNodeData
       }
    }
 
-   public void extend(SegmentationRawData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
+   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
    {
       for (Point3D point : fusionDataSegment.getPoints())
       {
@@ -135,7 +135,7 @@ public class SegmentationNodeData
    /**
     * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.
     */
-   public boolean isCoplanar(SegmentationRawData fusionDataSegment, double threshold, boolean isBigSegment)
+   public boolean isCoplanar(RawSuperPixelData fusionDataSegment, double threshold, boolean isBigSegment)
    {
       Point3D nodeDataCenter = new Point3D(center);
       Vector3D nodeDataNormal = new Vector3D(normal);
@@ -167,7 +167,7 @@ public class SegmentationNodeData
          return false;
    }
 
-   public boolean isParallel(SegmentationRawData fusionDataSegment, double threshold)
+   public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)
    {
       if (Math.abs(fusionDataSegment.getNormal().dot(normal)) > threshold)
          return true;
