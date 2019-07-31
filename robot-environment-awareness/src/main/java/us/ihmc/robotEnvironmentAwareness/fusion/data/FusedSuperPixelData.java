@@ -10,6 +10,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
@@ -123,7 +124,8 @@ public class FusedSuperPixelData implements SuperPixelData
       }
    }
 
-   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold)
+   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold,
+                      SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       for (Point3DReadOnly point : fusionDataSegment.getPoints())
       {
@@ -143,7 +145,10 @@ public class FusedSuperPixelData implements SuperPixelData
 
       if (updateNodeData)
       {
-         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
+//         if (normalEstimationParameters.updateUsingPCA())
+            SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
+//         else
+//            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
       }
    }
 
@@ -184,8 +189,11 @@ public class FusedSuperPixelData implements SuperPixelData
                closestLabel = i;
             }
          }
-         nodeDataCenter.set(labelCenters.get(closestLabel));
-         nodeDataNormal.set(labelNormals.get(closestLabel));
+         if (closestLabel > 0)
+         {
+            nodeDataCenter.set(labelCenters.get(closestLabel));
+            nodeDataNormal.set(labelNormals.get(closestLabel));
+         }
       }
 
       double distanceFromSegment = distancePlaneToPoint(fusionDataSegment.getNormal(), fusionDataSegment.getCenter(), nodeDataCenter);
