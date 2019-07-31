@@ -35,8 +35,6 @@ public class RawSuperPixelData implements SuperPixelData
    private double normalVariance = Double.NaN;
    private int normalConsensus = Integer.MIN_VALUE;
 
-   private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-
    private boolean isSparse = true;
 
    private static final boolean useAdjacentScore = true;
@@ -167,18 +165,6 @@ public class RawSuperPixelData implements SuperPixelData
          adjacentScore.clear();
          adjacentScore.addAll(newAdjacentScore);
       }
-
-      pca.clear();
-      points.stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
-      pca.compute();
-
-      pca.getMean(center);
-      pca.getThirdVector(normal);
-
-      if (normal.getZ() < 0.0)
-         normal.negate();
-
-      pca.getStandardDeviation(standardDeviation);
    }
 
    public void updateSparsity(double threshold)

@@ -144,6 +144,7 @@ public class FusedSuperPixelImageFactory
             fusionDataSegment.filteringFlyingPoints(segmentationRawDataFilteringParameters.get().getFlyingPointThreshold(),
                                                     segmentationRawDataFilteringParameters.get().getMinimumNumberOfFlyingPointNeighbors());
          fusionDataSegment.update();
+         SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment, fusionDataSegment.getPoints());
       }
 
       // set segment center in 2D.

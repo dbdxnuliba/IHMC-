@@ -8,6 +8,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
@@ -29,8 +30,7 @@ public class FusedSuperPixelData implements SuperPixelData
    private double weight = 0.0;
 
    private final List<Point3D> pointsInSegment = new ArrayList<>();
-   private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-   
+
    public FusedSuperPixelData(RawSuperPixelData seedImageSegment)
    {
       id = seedImageSegment.getId();
@@ -89,16 +89,10 @@ public class FusedSuperPixelData implements SuperPixelData
 
       pointsInSegment.addAll(fusionDataSegment.getPoints());
 
-      if(USE_PCA_TO_UPDATE)
+      if (USE_PCA_TO_UPDATE)
       {
-         fusionDataSegment.getPoints().stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
-         pca.compute();
-
-         pca.getMean(center);
-         pca.getThirdVector(normal);
-
-         if (normal.getZ() < 0.0)
-            normal.negate();
+         // FIXME should this be points in segment?
+         SuperPixelNormalEstimationTools.updateUsingPCA(this, fusionDataSegment.getPoints());
       }
       else
       {
@@ -136,17 +130,7 @@ public class FusedSuperPixelData implements SuperPixelData
 
       if (updateNodeData)
       {
-         PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
-
-         pca.clear();
-         pointsInSegment.stream().forEach(point -> pca.addPoint(point.getX(), point.getY(), point.getZ()));
-         pca.compute();
-
-         pca.getMean(center);
-         pca.getThirdVector(normal);
-
-         if (normal.getZ() < 0.0)
-            normal.negate();
+         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
       }
    }
 
