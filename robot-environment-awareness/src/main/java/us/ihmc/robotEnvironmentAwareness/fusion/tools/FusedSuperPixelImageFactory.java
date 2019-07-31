@@ -24,6 +24,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 
 public class FusedSuperPixelImageFactory
 {
@@ -101,7 +102,7 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      Stream<ColoredPixel> coloredPixelStream = projectInParallel ? Stream.of(coloredPixels).parallel() : Stream.of(coloredPixels);
+      Stream<ColoredPixel> coloredPixelStream = StereoREAParallelParameters.projectColoredPixelsToSuperPixelsInParallel ? Stream.of(coloredPixels).parallel() : Stream.of(coloredPixels);
       coloredPixelStream.forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloud, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth,
                                                                                    cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get()));
 
@@ -113,15 +114,10 @@ public class FusedSuperPixelImageFactory
             registerAdjacentPixelIds(rawSuperPixels, u, v, labelIds, imageWidth);
          }
       }
+
       // update and calculate normal.
-      for (RawSuperPixelData fusionDataSegment : rawSuperPixels)
-      {
-         if (segmentationRawDataFilteringParameters.get().isEnableFilterFlyingPoint())
-            fusionDataSegment.filteringFlyingPoints(segmentationRawDataFilteringParameters.get().getFlyingPointThreshold(),
-                                                    segmentationRawDataFilteringParameters.get().getMinimumNumberOfFlyingPointNeighbors());
-         fusionDataSegment.update();
-         SuperPixelNormalEstimationTools.updateUsingPCA(fusionDataSegment, fusionDataSegment.getPoints());
-      }
+      Stream<RawSuperPixelData> superPixelStream = StereoREAParallelParameters.updateRawSuperPixelNormalsInParallel ? rawSuperPixels.parallelStream() : rawSuperPixels.stream();
+      superPixelStream.forEach(superPixel -> updateSuperpixelAndCalculateNormal(superPixel, segmentationRawDataFilteringParameters.get()));
 
       // set segment center in 2D.
       int[] totalU = new int[numberOfLabels];
@@ -172,6 +168,17 @@ public class FusedSuperPixelImageFactory
       return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
    }
 
+   private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData rawSuperPixel,
+                                                          SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
+   {
+      if (segmentationRawDataFilteringParameters.isEnableFilterFlyingPoint())
+         rawSuperPixel.filteringFlyingPoints(segmentationRawDataFilteringParameters.getFlyingPointThreshold(),
+                                                 segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors());
+
+      rawSuperPixel.update();
+
+      SuperPixelNormalEstimationTools.updateUsingPCA(rawSuperPixel, rawSuperPixel.getPoints(), StereoREAParallelParameters.addPointsToRawPCAInParallel);
+   }
 
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.

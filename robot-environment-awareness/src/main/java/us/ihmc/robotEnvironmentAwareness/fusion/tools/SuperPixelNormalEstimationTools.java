@@ -10,9 +10,7 @@ import java.util.stream.Stream;
 
 public class SuperPixelNormalEstimationTools
 {
-   private static final boolean addPointsInParallel = true;
-
-   public static void updateUsingPCA(SuperPixelData superPixel, List<Point3D> points)
+   public static void updateUsingPCA(SuperPixelData superPixel, List<Point3D> points, boolean addPointsInParallel)
    {
       PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
       Stream<Point3D> pointStream = addPointsInParallel ? points.parallelStream() : points.stream();
