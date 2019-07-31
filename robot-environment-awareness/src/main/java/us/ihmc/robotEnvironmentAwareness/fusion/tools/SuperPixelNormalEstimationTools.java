@@ -15,10 +15,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.jOctoMap.node.NormalOcTreeNode;
-import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
 import us.ihmc.jOctoMap.tools.IncrementalCovariance3D;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixel;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
@@ -57,7 +54,7 @@ public class SuperPixelNormalEstimationTools
    }
 
 
-   public static void updateUsingRansac(SuperPixel currentNode, List<Point3D> points, SuperPixelNormalEstimationParameters parameters)
+   public static void updateUsingRansac(SuperPixel currentPixel, List<Point3D> points, SuperPixelNormalEstimationParameters parameters)
    {
       if (points.size() < 2)
          return;
@@ -65,31 +62,37 @@ public class SuperPixelNormalEstimationTools
       double maxDistanceFromPlane = parameters.getMaxDistanceFromPlane();
       // assume vertical
       Vector3D currentNormal = new Vector3D(0.0, 0.0, 1.0);
-      Point3D currentNodeHitLocation = new Point3D(getRandomStartPoint(points));
+      if (currentPixel.isNormalSet())
+         currentNormal.set(currentPixel.getNormal());
+      Point3D currentCenterLocation = new Point3D();
+      if (currentPixel.isCenterSet())
+         currentCenterLocation.set(currentPixel.getCenter());
+      else
+         currentCenterLocation.set(getRandomStartPoint(points));
 
       // Need to be recomputed as the neighbors may have changed
       MutableInt currentConsensus = new MutableInt();
       MutableDouble currentVariance = new MutableDouble();
-      computeNormalConsensusAndVariance(currentNodeHitLocation, currentNormal, points, maxDistanceFromPlane, currentVariance, currentConsensus);
+      computeNormalConsensusAndVariance(currentCenterLocation, currentNormal, points, maxDistanceFromPlane, currentVariance, currentConsensus);
 
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
-         Vector3D candidateNormal = computeNormalFromTwoRandomPoints(points, currentNodeHitLocation);
+         Vector3D candidateNormal = computeNormalFromTwoRandomPoints(points, currentCenterLocation);
 
          if (candidateNormal == null)
             continue;
 
          if (parameters.isLeastSquaresEstimationEnabled())
-            candidateNormal = refineNormalWithLeastSquares(currentNodeHitLocation, candidateNormal, maxDistanceFromPlane, points);
+            candidateNormal = refineNormalWithLeastSquares(currentCenterLocation, candidateNormal, maxDistanceFromPlane, points);
 
          if (candidateNormal == null)
             continue;
 
          MutableInt candidateConsensus = new MutableInt();
          MutableDouble candidateVariance = new MutableDouble();
-         computeNormalConsensusAndVariance(currentNodeHitLocation, candidateNormal, points, maxDistanceFromPlane, candidateVariance, candidateConsensus);
+         computeNormalConsensusAndVariance(currentCenterLocation, candidateNormal, points, maxDistanceFromPlane, candidateVariance, candidateConsensus);
 
-         peekBestNormal(currentNode, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
+         peekBestNormal(currentPixel, currentNormal, currentVariance, currentConsensus, candidateNormal, candidateVariance, candidateConsensus, parameters);
       }
    }
 
@@ -131,9 +134,8 @@ public class SuperPixelNormalEstimationTools
       return hasSmallerConsensusButIsMuchBetter;
    }
 
-   private static Vector3D computeNormalFromTwoRandomPoints(List<Point3D> neighbors, Point3DReadOnly currentNodeHitLocation)
+   private static Vector3D computeNormalFromTwoRandomPoints(List<Point3D> neighbors, Point3DReadOnly currentPixelCenter)
    {
-      // FIXME what the heck is going on in here
       Random random = ThreadLocalRandom.current();
 
       int maxNumberOfAttempts = 5;
@@ -150,7 +152,7 @@ public class SuperPixelNormalEstimationTools
                                               .map(Point3D::new)
                                               .toArray(Point3D[]::new);
 
-         normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentNodeHitLocation, randomHitLocations[0], randomHitLocations[1]);
+         normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentPixelCenter, randomHitLocations[0], randomHitLocations[1]);
       }
       return normalCandidate;
    }
@@ -167,8 +169,7 @@ public class SuperPixelNormalEstimationTools
          if (point == pointOnPlane)
             continue;
 
-         toNeighborHitLocation.set(point);
-         toNeighborHitLocation.sub(pointOnPlane);
+         toNeighborHitLocation.sub(point, pointOnPlane);
          double distanceFromPlane = Math.abs(ransacNormal.dot(toNeighborHitLocation));
          if (distanceFromPlane <= maxDistanceFromPlane)
             covarianceCalculator.addDataPoint(point.getX(), point.getY(), point.getZ());

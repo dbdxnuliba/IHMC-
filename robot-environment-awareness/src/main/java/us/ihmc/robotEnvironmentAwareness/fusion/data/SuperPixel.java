@@ -16,4 +16,14 @@ public interface SuperPixel
    void setStandardDeviation(Vector3DReadOnly standardDeviation);
 
    void setNormalQuality(double variance, int consensus);
+
+   default boolean isNormalSet()
+   {
+      return !getNormal().containsNaN();
+   }
+
+   default boolean isCenterSet()
+   {
+      return !getCenter().containsNaN();
+   }
 }

@@ -47,7 +47,11 @@ public class RawSuperPixelData implements SuperPixel
    {
       imageSegmentLabel = labelID;
       standardDeviationVector.setToNaN();
+
+      center.setToNaN();
+      normal.setToNaN();
    }
+
 
    public boolean contains(int otherLabel)
    {
