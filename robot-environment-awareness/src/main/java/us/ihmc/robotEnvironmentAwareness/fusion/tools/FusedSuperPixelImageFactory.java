@@ -89,9 +89,8 @@ public class FusedSuperPixelImageFactory
 
       List<RawSuperPixelData> rawSuperPixels = new ArrayList<>();
 
-      // create.
-      TIntArrayList labelList = new TIntArrayList(labelIds);
-      int numberOfLabels = labelList.max() + 1;
+      // create all of the raw super pixels
+      int numberOfLabels = max(labelIds) + 1;
       for (int i = 0; i < numberOfLabels; i++)
          rawSuperPixels.add(new RawSuperPixelData(i));
 
@@ -239,6 +238,19 @@ public class FusedSuperPixelImageFactory
    private static int getLabelIdIndex(int u, int v, int imageWidth)
    {
       return u + v * imageWidth;
+   }
+
+   private static int max(int[] values)
+   {
+      int max = Integer.MIN_VALUE;
+      for (int i = 0; i < values.length; i++)
+      {
+         if (values[i] > max)
+         {
+            max = values[i];
+         }
+      }
+      return max;
    }
 
 }
