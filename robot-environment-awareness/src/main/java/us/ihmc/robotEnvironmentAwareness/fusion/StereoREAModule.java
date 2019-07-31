@@ -102,6 +102,8 @@ public class StereoREAModule implements Runnable
       RawSuperPixelImage newBuffer = lidarImageFusionDataBuffer.pollNewBuffer();
       messager.submitMessage(LidarImageFusionAPI.FusionDataState, newBuffer);
 
+      double filteringTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
+
       planarRegionFeatureUpdater.updateLatestLidarImageFusionData(newBuffer);
 
       if (planarRegionFeatureUpdater.update())
@@ -110,9 +112,15 @@ public class StereoREAModule implements Runnable
          reportPlanarRegionState();
       }
 
+      double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - filteringTime;
+
       double runningTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
-      String computationTime = new DecimalFormat("##.###").format(runningTime) + "(sec)";
-      messager.submitMessage(LidarImageFusionAPI.ComputationTime, computationTime);
+      String filteringTimeMessage = new DecimalFormat("##.###").format(filteringTime) + "(sec)";
+      String segmentationTimeMessage = new DecimalFormat("##.###").format(segmentationTime) + "(sec)";
+      String runningTimeMessage = new DecimalFormat("##.###").format(runningTime) + "(sec)";
+      messager.submitMessage(LidarImageFusionAPI.DataFilteringTime, filteringTimeMessage);
+      messager.submitMessage(LidarImageFusionAPI.ImageSegmentationTime, segmentationTimeMessage);
+      messager.submitMessage(LidarImageFusionAPI.ComputationTime, runningTimeMessage);
       isRunning.set(false);
    }
 

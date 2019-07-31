@@ -18,6 +18,12 @@
 						<VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0"
 							spacing="5.0">
 							<children>
+								<Label fx:id="dataFilteringTime" alignment="CENTER"
+									   contentDisplay="CENTER" maxWidth="1.7976931348623157E308"
+									   prefHeight="25.0" />
+								<Label fx:id="segmentationTime" alignment="CENTER"
+									   contentDisplay="CENTER" maxWidth="1.7976931348623157E308"
+									   prefHeight="25.0" />
 								<Label fx:id="computationTime" alignment="CENTER"
 									contentDisplay="CENTER" maxWidth="1.7976931348623157E308"
 									prefHeight="25.0" />
