@@ -1,9 +1,11 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
@@ -129,7 +131,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
     */
    private SegmentationNodeData createSegmentNodeData(int seedLabel, int segmentId)
    {
-      // TODO speed this guy up
+      // TODO figure out how to parallelize this
       RawSuperPixelData seedImageSegment = data.get().getFusionDataSegment(seedLabel);
       seedImageSegment.setId(segmentId);
       SegmentationNodeData newSegment = new SegmentationNodeData(seedImageSegment);
@@ -148,24 +150,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
          {
             RawSuperPixelData candidate = data.get().getFusionDataSegment(adjacentLabel);
 
-            if (candidate.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidate.isSparse())
-            {
-               continue;
-            }
-
-            boolean isParallel = false;
-            boolean isCoplanar = false;
-            if (newSegment.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold()))
-               isParallel = true;
-            if (newSegment.isCoplanar(candidate, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment))
-               isCoplanar = true;
-
-            if (isParallel && isCoplanar)
-            {
-               candidate.setId(segmentId);
-               newSegment.merge(candidate, normalEstimationParameters);
+            if (checkAndMergeLikeSuperPixels(newSegment, candidate, planarRegionPropagationParameters, normalEstimationParameters, isBigSegment, segmentId))
                isPropagating = true;
-            }
          }
       }
 
@@ -173,19 +159,45 @@ public class StereoREAPlanarRegionSegmentationCalculator
       if (resetSmallNodeData)
       {
          boolean isSmallNodeData = labels.size() < MINIMAM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGIEON;
-         if(isSmallNodeData)
+
+         if (isSmallNodeData)
          {
-            for(int label : labels.toArray())
-            {
-               RawSuperPixelData rawData = data.get().getFusionDataSegment(label);
-               rawData.setId(RawSuperPixelData.DEFAULT_SEGMENT_ID);
-            }
+            Arrays.stream(labels.toArray()).parallel().forEach(label -> data.get().getFusionDataSegment(label).setId(RawSuperPixelData.DEFAULT_SEGMENT_ID));
+
             return null;
          }
       }
 
       return newSegment;
    }
+
+   private static boolean checkAndMergeLikeSuperPixels(SegmentationNodeData mergedNodeSegment, RawSuperPixelData candidateToCheck,
+                                                       PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                                       SuperPixelNormalEstimationParameters normalEstimationParameters, boolean isBigSegment,
+                                                       int segmentId)
+   {
+      if (candidateToCheck.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidateToCheck.isSparse())
+      {
+         return false;
+      }
+
+      boolean isParallel = false;
+      boolean isCoplanar = false;
+      if (mergedNodeSegment.isParallel(candidateToCheck, planarRegionPropagationParameters.getPlanarityThreshold()))
+         isParallel = true;
+      if (mergedNodeSegment.isCoplanar(candidateToCheck, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment))
+         isCoplanar = true;
+
+      if (isParallel && isCoplanar)
+      {
+         candidateToCheck.setId(segmentId);
+         mergedNodeSegment.merge(candidateToCheck, normalEstimationParameters);
+         return true;
+      }
+
+      return false;
+   }
+
 
    private int selectRandomNonIdentifiedLabel()
    {
