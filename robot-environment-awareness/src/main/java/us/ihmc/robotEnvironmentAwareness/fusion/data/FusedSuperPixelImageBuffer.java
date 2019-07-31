@@ -13,6 +13,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
+import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.converters.OcTreeMessageConverter;
@@ -71,6 +72,9 @@ public class FusedSuperPixelImageBuffer
 
    public RawSuperPixelImage updateNewBuffer(StereoVisionPointCloudMessage pointCloudMessage)
    {
+      if (pointCloudMessage == null)
+         return null;
+
       Point3D[] pointCloudBuffer = MessageTools.unpackScanPoint3ds(pointCloudMessage);
       int[] colorBuffer = pointCloudMessage.getColors().toArray();
       Random random = new Random();
@@ -108,12 +112,12 @@ public class FusedSuperPixelImageBuffer
          @Override
          public void run()
          {
-            StereoVisionPointCloudMessage newScan = latestStereoVisionPointCloudMessage.getAndSet(null);
-
             if (!enableREA.get())
             {
                return;
             }
+
+            StereoVisionPointCloudMessage newScan = latestStereoVisionPointCloudMessage.getAndSet(null);
 
             if (newScan == null)
                return;

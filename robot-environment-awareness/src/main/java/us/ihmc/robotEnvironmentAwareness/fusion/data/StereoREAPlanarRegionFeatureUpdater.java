@@ -95,12 +95,12 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
          @Override
          public void run()
          {
-            RawSuperPixelImage newScan = superPixelImage.getAndSet(null);
-
             if (!enableREA.get())
             {
                return;
             }
+
+            RawSuperPixelImage newScan = superPixelImage.getAndSet(null);
 
             if (newScan == null)
                return;
@@ -108,8 +108,6 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
             long runningStartTime = System.nanoTime();
 
             updateLatestLidarImageFusionData(newScan);
-
-
 
             if (update() && planarRegionsList != null)
             {
