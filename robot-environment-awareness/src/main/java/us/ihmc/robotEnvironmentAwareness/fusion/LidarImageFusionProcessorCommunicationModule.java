@@ -56,8 +56,6 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private final JPEGDecompressor jpegDecompressor = new JPEGDecompressor();
 
-   private final ExceptionHandlingThreadScheduler scheduler;
-   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 1500;
 
    private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
 
@@ -87,12 +85,6 @@ public class LidarImageFusionProcessorCommunicationModule
       socketHostIPAddress = messager.createInput(LidarImageFusionAPI.ObjectDetectionModuleAddress);
 
       messager.registerTopicListener(LidarImageFusionAPI.RunStereoREA, run -> executorService.submit(stereoREAModule::singleRun));
-
-      scheduler = new ExceptionHandlingThreadScheduler(this.getClass().getSimpleName(), t -> {
-         LogTools.error(t.getMessage());
-         t.printStackTrace();
-         LogTools.error("{} is crashing due to an exception.", Thread.currentThread().getName());
-      });
    }
 
    private void connect()
@@ -150,15 +142,15 @@ public class LidarImageFusionProcessorCommunicationModule
 
    public void start() throws IOException
    {
-      scheduler.schedule(stereoREAModule, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+      stereoREAModule.start();
    }
 
    public void stop() throws Exception
    {
       messager.closeMessager();
       ros2Node.destroy();
+      stereoREAModule.stop();
       objectDetectionManager.close();
-      scheduler.shutdown();
    }
 
    public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(Ros2Node ros2Node, SharedMemoryJavaFXMessager messager)

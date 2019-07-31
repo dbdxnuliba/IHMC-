@@ -1,10 +1,15 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import controller_msgs.msg.dds.PlanarRegionsListMessage;
+import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import us.ihmc.commons.Conversions;
+import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.messager.Messager;
@@ -32,6 +37,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
 
    private final TIntObjectHashMap<PlanarRegion> customPlanarRegions = new TIntObjectHashMap<>();
 
+   private final AtomicReference<RawSuperPixelImage> superPixelImage;
    private final AtomicReference<Boolean> enableCustomRegions;
    private final AtomicReference<Boolean> clearCustomRegions;
    private final AtomicReference<CustomRegionMergeParameters> customRegionMergingParameters;
@@ -42,12 +48,24 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
    private final AtomicReference<PolygonizerParameters> polygonizerParameters;
    private final AtomicReference<IntersectionEstimationParameters> intersectionEstimationParameters;
 
+   private final AtomicReference<Boolean> enableREA;
+
    private List<LineSegment3D> planarRegionsIntersections = null;
+
+   private final Messager reaMessager;
+   private final Messager messager;
 
    public StereoREAPlanarRegionFeatureUpdater(Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
+      this.reaMessager = reaMessager;
+      this.messager = messager;
+
       enableCustomRegions = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingEnable, true);
       clearCustomRegions = reaMessager.createInput(REAModuleAPI.CustomRegionsClear, false);
+
+      enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
+
+      superPixelImage = messager.createInput(LidarImageFusionAPI.FusionDataState);
 
       concaveHullFactoryParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsConcaveHullParameters, new ConcaveHullFactoryParameters());
       polygonizerParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsPolygonizerParameters, new PolygonizerParameters());
@@ -68,6 +86,44 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
    public void clear()
    {
       planarRegionsList = null;
+   }
+
+   public Runnable createBufferThread()
+   {
+      return new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            RawSuperPixelImage newScan = superPixelImage.getAndSet(null);
+
+            if (!enableREA.get())
+            {
+               return;
+            }
+
+            if (newScan == null)
+               return;
+
+            long runningStartTime = System.nanoTime();
+
+            updateLatestLidarImageFusionData(newScan);
+
+
+
+            if (update() && planarRegionsList != null)
+            {
+               reaMessager.submitMessage(REAModuleAPI.OcTreeEnable, true); // TODO: replace, or modify.
+               PlanarRegionsListMessage planarRegionsListMessage = PlanarRegionMessageConverter.convertToPlanarRegionsListMessage(planarRegionsList);
+               reaMessager.submitMessage(REAModuleAPI.PlanarRegionsState, planarRegionsListMessage);
+
+               double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
+
+               String segmentationTimeMessage = new DecimalFormat("##.###").format(segmentationTime) + "(sec)";
+               messager.submitMessage(LidarImageFusionAPI.ImageSegmentationTime, segmentationTimeMessage);
+            }
+         }
+      };
    }
 
    public boolean update()

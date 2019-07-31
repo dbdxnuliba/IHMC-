@@ -5,6 +5,9 @@ import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationPr
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
@@ -12,6 +15,7 @@ import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import us.ihmc.commons.Conversions;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
+import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
@@ -20,28 +24,37 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageBuffer;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.StereoREAPlanarRegionFeatureUpdater;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.PointCloudProjectionHelper;
+import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
+import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
 import us.ihmc.robotEnvironmentAwareness.updaters.REAPlanarRegionPublicNetworkProvider;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.ros2.Ros2Node;
 
-public class StereoREAModule implements Runnable
+public class StereoREAModule
 {
    private final Messager reaMessager;
    private final Messager messager;
 
    private final AtomicReference<Boolean> enable;
    private final AtomicReference<Boolean> isRunning = new AtomicReference<Boolean>(false);
-   private final FusedSuperPixelImageBuffer lidarImageFusionDataBuffer;
+   private final FusedSuperPixelImageBuffer fusedSuperPixelImageBuffer;
    private final StereoREAPlanarRegionFeatureUpdater planarRegionFeatureUpdater;
 
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
+
+   private static final int THREAD_PERIOD_MILLISECONDS = 200;
+   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
+
+   private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(3, getClass(), ExceptionHandling.CATCH_AND_REPORT);
+
+   private ScheduledFuture<?> scheduled;
 
    public StereoREAModule(Ros2Node ros2Node, Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
       this.reaMessager = reaMessager;
-      lidarImageFusionDataBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
+      fusedSuperPixelImageBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
       planarRegionFeatureUpdater = new StereoREAPlanarRegionFeatureUpdater(reaMessager, messager);
 
       enable = messager.createInput(LidarImageFusionAPI.EnableREA, false);
@@ -75,21 +88,55 @@ public class StereoREAModule implements Runnable
 
    public void updateLatestStereoVisionPointCloudMessage(StereoVisionPointCloudMessage message)
    {
-      lidarImageFusionDataBuffer.updateLatestStereoVisionPointCloudMessage(message);
+      fusedSuperPixelImageBuffer.updateLatestStereoVisionPointCloudMessage(message);
    }
 
    public void updateLatestBufferedImage(BufferedImage bufferedImage)
    {
-      lidarImageFusionDataBuffer.updateLatestBufferedImage(bufferedImage);
+      fusedSuperPixelImageBuffer.updateLatestBufferedImage(bufferedImage);
    }
 
-   @Override
-   public void run()
+   public void start()
    {
-      if (!enable.get())
-         return;
+      if (scheduled == null)
+      {
+         scheduled = executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+         executorService.scheduleAtFixedRate(fusedSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+         executorService.scheduleAtFixedRate(planarRegionFeatureUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+      }
+   }
 
-      singleRun();
+   public void stop() throws Exception
+   {
+      LogTools.info("REA Module is going down.");
+
+      if (scheduled != null)
+      {
+         scheduled.cancel(true);
+         scheduled = null;
+      }
+
+      if (executorService != null)
+      {
+         executorService.shutdownNow();
+         executorService = null;
+      }
+   }
+
+   public void mainUpdate()
+   {
+      if (enable.get())
+      {
+         isRunning.set(true);
+
+         planarRegionNetworkProvider.update(true);
+         reaMessager.submitMessage(REAModuleAPI.OcTreeEnable, true);
+         planarRegionNetworkProvider.publishCurrentState();
+      }
+      else
+      {
+         isRunning.set(false);
+      }
    }
 
    public void singleRun()
@@ -97,9 +144,9 @@ public class StereoREAModule implements Runnable
       isRunning.set(true);
       long runningStartTime = System.nanoTime();
 
-      lidarImageFusionDataBuffer.updateNewBuffer();
+      fusedSuperPixelImageBuffer.updateNewBuffer();
 
-      RawSuperPixelImage newBuffer = lidarImageFusionDataBuffer.pollNewBuffer();
+      RawSuperPixelImage newBuffer = fusedSuperPixelImageBuffer.pollNewBuffer();
       messager.submitMessage(LidarImageFusionAPI.FusionDataState, newBuffer);
 
       double filteringTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
