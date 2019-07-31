@@ -27,16 +27,12 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelPara
 
 public class FusedSuperPixelImageFactory
 {
-   private static final boolean projectInParallel = false;
-
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = true;
 
    private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
    private static final int matType = opencv_core.CV_8UC3;
 
-   private int imageWidth;
-   private int imageHeight;
 
    private BufferedImage segmentedContour;
    private BufferedImage projectedPointCloud;
@@ -47,14 +43,14 @@ public class FusedSuperPixelImageFactory
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public RawSuperPixelImage createLidarImageFusionData(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
+   public RawSuperPixelImage createRawSuperPixelImage(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
    {
-      imageWidth = bufferedImage.getWidth();
-      imageHeight = bufferedImage.getHeight();
+      int imageWidth = bufferedImage.getWidth();
+      int imageHeight = bufferedImage.getHeight();
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
-      int[] labels = calculateNewLabelsSLIC(bufferedImage);
+      int[] labels = calculateNewLabelsSLIC(bufferedImage, imageSegmentationParameters.get());
       List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, coloredPixels, imageHeight, imageWidth,
                                                                                         cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get(),
                                                                                         segmentationRawDataFilteringParameters.get());
@@ -62,13 +58,13 @@ public class FusedSuperPixelImageFactory
       return new RawSuperPixelImage(rawSuperPixels, imageWidth, imageHeight);
    }
 
-   private int[] calculateNewLabelsSLIC(BufferedImage bufferedImage)
+   private static int[] calculateNewLabelsSLIC(BufferedImage bufferedImage, ImageSegmentationParameters imageSegmentationParameters)
    {
-      int pixelSize = imageSegmentationParameters.get().getPixelSize();
-      double ruler = imageSegmentationParameters.get().getPixelRuler();
-      int iterate = imageSegmentationParameters.get().getIterate();
+      int pixelSize = imageSegmentationParameters.getPixelSize();
+      double ruler = imageSegmentationParameters.getPixelRuler();
+      int iterate = imageSegmentationParameters.getIterate();
       boolean enableConnectivity = true;
-      int elementSize = imageSegmentationParameters.get().getMinElementSize();
+      int elementSize = imageSegmentationParameters.getMinElementSize();
 
       Mat imageMat = convertBufferedImageToMat(bufferedImage);
       Mat convertedMat = new Mat();
@@ -81,7 +77,7 @@ public class FusedSuperPixelImageFactory
       Mat labelMat = new Mat();
       slic.getLabels(labelMat);
 
-      int[] labels = new int[imageWidth * imageHeight];
+      int[] labels = new int[bufferedImage.getWidth() * bufferedImage.getHeight()];
       for (int i = 0; i < labels.length; i++)
       {
          labels[i] = labelMat.getIntBuffer().get(i);

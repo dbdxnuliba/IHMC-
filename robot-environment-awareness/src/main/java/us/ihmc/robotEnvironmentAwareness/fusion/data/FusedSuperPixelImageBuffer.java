@@ -81,7 +81,7 @@ public class FusedSuperPixelImageBuffer
       fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
       fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      RawSuperPixelImage data = fusedSuperPixelImageFactory.createLidarImageFusionData(coloredPixels, latestBufferedImage.get());
+      RawSuperPixelImage data = fusedSuperPixelImageFactory.createRawSuperPixelImage(coloredPixels, latestBufferedImage.get());
 
       newBuffer.set(data);
    }
