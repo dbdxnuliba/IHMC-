@@ -34,7 +34,7 @@ public class RawSuperPixelData implements SuperPixelData
    private double normalVariance = Double.NaN;
    private int normalConsensus = Integer.MIN_VALUE;
 
-   private boolean isSparse = true;
+   private boolean isSparse = false;
 
    private static final boolean useAdjacentScore = true;
    private static final int minimumNumberOfAdjacentPixels = 10;
@@ -88,6 +88,11 @@ public class RawSuperPixelData implements SuperPixelData
    {
       this.normalVariance = normalVariance;
       this.normalConsensus = normalConsensus;
+   }
+
+   public boolean hasStandardDeviation()
+   {
+      return !standardDeviation.containsNaN();
    }
 
    public boolean contains(int otherLabel)

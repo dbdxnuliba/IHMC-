@@ -1,6 +1,5 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
-import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
@@ -55,12 +54,15 @@ public class SegmentationRawDataFiltering
 
    private static void updateSparsity(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters, int imageHeight)
    {
-      double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
-      double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
+      if (rawSuperPixel.hasStandardDeviation())
+      {
+         double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
+         double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
 
-      double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
-      double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
-      updateSparsity(rawSuperPixel, threshold);
+         double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
+         double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
+         updateSparsity(rawSuperPixel, threshold);
+      }
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
          SegmentationRawDataFiltering.updateSparsityFromCentrality(rawSuperPixel, rawDataFilteringParameters);
@@ -88,23 +90,11 @@ public class SegmentationRawDataFiltering
     */
    public static void updateSparsityFromCentrality(RawSuperPixelData rawSuperPixelData, double radius, double threshold)
    {
-      if (!rawSuperPixelData.isSparse())
+      if (!rawSuperPixelData.isSparse() && rawSuperPixelData.isCenterSet())
       {
          Stream<Point3DReadOnly> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPoints().parallelStream() : rawSuperPixelData.getPoints().stream();
          if (pointStream.filter(point -> rawSuperPixelData.getCenter().distance(point) < radius).count() < threshold * rawSuperPixelData.getWeight())
             rawSuperPixelData.setIsSparse(true);
-//         int numberOfInliers = 0;
-//         for (Point3DReadOnly point : rawSuperPixelData.getPoints())
-//         {
-//            double distance = rawSuperPixelData.getCenter().distance(point);
-//            if (distance < radius)
-//               numberOfInliers++;
-//         }
-//
-//         if (numberOfInliers < threshold * rawSuperPixelData.getWeight())
-//         {
-//            rawSuperPixelData.setIsSparse(true);
-//         }
       }
    }
 
@@ -125,7 +115,7 @@ public class SegmentationRawDataFiltering
     */
    public static void updateSparsityFromEllipticity(RawSuperPixelData rawSuperPixel, double minLength, double threshold)
    {
-      if (!rawSuperPixel.isSparse())
+      if (!rawSuperPixel.isSparse() && rawSuperPixel.hasStandardDeviation())
       {
          double lengthPrimary = rawSuperPixel.getStandardDeviation().getX();
          double lengthSecondary = rawSuperPixel.getStandardDeviation().getY();
