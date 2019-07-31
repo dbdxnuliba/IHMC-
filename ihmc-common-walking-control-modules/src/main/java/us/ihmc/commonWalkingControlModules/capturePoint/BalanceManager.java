@@ -473,9 +473,6 @@ public class BalanceManager
       else
          supportSeqence.update(footsteps, footstepTimings);
 
-      if (lastFootstepTiming.getTouchdownDuration() > controllerToolbox.getControlDT())
-         lastFootstepTiming.setTouchdownDuration(lastFootstepTiming.getTouchdownDuration() - controllerToolbox.getControlDT());
-
       copTrajectory.update(supportSeqence, finalTransferDuration, timeInSupportSequence.getValue(), initialReferenceCop);
 
       nummericalICPPlanner.setCopTrajectory(copTrajectory, timeInSupportSequence.getValue());
@@ -712,6 +709,16 @@ public class BalanceManager
          requestICPPlannerToHoldCurrentCoM();
          holdICPToCurrentCoMLocationInNextDoubleSupport.set(false);
       }
+
+      // Here we might need to finish up the touchdown of the last step: adjust the touchdown duration so the touchdown will
+      // happen at the correct time into the new sequence.
+      if (inFinalTransfer.getValue() && hasLastFootstep.getValue())
+      {
+         double timeSinceStepEnd = timeInSupportSequence.getValue();
+         double touchdownDuration = lastFootstepTiming.getTouchdownDuration();
+         lastFootstepTiming.setTouchdownDuration(touchdownDuration - timeSinceStepEnd);
+      }
+
       setFinalTransferTime(finalTransferTime);
       supportSeqence.initializeStance();
       currentTiming.set(footstepTimings.get(0));
