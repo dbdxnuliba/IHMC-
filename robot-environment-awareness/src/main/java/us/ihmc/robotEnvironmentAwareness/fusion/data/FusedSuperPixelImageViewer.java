@@ -32,7 +32,7 @@ public class FusedSuperPixelImageViewer
    private final AtomicReference<MeshView> meshToRender = new AtomicReference<>(null);
    private final Group root = new Group();
    protected final ObservableList<Node> children = root.getChildren();
-   private final AtomicReference<Boolean> showSolution = new AtomicReference<>(true);
+   private final AtomicReference<Boolean> showSolution = new AtomicReference<>(false);
    private final AtomicReference<Boolean> clearSolution = new AtomicReference<>(false);
 
    public FusedSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)

@@ -27,6 +27,7 @@ public class StereoREAAnchorPaneController
    @FXML private Slider superpixelRuler;
    @FXML private Slider superpixelIterate;
    @FXML private ToggleButton enableConnectivity;
+   @FXML private ToggleButton showFusionData;
    @FXML private Slider superpixelMinimumElement;
    @FXML private Slider minSparse;
    @FXML private Slider sparseRatio;
@@ -118,7 +119,7 @@ public class StereoREAAnchorPaneController
 
    public void showFusionData()
    {
-      messager.submitMessage(LidarImageFusionAPI.ShowFusionData, true);
+      messager.submitMessage(LidarImageFusionAPI.ShowFusionData, showFusionData.isSelected());
    }
 
    public void showProjection()
