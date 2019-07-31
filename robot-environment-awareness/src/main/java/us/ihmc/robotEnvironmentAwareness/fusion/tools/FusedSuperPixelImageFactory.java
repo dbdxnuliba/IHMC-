@@ -82,18 +82,18 @@ public class FusedSuperPixelImageFactory
       return labels;
    }
 
-   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labels, Point3D[] pointCloud, int[] colors)
+   private List<RawSuperPixelData> createListOfSegmentationRawData(int[] labelIds, Point3D[] pointCloud, int[] colors)
    {
-      if (labels.length != imageWidth * imageHeight)
-         throw new RuntimeException("newLabels length is different with size of image " + labels.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
+      if (labelIds.length != imageWidth * imageHeight)
+         throw new RuntimeException("newLabels length is different with size of image " + labelIds.length + ", (w)" + imageWidth + ", (h)" + imageHeight);
 
-      List<RawSuperPixelData> fusionDataSegments = new ArrayList<RawSuperPixelData>();
+      List<RawSuperPixelData> rawSuperPixels = new ArrayList<>();
 
       // create.
-      TIntArrayList labelList = new TIntArrayList(labels);
+      TIntArrayList labelList = new TIntArrayList(labelIds);
       int numberOfLabels = labelList.max() + 1;
       for (int i = 0; i < numberOfLabels; i++)
-         fusionDataSegments.add(new RawSuperPixelData(i));
+         rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
       for (int i = 0; i < pointCloud.length; i++)
@@ -107,9 +107,9 @@ public class FusedSuperPixelImageFactory
          if (pixel[0] < 0 || pixel[0] >= imageWidth || pixel[1] < 0 || pixel[1] >= imageHeight)
             continue;
 
-         int arrayIndex = getArrayIndex(pixel[0], pixel[1]);
-         int label = labels[arrayIndex];
-         fusionDataSegments.get(label).addPoint(new Point3D(point));
+         int arrayIndex = getLabelIdIndex(pixel[0], pixel[1], imageWidth);
+         int label = labelIds[arrayIndex];
+         rawSuperPixels.get(label).addPoint(new Point3D(point));
 
          if (enableDisplayProjectedPointCloud)
             projectedPointCloud.setRGB(pixel[0], pixel[1], colors[i]);
@@ -120,25 +120,11 @@ public class FusedSuperPixelImageFactory
       {
          for (int v = 1; v < imageHeight - 1; v++)
          {
-            int curLabel = labels[getArrayIndex(u, v)];
-            int[] labelsOfAdjacentPixels = new int[4];
-            labelsOfAdjacentPixels[0] = labels[getArrayIndex(u, v - 1)]; // N
-            labelsOfAdjacentPixels[1] = labels[getArrayIndex(u, v + 1)]; // S
-            labelsOfAdjacentPixels[2] = labels[getArrayIndex(u - 1, v)]; // W
-            labelsOfAdjacentPixels[3] = labels[getArrayIndex(u + 1, v)]; // E
-
-            for (int labelOfAdjacentPixel : labelsOfAdjacentPixels)
-            {
-               if (curLabel != labelOfAdjacentPixel)
-               {
-                  if (!fusionDataSegments.get(curLabel).contains(labelOfAdjacentPixel))
-                     fusionDataSegments.get(curLabel).addAdjacentSegmentLabel(labelOfAdjacentPixel);
-               }
-            }
+            registerAdjacentPixelIds(rawSuperPixels, u, v, labelIds, imageWidth);
          }
       }
       // update and calculate normal.
-      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
+      for (RawSuperPixelData fusionDataSegment : rawSuperPixels)
       {
          if (segmentationRawDataFilteringParameters.get().isEnableFilterFlyingPoint())
             fusionDataSegment.filteringFlyingPoints(segmentationRawDataFilteringParameters.get().getFlyingPointThreshold(),
@@ -152,23 +138,23 @@ public class FusedSuperPixelImageFactory
       int[] totalV = new int[numberOfLabels];
       int[] numberOfPixels = new int[numberOfLabels];
 
-      for (int i = 0; i < imageWidth; i++)
+      for (int widthIndex = 0; widthIndex < imageWidth; widthIndex++)
       {
-         for (int j = 0; j < imageHeight; j++)
+         for (int heightIndex = 0; heightIndex < imageHeight; heightIndex++)
          {
-            int label = labels[getArrayIndex(i, j)];
-            totalU[label] += i;
-            totalV[label] += j;
-            numberOfPixels[label]++;
+            int labelId = labelIds[getLabelIdIndex(widthIndex, heightIndex, imageWidth)];
+            totalU[labelId] += widthIndex;
+            totalV[labelId] += heightIndex;
+            numberOfPixels[labelId]++;
          }
       }
 
       for (int i = 0; i < numberOfLabels; i++)
       {
-         fusionDataSegments.get(i).setSegmentCenter(totalU[i] / numberOfPixels[i], totalV[i] / numberOfPixels[i]);
+         rawSuperPixels.get(i).setSegmentCenter(totalU[i] / numberOfPixels[i], totalV[i] / numberOfPixels[i]);
       }
 
-      return fusionDataSegments;
+      return rawSuperPixels;
    }
 
    /**
@@ -199,10 +185,6 @@ public class FusedSuperPixelImageFactory
       return imageMat;
    }
 
-   private int getArrayIndex(int u, int v)
-   {
-      return u + v * imageWidth;
-   }
 
    public BufferedImage getSegmentedContourBufferedImage()
    {
@@ -234,4 +216,29 @@ public class FusedSuperPixelImageFactory
       cameraPosition.set(position);
       cameraOrientation.set(orientation);
    }
+
+   private static void registerAdjacentPixelIds(List<RawSuperPixelData> segmentedSuperPixelsToPack, int widthIndex, int heightIndex, int[] labelIds, int imageWidth)
+   {
+      int currentLabelId = labelIds[getLabelIdIndex(widthIndex, heightIndex, imageWidth)];
+      int[] idOfAdjacentPixels = new int[4];
+      idOfAdjacentPixels[0] = labelIds[getLabelIdIndex(widthIndex, heightIndex - 1, imageWidth)]; // N
+      idOfAdjacentPixels[1] = labelIds[getLabelIdIndex(widthIndex, heightIndex + 1, imageWidth)]; // S
+      idOfAdjacentPixels[2] = labelIds[getLabelIdIndex(widthIndex - 1, heightIndex, imageWidth)]; // W
+      idOfAdjacentPixels[3] = labelIds[getLabelIdIndex(widthIndex + 1, heightIndex, imageWidth)]; // E
+
+      for (int labelOfAdjacentPixel : idOfAdjacentPixels)
+      {
+         if (currentLabelId != labelOfAdjacentPixel)
+         {
+            if (!segmentedSuperPixelsToPack.get(currentLabelId).contains(labelOfAdjacentPixel))
+               segmentedSuperPixelsToPack.get(currentLabelId).addAdjacentSegmentLabel(labelOfAdjacentPixel);
+         }
+      }
+   }
+
+   private static int getLabelIdIndex(int u, int v, int imageWidth)
+   {
+      return u + v * imageWidth;
+   }
+
 }
