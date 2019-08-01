@@ -134,8 +134,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
             }
 
             boolean isParallel = SuperPixelTools.areSuperPixelsParallel(fusedSuperPixel, candidate, planarRegionPropagationParameters.getPlanarityThreshold());
-            //            fusedSuperPixel.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold());
-            boolean isCoplanar = fusedSuperPixel.isCoplanar(candidate, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment);
+            boolean isCoplanar = SuperPixelTools.areSuperPixelsCoplanar(fusedSuperPixel, isBigSegment, candidate, planarRegionPropagationParameters.getProximityThreshold());
 
             if (isParallel && isCoplanar)
             {

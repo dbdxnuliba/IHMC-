@@ -94,6 +94,21 @@ public class FusedSuperPixelData implements SuperPixelData
       return allPointsInPixel;
    }
 
+   public int getNumberOfComponentSuperPixels()
+   {
+      return componentPixelCenters.size();
+   }
+
+   public Point3DReadOnly getComponentSuperPixelCenter(int superPixelIndex)
+   {
+      return componentPixelCenters.get(superPixelIndex);
+   }
+
+   public Vector3DReadOnly getComponentSuperPixelNormal(int superPixelIndex)
+   {
+      return componentPixelNormals.get(superPixelIndex);
+   }
+
    public void merge(RawSuperPixelData fusionDataSegment)
    {
       componentPixelLabels.add(fusionDataSegment.getImageSegmentLabel());
@@ -142,7 +157,7 @@ public class FusedSuperPixelData implements SuperPixelData
    {
       for (Point3DReadOnly point : fusionDataSegment.getPointsInPixel())
       {
-         double distance = distancePlaneToPoint(fusedNormal, fusedCenter, point);
+         double distance = SuperPixelTools.distancePlaneToPoint(fusedNormal, fusedCenter, point);
          if (distance < threshold)
          {
             for (Point3DReadOnly pointInSegment : allPointsInPixel)
@@ -173,51 +188,5 @@ public class FusedSuperPixelData implements SuperPixelData
    public TIntArrayList getLabels()
    {
       return componentPixelLabels;
-   }
-
-
-   /**
-    * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.
-    */
-   public boolean isCoplanar(RawSuperPixelData rawSuperPixelData, double threshold, boolean isBigSegment)
-   {
-      Point3D closestSuperPixelCenter = new Point3D(fusedCenter);
-      Vector3D closestSuperPixelNormal = new Vector3D(fusedNormal);
-      if (isBigSegment)
-      {
-         double closestLabelDistance = Double.POSITIVE_INFINITY;
-         int closestLabel = -1;
-         for (int i = 0; i < componentPixelCenters.size(); i++)
-         {
-            Point3DReadOnly labelCenter = componentPixelCenters.get(i);
-            double distanceToElementCenter = labelCenter.distance(rawSuperPixelData.getCenter());
-            if (distanceToElementCenter < closestLabelDistance)
-            {
-               closestLabelDistance = distanceToElementCenter;
-               closestLabel = i;
-            }
-         }
-
-         if (closestLabel > -1)
-         {
-            closestSuperPixelCenter.set(componentPixelCenters.get(closestLabel));
-            closestSuperPixelNormal.set(componentPixelNormals.get(closestLabel));
-         }
-      }
-
-      return SuperPixelTools.areSuperPixelsCoplanar(rawSuperPixelData.getCenter(), rawSuperPixelData.getNormal(), closestSuperPixelCenter,
-                                                    closestSuperPixelNormal, threshold);
-   }
-
-
-   private static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
-   {
-      Vector3D centerVector = new Vector3D(planeCenter);
-      double constantD = -planeNormal.dot(centerVector);
-
-      if (planeNormal.lengthSquared() == 0)
-         System.out.println("normalVector.lengthSquared() == 0");
-      Vector3D pointVector = new Vector3D(point);
-      return Math.abs(planeNormal.dot(pointVector) + constantD) / Math.sqrt(planeNormal.lengthSquared());
    }
 }

@@ -1,8 +1,10 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixelData;
 
 public class SuperPixelTools
@@ -17,6 +19,39 @@ public class SuperPixelTools
       return (Math.abs(pixelANormal.dot(pixelBNormal)) > threshold);
    }
 
+   /**
+    * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.
+    */
+   public static boolean areSuperPixelsCoplanar(FusedSuperPixelData fusedSuperPixel, boolean isBigPixel, SuperPixelData otherSuperPixel, double distanceThreshold)
+   {
+      Point3D closestSuperPixelCenter = new Point3D(fusedSuperPixel.getCenter());
+      Vector3D closestSuperPixelNormal = new Vector3D(fusedSuperPixel.getNormal());
+      if (isBigPixel)
+      {
+         double closestLabelDistance = Double.POSITIVE_INFINITY;
+         int closestLabel = -1;
+         for (int i = 0; i < fusedSuperPixel.getNumberOfComponentSuperPixels(); i++)
+         {
+            Point3DReadOnly labelCenter = fusedSuperPixel.getComponentSuperPixelCenter(i);
+            double distanceToElementCenter = labelCenter.distance(otherSuperPixel.getCenter());
+            if (distanceToElementCenter < closestLabelDistance)
+            {
+               closestLabelDistance = distanceToElementCenter;
+               closestLabel = i;
+            }
+         }
+
+         if (closestLabel > -1)
+         {
+            closestSuperPixelCenter.set(fusedSuperPixel.getComponentSuperPixelCenter(closestLabel));
+            closestSuperPixelNormal.set(fusedSuperPixel.getComponentSuperPixelNormal(closestLabel));
+         }
+      }
+
+      return SuperPixelTools.areSuperPixelsCoplanar(otherSuperPixel.getCenter(), otherSuperPixel.getNormal(), closestSuperPixelCenter,
+                                                    closestSuperPixelNormal, distanceThreshold);
+   }
+
    public static boolean areSuperPixelsCoplanar(Point3DReadOnly pixelACenter, Vector3DReadOnly pixelANormal, Point3DReadOnly pixelBCenter,
                                                 Vector3DReadOnly pixelBNormal, double distanceThreshold)
    {
@@ -26,7 +61,7 @@ public class SuperPixelTools
       return (Math.abs(distanceToQueryFromHere) < distanceThreshold && Math.abs(distanceToHereFromQuery) < distanceThreshold);
    }
 
-   private static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
+   public static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
    {
       Vector3D centerVector = new Vector3D(planeCenter);
       double constantD = -planeNormal.dot(centerVector);
