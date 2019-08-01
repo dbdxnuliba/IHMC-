@@ -219,7 +219,7 @@ public class StepUpPlannerRequester
 
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
-      double scale = 0.7;
+      double scale = 0.6;
       double rearOfFoot = -steppingParameters.getFootLength() / 2.0;
       double frontOfFoot = steppingParameters.getFootLength() / 2.0;
       double toeWidth = steppingParameters.getToeWidth();
