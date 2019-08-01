@@ -11,6 +11,7 @@ import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.LineSegment2D;
 import us.ihmc.euclid.geometry.interfaces.ConvexPolygon2DReadOnly;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -19,25 +20,19 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition.GraphicType;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
-import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoFramePoint2D;
 
 public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
 {
-   /**
-    * Distance for checks whether CoP waypoint is within a support. This should be small but positive to make sure that
-    * a toe off polygon for example is considered connected to the full foot polygon causing the CoP to move there
-    * instead of jump.
-    */
-   private static final double EPSILON = 0.001;
-
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final RecyclingArrayList<Point2D> waypoints = new RecyclingArrayList<>(50, Point2D.class);
    private final TDoubleArrayList waypointTimes = new TDoubleArrayList();
 
    private final List<YoFramePoint2D> yoWaypoints = new ArrayList<>();
+
+   private final LineSegment2D tempLine = new LineSegment2D();
 
    public CopTrajectory()
    {
@@ -87,6 +82,7 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
    {
       clear();
 
+      // First waypoint is a center of initial support.
       Point2DReadOnly centroid = supportPolygons.get(0).getCentroid();
       waypoints.add().set(centroid);
       waypointTimes.add(0.0);
@@ -98,6 +94,7 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
       waypoints.add().set(supportPolygons.get(supportPolygons.size() - 1).getCentroid());
       waypointTimes.add(supportTimes.get(supportTimes.size() - 1) + finalTransferDuration);
 
+      // Insert the provided CoP at the correct position in the sequence.
       addInitialCop(timeInSequence, initialCop);
 
       updateViz();
@@ -126,37 +123,18 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
       ConvexPolygon2DReadOnly previousPolygon = supportPolygons.get(i - 1);
       ConvexPolygon2DReadOnly polygon = supportPolygons.get(i);
       Point2DReadOnly centroid = polygon.getCentroid();
-      Point2DReadOnly lastWaypoint = waypoints.get(waypoints.size() - 1);
 
-      // Add a waypoint at the start of this polygon. This waypoint must be both in this polygon and the previous one.
-      if (previousPolygon.isPointInside(centroid, EPSILON))
-      {
-         waypoints.add().set(centroid);
-         waypointTimes.add(supportTimes.get(i));
-      }
-      else if (polygon.isPointInside(lastWaypoint, EPSILON))
-      {
-         waypoints.add().set(lastWaypoint);
-         waypointTimes.add(supportTimes.get(i));
-      }
-      else
-      {
-         LogTools.warn("Discontinuous support sequence! Expect invalid plans.");
-         waypoints.add().set(centroid);
-         waypointTimes.add(supportTimes.get(i));
-      }
+      // Add a waypoint at the start time of this polygon.
+      waypointTimes.add(supportTimes.get(i));
+      Point2D waypoint = waypoints.add();
+      waypoint.set(centroid);
 
-      // Add the polygons centroid as a waypoint halfway through this support polygons duration.
-      if (i < supportTimes.size() - 1)
+      // This waypoint must be both in this polygon and the previous one:
+      if (!previousPolygon.isPointInside(waypoint))
       {
-         double supportDuration = supportTimes.get(i + 1) - supportTimes.get(i);
-         waypoints.add().set(centroid);
-         waypointTimes.add(supportTimes.get(i) + supportDuration / 2.0);
-      }
-      else
-      {
-         waypoints.add().set(centroid);
-         waypointTimes.add(supportTimes.get(i) + finalTransferDuration / 2.0);
+         // The line intersection works better then orthogonal projection for funny shaped feet.
+         tempLine.set(previousPolygon.getCentroid(), centroid);
+         previousPolygon.intersectionWith(tempLine, waypoint, waypoint);
       }
    }
 
