@@ -18,15 +18,15 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 public class FusedSuperPixelData implements SuperPixelData
 {
    private static final boolean addInParallel = true;
-
    private static final boolean USE_PCA_TO_UPDATE = true;
-   private int id = PlanarRegion.NO_REGION_ID;
-   private final TIntArrayList labels = new TIntArrayList();
-   private final List<Point3DReadOnly> labelCenters = new ArrayList<>();
-   private final List<Vector3DReadOnly> labelNormals = new ArrayList<>();
 
-   private final Vector3D normal = new Vector3D();
-   private final Point3D center = new Point3D();
+   private final int id;
+   private final TIntArrayList componentPixelLabels = new TIntArrayList();
+   private final List<Point3DReadOnly> componentPixelCenters = new ArrayList<>();
+   private final List<Vector3DReadOnly> componentPixelNormals = new ArrayList<>();
+
+   private final Vector3D fusedNormal = new Vector3D();
+   private final Point3D fusedCenter = new Point3D();
 
    private final Vector3D standardDeviation = new Vector3D();
    private double normalVariance = Double.NaN;
@@ -34,44 +34,44 @@ public class FusedSuperPixelData implements SuperPixelData
 
    private double weight = 0.0;
 
-   private final List<Point3DReadOnly> pointsInSegment = new ArrayList<>();
+   private final List<Point3DReadOnly> allPointsInPixel = new ArrayList<>();
    private final PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
 
    public FusedSuperPixelData(RawSuperPixelData seedImageSegment)
    {
       id = seedImageSegment.getId();
-      labels.add(seedImageSegment.getImageSegmentLabel());
-      labelCenters.add(seedImageSegment.getCenter());
-      labelNormals.add(seedImageSegment.getNormal());
+      componentPixelLabels.add(seedImageSegment.getImageSegmentLabel());
+      componentPixelCenters.add(seedImageSegment.getCenter());
+      componentPixelNormals.add(seedImageSegment.getNormal());
 
-      normal.set(seedImageSegment.getNormal());
-      center.set(seedImageSegment.getCenter());
+      fusedNormal.set(seedImageSegment.getNormal());
+      fusedCenter.set(seedImageSegment.getCenter());
 
-      pointsInSegment.addAll(seedImageSegment.getPointsInPixel());
+      allPointsInPixel.addAll(seedImageSegment.getPointsInPixel());
    }
 
    @Override
    public Point3DReadOnly getCenter()
    {
-      return center;
+      return fusedCenter;
    }
 
    @Override
    public Vector3DReadOnly getNormal()
    {
-      return normal;
+      return fusedNormal;
    }
 
    @Override
    public void setCenter(Point3DReadOnly center)
    {
-      this.center.set(center);
+      this.fusedCenter.set(center);
    }
 
    @Override
    public void setNormal(Vector3DReadOnly normal)
    {
-      this.normal.set(normal);
+      this.fusedNormal.set(normal);
    }
 
    @Override
@@ -90,16 +90,16 @@ public class FusedSuperPixelData implements SuperPixelData
    @Override
    public List<Point3DReadOnly> getPointsInPixel()
    {
-      return pointsInSegment;
+      return allPointsInPixel;
    }
 
    public void merge(RawSuperPixelData fusionDataSegment)
    {
-      labels.add(fusionDataSegment.getImageSegmentLabel());
-      labelCenters.add(fusionDataSegment.getCenter());
-      labelNormals.add(fusionDataSegment.getNormal());
+      componentPixelLabels.add(fusionDataSegment.getImageSegmentLabel());
+      componentPixelCenters.add(fusionDataSegment.getCenter());
+      componentPixelNormals.add(fusionDataSegment.getNormal());
 
-      pointsInSegment.addAll(fusionDataSegment.getPointsInPixel());
+      allPointsInPixel.addAll(fusionDataSegment.getPointsInPixel());
 
       if (USE_PCA_TO_UPDATE)
       {
@@ -107,23 +107,23 @@ public class FusedSuperPixelData implements SuperPixelData
          pointStream.forEach(pca::addDataPoint);
          pca.compute();
 
-         pca.getMean(center);
-         pca.getThirdVector(normal);
+         pca.getMean(fusedCenter);
+         pca.getThirdVector(fusedNormal);
 
-         if (normal.getZ() < 0.0)
-            normal.negate();
+         if (fusedNormal.getZ() < 0.0)
+            fusedNormal.negate();
       }
       else
       {
          double otherWeight = fusionDataSegment.getWeight();
          double totalWeight = weight + otherWeight;
-         normal.setX((normal.getX() * weight + fusionDataSegment.getNormal().getX() * otherWeight) / totalWeight);
-         normal.setY((normal.getY() * weight + fusionDataSegment.getNormal().getY() * otherWeight) / totalWeight);
-         normal.setZ((normal.getZ() * weight + fusionDataSegment.getNormal().getZ() * otherWeight) / totalWeight);
+         fusedNormal.setX((fusedNormal.getX() * weight + fusionDataSegment.getNormal().getX() * otherWeight) / totalWeight);
+         fusedNormal.setY((fusedNormal.getY() * weight + fusionDataSegment.getNormal().getY() * otherWeight) / totalWeight);
+         fusedNormal.setZ((fusedNormal.getZ() * weight + fusionDataSegment.getNormal().getZ() * otherWeight) / totalWeight);
 
-         center.setX((center.getX() * weight + fusionDataSegment.getCenter().getX() * otherWeight) / totalWeight);
-         center.setY((center.getY() * weight + fusionDataSegment.getCenter().getY() * otherWeight) / totalWeight);
-         center.setZ((center.getZ() * weight + fusionDataSegment.getCenter().getZ() * otherWeight) / totalWeight);
+         fusedCenter.setX((fusedCenter.getX() * weight + fusionDataSegment.getCenter().getX() * otherWeight) / totalWeight);
+         fusedCenter.setY((fusedCenter.getY() * weight + fusionDataSegment.getCenter().getY() * otherWeight) / totalWeight);
+         fusedCenter.setZ((fusedCenter.getZ() * weight + fusionDataSegment.getCenter().getZ() * otherWeight) / totalWeight);
 
          weight = totalWeight;
       }
@@ -134,14 +134,14 @@ public class FusedSuperPixelData implements SuperPixelData
    {
       for (Point3DReadOnly point : fusionDataSegment.getPointsInPixel())
       {
-         double distance = distancePlaneToPoint(normal, center, point);
+         double distance = distancePlaneToPoint(fusedNormal, fusedCenter, point);
          if (distance < threshold)
          {
-            for (Point3DReadOnly pointInSegment : pointsInSegment)
+            for (Point3DReadOnly pointInSegment : allPointsInPixel)
             {
                if (pointInSegment.distance(point) < extendingThreshold)
                {
-                  pointsInSegment.add(point);
+                  allPointsInPixel.add(point);
                   break;
                }
             }
@@ -151,7 +151,7 @@ public class FusedSuperPixelData implements SuperPixelData
       if (updateNodeData)
       {
 //         if (normalEstimationParameters.updateUsingPCA())
-            SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
+            SuperPixelNormalEstimationTools.updateUsingPCA(this, allPointsInPixel, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
 //         else
 //            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
       }
@@ -164,46 +164,40 @@ public class FusedSuperPixelData implements SuperPixelData
 
    public TIntArrayList getLabels()
    {
-      return labels;
+      return componentPixelLabels;
    }
 
 
    /**
     * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.
     */
-   public boolean isCoplanar(RawSuperPixelData fusionDataSegment, double threshold, boolean isBigSegment)
+   public boolean isCoplanar(RawSuperPixelData rawSuperPixelData, double threshold, boolean isBigSegment)
    {
-      Point3D nodeDataCenter = new Point3D(center);
-      Vector3D nodeDataNormal = new Vector3D(normal);
+      Point3D closestSuperPixelCenter = new Point3D(fusedCenter);
+      Vector3D closestSuperPixelNormal = new Vector3D(fusedNormal);
       if (isBigSegment)
       {
-         double min = Double.POSITIVE_INFINITY;
-         double cur = 0;
+         double closestLabelDistance = Double.POSITIVE_INFINITY;
          int closestLabel = -1;
-         for (int i = 0; i < labelCenters.size(); i++)
+         for (int i = 0; i < componentPixelCenters.size(); i++)
          {
-            Point3DReadOnly labelCenter = labelCenters.get(i);
-            cur = labelCenter.distance(fusionDataSegment.getCenter());
-            if (cur < min)
+            Point3DReadOnly labelCenter = componentPixelCenters.get(i);
+            double distanceToElementCenter = labelCenter.distance(rawSuperPixelData.getCenter());
+            if (distanceToElementCenter < closestLabelDistance)
             {
-               min = cur;
+               closestLabelDistance = distanceToElementCenter;
                closestLabel = i;
             }
          }
-         if (closestLabel > 0)
-         {
-            nodeDataCenter.set(labelCenters.get(closestLabel));
-            nodeDataNormal.set(labelNormals.get(closestLabel));
-         }
+
+         closestSuperPixelCenter.set(componentPixelCenters.get(closestLabel));
+         closestSuperPixelNormal.set(componentPixelNormals.get(closestLabel));
       }
 
-      double distanceFromSegment = distancePlaneToPoint(fusionDataSegment.getNormal(), fusionDataSegment.getCenter(), nodeDataCenter);
-      double distanceToSegment = distancePlaneToPoint(nodeDataNormal, nodeDataCenter, fusionDataSegment.getCenter());
+      double distanceToQueryFromHere = distancePlaneToPoint(rawSuperPixelData.getNormal(), rawSuperPixelData.getCenter(), closestSuperPixelCenter);
+      double distanceToHereFromQuery = distancePlaneToPoint(closestSuperPixelNormal, closestSuperPixelCenter, rawSuperPixelData.getCenter());
 
-      if (Math.abs(distanceFromSegment) < threshold && Math.abs(distanceToSegment) < threshold)
-         return true;
-      else
-         return false;
+      return (Math.abs(distanceToQueryFromHere) < threshold && Math.abs(distanceToHereFromQuery) < threshold);
    }
 
    public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)
@@ -214,14 +208,14 @@ public class FusedSuperPixelData implements SuperPixelData
          return false;
    }
 
-   private static double distancePlaneToPoint(Vector3DReadOnly normalVector, Point3DReadOnly center, Point3DReadOnly point)
+   private static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
    {
-      Vector3D centerVector = new Vector3D(center);
-      double constantD = -normalVector.dot(centerVector);
+      Vector3D centerVector = new Vector3D(planeCenter);
+      double constantD = -planeNormal.dot(centerVector);
 
-      if (normalVector.lengthSquared() == 0)
+      if (planeNormal.lengthSquared() == 0)
          System.out.println("normalVector.lengthSquared() == 0");
       Vector3D pointVector = new Vector3D(point);
-      return Math.abs(normalVector.dot(pointVector) + constantD) / Math.sqrt(normalVector.lengthSquared());
+      return Math.abs(planeNormal.dot(pointVector) + constantD) / Math.sqrt(planeNormal.lengthSquared());
    }
 }
