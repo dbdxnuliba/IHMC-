@@ -114,6 +114,11 @@ public class FusedSuperPixelData implements SuperPixelData
       return componentPixelNormals.get(superPixelIndex);
    }
 
+   public TIntArrayList getComponentPixelLabels()
+   {
+      return componentPixelLabels;
+   }
+
    public void merge(RawSuperPixelData fusionDataSegment)
    {
       componentPixelLabels.add(fusionDataSegment.getImageSegmentLabel());
@@ -190,8 +195,5 @@ public class FusedSuperPixelData implements SuperPixelData
       return id;
    }
 
-   public TIntArrayList getLabels()
-   {
-      return componentPixelLabels;
-   }
+
 }

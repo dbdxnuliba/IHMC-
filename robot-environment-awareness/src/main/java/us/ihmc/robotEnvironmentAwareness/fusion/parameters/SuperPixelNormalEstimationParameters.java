@@ -11,7 +11,7 @@ public class SuperPixelNormalEstimationParameters
    public static final double DEFAULT_MAX_AVERAGE_DEVIATION_RATIO = 0.75;
    public static final int DEFAULT_NUMBER_OF_ITERATIONS = 20;
    public static final boolean DEFAULT_LEAST_SQUARES_ESTIMATION = false;
-   public static final boolean DEFAULT_UPDATE_USING_PCA = false;
+   public static final boolean DEFAULT_UPDATE_USING_PCA = true;
 
    private double maxDistanceFromPlane;
 

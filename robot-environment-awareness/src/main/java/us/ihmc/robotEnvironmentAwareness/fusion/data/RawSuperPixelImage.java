@@ -1,7 +1,9 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import gnu.trove.list.array.TIntArrayList;
 
@@ -36,23 +38,22 @@ public class RawSuperPixelImage
       return getSuperPixelData().get(label);
    }
 
-   public int[] getAdjacentLabels(TIntArrayList labels)
+   public Set<Integer> getLabelsOfSuperPixelsAdjacentToOtherSuperPixels(TIntArrayList superPixelLabels)
    {
-      TIntArrayList uncompressedAdjacentLabels = new TIntArrayList();
-      TIntArrayList adjacentLabels = new TIntArrayList();
+      Set<Integer> adjacentLabels = new HashSet<>();
 
-      for (int label : labels.toArray())
+      int[] labelArray = superPixelLabels.toArray();
+      for (int label : labelArray)
       {
-         uncompressedAdjacentLabels.addAll(rawSuperPixels.get(label).getAdjacentPixelLabels());
+         adjacentLabels.addAll(rawSuperPixels.get(label).getAdjacentPixelLabels());
       }
 
-      for (int label : uncompressedAdjacentLabels.toArray())
+      for (int label : labelArray)
       {
-         if (!labels.contains(label) && !adjacentLabels.contains(label))
-            adjacentLabels.add(label);
+         adjacentLabels.remove(label);
       }
 
-      return adjacentLabels.toArray();
+      return adjacentLabels;
    }
 
    public boolean allIdentified()

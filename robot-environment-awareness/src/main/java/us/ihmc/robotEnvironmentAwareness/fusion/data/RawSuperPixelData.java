@@ -1,7 +1,9 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -22,6 +24,7 @@ public class RawSuperPixelData implements SuperPixelData
    private int id = DEFAULT_SEGMENT_ID;
 
    private final int imageSegmentLabel;
+   private final Set<Integer> adjacentPixelLabels = new HashSet<>();
    private final List<AdjacentPixelData> adjacentPixelsData = new ArrayList<>();
    private final List<Point3DReadOnly> points = new ArrayList<>();
 
@@ -135,6 +138,7 @@ public class RawSuperPixelData implements SuperPixelData
    public void addAdjacentPixel(int adjacentPixelLabel)
    {
       adjacentPixelsData.add(new AdjacentPixelData(adjacentPixelLabel, 1));
+      adjacentPixelLabels.add(adjacentPixelLabel);
    }
 
    public void addPoint(Point3DReadOnly point)
@@ -150,9 +154,14 @@ public class RawSuperPixelData implements SuperPixelData
          while (i < adjacentPixelsData.size())
          {
             if (adjacentPixelsData.get(i).getNumberOfAdjacentPixels() > minimumNumberOfAdjacentPixels)
+            {
                i++;
+            }
             else
-               adjacentPixelsData.remove(i);
+            {
+               AdjacentPixelData removedPixel = adjacentPixelsData.remove(i);
+               adjacentPixelLabels.remove(removedPixel.getPixelId());
+            }
          }
 
       }
@@ -183,12 +192,9 @@ public class RawSuperPixelData implements SuperPixelData
       this.isSparse = isSparse;
    }
 
-   public int[] getAdjacentPixelLabels()
+   public Set<Integer> getAdjacentPixelLabels()
    {
-      int[] labels = new int[adjacentPixelsData.size()];
-      for (int i = 0; i < adjacentPixelsData.size(); i++)
-         labels[i] = adjacentPixelsData.get(i).getPixelId();
-      return labels;
+      return adjacentPixelLabels;
    }
 
    public double getWeight()

@@ -77,7 +77,7 @@ public class PlanarRegionPropagationParameters
       return planarityThreshold;
    }
 
-   public boolean isEnableExtending()
+   public boolean isExtendingEnabled()
    {
       return enableExtending;
    }

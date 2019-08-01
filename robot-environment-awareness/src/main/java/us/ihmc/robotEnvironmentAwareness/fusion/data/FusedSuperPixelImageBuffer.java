@@ -22,6 +22,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.converters.OcTreeMessageConverter;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.FusedSuperPixelImageFactory;
 
 public class FusedSuperPixelImageBuffer
@@ -40,6 +41,7 @@ public class FusedSuperPixelImageBuffer
    private final AtomicReference<Integer> bufferSize;
 
    private final AtomicReference<SegmentationRawDataFilteringParameters> latestSegmentationRawDataFilteringParameters;
+   private final AtomicReference<SuperPixelNormalEstimationParameters> latestNormalEstimationParameters;
    private final AtomicReference<ImageSegmentationParameters> latestImageSegmentationParaeters;
    private final AtomicReference<RawSuperPixelImage> newBuffer = new AtomicReference<>(null);
 
@@ -54,6 +56,7 @@ public class FusedSuperPixelImageBuffer
       latestImageSegmentationParaeters = messager.createInput(LidarImageFusionAPI.ImageSegmentationParameters, new ImageSegmentationParameters());
       latestSegmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
                                                                           new SegmentationRawDataFilteringParameters());
+      latestNormalEstimationParameters = messager.createInput(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
@@ -103,6 +106,7 @@ public class FusedSuperPixelImageBuffer
       fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
       fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
       fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+      fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
       fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
       return fusedSuperPixelImageFactory.createRawSuperPixelImage(coloredPixels, latestBufferedImage.get());

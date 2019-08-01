@@ -15,7 +15,7 @@ public class PlanarRegionPropagationParametersProperty extends ParametersPropert
    private final DoubleField planarityThreshold = new DoubleField(PlanarRegionPropagationParameters::getPlanarityThreshold,
                                                                   (p, v) -> p.setPlanarityThreshold(v));
 
-   private final BooleanField enableExtending = new BooleanField(PlanarRegionPropagationParameters::isEnableExtending,
+   private final BooleanField enableExtending = new BooleanField(PlanarRegionPropagationParameters::isExtendingEnabled,
                                                                     (p, v) -> p.setEnableExtending(v));
    private final BooleanField updateExtendedData = new BooleanField(PlanarRegionPropagationParameters::isUpdateExtendedData,
                                                                     (p, v) -> p.setUpdateExtendedData(v));
