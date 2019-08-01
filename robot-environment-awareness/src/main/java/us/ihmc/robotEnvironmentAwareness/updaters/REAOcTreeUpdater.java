@@ -128,10 +128,12 @@ public class REAOcTreeUpdater
 
       referenceOctree.setNormalEstimationParameters(normalEstimationParameters.get());
 
+      Point3DReadOnly sensorOrigin;
       if (latestLidarPoseReference.get() == null)
-         return;
-
-      Point3DReadOnly sensorOrigin = latestLidarPoseReference.get().getPosition();
+         sensorOrigin = new Point3D();
+      else
+         sensorOrigin = latestLidarPoseReference.get().getPosition();
+      
       boolean hasOcTreeBeenUpdated = false;
 
       for (REAOcTreeBuffer buffer : reaOcTreeBuffers)
