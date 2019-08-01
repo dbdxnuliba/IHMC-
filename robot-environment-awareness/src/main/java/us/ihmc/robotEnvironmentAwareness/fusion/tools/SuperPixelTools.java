@@ -78,13 +78,12 @@ public class SuperPixelTools
          double distance = SuperPixelTools.distancePlaneToPoint(fusedSuperPixelToExtend.getNormal(), fusedSuperPixelToExtend.getCenter(), point);
          if (distance < maxDistanceFromPixel)
          {
-            for (Point3DReadOnly pointInSegment : fusedSuperPixelToExtend.getPointsInPixel())
+            if (fusedSuperPixelToExtend.getPointsInPixel().parallelStream().anyMatch(pointInSegment -> pointInSegment.distance(point) < maxDistanceFromAnyPoint))
             {
-               if (pointInSegment.distance(point) < maxDistanceFromAnyPoint)
-               {
-                  fusedSuperPixelToExtend.addPoint(point);
-                  break;
-               }
+               // remove it from the other list
+               superPixelToInclude.getPointsInPixel().remove(point);
+               fusedSuperPixelToExtend.addPoint(point);
+               break;
             }
          }
       }

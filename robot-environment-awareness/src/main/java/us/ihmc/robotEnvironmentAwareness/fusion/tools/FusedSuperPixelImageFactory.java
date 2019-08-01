@@ -1,6 +1,7 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
 import java.awt.image.BufferedImage;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,7 +30,9 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstim
 public class FusedSuperPixelImageFactory
 {
    private static final boolean enableDisplaySegmentedContour = true;
-   private static final boolean enableDisplayProjectedPointCloud = true;
+   private static final boolean enableDisplayProjectedPointCloud = false;
+
+   private static final boolean enableConnectivity = true;
 
    private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
    private static final int matType = opencv_core.CV_8UC3;
@@ -67,7 +70,6 @@ public class FusedSuperPixelImageFactory
       int pixelSize = imageSegmentationParameters.getPixelSize();
       double ruler = imageSegmentationParameters.getPixelRuler();
       int iterate = imageSegmentationParameters.getIterate();
-      boolean enableConnectivity = true;
       int elementSize = imageSegmentationParameters.getMinElementSize();
 
       Mat imageMat = convertBufferedImageToMat(bufferedImage);
@@ -82,13 +84,15 @@ public class FusedSuperPixelImageFactory
       slic.getLabels(labelMat);
 
       int[] labels = new int[bufferedImage.getWidth() * bufferedImage.getHeight()];
+      IntBuffer intBuffer = labelMat.getIntBuffer();
       for (int i = 0; i < labels.length; i++)
       {
-         labels[i] = labelMat.getIntBuffer().get(i);
+         labels[i] = intBuffer.get(i);
       }
 
       return labels;
    }
+
 
    private static List<RawSuperPixelData> populateRawSuperPixelsWithPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
                                                                                ColoredPixel[] coloredPixels, int imageHeight, int imageWidth,
@@ -108,9 +112,11 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      Stream<ColoredPixel> coloredPixelStream = StereoREAParallelParameters.projectColoredPixelsToSuperPixelsInParallel ? Stream.of(coloredPixels).parallel() : Stream.of(coloredPixels);
-      coloredPixelStream.forEach(coloredPixel -> projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth,
-                                                                                   cameraPosition, cameraOrientation, intrinsicParameters));
+      for (ColoredPixel coloredPixel : coloredPixels)
+      {
+         projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth, cameraPosition,
+                                           cameraOrientation, intrinsicParameters);
+      }
 
       // register adjacent labels.
       for (int widthIndex = 1; widthIndex < imageWidth - 1; widthIndex++)

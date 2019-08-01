@@ -164,7 +164,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
    private static void extendSuperPixelsToIncludeAdjacentUnassignedData(List<FusedSuperPixelData> fusedSuperPixels, RawSuperPixelImage rawSuperPixelImage,
                                                                         PlanarRegionPropagationParameters planarRegionPropagationParameters)
    {
-      fusedSuperPixels.parallelStream().forEach(fusedSuperPixel -> extendSuperPixelToIncludeAdjacentUnassignedData(fusedSuperPixel, rawSuperPixelImage,
+      fusedSuperPixels.forEach(fusedSuperPixel -> extendSuperPixelToIncludeAdjacentUnassignedData(fusedSuperPixel, rawSuperPixelImage,
                                                                                                                    planarRegionPropagationParameters));
    }
 

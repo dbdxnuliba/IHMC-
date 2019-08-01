@@ -5,7 +5,6 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
-import us.ihmc.robotics.math.trajectories.SegmentedFrameTrajectory3D;
 
 import java.util.ArrayList;
 import java.util.List;

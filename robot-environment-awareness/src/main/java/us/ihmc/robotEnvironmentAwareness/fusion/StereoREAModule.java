@@ -44,7 +44,7 @@ public class StereoREAModule
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
 
    private static final int THREAD_PERIOD_MILLISECONDS = 200;
-   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
+   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 200;
 
    private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(3, getClass(), ExceptionHandling.CATCH_AND_REPORT);
 
