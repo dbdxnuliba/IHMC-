@@ -73,7 +73,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
          int[] adjacentLabels = data.get().getAdjacentLabels(segment.getLabels());
          for (int adjacentLabel : adjacentLabels)
          {
-            RawSuperPixelData adjacentData = data.get().getFusionDataSegment(adjacentLabel);
+            RawSuperPixelData adjacentData = data.get().getSuperPixelData(adjacentLabel);
             if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
             {
                segment.extend(adjacentData, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
@@ -130,13 +130,13 @@ public class StereoREAPlanarRegionSegmentationCalculator
     */
    private FusedSuperPixelData createSegmentNodeData(int seedLabel, int segmentId)
    {
-      RawSuperPixelData seedImageSegment = data.get().getFusionDataSegment(seedLabel);
-      seedImageSegment.setId(segmentId);
-      FusedSuperPixelData newSegment = new FusedSuperPixelData(seedImageSegment);
+      RawSuperPixelData seedSuperPixel = data.get().getSuperPixelData(seedLabel);
+      seedSuperPixel.setId(segmentId);
+      FusedSuperPixelData fusedSuperPixel = new FusedSuperPixelData(seedSuperPixel);
 
       boolean isPropagating = true;
 
-      TIntArrayList labels = newSegment.getLabels();
+      TIntArrayList labels = fusedSuperPixel.getLabels();
       while (isPropagating)
       {
          isPropagating = false;
@@ -146,24 +146,20 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
          for (int adjacentLabel : adjacentLabels)
          {
-            RawSuperPixelData candidate = data.get().getFusionDataSegment(adjacentLabel);
+            RawSuperPixelData candidate = data.get().getSuperPixelData(adjacentLabel);
 
             if (candidate.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidate.isSparse())
             {
                continue;
             }
 
-            boolean isParallel = false;
-            boolean isCoplanar = false;
-            if (newSegment.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold()))
-               isParallel = true;
-            if (newSegment.isCoplanar(candidate, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment))
-               isCoplanar = true;
+            boolean isParallel = fusedSuperPixel.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold());
+            boolean isCoplanar = fusedSuperPixel.isCoplanar(candidate, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment);
 
             if (isParallel && isCoplanar)
             {
                candidate.setId(segmentId);
-               newSegment.merge(candidate);
+               fusedSuperPixel.merge(candidate);
                isPropagating = true;
             }
          }
@@ -177,14 +173,14 @@ public class StereoREAPlanarRegionSegmentationCalculator
          {
             for(int label : labels.toArray())
             {
-               RawSuperPixelData rawData = data.get().getFusionDataSegment(label);
+               RawSuperPixelData rawData = data.get().getSuperPixelData(label);
                rawData.setId(RawSuperPixelData.DEFAULT_SEGMENT_ID);
             }
             return null;
          }
       }
 
-      return newSegment;
+      return fusedSuperPixel;
    }
 
    private int selectRandomNonIdentifiedLabel()
@@ -193,7 +189,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
       for (int i = 0; i < MAXIMUM_NUMBER_OF_TRIALS_TO_FIND_UN_ID_LABEL; i++)
       {
          randomSeedLabel = random.nextInt(numberOfLabels - 1);
-         RawSuperPixelData fusionDataSegment = data.get().getFusionDataSegment(randomSeedLabel);
+         RawSuperPixelData fusionDataSegment = data.get().getSuperPixelData(randomSeedLabel);
          if (fusionDataSegment.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID && !fusionDataSegment.isSparse())
             return randomSeedLabel;
       }

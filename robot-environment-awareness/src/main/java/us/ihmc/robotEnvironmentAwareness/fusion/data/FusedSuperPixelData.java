@@ -117,6 +117,8 @@ public class FusedSuperPixelData implements SuperPixelData
       {
          double otherWeight = fusionDataSegment.getWeight();
          double totalWeight = weight + otherWeight;
+
+         // TODO do this via interpolation
          fusedNormal.setX((fusedNormal.getX() * weight + fusionDataSegment.getNormal().getX() * otherWeight) / totalWeight);
          fusedNormal.setY((fusedNormal.getY() * weight + fusionDataSegment.getNormal().getY() * otherWeight) / totalWeight);
          fusedNormal.setZ((fusedNormal.getZ() * weight + fusionDataSegment.getNormal().getZ() * otherWeight) / totalWeight);

@@ -65,7 +65,7 @@ public class FusedSuperPixelImageViewer
 
       for (int i = 0; i < numberOfSegment; i++)
       {
-         RawSuperPixelData data = rawSuperPixelImage.getFusionDataSegment(i);
+         RawSuperPixelData data = rawSuperPixelImage.getSuperPixelData(i);
          FusedSuperPixelData fusedSuperPixelData = new FusedSuperPixelData(data);
 
          PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, fusedSuperPixelData.getNormal(),

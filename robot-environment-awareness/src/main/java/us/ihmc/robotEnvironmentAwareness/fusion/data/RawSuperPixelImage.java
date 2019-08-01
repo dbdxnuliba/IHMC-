@@ -12,28 +12,28 @@ public class RawSuperPixelImage
 {
    private final int imageWidth;
    private final int imageHeight;
-   private final ArrayList<RawSuperPixelData> fusionDataSegments = new ArrayList<RawSuperPixelData>();
+   private final ArrayList<RawSuperPixelData> rawSuperPixels = new ArrayList<>();
 
-   public RawSuperPixelImage(List<RawSuperPixelData> fusionDataSegments, int imageWidth, int imageHeight)
+   public RawSuperPixelImage(List<RawSuperPixelData> rawSuperPixels, int imageWidth, int imageHeight)
    {
-      this.fusionDataSegments.addAll(fusionDataSegments);
+      this.rawSuperPixels.addAll(rawSuperPixels);
       this.imageWidth = imageWidth;
       this.imageHeight = imageHeight;
    }
 
    public int getNumberOfImageSegments()
    {
-      return fusionDataSegments.size();
+      return rawSuperPixels.size();
    }
 
    public List<RawSuperPixelData> getSuperPixelData()
    {
-      return fusionDataSegments;
+      return rawSuperPixels;
    }
 
-   public RawSuperPixelData getFusionDataSegment(int label)
+   public RawSuperPixelData getSuperPixelData(int label)
    {
-      return fusionDataSegments.get(label);
+      return getSuperPixelData().get(label);
    }
 
    public int[] getAdjacentLabels(TIntArrayList labels)
@@ -43,7 +43,7 @@ public class RawSuperPixelImage
 
       for (int label : labels.toArray())
       {
-         uncompressedAdjacentLabels.addAll(fusionDataSegments.get(label).getAdjacentPixelLabels());
+         uncompressedAdjacentLabels.addAll(rawSuperPixels.get(label).getAdjacentPixelLabels());
       }
 
       for (int label : uncompressedAdjacentLabels.toArray())
@@ -57,7 +57,7 @@ public class RawSuperPixelImage
 
    public boolean allIdentified()
    {
-      for (RawSuperPixelData fusionDataSegment : fusionDataSegments)
+      for (RawSuperPixelData fusionDataSegment : rawSuperPixels)
       {
          if (fusionDataSegment.getId() == -1)
             return false;
