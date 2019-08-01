@@ -8,11 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-import controller_msgs.msg.dds.EuclideanTrajectoryPointMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
-import controller_msgs.msg.dds.QueueableMessage;
 import controller_msgs.msg.dds.StepUpPlannerCostWeights;
 import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
@@ -43,6 +39,7 @@ import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.ros2.Ros2Publisher;
+import us.ihmc.sensorProcessing.frames.CommonHumanoidReferenceFrames;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.SingleStepEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
@@ -136,7 +133,17 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
       assertTrue(success);
 
-      StepUpPlannerParametersMessage parameters = fillParametersMessage(getRobotModel().getWalkingControllerParameters().getSteppingParameters());
+      ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
+      FramePose3D comPose = new FramePose3D(initialCoMFrame);
+      comPose.changeFrame(ReferenceFrame.getWorldFrame());
+
+      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
+      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
+      double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
+
+      StepUpPlannerParametersMessage parameters = fillParametersMessage(getRobotModel().getWalkingControllerParameters().getSteppingParameters(),
+                                                                        heightDifference);
       LogTools.info("Sending parameters.");
       publishParameters(parameters);
       int loop = 0;
@@ -156,7 +163,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
       assertTrue(loop != 10 && !abort);
 
-      StepUpPlannerRequestMessage request = fillRequestMessage(stepHeight);
+      StepUpPlannerRequestMessage request = fillRequestMessage(stepHeight, drcSimulationTestHelper.getReferenceFrames());
       LogTools.info("Sending request.");
       publishRequest(request);
       loop = 0;
@@ -169,23 +176,15 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
       assertTrue(loop != 50 && !abort);
 
-
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
       {
          drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
       }
 
-      LogTools.info("Publishing CoM message with ID:"
-            + receivedRespond.getComMessages().get(0).getEuclideanTrajectory().getQueueingProperties().getMessageId());
-      drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(0));
-      drcSimulationTestHelper.publishToController(generatePelvisHeightMessageFromCoMMessage(receivedRespond.getComMessages().get(0)));
-
-      for (int i = receivedRespond.getComMessages().size() - 1; i > 0; --i) //this is necessary because the messages are not consumed by the controller yet and they are stacked instead of being queued
+      for (int i = 0; i < receivedRespond.getComMessages().size(); ++i)
       {
-         LogTools.info("Publishing CoM message with ID:"
-               + receivedRespond.getComMessages().get(i).getEuclideanTrajectory().getQueueingProperties().getMessageId());
          drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
-         drcSimulationTestHelper.publishToController(generatePelvisHeightMessageFromCoMMessage(receivedRespond.getComMessages().get(i)));
+         drcSimulationTestHelper.publishToController(receivedRespond.getPelvisHeightMessages().get(i));
 
       }
 
@@ -272,7 +271,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
    }
 
-   private StepUpPlannerParametersMessage fillParametersMessage(SteppingParameters steppingParameters)
+   private StepUpPlannerParametersMessage fillParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta)
    {
       StepUpPlannerParametersMessage msg = new StepUpPlannerParametersMessage();
       
@@ -363,17 +362,22 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       msg.setMaxComMessageLength(40);
       msg.setIncludeComMessages(true);
       
+      msg.setSendPelvisHeightMessages(false);
+      msg.setMaxPelvisHeightMessageLength(40);
+      msg.setIncludePelvisHeightMessages(true);
+      msg.setPelvisHeightDelta(pelvisHeightDelta);
+
       msg.setSendFootstepMessages(false);
       msg.setIncludeFootstepMessages(true);
 
       return msg;
    }
 
-   private StepUpPlannerRequestMessage fillRequestMessage(double stepHeight)
+   private StepUpPlannerRequestMessage fillRequestMessage(double stepHeight, CommonHumanoidReferenceFrames referenceFrames)
    {
       StepUpPlannerRequestMessage msg = new StepUpPlannerRequestMessage();
       
-      ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
+      ReferenceFrame initialCoMFrame = referenceFrames.getCenterOfMassFrame();
       FramePose3D comPose = new FramePose3D(initialCoMFrame);
       comPose.changeFrame(ReferenceFrame.getWorldFrame());
       double initialCoMHeight = comPose.getZ() * 0.9;
@@ -388,11 +392,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
       msg.getPhases().clear();
 
-      MovingReferenceFrame initialLeft = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(RobotSide.LEFT);
+      MovingReferenceFrame initialLeft = referenceFrames.getSoleZUpFrame(RobotSide.LEFT);
       FramePose3D initialLeftPose = new FramePose3D(initialLeft);
       initialLeftPose.changeFrame(ReferenceFrame.getWorldFrame());
 
-      MovingReferenceFrame initialRight = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(RobotSide.RIGHT);
+      MovingReferenceFrame initialRight = referenceFrames.getSoleZUpFrame(RobotSide.RIGHT);
       FramePose3D initialRightPose = new FramePose3D(initialRight);
       initialRightPose.changeFrame(ReferenceFrame.getWorldFrame());
 
@@ -463,40 +467,6 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       
       return msg;
    }
-
-   private PelvisHeightTrajectoryMessage generatePelvisHeightMessageFromCoMMessage(CenterOfMassTrajectoryMessage comMessage)
-   {
-      PelvisHeightTrajectoryMessage msg = new PelvisHeightTrajectoryMessage();
-
-      ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
-      FramePose3D comPose = new FramePose3D(initialCoMFrame);
-      comPose.changeFrame(ReferenceFrame.getWorldFrame());
-
-      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
-      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-      double heightDifference = (comPose.getPosition().getZ() - pelvisFrame.getPosition().getZ());
-
-      msg.setEnableUserPelvisControl(true);
-      msg.setEnableUserPelvisControlDuringWalking(true);
-
-      QueueableMessage queueingProperties = msg.getEuclideanTrajectory().getQueueingProperties();
-      QueueableMessage comQueueingProperties = comMessage.getEuclideanTrajectory().getQueueingProperties();
-      queueingProperties.setExecutionMode(comQueueingProperties.getExecutionMode());
-      queueingProperties.setMessageId(comQueueingProperties.getMessageId() + 1);
-      queueingProperties.setPreviousMessageId(comQueueingProperties.getPreviousMessageId() + 1);
-
-      for (int i = 0; i < comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().size(); ++i)
-      {
-         EuclideanTrajectoryPointMessage point = msg.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add();
-         point.getPosition().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getPosition().getZ() - heightDifference);
-         point.setTime(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getTime());
-         point.getLinearVelocity().setZ(comMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().get(i).getLinearVelocity().getZ());
-      }
-
-      return msg;
-   }
-
 
    private void assertReachedGoal(FootstepDataListMessage footsteps)
    {

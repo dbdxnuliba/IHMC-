@@ -50,6 +50,9 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
           current_alignment += controller_msgs.msg.dds.CenterOfMassTrajectoryMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 20; ++i0)
       {
+          current_alignment += controller_msgs.msg.dds.PelvisHeightTrajectoryMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 20; ++i0)
+      {
           current_alignment += controller_msgs.msg.dds.FootstepDataListMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
 
       return current_alignment - initial_alignment;
@@ -78,6 +81,11 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
           current_alignment += controller_msgs.msg.dds.CenterOfMassTrajectoryMessagePubSubType.getCdrSerializedSize(data.getComMessages().get(i0), current_alignment);}
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+      for(int i0 = 0; i0 < data.getPelvisHeightMessages().size(); ++i0)
+      {
+          current_alignment += controller_msgs.msg.dds.PelvisHeightTrajectoryMessagePubSubType.getCdrSerializedSize(data.getPelvisHeightMessages().get(i0), current_alignment);}
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
       for(int i0 = 0; i0 < data.getFoostepMessages().size(); ++i0)
       {
           current_alignment += controller_msgs.msg.dds.FootstepDataListMessagePubSubType.getCdrSerializedSize(data.getFoostepMessages().get(i0), current_alignment);}
@@ -98,6 +106,10 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       cdr.write_type_e(data.getComMessages());else
           throw new RuntimeException("com_messages field exceeds the maximum length");
 
+      if(data.getPelvisHeightMessages().size() <= 20)
+      cdr.write_type_e(data.getPelvisHeightMessages());else
+          throw new RuntimeException("pelvis_height_messages field exceeds the maximum length");
+
       if(data.getFoostepMessages().size() <= 20)
       cdr.write_type_e(data.getFoostepMessages());else
           throw new RuntimeException("foostep_messages field exceeds the maximum length");
@@ -110,6 +122,7 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       data.setTotalDuration(cdr.read_type_6());
       	
       cdr.read_type_e(data.getComMessages());	
+      cdr.read_type_e(data.getPelvisHeightMessages());	
       cdr.read_type_e(data.getFoostepMessages());	
 
    }
@@ -120,6 +133,7 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       ser.write_type_e("phases_result", data.getPhasesResult());
       ser.write_type_6("total_duration", data.getTotalDuration());
       ser.write_type_e("com_messages", data.getComMessages());
+      ser.write_type_e("pelvis_height_messages", data.getPelvisHeightMessages());
       ser.write_type_e("foostep_messages", data.getFoostepMessages());
    }
 
@@ -129,6 +143,7 @@ public class StepUpPlannerRespondMessagePubSubType implements us.ihmc.pubsub.Top
       ser.read_type_e("phases_result", data.getPhasesResult());
       data.setTotalDuration(ser.read_type_6("total_duration"));
       ser.read_type_e("com_messages", data.getComMessages());
+      ser.read_type_e("pelvis_height_messages", data.getPelvisHeightMessages());
       ser.read_type_e("foostep_messages", data.getFoostepMessages());
    }
 

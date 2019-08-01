@@ -65,6 +65,26 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
             */
    public long max_com_message_length_ = 50;
    /**
+            * Include a set of PelvisHeightTrajectoryMessages in the respond
+            */
+   public boolean include_pelvis_height_messages_;
+   /**
+            * Send the PelvisHeightTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public boolean send_pelvis_height_messages_;
+   /**
+            * A delta to be added to the CoM height to retrieve the pelvis height
+            */
+   public double pelvis_height_delta_;
+   /**
+            * Topic name of IHMC controller accepting the PelvisHeightTrajectoryMessages
+            */
+   public java.lang.StringBuilder pelvis_height_messages_topic_;
+   /**
+            * Maximum number of points to be defined in a single PelvisHeightTrajectoryMessages
+            */
+   public long max_pelvis_height_message_length_ = 50;
+   /**
             * Include a set of FootstepDataListMessage as well
             */
    public boolean include_footstep_messages_;
@@ -83,6 +103,7 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       ipopt_linear_solver_ = new java.lang.StringBuilder(255);
       cost_weights_ = new controller_msgs.msg.dds.StepUpPlannerCostWeights();
       com_messages_topic_ = new java.lang.StringBuilder(255);
+      pelvis_height_messages_topic_ = new java.lang.StringBuilder(255);
       footstep_messages_topic_ = new java.lang.StringBuilder(255);
 
    }
@@ -122,6 +143,17 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       com_messages_topic_.append(other.com_messages_topic_);
 
       max_com_message_length_ = other.max_com_message_length_;
+
+      include_pelvis_height_messages_ = other.include_pelvis_height_messages_;
+
+      send_pelvis_height_messages_ = other.send_pelvis_height_messages_;
+
+      pelvis_height_delta_ = other.pelvis_height_delta_;
+
+      pelvis_height_messages_topic_.setLength(0);
+      pelvis_height_messages_topic_.append(other.pelvis_height_messages_topic_);
+
+      max_pelvis_height_message_length_ = other.max_pelvis_height_message_length_;
 
       include_footstep_messages_ = other.include_footstep_messages_;
 
@@ -349,6 +381,90 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    }
 
    /**
+            * Include a set of PelvisHeightTrajectoryMessages in the respond
+            */
+   public void setIncludePelvisHeightMessages(boolean include_pelvis_height_messages)
+   {
+      include_pelvis_height_messages_ = include_pelvis_height_messages;
+   }
+   /**
+            * Include a set of PelvisHeightTrajectoryMessages in the respond
+            */
+   public boolean getIncludePelvisHeightMessages()
+   {
+      return include_pelvis_height_messages_;
+   }
+
+   /**
+            * Send the PelvisHeightTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public void setSendPelvisHeightMessages(boolean send_pelvis_height_messages)
+   {
+      send_pelvis_height_messages_ = send_pelvis_height_messages;
+   }
+   /**
+            * Send the PelvisHeightTrajectoryMessages directly (the topic name has also to be specified)
+            */
+   public boolean getSendPelvisHeightMessages()
+   {
+      return send_pelvis_height_messages_;
+   }
+
+   /**
+            * A delta to be added to the CoM height to retrieve the pelvis height
+            */
+   public void setPelvisHeightDelta(double pelvis_height_delta)
+   {
+      pelvis_height_delta_ = pelvis_height_delta;
+   }
+   /**
+            * A delta to be added to the CoM height to retrieve the pelvis height
+            */
+   public double getPelvisHeightDelta()
+   {
+      return pelvis_height_delta_;
+   }
+
+   /**
+            * Topic name of IHMC controller accepting the PelvisHeightTrajectoryMessages
+            */
+   public void setPelvisHeightMessagesTopic(java.lang.String pelvis_height_messages_topic)
+   {
+      pelvis_height_messages_topic_.setLength(0);
+      pelvis_height_messages_topic_.append(pelvis_height_messages_topic);
+   }
+
+   /**
+            * Topic name of IHMC controller accepting the PelvisHeightTrajectoryMessages
+            */
+   public java.lang.String getPelvisHeightMessagesTopicAsString()
+   {
+      return getPelvisHeightMessagesTopic().toString();
+   }
+   /**
+            * Topic name of IHMC controller accepting the PelvisHeightTrajectoryMessages
+            */
+   public java.lang.StringBuilder getPelvisHeightMessagesTopic()
+   {
+      return pelvis_height_messages_topic_;
+   }
+
+   /**
+            * Maximum number of points to be defined in a single PelvisHeightTrajectoryMessages
+            */
+   public void setMaxPelvisHeightMessageLength(long max_pelvis_height_message_length)
+   {
+      max_pelvis_height_message_length_ = max_pelvis_height_message_length;
+   }
+   /**
+            * Maximum number of points to be defined in a single PelvisHeightTrajectoryMessages
+            */
+   public long getMaxPelvisHeightMessageLength()
+   {
+      return max_pelvis_height_message_length_;
+   }
+
+   /**
             * Include a set of FootstepDataListMessage as well
             */
    public void setIncludeFootstepMessages(boolean include_footstep_messages)
@@ -452,6 +568,16 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.max_com_message_length_, other.max_com_message_length_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.include_pelvis_height_messages_, other.include_pelvis_height_messages_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_pelvis_height_messages_, other.send_pelvis_height_messages_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.pelvis_height_delta_, other.pelvis_height_delta_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.pelvis_height_messages_topic_, other.pelvis_height_messages_topic_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.max_pelvis_height_message_length_, other.max_pelvis_height_message_length_, epsilon)) return false;
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.include_footstep_messages_, other.include_footstep_messages_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.send_footstep_messages_, other.send_footstep_messages_, epsilon)) return false;
@@ -497,6 +623,16 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
       if(this.max_com_message_length_ != otherMyClass.max_com_message_length_) return false;
 
+      if(this.include_pelvis_height_messages_ != otherMyClass.include_pelvis_height_messages_) return false;
+
+      if(this.send_pelvis_height_messages_ != otherMyClass.send_pelvis_height_messages_) return false;
+
+      if(this.pelvis_height_delta_ != otherMyClass.pelvis_height_delta_) return false;
+
+      if (!us.ihmc.idl.IDLTools.equals(this.pelvis_height_messages_topic_, otherMyClass.pelvis_height_messages_topic_)) return false;
+
+      if(this.max_pelvis_height_message_length_ != otherMyClass.max_pelvis_height_message_length_) return false;
+
       if(this.include_footstep_messages_ != otherMyClass.include_footstep_messages_) return false;
 
       if(this.send_footstep_messages_ != otherMyClass.send_footstep_messages_) return false;
@@ -541,6 +677,16 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       builder.append(this.com_messages_topic_);      builder.append(", ");
       builder.append("max_com_message_length=");
       builder.append(this.max_com_message_length_);      builder.append(", ");
+      builder.append("include_pelvis_height_messages=");
+      builder.append(this.include_pelvis_height_messages_);      builder.append(", ");
+      builder.append("send_pelvis_height_messages=");
+      builder.append(this.send_pelvis_height_messages_);      builder.append(", ");
+      builder.append("pelvis_height_delta=");
+      builder.append(this.pelvis_height_delta_);      builder.append(", ");
+      builder.append("pelvis_height_messages_topic=");
+      builder.append(this.pelvis_height_messages_topic_);      builder.append(", ");
+      builder.append("max_pelvis_height_message_length=");
+      builder.append(this.max_pelvis_height_message_length_);      builder.append(", ");
       builder.append("include_footstep_messages=");
       builder.append(this.include_footstep_messages_);      builder.append(", ");
       builder.append("send_footstep_messages=");

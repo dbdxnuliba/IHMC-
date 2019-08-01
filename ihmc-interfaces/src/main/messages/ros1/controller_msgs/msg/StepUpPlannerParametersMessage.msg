@@ -47,6 +47,22 @@ string com_messages_topic
 # Field default value 50
 uint64 max_com_message_length
 
+# Include a set of PelvisHeightTrajectoryMessages in the respond
+bool include_pelvis_height_messages
+
+# Send the PelvisHeightTrajectoryMessages directly (the topic name has also to be specified)
+bool send_pelvis_height_messages
+
+# A delta to be added to the CoM height to retrieve the pelvis height
+float64 pelvis_height_delta
+
+# Topic name of IHMC controller accepting the PelvisHeightTrajectoryMessages
+string pelvis_height_messages_topic
+
+# Maximum number of points to be defined in a single PelvisHeightTrajectoryMessages
+# Field default value 50
+uint64 max_pelvis_height_message_length
+
 # Include a set of FootstepDataListMessage as well
 bool include_footstep_messages
 

@@ -21,6 +21,10 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage>  com_messages_;
    /**
+            * A collection of messages containing the pelvis height trajectory (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PelvisHeightTrajectoryMessage>  pelvis_height_messages_;
+   /**
             * A collection of messages containing the footsteps (0 elements in case not required in the parameters message)
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.FootstepDataListMessage>  foostep_messages_;
@@ -29,6 +33,7 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    {
       phases_result_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerPhaseResult> (20, new controller_msgs.msg.dds.StepUpPlannerPhaseResultPubSubType());
       com_messages_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage> (20, new controller_msgs.msg.dds.CenterOfMassTrajectoryMessagePubSubType());
+      pelvis_height_messages_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PelvisHeightTrajectoryMessage> (20, new controller_msgs.msg.dds.PelvisHeightTrajectoryMessagePubSubType());
       foostep_messages_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.FootstepDataListMessage> (20, new controller_msgs.msg.dds.FootstepDataListMessagePubSubType());
 
    }
@@ -45,6 +50,7 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       total_duration_ = other.total_duration_;
 
       com_messages_.set(other.com_messages_);
+      pelvis_height_messages_.set(other.pelvis_height_messages_);
       foostep_messages_.set(other.foostep_messages_);
    }
 
@@ -79,6 +85,15 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.CenterOfMassTrajectoryMessage>  getComMessages()
    {
       return com_messages_;
+   }
+
+
+   /**
+            * A collection of messages containing the pelvis height trajectory (0 elements in case not required in the parameters message)
+            */
+   public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PelvisHeightTrajectoryMessage>  getPelvisHeightMessages()
+   {
+      return pelvis_height_messages_;
    }
 
 
@@ -124,6 +139,13 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
          {  if (!this.com_messages_.get(i).epsilonEquals(other.com_messages_.get(i), epsilon)) return false; }
       }
 
+      if (this.pelvis_height_messages_.size() != other.pelvis_height_messages_.size()) { return false; }
+      else
+      {
+         for (int i = 0; i < this.pelvis_height_messages_.size(); i++)
+         {  if (!this.pelvis_height_messages_.get(i).epsilonEquals(other.pelvis_height_messages_.get(i), epsilon)) return false; }
+      }
+
       if (this.foostep_messages_.size() != other.foostep_messages_.size()) { return false; }
       else
       {
@@ -148,6 +170,7 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       if(this.total_duration_ != otherMyClass.total_duration_) return false;
 
       if (!this.com_messages_.equals(otherMyClass.com_messages_)) return false;
+      if (!this.pelvis_height_messages_.equals(otherMyClass.pelvis_height_messages_)) return false;
       if (!this.foostep_messages_.equals(otherMyClass.foostep_messages_)) return false;
 
       return true;
@@ -165,6 +188,8 @@ public class StepUpPlannerRespondMessage extends Packet<StepUpPlannerRespondMess
       builder.append(this.total_duration_);      builder.append(", ");
       builder.append("com_messages=");
       builder.append(this.com_messages_);      builder.append(", ");
+      builder.append("pelvis_height_messages=");
+      builder.append(this.pelvis_height_messages_);      builder.append(", ");
       builder.append("foostep_messages=");
       builder.append(this.foostep_messages_);
       builder.append("}");

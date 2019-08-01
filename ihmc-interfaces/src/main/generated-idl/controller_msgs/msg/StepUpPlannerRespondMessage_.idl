@@ -3,6 +3,7 @@
 
 #include "controller_msgs/msg/./CenterOfMassTrajectoryMessage_.idl"
 #include "controller_msgs/msg/./FootstepDataListMessage_.idl"
+#include "controller_msgs/msg/./PelvisHeightTrajectoryMessage_.idl"
 #include "controller_msgs/msg/./StepUpPlannerPhaseResult_.idl"
 module controller_msgs
 {
@@ -26,6 +27,10 @@ module controller_msgs
          * A collection of messages containing the CoM trajectory (0 elements in case not required in the parameters message)
          */
         sequence<controller_msgs::msg::dds::CenterOfMassTrajectoryMessage, 20> com_messages;
+        /**
+         * A collection of messages containing the pelvis height trajectory (0 elements in case not required in the parameters message)
+         */
+        sequence<controller_msgs::msg::dds::PelvisHeightTrajectoryMessage, 20> pelvis_height_messages;
         /**
          * A collection of messages containing the footsteps (0 elements in case not required in the parameters message)
          */

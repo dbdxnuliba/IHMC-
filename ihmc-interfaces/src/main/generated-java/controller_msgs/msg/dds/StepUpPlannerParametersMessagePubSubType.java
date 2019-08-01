@@ -71,6 +71,15 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
 
       return current_alignment - initial_alignment;
@@ -132,6 +141,20 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getPelvisHeightMessagesTopic().length() + 1;
+
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getFootstepMessagesTopic().length() + 1;
 
 
@@ -173,6 +196,18 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       cdr.write_type_12(data.getMaxComMessageLength());
 
+      cdr.write_type_7(data.getIncludePelvisHeightMessages());
+
+      cdr.write_type_7(data.getSendPelvisHeightMessages());
+
+      cdr.write_type_6(data.getPelvisHeightDelta());
+
+      if(data.getPelvisHeightMessagesTopic().length() <= 255)
+      cdr.write_type_d(data.getPelvisHeightMessagesTopic());else
+          throw new RuntimeException("pelvis_height_messages_topic field exceeds the maximum length");
+
+      cdr.write_type_12(data.getMaxPelvisHeightMessageLength());
+
       cdr.write_type_7(data.getIncludeFootstepMessages());
 
       cdr.write_type_7(data.getSendFootstepMessages());
@@ -209,6 +244,15 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       cdr.read_type_d(data.getComMessagesTopic());	
       data.setMaxComMessageLength(cdr.read_type_12());
       	
+      data.setIncludePelvisHeightMessages(cdr.read_type_7());
+      	
+      data.setSendPelvisHeightMessages(cdr.read_type_7());
+      	
+      data.setPelvisHeightDelta(cdr.read_type_6());
+      	
+      cdr.read_type_d(data.getPelvisHeightMessagesTopic());	
+      data.setMaxPelvisHeightMessageLength(cdr.read_type_12());
+      	
       data.setIncludeFootstepMessages(cdr.read_type_7());
       	
       data.setSendFootstepMessages(cdr.read_type_7());
@@ -235,6 +279,11 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.write_type_7("send_com_messages", data.getSendComMessages());
       ser.write_type_d("com_messages_topic", data.getComMessagesTopic());
       ser.write_type_12("max_com_message_length", data.getMaxComMessageLength());
+      ser.write_type_7("include_pelvis_height_messages", data.getIncludePelvisHeightMessages());
+      ser.write_type_7("send_pelvis_height_messages", data.getSendPelvisHeightMessages());
+      ser.write_type_6("pelvis_height_delta", data.getPelvisHeightDelta());
+      ser.write_type_d("pelvis_height_messages_topic", data.getPelvisHeightMessagesTopic());
+      ser.write_type_12("max_pelvis_height_message_length", data.getMaxPelvisHeightMessageLength());
       ser.write_type_7("include_footstep_messages", data.getIncludeFootstepMessages());
       ser.write_type_7("send_footstep_messages", data.getSendFootstepMessages());
       ser.write_type_d("footstep_messages_topic", data.getFootstepMessagesTopic());
@@ -258,6 +307,11 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       data.setSendComMessages(ser.read_type_7("send_com_messages"));
       ser.read_type_d("com_messages_topic", data.getComMessagesTopic());
       data.setMaxComMessageLength(ser.read_type_12("max_com_message_length"));
+      data.setIncludePelvisHeightMessages(ser.read_type_7("include_pelvis_height_messages"));
+      data.setSendPelvisHeightMessages(ser.read_type_7("send_pelvis_height_messages"));
+      data.setPelvisHeightDelta(ser.read_type_6("pelvis_height_delta"));
+      ser.read_type_d("pelvis_height_messages_topic", data.getPelvisHeightMessagesTopic());
+      data.setMaxPelvisHeightMessageLength(ser.read_type_12("max_pelvis_height_message_length"));
       data.setIncludeFootstepMessages(ser.read_type_7("include_footstep_messages"));
       data.setSendFootstepMessages(ser.read_type_7("send_footstep_messages"));
       ser.read_type_d("footstep_messages_topic", data.getFootstepMessagesTopic());
