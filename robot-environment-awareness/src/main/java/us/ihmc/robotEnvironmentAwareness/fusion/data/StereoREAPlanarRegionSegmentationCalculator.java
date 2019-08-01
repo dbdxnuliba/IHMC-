@@ -30,7 +30,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
    private final AtomicReference<RawSuperPixelImage> latestSuperPixelImage = new AtomicReference<>(null);
    private final List<FusedSuperPixelData> fusedSuperPixels = new ArrayList<>();
-   private List<PlanarRegionSegmentationRawData> regionsNodeData = new ArrayList<>();
+   private final AtomicReference<List<PlanarRegionSegmentationRawData>> regionsNodeNata = new AtomicReference<>(null);
 
    private final Random random = new Random(0612L);
 
@@ -47,12 +47,12 @@ public class StereoREAPlanarRegionSegmentationCalculator
    public void initialize()
    {
       fusedSuperPixels.clear();
-      regionsNodeData.clear();
+      regionsNodeNata.set(null);
    }
 
    public List<PlanarRegionSegmentationRawData> getSegmentationRawData()
    {
-      return regionsNodeData;
+      return regionsNodeNata.get();
    }
 
    public boolean calculate()
@@ -68,10 +68,10 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
       if (planarRegionPropagationParameters.isExtendingEnabled())
       {
-         extendSuperPixelsToIncludeNewImage(rawSuperPixelImage);
+         extendSuperPixelsToIncludeAdjacentUnassignedData(fusedSuperPixels, rawSuperPixelImage, planarRegionPropagationParameters);
       }
 
-      convertSuperPixelsToPlanarRegionSegmentationRawData();
+      regionsNodeNata.set(convertSuperPixelsToPlanarRegionSegmentationRawData(fusedSuperPixels));
       return true;
    }
 
@@ -130,6 +130,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
          {
             RawSuperPixelData candidateAdjacentPixel = rawSuperPixelImage.getSuperPixelData(adjacentPixelLabel);
 
+            // skipped this pixel if it's already been assigned, or it's sparse
             if (candidateAdjacentPixel.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidateAdjacentPixel.isSparse())
             {
                continue;
@@ -167,19 +168,23 @@ public class StereoREAPlanarRegionSegmentationCalculator
    }
 
 
-   private void extendSuperPixelsToIncludeNewImage(RawSuperPixelImage rawSuperPixelImage)
+   private static void extendSuperPixelsToIncludeAdjacentUnassignedData(List<FusedSuperPixelData> fusedSuperPixels, RawSuperPixelImage rawSuperPixelImage,
+                                                                        PlanarRegionPropagationParameters planarRegionPropagationParameters)
    {
-      for (FusedSuperPixelData segment : fusedSuperPixels)
-      {
-         Set<Integer> adjacentPixelLabels = rawSuperPixelImage.getLabelsOfSuperPixelsAdjacentToOtherSuperPixels(segment.getComponentPixelLabels());
-         for (int adjacentLabel : adjacentPixelLabels)
-         {
-            RawSuperPixelData adjacentData = rawSuperPixelImage.getSuperPixelData(adjacentLabel);
-            if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
-            {
-               SuperPixelTools.extendFusedSuperPixel(segment, adjacentData, planarRegionPropagationParameters);
-            }
+      fusedSuperPixels.parallelStream().forEach(fusedSuperPixel -> extendSuperPixelToIncludeAdjacentUnassignedData(fusedSuperPixel, rawSuperPixelImage,
+                                                                                                                   planarRegionPropagationParameters));
+   }
 
+   private static void extendSuperPixelToIncludeAdjacentUnassignedData(FusedSuperPixelData fusedSuperPixel, RawSuperPixelImage rawSuperPixelImage,
+                                                                       PlanarRegionPropagationParameters planarRegionPropagationParameters)
+   {
+      Set<Integer> adjacentPixelsInNewImage = rawSuperPixelImage.getLabelsOfSuperPixelsAdjacentToOtherSuperPixels(fusedSuperPixel.getComponentPixelLabels());
+      for (int adjacentLabel : adjacentPixelsInNewImage)
+      {
+         RawSuperPixelData adjacentData = rawSuperPixelImage.getSuperPixelData(adjacentLabel);
+         if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
+         {
+            SuperPixelTools.extendFusedSuperPixel(fusedSuperPixel, adjacentData, planarRegionPropagationParameters);
          }
       }
    }
@@ -187,17 +192,21 @@ public class StereoREAPlanarRegionSegmentationCalculator
    /**
     * The id of the PlanarRegionSegmentationRawData is randomly selected to be visualized efficiently rather than selected by SegmentationNodeData.getId().
     */
-   private void convertSuperPixelsToPlanarRegionSegmentationRawData()
+   private static List<PlanarRegionSegmentationRawData> convertSuperPixelsToPlanarRegionSegmentationRawData(List<FusedSuperPixelData> fusedSuperPixels)
    {
+      List<PlanarRegionSegmentationRawData> regionsNodeData = new ArrayList<>();
+
       for (FusedSuperPixelData fusedSuperPixelData : fusedSuperPixels)
       {
          if (fusedSuperPixelData.getComponentPixelLabels().size() < MINIMUM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGION)
             continue;
-         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(random.nextInt(),
+         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(ThreadLocalRandom.current().nextInt(),
                                                                                                                fusedSuperPixelData.getNormal(),
                                                                                                                fusedSuperPixelData.getCenter(),
                                                                                                                fusedSuperPixelData.getPointsInPixel());
          regionsNodeData.add(planarRegionSegmentationRawData);
       }
+
+      return regionsNodeData;
    }
 }
