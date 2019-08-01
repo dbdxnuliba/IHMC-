@@ -102,7 +102,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
          PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(random.nextInt(),
                                                                                                                fusedSuperPixelData.getNormal(),
                                                                                                                fusedSuperPixelData.getCenter(),
-                                                                                                               fusedSuperPixelData.getPointsInSegment());
+                                                                                                               fusedSuperPixelData.getPointsInPixel());
          regionsNodeData.add(planarRegionSegmentationRawData);
       }
    }

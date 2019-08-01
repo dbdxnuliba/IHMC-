@@ -183,9 +183,9 @@ public class FusedSuperPixelImageFactory
       rawSuperPixel.updateAdjacency();
 
       if (normalEstimationParameters.updateUsingPCA())
-         SuperPixelNormalEstimationTools.updateUsingPCA(rawSuperPixel, rawSuperPixel.getPoints(), StereoREAParallelParameters.addPointsToRawPCAInParallel);
+         SuperPixelNormalEstimationTools.updateUsingPCA(rawSuperPixel, rawSuperPixel.getPointsInPixel(), StereoREAParallelParameters.addPointsToRawPCAInParallel);
       else
-         SuperPixelNormalEstimationTools.updateUsingRansac(rawSuperPixel, rawSuperPixel.getPoints(), normalEstimationParameters);
+         SuperPixelNormalEstimationTools.updateUsingRansac(rawSuperPixel, rawSuperPixel.getPointsInPixel(), normalEstimationParameters);
    }
 
    /**

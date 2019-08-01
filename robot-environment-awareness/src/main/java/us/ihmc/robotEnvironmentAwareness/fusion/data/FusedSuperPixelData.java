@@ -47,7 +47,7 @@ public class FusedSuperPixelData implements SuperPixelData
       normal.set(seedImageSegment.getNormal());
       center.set(seedImageSegment.getCenter());
 
-      pointsInSegment.addAll(seedImageSegment.getPoints());
+      pointsInSegment.addAll(seedImageSegment.getPointsInPixel());
    }
 
    @Override
@@ -87,18 +87,23 @@ public class FusedSuperPixelData implements SuperPixelData
       this.normalConsensus = normalConsensus;
    }
 
+   @Override
+   public List<Point3DReadOnly> getPointsInPixel()
+   {
+      return pointsInSegment;
+   }
+
    public void merge(RawSuperPixelData fusionDataSegment)
    {
       labels.add(fusionDataSegment.getImageSegmentLabel());
       labelCenters.add(fusionDataSegment.getCenter());
       labelNormals.add(fusionDataSegment.getNormal());
 
-      pointsInSegment.addAll(fusionDataSegment.getPoints());
+      pointsInSegment.addAll(fusionDataSegment.getPointsInPixel());
 
       if (USE_PCA_TO_UPDATE)
       {
-//         SuperPixelNormalEstimationTools.updateUsingPCA(this, pointsInSegment);
-         Stream<Point3DReadOnly> pointStream = addInParallel ? fusionDataSegment.getPoints().parallelStream() : fusionDataSegment.getPoints().stream();
+         Stream<Point3DReadOnly> pointStream = addInParallel ? fusionDataSegment.getPointsInPixel().parallelStream() : fusionDataSegment.getPointsInPixel().stream();
          pointStream.forEach(pca::addDataPoint);
          pca.compute();
 
@@ -127,7 +132,7 @@ public class FusedSuperPixelData implements SuperPixelData
    public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold,
                       SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
-      for (Point3DReadOnly point : fusionDataSegment.getPoints())
+      for (Point3DReadOnly point : fusionDataSegment.getPointsInPixel())
       {
          double distance = distancePlaneToPoint(normal, center, point);
          if (distance < threshold)
@@ -162,10 +167,6 @@ public class FusedSuperPixelData implements SuperPixelData
       return labels;
    }
 
-   public List<Point3DReadOnly> getPointsInSegment()
-   {
-      return pointsInSegment;
-   }
 
    /**
     * If this segment is big enough (isBigSegment = true), coplanar test is done with the closest label among this segment.

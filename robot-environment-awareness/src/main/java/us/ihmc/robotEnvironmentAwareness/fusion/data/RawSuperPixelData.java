@@ -66,6 +66,12 @@ public class RawSuperPixelData implements SuperPixelData
    }
 
    @Override
+   public List<Point3DReadOnly> getPointsInPixel()
+   {
+      return points;
+   }
+
+   @Override
    public void setCenter(Point3DReadOnly center)
    {
       this.center.set(center);
@@ -184,10 +190,6 @@ public class RawSuperPixelData implements SuperPixelData
       return imageSegmentLabel;
    }
 
-   public List<Point3DReadOnly> getPoints()
-   {
-      return points;
-   }
 
    private class AdjacentPixelData
    {

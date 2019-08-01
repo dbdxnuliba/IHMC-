@@ -1,8 +1,5 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
@@ -15,19 +12,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
-import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
-import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.graphicsDescription.MeshDataBuilder;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
-import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class FusedSuperPixelImageViewer
 {
@@ -79,7 +70,7 @@ public class FusedSuperPixelImageViewer
 
          PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, fusedSuperPixelData.getNormal(),
                                                                                                                fusedSuperPixelData.getCenter(),
-                                                                                                               fusedSuperPixelData.getPointsInSegment());
+                                                                                                               fusedSuperPixelData.getPointsInPixel());
 
          planarRegionSegmentationRawDataList.add(planarRegionSegmentationRawData);
       }
@@ -126,7 +117,7 @@ public class FusedSuperPixelImageViewer
       centerEnd.scaleAdd(0.1, rawSuperPixelData.getCenter());
 
       meshBuilder.addLine(center, centerEnd, lineWidth, regionColor);
-      rawSuperPixelData.getPoints().forEach(point -> meshBuilder.addTetrahedron(0.02, point, regionColor));
+      rawSuperPixelData.getPointsInPixel().forEach(point -> meshBuilder.addTetrahedron(0.02, point, regionColor));
    }
 
    private static Color getRegionColor(boolean isSparse)

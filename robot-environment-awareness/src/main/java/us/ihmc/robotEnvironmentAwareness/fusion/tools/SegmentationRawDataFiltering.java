@@ -20,7 +20,7 @@ public class SegmentationRawDataFiltering
       double flyingPointThreshold = segmentationRawDataFilteringParameters.getFlyingPointThreshold();
       int minimumNeighborOfFlyingPointNeighbors = segmentationRawDataFilteringParameters.getMinimumNumberOfFlyingPointNeighbors();
 
-      List<Point3DReadOnly> points = rawSuperPixel.getPoints();
+      List<Point3DReadOnly> points = rawSuperPixel.getPointsInPixel();
       List<Point3DReadOnly> filteredPoints = new ArrayList<>();
       for (Point3DReadOnly point : points)
       {
@@ -92,7 +92,7 @@ public class SegmentationRawDataFiltering
    {
       if (!rawSuperPixelData.isSparse() && rawSuperPixelData.isCenterSet())
       {
-         Stream<Point3DReadOnly> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPoints().parallelStream() : rawSuperPixelData.getPoints().stream();
+         Stream<Point3DReadOnly> pointStream = StereoREAParallelParameters.useParallelStreamsForFiltering ? rawSuperPixelData.getPointsInPixel().parallelStream() : rawSuperPixelData.getPointsInPixel().stream();
          if (pointStream.filter(point -> rawSuperPixelData.getCenter().distance(point) < radius).count() < threshold * rawSuperPixelData.getWeight())
             rawSuperPixelData.setIsSparse(true);
       }
