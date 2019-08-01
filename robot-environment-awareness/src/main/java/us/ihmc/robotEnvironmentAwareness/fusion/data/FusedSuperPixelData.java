@@ -94,6 +94,11 @@ public class FusedSuperPixelData implements SuperPixelData
       return allPointsInPixel;
    }
 
+   public void addPoint(Point3DReadOnly point)
+   {
+      allPointsInPixel.add(point);
+   }
+
    public int getNumberOfComponentSuperPixels()
    {
       return componentPixelCenters.size();

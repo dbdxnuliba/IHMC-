@@ -84,8 +84,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
       }
       else
       {
-         FusedSuperPixelData segmentNodeData = createSegmentNodeData(nonIDLabel, segmentId, rawSuperPixelImage);
-         if(segmentNodeData != null)
+         FusedSuperPixelData segmentNodeData = createSegmentNodeData(nonIDLabel, segmentId, rawSuperPixelImage, planarRegionPropagationParameters);
+         if (segmentNodeData != null)
             fusedSuperPixels.add(segmentNodeData);
       }
 
@@ -108,7 +108,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
    /**
     * iterate computation until there is no more candidate to try merge.
     */
-   private FusedSuperPixelData createSegmentNodeData(int seedLabel, int segmentId, RawSuperPixelImage rawSuperPixelImage)
+   private static FusedSuperPixelData createSegmentNodeData(int seedLabel, int segmentId, RawSuperPixelImage rawSuperPixelImage,
+                                                            PlanarRegionPropagationParameters planarRegionPropagationParameters)
    {
       RawSuperPixelData seedSuperPixel = rawSuperPixelImage.getSuperPixelData(seedLabel);
       seedSuperPixel.setId(segmentId);
@@ -174,9 +175,10 @@ public class StereoREAPlanarRegionSegmentationCalculator
             RawSuperPixelData adjacentData = rawSuperPixelImage.getSuperPixelData(adjacentLabel);
             if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
             {
-               segment.extend(adjacentData, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
-                              planarRegionPropagationParameters.isUpdateExtendedData(), planarRegionPropagationParameters.getExtendingRadiusThreshold(),
-                              normalEstimationParameters);
+               SuperPixelTools.extendFusedSuperPixel(segment, adjacentData, planarRegionPropagationParameters);
+//               segment.extend(adjacentData, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
+//                              planarRegionPropagationParameters.isUpdateExtendedData(), planarRegionPropagationParameters.getExtendingRadiusThreshold(),
+//                              normalEstimationParameters);
             }
 
          }

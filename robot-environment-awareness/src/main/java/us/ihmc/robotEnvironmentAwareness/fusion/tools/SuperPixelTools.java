@@ -6,6 +6,8 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixelData;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 
 public class SuperPixelTools
 {
@@ -59,6 +61,41 @@ public class SuperPixelTools
       double distanceToHereFromQuery = distancePlaneToPoint(pixelBNormal, pixelBCenter, pixelACenter);
 
       return (Math.abs(distanceToQueryFromHere) < distanceThreshold && Math.abs(distanceToHereFromQuery) < distanceThreshold);
+   }
+
+   public static void extendFusedSuperPixel(FusedSuperPixelData fusedSuperPixelToExtend, SuperPixelData superPixelToInclude,
+                                           PlanarRegionPropagationParameters planarRegionPropagationParameters)
+   {
+      extendFusedSuperPixel(fusedSuperPixelToExtend, superPixelToInclude, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
+                            planarRegionPropagationParameters.getExtendingRadiusThreshold(), planarRegionPropagationParameters.isUpdateExtendedData());
+   }
+
+   public static void extendFusedSuperPixel(FusedSuperPixelData fusedSuperPixelToExtend, SuperPixelData superPixelToInclude, double maxDistanceFromPixel,
+                                            double maxDistanceFromAnyPoint, boolean updateFusedSuperPixel)
+   {
+      for (Point3DReadOnly point : superPixelToInclude.getPointsInPixel())
+      {
+         double distance = SuperPixelTools.distancePlaneToPoint(fusedSuperPixelToExtend.getNormal(), fusedSuperPixelToExtend.getCenter(), point);
+         if (distance < maxDistanceFromPixel)
+         {
+            for (Point3DReadOnly pointInSegment : fusedSuperPixelToExtend.getPointsInPixel())
+            {
+               if (pointInSegment.distance(point) < maxDistanceFromAnyPoint)
+               {
+                  fusedSuperPixelToExtend.addPoint(point);
+                  break;
+               }
+            }
+         }
+      }
+
+      if (updateFusedSuperPixel)
+      {
+         //         if (normalEstimationParameters.updateUsingPCA())
+         SuperPixelNormalEstimationTools.updateUsingPCA(fusedSuperPixelToExtend, fusedSuperPixelToExtend.getPointsInPixel(), StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
+         //         else
+         //            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
+      }
    }
 
    public static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
