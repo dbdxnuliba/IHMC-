@@ -71,6 +71,8 @@ public class LIDARBasedREAModule
    private ScheduledFuture<?> scheduled;
    private final Messager reaMessager;
 
+   private final AtomicReference<StereoVisionPointCloudMessage> importedStereoVisionPointCloudMessage;
+
    private LIDARBasedREAModule(Messager reaMessager, File configurationFile) throws IOException
    {
       this.reaMessager = reaMessager;
@@ -112,6 +114,9 @@ public class LIDARBasedREAModule
 
       // At the very end, we force the modules to submit their state so duplicate inputs have consistent values.
       reaMessager.submitMessage(REAModuleAPI.RequestEntireModuleState, true);
+
+      importedStereoVisionPointCloudMessage = reaMessager.createInput(REAModuleAPI.StereoVisionPointCloudState);
+      reaMessager.registerTopicListener(REAModuleAPI.ImportStereoPointCloudData, (content) -> dispatchImportedStereoVisionPointCloudMessage());
    }
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
@@ -125,6 +130,13 @@ public class LIDARBasedREAModule
    private void dispatchStereoVisionPointCloudMessage(Subscriber<StereoVisionPointCloudMessage> subscriber)
    {
       StereoVisionPointCloudMessage message = subscriber.takeNextData();
+      moduleStateReporter.registerStereoVisionPointCloudMessage(message);
+      stereoVisionBufferUpdater.handleStereoVisionPointCloudMessage(message);
+   }
+
+   private void dispatchImportedStereoVisionPointCloudMessage()
+   {
+      StereoVisionPointCloudMessage message = importedStereoVisionPointCloudMessage.getAndSet(null);
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
       stereoVisionBufferUpdater.handleStereoVisionPointCloudMessage(message);
    }

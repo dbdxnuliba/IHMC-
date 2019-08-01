@@ -18,6 +18,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.CustomRegionMergeAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.DataExporterAnchorPaneController;
+import us.ihmc.robotEnvironmentAwareness.ui.controller.DataImporterAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.LIDARFilterAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.NormalEstimationAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.OcTreeBasicsAnchorPaneController;
@@ -55,7 +56,9 @@ public class LIDARBasedEnvironmentAwarenessUI
    private PolygonizerAnchorPaneController polygonizerAnchorPaneController;
    @FXML
    private DataExporterAnchorPaneController dataExporterAnchorPaneController;
-
+   @FXML
+   private DataImporterAnchorPaneController dataImporterAnchorPaneController;
+   
    private final Stage primaryStage;
 
    private final UIConnectionHandler uiConnectionHandler;
@@ -156,6 +159,8 @@ public class LIDARBasedEnvironmentAwarenessUI
       dataExporterAnchorPaneController.attachREAMessager(uiMessager);
       dataExporterAnchorPaneController.setMainWindow(primaryStage);
       dataExporterAnchorPaneController.bindControls();
+      
+      dataImporterAnchorPaneController.initialize(uiMessager, null, primaryStage);
    }
 
    public void show() throws IOException

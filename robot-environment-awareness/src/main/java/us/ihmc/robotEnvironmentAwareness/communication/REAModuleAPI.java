@@ -55,6 +55,7 @@ public class REAModuleAPI
    private static final TypedTopicTheme<Boolean> Hide = apiFactory.createTypedTopicTheme("Hide");
    private static final TypedTopicTheme<Boolean> Save = apiFactory.createTypedTopicTheme("Save");
    private static final TypedTopicTheme<Boolean> Export = apiFactory.createTypedTopicTheme("Export");
+   private static final TypedTopicTheme<Boolean> Import = apiFactory.createTypedTopicTheme("Import");
    private static final TypedTopicTheme<Integer> Size = apiFactory.createTypedTopicTheme("Size");
    private static final TypedTopicTheme<Integer> Depth = apiFactory.createTypedTopicTheme("Depth");
    private static final TypedTopicTheme<String> Path = apiFactory.createTypedTopicTheme("Path");
@@ -147,6 +148,8 @@ public class REAModuleAPI
    public static final Topic<Boolean> SaveMainUpdaterConfiguration = OcTreeCategory.topic(Save);
    public static final Topic<Boolean> SaveBufferConfiguration = OcTreeCategory.child(Buffer).topic(Save);
    public static final Topic<Boolean> SaveRegionUpdaterConfiguration = PlanarRegionsCategory.topic(Save);
+   
+   public static final Topic<Boolean> ImportStereoPointCloudData = OcTreeCategory.child(StereoVision).topic(Import);
 
    public static final MessagerAPI API = apiFactory.getAPIAndCloseFactory();
 }
