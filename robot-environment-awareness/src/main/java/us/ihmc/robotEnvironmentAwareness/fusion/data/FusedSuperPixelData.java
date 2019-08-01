@@ -198,26 +198,17 @@ public class FusedSuperPixelData implements SuperPixelData
             }
          }
 
-         closestSuperPixelCenter.set(componentPixelCenters.get(closestLabel));
-         closestSuperPixelNormal.set(componentPixelNormals.get(closestLabel));
+         if (closestLabel > -1)
+         {
+            closestSuperPixelCenter.set(componentPixelCenters.get(closestLabel));
+            closestSuperPixelNormal.set(componentPixelNormals.get(closestLabel));
+         }
       }
-
-//      double distanceToQueryFromHere = distancePlaneToPoint(rawSuperPixelData.getNormal(), rawSuperPixelData.getCenter(), closestSuperPixelCenter);
-//      double distanceToHereFromQuery = distancePlaneToPoint(closestSuperPixelNormal, closestSuperPixelCenter, rawSuperPixelData.getCenter());
-//
-//      return (Math.abs(distanceToQueryFromHere) < threshold && Math.abs(distanceToHereFromQuery) < threshold);
 
       return SuperPixelTools.areSuperPixelsCoplanar(rawSuperPixelData.getCenter(), rawSuperPixelData.getNormal(), closestSuperPixelCenter,
                                                     closestSuperPixelNormal, threshold);
    }
 
-   public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)
-   {
-      if (Math.abs(fusionDataSegment.getNormal().dot(getNormal())) > threshold)
-         return true;
-      else
-         return false;
-   }
 
    private static double distancePlaneToPoint(Vector3DReadOnly planeNormal, Point3DReadOnly planeCenter, Point3DReadOnly point)
    {

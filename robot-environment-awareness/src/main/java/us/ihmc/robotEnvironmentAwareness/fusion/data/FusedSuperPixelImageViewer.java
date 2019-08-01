@@ -1,5 +1,8 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
@@ -19,6 +22,7 @@ import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class FusedSuperPixelImageViewer
 {
@@ -58,24 +62,6 @@ public class FusedSuperPixelImageViewer
       if (rawSuperPixelImage == null)
          return;
 
-      /*
-      int numberOfSegment = rawSuperPixelImage.getNumberOfImageSegments();
-
-      List<PlanarRegionSegmentationRawData> planarRegionSegmentationRawDataList = new ArrayList<>();
-
-      for (int i = 0; i < numberOfSegment; i++)
-      {
-         RawSuperPixelData data = rawSuperPixelImage.getSuperPixelData(i);
-         FusedSuperPixelData fusedSuperPixelData = new FusedSuperPixelData(data);
-
-         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(i, fusedSuperPixelData.getNormal(),
-                                                                                                               fusedSuperPixelData.getCenter(),
-                                                                                                               fusedSuperPixelData.getPointsInPixel());
-
-         planarRegionSegmentationRawDataList.add(planarRegionSegmentationRawData);
-      }
-       */
-
       rawSuperPixelImage.getSuperPixelData().forEach(rawSuperPixelData -> addSuperPixelToMeshBuilder(meshBuilder, rawSuperPixelData));
 
       MeshView scanMeshView = new MeshView(meshBuilder.generateMesh());
@@ -86,14 +72,15 @@ public class FusedSuperPixelImageViewer
 
    public void render()
    {
-      MeshView newScanMeshView = meshToRender.getAndSet(null);
+      MeshView newScanMeshView = meshToRender.get();
 
       if (clearSolution.getAndSet(false))
          children.clear();
 
       if (newScanMeshView != null && showSolution.get())
       {
-         children.add(newScanMeshView);
+         if (children.isEmpty())
+            children.add(newScanMeshView);
       }
    }
 
@@ -109,6 +96,7 @@ public class FusedSuperPixelImageViewer
 
    private static void addSuperPixelToMeshBuilder(JavaFXMultiColorMeshBuilder meshBuilder, RawSuperPixelData rawSuperPixelData)
    {
+      // todo this needs to be faster
       Color regionColor = getRegionColor(rawSuperPixelData.isSparse());
       Point3DReadOnly center = rawSuperPixelData.getCenter();
       Vector3DReadOnly normal = rawSuperPixelData.getNormal();
@@ -125,7 +113,7 @@ public class FusedSuperPixelImageViewer
       if (isSparse)
          return Color.BLACK;
 
-      java.awt.Color awtColor = new java.awt.Color(RandomNumbers.nextInt(ThreadLocalRandom.current(), 0, Integer.MAX_VALUE));
+      java.awt.Color awtColor = new java.awt.Color(new Random().nextInt());
       return Color.rgb(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
    }
 }
