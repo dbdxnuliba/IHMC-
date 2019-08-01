@@ -102,6 +102,11 @@ public class FusedSuperPixelData implements SuperPixelData
 
       allPointsInPixel.addAll(fusionDataSegment.getPointsInPixel());
 
+      updateFusedParameters(fusionDataSegment);
+   }
+
+   private void updateFusedParameters(RawSuperPixelData fusionDataSegment)
+   {
       if (USE_PCA_TO_UPDATE)
       {
          Stream<Point3DReadOnly> pointStream = addInParallel ? fusionDataSegment.getPointsInPixel().parallelStream() : fusionDataSegment.getPointsInPixel().stream();
