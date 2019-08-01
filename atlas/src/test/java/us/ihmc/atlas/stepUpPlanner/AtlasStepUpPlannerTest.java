@@ -27,9 +27,21 @@ public class AtlasStepUpPlannerTest extends AvatarStepUpPlannerTest
    }
 
    @Test
-   public void testStepUpPlanner() throws SimulationExceededMaximumTimeException
+   public void testStepUpPlannerLowStep() throws SimulationExceededMaximumTimeException
+   {
+      super.walkUpToHighStep(0.30);
+   }
+
+   @Test
+   public void testStepUpPlannerMediumStep() throws SimulationExceededMaximumTimeException
    {
       super.walkUpToHighStep(0.35);
+   }
+
+   @Test
+   public void testStepUpPlannerHighStep() throws SimulationExceededMaximumTimeException
+   {
+      super.walkUpToHighStep(0.40);
    }
 
 }

@@ -100,9 +100,9 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
 
       StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
-                                                                                                                                   .getSteppingParameters(),
-                                                                                                                    heightDifference,
-                                                                                                                    1.15);
+                                                                                                                              .getSteppingParameters(),
+                                                                                                               heightDifference,
+                                                                                                               maxLegLength());
       LogTools.info("Sending parameters.");
       boolean ok = requester.publishParametersAndWaitAck(parameters);
       assertTrue(ok);
@@ -110,7 +110,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(0.6,
                                                                                                       0.0,
                                                                                                       stepHeight,
-                                                                                                      1.05,
+                                                                                                      desiredLegLength(),
                                                                                                       drcSimulationTestHelper.getReferenceFrames());
       LogTools.info("Sending request.");
       receivedRespond = requester.getRespond(request);
@@ -232,6 +232,16 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
 
       System.out.println("-------------------------------------------------------------");
+   }
+
+   protected double maxLegLength()
+   {
+      return 1.15;
+   }
+
+   protected double desiredLegLength()
+   {
+      return 1.05;
    }
 
 }
