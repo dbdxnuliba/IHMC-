@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.StepUpPlannerCostWeights;
-import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerPhase;
 import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
@@ -22,10 +21,8 @@ import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
-import us.ihmc.commons.exception.DefaultExceptionHandler;
-import us.ihmc.commons.exception.ExceptionTools;
+import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
 import us.ihmc.commons.thread.ThreadTools;
-import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -34,11 +31,7 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
-import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
-import us.ihmc.pubsub.subscriber.Subscriber;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.ros2.Ros2Node;
-import us.ihmc.ros2.Ros2Publisher;
 import us.ihmc.sensorProcessing.frames.CommonHumanoidReferenceFrames;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.SingleStepEnvironment;
@@ -86,14 +79,6 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
    }
 
-   Ros2Publisher<StepUpPlannerParametersMessage> parametersPublisher;
-   Ros2Publisher<StepUpPlannerRequestMessage> requestPublisher;
-   StepUpPlannerRespondMessage receivedRespond;
-   private int numberOfExceptions = 0;
-   private static final int NUMBER_OF_EXCEPTIONS_TO_PRINT = 5;
-   boolean parametersAcked = false;
-   boolean abort = false;
-
    protected void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
    {
 
@@ -108,26 +93,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       drcSimulationTestHelper.setupCameraForUnitTest(cameraFix, cameraPosition);
       createTorqueGraph(drcSimulationTestHelper.getSimulationConstructionSet(), getRobotModel().createHumanoidFloatingRootJointRobot(false));
 
-      Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "stepUpPlanner_javaNode");
-
-      ExceptionTools.handle(() -> parametersPublisher = ros2Node.createPublisher(ROS2Tools.newMessageTopicDataTypeInstance(StepUpPlannerParametersMessage.class),
-                                                                                 "/us/ihmc/stepUpPlanner/parameters"),
-                            DefaultExceptionHandler.RUNTIME_EXCEPTION);
-
-      ExceptionTools.handle(() -> requestPublisher = ros2Node.createPublisher(ROS2Tools.newMessageTopicDataTypeInstance(StepUpPlannerRequestMessage.class),
-                                                                              "/us/ihmc/stepUpPlanner/request"),
-                            DefaultExceptionHandler.RUNTIME_EXCEPTION);
-
-      ExceptionTools.handle(() -> ros2Node.createSubscription(ROS2Tools.newMessageTopicDataTypeInstance(StepUpPlannerRespondMessage.class),
-                                                              this::acceptRespondMessage,
-                                                              "/us/ihmc/stepUpPlanner/respond"),
-                            DefaultExceptionHandler.RUNTIME_EXCEPTION);
-
-      ExceptionTools.handle(() -> ros2Node.createSubscription(ROS2Tools.newMessageTopicDataTypeInstance(StepUpPlannerErrorMessage.class),
-                                                              this::acceptErrorMessage,
-                                                              "/us/ihmc/stepUpPlanner/errors"),
-                            DefaultExceptionHandler.RUNTIME_EXCEPTION);
-
+      StepUpPlannerRespondMessage receivedRespond;
+      StepUpPlannerRequester requester = new StepUpPlannerRequester();
 
       ThreadTools.sleep(1000);
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
@@ -145,36 +112,13 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       StepUpPlannerParametersMessage parameters = fillParametersMessage(getRobotModel().getWalkingControllerParameters().getSteppingParameters(),
                                                                         heightDifference);
       LogTools.info("Sending parameters.");
-      publishParameters(parameters);
-      int loop = 0;
-      
-      while (!parametersAcked && loop < 20 && !abort)
-      {
-         ThreadTools.sleep(500);
-         LogTools.info("Waiting to receive parameters ack.");
-
-         if (loop == 10)
-         {
-            LogTools.warn("Sending parameters again.");
-            publishParameters(parameters);
-         }
-
-         ++loop;
-      }
-      assertTrue(loop != 10 && !abort);
+      boolean ok = requester.publishParametersAndWaitAck(parameters);
+      assertTrue(ok);
 
       StepUpPlannerRequestMessage request = fillRequestMessage(stepHeight, drcSimulationTestHelper.getReferenceFrames());
       LogTools.info("Sending request.");
-      publishRequest(request);
-      loop = 0;
-      
-      while (receivedRespond == null && loop < 50 && !abort)
-      {
-         ThreadTools.sleep(500);
-         LogTools.info("Waiting to receive respond.");
-         ++loop;
-      }
-      assertTrue(loop != 50 && !abort);
+      receivedRespond = requester.getRespond(request);
+      assertTrue(receivedRespond != null);
 
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
       {
@@ -193,82 +137,6 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
 
       assertReachedGoal(receivedRespond.getFoostepMessages().getLast());
-   }
-
-   private void publishParameters(StepUpPlannerParametersMessage parametersMessage)
-   {
-      try
-      {
-         parametersPublisher.publish(parametersMessage);
-      }
-      catch (Exception e)
-      {
-         if (numberOfExceptions <= NUMBER_OF_EXCEPTIONS_TO_PRINT)
-         {
-            e.printStackTrace();
-
-            if (++numberOfExceptions > NUMBER_OF_EXCEPTIONS_TO_PRINT)
-            {
-               LogTools.error("Stopping to print exceptions after {}.", NUMBER_OF_EXCEPTIONS_TO_PRINT);
-            }
-         }
-      }
-   }
-
-   private void publishRequest(StepUpPlannerRequestMessage requestMessage)
-   {
-      try
-      {
-         requestPublisher.publish(requestMessage);
-      }
-      catch (Exception e)
-      {
-         if (numberOfExceptions <= NUMBER_OF_EXCEPTIONS_TO_PRINT)
-         {
-            e.printStackTrace();
-
-            if (++numberOfExceptions > NUMBER_OF_EXCEPTIONS_TO_PRINT)
-            {
-               LogTools.error("Stopping to print exceptions after {}.", NUMBER_OF_EXCEPTIONS_TO_PRINT);
-            }
-         }
-      }
-   }
-
-   private void acceptRespondMessage(Subscriber<StepUpPlannerRespondMessage> subscriber)
-   {
-      StepUpPlannerRespondMessage incomingData = subscriber.takeNextData();
-      if (incomingData != null)
-      {
-         receivedRespond = incomingData;
-      }
-      else
-      {
-         LogTools.warn("Received null from takeNextData()");
-      }
-   }
-
-   private void acceptErrorMessage(Subscriber<StepUpPlannerErrorMessage> subscriber)
-   {
-      StepUpPlannerErrorMessage incomingData = subscriber.takeNextData();
-      if (incomingData != null)
-      {
-         if (incomingData.getErrorCode() > 0)
-         {
-            LogTools.error("Recevied error: " + incomingData.getErrorDescriptionAsString());
-            assertTrue(false);
-            abort = true;
-         }
-         else
-         {
-            LogTools.info("Received ack for message with ID: " + incomingData.getSequenceIdReceived());
-            parametersAcked = true;
-         }
-      }
-      else
-      {
-         LogTools.warn("Received null from takeNextData()");
-      }
    }
 
    private StepUpPlannerParametersMessage fillParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta)
