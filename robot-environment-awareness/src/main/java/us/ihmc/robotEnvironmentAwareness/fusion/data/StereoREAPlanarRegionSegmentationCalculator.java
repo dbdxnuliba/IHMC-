@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
@@ -194,19 +195,19 @@ public class StereoREAPlanarRegionSegmentationCalculator
     */
    private static List<PlanarRegionSegmentationRawData> convertSuperPixelsToPlanarRegionSegmentationRawData(List<FusedSuperPixelData> fusedSuperPixels)
    {
-      List<PlanarRegionSegmentationRawData> regionsNodeData = new ArrayList<>();
+      return fusedSuperPixels.parallelStream().filter(StereoREAPlanarRegionSegmentationCalculator::hasEnoughComponents)
+                      .map(StereoREAPlanarRegionSegmentationCalculator::convertSuperPixelToPlanarRegionSegmentationRawData).collect(Collectors.toList());
+   }
 
-      for (FusedSuperPixelData fusedSuperPixelData : fusedSuperPixels)
-      {
-         if (fusedSuperPixelData.getComponentPixelLabels().size() < MINIMUM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGION)
-            continue;
-         PlanarRegionSegmentationRawData planarRegionSegmentationRawData = new PlanarRegionSegmentationRawData(ThreadLocalRandom.current().nextInt(),
-                                                                                                               fusedSuperPixelData.getNormal(),
-                                                                                                               fusedSuperPixelData.getCenter(),
-                                                                                                               fusedSuperPixelData.getPointsInPixel());
-         regionsNodeData.add(planarRegionSegmentationRawData);
-      }
+   private static boolean hasEnoughComponents(FusedSuperPixelData fusedSuperPixelData)
+   {
+      return fusedSuperPixelData.getNumberOfComponentSuperPixels() >= MINIMUM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGION;
+   }
 
-      return regionsNodeData;
+   private static PlanarRegionSegmentationRawData convertSuperPixelToPlanarRegionSegmentationRawData(FusedSuperPixelData fusedSuperPixelData)
+   {
+      return new PlanarRegionSegmentationRawData(ThreadLocalRandom.current().nextInt(), fusedSuperPixelData.getNormal(), fusedSuperPixelData.getCenter(),
+                                                 fusedSuperPixelData.getPointsInPixel());
+
    }
 }
