@@ -5,6 +5,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
+import us.ihmc.robotics.math.trajectories.SegmentedFrameTrajectory3D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +63,18 @@ public class SegmentationRawDataFiltering
          double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
          double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
          updateSparsity(rawSuperPixel, threshold);
+
+      if (rawDataFilteringParameters.isEnableFilterEllipticity())
+         SegmentationRawDataFiltering.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
+      }
+      else if (rawSuperPixel.hasNormalQuality())
+      {
+         SegmentationRawDataFiltering.updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters);
       }
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
          SegmentationRawDataFiltering.updateSparsityFromCentrality(rawSuperPixel, rawDataFilteringParameters);
-      if (rawDataFilteringParameters.isEnableFilterEllipticity())
-         SegmentationRawDataFiltering.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
+
    }
 
    private static void updateSparsity(RawSuperPixelData rawSuperPixelData, double threshold)
@@ -124,5 +131,16 @@ public class SegmentationRawDataFiltering
             rawSuperPixel.setIsSparse(true);
          }
       }
+   }
+
+   public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters)
+   {
+      updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters.getMinNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
+   }
+
+   public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, double varianceThreshold, double minimumConsensus)
+   {
+      if (rawSuperPixel.getNormalVariance() > varianceThreshold || rawSuperPixel.getNormalConsensus() < minimumConsensus)
+         rawSuperPixel.setIsSparse(true);
    }
 }

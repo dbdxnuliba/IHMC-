@@ -60,10 +60,6 @@ public class RawSuperPixelData implements SuperPixelData
       return normal;
    }
 
-   public Vector3DReadOnly getStandardDeviation()
-   {
-      return standardDeviation;
-   }
 
    @Override
    public List<Point3DReadOnly> getPointsInPixel()
@@ -96,9 +92,29 @@ public class RawSuperPixelData implements SuperPixelData
       this.normalConsensus = normalConsensus;
    }
 
+   public Vector3DReadOnly getStandardDeviation()
+   {
+      return standardDeviation;
+   }
+
    public boolean hasStandardDeviation()
    {
       return !standardDeviation.containsNaN();
+   }
+
+   public boolean hasNormalQuality()
+   {
+      return Double.isFinite(normalVariance) && Double.isFinite(normalConsensus);
+   }
+
+   public double getNormalVariance()
+   {
+      return normalVariance;
+   }
+
+   public double getNormalConsensus()
+   {
+      return normalConsensus;
    }
 
    public boolean contains(int otherLabel)

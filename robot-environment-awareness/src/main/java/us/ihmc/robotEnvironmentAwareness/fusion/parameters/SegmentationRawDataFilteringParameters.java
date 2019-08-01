@@ -17,6 +17,9 @@ public class SegmentationRawDataFilteringParameters
    private static final double DEFAULT_ELLIPTICITY_MINIMUM_LENGTH = 0.02;
    private static final double DEFAULT_ELLIPTICITY_THRESHOLD = 2.0;
 
+   private static final double DEFAULT_MIN_NORMAL_QUALITY = 0.005;
+   private static final int DEFAULT_MIN_NORMAL_CONSENSUS = 10;
+
    private double minimumSparseThreshold;
    private double maximumSparsePropotionalRatio;
 
@@ -31,6 +34,9 @@ public class SegmentationRawDataFilteringParameters
    private boolean enableFilterEllipticity;
    private double ellipticityMinimumLength;
    private double ellipticityThreshold;
+
+   private double minNormalVariance;
+   private int minNormalConsensus;
 
    public SegmentationRawDataFilteringParameters()
    {
@@ -58,6 +64,9 @@ public class SegmentationRawDataFilteringParameters
       enableFilterEllipticity = DEFAULT_ENABLE_FILTER_ELLIPTICITY;
       ellipticityMinimumLength = DEFAULT_ELLIPTICITY_MINIMUM_LENGTH;
       ellipticityThreshold = DEFAULT_ELLIPTICITY_THRESHOLD;
+
+      minNormalVariance = DEFAULT_MIN_NORMAL_QUALITY;
+      minNormalConsensus = DEFAULT_MIN_NORMAL_CONSENSUS;
    }
 
    public void set(SegmentationRawDataFilteringParameters other)
@@ -76,6 +85,9 @@ public class SegmentationRawDataFilteringParameters
       enableFilterEllipticity = other.enableFilterEllipticity;
       ellipticityMinimumLength = other.ellipticityMinimumLength;
       ellipticityThreshold = other.ellipticityThreshold;
+
+      minNormalVariance = other.minNormalVariance;
+      minNormalConsensus = other.minNormalConsensus;
    }
 
    public double getMinimumSparseThreshold()
@@ -131,6 +143,16 @@ public class SegmentationRawDataFilteringParameters
    public double getEllipticityThreshold()
    {
       return ellipticityThreshold;
+   }
+
+   public double getMinNormalVariance()
+   {
+      return minNormalVariance;
+   }
+
+   public int getMinNormalConsensus()
+   {
+      return minNormalConsensus;
    }
 
    public void setMinimumSparseThreshold(double minimumSparseThreshold)
