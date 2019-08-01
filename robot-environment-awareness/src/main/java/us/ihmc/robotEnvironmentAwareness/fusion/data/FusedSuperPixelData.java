@@ -12,6 +12,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
@@ -196,10 +197,13 @@ public class FusedSuperPixelData implements SuperPixelData
          closestSuperPixelNormal.set(componentPixelNormals.get(closestLabel));
       }
 
-      double distanceToQueryFromHere = distancePlaneToPoint(rawSuperPixelData.getNormal(), rawSuperPixelData.getCenter(), closestSuperPixelCenter);
-      double distanceToHereFromQuery = distancePlaneToPoint(closestSuperPixelNormal, closestSuperPixelCenter, rawSuperPixelData.getCenter());
+//      double distanceToQueryFromHere = distancePlaneToPoint(rawSuperPixelData.getNormal(), rawSuperPixelData.getCenter(), closestSuperPixelCenter);
+//      double distanceToHereFromQuery = distancePlaneToPoint(closestSuperPixelNormal, closestSuperPixelCenter, rawSuperPixelData.getCenter());
+//
+//      return (Math.abs(distanceToQueryFromHere) < threshold && Math.abs(distanceToHereFromQuery) < threshold);
 
-      return (Math.abs(distanceToQueryFromHere) < threshold && Math.abs(distanceToHereFromQuery) < threshold);
+      return SuperPixelTools.areSuperPixelsCoplanar(rawSuperPixelData.getCenter(), rawSuperPixelData.getNormal(), closestSuperPixelCenter,
+                                                    closestSuperPixelNormal, threshold);
    }
 
    public boolean isParallel(RawSuperPixelData fusionDataSegment, double threshold)

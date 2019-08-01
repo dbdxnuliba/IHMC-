@@ -10,6 +10,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagati
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelTools;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class StereoREAPlanarRegionSegmentationCalculator
@@ -136,13 +137,13 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
       boolean isPropagating = true;
 
-      TIntArrayList labels = fusedSuperPixel.getLabels();
+      TIntArrayList labelsAlreadyInSuperPixel = fusedSuperPixel.getLabels();
       while (isPropagating)
       {
          isPropagating = false;
-         boolean isBigSegment = labels.size() > MINIMUM_NUMBER_OF_LABELS_FOR_BIG_SEGMENT;
+         boolean isBigSegment = labelsAlreadyInSuperPixel.size() > MINIMUM_NUMBER_OF_LABELS_FOR_BIG_SEGMENT;
 
-         int[] adjacentLabels = data.get().getAdjacentLabels(labels);
+         int[] adjacentLabels = data.get().getAdjacentLabels(labelsAlreadyInSuperPixel);
 
          for (int adjacentLabel : adjacentLabels)
          {
@@ -153,7 +154,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
                continue;
             }
 
-            boolean isParallel = fusedSuperPixel.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold());
+            boolean isParallel = SuperPixelTools.areSuperPixelsParallel(fusedSuperPixel, candidate, planarRegionPropagationParameters.getPlanarityThreshold());
+//            fusedSuperPixel.isParallel(candidate, planarRegionPropagationParameters.getPlanarityThreshold());
             boolean isCoplanar = fusedSuperPixel.isCoplanar(candidate, planarRegionPropagationParameters.getProximityThreshold(), isBigSegment);
 
             if (isParallel && isCoplanar)
@@ -168,10 +170,10 @@ public class StereoREAPlanarRegionSegmentationCalculator
       boolean resetSmallNodeData = true;
       if (resetSmallNodeData)
       {
-         boolean isSmallNodeData = labels.size() < MINIMAM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGIEON;
+         boolean isSmallNodeData = labelsAlreadyInSuperPixel.size() < MINIMAM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGIEON;
          if(isSmallNodeData)
          {
-            for(int label : labels.toArray())
+            for(int label : labelsAlreadyInSuperPixel.toArray())
             {
                RawSuperPixelData rawData = data.get().getSuperPixelData(label);
                rawData.setId(RawSuperPixelData.DEFAULT_SEGMENT_ID);
