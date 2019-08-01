@@ -3,11 +3,14 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import org.apache.logging.log4j.ThreadContext;
 import us.ihmc.commons.Conversions;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -77,7 +80,7 @@ public class FusedSuperPixelImageBuffer
 
       Point3D[] pointCloudBuffer = MessageTools.unpackScanPoint3ds(pointCloudMessage);
       int[] colorBuffer = pointCloudMessage.getColors().toArray();
-      Random random = new Random();
+      Random random = ThreadLocalRandom.current();
       int numberOfPoints = pointCloudBuffer.length;
 
       while (numberOfPoints > bufferSize.get())

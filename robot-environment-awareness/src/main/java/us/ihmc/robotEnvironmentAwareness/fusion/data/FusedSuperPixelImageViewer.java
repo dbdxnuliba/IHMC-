@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javafx.collections.ObservableList;
@@ -12,14 +13,20 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
+import us.ihmc.commons.RandomNumbers;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.euclid.geometry.tools.EuclidGeometryPolygonTools;
+import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
+import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.graphicsDescription.MeshDataBuilder;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
+import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
 public class FusedSuperPixelImageViewer
@@ -34,6 +41,8 @@ public class FusedSuperPixelImageViewer
    protected final ObservableList<Node> children = root.getChildren();
    private final AtomicReference<Boolean> showSolution = new AtomicReference<>(false);
    private final AtomicReference<Boolean> clearSolution = new AtomicReference<>(false);
+
+   private static final double lineWidth = 0.01;
 
    public FusedSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)
    {
@@ -50,15 +59,15 @@ public class FusedSuperPixelImageViewer
          clearSolution.set(true);
    }
 
-   private void unpackFusionData(RawSuperPixelImage rawSuperPixelImage)
+   private synchronized void unpackFusionData(RawSuperPixelImage rawSuperPixelImage)
    {
       clear();
-      double lineWidth = 0.01;
       meshBuilder.clear();
 
       if (rawSuperPixelImage == null)
          return;
 
+      /*
       int numberOfSegment = rawSuperPixelImage.getNumberOfImageSegments();
 
       List<PlanarRegionSegmentationRawData> planarRegionSegmentationRawDataList = new ArrayList<>();
@@ -74,25 +83,9 @@ public class FusedSuperPixelImageViewer
 
          planarRegionSegmentationRawDataList.add(planarRegionSegmentationRawData);
       }
+       */
 
-      for (int i = 0; i < numberOfSegment; i++)
-      {
-         int randomID = new Random().nextInt();
-         Color regionColor = getRegionColor(randomID);
-         RawSuperPixelData data = rawSuperPixelImage.getFusionDataSegment(i);
-         Point3DReadOnly center = data.getCenter();
-         Vector3DReadOnly normal = data.getNormal();
-         Point3D centerEnd = new Point3D(normal);
-         centerEnd.scaleAdd(0.1, center);
-         if (data.isSparse())
-         {
-            regionColor = Color.rgb(0, 0, 0);
-         }
-
-         meshBuilder.addLine(center, centerEnd, lineWidth, regionColor);
-         for (Point3DReadOnly point : data.getPoints())
-            meshBuilder.addTetrahedron(0.02, point, regionColor);
-      }
+      rawSuperPixelImage.getSuperPixelData().forEach(rawSuperPixelData -> addSuperPixelToMeshBuilder(meshBuilder, rawSuperPixelData));
 
       MeshView scanMeshView = new MeshView(meshBuilder.generateMesh());
       scanMeshView.setMaterial(meshBuilder.generateMaterial());
@@ -123,9 +116,25 @@ public class FusedSuperPixelImageViewer
       return root;
    }
 
-   private Color getRegionColor(int regionId)
+   private static void addSuperPixelToMeshBuilder(JavaFXMultiColorMeshBuilder meshBuilder, RawSuperPixelData rawSuperPixelData)
    {
-      java.awt.Color awtColor = new java.awt.Color(regionId);
+      Color regionColor = getRegionColor(rawSuperPixelData.isSparse());
+      Point3DReadOnly center = rawSuperPixelData.getCenter();
+      Vector3DReadOnly normal = rawSuperPixelData.getNormal();
+
+      Point3D centerEnd = new Point3D(normal);
+      centerEnd.scaleAdd(0.1, rawSuperPixelData.getCenter());
+
+      meshBuilder.addLine(center, centerEnd, lineWidth, regionColor);
+      rawSuperPixelData.getPoints().forEach(point -> meshBuilder.addTetrahedron(0.02, point, regionColor));
+   }
+
+   private static Color getRegionColor(boolean isSparse)
+   {
+      if (isSparse)
+         return Color.BLACK;
+
+      java.awt.Color awtColor = new java.awt.Color(RandomNumbers.nextInt(ThreadLocalRandom.current(), 0, Integer.MAX_VALUE));
       return Color.rgb(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
    }
 }
