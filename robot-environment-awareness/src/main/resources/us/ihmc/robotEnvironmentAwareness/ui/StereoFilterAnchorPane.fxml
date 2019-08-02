@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane prefHeight="200.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.robotEnvironmentAwareness.ui.controller.StereoFilterAnchorPaneController">
+   <children>
+      <VBox layoutX="10.0" layoutY="10.0" prefHeight="180.0" prefWidth="200.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
+         <children>
+            <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" text="Stereo vision Buffer" textAlignment="CENTER">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            <Slider fx:id="stereoBufferSizeSlider" blockIncrement="1.0" majorTickUnit="5.0" max="20.0" min="1.0" minorTickCount="4" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0">
+               <tooltip>
+                  <Tooltip text="Set the capacity of the stereo vision buffer. When the capacity is reached, the buffer is considered full." />
+               </tooltip>
+            </Slider>
+         </children>
+      </VBox>
+      <VBox layoutX="222.0" layoutY="10.0" prefHeight="180.0" prefWidth="200.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
+         <children>
+            <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" text="Allowable surface normal" textAlignment="CENTER">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            <Slider fx:id="surfaceNormalUpperBound" blockIncrement="1.0" majorTickUnit="5.0" max="90.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="40.0">
+               <tooltip>
+                  <Tooltip text="Set the capacity of the stereo vision buffer. When the capacity is reached, the buffer is considered full." />
+               </tooltip>
+            </Slider>
+            <Slider fx:id="surfaceNormalLowerBound" blockIncrement="1.0" majorTickUnit="5.0" max="0.0" min="-90.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="-40.0">
+               <tooltip>
+                  <Tooltip text="Set the capacity of the stereo vision buffer. When the capacity is reached, the buffer is considered full." />
+               </tooltip>
+            </Slider>
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="364.0" text="TODO: add animation here" textAlignment="CENTER" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
