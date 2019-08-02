@@ -9,7 +9,7 @@ import gnu.trove.list.array.TIntArrayList;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFilteringTools;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelTools;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
@@ -33,7 +33,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
    public void updateFusionData(RawSuperPixelImage rawSuperPixelImage, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
                                 PlanarRegionPropagationParameters propagationParameters, SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
-      SegmentationRawDataFiltering.updateSparsity(rawSuperPixelImage, rawDataFilteringParameters);
+      SegmentationRawDataFilteringTools.updateSparsity(rawSuperPixelImage, rawDataFilteringParameters);
       latestSuperPixelImage.set(rawSuperPixelImage);
       planarRegionPropagationParameters.set(propagationParameters);
       segmentationRawDataFilteringParameters.set(rawDataFilteringParameters);

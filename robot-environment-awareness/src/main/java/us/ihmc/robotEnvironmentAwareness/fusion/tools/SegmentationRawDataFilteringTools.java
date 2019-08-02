@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class SegmentationRawDataFiltering
+public class SegmentationRawDataFilteringTools
 {
    public static void filterOutFlyingPoints(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters)
    {
@@ -64,15 +64,15 @@ public class SegmentationRawDataFiltering
          updateSparsity(rawSuperPixel, threshold);
 
       if (rawDataFilteringParameters.isEnableFilterEllipticity())
-         SegmentationRawDataFiltering.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
+         SegmentationRawDataFilteringTools.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
       }
       else if (rawSuperPixel.hasNormalQuality())
       {
-         SegmentationRawDataFiltering.updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters);
+         SegmentationRawDataFilteringTools.updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters);
       }
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
-         SegmentationRawDataFiltering.updateSparsityFromCentrality(rawSuperPixel, rawDataFilteringParameters);
+         SegmentationRawDataFilteringTools.updateSparsityFromCentrality(rawSuperPixel, rawDataFilteringParameters);
 
    }
 

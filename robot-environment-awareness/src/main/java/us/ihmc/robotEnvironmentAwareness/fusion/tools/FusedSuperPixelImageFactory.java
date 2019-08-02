@@ -184,7 +184,7 @@ public class FusedSuperPixelImageFactory
                                                           SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters,
                                                           SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
-      SegmentationRawDataFiltering.filterOutFlyingPoints(rawSuperPixel, segmentationRawDataFilteringParameters);
+      SegmentationRawDataFilteringTools.filterOutFlyingPoints(rawSuperPixel, segmentationRawDataFilteringParameters);
 
       rawSuperPixel.updateAdjacency();
 
