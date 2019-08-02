@@ -34,8 +34,9 @@
 						<VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
 							<children>
 								<Slider fx:id="stereoBuffer" blockIncrement="5000.0" majorTickUnit="10000.0" max="200000.0" minorTickCount="1000" prefHeight="48.0" prefWidth="182.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50000.0" />
-								<ToggleButton fx:id="showFusionData" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showFusionData" text="Show Fusion Data" />
-								<Button fx:id="showProjection" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showProjection" text="-" />
+								<ToggleButton fx:id="showRawData" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showRawData" text="Show Raw Data" />
+								<ToggleButton fx:id="showFusedData" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showFusedData" text="Show Fused Data" />
+								<ToggleButton fx:id="showPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" selected="true" onAction="#showPlanarRegions" text="Show Planar Regions" />
 							</children>
 						</VBox>
 					</children>

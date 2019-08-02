@@ -1,5 +1,10 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+
 import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -13,16 +18,9 @@ import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
-import us.ihmc.log.LogTools;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
-
-public class FusedSuperPixelImageViewer
+public class RawSuperPixelImageViewer
 {
    protected final JavaFXMultiColorMeshBuilder meshBuilder;
 
@@ -37,12 +35,12 @@ public class FusedSuperPixelImageViewer
 
    private static final double lineWidth = 0.01;
 
-   public FusedSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)
+   public RawSuperPixelImageViewer(SharedMemoryJavaFXMessager messager)
    {
       meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(2048));
 
-      messager.registerTopicListener(LidarImageFusionAPI.FusedSuperPixelData, superPixelImage -> executorService.submit(() -> unpackFusionData(superPixelImage)));
-      messager.registerTopicListener(LidarImageFusionAPI.ShowFusedSuperPixelData, this::handleShowSolution);
+      messager.registerTopicListener(LidarImageFusionAPI.RawSuperPixelData, superPixelImage -> executorService.submit(() -> unpackFusionData(superPixelImage)));
+      messager.registerTopicListener(LidarImageFusionAPI.ShowRawSuperPixelData, this::handleShowSolution);
    }
 
    private void handleShowSolution(boolean show)
@@ -52,22 +50,20 @@ public class FusedSuperPixelImageViewer
          clearSolution.set(true);
    }
 
-   private synchronized void unpackFusionData(List<FusedSuperPixelData> fusedSuperPixels)
+   private synchronized void unpackFusionData(RawSuperPixelImage rawSuperPixelImage)
    {
       clear();
       meshBuilder.clear();
 
-      if (fusedSuperPixels == null)
+      if (rawSuperPixelImage == null)
          return;
 
-      fusedSuperPixels.forEach(rawSuperPixelData -> addSuperPixelToMeshBuilder(meshBuilder, rawSuperPixelData));
+      rawSuperPixelImage.getSuperPixelData().forEach(rawSuperPixelData -> addSuperPixelToMeshBuilder(meshBuilder, rawSuperPixelData));
 
       MeshView scanMeshView = new MeshView(meshBuilder.generateMesh());
       scanMeshView.setMaterial(meshBuilder.generateMaterial());
       meshToRender.set(scanMeshView);
       meshBuilder.clear();
-
-      LogTools.info("unpacked fused data");
    }
 
    public void render()
@@ -81,7 +77,6 @@ public class FusedSuperPixelImageViewer
       {
          if (children.isEmpty())
          {
-            LogTools.info("rendering fused data.");
             children.add(newScanMeshView);
          }
       }
@@ -98,10 +93,10 @@ public class FusedSuperPixelImageViewer
       return root;
    }
 
-   private static void addSuperPixelToMeshBuilder(JavaFXMultiColorMeshBuilder meshBuilder, FusedSuperPixelData rawSuperPixelData)
+   private static void addSuperPixelToMeshBuilder(JavaFXMultiColorMeshBuilder meshBuilder, RawSuperPixelData rawSuperPixelData)
    {
       // todo this needs to be faster
-      Color regionColor = getRegionColor();
+      Color regionColor = getRegionColor(rawSuperPixelData.isSparse());
       Point3DReadOnly center = rawSuperPixelData.getCenter();
       Vector3DReadOnly normal = rawSuperPixelData.getNormal();
 
@@ -112,8 +107,11 @@ public class FusedSuperPixelImageViewer
       rawSuperPixelData.getPointsInPixel().forEach(point -> meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(0.02), point, regionColor));
    }
 
-   private static Color getRegionColor()
+   private static Color getRegionColor(boolean isSparse)
    {
+      if (isSparse)
+         return Color.BLACK;
+
       java.awt.Color awtColor = new java.awt.Color(new Random().nextInt());
       return Color.rgb(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
    }

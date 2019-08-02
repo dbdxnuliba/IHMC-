@@ -196,16 +196,15 @@ public class SuperPixelNormalEstimationTools
       Variance variance = new Variance();
       consensusToPack.setValue(0);
 
-      Vector3D toNeighborHitLocation = new Vector3D();
+      Vector3D toNeighborPointLocation = new Vector3D();
 
       for (Point3DReadOnly point : points)
       {
          if (point == centerPointOnPlane)
             continue;
 
-         toNeighborHitLocation.set(point);
-         toNeighborHitLocation.sub(centerPointOnPlane);
-         double normalDistanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
+         toNeighborPointLocation.sub(point, centerPointOnPlane);
+         double normalDistanceFromPlane = Math.abs(planeNormal.dot(toNeighborPointLocation));
          if (normalDistanceFromPlane <= maxDistanceFromPlane)
          {
             variance.increment(normalDistanceFromPlane);

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javafx.animation.AnimationTimer;
 import javafx.scene.Group;
@@ -18,6 +19,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageViewer;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImageViewer;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.DetectedObjectViewer;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
@@ -39,7 +41,8 @@ public class FusionSensorMeshViewer
    private final StereoVisionPointCloudViewer stereoVisionPointCloudViewer;
    private final DetectedObjectViewer detectedObjectViewer;
    private final PlanarRegionsMeshBuilder planarRegionsMeshBuilder;
-   private final FusedSuperPixelImageViewer fusedSuperPixelImageViewer;
+   private final RawSuperPixelImageViewer rawPixelImageViewer;
+   private final FusedSuperPixelImageViewer fusedPixelImageViewer;
 
    private final MeshView planarRegionMeshView = new MeshView();
 
@@ -54,9 +57,11 @@ public class FusionSensorMeshViewer
       stereoVisionPointCloudViewer = new StereoVisionPointCloudViewer(REAModuleAPI.StereoVisionPointCloudState, reaMessager);
       detectedObjectViewer = new DetectedObjectViewer(ros2Node);
       planarRegionsMeshBuilder = new PlanarRegionsMeshBuilder(reaMessager);
-      fusedSuperPixelImageViewer = new FusedSuperPixelImageViewer(messager);
-      
+      rawPixelImageViewer = new RawSuperPixelImageViewer(messager);
+      fusedPixelImageViewer = new FusedSuperPixelImageViewer(messager);
+
       messager.registerTopicListener(LidarImageFusionAPI.ClearREA, (content) -> clear());
+      AtomicReference<Boolean> showPlanarRegions = messager.createInput(LidarImageFusionAPI.ShowPlanarRegions, true);
 
       Node lidarScanRootNode = lidarScanViewer.getRoot();
       lidarScanRootNode.setMouseTransparent(true);
@@ -64,10 +69,13 @@ public class FusionSensorMeshViewer
       stereoVisionPointCloudRootNode.setMouseTransparent(true);
       Node detectedObjectRootNode = detectedObjectViewer.getRoot();
       detectedObjectRootNode.setMouseTransparent(true);
-      Node lidarImageFusionDataRootNode = fusedSuperPixelImageViewer.getRoot();
-      lidarImageFusionDataRootNode.setMouseTransparent(true);
+      Node rawSuperPixelImageDataRootNode = rawPixelImageViewer.getRoot();
+      rawSuperPixelImageDataRootNode.setMouseTransparent(true);
+      Node fusedSuperPixelImageDataRootNode = fusedPixelImageViewer.getRoot();
+      fusedSuperPixelImageDataRootNode.setMouseTransparent(true);
 
-      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, detectedObjectRootNode, planarRegionMeshView, lidarImageFusionDataRootNode);
+      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, detectedObjectRootNode, planarRegionMeshView, rawSuperPixelImageDataRootNode,
+                                fusedSuperPixelImageDataRootNode);
 
       renderMeshAnimation = new AnimationTimer()
       {
@@ -77,10 +85,13 @@ public class FusionSensorMeshViewer
             lidarScanViewer.render();
             stereoVisionPointCloudViewer.render();
             detectedObjectViewer.render();
-            fusedSuperPixelImageViewer.render();
+            rawPixelImageViewer.render();
+            fusedPixelImageViewer.render();
 
             if (planarRegionsMeshBuilder.hasNewMeshAndMaterial())
                updateMeshView(planarRegionMeshView, planarRegionsMeshBuilder.pollMeshAndMaterial());
+
+            planarRegionMeshView.setVisible(showPlanarRegions.get());
          }
       };
       start();
@@ -89,7 +100,8 @@ public class FusionSensorMeshViewer
    public void clear()
    {
       reaMessager.submitMessageInternal(REAModuleAPI.PlanarRegionsPolygonizerClear, true);
-      fusedSuperPixelImageViewer.clear();
+      rawPixelImageViewer.clear();
+      fusedPixelImageViewer.clear();
    }
 
    public void start()

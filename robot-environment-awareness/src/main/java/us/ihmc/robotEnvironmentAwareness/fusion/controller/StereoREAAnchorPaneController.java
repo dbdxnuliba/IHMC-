@@ -25,12 +25,13 @@ public class StereoREAAnchorPaneController
    @FXML private Button clearREA;
    @FXML private Slider stereoBuffer;
    @FXML private Button showSegmentationRawData;
-   @FXML private Button showProjection;
    @FXML private Slider superpixelSize;
    @FXML private Slider superpixelRuler;
    @FXML private Slider superpixelIterate;
    @FXML private ToggleButton enableConnectivity;
-   @FXML private ToggleButton showFusionData;
+   @FXML private ToggleButton showRawData;
+   @FXML private ToggleButton showFusedData;
+   @FXML private ToggleButton showPlanarRegions;
    @FXML private Slider superpixelMinimumElement;
    @FXML private Slider minSparse;
    @FXML private Slider sparseRatio;
@@ -144,9 +145,19 @@ public class StereoREAAnchorPaneController
       messager.submitMessage(LidarImageFusionAPI.ClearREA, true);
    }
 
-   public void showFusionData()
+   public void showRawData()
    {
-      messager.submitMessage(LidarImageFusionAPI.ShowFusionData, showFusionData.isSelected());
+      messager.submitMessage(LidarImageFusionAPI.ShowRawSuperPixelData, showRawData.isSelected());
+   }
+
+   public void showFusedData()
+   {
+      messager.submitMessage(LidarImageFusionAPI.ShowFusedSuperPixelData, showFusedData.isSelected());
+   }
+
+   public void showPlanarRegions()
+   {
+      messager.submitMessage(LidarImageFusionAPI.ShowPlanarRegions, showPlanarRegions.isSelected());
    }
 
    public void showProjection()

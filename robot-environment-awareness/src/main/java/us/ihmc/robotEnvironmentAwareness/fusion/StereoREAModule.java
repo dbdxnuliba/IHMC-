@@ -147,7 +147,7 @@ public class StereoREAModule
       fusedSuperPixelImageBuffer.updateNewBuffer();
 
       RawSuperPixelImage newBuffer = fusedSuperPixelImageBuffer.pollNewBuffer();
-      messager.submitMessage(LidarImageFusionAPI.FusionDataState, newBuffer);
+      messager.submitMessage(LidarImageFusionAPI.RawSuperPixelData, newBuffer);
 
       double filteringTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
 

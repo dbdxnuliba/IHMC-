@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
-import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.commons.Conversions;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
@@ -67,7 +66,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
-      superPixelImage = messager.createInput(LidarImageFusionAPI.FusionDataState);
+      superPixelImage = messager.createInput(LidarImageFusionAPI.RawSuperPixelData);
 
       concaveHullFactoryParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsConcaveHullParameters, new ConcaveHullFactoryParameters());
       polygonizerParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsPolygonizerParameters, new PolygonizerParameters());
@@ -129,7 +128,12 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
 
    public boolean update()
    {
-      boolean calculationIsDone = planarRegionSegmentationCalculator.calculate();
+      if (!planarRegionSegmentationCalculator.fuseSimilarRawSuperPixels())
+         return false;
+
+      messager.submitMessage(LidarImageFusionAPI.FusedSuperPixelData, planarRegionSegmentationCalculator.getFusedSuperPixels());
+
+      boolean calculationIsDone = planarRegionSegmentationCalculator.calculatePlanarRegionSegmentationFromSuperPixels();
       if (calculationIsDone)
       {
          List<PlanarRegionSegmentationRawData> rawData = planarRegionSegmentationCalculator.getSegmentationRawData();

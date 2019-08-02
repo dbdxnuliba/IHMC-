@@ -5,6 +5,8 @@ import java.util.List;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import controller_msgs.msg.dds.Image32;
+import jdk.nashorn.internal.ir.RuntimeNode;
+import jdk.nashorn.internal.ir.RuntimeNode.Request;
 import sensor_msgs.msg.dds.RegionOfInterest;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -15,6 +17,7 @@ import us.ihmc.messager.MessagerAPIFactory.MessagerAPI;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
 import us.ihmc.messager.MessagerAPIFactory.TopicTheme;
 import us.ihmc.messager.MessagerAPIFactory.TypedTopicTheme;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.ObjectType;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
@@ -44,7 +47,8 @@ public class LidarImageFusionAPI
    private static final CategoryTheme DataFiltering = apiFactory.createCategoryTheme("DataFiltering");
    private static final CategoryTheme NormalEstimation = apiFactory.createCategoryTheme("NormalEstimation");
    private static final CategoryTheme StereoREA = apiFactory.createCategoryTheme("StereoREA");
-   private static final CategoryTheme FusionData = apiFactory.createCategoryTheme("RawData");
+   private static final CategoryTheme RawData = apiFactory.createCategoryTheme("RawData");
+   private static final CategoryTheme FusionData = apiFactory.createCategoryTheme("FusionData");
    private static final CategoryTheme Result = apiFactory.createCategoryTheme("Result");
    private static final CategoryTheme Buffer = apiFactory.createCategoryTheme("Buffer");
 
@@ -52,6 +56,7 @@ public class LidarImageFusionAPI
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
    private static final TypedTopicTheme<Boolean> Clear = apiFactory.createTypedTopicTheme("Clear");
    private static final TypedTopicTheme<Boolean> Request = apiFactory.createTypedTopicTheme("Request");
+   private static final TypedTopicTheme<Boolean> Show = apiFactory.createTypedTopicTheme("Show");
    private static final TypedTopicTheme<String> Address = apiFactory.createTypedTopicTheme("Address");
    private static final TypedTopicTheme<List<RegionOfInterest>> ROIs = apiFactory.createTypedTopicTheme("ROIs");
    private static final TypedTopicTheme<List<ObjectType>> ObjecTypes = apiFactory.createTypedTopicTheme("ObjecTypes");
@@ -71,8 +76,9 @@ public class LidarImageFusionAPI
 
    public static final Topic<Image32> ImageState = ModuleCategory.child(Image).topic(Data);
    public static final Topic<BufferedImage> ImageResultState = ModuleCategory.child(Image).child(Result).topic(Data);
-   public static final Topic<RawSuperPixelImage> FusionDataState = ModuleCategory.child(StereoREA).child(FusionData).topic(Data);
-   
+   public static final Topic<RawSuperPixelImage> RawSuperPixelData = ModuleCategory.child(StereoREA).child(RawData).topic(Data);
+   public static final Topic<List<FusedSuperPixelData>> FusedSuperPixelData = ModuleCategory.child(StereoREA).child(FusionData).topic(Data);
+
    public static final Topic<Point3D> CameraPositionState = ModuleCategory.child(Camera).topic(Position);
    public static final Topic<Quaternion> CameraOrientationState = ModuleCategory.child(Camera).topic(Orientation);
    public static final Topic<IntrinsicParameters> CameraIntrinsicParametersState = ModuleCategory.child(Camera).topic(IntrinsicParameters);
@@ -91,8 +97,10 @@ public class LidarImageFusionAPI
    public static final Topic<String> ImageSegmentationTime = UICategory.child(ImageSegmentation).topic(Time);
 
    public static final Topic<Integer> StereoBufferSize = UICategory.child(StereoREA).child(Buffer).topic(Size);
-   public static final Topic<Boolean> ShowFusionData = UICategory.child(StereoREA).child(FusionData).topic(Request);
-   public static final Topic<Boolean> ShowStereoBufferProjection = UICategory.child(StereoREA).child(Buffer).topic(SnapShot);
+   public static final Topic<Boolean> ShowRawSuperPixelData = UICategory.child(StereoREA).child(RawData).topic(Show);
+   public static final Topic<Boolean> ShowFusedSuperPixelData = UICategory.child(StereoREA).child(FusionData).topic(Show);
+   public static final Topic<Boolean> ShowStereoBufferProjection = UICategory.child(StereoREA).child(Buffer).topic(Show);
+   public static final Topic<Boolean> ShowPlanarRegions = UICategory.child(StereoREA).child(Result).topic(Show);
    public static final Topic<Boolean> RunStereoREA = UICategory.child(StereoREA).topic(Request);
 
    public static final Topic<SegmentationRawDataFilteringParameters> SegmentationRawDataFilteringParameters = UICategory.child(DataFiltering).topic(Parameters);

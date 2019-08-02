@@ -27,7 +27,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
    private static final boolean resetSmallNodeData = true;
 
    private final AtomicReference<RawSuperPixelImage> latestSuperPixelImage = new AtomicReference<>(null);
-   private final List<FusedSuperPixelData> fusedSuperPixels = new ArrayList<>();
+   private final AtomicReference<List<FusedSuperPixelData>> latestFusedSuperPixels = new AtomicReference<>(null);
    private final AtomicReference<List<PlanarRegionSegmentationRawData>> regionsNodeNata = new AtomicReference<>(null);
 
    public void updateFusionData(RawSuperPixelImage rawSuperPixelImage, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
@@ -42,8 +42,13 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
    public void initialize()
    {
-      fusedSuperPixels.clear();
+      latestFusedSuperPixels.set(null);
       regionsNodeNata.set(null);
+   }
+
+   public List<FusedSuperPixelData> getFusedSuperPixels()
+   {
+      return latestFusedSuperPixels.get();
    }
 
    public List<PlanarRegionSegmentationRawData> getSegmentationRawData()
@@ -51,12 +56,13 @@ public class StereoREAPlanarRegionSegmentationCalculator
       return regionsNodeNata.get();
    }
 
-   public boolean calculate()
+   public boolean fuseSimilarRawSuperPixels()
    {
+      List<FusedSuperPixelData> fusedSuperPixels = new ArrayList<>();
       RawSuperPixelImage rawSuperPixelImage = latestSuperPixelImage.get();
       for (int newSegmentId = 0; newSegmentId < NUMBER_OF_ITERATIONS; newSegmentId++)
       {
-         if (!growFusedPixelsFromImage(newSegmentId, rawSuperPixelImage))
+         if (!growFusedPixelsFromImage(newSegmentId, rawSuperPixelImage, fusedSuperPixels))
             break;
       }
 
@@ -65,11 +71,18 @@ public class StereoREAPlanarRegionSegmentationCalculator
          extendSuperPixelsToIncludeAdjacentUnassignedData(fusedSuperPixels, rawSuperPixelImage, planarRegionPropagationParameters);
       }
 
-      regionsNodeNata.set(convertSuperPixelsToPlanarRegionSegmentationRawData(fusedSuperPixels));
+      latestFusedSuperPixels.set(fusedSuperPixels);
+
       return true;
    }
 
-   private boolean growFusedPixelsFromImage(int newSegmentId, RawSuperPixelImage rawSuperPixelImage)
+   public boolean calculatePlanarRegionSegmentationFromSuperPixels()
+   {
+      regionsNodeNata.set(convertSuperPixelsToPlanarRegionSegmentationRawData(latestFusedSuperPixels.get()));
+      return true;
+   }
+
+   private boolean growFusedPixelsFromImage(int newSegmentId, RawSuperPixelImage rawSuperPixelImage, List<FusedSuperPixelData> fusedSuperPixelDataToPack)
    {
       RawSuperPixelData unassignedSuperPixel = selectRandomUnassignedPixel(rawSuperPixelImage);
       if (unassignedSuperPixel == null)
@@ -77,7 +90,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
       FusedSuperPixelData segmentNodeData = createSegmentNodeData(unassignedSuperPixel, newSegmentId, rawSuperPixelImage, planarRegionPropagationParameters);
       if (segmentNodeData != null)
-         fusedSuperPixels.add(segmentNodeData);
+         fusedSuperPixelDataToPack.add(segmentNodeData);
 
       return true;
    }
