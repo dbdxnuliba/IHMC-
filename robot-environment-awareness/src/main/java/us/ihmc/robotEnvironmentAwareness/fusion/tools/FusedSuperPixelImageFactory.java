@@ -78,7 +78,7 @@ public class FusedSuperPixelImageFactory
       opencv_imgproc.cvtColor(imageMat, convertedMat, opencv_imgproc.COLOR_RGB2HSV);
       SuperpixelSLIC slic = opencv_ximgproc.createSuperpixelSLIC(convertedMat, opencv_ximgproc.SLIC, pixelSize, (float) ruler);
       slic.iterate(iterate);
-      if (enableConnectivity)
+      if (imageSegmentationParameters.getEnableConnectivity())
          slic.enforceLabelConnectivity(elementSize);
 
       Mat labelMat = new Mat();

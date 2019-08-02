@@ -1,5 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
+import us.ihmc.commons.InterpolationTools;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
@@ -59,9 +60,9 @@ public class SegmentationRawDataFiltering
          double sparseLowerThreshold = rawDataFilteringParameters.getMinimumSparseThreshold();
          double sparseUpperThreshold = sparseLowerThreshold * rawDataFilteringParameters.getMaximumSparsePropotionalRatio();
 
-         double alpha = 1 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
-         double threshold = alpha * (sparseUpperThreshold - sparseLowerThreshold) + sparseLowerThreshold;
-         updateSparsity(rawSuperPixel, threshold);
+         double alpha = 1.0 - rawSuperPixel.getSegmentCenter().getY() / imageHeight;
+         double maximumNormalDeviation = InterpolationTools.linearInterpolate(sparseLowerThreshold, sparseUpperThreshold, alpha);
+         updateSparsity(rawSuperPixel, maximumNormalDeviation);
 
       if (rawDataFilteringParameters.isEnableFilterEllipticity())
          SegmentationRawDataFiltering.updateSparsityFromEllipticity(rawSuperPixel, rawDataFilteringParameters);
@@ -76,9 +77,9 @@ public class SegmentationRawDataFiltering
 
    }
 
-   private static void updateSparsity(RawSuperPixelData rawSuperPixelData, double threshold)
+   private static void updateSparsity(RawSuperPixelData rawSuperPixelData, double maximumNormalDeviation)
    {
-      rawSuperPixelData.setIsSparse(rawSuperPixelData.getStandardDeviation().getZ() > threshold);
+      rawSuperPixelData.setIsSparse(rawSuperPixelData.getStandardDeviation().getZ() > maximumNormalDeviation);
    }
 
    /**
