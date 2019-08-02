@@ -18,8 +18,8 @@ import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageViewer;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImageViewer;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageBuilder;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImageBuilder;
 import us.ihmc.robotEnvironmentAwareness.fusion.objectDetection.DetectedObjectViewer;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
@@ -30,6 +30,7 @@ import us.ihmc.ros2.Ros2Node;
 
 public class FusionSensorMeshViewer
 {
+   private static final int SLOW_PACE_UPDATE_PERIOD = 250;
    private static final int MEDIUM_PACE_UPDATE_PERIOD = 100;
    private static final int HIGH_PACE_UPDATE_PERIOD = 10;
 
@@ -41,10 +42,12 @@ public class FusionSensorMeshViewer
    private final StereoVisionPointCloudViewer stereoVisionPointCloudViewer;
    private final DetectedObjectViewer detectedObjectViewer;
    private final PlanarRegionsMeshBuilder planarRegionsMeshBuilder;
-   private final RawSuperPixelImageViewer rawPixelImageViewer;
-   private final FusedSuperPixelImageViewer fusedPixelImageViewer;
+   private final RawSuperPixelImageBuilder rawPixelImageBuilder;
+   private final FusedSuperPixelImageBuilder fusedPixelImageMeshBuilder;
 
    private final MeshView planarRegionMeshView = new MeshView();
+   private final MeshView fusedSuperPixelMeshView = new MeshView();
+   private final MeshView rawSuperPixelMeshView = new MeshView();
 
    private final AnimationTimer renderMeshAnimation;
    private final List<ScheduledFuture<?>> meshBuilderScheduledFutures = new ArrayList<>();
@@ -57,11 +60,15 @@ public class FusionSensorMeshViewer
       stereoVisionPointCloudViewer = new StereoVisionPointCloudViewer(REAModuleAPI.StereoVisionPointCloudState, reaMessager);
       detectedObjectViewer = new DetectedObjectViewer(ros2Node);
       planarRegionsMeshBuilder = new PlanarRegionsMeshBuilder(reaMessager);
-      rawPixelImageViewer = new RawSuperPixelImageViewer(messager);
-      fusedPixelImageViewer = new FusedSuperPixelImageViewer(messager);
+      rawPixelImageBuilder = new RawSuperPixelImageBuilder(messager);
+      fusedPixelImageMeshBuilder = new FusedSuperPixelImageBuilder(messager);
 
       messager.registerTopicListener(LidarImageFusionAPI.ClearREA, (content) -> clear());
+
       AtomicReference<Boolean> showPlanarRegions = messager.createInput(LidarImageFusionAPI.ShowPlanarRegions, true);
+      AtomicReference<Boolean> showFusedSuperPixelData = messager.createInput(LidarImageFusionAPI.ShowFusedSuperPixelData, false);
+      AtomicReference<Boolean> showRawSuperPixelData = messager.createInput(LidarImageFusionAPI.ShowRawSuperPixelData, false);
+
 
       Node lidarScanRootNode = lidarScanViewer.getRoot();
       lidarScanRootNode.setMouseTransparent(true);
@@ -69,13 +76,9 @@ public class FusionSensorMeshViewer
       stereoVisionPointCloudRootNode.setMouseTransparent(true);
       Node detectedObjectRootNode = detectedObjectViewer.getRoot();
       detectedObjectRootNode.setMouseTransparent(true);
-      Node rawSuperPixelImageDataRootNode = rawPixelImageViewer.getRoot();
-      rawSuperPixelImageDataRootNode.setMouseTransparent(true);
-      Node fusedSuperPixelImageDataRootNode = fusedPixelImageViewer.getRoot();
-      fusedSuperPixelImageDataRootNode.setMouseTransparent(true);
 
-      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, detectedObjectRootNode, planarRegionMeshView, rawSuperPixelImageDataRootNode,
-                                fusedSuperPixelImageDataRootNode);
+      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, detectedObjectRootNode, planarRegionMeshView, rawSuperPixelMeshView,
+                                fusedSuperPixelMeshView);
 
       renderMeshAnimation = new AnimationTimer()
       {
@@ -85,12 +88,16 @@ public class FusionSensorMeshViewer
             lidarScanViewer.render();
             stereoVisionPointCloudViewer.render();
             detectedObjectViewer.render();
-            rawPixelImageViewer.render();
-            fusedPixelImageViewer.render();
 
             if (planarRegionsMeshBuilder.hasNewMeshAndMaterial())
                updateMeshView(planarRegionMeshView, planarRegionsMeshBuilder.pollMeshAndMaterial());
+            if (fusedPixelImageMeshBuilder.hasNewMeshAndMaterial())
+               updateMeshView(fusedSuperPixelMeshView, fusedPixelImageMeshBuilder.pollMeshAndMaterial());
+            if (rawPixelImageBuilder.hasNewMeshAndMaterial())
+               updateMeshView(rawSuperPixelMeshView, rawPixelImageBuilder.pollMeshAndMaterial());
 
+            fusedSuperPixelMeshView.setVisible(showFusedSuperPixelData.get());
+            rawSuperPixelMeshView.setVisible(showRawSuperPixelData.get());
             planarRegionMeshView.setVisible(showPlanarRegions.get());
          }
       };
@@ -100,8 +107,6 @@ public class FusionSensorMeshViewer
    public void clear()
    {
       reaMessager.submitMessageInternal(REAModuleAPI.PlanarRegionsPolygonizerClear, true);
-      rawPixelImageViewer.clear();
-      fusedPixelImageViewer.clear();
    }
 
    public void start()
@@ -111,6 +116,8 @@ public class FusionSensorMeshViewer
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidarScanViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(stereoVisionPointCloudViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(planarRegionsMeshBuilder, 0, MEDIUM_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
+      meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(fusedPixelImageMeshBuilder, 0, SLOW_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
+      meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(rawPixelImageBuilder, 0, SLOW_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
    }
 
    public void sleep()
