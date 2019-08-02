@@ -102,6 +102,9 @@ public class CopTrajectory implements ObjDoubleConsumer<Point2DBasics>
 
    private void addInitialCop(double timeInSequence, Point2DReadOnly initialCop)
    {
+      if (timeInSequence > waypointTimes.get(waypointTimes.size() - 1))
+         return;
+
       int index = 1;
       while (index < waypointTimes.size() && waypointTimes.get(index) < timeInSequence)
          index++;
