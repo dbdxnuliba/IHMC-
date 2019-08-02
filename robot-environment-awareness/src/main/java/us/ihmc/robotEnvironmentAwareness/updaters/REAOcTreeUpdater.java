@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import controller_msgs.msg.dds.LidarScanMessage;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.jOctoMap.boundingBox.OcTreeBoundingBoxWithCenterAndYaw;
@@ -152,6 +153,8 @@ public class REAOcTreeUpdater
             Set<NormalOcTreeNode> updatedNodes = new HashSet<>();
             referenceOctree.insertScan(scan, updatedNodes, null);
             hasOcTreeBeenUpdated = true;
+            
+            System.out.println(""+bufferOctree.getRoot().getNumberOfNonNullChildren());
          }
       }
 
@@ -165,6 +168,24 @@ public class REAOcTreeUpdater
          return;
 
       referenceOctree.updateNormals();
+   }
+
+   private void surfaceNormalFilter()
+   {
+      double lowerBound = 0.0;
+      double upperBound = 1.0;
+      
+      Vector3D cameraToNode = new Vector3D();
+      Vector3D surfaceNormal = new Vector3D();
+
+      surfaceNormal.normalize();
+      if (surfaceNormal.getZ() < 0)
+      {
+         surfaceNormal.negate();
+      }
+
+      double dotValue = cameraToNode.dot(surfaceNormal);
+      boolean isTrash = dotValue > lowerBound && dotValue < upperBound;
    }
 
    public void clearOcTree()

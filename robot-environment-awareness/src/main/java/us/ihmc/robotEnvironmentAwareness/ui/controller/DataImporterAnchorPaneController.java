@@ -124,7 +124,6 @@ public class DataImporterAnchorPaneController
       }
 
       StereoVisionPointCloudMessage dummyMessage = MessageTools.createStereoVisionPointCloudMessage(timestamp, pointCloudBuffer, colorsInteger);
-      System.out.println(dummyMessage.getSensorPosition());
       reaMessager.submitMessageToModule(REAModuleAPI.StereoVisionPointCloudState, dummyMessage);
       reaMessager.submitMessageToModule(REAModuleAPI.ImportStereoPointCloudData, true);
 
