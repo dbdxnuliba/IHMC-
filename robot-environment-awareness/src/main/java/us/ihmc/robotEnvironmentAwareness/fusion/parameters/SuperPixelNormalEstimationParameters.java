@@ -11,16 +11,20 @@ public class SuperPixelNormalEstimationParameters
    public static final double DEFAULT_MAX_AVERAGE_DEVIATION_RATIO = 0.75;
    public static final int DEFAULT_NUMBER_OF_ITERATIONS = 10;
    public static final boolean DEFAULT_LEAST_SQUARES_ESTIMATION = true;
-   public static final boolean DEFAULT_UPDATE_USING_PCA = false;
+   public static final boolean DEFAULT_UPDATE_USING_PCA = true;
+   public static final int DEFAULT_MAX_ATTEMPTS_FOR_NORMAL_GUESS = 10;
+   public static final double DEFAULT_MIN_DISTANCE_FOR_NORMAL_GUESS = 0.01;
 
    private double maxDistanceFromPlane;
 
    private double minConsensusRatio;
    private double maxAverageDeviationRatio;
+   private double minDistanceForNormalGuess;
 
    private int numberOfIterations;
    private boolean enableLeastSquaresEstimation;
 
+   private int maxAttemptsForNormalGuess;
    private boolean updateUsingPCA;
 
    public SuperPixelNormalEstimationParameters()
@@ -41,6 +45,8 @@ public class SuperPixelNormalEstimationParameters
       numberOfIterations = DEFAULT_NUMBER_OF_ITERATIONS;
       enableLeastSquaresEstimation = DEFAULT_LEAST_SQUARES_ESTIMATION;
       updateUsingPCA = DEFAULT_UPDATE_USING_PCA;
+      maxAttemptsForNormalGuess = DEFAULT_MAX_ATTEMPTS_FOR_NORMAL_GUESS;
+      minDistanceForNormalGuess = DEFAULT_MIN_DISTANCE_FOR_NORMAL_GUESS;
    }
 
    public void set(SuperPixelNormalEstimationParameters other)
@@ -49,8 +55,10 @@ public class SuperPixelNormalEstimationParameters
       minConsensusRatio = other.minConsensusRatio;
       maxAverageDeviationRatio = other.maxAverageDeviationRatio;
       numberOfIterations = other.numberOfIterations;
+      maxAttemptsForNormalGuess = other.maxAttemptsForNormalGuess;
       enableLeastSquaresEstimation = other.enableLeastSquaresEstimation;
       updateUsingPCA = other.updateUsingPCA;
+      minDistanceForNormalGuess = other.minDistanceForNormalGuess;
    }
 
    public void setMaxDistanceFromPlane(double maxDistanceFromPlane)
@@ -76,6 +84,16 @@ public class SuperPixelNormalEstimationParameters
    public void enableLeastSquaresEstimation(boolean enableLeastSquaresEstimation)
    {
       this.enableLeastSquaresEstimation = enableLeastSquaresEstimation;
+   }
+
+   public int getMaxAttemptsForNormalGuess()
+   {
+      return maxAttemptsForNormalGuess;
+   }
+
+   public double getMinDistanceForNormalGuess()
+   {
+      return minDistanceForNormalGuess;
    }
 
    public void updateUsingPCA(boolean updateUsingPCA)
@@ -109,6 +127,16 @@ public class SuperPixelNormalEstimationParameters
       return enableLeastSquaresEstimation;
    }
 
+   public void setMaxAttemptsForNormalGuess(int maxAttemptsForNormalGuess)
+   {
+      this.maxAttemptsForNormalGuess = maxAttemptsForNormalGuess;
+   }
+
+   public void setMinDistanceForNormalGuess(double minDistanceForNormalGuess)
+   {
+      this.minDistanceForNormalGuess = minDistanceForNormalGuess;
+   }
+
    public boolean updateUsingPCA()
    {
       return updateUsingPCA;
@@ -120,7 +148,8 @@ public class SuperPixelNormalEstimationParameters
       return "max distance from plane: " + maxDistanceFromPlane
             + ", min consensus ratio: " + minConsensusRatio + ", max average deviation ratio: " + maxAverageDeviationRatio
             + ", number of iterations: " + numberOfIterations + ", least squares estimation: " + enableLeastSquaresEstimation
-            + ", update using pca: " + updateUsingPCA;
+            + ", update using pca: " + updateUsingPCA + ", max attempts for normal guess: " + maxAttemptsForNormalGuess
+            + ", min distance for normal guess: " + minDistanceForNormalGuess;
    }
 
    public static SuperPixelNormalEstimationParameters parse(String parametersAsString)
@@ -134,6 +163,8 @@ public class SuperPixelNormalEstimationParameters
       parameters.setNumberOfIterations(ScannerTools.readNextInt(scanner, parameters.getNumberOfIterations()));
       parameters.enableLeastSquaresEstimation(ScannerTools.readNextBoolean(scanner, parameters.isLeastSquaresEstimationEnabled()));
       parameters.updateUsingPCA(ScannerTools.readNextBoolean(scanner, parameters.updateUsingPCA()));
+      parameters.setMinDistanceForNormalGuess(ScannerTools.readNextDouble(scanner, parameters.getMinDistanceForNormalGuess()));
+      parameters.setMaxAttemptsForNormalGuess(ScannerTools.readNextInt(scanner, parameters.getMaxAttemptsForNormalGuess()));
       scanner.close();
       return parameters;
    }

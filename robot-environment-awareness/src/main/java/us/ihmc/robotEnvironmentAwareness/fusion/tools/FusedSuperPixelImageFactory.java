@@ -51,7 +51,6 @@ public class FusedSuperPixelImageFactory
 
    public RawSuperPixelImage createRawSuperPixelImage(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
    {
-      LogTools.info("Creating image.");
       int imageWidth = bufferedImage.getWidth();
       int imageHeight = bufferedImage.getHeight();
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);

@@ -61,7 +61,10 @@ public class RawSuperPixelImageBuilder implements Runnable
 
       meshBuilder.clear();
 
-      rawSuperPixelImage.getSuperPixelData().forEach(rawSuperPixelData -> addSuperPixelToMeshBuilder(meshBuilder, rawSuperPixelData));
+      for (RawSuperPixelData superPixelData : rawSuperPixelImage.getSuperPixelData())
+      {
+         addSuperPixelToMeshBuilder(meshBuilder, superPixelData);
+      }
       Mesh scanMeshView = meshBuilder.generateMesh();
       Material material = meshBuilder.generateMaterial();
 
@@ -79,7 +82,10 @@ public class RawSuperPixelImageBuilder implements Runnable
       centerEnd.scaleAdd(0.1, rawSuperPixelData.getCenter());
 
       meshBuilder.addLine(center, centerEnd, lineWidth, regionColor);
-      rawSuperPixelData.getPointsInPixel().forEach(point -> meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(0.02), point, regionColor));
+      for (Point3DReadOnly point : rawSuperPixelData.getPointsInPixel())
+      {
+         meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(0.02), point, regionColor);
+      }
    }
 
    private static Color getRegionColor(boolean isSparse)

@@ -56,12 +56,24 @@ public class StereoREAAnchorPaneController
    @FXML private Slider maxNormalVariance;
    @FXML private Slider minNormalConsensus;
 
-   @FXML private Slider maxDistanceFromPlane;
-   @FXML private Slider maxDeviation;
-   @FXML private Slider minConsensus;
-   @FXML private Slider ransacIterations;
-   @FXML private CheckBox usePCA;
-   @FXML private CheckBox useLeastSquares;
+   @FXML private Slider rawMaxDistanceFromPlane;
+   @FXML private Slider rawMaxDeviation;
+   @FXML private Slider rawMinConsensus;
+   @FXML private Slider rawRansacIterations;
+   @FXML private CheckBox rawUsePCA;
+   @FXML private CheckBox rawUseLeastSquares;
+   @FXML private Slider rawMinDistanceForNormalGuess;
+   @FXML private Slider rawMaxAttemptsForNormalGuess;
+
+   @FXML private Slider fusedMaxDistanceFromPlane;
+   @FXML private Slider fusedMaxDeviation;
+   @FXML private Slider fusedMinConsensus;
+   @FXML private Slider fusedRansacIterations;
+   @FXML private CheckBox fusedUsePCA;
+   @FXML private CheckBox fusedUseLeastSquares;
+   @FXML private Slider fusedMinDistanceForNormalGuess;
+   @FXML private Slider fusedMaxAttemptsForNormalGuess;
+
 
    private final ImageSegmentationParametersProperty imageSegmentationParametersProperty = new ImageSegmentationParametersProperty(this,
                                                                                                                                    "imageSegmentationParametersProperty");
@@ -70,7 +82,8 @@ public class StereoREAAnchorPaneController
 
    private final SegmentationRawDataFilteringParametersProperty segmentationRawDataFilteringParametersProperty = new SegmentationRawDataFilteringParametersProperty(this,
                                                                                                                                                                     "segmentationRawDataFilteringParametersProperty");
-   private final SuperPixelNormalEstimationParametersProperty superPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "superPixelNormalEstimationParametersProperty");
+   private final SuperPixelNormalEstimationParametersProperty rawSuperPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "rawSuperPixelNormalEstimationParametersProperty");
+   private final SuperPixelNormalEstimationParametersProperty fusedSuperPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "fusedSuperPixelNormalEstimationParametersProperty");
 
    @FXML
    private Button runSREA;
@@ -116,13 +129,25 @@ public class StereoREAAnchorPaneController
       messager.bindBidirectional(LidarImageFusionAPI.PlanarRegionPropagationParameters, planarRegionPropagationParametersProperty, true);
 
 
-      superPixelNormalEstimationParametersProperty.bindBidirectionalMaxDistanceFromPlane(maxDistanceFromPlane.valueProperty());
-      superPixelNormalEstimationParametersProperty.bindBidirectionalMaxAverageDeviationRatio(maxDeviation.valueProperty());
-      superPixelNormalEstimationParametersProperty.bindBidirectionalMinConsensusRatio(minConsensus.valueProperty());
-      superPixelNormalEstimationParametersProperty.bindBidirectionalNumberOfIterations(ransacIterations.valueProperty());
-      superPixelNormalEstimationParametersProperty.bindBidirectionalUpdateUsingPCA(usePCA.selectedProperty());
-      superPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(useLeastSquares.selectedProperty());
-      messager.bindBidirectional(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, superPixelNormalEstimationParametersProperty, true);
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxDistanceFromPlane(rawMaxDistanceFromPlane.valueProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAverageDeviationRatio(rawMaxDeviation.valueProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinConsensusRatio(rawMinConsensus.valueProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalNumberOfIterations(rawRansacIterations.valueProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalUpdateUsingPCA(rawUsePCA.selectedProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(rawUseLeastSquares.selectedProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinDistanceForNormalGuess(rawMinDistanceForNormalGuess.valueProperty());
+      rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAttemptsForNormalGuess(rawMaxAttemptsForNormalGuess.valueProperty());
+      messager.bindBidirectional(LidarImageFusionAPI.RawSuperPixelNormalEstimationParameters, rawSuperPixelNormalEstimationParametersProperty, true);
+
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxDistanceFromPlane(fusedMaxDistanceFromPlane.valueProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAverageDeviationRatio(fusedMaxDeviation.valueProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinConsensusRatio(fusedMinConsensus.valueProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalNumberOfIterations(fusedRansacIterations.valueProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalUpdateUsingPCA(fusedUsePCA.selectedProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(fusedUseLeastSquares.selectedProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinDistanceForNormalGuess(fusedMinDistanceForNormalGuess.valueProperty());
+      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAttemptsForNormalGuess(fusedMaxAttemptsForNormalGuess.valueProperty());
+      messager.bindBidirectional(LidarImageFusionAPI.FusedSuperPixelNormalEstimationParameters, fusedSuperPixelNormalEstimationParametersProperty, true);
    }
 
    private final PropertyToMessageTypeConverter<Integer, Number> numberToIntegerConverter = new PropertyToMessageTypeConverter<Integer, Number>()

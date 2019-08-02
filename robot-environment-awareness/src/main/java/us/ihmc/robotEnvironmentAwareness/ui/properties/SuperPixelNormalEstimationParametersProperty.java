@@ -13,6 +13,8 @@ public class SuperPixelNormalEstimationParametersProperty extends ParametersProp
    private final IntegerField numberOfIterations = new IntegerField(SuperPixelNormalEstimationParameters::getNumberOfIterations, SuperPixelNormalEstimationParameters::setNumberOfIterations);
    private final BooleanField enableLeastSquaresEstimation = new BooleanField(SuperPixelNormalEstimationParameters::isLeastSquaresEstimationEnabled, SuperPixelNormalEstimationParameters::enableLeastSquaresEstimation);
    private final BooleanField updateUsingPca = new BooleanField(SuperPixelNormalEstimationParameters::updateUsingPCA, SuperPixelNormalEstimationParameters::updateUsingPCA);
+   private final DoubleField minDistanceForNormalGuess = new DoubleField(SuperPixelNormalEstimationParameters::getMinDistanceForNormalGuess, SuperPixelNormalEstimationParameters::setMinDistanceForNormalGuess);
+   private final IntegerField maxAttemptsForNormalGuess = new IntegerField(SuperPixelNormalEstimationParameters::getMaxAttemptsForNormalGuess, SuperPixelNormalEstimationParameters::setMaxAttemptsForNormalGuess);
 
    public SuperPixelNormalEstimationParametersProperty(Object bean, String name)
    {
@@ -43,6 +45,17 @@ public class SuperPixelNormalEstimationParametersProperty extends ParametersProp
    {
       bindFieldBidirectionalToBooleanProperty(property, enableLeastSquaresEstimation);
    }
+
+   public void bindBidirectionalMinDistanceForNormalGuess(Property<? extends Number> property)
+   {
+      bindFieldBidirectionalToNumberProperty(property, minDistanceForNormalGuess);
+   }
+
+   public void bindBidirectionalMaxAttemptsForNormalGuess(Property<? extends Number> property)
+   {
+      bindFieldBidirectionalToNumberProperty(property, maxAttemptsForNormalGuess);
+   }
+
 
    public void bindBidirectionalUpdateUsingPCA(BooleanProperty property)
    {

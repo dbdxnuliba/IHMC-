@@ -97,7 +97,16 @@ public class FusedSuperPixelData implements SuperPixelData
    public void addPoint(Point3DReadOnly point)
    {
       allPointsInPixel.add(point);
+      pca.addDataPoint(point);
    }
+
+   public void addPoints(List<Point3DReadOnly> points)
+   {
+      allPointsInPixel.addAll(points);
+      Stream<Point3DReadOnly> pointStream = addInParallel ? points.parallelStream() : points.stream();
+      pointStream.forEach(pca::addDataPoint);
+   }
+
 
    public int getNumberOfComponentSuperPixels()
    {
@@ -119,30 +128,22 @@ public class FusedSuperPixelData implements SuperPixelData
       return componentPixelLabels;
    }
 
-   public void merge(RawSuperPixelData fusionDataSegment)
+   public void merge(RawSuperPixelData fusionDataSegment, SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       componentPixelLabels.add(fusionDataSegment.getImageSegmentLabel());
       componentPixelCenters.add(fusionDataSegment.getCenter());
       componentPixelNormals.add(fusionDataSegment.getNormal());
 
-      allPointsInPixel.addAll(fusionDataSegment.getPointsInPixel());
+      addPoints(fusionDataSegment.getPointsInPixel());
 
-      updateFusedParameters(fusionDataSegment);
+      updateFusedParameters(fusionDataSegment, normalEstimationParameters);
    }
 
-   private void updateFusedParameters(RawSuperPixelData fusionDataSegment)
+   private void updateFusedParameters(RawSuperPixelData fusionDataSegment, SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       if (USE_PCA_TO_UPDATE)
       {
-         Stream<Point3DReadOnly> pointStream = addInParallel ? fusionDataSegment.getPointsInPixel().parallelStream() : fusionDataSegment.getPointsInPixel().stream();
-         pointStream.forEach(pca::addDataPoint);
-         pca.compute();
-
-         pca.getMean(fusedCenter);
-         pca.getThirdVector(fusedNormal);
-
-         if (fusedNormal.getZ() < 0.0)
-            fusedNormal.negate();
+         updateNormal(normalEstimationParameters);
       }
       else
       {
@@ -162,33 +163,25 @@ public class FusedSuperPixelData implements SuperPixelData
       }
    }
 
-   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold,
-                      SuperPixelNormalEstimationParameters normalEstimationParameters)
+   public void updateNormal(SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
-      for (Point3DReadOnly point : fusionDataSegment.getPointsInPixel())
+      if (normalEstimationParameters.updateUsingPCA())
       {
-         double distance = SuperPixelTools.distancePlaneToPoint(fusedNormal, fusedCenter, point);
-         if (distance < threshold)
-         {
-            for (Point3DReadOnly pointInSegment : allPointsInPixel)
-            {
-               if (pointInSegment.distance(point) < extendingThreshold)
-               {
-                  allPointsInPixel.add(point);
-                  break;
-               }
-            }
-         }
+         pca.compute();
+
+         pca.getMean(fusedCenter);
+         pca.getThirdVector(fusedNormal);
+
+         if (fusedNormal.getZ() < 0.0)
+            fusedNormal.negate();
+      }
+      else
+      {
+         SuperPixelNormalEstimationTools.updateUsingRansac(this, allPointsInPixel, normalEstimationParameters);
       }
 
-      if (updateNodeData)
-      {
-//         if (normalEstimationParameters.updateUsingPCA())
-            SuperPixelNormalEstimationTools.updateUsingPCA(this, allPointsInPixel, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
-//         else
-//            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
-      }
    }
+
 
    public int getId()
    {

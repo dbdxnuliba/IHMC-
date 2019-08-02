@@ -10,6 +10,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagati
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelTools;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
@@ -68,7 +69,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
       if (planarRegionPropagationParameters.isExtendingEnabled())
       {
-         extendSuperPixelsToIncludeAdjacentUnassignedData(fusedSuperPixels, rawSuperPixelImage, planarRegionPropagationParameters);
+         extendSuperPixelsToIncludeAdjacentUnassignedData(fusedSuperPixels, rawSuperPixelImage, planarRegionPropagationParameters, normalEstimationParameters);
       }
 
       latestFusedSuperPixels.set(fusedSuperPixels);
@@ -88,7 +89,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
       if (unassignedSuperPixel == null)
          return false;
 
-      FusedSuperPixelData segmentNodeData = createSegmentNodeData(unassignedSuperPixel, newSegmentId, rawSuperPixelImage, planarRegionPropagationParameters);
+      FusedSuperPixelData segmentNodeData = createSegmentNodeData(unassignedSuperPixel, newSegmentId, rawSuperPixelImage, planarRegionPropagationParameters,
+                                                                  normalEstimationParameters);
       if (segmentNodeData != null)
          fusedSuperPixelDataToPack.add(segmentNodeData);
 
@@ -114,7 +116,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
     * iterate computation until there is no more candidate to try merge.
     */
    private static FusedSuperPixelData createSegmentNodeData(RawSuperPixelData unassignedSuperPixel, int segmentId, RawSuperPixelImage rawSuperPixelImage,
-                                                            PlanarRegionPropagationParameters planarRegionPropagationParameters)
+                                                            PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                                            SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       unassignedSuperPixel.setId(segmentId);
       FusedSuperPixelData newFusedSuperPixel = new FusedSuperPixelData(unassignedSuperPixel);
@@ -131,7 +134,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
          for (int adjacentPixelLabel : adjacentPixelLabels)
          {
-            if (checkAndMergeAdjacentSuperPixelsIfValid(newFusedSuperPixel, isBigSegment, rawSuperPixelImage.getSuperPixelData(adjacentPixelLabel), planarRegionPropagationParameters))
+            if (checkAndMergeAdjacentSuperPixelsIfValid(newFusedSuperPixel, isBigSegment, rawSuperPixelImage.getSuperPixelData(adjacentPixelLabel),
+                                                        planarRegionPropagationParameters, normalEstimationParameters))
                isPropagating = true;
          }
       }
@@ -152,7 +156,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
    }
 
    private static boolean checkAndMergeAdjacentSuperPixelsIfValid(FusedSuperPixelData fusedSuperPixelToPack, boolean isBigPixel, RawSuperPixelData candidateAdjacentPixel,
-                                                                  PlanarRegionPropagationParameters planarRegionPropagationParameters)
+                                                                  PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                                                  SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       // skipped this pixel if it's already been assigned, or it's sparse
       if (candidateAdjacentPixel.getId() != RawSuperPixelData.DEFAULT_SEGMENT_ID || candidateAdjacentPixel.isSparse())
@@ -166,7 +171,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
       if (isParallel && isCoplanar)
       {
          candidateAdjacentPixel.setId(fusedSuperPixelToPack.getId());
-         fusedSuperPixelToPack.merge(candidateAdjacentPixel);
+         fusedSuperPixelToPack.merge(candidateAdjacentPixel, normalEstimationParameters);
          return  true;
       }
 
@@ -175,14 +180,16 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
 
    private static void extendSuperPixelsToIncludeAdjacentUnassignedData(List<FusedSuperPixelData> fusedSuperPixels, RawSuperPixelImage rawSuperPixelImage,
-                                                                        PlanarRegionPropagationParameters planarRegionPropagationParameters)
+                                                                        PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                                                        SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       fusedSuperPixels.forEach(fusedSuperPixel -> extendSuperPixelToIncludeAdjacentUnassignedData(fusedSuperPixel, rawSuperPixelImage,
-                                                                                                                   planarRegionPropagationParameters));
+                                                                                                  planarRegionPropagationParameters, normalEstimationParameters));
    }
 
    private static void extendSuperPixelToIncludeAdjacentUnassignedData(FusedSuperPixelData fusedSuperPixel, RawSuperPixelImage rawSuperPixelImage,
-                                                                       PlanarRegionPropagationParameters planarRegionPropagationParameters)
+                                                                       PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                                                       SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       Set<Integer> adjacentPixelsInNewImage = rawSuperPixelImage.getLabelsOfSuperPixelsAdjacentToOtherSuperPixels(fusedSuperPixel.getComponentPixelLabels());
       for (int adjacentLabel : adjacentPixelsInNewImage)
@@ -190,7 +197,7 @@ public class StereoREAPlanarRegionSegmentationCalculator
          RawSuperPixelData adjacentData = rawSuperPixelImage.getSuperPixelData(adjacentLabel);
          if (adjacentData.getId() == RawSuperPixelData.DEFAULT_SEGMENT_ID)
          {
-            SuperPixelTools.extendFusedSuperPixel(fusedSuperPixel, adjacentData, planarRegionPropagationParameters);
+            SuperPixelTools.extendFusedSuperPixel(fusedSuperPixel, adjacentData, planarRegionPropagationParameters, normalEstimationParameters);
          }
       }
    }

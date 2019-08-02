@@ -8,6 +8,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 
 public class SuperPixelTools
 {
@@ -64,14 +65,17 @@ public class SuperPixelTools
    }
 
    public static void extendFusedSuperPixel(FusedSuperPixelData fusedSuperPixelToExtend, SuperPixelData superPixelToInclude,
-                                           PlanarRegionPropagationParameters planarRegionPropagationParameters)
+                                           PlanarRegionPropagationParameters planarRegionPropagationParameters,
+                                            SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       extendFusedSuperPixel(fusedSuperPixelToExtend, superPixelToInclude, planarRegionPropagationParameters.getExtendingDistanceThreshold(),
-                            planarRegionPropagationParameters.getExtendingRadiusThreshold(), planarRegionPropagationParameters.isUpdateExtendedData());
+                            planarRegionPropagationParameters.getExtendingRadiusThreshold(), planarRegionPropagationParameters.isUpdateExtendedData(),
+                            normalEstimationParameters);
    }
 
    public static void extendFusedSuperPixel(FusedSuperPixelData fusedSuperPixelToExtend, SuperPixelData superPixelToInclude, double maxDistanceFromPixel,
-                                            double maxDistanceFromAnyPoint, boolean updateFusedSuperPixel)
+                                            double maxDistanceFromAnyPoint, boolean updateFusedSuperPixel,
+                                            SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       for (Point3DReadOnly point : superPixelToInclude.getPointsInPixel())
       {
@@ -90,10 +94,7 @@ public class SuperPixelTools
 
       if (updateFusedSuperPixel)
       {
-         //         if (normalEstimationParameters.updateUsingPCA())
-         SuperPixelNormalEstimationTools.updateUsingPCA(fusedSuperPixelToExtend, fusedSuperPixelToExtend.getPointsInPixel(), StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
-         //         else
-         //            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
+         fusedSuperPixelToExtend.updateNormal(normalEstimationParameters);
       }
    }
 

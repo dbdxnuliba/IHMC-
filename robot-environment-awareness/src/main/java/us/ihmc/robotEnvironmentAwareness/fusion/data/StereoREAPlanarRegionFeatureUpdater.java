@@ -74,7 +74,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
       segmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
                                                                     new SegmentationRawDataFilteringParameters());
       planarRegionPropagationParameters = messager.createInput(LidarImageFusionAPI.PlanarRegionPropagationParameters, new PlanarRegionPropagationParameters());
-      normalEstimationParameters = messager.createInput(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
+      normalEstimationParameters = messager.createInput(LidarImageFusionAPI.FusedSuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
       customRegionMergingParameters = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingParameters, new CustomRegionMergeParameters());
    }
 

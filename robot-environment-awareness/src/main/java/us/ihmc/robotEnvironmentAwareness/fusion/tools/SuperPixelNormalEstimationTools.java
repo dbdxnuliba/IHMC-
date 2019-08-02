@@ -20,13 +20,17 @@ import us.ihmc.robotEnvironmentAwareness.fusion.data.SuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SuperPixelNormalEstimationTools
 {
+   private static final double minDistanceAwayForNormal = 0.01;
+
    public static void updateUsingPCA(SuperPixelData superPixel, List<Point3DReadOnly> points, boolean addPointsInParallel)
    {
       PrincipalComponentAnalysis3D pca = new PrincipalComponentAnalysis3D();
@@ -77,7 +81,7 @@ public class SuperPixelNormalEstimationTools
 
       for (int iteration = 0; iteration < parameters.getNumberOfIterations(); iteration++)
       {
-         Vector3D candidateNormal = computeNormalFromTwoRandomPoints(points, currentCenterLocation);
+         Vector3D candidateNormal = computeNormalFromTwoRandomPoints(points, currentCenterLocation, minDistanceAwayForNormal);
 
          if (candidateNormal == null)
             continue;
@@ -134,14 +138,15 @@ public class SuperPixelNormalEstimationTools
       return hasSmallerConsensusButIsMuchBetter;
    }
 
-   private static Vector3D computeNormalFromTwoRandomPoints(List<Point3DReadOnly> neighbors, Point3DReadOnly currentPixelCenter)
+   private static Vector3D computeNormalFromTwoRandomPoints(List<Point3DReadOnly> neighbors, Point3DReadOnly currentPixelCenter, double minDistanceAwayForPoints)
    {
       Random random = ThreadLocalRandom.current();
 
-      int maxNumberOfAttempts = 5;
+      int maxNumberOfAttempts = 20;
 
       int iteration = 0;
       Vector3D normalCandidate = null;
+
 
       while (normalCandidate == null && iteration++ < maxNumberOfAttempts)
       {
@@ -151,6 +156,8 @@ public class SuperPixelNormalEstimationTools
                                               .mapToObj(neighbors::get)
                                               .map(Point3D::new)
                                               .toArray(Point3D[]::new);
+         if (Arrays.stream(randomHitLocations).anyMatch(point -> currentPixelCenter.distance(point) < minDistanceAwayForPoints))
+            continue;
 
          normalCandidate = EuclidGeometryTools.normal3DFromThreePoint3Ds(currentPixelCenter, randomHitLocations[0], randomHitLocations[1]);
       }
