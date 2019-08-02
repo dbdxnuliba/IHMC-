@@ -19,6 +19,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
@@ -50,6 +51,7 @@ public class FusedSuperPixelImageFactory
 
    public RawSuperPixelImage createRawSuperPixelImage(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
    {
+      LogTools.info("Creating image.");
       int imageWidth = bufferedImage.getWidth();
       int imageHeight = bufferedImage.getHeight();
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);

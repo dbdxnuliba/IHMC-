@@ -12,6 +12,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.ImageSegmentationParametersProperty;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.PlanarRegionPropagationParametersProperty;
 import us.ihmc.robotEnvironmentAwareness.ui.properties.SegmentationRawDataFilteringParametersProperty;
+import us.ihmc.robotEnvironmentAwareness.ui.properties.SuperPixelNormalEstimationParametersProperty;
 
 public class StereoREAAnchorPaneController
 {
@@ -51,6 +52,16 @@ public class StereoREAAnchorPaneController
    @FXML private Slider extendingDistanceThreshold;
    @FXML private Slider ExtendingRadius;
 
+   @FXML private Slider maxNormalVariance;
+   @FXML private Slider minNormalConsensus;
+
+   @FXML private Slider maxDistanceFromPlane;
+   @FXML private Slider maxDeviation;
+   @FXML private Slider minConsensus;
+   @FXML private Slider ransacIterations;
+   @FXML private CheckBox usePCA;
+   @FXML private CheckBox useLeastSquares;
+
    private final ImageSegmentationParametersProperty imageSegmentationParametersProperty = new ImageSegmentationParametersProperty(this,
                                                                                                                                    "imageSegmentationParametersProperty");
    private final PlanarRegionPropagationParametersProperty planarRegionPropagationParametersProperty = new PlanarRegionPropagationParametersProperty(this,
@@ -58,6 +69,7 @@ public class StereoREAAnchorPaneController
 
    private final SegmentationRawDataFilteringParametersProperty segmentationRawDataFilteringParametersProperty = new SegmentationRawDataFilteringParametersProperty(this,
                                                                                                                                                                     "segmentationRawDataFilteringParametersProperty");
+   private final SuperPixelNormalEstimationParametersProperty superPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "superPixelNormalEstimationParametersProperty");
 
    @FXML
    private Button runSREA;
@@ -89,6 +101,8 @@ public class StereoREAAnchorPaneController
       segmentationRawDataFilteringParametersProperty.bindBidirectionalEnableFilterEllipticity(ellipticity.selectedProperty());
       segmentationRawDataFilteringParametersProperty.bindBidirectionalEllipticityParameters(ellipticityLength.valueProperty(),
                                                                                             ellipticityThreshold.valueProperty());
+      segmentationRawDataFilteringParametersProperty.bindBidirectionalMaxNormalVariance(maxNormalVariance.valueProperty());
+      segmentationRawDataFilteringParametersProperty.bindBidirectionalMinNormalConsensus(minNormalConsensus.valueProperty());
       messager.bindBidirectional(LidarImageFusionAPI.SegmentationRawDataFilteringParameters, segmentationRawDataFilteringParametersProperty, true);
 
       planarRegionPropagationParametersProperty.bindBidirectionalSparseThreshold(sparseLowerThreshold.valueProperty(), sparseUpperThreshold.valueProperty());
@@ -99,6 +113,15 @@ public class StereoREAAnchorPaneController
       planarRegionPropagationParametersProperty.bindBidirectionalExtendingDistanceThreshold(extendingDistanceThreshold.valueProperty());
       planarRegionPropagationParametersProperty.bindBidirectionalExtendingRadiusThreshold(ExtendingRadius.valueProperty());
       messager.bindBidirectional(LidarImageFusionAPI.PlanarRegionPropagationParameters, planarRegionPropagationParametersProperty, true);
+
+
+      superPixelNormalEstimationParametersProperty.bindBidirectionalMaxDistanceFromPlane(maxDistanceFromPlane.valueProperty());
+      superPixelNormalEstimationParametersProperty.bindBidirectionalMaxAverageDeviationRatio(maxDeviation.valueProperty());
+      superPixelNormalEstimationParametersProperty.bindBidirectionalMinConsensusRatio(minConsensus.valueProperty());
+      superPixelNormalEstimationParametersProperty.bindBidirectionalNumberOfIterations(ransacIterations.valueProperty());
+      superPixelNormalEstimationParametersProperty.bindBidirectionalUpdateUsingPCA(usePCA.selectedProperty());
+      superPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(useLeastSquares.selectedProperty());
+      messager.bindBidirectional(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, superPixelNormalEstimationParametersProperty, true);
    }
 
    private final PropertyToMessageTypeConverter<Integer, Number> numberToIntegerConverter = new PropertyToMessageTypeConverter<Integer, Number>()

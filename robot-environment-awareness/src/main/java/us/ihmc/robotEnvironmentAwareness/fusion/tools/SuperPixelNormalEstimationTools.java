@@ -190,7 +190,7 @@ public class SuperPixelNormalEstimationTools
       return refinedNormal;
    }
 
-   private static void computeNormalConsensusAndVariance(Point3DReadOnly pointOnPlane, Vector3DReadOnly planeNormal, Iterable<Point3DReadOnly> points,
+   private static void computeNormalConsensusAndVariance(Point3DReadOnly centerPointOnPlane, Vector3DReadOnly planeNormal, Iterable<Point3DReadOnly> points,
                                                          double maxDistanceFromPlane, MutableDouble varianceToPack, MutableInt consensusToPack)
    {
       Variance variance = new Variance();
@@ -200,15 +200,15 @@ public class SuperPixelNormalEstimationTools
 
       for (Point3DReadOnly point : points)
       {
-         if (point == pointOnPlane)
+         if (point == centerPointOnPlane)
             continue;
 
          toNeighborHitLocation.set(point);
-         toNeighborHitLocation.sub(pointOnPlane);
-         double distanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
-         if (distanceFromPlane <= maxDistanceFromPlane)
+         toNeighborHitLocation.sub(centerPointOnPlane);
+         double normalDistanceFromPlane = Math.abs(planeNormal.dot(toNeighborHitLocation));
+         if (normalDistanceFromPlane <= maxDistanceFromPlane)
          {
-            variance.increment(distanceFromPlane);
+            variance.increment(normalDistanceFromPlane);
             consensusToPack.increment();
          }
       }

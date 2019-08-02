@@ -134,7 +134,7 @@ public class SegmentationRawDataFiltering
 
    public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters)
    {
-      updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters.getMinNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
+      updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters.getMaxNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
    }
 
    public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, double varianceThreshold, double minimumConsensus)

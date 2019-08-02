@@ -17,7 +17,7 @@ public class SegmentationRawDataFilteringParameters
    private static final double DEFAULT_ELLIPTICITY_MINIMUM_LENGTH = 0.02;
    private static final double DEFAULT_ELLIPTICITY_THRESHOLD = 2.0;
 
-   private static final double DEFAULT_MIN_NORMAL_QUALITY = 0.005;
+   private static final double DEFAULT_MIN_NORMAL_QUALITY = 0.01;
    private static final int DEFAULT_MIN_NORMAL_CONSENSUS = 10;
 
    private double minimumSparseThreshold;
@@ -35,7 +35,7 @@ public class SegmentationRawDataFilteringParameters
    private double ellipticityMinimumLength;
    private double ellipticityThreshold;
 
-   private double minNormalVariance;
+   private double maxNormalVariance;
    private int minNormalConsensus;
 
    public SegmentationRawDataFilteringParameters()
@@ -65,7 +65,7 @@ public class SegmentationRawDataFilteringParameters
       ellipticityMinimumLength = DEFAULT_ELLIPTICITY_MINIMUM_LENGTH;
       ellipticityThreshold = DEFAULT_ELLIPTICITY_THRESHOLD;
 
-      minNormalVariance = DEFAULT_MIN_NORMAL_QUALITY;
+      maxNormalVariance = DEFAULT_MIN_NORMAL_QUALITY;
       minNormalConsensus = DEFAULT_MIN_NORMAL_CONSENSUS;
    }
 
@@ -86,7 +86,7 @@ public class SegmentationRawDataFilteringParameters
       ellipticityMinimumLength = other.ellipticityMinimumLength;
       ellipticityThreshold = other.ellipticityThreshold;
 
-      minNormalVariance = other.minNormalVariance;
+      maxNormalVariance = other.maxNormalVariance;
       minNormalConsensus = other.minNormalConsensus;
    }
 
@@ -145,9 +145,9 @@ public class SegmentationRawDataFilteringParameters
       return ellipticityThreshold;
    }
 
-   public double getMinNormalVariance()
+   public double getMaxNormalVariance()
    {
-      return minNormalVariance;
+      return maxNormalVariance;
    }
 
    public int getMinNormalConsensus()
@@ -208,5 +208,15 @@ public class SegmentationRawDataFilteringParameters
    public void setEllipticityThreshold(double ellipticityThreshold)
    {
       this.ellipticityThreshold = ellipticityThreshold;
+   }
+
+   public void setMaxNormalVariance(double maxNormalVariance)
+   {
+      this.maxNormalVariance = maxNormalVariance;
+   }
+
+   public void setMinNormalConsensus(int minNormalConsensus)
+   {
+      this.minNormalConsensus = minNormalConsensus;
    }
 }

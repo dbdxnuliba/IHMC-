@@ -31,6 +31,10 @@ public class SegmentationRawDataFilteringParametersProperty extends ParametersPr
    private DoubleField ellipticityThreshold = new DoubleField(SegmentationRawDataFilteringParameters::getEllipticityThreshold,
                                                               (p, v) -> p.setEllipticityThreshold(v));
 
+   private DoubleField minNormalVariance = new DoubleField(SegmentationRawDataFilteringParameters::getMaxNormalVariance, SegmentationRawDataFilteringParameters::setMaxNormalVariance);
+   private IntegerField minNormalConsensus = new IntegerField(SegmentationRawDataFilteringParameters::getMinNormalConsensus, SegmentationRawDataFilteringParameters::setMinNormalConsensus);
+
+
    public SegmentationRawDataFilteringParametersProperty(Object bean, String name)
    {
       super(bean, name, new SegmentationRawDataFilteringParameters());
@@ -73,6 +77,16 @@ public class SegmentationRawDataFilteringParametersProperty extends ParametersPr
    {
       bindFieldBidirectionalToNumberProperty(length, ellipticityMinimumLength);
       bindFieldBidirectionalToNumberProperty(threshold, ellipticityThreshold);
+   }
+
+   public void bindBidirectionalMinNormalConsensus(Property<? extends Number> minNormalConsensus)
+   {
+      bindFieldBidirectionalToNumberProperty(minNormalConsensus, this.minNormalConsensus);
+   }
+
+   public void bindBidirectionalMaxNormalVariance(Property<? extends Number> minNormalVariance)
+   {
+      bindFieldBidirectionalToNumberProperty(minNormalVariance, this.minNormalVariance);
    }
 
    @Override
