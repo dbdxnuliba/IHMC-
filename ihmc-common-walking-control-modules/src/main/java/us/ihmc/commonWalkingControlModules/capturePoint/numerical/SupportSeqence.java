@@ -354,20 +354,45 @@ public class SupportSeqence
 
       if (doPartialFootholdLiftoff)
       {
-         FrameConvexPolygon2D liftoffPolygon = footSupportSequences.get(stepSide).add();
+         double initialTime = stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration();
+         FrameConvexPolygon2D liftoffPolygon = insertAt(stepSide, initialTime);
          if (computeLiftoffPitch(footstep) > 0.0)
             computeToePolygon(liftoffPolygon, movingPolygonsInSole.get(stepSide), stepFrame);
          else
             computeHeelPolygon(liftoffPolygon, movingPolygonsInSole.get(stepSide), stepFrame);
-         footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() - footstepTiming.getLiftoffDuration());
       }
       else if (shouldDoToeOff(last(stepFrames.get(stepSide.getOppositeSide())), stepFrame))
       {
-         double toeOffTime = footstepTiming.getTransferTime() / 2.0;
          FrameConvexPolygon2D liftoffPolygon = footSupportSequences.get(stepSide).add();
          computeToePolygon(liftoffPolygon, movingPolygonsInSole.get(stepSide), stepFrame);
-         footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() - toeOffTime);
+         // TODO: This timing is a heuristic. Make this tunable.
+         footSupportInitialTimes.get(stepSide).add(stepStartTime + footstepTiming.getTransferTime() / 2.0);
       }
+   }
+
+   private FrameConvexPolygon2D insertAt(RobotSide robotSide, double initialTime)
+   {
+      TDoubleArrayList initialTimes = footSupportInitialTimes.get(robotSide);
+      RecyclingArrayList<FrameConvexPolygon2D> polygons = footSupportSequences.get(robotSide);
+
+      if (initialTime > last(initialTimes))
+      {
+         initialTimes.add(initialTime);
+         return polygons.add();
+      }
+      else if (Precision.equals(initialTime, last(initialTimes)))
+      {
+         return last(polygons);
+      }
+      else if (initialTime <= 0.0)
+      {
+         return polygons.get(0);
+      }
+
+      // If we end up here that suggests that step timings for a single side are overlapping.
+      // E.g. a liftoff might be starting before a previous touchdown is finished.
+      System.out.println(initialTimes);
+      throw new RuntimeException("Tried to add " + initialTime);
    }
 
    private boolean checkForTouchdown(Footstep footstep, FootstepTiming footstepTiming)
@@ -555,6 +580,11 @@ public class SupportSeqence
    }
 
    private static <T> T last(List<T> list)
+   {
+      return list.get(list.size() - 1);
+   }
+
+   private static double last(TDoubleList list)
    {
       return list.get(list.size() - 1);
    }
