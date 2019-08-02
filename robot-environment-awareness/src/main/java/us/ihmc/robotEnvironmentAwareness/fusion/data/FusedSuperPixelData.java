@@ -162,34 +162,6 @@ public class FusedSuperPixelData implements SuperPixelData
       }
    }
 
-   public void extend(RawSuperPixelData fusionDataSegment, double threshold, boolean updateNodeData, double extendingThreshold,
-                      SuperPixelNormalEstimationParameters normalEstimationParameters)
-   {
-      for (Point3DReadOnly point : fusionDataSegment.getPointsInPixel())
-      {
-         double distance = SuperPixelTools.distancePlaneToPoint(fusedNormal, fusedCenter, point);
-         if (distance < threshold)
-         {
-            for (Point3DReadOnly pointInSegment : allPointsInPixel)
-            {
-               if (pointInSegment.distance(point) < extendingThreshold)
-               {
-                  allPointsInPixel.add(point);
-                  break;
-               }
-            }
-         }
-      }
-
-      if (updateNodeData)
-      {
-//         if (normalEstimationParameters.updateUsingPCA())
-            SuperPixelNormalEstimationTools.updateUsingPCA(this, allPointsInPixel, StereoREAParallelParameters.addPointsToPCAWhenExtendingInParallel);
-//         else
-//            SuperPixelNormalEstimationTools.updateUsingRansac(this, pointsInSegment, normalEstimationParameters);
-      }
-   }
-
    public int getId()
    {
       return id;
