@@ -19,7 +19,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPoint;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
@@ -48,7 +48,7 @@ public class FusedSuperPixelImageFactory
    private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
    private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public RawSuperPixelImage createRawSuperPixelImage(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
+   public RawSuperPixelImage createRawSuperPixelImage(ColoredPoint[] coloredPoints, BufferedImage bufferedImage)
    {
       int imageWidth = bufferedImage.getWidth();
       int imageHeight = bufferedImage.getHeight();
@@ -56,9 +56,9 @@ public class FusedSuperPixelImageFactory
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
       int[] labels = calculateNewLabelsSLIC(bufferedImage, imageSegmentationParameters.get());
-      List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, coloredPixels, imageHeight, imageWidth,
-                                                                                        cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get(),
-                                                                                        segmentationRawDataFilteringParameters.get(),
+      List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, coloredPoints, imageHeight, imageWidth,
+                                                                                    cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get(),
+                                                                                    segmentationRawDataFilteringParameters.get(),
                                                                                     normalEstimationParameters.get()
                                                                                     );
 
@@ -95,7 +95,7 @@ public class FusedSuperPixelImageFactory
 
 
    private static List<RawSuperPixelData> populateRawSuperPixelsWithPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
-                                                                               ColoredPixel[] coloredPixels, int imageHeight, int imageWidth,
+                                                                               ColoredPoint[] coloredPoints, int imageHeight, int imageWidth,
                                                                                Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
                                                                                IntrinsicParameters intrinsicParameters,
                                                                                SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters,
@@ -112,9 +112,9 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      for (ColoredPixel coloredPixel : coloredPixels)
+      for (ColoredPoint coloredPoint : coloredPoints)
       {
-         projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth, cameraPosition,
+         projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPoint, imageHeight, imageWidth, cameraPosition,
                                            cameraOrientation, intrinsicParameters);
       }
 
@@ -156,23 +156,23 @@ public class FusedSuperPixelImageFactory
    }
 
    private static void projectColoredPixelIntoSuperPixel(BufferedImage projectedPointCloudToPack, List<RawSuperPixelData> segmentedSuperPixelToPack,
-                                                         int[] labelIds, ColoredPixel coloredPixel, int imageHeight, int imageWidth, Point3DReadOnly cameraPosition,
+                                                         int[] labelIds, ColoredPoint coloredPoint, int imageHeight, int imageWidth, Point3DReadOnly cameraPosition,
                                                          QuaternionReadOnly cameraOrientation, IntrinsicParameters intrinsicParameters)
    {
-      if (coloredPixel == null)
+      if (coloredPoint == null)
          return;
 
-      int[] pixelIndices = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(coloredPixel.getPoint(), intrinsicParameters, cameraPosition,
+      int[] pixelIndices = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(coloredPoint, intrinsicParameters, cameraPosition,
                                                                                          cameraOrientation);
 
       if (isPixelOutOfBounds(pixelIndices, imageHeight, imageWidth))
          return;
 
       int labelId = labelIds[getLabelIdIndex(pixelIndices[0], pixelIndices[1], imageWidth)];
-      segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(coloredPixel.getPoint()));
+      segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(coloredPoint));
 
       if (enableDisplayProjectedPointCloud)
-         projectedPointCloudToPack.setRGB(pixelIndices[0], pixelIndices[1], coloredPixel.getColor());
+         projectedPointCloudToPack.setRGB(pixelIndices[0], pixelIndices[1], coloredPoint.getColor());
    }
 
    private static boolean isPixelOutOfBounds(int[] pixelIndices, int imageHeight, int imageWidth)

@@ -1,21 +1,21 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 
-public class ColoredPixel
+public class ColoredPoint extends Point3D
 {
-   private final Point3DReadOnly point;
    private final int color;
 
-   public ColoredPixel(Point3DReadOnly point, int color)
+   public ColoredPoint(int color)
    {
-      this.point = point;
       this.color = color;
    }
 
-   public Point3DReadOnly getPoint()
+   public ColoredPoint(Point3DReadOnly point, int color)
    {
-      return point;
+      super(point);
+      this.color = color;
    }
 
    public int getColor()

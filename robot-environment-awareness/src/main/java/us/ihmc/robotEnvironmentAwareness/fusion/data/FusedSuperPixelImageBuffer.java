@@ -97,10 +97,10 @@ public class FusedSuperPixelImageBuffer
          numberOfPoints--;
       }
 
-      ColoredPixel[] coloredPixels = new ColoredPixel[numberOfPoints];
+      ColoredPoint[] coloredPixels = new ColoredPoint[numberOfPoints];
       for (int i = 0; i < numberOfPoints; i++)
       {
-         coloredPixels[i] = new ColoredPixel(pointCloudBuffer[i], colorBuffer[i]);
+         coloredPixels[i] = new ColoredPoint(pointCloudBuffer[i], colorBuffer[i]);
       }
 
       fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
