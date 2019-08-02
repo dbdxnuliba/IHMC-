@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import controller_msgs.msg.dds.CollisionManagerMessage;
+import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.EuclideanTrajectoryPointMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
@@ -89,7 +89,7 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
-      CollisionManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
+      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(collisionMessage);
@@ -101,7 +101,8 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       assertTrue(success);
    }
 
-   protected void walkUpToHighStepWithCustomTrajectories(ArrayList<Double> stepsHeights) throws SimulationExceededMaximumTimeException
+   protected void walkUpToHighStepWithCustomTrajectories(ArrayList<Double> stepsHeights, boolean useAlsoTorsoTrajectory)
+         throws SimulationExceededMaximumTimeException
    {
 
       VariableHeightStairsEnvironment environment = new VariableHeightStairsEnvironment(stepsHeights, 0.6);
@@ -123,11 +124,14 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
-      CollisionManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
+      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(collisionMessage);
-      //      drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
+      if (useAlsoTorsoTrajectory)
+      {
+         drcSimulationTestHelper.publishToController(pelvisHeightTrajectory);
+      }
 
       int numberOfSteps = footsteps.getFootstepDataList().size();
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(numberOfSteps * stepTime + 2.0 * initialFinalTransfer + 3.0);
@@ -171,9 +175,9 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       return newList;
    }
 
-   private CollisionManagerMessage createCollisionMessage(PlanarRegionsList planarRegions)
+   private CollisionAvoidanceManagerMessage createCollisionMessage(PlanarRegionsList planarRegions)
    {
-      CollisionManagerMessage collisionMessage = new CollisionManagerMessage();
+      CollisionAvoidanceManagerMessage collisionMessage = new CollisionAvoidanceManagerMessage();
 
       for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
       {

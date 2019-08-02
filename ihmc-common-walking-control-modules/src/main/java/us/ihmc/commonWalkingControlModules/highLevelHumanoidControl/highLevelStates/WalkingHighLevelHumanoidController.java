@@ -92,7 +92,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
    private final LegConfigurationManager legConfigurationManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
-   private final CollisionManager collisionManager;
+   private final CollisionAvoidanceManager collisionManager;
 
    private final ArrayList<RigidBodyControlManager> bodyManagers = new ArrayList<>();
    private final Map<String, RigidBodyControlManager> bodyManagerByJointName = new HashMap<>();

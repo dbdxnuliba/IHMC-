@@ -1,5 +1,5 @@
-#ifndef __controller_msgs__msg__CollisionManagerMessage__idl__
-#define __controller_msgs__msg__CollisionManagerMessage__idl__
+#ifndef __controller_msgs__msg__CollisionAvoidanceManagerMessage__idl__
+#define __controller_msgs__msg__CollisionAvoidanceManagerMessage__idl__
 
 #include "controller_msgs/msg/./PlanarRegionMessage_.idl"
 module controller_msgs
@@ -9,8 +9,8 @@ module controller_msgs
     module dds
     {
 
-      @TypeCode(type="controller_msgs::msg::dds_::CollisionManagerMessage_")
-      struct CollisionManagerMessage
+      @TypeCode(type="controller_msgs::msg::dds_::CollisionAvoidanceManagerMessage_")
+      struct CollisionAvoidanceManagerMessage
       {
         /**
          * List of the planar regions considered for collision avoidance.

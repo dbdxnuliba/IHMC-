@@ -6,26 +6,26 @@ import us.ihmc.euclid.interfaces.EpsilonComparable;
 import java.util.function.Supplier;
 import us.ihmc.pubsub.TopicDataType;
 
-public class CollisionManagerMessage extends Packet<CollisionManagerMessage> implements Settable<CollisionManagerMessage>, EpsilonComparable<CollisionManagerMessage>
+public class CollisionAvoidanceManagerMessage extends Packet<CollisionAvoidanceManagerMessage> implements Settable<CollisionAvoidanceManagerMessage>, EpsilonComparable<CollisionAvoidanceManagerMessage>
 {
    /**
             * List of the planar regions considered for collision avoidance.
             */
    public us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PlanarRegionMessage>  planar_regions_list_;
 
-   public CollisionManagerMessage()
+   public CollisionAvoidanceManagerMessage()
    {
       planar_regions_list_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.PlanarRegionMessage> (100, new controller_msgs.msg.dds.PlanarRegionMessagePubSubType());
 
    }
 
-   public CollisionManagerMessage(CollisionManagerMessage other)
+   public CollisionAvoidanceManagerMessage(CollisionAvoidanceManagerMessage other)
    {
       this();
       set(other);
    }
 
-   public void set(CollisionManagerMessage other)
+   public void set(CollisionAvoidanceManagerMessage other)
    {
       planar_regions_list_.set(other.planar_regions_list_);
    }
@@ -40,19 +40,19 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
    }
 
 
-   public static Supplier<CollisionManagerMessagePubSubType> getPubSubType()
+   public static Supplier<CollisionAvoidanceManagerMessagePubSubType> getPubSubType()
    {
-      return CollisionManagerMessagePubSubType::new;
+      return CollisionAvoidanceManagerMessagePubSubType::new;
    }
 
    @Override
    public Supplier<TopicDataType> getPubSubTypePacket()
    {
-      return CollisionManagerMessagePubSubType::new;
+      return CollisionAvoidanceManagerMessagePubSubType::new;
    }
 
    @Override
-   public boolean epsilonEquals(CollisionManagerMessage other, double epsilon)
+   public boolean epsilonEquals(CollisionAvoidanceManagerMessage other, double epsilon)
    {
       if(other == null) return false;
       if(other == this) return true;
@@ -72,9 +72,9 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
    {
       if(other == null) return false;
       if(other == this) return true;
-      if(!(other instanceof CollisionManagerMessage)) return false;
+      if(!(other instanceof CollisionAvoidanceManagerMessage)) return false;
 
-      CollisionManagerMessage otherMyClass = (CollisionManagerMessage) other;
+      CollisionAvoidanceManagerMessage otherMyClass = (CollisionAvoidanceManagerMessage) other;
 
       if (!this.planar_regions_list_.equals(otherMyClass.planar_regions_list_)) return false;
 
@@ -86,7 +86,7 @@ public class CollisionManagerMessage extends Packet<CollisionManagerMessage> imp
    {
       StringBuilder builder = new StringBuilder();
 
-      builder.append("CollisionManagerMessage {");
+      builder.append("CollisionAvoidanceManagerMessage {");
       builder.append("planar_regions_list=");
       builder.append(this.planar_regions_list_);
       builder.append("}");
