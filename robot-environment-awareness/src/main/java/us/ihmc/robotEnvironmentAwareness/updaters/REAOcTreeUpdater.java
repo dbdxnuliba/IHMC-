@@ -1,10 +1,13 @@
 package us.ihmc.robotEnvironmentAwareness.updaters;
 
+import static us.ihmc.jOctoMap.iterators.OcTreeIteratorFactory.createLeafIterable;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.LidarScanMessage;
+import us.ihmc.commons.Conversions;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
@@ -21,6 +24,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.converters.BoundingBoxMessageConverter;
 import us.ihmc.robotEnvironmentAwareness.communication.packets.BoundingBoxParametersMessage;
 import us.ihmc.robotEnvironmentAwareness.io.FilePropertyHelper;
+import us.ihmc.robotEnvironmentAwareness.ui.UIOcTreeNode;
 
 public class REAOcTreeUpdater
 {
@@ -153,8 +157,6 @@ public class REAOcTreeUpdater
             Set<NormalOcTreeNode> updatedNodes = new HashSet<>();
             referenceOctree.insertScan(scan, updatedNodes, null);
             hasOcTreeBeenUpdated = true;
-            
-            System.out.println(""+bufferOctree.getRoot().getNumberOfNonNullChildren());
          }
       }
 
@@ -167,26 +169,25 @@ public class REAOcTreeUpdater
       if (!hasOcTreeBeenUpdated || !enableNormalEstimation.get())
          return;
 
-      referenceOctree.updateNormals();
-   }
-
-   private void surfaceNormalFilter()
-   {
-      double lowerBound = 0.0;
-      double upperBound = 1.0;
       
-      Vector3D cameraToNode = new Vector3D();
-      Vector3D surfaceNormal = new Vector3D();
-
-      surfaceNormal.normalize();
-      if (surfaceNormal.getZ() < 0)
-      {
-         surfaceNormal.negate();
-      }
-
-      double dotValue = cameraToNode.dot(surfaceNormal);
-      boolean isTrash = dotValue > lowerBound && dotValue < upperBound;
+      
+      referenceOctree.updateNormals();
+      
+      
+//      Iterable<NormalOcTreeNode> iterable = createLeafIterable(referenceOctree.getRoot(), 15);
+//      int numberOfNodes = 0;
+//      Vector3D normalToPrint = new Vector3D();
+//      for (NormalOcTreeNode node : iterable)
+//      {
+//         numberOfNodes++;
+//         node.getNormal(normalToPrint);
+//      }
+//      System.out.println("numberOfNodes "+numberOfNodes);
+//      long endTime = System.nanoTime();
+//      System.out.println("update normal and iterate "+Conversions.nanosecondsToSeconds(endTime - startTime1));
+//      System.out.println("collecting & update normal and iterate "+Conversions.nanosecondsToSeconds(endTime - startTime2));
    }
+
 
    public void clearOcTree()
    {
