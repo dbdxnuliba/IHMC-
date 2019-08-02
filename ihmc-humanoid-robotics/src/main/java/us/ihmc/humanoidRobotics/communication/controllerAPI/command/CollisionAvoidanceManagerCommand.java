@@ -6,17 +6,26 @@ import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.controllerAPI.command.Command;
+import us.ihmc.humanoidRobotics.communication.packets.collisionAvoidance.CollisionAvoidanceMessageMode;
 
 public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoidanceManagerCommand, CollisionAvoidanceManagerMessage>
 {
 
    private final PlanarRegionCommand planarRegionCommand = new PlanarRegionCommand();
    private final RecyclingArrayList<PlanarRegionCommand> planarRegions = new RecyclingArrayList<>(100, PlanarRegionCommand.class);
+   private CollisionAvoidanceMessageMode mode = CollisionAvoidanceMessageMode.OVERRIDE;
+   private long sequenceId;
+   boolean considerOnlyEdges = false;
+
 
    @Override
    public void set(CollisionAvoidanceManagerCommand other)
    {
       clear();
+
+      mode = other.mode;
+      sequenceId = other.sequenceId;
+      considerOnlyEdges = other.considerOnlyEdges;
 
       RecyclingArrayList<PlanarRegionCommand> dataList = other.getPlanarRegions();
       if (dataList != null)
@@ -41,16 +50,33 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
       return planarRegions.get(i);
    }
 
+   public CollisionAvoidanceMessageMode getMode()
+   {
+      return mode;
+   }
+
+   public boolean considerOnlyEdges()
+   {
+      return considerOnlyEdges;
+   }
+
    @Override
    public void clear()
    {
+      mode = CollisionAvoidanceMessageMode.OVERRIDE;
       planarRegions.clear();
+      sequenceId = 0;
+      considerOnlyEdges = false;
    }
 
    @Override
    public void setFromMessage(CollisionAvoidanceManagerMessage message)
    {
       clear();
+
+      sequenceId = message.getSequenceId();
+      mode = CollisionAvoidanceMessageMode.fromByte(message.getMode());
+      considerOnlyEdges = message.getConsiderOnlyEdges();
 
       List<PlanarRegionMessage> planarRegionsList = message.getPlanarRegionsList();
       
@@ -77,7 +103,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
    @Override
    public long getSequenceId()
    {
-      return 0;
+      return sequenceId;
    }
 
 }

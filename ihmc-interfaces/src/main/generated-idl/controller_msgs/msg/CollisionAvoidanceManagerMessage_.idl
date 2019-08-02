@@ -8,6 +8,12 @@ module controller_msgs
   {
     module dds
     {
+      const octet MODE_OVERRIDE =
+      0;
+
+      const octet MODE_ADD =
+      1;
+
 
       @TypeCode(type="controller_msgs::msg::dds_::CollisionAvoidanceManagerMessage_")
       struct CollisionAvoidanceManagerMessage
@@ -15,7 +21,20 @@ module controller_msgs
         /**
          * List of the planar regions considered for collision avoidance.
          */
-        sequence<controller_msgs::msg::dds::PlanarRegionMessage, 100> planar_regions_list;
+        sequence<controller_msgs::msg::dds::PlanarRegionMessage, 20> planar_regions_list;
+        /**
+         * Considers only the edges for collision avoidance
+         */
+        boolean consider_only_edges;
+        /**
+         * When equal to MODE_OVERRIDE, regions previously sent are cleared and only these regions will be considered.
+         * When equal to MODE_ADD, the regions sent with this message are added. The "consider_only_edges" parameter will affect only the regions sent within this message
+         */
+        octet mode;
+        /**
+         * Unique ID used to identify this message, should preferably be consecutively increasing.
+         */
+        unsigned long sequence_id;
       };
     };
   };
