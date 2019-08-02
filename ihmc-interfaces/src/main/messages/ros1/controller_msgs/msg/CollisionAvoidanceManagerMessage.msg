@@ -1,4 +1,18 @@
+int8 MODE_OVERRIDE=0
+
+int8 MODE_ADD=1
+
 # List of the planar regions considered for collision avoidance.
 controller_msgs/PlanarRegionMessage[] planar_regions_list
+
+# Considers only the edges for collision avoidance
+bool consider_only_edges
+
+# When equal to MODE_OVERRIDE, regions previously sent are cleared and only these regions will be considered.
+# When equal to MODE_ADD, the regions sent with this message are added. The "consider_only_edges" parameter will affect only the regions sent within this message
+int8 mode
+
+# Unique ID used to identify this message, should preferably be consecutively increasing.
+uint32 sequence_id
 
 

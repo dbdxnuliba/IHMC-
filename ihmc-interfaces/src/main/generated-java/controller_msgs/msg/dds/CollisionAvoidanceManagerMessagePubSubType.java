@@ -40,9 +40,16 @@ public class CollisionAvoidanceManagerMessagePubSubType implements us.ihmc.pubsu
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 100; ++i0)
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);for(int i0 = 0; i0 < 20; ++i0)
       {
           current_alignment += controller_msgs.msg.dds.PlanarRegionMessagePubSubType.getMaxCdrSerializedSize(current_alignment);}
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+
       return current_alignment - initial_alignment;
    }
 
@@ -60,20 +67,42 @@ public class CollisionAvoidanceManagerMessagePubSubType implements us.ihmc.pubsu
       {
           current_alignment += controller_msgs.msg.dds.PlanarRegionMessagePubSubType.getCdrSerializedSize(data.getPlanarRegionsList().get(i0), current_alignment);}
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+
+
       return current_alignment - initial_alignment;
    }
 
    public static void write(controller_msgs.msg.dds.CollisionAvoidanceManagerMessage data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getPlanarRegionsList().size() <= 100)
+      if(data.getPlanarRegionsList().size() <= 20)
       cdr.write_type_e(data.getPlanarRegionsList());else
           throw new RuntimeException("planar_regions_list field exceeds the maximum length");
+
+      cdr.write_type_7(data.getConsiderOnlyEdges());
+
+      cdr.write_type_9(data.getMode());
+
+      cdr.write_type_4(data.getSequenceId());
 
    }
 
    public static void read(controller_msgs.msg.dds.CollisionAvoidanceManagerMessage data, us.ihmc.idl.CDR cdr)
    {
       cdr.read_type_e(data.getPlanarRegionsList());	
+      data.setConsiderOnlyEdges(cdr.read_type_7());
+      	
+      data.setMode(cdr.read_type_9());
+      	
+      data.setSequenceId(cdr.read_type_4());
+      	
 
    }
 
@@ -81,12 +110,18 @@ public class CollisionAvoidanceManagerMessagePubSubType implements us.ihmc.pubsu
    public final void serialize(controller_msgs.msg.dds.CollisionAvoidanceManagerMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_e("planar_regions_list", data.getPlanarRegionsList());
+      ser.write_type_7("consider_only_edges", data.getConsiderOnlyEdges());
+      ser.write_type_9("mode", data.getMode());
+      ser.write_type_4("sequence_id", data.getSequenceId());
    }
 
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.CollisionAvoidanceManagerMessage data)
    {
       ser.read_type_e("planar_regions_list", data.getPlanarRegionsList());
+      data.setConsiderOnlyEdges(ser.read_type_7("consider_only_edges"));
+      data.setMode(ser.read_type_9("mode"));
+      data.setSequenceId(ser.read_type_4("sequence_id"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.CollisionAvoidanceManagerMessage src, controller_msgs.msg.dds.CollisionAvoidanceManagerMessage dest)
