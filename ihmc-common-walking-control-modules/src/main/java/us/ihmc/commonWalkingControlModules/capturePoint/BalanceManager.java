@@ -271,7 +271,8 @@ public class BalanceManager
 
       FrameConvexPolygon2D defaultSupportPolygon = controllerToolbox.getDefaultFootPolygons().get(RobotSide.LEFT);
       SideDependentList<MovingReferenceFrame> soleFrames = controllerToolbox.getReferenceFrames().getSoleFrames();
-      supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, bipedSupportPolygons, registry, controllerToolbox.getYoGraphicsListRegistry());
+      SideDependentList<MovingReferenceFrame> soleZUpFrames = controllerToolbox.getReferenceFrames().getSoleZUpFrames();
+      supportSeqence = new SupportSeqence(defaultSupportPolygon, soleFrames, soleZUpFrames, bipedSupportPolygons, registry, controllerToolbox.getYoGraphicsListRegistry());
       nummericalICPPlanner = new NumericalICPPlanner(0.02, 3.0, 0.2, registry, controllerToolbox.getYoGraphicsListRegistry());
       nummericalICPPlanner.setOmega(controllerToolbox.getOmega0());
       copTrajectory = new CopTrajectory(registry, controllerToolbox.getYoGraphicsListRegistry());

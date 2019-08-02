@@ -51,6 +51,7 @@ public class SupportSeqence
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final SideDependentList<? extends ReferenceFrame> soleFrames;
+   private final SideDependentList<? extends ReferenceFrame> soleZUpFrames;
 
    private final RecyclingArrayList<ConvexPolygon2D> supportPolygons = new RecyclingArrayList<>(INITIAL_CAPACITY, ConvexPolygon2D.class);
    private final TDoubleArrayList supportInitialTimes = new TDoubleArrayList(INITIAL_CAPACITY, UNSET_TIME);
@@ -74,13 +75,15 @@ public class SupportSeqence
     */
    private final SideDependentList<RecyclingArrayList<PoseReferenceFrame>> stepFrames = new SideDependentList<>();
 
-   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames)
+   public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames,
+                         SideDependentList<? extends ReferenceFrame> soleZUpFrames)
    {
-      this(defaultSupportPolygon, soleFrames, null, null, null);
+      this(defaultSupportPolygon, soleFrames, soleZUpFrames, null, null, null);
    }
 
    public SupportSeqence(ConvexPolygon2DReadOnly defaultSupportPolygon, SideDependentList<? extends ReferenceFrame> soleFrames,
-                         BipedSupportPolygons bipedSupportPolygons, YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
+                         SideDependentList<? extends ReferenceFrame> soleZUpFrames, BipedSupportPolygons bipedSupportPolygons,
+                         YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicRegistry)
    {
       if (graphicRegistry != null)
       {
@@ -116,6 +119,7 @@ public class SupportSeqence
       this.defaultSupportPolygon.set(defaultSupportPolygon);
       this.bipedSupportPolygons = bipedSupportPolygons;
       this.soleFrames = soleFrames;
+      this.soleZUpFrames = soleZUpFrames;
    }
 
    /**
@@ -162,6 +166,7 @@ public class SupportSeqence
       else
          footPolygonsInSole.get(robotSide).set(bipedSupportPolygons.getFootPolygonInSoleFrame(robotSide));
       footPoses.get(robotSide).setToZero(soleFrames.get(robotSide));
+      footPoses.get(robotSide).changeFrame(soleZUpFrames.get(robotSide));
    }
 
    public void changeFootFrame(RobotSide robotSide, ReferenceFrame referenceFrame)
