@@ -2,19 +2,19 @@ package us.ihmc.humanoidRobotics.communication.controllerAPI.command;
 
 import java.util.List;
 
-import controller_msgs.msg.dds.CollisionManagerMessage;
+import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.controllerAPI.command.Command;
 
-public class CollisionManagerCommand implements Command<CollisionManagerCommand, CollisionManagerMessage>
+public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoidanceManagerCommand, CollisionAvoidanceManagerMessage>
 {
 
    private final PlanarRegionCommand planarRegionCommand = new PlanarRegionCommand();
    private final RecyclingArrayList<PlanarRegionCommand> planarRegions = new RecyclingArrayList<>(100, PlanarRegionCommand.class);
 
    @Override
-   public void set(CollisionManagerCommand other)
+   public void set(CollisionAvoidanceManagerCommand other)
    {
       clear();
 
@@ -48,7 +48,7 @@ public class CollisionManagerCommand implements Command<CollisionManagerCommand,
    }
 
    @Override
-   public void setFromMessage(CollisionManagerMessage message)
+   public void setFromMessage(CollisionAvoidanceManagerMessage message)
    {
       clear();
 
@@ -63,9 +63,9 @@ public class CollisionManagerCommand implements Command<CollisionManagerCommand,
    }
 
    @Override
-   public Class<CollisionManagerMessage> getMessageClass()
+   public Class<CollisionAvoidanceManagerMessage> getMessageClass()
    {
-      return CollisionManagerMessage.class;
+      return CollisionAvoidanceManagerMessage.class;
    }
 
    @Override

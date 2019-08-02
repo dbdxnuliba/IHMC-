@@ -21,7 +21,7 @@ import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionAvoidanceManagerCommand;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.screwTheory.SelectionMatrix3D;
@@ -30,12 +30,11 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
-public class CollisionManager
+public class CollisionAvoidanceManager
 {
    private final PointFeedbackControlCommand pointFeedbackCommand = new PointFeedbackControlCommand();
 
    private final RigidBodyBasics body;
-   private final RigidBodyBasics root;
    private final ReferenceFrame firstEndLinkFrame, otherEndLinkFrame;
    private final FramePose3D firstEndPose = new FramePose3D();
    private final FramePose3D otherEndPose = new FramePose3D();
@@ -73,7 +72,7 @@ public class CollisionManager
    private final YoInteger numberOfPlanarSurfaces;
    private final YoGraphicVector distanceArrow, desiredPositionArrow;
 
-   public CollisionManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
+   public CollisionAvoidanceManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
                            RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       pointFeedbackCommand.set(elevator, body);
@@ -82,7 +81,6 @@ public class CollisionManager
       this.firstEndLinkFrame = firstEndLinkFrame;
       this.otherEndLinkFrame = otherEndLinkFrame;
       this.body = body;
-      root = elevator;
       parentRegistry.addChild(registry);
       bodyOriginX = new YoDouble("collision_" + body.getName() + "_originX", registry);
       bodyOriginY = new YoDouble("collision_" + body.getName() + "_originY", registry);
@@ -227,7 +225,6 @@ public class CollisionManager
          desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getX(),
                              closestPointOnBody.getY() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getY(),
                              closestPointOnBody.getZ() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getZ());
-         desiredPosition.changeFrame(root.getBodyFixedFrame());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
          
@@ -255,7 +252,7 @@ public class CollisionManager
 
    private ReferenceFrame computeClosestPointFrame()
    {
-      EuclidFrameTools.axisAngleFromFirstToSecondVector3D(zAxis, minDistanceVector, worldZToDistanceVectorRotation);
+      EuclidFrameTools.orientation3DFromFirstToSecondVector3D(zAxis, minDistanceVector, worldZToDistanceVectorRotation);
 
       body_H_closestPoint.setToZero(ReferenceFrame.getWorldFrame());
       body_H_closestPoint.setPosition(closestPointOnBody);
@@ -278,7 +275,7 @@ public class CollisionManager
       return pointFeedbackCommand;
    }
 
-   public void handleCollisionManagerCommand(CollisionManagerCommand command)
+   public void handleCollisionManagerCommand(CollisionAvoidanceManagerCommand command)
    {
       int regions = command.getNumberOfPlanarRegions();
       numberOfPlanarSurfaces.set(regions);

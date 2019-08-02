@@ -10,7 +10,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOrientationManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelControlManagerFactory;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionManager;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionAvoidanceManager;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController.states.WalkingState;
 import us.ihmc.commonWalkingControlModules.messageHandlers.WalkingMessageHandler;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
@@ -25,7 +25,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.AutomaticMan
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CenterOfMassTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestHybridJointspaceTaskspaceTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.ChestTrajectoryCommand;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionManagerCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionAvoidanceManagerCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.DesiredAccelerationsCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootLoadBearingCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootTrajectoryCommand;
@@ -82,7 +82,7 @@ public class WalkingCommandConsumer
    private final FeetManager feetManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
-   private final CollisionManager collisionManager;
+   private final CollisionAvoidanceManager collisionManager;
 
    private final RigidBodyControlManager chestManager;
    private final RigidBodyControlManager headManager;
@@ -531,9 +531,9 @@ public class WalkingCommandConsumer
 
    public void consumeCollisioManagerCommand()
    {
-      if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CollisionManagerCommand.class))
+      if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CollisionAvoidanceManagerCommand.class))
       {
-         CollisionManagerCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CollisionManagerCommand.class);
+         CollisionAvoidanceManagerCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CollisionAvoidanceManagerCommand.class);
          collisionManager.handleCollisionManagerCommand(command);
       }
    }

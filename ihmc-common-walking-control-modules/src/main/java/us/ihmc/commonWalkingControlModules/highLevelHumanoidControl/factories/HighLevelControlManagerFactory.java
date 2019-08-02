@@ -20,7 +20,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOrientati
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlManager;
 import us.ihmc.commonWalkingControlModules.controlModules.rigidBody.RigidBodyControlMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommandList;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionManager;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionAvoidanceManager;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.euclid.geometry.Pose3D;
@@ -66,7 +66,7 @@ public class HighLevelControlManagerFactory
    private FeetManager feetManager;
    private PelvisOrientationManager pelvisOrientationManager;
    private LegConfigurationManager legConfigurationManager;
-   private CollisionManager collisionManager;
+   private CollisionAvoidanceManager collisionManager;
 
    private final Map<String, RigidBodyControlManager> rigidBodyManagerMapByBodyName = new HashMap<>();
 
@@ -225,7 +225,7 @@ public class HighLevelControlManagerFactory
       return manager;
    }
 
-   public CollisionManager getOrCreateCollisionManager()
+   public CollisionAvoidanceManager getOrCreateCollisionManager()
    {
       if (collisionManager != null)
       {
@@ -245,7 +245,7 @@ public class HighLevelControlManagerFactory
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
-      collisionManager = new CollisionManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry, graphicsListRegistry);
+      collisionManager = new CollisionAvoidanceManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry, graphicsListRegistry);
 
       return collisionManager;
    }
