@@ -56,7 +56,7 @@ public class FusedSuperPixelImageBuffer
       latestImageSegmentationParaeters = messager.createInput(LidarImageFusionAPI.ImageSegmentationParameters, new ImageSegmentationParameters());
       latestSegmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
                                                                           new SegmentationRawDataFilteringParameters());
-      latestNormalEstimationParameters = messager.createInput(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
+      latestNormalEstimationParameters = messager.createInput(LidarImageFusionAPI.RawSuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
@@ -133,7 +133,7 @@ public class FusedSuperPixelImageBuffer
 
             RawSuperPixelImage superPixelImage = updateNewBuffer(newScan);
             newBuffer.set(superPixelImage);
-            messager.submitMessage(LidarImageFusionAPI.FusionDataState, superPixelImage);
+            messager.submitMessage(LidarImageFusionAPI.RawSuperPixelData, superPixelImage);
 
             double runningTime = Conversions.nanosecondsToSeconds(System.nanoTime() - startTime);
             String filteringTimeMessage = new DecimalFormat("##.###").format(runningTime) + "(sec)";
