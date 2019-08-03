@@ -1,32 +1,27 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.tools;
 
-import java.awt.image.BufferedImage;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
-
 import org.bytedeco.javacpp.indexer.UByteRawIndexer;
 import org.bytedeco.opencv.global.opencv_core;
 import org.bytedeco.opencv.global.opencv_imgproc;
 import org.bytedeco.opencv.global.opencv_ximgproc;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_ximgproc.SuperpixelSLIC;
-
-import boofcv.struct.calib.IntrinsicParameters;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
-import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
-import us.ihmc.log.LogTools;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.ColoredPixel;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.StereoImage;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.StereoPoint;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
+
+import java.awt.image.BufferedImage;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 public class FusedSuperPixelImageFactory
 {
@@ -42,38 +37,33 @@ public class FusedSuperPixelImageFactory
    private BufferedImage segmentedContour;
    private BufferedImage projectedPointCloud;
 
-   private final AtomicReference<IntrinsicParameters> intrinsicParameters = new AtomicReference<>(PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
    private final AtomicReference<ImageSegmentationParameters> imageSegmentationParameters = new AtomicReference<>(null);
    private final AtomicReference<SegmentationRawDataFilteringParameters> segmentationRawDataFilteringParameters = new AtomicReference<>(null);
    private final AtomicReference<SuperPixelNormalEstimationParameters> normalEstimationParameters = new AtomicReference<>(null);
-   private final AtomicReference<Point3D> cameraPosition = new AtomicReference<>(new Point3D());
-   private final AtomicReference<Quaternion> cameraOrientation = new AtomicReference<>(new Quaternion());
 
-   public RawSuperPixelImage createRawSuperPixelImage(ColoredPixel[] coloredPixels, BufferedImage bufferedImage)
+   public RawSuperPixelImage createRawSuperPixelImage(StereoImage stereoImage)
    {
-      int imageWidth = bufferedImage.getWidth();
-      int imageHeight = bufferedImage.getHeight();
+      int imageWidth = stereoImage.getWidth();
+      int imageHeight = stereoImage.getHeight();
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
-      int[] labels = calculateNewLabelsSLIC(bufferedImage, imageSegmentationParameters.get());
-      List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, coloredPixels, imageHeight, imageWidth,
-                                                                                        cameraPosition.get(), cameraOrientation.get(), intrinsicParameters.get(),
-                                                                                        segmentationRawDataFilteringParameters.get(),
-                                                                                    normalEstimationParameters.get()
-                                                                                    );
+      int[] labels = calculateNewLabelsSLIC(stereoImage, imageSegmentationParameters.get());
+      List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, stereoImage, imageHeight, imageWidth,
+                                                                                    segmentationRawDataFilteringParameters.get(),
+                                                                                    normalEstimationParameters.get());
 
       return new RawSuperPixelImage(rawSuperPixels, imageWidth, imageHeight);
    }
 
-   private static int[] calculateNewLabelsSLIC(BufferedImage bufferedImage, ImageSegmentationParameters imageSegmentationParameters)
+   private static int[] calculateNewLabelsSLIC(StereoImage stereoImage, ImageSegmentationParameters imageSegmentationParameters)
    {
       int pixelSize = imageSegmentationParameters.getPixelSize();
       double ruler = imageSegmentationParameters.getPixelRuler();
       int iterate = imageSegmentationParameters.getIterate();
       int elementSize = imageSegmentationParameters.getMinElementSize();
 
-      Mat imageMat = convertBufferedImageToMat(bufferedImage);
+      Mat imageMat = convertStereoImageToMat(stereoImage);
       Mat convertedMat = new Mat();
       opencv_imgproc.cvtColor(imageMat, convertedMat, opencv_imgproc.COLOR_RGB2HSV);
       SuperpixelSLIC slic = opencv_ximgproc.createSuperpixelSLIC(convertedMat, opencv_ximgproc.SLIC, pixelSize, (float) ruler);
@@ -84,7 +74,7 @@ public class FusedSuperPixelImageFactory
       Mat labelMat = new Mat();
       slic.getLabels(labelMat);
 
-      int[] labels = new int[bufferedImage.getWidth() * bufferedImage.getHeight()];
+      int[] labels = new int[stereoImage.getWidth() * stereoImage.getHeight()];
       IntBuffer intBuffer = labelMat.getIntBuffer();
       for (int i = 0; i < labels.length; i++)
       {
@@ -96,9 +86,7 @@ public class FusedSuperPixelImageFactory
 
 
    private static List<RawSuperPixelData> populateRawSuperPixelsWithPointCloud(BufferedImage projectedPointCloudToPack, int[] labelIds,
-                                                                               ColoredPixel[] coloredPixels, int imageHeight, int imageWidth,
-                                                                               Point3DReadOnly cameraPosition, QuaternionReadOnly cameraOrientation,
-                                                                               IntrinsicParameters intrinsicParameters,
+                                                                               StereoImage stereoImage, int imageHeight, int imageWidth,
                                                                                SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters,
                                                                                SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
@@ -113,10 +101,9 @@ public class FusedSuperPixelImageFactory
          rawSuperPixels.add(new RawSuperPixelData(i));
 
       // projection.
-      for (ColoredPixel coloredPixel : coloredPixels)
+      for (StereoPoint stereoPoint : stereoImage.getPoints())
       {
-         projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, coloredPixel, imageHeight, imageWidth, cameraPosition,
-                                           cameraOrientation, intrinsicParameters);
+         projectColoredPixelIntoSuperPixel(projectedPointCloudToPack, rawSuperPixels, labelIds, stereoPoint, imageWidth);
       }
 
       // register adjacent labels.
@@ -157,28 +144,17 @@ public class FusedSuperPixelImageFactory
    }
 
    private static void projectColoredPixelIntoSuperPixel(BufferedImage projectedPointCloudToPack, List<RawSuperPixelData> segmentedSuperPixelToPack,
-                                                         int[] labelIds, ColoredPixel coloredPixel, int imageHeight, int imageWidth, Point3DReadOnly cameraPosition,
-                                                         QuaternionReadOnly cameraOrientation, IntrinsicParameters intrinsicParameters)
+                                                         int[] labelIds, StereoPoint stereoPoint, int imageWidth)
    {
-      if (coloredPixel == null)
+      if (stereoPoint == null)
          return;
 
-      int[] pixelIndices = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(coloredPixel.getPoint(), intrinsicParameters, cameraPosition,
-                                                                                         cameraOrientation);
-
-      if (isPixelOutOfBounds(pixelIndices, imageHeight, imageWidth))
-         return;
-
+      int[] pixelIndices = stereoPoint.getPixelIndices();
       int labelId = labelIds[getLabelIdIndex(pixelIndices[0], pixelIndices[1], imageWidth)];
-      segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(coloredPixel.getPoint()));
+      segmentedSuperPixelToPack.get(labelId).addPoint(new Point3D(stereoPoint));
 
       if (enableDisplayProjectedPointCloud)
-         projectedPointCloudToPack.setRGB(pixelIndices[0], pixelIndices[1], coloredPixel.getColor());
-   }
-
-   private static boolean isPixelOutOfBounds(int[] pixelIndices, int imageHeight, int imageWidth)
-   {
-      return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
+         projectedPointCloudToPack.setRGB(pixelIndices[0], pixelIndices[1], stereoPoint.getColor());
    }
 
    private static void updateSuperpixelAndCalculateNormal(RawSuperPixelData rawSuperPixel,
@@ -198,21 +174,21 @@ public class FusedSuperPixelImageFactory
    /**
     * The type of the BufferedImage is TYPE_INT_RGB and the type of the Mat is CV_8UC3.
     */
-   private static Mat convertBufferedImageToMat(BufferedImage bufferedImage)
+   private static Mat convertStereoImageToMat(StereoImage bufferedImage)
    {
       Mat imageMat = new Mat(bufferedImage.getHeight(), bufferedImage.getWidth(), matType);
       UByteRawIndexer indexer = imageMat.createIndexer();
-      for (int y = 0; y < bufferedImage.getHeight(); y++)
+      for (StereoPoint point : bufferedImage.getPoints())
       {
-         for (int x = 0; x < bufferedImage.getWidth(); x++)
-         {
-            int rgb = bufferedImage.getRGB(x, y);
+         int rgb = point.getColor();
+         int x = point.getXIndex();
+         int y = point.getYIndex();
 
-            indexer.put(y, x, 0, (byte) ((rgb /*>> 0*/) & 0xFF));
-            indexer.put(y, x, 1, (byte) ((rgb >> 8) & 0xFF));
-            indexer.put(y, x, 2, (byte) ((rgb >> 16) & 0xFF));
-         }
+         indexer.put(y, x, 0, (byte) ((rgb /*>> 0*/) & 0xFF));
+         indexer.put(y, x, 1, (byte) ((rgb >> 8) & 0xFF));
+         indexer.put(y, x, 2, (byte) ((rgb >> 16) & 0xFF));
       }
+
       indexer.release();
 
       return imageMat;
@@ -229,11 +205,6 @@ public class FusedSuperPixelImageFactory
       return projectedPointCloud;
    }
 
-   public void setIntrinsicParameters(IntrinsicParameters intrinsicParameters)
-   {
-      this.intrinsicParameters.set(intrinsicParameters);
-   }
-
    public void setImageSegmentationParameters(ImageSegmentationParameters imageSegmentationParameters)
    {
       this.imageSegmentationParameters.set(imageSegmentationParameters);
@@ -247,12 +218,6 @@ public class FusedSuperPixelImageFactory
    public void setNormalEstimationParameters(SuperPixelNormalEstimationParameters normalEstimationParameters)
    {
       this.normalEstimationParameters.set(normalEstimationParameters);
-   }
-
-   public void setCameraPose(Point3D position, Quaternion orientation)
-   {
-      cameraPosition.set(position);
-      cameraOrientation.set(orientation);
    }
 
    private static void registerAdjacentPixelIds(List<RawSuperPixelData> segmentedSuperPixelsToPack, int widthIndex, int heightIndex, int[] labelIds, int imageWidth)

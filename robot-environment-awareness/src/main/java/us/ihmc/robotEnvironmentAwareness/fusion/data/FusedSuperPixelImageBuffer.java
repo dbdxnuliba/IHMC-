@@ -2,9 +2,11 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
@@ -13,7 +15,9 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.jOctoMap.pointCloud.ScanCollection;
 import us.ihmc.log.LogTools;
@@ -24,6 +28,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationPara
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.FusedSuperPixelImageFactory;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.PointCloudProjectionHelper;
 
 public class FusedSuperPixelImageBuffer
 {
@@ -97,20 +102,42 @@ public class FusedSuperPixelImageBuffer
          numberOfPoints--;
       }
 
-      ColoredPixel[] coloredPixels = new ColoredPixel[numberOfPoints];
-      for (int i = 0; i < numberOfPoints; i++)
-      {
-         coloredPixels[i] = new ColoredPixel(pointCloudBuffer[i], colorBuffer[i]);
-      }
+      BufferedImage bufferedImage = latestBufferedImage.get();
+      IntrinsicParameters intrinsicParameters = latestCameraIntrinsicParameters.get();
+      Point3DReadOnly cameraPosition = latestCameraPosition.get();
+      QuaternionReadOnly cameraOrientation = latestCameraOrientation.get();
+      int imageHeight = bufferedImage.getHeight();
+      int imageWidth = bufferedImage.getWidth();
 
-      fusedSuperPixelImageFactory.setIntrinsicParameters(latestCameraIntrinsicParameters.get());
+      StereoImage stereoImage = new StereoImage(numberOfPoints, imageHeight, imageWidth);
+
+      IntStream.range(0, numberOfPoints).parallel().forEach(i -> stereoImage.setPoint(i, createStereoPoint(pointCloudBuffer[i], colorBuffer[i], intrinsicParameters, cameraPosition, cameraOrientation, imageHeight, imageWidth)));
+
       fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
       fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
       fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
-      fusedSuperPixelImageFactory.setCameraPose(latestCameraPosition.get(), latestCameraOrientation.get());
 
-      return fusedSuperPixelImageFactory.createRawSuperPixelImage(coloredPixels, latestBufferedImage.get());
+      return fusedSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
    }
+
+
+
+
+   private static StereoPoint createStereoPoint(Point3DReadOnly point, int color, IntrinsicParameters intrinsicParameters, Point3DReadOnly latestCameraPosition,
+                                         QuaternionReadOnly latestCameraOrientation, int imageHeight, int imageWidth)
+   {
+      int[] pixelIndices = PointCloudProjectionHelper.projectMultisensePointCloudOnImage(point, intrinsicParameters, latestCameraPosition, latestCameraOrientation);
+      if (isPixelOutOfBounds(pixelIndices, imageHeight, imageWidth))
+         return null;
+
+      return new StereoPoint(point, color, pixelIndices);
+   }
+
+   private static boolean isPixelOutOfBounds(int[] pixelIndices, int imageHeight, int imageWidth)
+   {
+      return pixelIndices[0] < 0 || pixelIndices[0] >= imageWidth || pixelIndices[1] < 0 || pixelIndices[1] >= imageHeight;
+   }
+
 
    public Runnable createBufferThread()
    {
