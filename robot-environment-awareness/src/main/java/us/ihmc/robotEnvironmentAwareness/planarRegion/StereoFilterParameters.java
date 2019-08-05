@@ -3,7 +3,7 @@ package us.ihmc.robotEnvironmentAwareness.planarRegion;
 public class StereoFilterParameters
 {
    private static final int DEFAULT_NUMBER_OF_BUFFER = 1;
-   private static final int DEFAULT_SIZE_OF_BUFFER = 1;
+   private static final int DEFAULT_SIZE_OF_BUFFER = 100000;
    private static final double DEFAULT_SURFACE_NORMAL_UPPER_BOUND_DEGREE = 40.0;
    private static final double DEFAULT_SURFACE_NORMAL_LOWER_BOUND_DEGREE = -40.0;
 
