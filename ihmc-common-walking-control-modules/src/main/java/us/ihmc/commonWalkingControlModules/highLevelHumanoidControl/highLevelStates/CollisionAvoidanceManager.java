@@ -85,6 +85,7 @@ public class CollisionAvoidanceManager
                                     YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       assert (parameters.useCollisionAvoidance());
+      assert (parameters.getActivationThreshold() <= parameters.getDeactivationThreshold());
       param = parameters;
       pointFeedbackCommand.set(elevator, body);
       pointFeedbackCommand.setControlMode(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);

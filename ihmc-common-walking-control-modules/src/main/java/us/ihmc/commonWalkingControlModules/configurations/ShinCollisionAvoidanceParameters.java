@@ -5,6 +5,9 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 
 public class ShinCollisionAvoidanceParameters extends CollisionAvoidanceParameters
 {
+   /**
+    * {@inheritDoc}
+    */
    @Override
    public Vector3DReadOnly getFirstFrameOffset()
    {
