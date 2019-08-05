@@ -529,12 +529,12 @@ public class WalkingCommandConsumer
       }
    }
 
-   public void consumeCollisioManagerCommand()
+   public void consumeCollisionAvoidanceManagerCommand()
    {
       if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CollisionAvoidanceManagerCommand.class))
       {
          CollisionAvoidanceManagerCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CollisionAvoidanceManagerCommand.class);
-         collisionManager.handleCollisionManagerCommand(command);
+         collisionManager.handleCollisionAvoidanceManagerCommand(command);
       }
    }
 }

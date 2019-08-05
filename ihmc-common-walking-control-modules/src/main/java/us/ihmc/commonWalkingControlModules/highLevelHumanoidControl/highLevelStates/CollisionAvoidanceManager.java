@@ -1,5 +1,7 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.PointFeedbackControlCommand;
@@ -22,6 +24,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionAvoidanceManagerCommand;
+import us.ihmc.humanoidRobotics.communication.packets.collisionAvoidance.CollisionAvoidanceMessageMode;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.screwTheory.SelectionMatrix3D;
@@ -58,6 +61,7 @@ public class CollisionAvoidanceManager
    private final FramePoint3D desiredPosition = new FramePoint3D();
    private final FrameVector3D zeroVector = new FrameVector3D();
 
+   private final RecyclingArrayList<AtomicBoolean> considerOnlyEdgesVector = new RecyclingArrayList<>(100, AtomicBoolean.class);
    private final RecyclingArrayList<PlanarRegion> planarRegions = new RecyclingArrayList<>(100, PlanarRegion.class);
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
@@ -165,7 +169,10 @@ public class CollisionAvoidanceManager
 
       for (int i = 0; i < planarRegions.size(); ++i)
       {
-         double distance = computeDistanceFromPlanarRegion(planarRegions.get(i), templPlaneDistanceVector, templPlaneClosestPointOnBody);
+         double distance = computeDistanceFromPlanarRegion(planarRegions.get(i),
+                                                           considerOnlyEdgesVector.get(i).get(),
+                                                           templPlaneDistanceVector,
+                                                           templPlaneClosestPointOnBody);
 
          if (distance < minDistance)
          {
@@ -221,16 +228,17 @@ public class CollisionAvoidanceManager
          pointFeedbackCommand.getGains().setIntegralGains(0.0, 0.0);
          pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxFeedback, maxFeedback * 10);
 
+         double desiredPointMultiplier = 0.9;
          desiredPosition.setToZero(ReferenceFrame.getWorldFrame());
-         desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getX(),
-                             closestPointOnBody.getY() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getY(),
-                             closestPointOnBody.getZ() - (distanceThreshold - minDistance) * 0.9 * distanceVector.getZ());
+         desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getX(),
+                             closestPointOnBody.getY() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getY(),
+                             closestPointOnBody.getZ() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getZ());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
          
-         desiredPositionX.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getX());
-         desiredPositionY.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getY());
-         desiredPositionZ.set(-(distanceThreshold - minDistance) * 0.9 * distanceVector.getZ());
+         desiredPositionX.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getX());
+         desiredPositionY.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getY());
+         desiredPositionZ.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getZ());
 
          distanceArrow.showGraphicObject();
          desiredPositionArrow.showGraphicObject();
@@ -275,23 +283,30 @@ public class CollisionAvoidanceManager
       return pointFeedbackCommand;
    }
 
-   public void handleCollisionManagerCommand(CollisionAvoidanceManagerCommand command)
+   public void handleCollisionAvoidanceManagerCommand(CollisionAvoidanceManagerCommand command)
    {
-      int regions = command.getNumberOfPlanarRegions();
-      numberOfPlanarSurfaces.set(regions);
-      planarRegions.clear();
+      int newRegions = command.getNumberOfPlanarRegions();
 
-      for (int i = 0; i < regions; i++)
+      if (command.getMode() == CollisionAvoidanceMessageMode.OVERRIDE)
       {
-         planarRegions.add();
-         command.getPlanarRegionCommand(i).getPlanarRegion(planarRegions.getLast());
+         planarRegions.clear();
+         considerOnlyEdgesVector.clear();
+         numberOfPlanarSurfaces.set(0);
+      }
+      numberOfPlanarSurfaces.set(newRegions + numberOfPlanarSurfaces.getIntegerValue());
+
+      for (int i = 0; i < newRegions; i++)
+      {
+         PlanarRegion newRegion = planarRegions.add();
+         command.getPlanarRegionCommand(i).getPlanarRegion(newRegion);
+         considerOnlyEdgesVector.add().set(command.considerOnlyEdges());
       }
    }
    
    private FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
    private FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
 
-   private double computeDistanceFromPlanarRegion(PlanarRegion region, FrameVector3D distanceVector, FramePoint3D pointOnBody)
+   private double computeDistanceFromPlanarRegion(PlanarRegion region, boolean considerOnlyEdges, FrameVector3D distanceVector, FramePoint3D pointOnBody)
    {
       firstEndPoseInPlaneCoordinates.set(firstEndPose);
       otherEndPoseInPlaneCoordinates.set(otherEndPose);
@@ -317,43 +332,44 @@ public class CollisionAvoidanceManager
       
       double minDistance = -1.0;
       
-      boolean firstProjectionIsInside = region.isPointInside(firstEndPoseInPlaneCoordinates.getX(),
-                                                                     firstEndPoseInPlaneCoordinates.getY());
-      
-      boolean otherProjectionIsInside = region.isPointInside(otherEndPoseInPlaneCoordinates.getX(),
-                                                                     otherEndPoseInPlaneCoordinates.getY());
-
-      if (firstProjectionIsInside || otherProjectionIsInside)
+      if (considerOnlyEdges)
       {
-         boolean firstIsCloser = firstProjectionIsInside
-               && (!otherProjectionIsInside || Math.abs(firstEndPoseInPlaneCoordinates.getZ()) < Math.abs(otherEndPoseInPlaneCoordinates.getZ()));
+         boolean firstProjectionIsInside = region.isPointInside(firstEndPoseInPlaneCoordinates.getX(), firstEndPoseInPlaneCoordinates.getY());
 
-         if (firstIsCloser)
+         boolean otherProjectionIsInside = region.isPointInside(otherEndPoseInPlaneCoordinates.getX(), otherEndPoseInPlaneCoordinates.getY());
+
+         if (firstProjectionIsInside || otherProjectionIsInside)
          {
-            minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
-            pointOnBody.set(firstEndPose.getPosition());
+            boolean firstIsCloser = firstProjectionIsInside
+                  && (!otherProjectionIsInside || Math.abs(firstEndPoseInPlaneCoordinates.getZ()) < Math.abs(otherEndPoseInPlaneCoordinates.getZ()));
 
-            firstEndPoseInPlaneCoordinates.setZ(0.0);
-            firstEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-            distanceVector.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
-                               firstEndPoseInPlaneCoordinates.getY() - firstEndPose.getPosition().getY(),
-                               firstEndPoseInPlaneCoordinates.getZ() - firstEndPose.getPosition().getZ());
-            firstEndPoseInPlaneCoordinates.set(firstEndPose);
-            firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
+            if (firstIsCloser)
+            {
+               minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
+               pointOnBody.set(firstEndPose.getPosition());
 
-         }
-         else
-         {
-            minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
-            pointOnBody.set(otherEndPose.getPosition());
+               firstEndPoseInPlaneCoordinates.setZ(0.0);
+               firstEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
+               distanceVector.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
+                                  firstEndPoseInPlaneCoordinates.getY() - firstEndPose.getPosition().getY(),
+                                  firstEndPoseInPlaneCoordinates.getZ() - firstEndPose.getPosition().getZ());
+               firstEndPoseInPlaneCoordinates.set(firstEndPose);
+               firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
 
-            otherEndPoseInPlaneCoordinates.setZ(0.0);
-            otherEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-            distanceVector.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
-                               otherEndPoseInPlaneCoordinates.getY() - otherEndPose.getPosition().getY(),
-                               otherEndPoseInPlaneCoordinates.getZ() - otherEndPose.getPosition().getZ());
-            otherEndPoseInPlaneCoordinates.set(otherEndPose);
-            otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
+            }
+            else
+            {
+               minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
+               pointOnBody.set(otherEndPose.getPosition());
+
+               otherEndPoseInPlaneCoordinates.setZ(0.0);
+               otherEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
+               distanceVector.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
+                                  otherEndPoseInPlaneCoordinates.getY() - otherEndPose.getPosition().getY(),
+                                  otherEndPoseInPlaneCoordinates.getZ() - otherEndPose.getPosition().getZ());
+               otherEndPoseInPlaneCoordinates.set(otherEndPose);
+               otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
+            }
          }
       }
 
