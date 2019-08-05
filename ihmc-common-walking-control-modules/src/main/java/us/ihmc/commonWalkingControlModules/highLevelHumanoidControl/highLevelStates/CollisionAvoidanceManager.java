@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import us.ihmc.commonWalkingControlModules.configurations.CollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.PointFeedbackControlCommand;
@@ -38,6 +39,7 @@ public class CollisionAvoidanceManager
 {
    private final PointFeedbackControlCommand pointFeedbackCommand = new PointFeedbackControlCommand();
 
+   private final CollisionAvoidanceParameters param;
    private final RigidBodyBasics body;
    private final ReferenceFrame firstEndLinkFrame, otherEndLinkFrame;
    private final FramePose3D firstEndPose = new FramePose3D();
@@ -78,14 +80,21 @@ public class CollisionAvoidanceManager
    private final YoGraphicVector distanceArrow, desiredPositionArrow;
    private final YoBoolean isActive;
 
-   public CollisionAvoidanceManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
-                           RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
+   public CollisionAvoidanceManager(CollisionAvoidanceParameters parameters, ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame,
+                                    RigidBodyBasics body, RigidBodyBasics elevator, YoVariableRegistry parentRegistry,
+                                    YoGraphicsListRegistry yoGraphicsListRegistry)
    {
+      assert (parameters.useCollisionAvoidance());
+      param = parameters;
       pointFeedbackCommand.set(elevator, body);
       pointFeedbackCommand.setControlMode(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
 
-      this.firstEndLinkFrame = firstEndLinkFrame;
-      this.otherEndLinkFrame = otherEndLinkFrame;
+      this.firstEndLinkFrame = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent(firstEndLinkFrame.getName() + "_plus_offset",
+                                                                                                     firstEndLinkFrame,
+                                                                                                     parameters.getFirstFrameOffset());
+      this.otherEndLinkFrame = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent(otherEndLinkFrame.getName() + "_plus_offset",
+                                                                                                     otherEndLinkFrame,
+                                                                                                     parameters.getSecondFrameOffset());
       this.body = body;
       parentRegistry.addChild(registry);
       bodyOriginX = new YoDouble("collision_" + body.getName() + "_originX", registry);
@@ -145,7 +154,7 @@ public class CollisionAvoidanceManager
    private FrameVector3D templPlaneDistanceVector = new FrameVector3D();
    private FramePoint3D templPlaneClosestPointOnBody = new FramePoint3D();
 
-   public void compute(boolean loadBearing)
+   public void compute()
    {
       
       firstEndPose.setToZero(firstEndLinkFrame);
@@ -166,10 +175,7 @@ public class CollisionAvoidanceManager
 
       bodyLine.set(firstEndPose.getPosition(), otherEndPose.getPosition());
 
-      double activationThreshold = 0.1;
-      double deactivationThreshold = 1.2 * activationThreshold;
-
-      double minDistance = deactivationThreshold;
+      double minDistance = param.getDeactivationThreshold();
 
       for (int i = 0; i < planarRegions.size(); ++i)
       {
@@ -187,11 +193,10 @@ public class CollisionAvoidanceManager
          }
       }
       
-      double maxZComponent = -0.1;
 
-      if (minDistanceVector.getZ() > maxZComponent)
+      if (minDistanceVector.getZ() > param.getMaximumVerticalDistanceComponent())
       {
-         minDistanceVector.setZ(maxZComponent);
+         minDistanceVector.setZ(param.getMaximumVerticalDistanceComponent());
          minDistanceVector.normalize();
       }
       
@@ -203,46 +208,44 @@ public class CollisionAvoidanceManager
       closestBodyPointZ.set(closestPointOnBody.getZ());
       minimumDistanceValue.set(minDistance);
 
-      setupCommands(activationThreshold, deactivationThreshold, minDistance, minDistanceVector);
+      setupCommands(minDistance, minDistanceVector);
    }
 
    private RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
    private WeightMatrix3D weights = new WeightMatrix3D();
    private SelectionMatrix3D selection = new SelectionMatrix3D();
 
-   private void setupCommands(double activationThreshold, double deactivationThreshold, double minDistance, FrameVector3D distanceVector)
+   private void setupCommands(double minDistance, FrameVector3D distanceVector)
    {
       if (minDistance >= 0.0
-            && (((minDistance < activationThreshold) && !isActive.getBooleanValue()) || ((minDistance < deactivationThreshold) && isActive.getBooleanValue())))
+            && (((minDistance < param.getActivationThreshold()) && !isActive.getBooleanValue())
+                  || ((minDistance < param.getDeactivationThreshold()) && isActive.getBooleanValue())))
       {
          ReferenceFrame closestPointFrame = computeClosestPointFrame();
-
-         double accelerationGain = 500.0;
-         double maxFeedback = 250.0;
 
          selection.setSelectionFrame(closestPointFrame);
          selection.setAxisSelection(false, false, true);
          pointFeedbackCommand.setSelectionMatrix(selection);
 
          weights.setWeightFrame(closestPointFrame);
-         weights.setWeights(0.0, 0.0, 10.0);
+         weights.setWeights(0.0, 0.0, param.getWeight());
          pointFeedbackCommand.setWeightMatrix(weights);
          pointFeedbackCommand.setBodyFixedPointToControl(body_H_closestPoint.getPosition());
-         pointFeedbackCommand.getGains().setProportionalGains(accelerationGain);
-         pointFeedbackCommand.getGains().setDerivativeGains(5.0 * Math.sqrt(accelerationGain));
+         pointFeedbackCommand.getGains().setProportionalGains(param.getProportionalGain());
+         pointFeedbackCommand.getGains().setDerivativeGains(param.getDerivativeGain());
          pointFeedbackCommand.getGains().setIntegralGains(0.0, 0.0);
-         pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxFeedback, maxFeedback * 10);
+         pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(param.getMaxFeedback(), param.getMaxFeedbackVariation());
 
          desiredPosition.setToZero(ReferenceFrame.getWorldFrame());
-         desiredPosition.set(closestPointOnBody.getX() - (activationThreshold - minDistance) * distanceVector.getX(),
-                             closestPointOnBody.getY() - (activationThreshold - minDistance) * distanceVector.getY(),
-                             closestPointOnBody.getZ() - (activationThreshold - minDistance) * distanceVector.getZ());
+         desiredPosition.set(closestPointOnBody.getX() - (param.getActivationThreshold() - minDistance) * distanceVector.getX(),
+                             closestPointOnBody.getY() - (param.getActivationThreshold() - minDistance) * distanceVector.getY(),
+                             closestPointOnBody.getZ() - (param.getActivationThreshold() - minDistance) * distanceVector.getZ());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
          
-         desiredPositionX.set(-(activationThreshold - minDistance) * distanceVector.getX());
-         desiredPositionY.set(-(activationThreshold - minDistance) * distanceVector.getY());
-         desiredPositionZ.set(-(activationThreshold - minDistance) * distanceVector.getZ());
+         desiredPositionX.set(-(param.getActivationThreshold() - minDistance) * distanceVector.getX());
+         desiredPositionY.set(-(param.getActivationThreshold() - minDistance) * distanceVector.getY());
+         desiredPositionZ.set(-(param.getActivationThreshold() - minDistance) * distanceVector.getZ());
 
          distanceArrow.showGraphicObject();
          desiredPositionArrow.showGraphicObject();

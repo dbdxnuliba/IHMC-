@@ -13,6 +13,7 @@ import us.ihmc.commonWalkingControlModules.configurations.ICPWithTimeFreezingPla
 import us.ihmc.commonWalkingControlModules.configurations.LeapOfFaithParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ParameterTools;
 import us.ihmc.commonWalkingControlModules.configurations.PelvisOffsetWhileWalkingParameters;
+import us.ihmc.commonWalkingControlModules.configurations.ShinCollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationManager;
@@ -25,8 +26,6 @@ import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHuma
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
-import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
@@ -66,7 +65,7 @@ public class HighLevelControlManagerFactory
    private FeetManager feetManager;
    private PelvisOrientationManager pelvisOrientationManager;
    private LegConfigurationManager legConfigurationManager;
-   private CollisionAvoidanceManager collisionManager;
+   private CollisionAvoidanceManager collisionAvoidanceManager;
 
    private final Map<String, RigidBodyControlManager> rigidBodyManagerMapByBodyName = new HashMap<>();
 
@@ -225,29 +224,33 @@ public class HighLevelControlManagerFactory
       return manager;
    }
 
-   public CollisionAvoidanceManager getOrCreateCollisionManager()
+   public CollisionAvoidanceManager getOrCreateCollisionAvoidanceManager()
    {
-      if (collisionManager != null)
+      if (collisionAvoidanceManager != null)
       {
-         return collisionManager;
+         return collisionAvoidanceManager;
       }
 
       MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH);
-      ReferenceFrame shinParent_plusOffset = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent("shinParent_plus_offset",
-                                                                                                                   shinParent,
-                                                                                                                   new Vector3D(0.11, 0.0, 0.0));
       RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH).getSuccessor();
       assert (shinBody.hasChildrenJoints());
       MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
-      ReferenceFrame shinChild_plusOffset = ReferenceFrameTools.constructFrameWithUnchangingTranslationFromParent("shinChild_plus_offset",
-                                                                                                                  shinChild,
-                                                                                                                  new Vector3D(0.0, 0.0, 0.0));
+
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
-      collisionManager = new CollisionAvoidanceManager(shinParent_plusOffset, shinChild_plusOffset, shinBody, elevator, registry, graphicsListRegistry);
+      ShinCollisionAvoidanceParameters collisionParams = new ShinCollisionAvoidanceParameters();
+      collisionParams.setUseCollisionAvoidance(true);
 
-      return collisionManager;
+      collisionAvoidanceManager = new CollisionAvoidanceManager(collisionParams,
+                                                                shinParent,
+                                                                shinChild,
+                                                                shinBody,
+                                                                elevator,
+                                                                registry,
+                                                                graphicsListRegistry);
+
+      return collisionAvoidanceManager;
    }
 
    public FeetManager getOrCreateFeetManager()
@@ -407,9 +410,9 @@ public class HighLevelControlManagerFactory
          ret.addCommand(pelvisOrientationManager.createFeedbackControlTemplate());
       }
 
-      if (collisionManager != null)
+      if (collisionAvoidanceManager != null)
       {
-         ret.addCommand(collisionManager.getFeedbackControlCommand());
+         ret.addCommand(collisionAvoidanceManager.getFeedbackControlCommand());
       }
 
       return ret;
