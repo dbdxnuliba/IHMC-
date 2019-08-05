@@ -44,8 +44,6 @@ public class StereoREAAnchorPaneController
    @FXML private ToggleButton ellipticity;
    @FXML private Slider ellipticityLength;
    @FXML private Slider ellipticityThreshold;
-   @FXML private Slider sparseLowerThreshold;
-   @FXML private Slider sparseUpperThreshold;
    @FXML private Slider proximityThreshold;
    @FXML private Slider planarityThreshold;
    @FXML private CheckBox enableExtending;
@@ -75,7 +73,6 @@ public class StereoREAAnchorPaneController
    private final SegmentationRawDataFilteringParametersProperty segmentationRawDataFilteringParametersProperty = new SegmentationRawDataFilteringParametersProperty(this,
                                                                                                                                                                     "segmentationRawDataFilteringParametersProperty");
    private final SuperPixelNormalEstimationParametersProperty rawSuperPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "rawSuperPixelNormalEstimationParametersProperty");
-   private final SuperPixelNormalEstimationParametersProperty fusedSuperPixelNormalEstimationParametersProperty = new SuperPixelNormalEstimationParametersProperty(this, "fusedSuperPixelNormalEstimationParametersProperty");
 
    @FXML
    private Button runSREA;
@@ -107,11 +104,10 @@ public class StereoREAAnchorPaneController
       segmentationRawDataFilteringParametersProperty.bindBidirectionalEnableFilterEllipticity(ellipticity.selectedProperty());
       segmentationRawDataFilteringParametersProperty.bindBidirectionalEllipticityParameters(ellipticityLength.valueProperty(),
                                                                                             ellipticityThreshold.valueProperty());
-      segmentationRawDataFilteringParametersProperty.bindBidirectionalMaxNormalVariance(maxNormalVariance.valueProperty());
-      segmentationRawDataFilteringParametersProperty.bindBidirectionalMinNormalConsensus(minNormalConsensus.valueProperty());
+//      segmentationRawDataFilteringParametersProperty.bindBidirectionalMaxNormalVariance(maxNormalVariance.valueProperty());
+//      segmentationRawDataFilteringParametersProperty.bindBidirectionalMinNormalConsensus(minNormalConsensus.valueProperty());
       messager.bindBidirectional(LidarImageFusionAPI.SegmentationRawDataFilteringParameters, segmentationRawDataFilteringParametersProperty, true);
 
-      planarRegionPropagationParametersProperty.bindBidirectionalSparseThreshold(sparseLowerThreshold.valueProperty(), sparseUpperThreshold.valueProperty());
       planarRegionPropagationParametersProperty.bindBidirectionalProximityThreshold(proximityThreshold.valueProperty());
       planarRegionPropagationParametersProperty.bindBidirectionalPlanarityThreshold(planarityThreshold.valueProperty());
       planarRegionPropagationParametersProperty.bindBidirectionalEnableExtending(enableExtending.selectedProperty());

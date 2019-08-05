@@ -2,8 +2,6 @@ package us.ihmc.robotEnvironmentAwareness.fusion.parameters;
 
 public class PlanarRegionPropagationParameters
 {
-   private static final double DEFAULT_LOWER_SPARSE_THRESHOLD = 0.01;
-   private static final double DEFAULT_UPPER_SPARSE_THRESHOLD = 0.03;
    private static final double DEFAULT_PROXIMITY_THRESHOLD = 0.02;
    private static final double DEFAULT_PLANARITY_THRESHOLD = Math.cos(Math.PI / 180 * 30);
 
@@ -12,8 +10,6 @@ public class PlanarRegionPropagationParameters
    private static final double DEFAULT_EXTENDING_DISTANCE_THRESHOLD = 0.01;
    private static final double DEFAULT_EXTENDING_RADIUS_THRESHOLD = 0.03;
 
-   private double sparseLowerThreshold;
-   private double sparseUpperThreshold;
    private double proximityThreshold;
    private double planarityThreshold;
    private boolean enableExtending;
@@ -33,8 +29,6 @@ public class PlanarRegionPropagationParameters
 
    public void setDefaultParameters()
    {
-      sparseLowerThreshold = DEFAULT_LOWER_SPARSE_THRESHOLD;
-      sparseUpperThreshold = DEFAULT_UPPER_SPARSE_THRESHOLD;
       proximityThreshold = DEFAULT_PROXIMITY_THRESHOLD;
       planarityThreshold = DEFAULT_PLANARITY_THRESHOLD;
 
@@ -46,8 +40,6 @@ public class PlanarRegionPropagationParameters
 
    public void set(PlanarRegionPropagationParameters other)
    {
-      sparseLowerThreshold = other.sparseLowerThreshold;
-      sparseUpperThreshold = other.sparseUpperThreshold;
       proximityThreshold = other.proximityThreshold;
       planarityThreshold = other.planarityThreshold;
 
@@ -55,16 +47,6 @@ public class PlanarRegionPropagationParameters
       updateExtendedData = other.updateExtendedData;
       extendingDistanceThreshold = other.extendingDistanceThreshold;
       extendingRadiusThreshold = other.extendingRadiusThreshold;
-   }
-
-   public double getSparseLowerThreshold()
-   {
-      return sparseLowerThreshold;
-   }
-
-   public double getSparseUpperThreshold()
-   {
-      return sparseUpperThreshold;
    }
 
    public double getProximityThreshold()
@@ -95,16 +77,6 @@ public class PlanarRegionPropagationParameters
    public double getExtendingRadiusThreshold()
    {
       return extendingRadiusThreshold;
-   }
-
-   public void setSparseLowerThreshold(double sparseLowerThreshold)
-   {
-      this.sparseLowerThreshold = sparseLowerThreshold;
-   }
-
-   public void setSparseUpperThreshold(double sparseUpperThreshold)
-   {
-      this.sparseUpperThreshold = sparseUpperThreshold;
    }
 
    public void setProximityThreshold(double proximityThreshold)

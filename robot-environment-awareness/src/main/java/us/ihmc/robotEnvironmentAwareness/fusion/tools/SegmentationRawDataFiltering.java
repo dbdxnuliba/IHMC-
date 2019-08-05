@@ -69,7 +69,7 @@ public class SegmentationRawDataFiltering
       }
       else if (rawSuperPixel.hasNormalQuality())
       {
-         SegmentationRawDataFiltering.updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters);
+//         SegmentationRawDataFiltering.updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters);
       }
 
       if (rawDataFilteringParameters.isEnableFilterCentrality())
@@ -133,10 +133,10 @@ public class SegmentationRawDataFiltering
       }
    }
 
-   public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters)
-   {
-      updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters.getMaxNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
-   }
+//   public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, SegmentationRawDataFilteringParameters rawDataFilteringParameters)
+//   {
+//      updateSparsityFromNormalQuality(rawSuperPixel, rawDataFilteringParameters.getMaxNormalVariance(), rawDataFilteringParameters.getMinNormalConsensus());
+//   }
 
    public static void updateSparsityFromNormalQuality(RawSuperPixelData rawSuperPixel, double varianceThreshold, double minimumConsensus)
    {

@@ -19,7 +19,7 @@ import us.ihmc.robotics.linearAlgebra.PrincipalComponentAnalysis3D;
 public class FusedSuperPixelData implements SuperPixelData
 {
    private static final boolean addInParallel = true;
-   private static final boolean USE_PCA_TO_UPDATE = true;
+   private static final boolean USE_PCA_TO_UPDATE = false;
 
    private final int id;
    private final TIntArrayList componentPixelLabels = new TIntArrayList();

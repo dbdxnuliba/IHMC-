@@ -152,6 +152,8 @@ public class StereoREAPlanarRegionSegmentationCalculator
          }
       }
 
+      newFusedSuperPixel.updateNormal(normalEstimationParameters);
+
       return newFusedSuperPixel;
    }
 

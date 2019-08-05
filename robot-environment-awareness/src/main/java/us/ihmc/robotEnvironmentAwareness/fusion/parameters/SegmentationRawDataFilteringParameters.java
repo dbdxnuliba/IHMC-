@@ -35,9 +35,6 @@ public class SegmentationRawDataFilteringParameters
    private double ellipticityMinimumLength;
    private double ellipticityThreshold;
 
-   private double maxNormalVariance;
-   private int minNormalConsensus;
-
    public SegmentationRawDataFilteringParameters()
    {
       setDefaultParameters();
@@ -64,9 +61,6 @@ public class SegmentationRawDataFilteringParameters
       enableFilterEllipticity = DEFAULT_ENABLE_FILTER_ELLIPTICITY;
       ellipticityMinimumLength = DEFAULT_ELLIPTICITY_MINIMUM_LENGTH;
       ellipticityThreshold = DEFAULT_ELLIPTICITY_THRESHOLD;
-
-      maxNormalVariance = DEFAULT_MIN_NORMAL_QUALITY;
-      minNormalConsensus = DEFAULT_MIN_NORMAL_CONSENSUS;
    }
 
    public void set(SegmentationRawDataFilteringParameters other)
@@ -85,9 +79,6 @@ public class SegmentationRawDataFilteringParameters
       enableFilterEllipticity = other.enableFilterEllipticity;
       ellipticityMinimumLength = other.ellipticityMinimumLength;
       ellipticityThreshold = other.ellipticityThreshold;
-
-      maxNormalVariance = other.maxNormalVariance;
-      minNormalConsensus = other.minNormalConsensus;
    }
 
    public double getMinimumSparseThreshold()
@@ -145,16 +136,6 @@ public class SegmentationRawDataFilteringParameters
       return ellipticityThreshold;
    }
 
-   public double getMaxNormalVariance()
-   {
-      return maxNormalVariance;
-   }
-
-   public int getMinNormalConsensus()
-   {
-      return minNormalConsensus;
-   }
-
    public void setMinimumSparseThreshold(double minimumSparseThreshold)
    {
       this.minimumSparseThreshold = minimumSparseThreshold;
@@ -210,13 +191,4 @@ public class SegmentationRawDataFilteringParameters
       this.ellipticityThreshold = ellipticityThreshold;
    }
 
-   public void setMaxNormalVariance(double maxNormalVariance)
-   {
-      this.maxNormalVariance = maxNormalVariance;
-   }
-
-   public void setMinNormalConsensus(int minNormalConsensus)
-   {
-      this.minNormalConsensus = minNormalConsensus;
-   }
 }

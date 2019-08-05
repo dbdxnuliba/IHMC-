@@ -150,24 +150,18 @@
 						<Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" prefHeight="20.0" text="Propagation Parameters" textAlignment="CENTER" />
 						<HBox prefHeight="60.0" prefWidth="200.0" spacing="5.0">
 							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" prefWidth="110.0" text="Sparse Bound" textAlignment="CENTER" />
-								<VBox prefHeight="200.0">
-									<children>
-										<Slider fx:id="sparseLowerThreshold" blockIncrement="0.01" majorTickUnit="0.005" max="0.05" maxWidth="1.7976931348623157E308" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.01" />
-										<Slider fx:id="sparseUpperThreshold" blockIncrement="0.01" majorTickUnit="0.005" max="0.05" maxWidth="1.7976931348623157E308" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.03" />
-									</children>
-								</VBox>
+								<VBox prefHeight="200.0" />
+      						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
+      							<children>
+      								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="110.0" text="Proximity (m)" textAlignment="CENTER" wrapText="true" />
+      								<Slider fx:id="proximityThreshold" blockIncrement="1.0" majorTickUnit="0.01" max="0.1" maxWidth="1.7976931348623157E308" min="0.01" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.05" />
+      							</children>
+      						</HBox>
 							</children>
 						</HBox>
 						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
 							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="110.0" text="Proximity (m)" textAlignment="CENTER" />
-								<Slider fx:id="proximityThreshold" blockIncrement="1.0" majorTickUnit="0.01" max="0.1" maxWidth="1.7976931348623157E308" min="0.01" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.05" />
-							</children>
-						</HBox>
-						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
-							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="110.0" text="Planarity (rad)" textAlignment="CENTER" />
+								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="110.0" text="Planarity (rad)" textAlignment="CENTER" wrapText="true" />
 								<Slider fx:id="planarityThreshold" blockIncrement="0.1" majorTickUnit="0.1" max="1.0" maxWidth="1.7976931348623157E308" min="0.3" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.6" />
 							</children>
 						</HBox>
@@ -177,12 +171,12 @@
             						<HBox alignment="CENTER" prefHeight="30.0" prefWidth="200.0">
             							<children>
             								<CheckBox fx:id="enableExtending" mnemonicParsing="false" prefHeight="17.0" prefWidth="100.0" selected="true" text="Extending" />
-            								<CheckBox fx:id="updateExtendedData" mnemonicParsing="false" prefHeight="17.0" prefWidth="100.0" text="Update Plane" />
+            								<CheckBox fx:id="updateExtendedData" mnemonicParsing="false" prefHeight="17.0" prefWidth="100.0" text="Update Plane" wrapText="true" />
             							</children>
             						</HBox>
             						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
             							<children>
-            								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="42.0" prefWidth="110.0" text="Distance (m)" textAlignment="CENTER" />
+            								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="42.0" prefWidth="110.0" text="Distance (m)" textAlignment="CENTER" wrapText="true" />
             								<Slider fx:id="extendingDistanceThreshold" blockIncrement="0.01" majorTickUnit="0.005" max="0.05" maxWidth="1.7976931348623157E308" min="0.005" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.01" />
             							</children>
             						</HBox>
@@ -243,29 +237,6 @@
                   </HBox>
                </children>
             </VBox>
-				<VBox prefHeight="350.0" prefWidth="200.0" spacing="5.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
-					<children>
-						<Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" prefHeight="20.0" text="Stitching Parameters" textAlignment="CENTER" />
-						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0" />
-						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
-							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="175.0" text="Alpha convex hull" textAlignment="CENTER" />
-							</children>
-						</HBox>
-						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
-							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="42.0" prefWidth="110.0" text="Proximity (m)" textAlignment="CENTER" />
-								<Slider fx:id="maxNormalVariance" blockIncrement="1.0" majorTickUnit="0.01" max="0.2" maxWidth="1.7976931348623157E308" min="0.01" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.05" />
-							</children>
-						</HBox>
-						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
-							<children>
-								<Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="42.0" prefWidth="110.0" text="Planarity (rad)" textAlignment="CENTER" />
-								<Slider fx:id="minNormalConsensus" blockIncrement="0.1" majorTickUnit="0.1" max="1.0" maxWidth="1.7976931348623157E308" min="0.3" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.6" />
-							</children>
-						</HBox>
-					</children>
-				</VBox>
 			</children>
 		</HBox>
 	</children>

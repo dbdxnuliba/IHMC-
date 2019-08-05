@@ -6,10 +6,6 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagati
 
 public class PlanarRegionPropagationParametersProperty extends ParametersProperty<PlanarRegionPropagationParameters>
 {
-   private final DoubleField sparseLowerThreshold = new DoubleField(PlanarRegionPropagationParameters::getSparseLowerThreshold,
-                                                                    (p, v) -> p.setSparseLowerThreshold(v));
-   private final DoubleField sparseUpperThreshold = new DoubleField(PlanarRegionPropagationParameters::getSparseUpperThreshold,
-                                                                    (p, v) -> p.setSparseUpperThreshold(v));
    private final DoubleField proximityThreshold = new DoubleField(PlanarRegionPropagationParameters::getProximityThreshold,
                                                                   (p, v) -> p.setProximityThreshold(v));
    private final DoubleField planarityThreshold = new DoubleField(PlanarRegionPropagationParameters::getPlanarityThreshold,
@@ -28,12 +24,7 @@ public class PlanarRegionPropagationParametersProperty extends ParametersPropert
    {
       super(bean, name, new PlanarRegionPropagationParameters());
    }
-   
-   public void bindBidirectionalSparseThreshold(Property<? extends Number> lowerProperty, Property<? extends Number> uppperProperty)
-   {
-      bindFieldBidirectionalToNumberProperty(lowerProperty, sparseLowerThreshold);
-      bindFieldBidirectionalToNumberProperty(uppperProperty, sparseUpperThreshold);
-   }
+
 
    public void bindBidirectionalProximityThreshold(Property<? extends Number> property)
    {
