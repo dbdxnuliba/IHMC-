@@ -38,6 +38,7 @@ public class PlanarRegionFeatureUpdater implements RegionFeaturesProvider
    private final AtomicReference<IntersectionEstimationParameters> intersectionEstimationParameters;
 
    private final AtomicReference<Boolean> enableREA;
+   private final AtomicReference<Boolean> runSingleThreaded;
 
    private List<LineSegment3D> planarRegionsIntersections = null;
 
@@ -53,6 +54,7 @@ public class PlanarRegionFeatureUpdater implements RegionFeaturesProvider
       clearCustomRegions = reaMessager.createInput(REAModuleAPI.CustomRegionsClear, false);
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
+      runSingleThreaded = messager.createInput(LidarImageFusionAPI.RunSingleThreaded, false);
 
       fusedSuperPixels = messager.createInput(LidarImageFusionAPI.FusedSuperPixelData);
 
@@ -80,7 +82,7 @@ public class PlanarRegionFeatureUpdater implements RegionFeaturesProvider
          @Override
          public void run()
          {
-            if (!enableREA.get())
+            if (!enableREA.get() || runSingleThreaded.get())
             {
                return;
             }
@@ -111,7 +113,7 @@ public class PlanarRegionFeatureUpdater implements RegionFeaturesProvider
 
    public boolean update()
    {
-      boolean success = planarRegionSegmentationCalculator.calculatePlanarRegionSegmentationFromSuperPixels();
+      boolean success = planarRegionSegmentationCalculator.convertSuperPixelsToPlanarRegionSegmentationRawData();
       if (success)
       {
          List<PlanarRegionSegmentationRawData> rawData = planarRegionSegmentationCalculator.getSegmentationRawData();

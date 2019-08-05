@@ -31,8 +31,10 @@ public class RawSuperPixelImageFactory
    private static final boolean enableDisplayProjectedPointCloud = false;
 
    private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
-//   private static final int matType = opencv_core.CV_8UC3;
 
+//   private static final opencv_imgproc opencv_imgproc = new opencv_imgproc();
+//   private static final opencv_ximgproc opencv_ximgproc = new opencv_ximgproc();
+//   private static final opencv_core opencv_core = new opencv_core();
 
    private BufferedImage segmentedContour;
    private BufferedImage projectedPointCloud;
@@ -208,6 +210,9 @@ public class RawSuperPixelImageFactory
       UByteRawIndexer indexer = imageMat.createIndexer();
       for (StereoPoint point : bufferedImage.getPoints())
       {
+         if (point == null)
+            continue;
+
          int rgb = point.getColor();
          int x = point.getXIndex();
          int y = point.getYIndex();

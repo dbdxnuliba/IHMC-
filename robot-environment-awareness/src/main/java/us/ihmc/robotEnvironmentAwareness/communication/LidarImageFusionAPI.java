@@ -91,6 +91,7 @@ public class LidarImageFusionAPI
 
    public static final Topic<Boolean> EnableREA = UICategory.child(StereoREA).topic(Enable);
    public static final Topic<Boolean> ClearREA = UICategory.child(StereoREA).topic(Clear);
+   public static final Topic<Boolean> RunSingleThreaded = UICategory.child(StereoREA).child(Buffer).topic(Enable);
 
    public static final Topic<String> DataFilteringTime = UICategory.child(DataFiltering).topic(Time);
    public static final Topic<String> DataFusingTime = UICategory.child(FusionData).topic(Time);

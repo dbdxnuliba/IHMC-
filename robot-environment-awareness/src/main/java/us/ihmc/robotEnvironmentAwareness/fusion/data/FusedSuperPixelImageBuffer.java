@@ -25,6 +25,7 @@ public class FusedSuperPixelImageBuffer
    private final AtomicReference<SuperPixelNormalEstimationParameters> normalEstimationParameters;
 
    private final AtomicReference<Boolean> enableREA;
+   private final AtomicReference<Boolean> runSingleThreaded;
 
    private final AtomicReference<List<FusedSuperPixelData>> newBuffer = new AtomicReference<>();
 
@@ -37,6 +38,7 @@ public class FusedSuperPixelImageBuffer
       this.messager = messager;
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
+      runSingleThreaded = messager.createInput(LidarImageFusionAPI.RunSingleThreaded, false);
 
       superPixelImage = messager.createInput(LidarImageFusionAPI.RawSuperPixelData);
 
@@ -59,7 +61,7 @@ public class FusedSuperPixelImageBuffer
          @Override
          public void run()
          {
-            if (!enableREA.get())
+            if (!enableREA.get() || runSingleThreaded.get())
             {
                return;
             }

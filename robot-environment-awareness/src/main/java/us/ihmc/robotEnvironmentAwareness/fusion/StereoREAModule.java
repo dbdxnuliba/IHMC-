@@ -37,6 +37,7 @@ public class StereoREAModule
    private final Messager messager;
 
    private final AtomicReference<Boolean> enable;
+   private final AtomicReference<Boolean> runSingleThreaded;
    private final AtomicReference<Boolean> isRunning = new AtomicReference<Boolean>(false);
    private final RawSuperPixelImageBuffer rawSuperPixelImageBuffer;
    private final FusedSuperPixelImageBuffer fusedSuperPixelImageBuffer;
@@ -47,7 +48,7 @@ public class StereoREAModule
    private static final int THREAD_PERIOD_MILLISECONDS = 200;
    private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 300;
 
-   private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(3, getClass(), ExceptionHandling.CATCH_AND_REPORT);
+   private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(2, getClass(), ExceptionHandling.CATCH_AND_REPORT);
 
    private final ArrayList<ScheduledFuture<?>> scheduledFutures = new ArrayList<>();
 
@@ -60,6 +61,7 @@ public class StereoREAModule
       planarRegionFeatureUpdater = new PlanarRegionFeatureUpdater(reaMessager, messager);
 
       enable = messager.createInput(LidarImageFusionAPI.EnableREA, false);
+      runSingleThreaded = messager.createInput(LidarImageFusionAPI.RunSingleThreaded, false);
 
       planarRegionNetworkProvider = new REAPlanarRegionPublicNetworkProvider(reaMessager, planarRegionFeatureUpdater, ros2Node, publisherTopicNameGenerator,
                                                                              subscriberTopicNameGenerator);
@@ -103,6 +105,7 @@ public class StereoREAModule
       if (scheduledFutures.isEmpty())
       {
          scheduledFutures.add(executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
+         scheduledFutures.add(executorService.scheduleAtFixedRate(this::run, 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
          scheduledFutures.add(executorService.scheduleAtFixedRate(rawSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
          scheduledFutures.add(executorService.scheduleAtFixedRate(fusedSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
          scheduledFutures.add(executorService.scheduleAtFixedRate(planarRegionFeatureUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
@@ -143,6 +146,12 @@ public class StereoREAModule
       }
    }
 
+   public void run()
+   {
+      if (runSingleThreaded.get() && enable.get())
+         singleRun();
+   }
+
    public void singleRun()
    {
       isRunning.set(true);
@@ -151,13 +160,17 @@ public class StereoREAModule
       rawSuperPixelImageBuffer.updateNewBuffer();
 
       RawSuperPixelImage rawSuperPixelData = rawSuperPixelImageBuffer.pollNewBuffer();
+      if (rawSuperPixelData == null)
+         return;
+
       messager.submitMessage(LidarImageFusionAPI.RawSuperPixelData, rawSuperPixelData);
 
       double filteringTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
 
-      fusedSuperPixelImageBuffer.updateNewBuffer();
+      List<FusedSuperPixelData> fusedSuperPixelData = fusedSuperPixelImageBuffer.updateNewBuffer(rawSuperPixelData);
+      if (fusedSuperPixelData == null)
+         return;
 
-      List<FusedSuperPixelData> fusedSuperPixelData = fusedSuperPixelImageBuffer.pollNewBuffer();
       messager.submitMessage(LidarImageFusionAPI.FusedSuperPixelData, fusedSuperPixelData);
 
       double fusingTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - filteringTime;

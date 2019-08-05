@@ -38,6 +38,7 @@
 								<ToggleButton fx:id="showRawData" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showRawData" text="Show Raw Data" />
 								<ToggleButton fx:id="showFusedData" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showFusedData" text="Show Fused Data" />
 								<ToggleButton fx:id="showPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showPlanarRegions" selected="true" text="Show Planar Regions" />
+								<ToggleButton fx:id="runSingleThreaded" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#runSingleThreaded" text="Run Single Threaded" />
 							</children>
 						</VBox>
 					</children>

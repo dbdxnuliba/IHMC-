@@ -34,6 +34,7 @@ public class StereoREAAnchorPaneController
    @FXML private ToggleButton showRawData;
    @FXML private ToggleButton showFusedData;
    @FXML private ToggleButton showPlanarRegions;
+   @FXML private ToggleButton runSingleThreaded;
    @FXML private Slider superpixelMinimumElement;
    @FXML private Slider minSparse;
    @FXML private Slider sparseRatio;
@@ -165,6 +166,11 @@ public class StereoREAAnchorPaneController
    public void showPlanarRegions()
    {
       messager.submitMessage(LidarImageFusionAPI.ShowPlanarRegions, showPlanarRegions.isSelected());
+   }
+
+   public void runSingleThreaded()
+   {
+      messager.submitMessage(LidarImageFusionAPI.RunSingleThreaded, runSingleThreaded.isSelected());
    }
 
    public void showProjection()

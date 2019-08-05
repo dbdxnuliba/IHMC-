@@ -30,7 +30,7 @@ public class PlanarRegionSegmentationCalculator
       return regionsNodeNata.get();
    }
 
-   public boolean calculatePlanarRegionSegmentationFromSuperPixels()
+   public boolean convertSuperPixelsToPlanarRegionSegmentationRawData()
    {
       regionsNodeNata.set(convertSuperPixelsToPlanarRegionSegmentationRawData(latestFusedSuperPixels.get()));
       return true;
