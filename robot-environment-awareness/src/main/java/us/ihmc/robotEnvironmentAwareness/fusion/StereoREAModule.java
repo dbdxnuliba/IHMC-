@@ -5,6 +5,7 @@ import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationPr
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -20,9 +21,7 @@ import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.packets.BoundingBoxParametersMessage;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelImageBuffer;
-import us.ihmc.robotEnvironmentAwareness.fusion.data.StereoREAPlanarRegionFeatureUpdater;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.*;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.PointCloudProjectionHelper;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
@@ -38,8 +37,9 @@ public class StereoREAModule
 
    private final AtomicReference<Boolean> enable;
    private final AtomicReference<Boolean> isRunning = new AtomicReference<Boolean>(false);
+   private final RawSuperPixelImageBuffer rawSuperPixelImageBuffer;
    private final FusedSuperPixelImageBuffer fusedSuperPixelImageBuffer;
-   private final StereoREAPlanarRegionFeatureUpdater planarRegionFeatureUpdater;
+   private final PlanarRegionFeatureUpdater planarRegionFeatureUpdater;
 
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
 
@@ -54,8 +54,9 @@ public class StereoREAModule
    {
       this.messager = messager;
       this.reaMessager = reaMessager;
-      fusedSuperPixelImageBuffer = new FusedSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
-      planarRegionFeatureUpdater = new StereoREAPlanarRegionFeatureUpdater(reaMessager, messager);
+      rawSuperPixelImageBuffer = new RawSuperPixelImageBuffer(messager, PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
+      fusedSuperPixelImageBuffer = new FusedSuperPixelImageBuffer(reaMessager, messager);
+      planarRegionFeatureUpdater = new PlanarRegionFeatureUpdater(reaMessager, messager);
 
       enable = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
@@ -88,12 +89,12 @@ public class StereoREAModule
 
    public void updateLatestStereoVisionPointCloudMessage(StereoVisionPointCloudMessage message)
    {
-      fusedSuperPixelImageBuffer.updateLatestStereoVisionPointCloudMessage(message);
+      rawSuperPixelImageBuffer.updateLatestStereoVisionPointCloudMessage(message);
    }
 
    public void updateLatestBufferedImage(BufferedImage bufferedImage)
    {
-      fusedSuperPixelImageBuffer.updateLatestBufferedImage(bufferedImage);
+      rawSuperPixelImageBuffer.updateLatestBufferedImage(bufferedImage);
    }
 
    public void start()
@@ -101,6 +102,7 @@ public class StereoREAModule
       if (scheduled == null)
       {
          scheduled = executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+         executorService.scheduleAtFixedRate(rawSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
          executorService.scheduleAtFixedRate(fusedSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
          executorService.scheduleAtFixedRate(planarRegionFeatureUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
       }
@@ -144,14 +146,21 @@ public class StereoREAModule
       isRunning.set(true);
       long runningStartTime = System.nanoTime();
 
-      fusedSuperPixelImageBuffer.updateNewBuffer();
+      rawSuperPixelImageBuffer.updateNewBuffer();
 
-      RawSuperPixelImage newBuffer = fusedSuperPixelImageBuffer.pollNewBuffer();
-      messager.submitMessage(LidarImageFusionAPI.RawSuperPixelData, newBuffer);
+      RawSuperPixelImage rawSuperPixelData = rawSuperPixelImageBuffer.pollNewBuffer();
+      messager.submitMessage(LidarImageFusionAPI.RawSuperPixelData, rawSuperPixelData);
 
       double filteringTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
 
-      planarRegionFeatureUpdater.updateLatestLidarImageFusionData(newBuffer);
+      fusedSuperPixelImageBuffer.updateNewBuffer();
+
+      List<FusedSuperPixelData> fusedSuperPixelData = fusedSuperPixelImageBuffer.pollNewBuffer();
+      messager.submitMessage(LidarImageFusionAPI.FusedSuperPixelData, fusedSuperPixelData);
+
+      double fusingTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - filteringTime;
+
+      planarRegionFeatureUpdater.updateLatestSuperPixels(fusedSuperPixelData);
 
       if (planarRegionFeatureUpdater.update())
       {
@@ -159,13 +168,17 @@ public class StereoREAModule
          reportPlanarRegionState();
       }
 
-      double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - filteringTime;
+      double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - fusingTime;
+
 
       double runningTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);
       String filteringTimeMessage = new DecimalFormat("##.###").format(filteringTime) + "(sec)";
+      String fusingTimeMessage = new DecimalFormat("##.###").format(fusingTime) + "(sec)";
       String segmentationTimeMessage = new DecimalFormat("##.###").format(segmentationTime) + "(sec)";
       String runningTimeMessage = new DecimalFormat("##.###").format(runningTime) + "(sec)";
+
       messager.submitMessage(LidarImageFusionAPI.DataFilteringTime, filteringTimeMessage);
+      messager.submitMessage(LidarImageFusionAPI.DataFusingTime, fusingTimeMessage);
       messager.submitMessage(LidarImageFusionAPI.ImageSegmentationTime, segmentationTimeMessage);
       messager.submitMessage(LidarImageFusionAPI.ComputationTime, runningTimeMessage);
       isRunning.set(false);

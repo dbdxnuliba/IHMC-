@@ -1,23 +1,27 @@
-package us.ihmc.robotEnvironmentAwareness.fusion.data;
-
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
+package us.ihmc.robotEnvironmentAwareness.fusion.dataFactory;
 
 import gnu.trove.list.array.TIntArrayList;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.FusedSuperPixelData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
+import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelImage;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
-import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelTools;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
 
-public class StereoREAPlanarRegionSegmentationCalculator
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+public class FusedSuperPixelsFactory
 {
    private final PlanarRegionPropagationParameters planarRegionPropagationParameters = new PlanarRegionPropagationParameters();
-   private final SegmentationRawDataFilteringParameters segmentationRawDataFilteringParameters = new SegmentationRawDataFilteringParameters();
    private final SuperPixelNormalEstimationParameters normalEstimationParameters = new SuperPixelNormalEstimationParameters();
 
    private static final int NUMBER_OF_ITERATIONS = 1000;
@@ -29,7 +33,6 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
    private final AtomicReference<RawSuperPixelImage> latestSuperPixelImage = new AtomicReference<>(null);
    private final AtomicReference<List<FusedSuperPixelData>> latestFusedSuperPixels = new AtomicReference<>(null);
-   private final AtomicReference<List<PlanarRegionSegmentationRawData>> regionsNodeNata = new AtomicReference<>(null);
 
    public void updateFusionData(RawSuperPixelImage rawSuperPixelImage, SegmentationRawDataFilteringParameters rawDataFilteringParameters,
                                 PlanarRegionPropagationParameters propagationParameters, SuperPixelNormalEstimationParameters normalEstimationParameters)
@@ -37,24 +40,17 @@ public class StereoREAPlanarRegionSegmentationCalculator
       SegmentationRawDataFiltering.updateSparsity(rawSuperPixelImage, rawDataFilteringParameters);
       latestSuperPixelImage.set(rawSuperPixelImage);
       planarRegionPropagationParameters.set(propagationParameters);
-      segmentationRawDataFilteringParameters.set(rawDataFilteringParameters);
       this.normalEstimationParameters.set(normalEstimationParameters);
    }
 
    public void initialize()
    {
       latestFusedSuperPixels.set(null);
-      regionsNodeNata.set(null);
    }
 
    public List<FusedSuperPixelData> getFusedSuperPixels()
    {
       return latestFusedSuperPixels.get();
-   }
-
-   public List<PlanarRegionSegmentationRawData> getSegmentationRawData()
-   {
-      return regionsNodeNata.get();
    }
 
    public boolean fuseSimilarRawSuperPixels()
@@ -74,12 +70,6 @@ public class StereoREAPlanarRegionSegmentationCalculator
 
       latestFusedSuperPixels.set(fusedSuperPixels);
 
-      return true;
-   }
-
-   public boolean calculatePlanarRegionSegmentationFromSuperPixels()
-   {
-      regionsNodeNata.set(convertSuperPixelsToPlanarRegionSegmentationRawData(latestFusedSuperPixels.get()));
       return true;
    }
 
@@ -204,24 +194,4 @@ public class StereoREAPlanarRegionSegmentationCalculator
       }
    }
 
-   /**
-    * The id of the PlanarRegionSegmentationRawData is randomly selected to be visualized efficiently rather than selected by SegmentationNodeData.getId().
-    */
-   private static List<PlanarRegionSegmentationRawData> convertSuperPixelsToPlanarRegionSegmentationRawData(List<FusedSuperPixelData> fusedSuperPixels)
-   {
-      return fusedSuperPixels.parallelStream().filter(StereoREAPlanarRegionSegmentationCalculator::hasEnoughComponents)
-                      .map(StereoREAPlanarRegionSegmentationCalculator::convertSuperPixelToPlanarRegionSegmentationRawData).collect(Collectors.toList());
-   }
-
-   private static boolean hasEnoughComponents(FusedSuperPixelData fusedSuperPixelData)
-   {
-      return fusedSuperPixelData.getNumberOfComponentSuperPixels() >= MINIMUM_NUMBER_OF_SEGMENTATION_RAW_DATA_FOR_PLANAR_REGION;
-   }
-
-   private static PlanarRegionSegmentationRawData convertSuperPixelToPlanarRegionSegmentationRawData(FusedSuperPixelData fusedSuperPixelData)
-   {
-      return new PlanarRegionSegmentationRawData(ThreadLocalRandom.current().nextInt(), fusedSuperPixelData.getNormal(), fusedSuperPixelData.getCenter(),
-                                                 fusedSuperPixelData.getPointsInPixel());
-
-   }
 }

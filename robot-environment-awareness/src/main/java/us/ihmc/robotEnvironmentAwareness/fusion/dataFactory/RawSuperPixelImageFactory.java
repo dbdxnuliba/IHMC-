@@ -1,4 +1,4 @@
-package us.ihmc.robotEnvironmentAwareness.fusion.tools;
+package us.ihmc.robotEnvironmentAwareness.fusion.dataFactory;
 
 import org.bytedeco.javacpp.indexer.UByteRawIndexer;
 import org.bytedeco.opencv.global.opencv_core;
@@ -15,6 +15,8 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationPara
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 
 import java.awt.image.BufferedImage;
 import java.nio.IntBuffer;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-public class FusedSuperPixelImageFactory
+public class RawSuperPixelImageFactory
 {
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = false;
@@ -115,7 +117,7 @@ public class FusedSuperPixelImageFactory
          }
       }
 
-      // update and calculate normal.
+      // updateNewBuffer and updateNewBuffer normal.
       Stream<RawSuperPixelData> superPixelStream = StereoREAParallelParameters.updateRawSuperPixelNormalsInParallel ? rawSuperPixels.parallelStream() : rawSuperPixels.stream();
       superPixelStream.forEach(superPixel -> updateSuperpixelAndCalculateNormal(superPixel, segmentationRawDataFilteringParameters, normalEstimationParameters));
 

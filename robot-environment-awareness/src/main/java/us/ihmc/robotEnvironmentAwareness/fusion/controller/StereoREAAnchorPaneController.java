@@ -20,6 +20,7 @@ public class StereoREAAnchorPaneController
 
    @FXML private Label computationTime;
    @FXML private Label dataFilteringTime;
+   @FXML private Label dataFusingTime;
    @FXML private Label segmentationTime;
    @FXML private ToggleButton enableREA;
    @FXML private Button clearREA;
@@ -84,6 +85,7 @@ public class StereoREAAnchorPaneController
       messager.bindBidirectional(LidarImageFusionAPI.EnableREA, enableREA.selectedProperty(), false);
       messager.bindBidirectional(LidarImageFusionAPI.ComputationTime, computationTime.textProperty(), false);
       messager.bindBidirectional(LidarImageFusionAPI.DataFilteringTime, dataFilteringTime.textProperty(), false);
+      messager.bindBidirectional(LidarImageFusionAPI.DataFusingTime, dataFusingTime.textProperty(), false);
       messager.bindBidirectional(LidarImageFusionAPI.ImageSegmentationTime, segmentationTime.textProperty(), false);
       messager.bindBidirectional(LidarImageFusionAPI.StereoBufferSize, stereoBuffer.valueProperty(), numberToIntegerConverter, true);
 

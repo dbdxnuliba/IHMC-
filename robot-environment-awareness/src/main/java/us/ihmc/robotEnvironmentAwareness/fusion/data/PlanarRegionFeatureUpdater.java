@@ -1,10 +1,5 @@
 package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
-import java.text.DecimalFormat;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.commons.Conversions;
@@ -14,38 +9,30 @@ import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
-import us.ihmc.robotEnvironmentAwareness.fusion.dataFactory.StereoREAPlanarRegionSegmentationCalculator;
-import us.ihmc.robotEnvironmentAwareness.fusion.parameters.PlanarRegionPropagationParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
-import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.dataFactory.PlanarRegionSegmentationCalculator;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomPlanarRegionHandler;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomRegionMergeParameters;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.IntersectionEstimationParameters;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionIntersectionCalculator;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionPolygonizer;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationNodeData;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationRawData;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.PolygonizerParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.*;
 import us.ihmc.robotEnvironmentAwareness.updaters.RegionFeaturesProvider;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 
-public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvider
+import java.text.DecimalFormat;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class PlanarRegionFeatureUpdater implements RegionFeaturesProvider
 {
-   private final StereoREAPlanarRegionSegmentationCalculator planarRegionSegmentationCalculator = new StereoREAPlanarRegionSegmentationCalculator();
+   private final PlanarRegionSegmentationCalculator planarRegionSegmentationCalculator = new PlanarRegionSegmentationCalculator();
    private PlanarRegionsList planarRegionsList = null;
 
    private final TIntObjectHashMap<PlanarRegion> customPlanarRegions = new TIntObjectHashMap<>();
 
-   private final AtomicReference<RawSuperPixelImage> superPixelImage;
+   private final AtomicReference<List<FusedSuperPixelData>> fusedSuperPixels;
    private final AtomicReference<Boolean> enableCustomRegions;
    private final AtomicReference<Boolean> clearCustomRegions;
    private final AtomicReference<CustomRegionMergeParameters> customRegionMergingParameters;
 
-   private final AtomicReference<SegmentationRawDataFilteringParameters> segmentationRawDataFilteringParameters;
-   private final AtomicReference<PlanarRegionPropagationParameters> planarRegionPropagationParameters;
-   private final AtomicReference<SuperPixelNormalEstimationParameters> normalEstimationParameters;
    private final AtomicReference<ConcaveHullFactoryParameters> concaveHullFactoryParameters;
    private final AtomicReference<PolygonizerParameters> polygonizerParameters;
    private final AtomicReference<IntersectionEstimationParameters> intersectionEstimationParameters;
@@ -57,7 +44,7 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
    private final Messager reaMessager;
    private final Messager messager;
 
-   public StereoREAPlanarRegionFeatureUpdater(Messager reaMessager, SharedMemoryJavaFXMessager messager)
+   public PlanarRegionFeatureUpdater(Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
       this.reaMessager = reaMessager;
       this.messager = messager;
@@ -67,22 +54,17 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
-      superPixelImage = messager.createInput(LidarImageFusionAPI.RawSuperPixelData);
+      fusedSuperPixels = messager.createInput(LidarImageFusionAPI.FusedSuperPixelData);
 
       concaveHullFactoryParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsConcaveHullParameters, new ConcaveHullFactoryParameters());
       polygonizerParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsPolygonizerParameters, new PolygonizerParameters());
       intersectionEstimationParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsIntersectionParameters, new IntersectionEstimationParameters());
-      segmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
-                                                                    new SegmentationRawDataFilteringParameters());
-      planarRegionPropagationParameters = messager.createInput(LidarImageFusionAPI.PlanarRegionPropagationParameters, new PlanarRegionPropagationParameters());
-      normalEstimationParameters = messager.createInput(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
       customRegionMergingParameters = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingParameters, new CustomRegionMergeParameters());
    }
 
-   public void updateLatestLidarImageFusionData(RawSuperPixelImage rawSuperPixelImage)
+   public void updateLatestSuperPixels(List<FusedSuperPixelData> fusedSuperPixels)
    {
-      planarRegionSegmentationCalculator.updateFusionData(rawSuperPixelImage, segmentationRawDataFilteringParameters.get(),
-                                                          planarRegionPropagationParameters.get(), normalEstimationParameters.get());
+      planarRegionSegmentationCalculator.updatedFusedSuperPixelData(fusedSuperPixels);
       planarRegionSegmentationCalculator.initialize();
    }
 
@@ -103,14 +85,14 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
                return;
             }
 
-            RawSuperPixelImage newScan = superPixelImage.getAndSet(null);
+            List<FusedSuperPixelData> newData = fusedSuperPixels.getAndSet(null);
 
-            if (newScan == null)
+            if (newData == null)
                return;
 
             long runningStartTime = System.nanoTime();
 
-            updateLatestLidarImageFusionData(newScan);
+            updateLatestSuperPixels(newData);
 
             if (update() && planarRegionsList != null)
             {
@@ -129,13 +111,8 @@ public class StereoREAPlanarRegionFeatureUpdater implements RegionFeaturesProvid
 
    public boolean update()
    {
-      if (!planarRegionSegmentationCalculator.fuseSimilarRawSuperPixels())
-         return false;
-
-      messager.submitMessage(LidarImageFusionAPI.FusedSuperPixelData, planarRegionSegmentationCalculator.getFusedSuperPixels());
-
-      boolean calculationIsDone = planarRegionSegmentationCalculator.calculatePlanarRegionSegmentationFromSuperPixels();
-      if (calculationIsDone)
+      boolean success = planarRegionSegmentationCalculator.calculatePlanarRegionSegmentationFromSuperPixels();
+      if (success)
       {
          List<PlanarRegionSegmentationRawData> rawData = planarRegionSegmentationCalculator.getSegmentationRawData();
          updateIntersections(rawData);

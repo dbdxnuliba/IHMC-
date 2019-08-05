@@ -191,7 +191,7 @@ public class FusionSensorObjectDetectionManager
    }
 
    /**
-    * To calculate {@code DoorParameterPacket}, calculator needs handle ROI with door ROI.
+    * To updateNewBuffer {@code DoorParameterPacket}, calculator needs handle ROI with door ROI.
     * @param doorROI
     * @param handleROI
     */

@@ -1,4 +1,4 @@
-package us.ihmc.robotEnvironmentAwareness.fusion.tools;
+package us.ihmc.robotEnvironmentAwareness.fusion.dataFactory;
 
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.robotEnvironmentAwareness.fusion.data.RawSuperPixelData;
@@ -9,6 +9,8 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationPara
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.StereoREAParallelParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SegmentationRawDataFiltering;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelNormalEstimationTools;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -102,7 +104,7 @@ public class SuperPixelGridImageFactory
          }
       }
 
-      // update and calculate normal.
+      // updateNewBuffer and updateNewBuffer normal.
       Stream<RawSuperPixelData> superPixelStream = StereoREAParallelParameters.updateRawSuperPixelNormalsInParallel ? rawSuperPixels.parallelStream() : rawSuperPixels.stream();
       superPixelStream.forEach(superPixel -> updateSuperpixelAndCalculateNormal(superPixel, segmentationRawDataFilteringParameters, normalEstimationParameters));
 
