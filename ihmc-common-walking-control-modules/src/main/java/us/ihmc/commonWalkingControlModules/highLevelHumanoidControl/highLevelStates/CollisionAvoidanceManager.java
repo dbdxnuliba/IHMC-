@@ -67,7 +67,7 @@ public class CollisionAvoidanceManager
    private final RecyclingArrayList<AtomicBoolean> considerOnlyEdgesVector = new RecyclingArrayList<>(100, AtomicBoolean.class);
    private final RecyclingArrayList<PlanarRegion> planarRegions = new RecyclingArrayList<>(100, PlanarRegion.class);
 
-   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+   private final YoVariableRegistry registry;
 
    private final YoDouble bodyOriginX, bodyOriginY, bodyOriginZ;
    private final YoDouble bodyEndX, bodyEndY, bodyEndZ;
@@ -75,7 +75,7 @@ public class CollisionAvoidanceManager
    private final YoDouble closestBodyPointX, closestBodyPointY, closestBodyPointZ;
    private final YoDouble desiredPositionX, desiredPositionY, desiredPositionZ;
    private final YoInteger closestPlanarRegion;
-   private final YoDouble measuredDistance, minimumDistanceValue;
+   private final YoDouble minimumDistanceValue;
    private final YoInteger numberOfPlanarSurfaces;
    private final YoGraphicVector distanceArrow, desiredPositionArrow;
    private final YoBoolean isActive;
@@ -96,6 +96,7 @@ public class CollisionAvoidanceManager
                                                                                                      otherEndLinkFrame,
                                                                                                      parameters.getSecondFrameOffset());
       this.body = body;
+      registry = new YoVariableRegistry(getClass().getSimpleName() + "_" + body.getName());
       parentRegistry.addChild(registry);
       bodyOriginX = new YoDouble("collision_" + body.getName() + "_originX", registry);
       bodyOriginY = new YoDouble("collision_" + body.getName() + "_originY", registry);
@@ -116,11 +117,9 @@ public class CollisionAvoidanceManager
       closestPlanarRegion = new YoInteger("collision_" + body.getName() + "_closestRegion", registry);
       isActive = new YoBoolean("collision_" + body.getName() + "_active", registry);
 
-      measuredDistance = new YoDouble("collision_" + body.getName() + "measuredLenght", registry);
+      numberOfPlanarSurfaces = new YoInteger("collision_" + body.getName() + "_numberOfPlanarSurfaces", registry);
       
-      numberOfPlanarSurfaces = new YoInteger("collision_numberOfPlanarSurfaces", registry);
-      
-      distanceArrow = new YoGraphicVector("ClosestCollisionVector",
+      distanceArrow = new YoGraphicVector("ClosestCollisionVector_" + body.getName(),
                                           closestBodyPointX,
                                           closestBodyPointY,
                                           closestBodyPointZ,
@@ -132,7 +131,7 @@ public class CollisionAvoidanceManager
                                           true);
       distanceArrow.setLineRadiusWhenOneMeterLong(0.03);
 
-      desiredPositionArrow = new YoGraphicVector("DesiredPositionToAvoidCollision",
+      desiredPositionArrow = new YoGraphicVector("DesiredPositionToAvoidCollision_" + body.getName(),
                                                  closestBodyPointX,
                                                  closestBodyPointY,
                                                  closestBodyPointZ,
@@ -144,7 +143,7 @@ public class CollisionAvoidanceManager
                                                  true);
       desiredPositionArrow.setLineRadiusWhenOneMeterLong(0.03);
 
-      YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionAvoidanceManagerGraphics");
+      YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionAvoidanceManager_" + body.getName() + "_Graphics");
       yoGraphicsList.add(distanceArrow);
       yoGraphicsList.add(desiredPositionArrow);
       yoGraphicsListRegistry.registerYoGraphicsList(yoGraphicsList);
@@ -170,8 +169,6 @@ public class CollisionAvoidanceManager
       bodyEndX.set(otherEndPose.getX());
       bodyEndY.set(otherEndPose.getY());
       bodyEndZ.set(otherEndPose.getZ());
-
-      measuredDistance.set(otherEndPose.getPositionDistance(firstEndPose.getPosition()));
 
       bodyLine.set(firstEndPose.getPosition(), otherEndPose.getPosition());
 

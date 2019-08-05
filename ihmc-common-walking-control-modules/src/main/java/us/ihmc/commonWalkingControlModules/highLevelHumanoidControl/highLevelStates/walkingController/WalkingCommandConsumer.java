@@ -1,10 +1,12 @@
 package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.walkingController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import controller_msgs.msg.dds.ManipulationAbortedStatus;
 import us.ihmc.commonWalkingControlModules.capturePoint.BalanceManager;
 import us.ihmc.commonWalkingControlModules.capturePoint.CenterOfMassHeightManager;
+import us.ihmc.commonWalkingControlModules.configurations.CollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisOrientationManager;
@@ -54,7 +56,9 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SpineTraject
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.WrenchTrajectoryControllerCommand;
 import us.ihmc.humanoidRobotics.communication.packets.walking.HumanoidBodyPart;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
+import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -83,7 +87,7 @@ public class WalkingCommandConsumer
    private final FeetManager feetManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
-   private final CollisionAvoidanceManager collisionManager;
+   private final ArrayList<CollisionAvoidanceManager> collisionManagers = new ArrayList<>();
 
    private final RigidBodyControlManager chestManager;
    private final RigidBodyControlManager headManager;
@@ -143,7 +147,20 @@ public class WalkingCommandConsumer
       feetManager = managerFactory.getOrCreateFeetManager();
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
-      collisionManager = managerFactory.getOrCreateCollisionAvoidanceManager();
+
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         CollisionAvoidanceParameters collisionParams = walkingControllerParameters.getShinsCollisionAvoidanceParameters().get(robotSide);
+         if (collisionParams.useCollisionAvoidance())
+         {
+            MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(robotSide, LegJointName.KNEE_PITCH);
+            RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(robotSide, LegJointName.KNEE_PITCH).getSuccessor();
+            assert (shinBody.hasChildrenJoints());
+            MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
+
+            collisionManagers.add(managerFactory.getOrCreateCollisionAvoidanceManager(shinBody, collisionParams, shinParent, shinChild));
+         }
+      }
 
       isAutomaticManipulationAbortEnabled.set(walkingControllerParameters.allowAutomaticManipulationAbort());
       icpErrorThresholdToAbortManipulation.set(walkingControllerParameters.getICPErrorThresholdForManipulationAbort());
@@ -548,7 +565,13 @@ public class WalkingCommandConsumer
       if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CollisionAvoidanceManagerCommand.class))
       {
          CollisionAvoidanceManagerCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CollisionAvoidanceManagerCommand.class);
-         collisionManager.handleCollisionAvoidanceManagerCommand(command);
+         for (int collIdx = 0; collIdx < collisionManagers.size(); ++collIdx)
+         {
+            if (collisionManagers.get(collIdx) != null)
+            {
+               collisionManagers.get(collIdx).handleCollisionAvoidanceManagerCommand(command);
+            }
+         }
       }
    }
 }

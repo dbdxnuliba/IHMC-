@@ -7,13 +7,13 @@ import java.util.Map;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.commonWalkingControlModules.capturePoint.BalanceManager;
 import us.ihmc.commonWalkingControlModules.capturePoint.CenterOfMassHeightManager;
+import us.ihmc.commonWalkingControlModules.configurations.CollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPTrajectoryPlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ICPWithTimeFreezingPlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.LeapOfFaithParameters;
 import us.ihmc.commonWalkingControlModules.configurations.ParameterTools;
 import us.ihmc.commonWalkingControlModules.configurations.PelvisOffsetWhileWalkingParameters;
-import us.ihmc.commonWalkingControlModules.configurations.ShinCollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controlModules.legConfiguration.LegConfigurationManager;
@@ -29,7 +29,6 @@ import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
-import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.contactable.ContactablePlaneBody;
 import us.ihmc.robotics.controllers.pidGains.PID3DGainsReadOnly;
@@ -38,7 +37,6 @@ import us.ihmc.robotics.controllers.pidGains.PIDSE3GainsReadOnly;
 import us.ihmc.robotics.controllers.pidGains.implementations.ParameterizedPIDGains;
 import us.ihmc.robotics.controllers.pidGains.implementations.ParameterizedPIDSE3Gains;
 import us.ihmc.robotics.dataStructures.parameters.ParameterVector3D;
-import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -65,8 +63,8 @@ public class HighLevelControlManagerFactory
    private FeetManager feetManager;
    private PelvisOrientationManager pelvisOrientationManager;
    private LegConfigurationManager legConfigurationManager;
-   private CollisionAvoidanceManager collisionAvoidanceManager;
 
+   private final Map<String, CollisionAvoidanceManager> collisionAvoidanceManagerMapByBodyName = new HashMap<>();
    private final Map<String, RigidBodyControlManager> rigidBodyManagerMapByBodyName = new HashMap<>();
 
    private HighLevelHumanoidControllerToolbox controllerToolbox;
@@ -224,31 +222,32 @@ public class HighLevelControlManagerFactory
       return manager;
    }
 
-   public CollisionAvoidanceManager getOrCreateCollisionAvoidanceManager()
+   public CollisionAvoidanceManager getOrCreateCollisionAvoidanceManager(RigidBodyBasics body, CollisionAvoidanceParameters parameters,
+                                                                         ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame)
    {
-      if (collisionAvoidanceManager != null)
-      {
-         return collisionAvoidanceManager;
-      }
+      if (body == null)
+         return null;
 
-      MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH);
-      RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(RobotSide.RIGHT, LegJointName.KNEE_PITCH).getSuccessor();
-      assert (shinBody.hasChildrenJoints());
-      MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
+      String bodyName = body.getName();
+      if (collisionAvoidanceManagerMapByBodyName.containsKey(bodyName))
+      {
+         CollisionAvoidanceManager manager = collisionAvoidanceManagerMapByBodyName.get(bodyName);
+         if (manager != null)
+            return manager;
+      }
 
       RigidBodyBasics elevator = controllerToolbox.getFullRobotModel().getElevator();
       YoGraphicsListRegistry graphicsListRegistry = controllerToolbox.getYoGraphicsListRegistry();
 
-      ShinCollisionAvoidanceParameters collisionParams = new ShinCollisionAvoidanceParameters();
-      collisionParams.setUseCollisionAvoidance(true);
-
-      collisionAvoidanceManager = new CollisionAvoidanceManager(collisionParams,
-                                                                shinParent,
-                                                                shinChild,
-                                                                shinBody,
-                                                                elevator,
-                                                                registry,
-                                                                graphicsListRegistry);
+      CollisionAvoidanceManager collisionAvoidanceManager = new CollisionAvoidanceManager(parameters,
+                                                                                          firstEndLinkFrame,
+                                                                                          otherEndLinkFrame,
+                                                                                          body,
+                                                                                          elevator,
+                                                                                          registry,
+                                                                                          graphicsListRegistry);
+      
+      collisionAvoidanceManagerMapByBodyName.put(bodyName, collisionAvoidanceManager);
 
       return collisionAvoidanceManager;
    }
@@ -410,9 +409,13 @@ public class HighLevelControlManagerFactory
          ret.addCommand(pelvisOrientationManager.createFeedbackControlTemplate());
       }
 
-      if (collisionAvoidanceManager != null)
+      Collection<CollisionAvoidanceManager> collisionAvoidanceManagers = collisionAvoidanceManagerMapByBodyName.values();
+      for (CollisionAvoidanceManager collisionAvoidanceManager : collisionAvoidanceManagers)
       {
-         ret.addCommand(collisionAvoidanceManager.getFeedbackControlCommand());
+         if (collisionAvoidanceManager != null)
+         {
+            ret.addCommand(collisionAvoidanceManager.getFeedbackControlCommand());
+         }
       }
 
       return ret;
