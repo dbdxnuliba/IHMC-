@@ -214,7 +214,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
-      collisionManager = managerFactory.getOrCreateCollisionManager();
+      collisionManager = managerFactory.getOrCreateCollisionAvoidanceManager();
 
       this.commandInputManager = commandInputManager;
       this.statusOutputManager = statusOutputManager;
@@ -690,7 +690,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
          balanceManager.compute(currentState.getSupportSide(), controlledCoMHeightAcceleration.getDoubleValue(), keepCMPInsideSupportPolygon,
                                 controlHeightWithMomentum);
 
-      collisionManager.compute(feetManager.getCurrentConstraintType(RobotSide.LEFT).isLoadBearing());
+      collisionManager.compute();
 
    }
 

@@ -143,7 +143,7 @@ public class WalkingCommandConsumer
       feetManager = managerFactory.getOrCreateFeetManager();
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
-      collisionManager = managerFactory.getOrCreateCollisionManager();
+      collisionManager = managerFactory.getOrCreateCollisionAvoidanceManager();
 
       isAutomaticManipulationAbortEnabled.set(walkingControllerParameters.allowAutomaticManipulationAbort());
       icpErrorThresholdToAbortManipulation.set(walkingControllerParameters.getICPErrorThresholdForManipulationAbort());
