@@ -65,14 +65,6 @@ public class StereoREAAnchorPaneController
    @FXML private Slider rawMinDistanceForNormalGuess;
    @FXML private Slider rawMaxAttemptsForNormalGuess;
 
-   @FXML private Slider fusedMaxDistanceFromPlane;
-   @FXML private Slider fusedMaxDeviation;
-   @FXML private Slider fusedMinConsensus;
-   @FXML private Slider fusedRansacIterations;
-   @FXML private CheckBox fusedUsePCA;
-   @FXML private CheckBox fusedUseLeastSquares;
-   @FXML private Slider fusedMinDistanceForNormalGuess;
-   @FXML private Slider fusedMaxAttemptsForNormalGuess;
 
 
    private final ImageSegmentationParametersProperty imageSegmentationParametersProperty = new ImageSegmentationParametersProperty(this,
@@ -137,17 +129,7 @@ public class StereoREAAnchorPaneController
       rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(rawUseLeastSquares.selectedProperty());
       rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinDistanceForNormalGuess(rawMinDistanceForNormalGuess.valueProperty());
       rawSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAttemptsForNormalGuess(rawMaxAttemptsForNormalGuess.valueProperty());
-      messager.bindBidirectional(LidarImageFusionAPI.RawSuperPixelNormalEstimationParameters, rawSuperPixelNormalEstimationParametersProperty, true);
-
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxDistanceFromPlane(fusedMaxDistanceFromPlane.valueProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAverageDeviationRatio(fusedMaxDeviation.valueProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinConsensusRatio(fusedMinConsensus.valueProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalNumberOfIterations(fusedRansacIterations.valueProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalUpdateUsingPCA(fusedUsePCA.selectedProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalEnableLeastSquaresEstimation(fusedUseLeastSquares.selectedProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMinDistanceForNormalGuess(fusedMinDistanceForNormalGuess.valueProperty());
-      fusedSuperPixelNormalEstimationParametersProperty.bindBidirectionalMaxAttemptsForNormalGuess(fusedMaxAttemptsForNormalGuess.valueProperty());
-      messager.bindBidirectional(LidarImageFusionAPI.FusedSuperPixelNormalEstimationParameters, fusedSuperPixelNormalEstimationParametersProperty, true);
+      messager.bindBidirectional(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, rawSuperPixelNormalEstimationParametersProperty, true);
    }
 
    private final PropertyToMessageTypeConverter<Integer, Number> numberToIntegerConverter = new PropertyToMessageTypeConverter<Integer, Number>()

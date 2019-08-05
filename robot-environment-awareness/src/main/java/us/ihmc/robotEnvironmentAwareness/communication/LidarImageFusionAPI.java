@@ -104,8 +104,7 @@ public class LidarImageFusionAPI
    public static final Topic<Boolean> RunStereoREA = UICategory.child(StereoREA).topic(Request);
 
    public static final Topic<SegmentationRawDataFilteringParameters> SegmentationRawDataFilteringParameters = UICategory.child(DataFiltering).topic(Parameters);
-   public static final Topic<SuperPixelNormalEstimationParameters> RawSuperPixelNormalEstimationParameters = UICategory.child(NormalEstimation).child(RawData).topic(Parameters);
-   public static final Topic<SuperPixelNormalEstimationParameters> FusedSuperPixelNormalEstimationParameters = UICategory.child(NormalEstimation).child(FusionData).topic(Parameters);
+   public static final Topic<SuperPixelNormalEstimationParameters> SuperPixelNormalEstimationParameters = UICategory.child(NormalEstimation).child(RawData).topic(Parameters);
    public static final Topic<ImageSegmentationParameters> ImageSegmentationParameters = UICategory.child(ImageSegmentation).topic(Parameters);
    public static final Topic<PlanarRegionPropagationParameters> PlanarRegionPropagationParameters = UICategory.child(StereoREA).topic(Parameters);
 

@@ -2,7 +2,6 @@ package us.ihmc.robotEnvironmentAwareness.fusion.data;
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,20 +9,14 @@ import java.util.stream.IntStream;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
-import org.apache.logging.log4j.ThreadContext;
 import us.ihmc.commons.Conversions;
-import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
-import us.ihmc.jOctoMap.ocTree.NormalOcTree;
-import us.ihmc.jOctoMap.pointCloud.ScanCollection;
-import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
-import us.ihmc.robotEnvironmentAwareness.communication.converters.OcTreeMessageConverter;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.ImageSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFilteringParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
@@ -61,7 +54,7 @@ public class FusedSuperPixelImageBuffer
       latestImageSegmentationParaeters = messager.createInput(LidarImageFusionAPI.ImageSegmentationParameters, new ImageSegmentationParameters());
       latestSegmentationRawDataFilteringParameters = messager.createInput(LidarImageFusionAPI.SegmentationRawDataFilteringParameters,
                                                                           new SegmentationRawDataFilteringParameters());
-      latestNormalEstimationParameters = messager.createInput(LidarImageFusionAPI.RawSuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
+      latestNormalEstimationParameters = messager.createInput(LidarImageFusionAPI.SuperPixelNormalEstimationParameters, new SuperPixelNormalEstimationParameters());
 
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
