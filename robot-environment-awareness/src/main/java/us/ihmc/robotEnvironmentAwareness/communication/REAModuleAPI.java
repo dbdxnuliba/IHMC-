@@ -21,6 +21,7 @@ import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomRegionMergeParameter
 import us.ihmc.robotEnvironmentAwareness.planarRegion.IntersectionEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationParameters;
 import us.ihmc.robotEnvironmentAwareness.planarRegion.PolygonizerParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.StereoFilterParameters;
 import us.ihmc.robotEnvironmentAwareness.ui.graphicsBuilders.OcTreeMeshBuilder.ColoringType;
 import us.ihmc.robotEnvironmentAwareness.ui.graphicsBuilders.OcTreeMeshBuilder.DisplayType;
 
@@ -148,8 +149,10 @@ public class REAModuleAPI
    public static final Topic<Boolean> SaveMainUpdaterConfiguration = OcTreeCategory.topic(Save);
    public static final Topic<Boolean> SaveBufferConfiguration = OcTreeCategory.child(Buffer).topic(Save);
    public static final Topic<Boolean> SaveRegionUpdaterConfiguration = PlanarRegionsCategory.topic(Save);
-   
+
    public static final Topic<Boolean> ImportStereoPointCloudData = OcTreeCategory.child(StereoVision).topic(Import);
+
+   public static final Topic<StereoFilterParameters> StereoFilterParameters = ModuleCategory.child(StereoVision).topic(Parameters);
    public static final Topic<Boolean> StereoREAEndToEndRun = ModuleCategory.child(StereoVision).child(Request).topic(Show);
 
    public static final MessagerAPI API = apiFactory.getAPIAndCloseFactory();

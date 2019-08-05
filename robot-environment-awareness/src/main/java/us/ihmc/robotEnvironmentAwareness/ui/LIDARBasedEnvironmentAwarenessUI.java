@@ -25,6 +25,7 @@ import us.ihmc.robotEnvironmentAwareness.ui.controller.OcTreeBasicsAnchorPaneCon
 import us.ihmc.robotEnvironmentAwareness.ui.controller.PointCloudAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.PolygonizerAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.RegionSegmentationAnchorPaneController;
+import us.ihmc.robotEnvironmentAwareness.ui.controller.StereoFilterAnchorPaneController;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionDataExporter;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionSegmentationDataExporter;
 import us.ihmc.robotEnvironmentAwareness.ui.viewer.LidarFrameViewer;
@@ -46,6 +47,8 @@ public class LIDARBasedEnvironmentAwarenessUI
    private OcTreeBasicsAnchorPaneController ocTreeBasicsAnchorPaneController;
    @FXML
    private LIDARFilterAnchorPaneController lidarFilterAnchorPaneController;
+   @FXML
+   private StereoFilterAnchorPaneController stereoFilterAnchorPaneController;
    @FXML
    private NormalEstimationAnchorPaneController normalEstimationAnchorPaneController;
    @FXML
@@ -138,6 +141,10 @@ public class LIDARBasedEnvironmentAwarenessUI
       lidarFilterAnchorPaneController.setConfigurationFile(configurationFile);
       lidarFilterAnchorPaneController.attachREAMessager(uiMessager);
       lidarFilterAnchorPaneController.bindControls();
+      
+      stereoFilterAnchorPaneController.setConfigurationFile(configurationFile);
+      stereoFilterAnchorPaneController.attachREAMessager(uiMessager);
+      stereoFilterAnchorPaneController.bindControls();
 
       normalEstimationAnchorPaneController.setConfigurationFile(configurationFile);
       normalEstimationAnchorPaneController.attachREAMessager(uiMessager);
