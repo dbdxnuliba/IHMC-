@@ -89,7 +89,7 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
-      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
+      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForHorizontalSurfaces(environment.getPlanarRegionsList());
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(collisionMessage);
@@ -124,7 +124,7 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
       double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
 
-      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessage(environment.getPlanarRegionsList());
+      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForVerticalSurfaces(environment.getPlanarRegionsList());
 
       drcSimulationTestHelper.publishToController(footsteps);
       drcSimulationTestHelper.publishToController(collisionMessage);
@@ -175,7 +175,25 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
       return newList;
    }
 
-   private CollisionAvoidanceManagerMessage createCollisionMessage(PlanarRegionsList planarRegions)
+   private CollisionAvoidanceManagerMessage createCollisionMessageForHorizontalSurfaces(PlanarRegionsList planarRegions)
+   {
+      CollisionAvoidanceManagerMessage collisionMessage = new CollisionAvoidanceManagerMessage();
+
+      for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
+      {
+         Vector3D normal = planarRegions.getPlanarRegion(i).getNormal();
+         if (Math.abs(normal.getZ()) >= 0.1)
+         {
+            PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
+            collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
+            collisionMessage.setConsiderOnlyEdges(true);
+         }
+      }
+
+      return collisionMessage;
+   }
+
+   private CollisionAvoidanceManagerMessage createCollisionMessageForVerticalSurfaces(PlanarRegionsList planarRegions)
    {
       CollisionAvoidanceManagerMessage collisionMessage = new CollisionAvoidanceManagerMessage();
 
@@ -186,6 +204,7 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
          {
             PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
             collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
+            collisionMessage.setConsiderOnlyEdges(false);
          }
       }
 
