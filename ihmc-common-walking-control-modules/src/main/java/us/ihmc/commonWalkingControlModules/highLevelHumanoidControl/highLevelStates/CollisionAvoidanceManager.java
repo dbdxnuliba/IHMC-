@@ -132,7 +132,7 @@ public class CollisionAvoidanceManager
                                                  true);
       desiredPositionArrow.setLineRadiusWhenOneMeterLong(0.03);
 
-      YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionManagerGraphics");
+      YoGraphicsList yoGraphicsList = new YoGraphicsList("CollisionAvoidanceManagerGraphics");
       yoGraphicsList.add(distanceArrow);
       yoGraphicsList.add(desiredPositionArrow);
       yoGraphicsListRegistry.registerYoGraphicsList(yoGraphicsList);
@@ -213,7 +213,7 @@ public class CollisionAvoidanceManager
          ReferenceFrame closestPointFrame = computeClosestPointFrame();
 
          double accelerationGain = 500.0;
-         double maxFeedback = 50.0;
+         double maxFeedback = 250.0;
 
          selection.setSelectionFrame(closestPointFrame);
          selection.setAxisSelection(false, false, true);
@@ -332,7 +332,7 @@ public class CollisionAvoidanceManager
       
       double minDistance = -1.0;
       
-      if (considerOnlyEdges)
+      if (!considerOnlyEdges)
       {
          boolean firstProjectionIsInside = region.isPointInside(firstEndPoseInPlaneCoordinates.getX(), firstEndPoseInPlaneCoordinates.getY());
 

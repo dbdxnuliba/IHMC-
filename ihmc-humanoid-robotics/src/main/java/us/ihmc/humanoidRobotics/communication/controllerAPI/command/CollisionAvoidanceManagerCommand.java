@@ -1,6 +1,7 @@
 package us.ihmc.humanoidRobotics.communication.controllerAPI.command;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
@@ -15,7 +16,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
    private final RecyclingArrayList<PlanarRegionCommand> planarRegions = new RecyclingArrayList<>(100, PlanarRegionCommand.class);
    private CollisionAvoidanceMessageMode mode = CollisionAvoidanceMessageMode.OVERRIDE;
    private long sequenceId;
-   boolean considerOnlyEdges = false;
+   private final AtomicBoolean considerOnlyEdges = new AtomicBoolean(false);
 
 
    @Override
@@ -25,7 +26,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
 
       mode = other.mode;
       sequenceId = other.sequenceId;
-      considerOnlyEdges = other.considerOnlyEdges;
+      considerOnlyEdges.set(other.considerOnlyEdges.get());
 
       RecyclingArrayList<PlanarRegionCommand> dataList = other.getPlanarRegions();
       if (dataList != null)
@@ -57,7 +58,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
 
    public boolean considerOnlyEdges()
    {
-      return considerOnlyEdges;
+      return considerOnlyEdges.get();
    }
 
    @Override
@@ -66,7 +67,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
       mode = CollisionAvoidanceMessageMode.OVERRIDE;
       planarRegions.clear();
       sequenceId = 0;
-      considerOnlyEdges = false;
+      considerOnlyEdges.set(false);
    }
 
    @Override
@@ -76,7 +77,7 @@ public class CollisionAvoidanceManagerCommand implements Command<CollisionAvoida
 
       sequenceId = message.getSequenceId();
       mode = CollisionAvoidanceMessageMode.fromByte(message.getMode());
-      considerOnlyEdges = message.getConsiderOnlyEdges();
+      considerOnlyEdges.set(message.getConsiderOnlyEdges());
 
       List<PlanarRegionMessage> planarRegionsList = message.getPlanarRegionsList();
       
