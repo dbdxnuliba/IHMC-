@@ -47,6 +47,7 @@ public class REAPlanarRegionFeatureUpdater implements RegionFeaturesProvider
    private final AtomicReference<Boolean> clearPolygonizer;
    private final AtomicReference<Boolean> enableIntersectionCalulator;
    private final AtomicReference<PlanarRegionSegmentationParameters> planarRegionSegmentationParameters;
+   private final AtomicReference<StereoFilterParameters> stereoFilterParameters;
    private final AtomicReference<CustomRegionMergeParameters> customRegionMergingParameters;
    private final AtomicReference<ConcaveHullFactoryParameters> concaveHullFactoryParameters;
    private final AtomicReference<PolygonizerParameters> polygonizerParameters;
@@ -67,6 +68,7 @@ public class REAPlanarRegionFeatureUpdater implements RegionFeaturesProvider
       clearPolygonizer = reaMessager.createInput(REAModuleAPI.PlanarRegionsPolygonizerClear, false);
       enableIntersectionCalulator = reaMessager.createInput(REAModuleAPI.PlanarRegionsIntersectionEnable, false);
       planarRegionSegmentationParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsSegmentationParameters, new PlanarRegionSegmentationParameters());
+      stereoFilterParameters = reaMessager.createInput(REAModuleAPI.StereoFilterParameters, new StereoFilterParameters());
       customRegionMergingParameters = reaMessager.createInput(REAModuleAPI.CustomRegionsMergingParameters, new CustomRegionMergeParameters());
       concaveHullFactoryParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsConcaveHullParameters, new ConcaveHullFactoryParameters());
       polygonizerParameters = reaMessager.createInput(REAModuleAPI.PlanarRegionsPolygonizerParameters, new PolygonizerParameters());
@@ -161,6 +163,8 @@ public class REAPlanarRegionFeatureUpdater implements RegionFeaturesProvider
 
       segmentationCalculator.setBoundingBox(octree.getBoundingBox());
       segmentationCalculator.setParameters(planarRegionSegmentationParameters.get());
+      segmentationCalculator.setStereoFilterParameters(stereoFilterParameters.get());
+      System.out.println(stereoFilterParameters.get().toString());
 
       timeReporter.run(() -> segmentationCalculator.compute(octree.getRoot()), segmentationTimeReport);
 

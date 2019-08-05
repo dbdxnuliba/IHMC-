@@ -37,6 +37,7 @@ public class PlanarRegionSegmentationCalculator
    private final List<NormalOcTreeNode> nodesWithoutRegion = new ArrayList<>();
 
    private PlanarRegionSegmentationParameters parameters;
+   private StereoFilterParameters stereoFilterParameters;
    private OcTreeBoundingBoxInterface boundingBox;
 
    public void compute(NormalOcTreeNode root)
@@ -361,6 +362,11 @@ public class PlanarRegionSegmentationCalculator
 
       double absoluteDot = region.absoluteDotWithNodeNormal(node);
       return absoluteDot > dotThreshold;
+   }
+   
+   public void setStereoFilterParameters(StereoFilterParameters stereoFilterParameters)
+   {
+      this.stereoFilterParameters = stereoFilterParameters;
    }
 
    public void setParameters(PlanarRegionSegmentationParameters parameters)
