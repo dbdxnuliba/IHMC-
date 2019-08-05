@@ -168,7 +168,7 @@ public class StereoREAModule
          reportPlanarRegionState();
       }
 
-      double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - fusingTime;
+      double segmentationTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime) - (fusingTime + filteringTime);
 
 
       double runningTime = Conversions.nanosecondsToSeconds(System.nanoTime() - runningStartTime);

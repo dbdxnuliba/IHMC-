@@ -7,12 +7,14 @@ public class ImageSegmentationParameters
    private static final int DEFAULT_ITERATE = 6;
    private static final boolean DEFAULT_ENABLE_CONNECTIVITY = true;
    private static final int DEFAULT_MIN_ELEMENT_SIZE = 30;
+   private static final boolean DEFAULT_GROUP_VIA_COLORS = true;
 
    private int pixelSize;
    private double pixelRuler;
    private int iterate;
    private boolean enableConnectivity;
    private int minElementSize;
+   private boolean groupViaColors;
 
    public ImageSegmentationParameters()
    {
@@ -31,6 +33,7 @@ public class ImageSegmentationParameters
       iterate = DEFAULT_ITERATE;
       enableConnectivity = DEFAULT_ENABLE_CONNECTIVITY;
       minElementSize = DEFAULT_MIN_ELEMENT_SIZE;
+      groupViaColors = DEFAULT_GROUP_VIA_COLORS;
    }
 
    public void set(ImageSegmentationParameters other)
@@ -40,6 +43,7 @@ public class ImageSegmentationParameters
       iterate = other.iterate;
       enableConnectivity = other.enableConnectivity;
       minElementSize = other.minElementSize;
+      groupViaColors = other.groupViaColors;
    }
 
    public int getPixelSize()
@@ -67,6 +71,11 @@ public class ImageSegmentationParameters
       return minElementSize;
    }
 
+   public boolean groupViaColors()
+   {
+      return groupViaColors;
+   }
+
    public void setPixelSize(int pixelSize)
    {
       this.pixelSize = pixelSize;
@@ -90,5 +99,10 @@ public class ImageSegmentationParameters
    public void setMinElementSize(int minElementSize)
    {
       this.minElementSize = minElementSize;
+   }
+
+   public void setGroupViaColors(boolean groupViaColors)
+   {
+      this.groupViaColors = groupViaColors;
    }
 }

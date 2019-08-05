@@ -30,8 +30,6 @@ public class RawSuperPixelImageFactory
    private static final boolean enableDisplaySegmentedContour = true;
    private static final boolean enableDisplayProjectedPointCloud = false;
 
-   private static final boolean enableConnectivity = true;
-
    private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
    private static final int matType = opencv_core.CV_8UC3;
 
@@ -50,7 +48,12 @@ public class RawSuperPixelImageFactory
       segmentedContour = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
       projectedPointCloud = new BufferedImage(imageWidth, imageHeight, bufferedImageType);
 
-      int[] labels = calculateNewLabelsSLIC(stereoImage, imageSegmentationParameters.get());
+      int[] labels;
+      ImageSegmentationParameters imageSegmentationParameters = this.imageSegmentationParameters.get();
+      if (imageSegmentationParameters.groupViaColors())
+         labels = calculateNewLabelsSLIC(stereoImage, imageSegmentationParameters);
+      else
+         labels = calculateNewLabels(stereoImage, imageSegmentationParameters);
       List<RawSuperPixelData> rawSuperPixels = populateRawSuperPixelsWithPointCloud(projectedPointCloud, labels, stereoImage, imageHeight, imageWidth,
                                                                                     segmentationRawDataFilteringParameters.get(),
                                                                                     normalEstimationParameters.get());
@@ -82,6 +85,29 @@ public class RawSuperPixelImageFactory
       {
          labels[i] = intBuffer.get(i);
       }
+
+      return labels;
+   }
+
+   private static int[] calculateNewLabels(StereoImage stereoImage, ImageSegmentationParameters imageSegmentationParameters)
+   {
+      int pixelSize = imageSegmentationParameters.getPixelSize();
+
+      int imageWidth = stereoImage.getWidth();
+      int imageHeight = stereoImage.getHeight();
+      int numberOfSuperPixelsWide = Math.floorDiv(imageWidth, pixelSize);
+
+      int[] labels = new int[imageWidth * imageHeight];
+      for (int u = 0; u < imageWidth; u++)
+      {
+         int widthNumber = Math.floorDiv(u, pixelSize);
+         for (int v = 0; v < imageHeight; v++)
+         {
+            int heightNumber = Math.floorDiv(v, pixelSize);
+            labels[getLabelIdIndex(u, v, imageWidth)] = widthNumber + numberOfSuperPixelsWide * heightNumber;
+         }
+      }
+
 
       return labels;
    }

@@ -30,6 +30,7 @@ public class StereoREAAnchorPaneController
    @FXML private Slider superpixelRuler;
    @FXML private Slider superpixelIterate;
    @FXML private ToggleButton enableConnectivity;
+   @FXML private ToggleButton groupViaColors;
    @FXML private ToggleButton showRawData;
    @FXML private ToggleButton showFusedData;
    @FXML private ToggleButton showPlanarRegions;
@@ -93,6 +94,7 @@ public class StereoREAAnchorPaneController
       imageSegmentationParametersProperty.bindBidirectionalPixelRuler(superpixelRuler.valueProperty());
       imageSegmentationParametersProperty.bindBidirectionalIterate(superpixelIterate.valueProperty());
       imageSegmentationParametersProperty.bindBidirectionalEnableConnectivity(enableConnectivity.selectedProperty());
+      imageSegmentationParametersProperty.bindBidirectionalGroupViaColors(groupViaColors.selectedProperty());
       imageSegmentationParametersProperty.bindBidirectionalMinElementSize(superpixelMinimumElement.valueProperty());
       messager.bindBidirectional(LidarImageFusionAPI.ImageSegmentationParameters, imageSegmentationParametersProperty, true);
 

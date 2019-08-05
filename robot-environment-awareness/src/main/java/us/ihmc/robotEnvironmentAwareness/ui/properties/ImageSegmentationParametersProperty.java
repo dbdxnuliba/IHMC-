@@ -11,6 +11,7 @@ public class ImageSegmentationParametersProperty extends ParametersProperty<Imag
    private final IntegerField iterate = new IntegerField(ImageSegmentationParameters::getIterate, (p, v) -> p.setIterate(v));
    private final BooleanField enableConnectivity = new BooleanField(ImageSegmentationParameters::getEnableConnectivity, (p, v) -> p.setEnableConnectivity(v));
    private final IntegerField minElementSize = new IntegerField(ImageSegmentationParameters::getMinElementSize, (p, v) -> p.setMinElementSize(v));
+   private final BooleanField groupViaColors = new BooleanField(ImageSegmentationParameters::groupViaColors, (p, v) -> p.setGroupViaColors(v));
 
    public ImageSegmentationParametersProperty(Object bean, String name)
    {
@@ -35,6 +36,11 @@ public class ImageSegmentationParametersProperty extends ParametersProperty<Imag
    public void bindBidirectionalEnableConnectivity(BooleanProperty property)
    {
       bindFieldBidirectionalToBooleanProperty(property, enableConnectivity);
+   }
+
+   public void bindBidirectionalGroupViaColors(BooleanProperty property)
+   {
+      bindFieldBidirectionalToBooleanProperty(property, groupViaColors);
    }
 
    public void bindBidirectionalMinElementSize(Property<? extends Number> property)

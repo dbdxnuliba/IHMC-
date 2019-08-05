@@ -26,10 +26,7 @@ import us.ihmc.robotEnvironmentAwareness.fusion.dataFactory.SuperPixelGridImageF
 
 public class RawSuperPixelImageBuffer
 {
-   private static final boolean groupViaColors = true;
-
    private final RawSuperPixelImageFactory fusedSuperPixelImageFactory = new RawSuperPixelImageFactory();
-   private final SuperPixelGridImageFactory gridSuperPixelImageFactory = new SuperPixelGridImageFactory();
 
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
    private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
@@ -113,22 +110,11 @@ public class RawSuperPixelImageBuffer
 
       IntStream.range(0, numberOfPoints).parallel().forEach(i -> stereoImage.setPoint(i, createStereoPoint(pointCloudBuffer[i], colorBuffer[i], intrinsicParameters, cameraPosition, cameraOrientation, imageHeight, imageWidth)));
 
-      if (groupViaColors)
-      {
-         fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
-         fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
-         fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
+      fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
+      fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+      fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
 
-         return fusedSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
-      }
-      else
-      {
-         gridSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
-         gridSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
-         gridSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
-
-         return gridSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
-      }
+      return fusedSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
    }
 
    private static StereoPoint createStereoPoint(Point3DReadOnly point, int color, IntrinsicParameters intrinsicParameters, Point3DReadOnly latestCameraPosition,

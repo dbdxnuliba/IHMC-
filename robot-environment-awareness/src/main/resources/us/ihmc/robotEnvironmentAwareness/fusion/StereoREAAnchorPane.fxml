@@ -65,14 +65,26 @@
 						</HBox>
 						<HBox prefHeight="30.0" prefWidth="200.0" spacing="5.0">
 							<children>
-								<ToggleButton fx:id="enableConnectivity" mnemonicParsing="false" prefHeight="25.0" prefWidth="110.0" selected="true" text="Element Size">
-									<font>
-										<Font size="11.0" />
-									</font>
-								</ToggleButton>
+                                <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="110.0" text="Element Size" textAlignment="CENTER" />
+
 								<Slider fx:id="superpixelMinimumElement" majorTickUnit="5.0" maxWidth="1.7976931348623157E308" min="10.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="30.0" />
 							</children>
 						</HBox>
+                        <HBox prefHeight="41.0" prefWidth="190.0" spacing="5.0">
+                            <children>
+
+                                <ToggleButton fx:id="enableConnectivity" mnemonicParsing="false" prefHeight="41.0" prefWidth="93.0" selected="true" text="Enable Connectivity" wrapText="true">
+                                    <font>
+                                        <Font size="11.0" />
+                                    </font>
+                                </ToggleButton>
+                                <ToggleButton fx:id="groupViaColors" mnemonicParsing="false" prefHeight="51.0" prefWidth="101.0" selected="true" text="Group Via Colors" wrapText="true">
+                                    <font>
+                                        <Font size="11.0" />
+                                    </font>
+                                </ToggleButton>
+                            </children>
+                        </HBox>
 					</children>
 				</VBox>
 				<VBox prefHeight="350.0" prefWidth="400.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
