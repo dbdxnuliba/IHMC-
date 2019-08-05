@@ -45,6 +45,8 @@ public class OcTreeBasicsAnchorPaneController extends REABasicUIController
    private ToggleButton showStereoBufferButton;
    @FXML
    private ToggleButton showInputStereoPointCloudButton;
+   @FXML
+   private Button endToEndRunButton;
 
    private final PropertyToMessageTypeConverter<Integer, Number> numberToIntegerConverter = new PropertyToMessageTypeConverter<Integer, Number>()
    {
@@ -134,5 +136,10 @@ public class OcTreeBasicsAnchorPaneController extends REABasicUIController
       loadUIControlProperty(REAModuleAPI.UIOcTreeColoringMode, coloringTypeComboBox);
       loadUIControlProperty(REAModuleAPI.UIOcTreeShowLidarBuffer, showLidarBufferButton);
       loadUIControlProperty(REAModuleAPI.UILidarScanShow, showInputLidarScanButton);
+   }
+   
+   public void endToEndRun()
+   {
+      uiMessager.submitMessageInternal(REAModuleAPI.StereoREAEndToEndRun, true);
    }
 }

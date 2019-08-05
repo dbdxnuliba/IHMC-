@@ -150,6 +150,7 @@ public class REAModuleAPI
    public static final Topic<Boolean> SaveRegionUpdaterConfiguration = PlanarRegionsCategory.topic(Save);
    
    public static final Topic<Boolean> ImportStereoPointCloudData = OcTreeCategory.child(StereoVision).topic(Import);
+   public static final Topic<Boolean> StereoREAEndToEndRun = ModuleCategory.child(StereoVision).child(Request).topic(Show);
 
    public static final MessagerAPI API = apiFactory.getAPIAndCloseFactory();
 }
