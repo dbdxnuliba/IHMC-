@@ -16,6 +16,7 @@ import us.ihmc.commonWalkingControlModules.capturePoint.BalanceManager;
 import us.ihmc.commonWalkingControlModules.capturePoint.CenterOfMassHeightManager;
 import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleInput;
 import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleOutput;
+import us.ihmc.commonWalkingControlModules.configurations.CollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.controlModules.WalkingFailureDetectionControlModule;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
@@ -60,12 +61,14 @@ import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.contactable.ContactablePlaneBody;
 import us.ihmc.robotics.partNames.ArmJointName;
+import us.ihmc.robotics.partNames.LegJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.ScrewTools;
@@ -92,7 +95,7 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
    private final LegConfigurationManager legConfigurationManager;
    private final BalanceManager balanceManager;
    private final CenterOfMassHeightManager comHeightManager;
-   private final CollisionAvoidanceManager collisionManager;
+   private final ArrayList<CollisionAvoidanceManager> collisionManagers = new ArrayList<>();
 
    private final ArrayList<RigidBodyControlManager> bodyManagers = new ArrayList<>();
    private final Map<String, RigidBodyControlManager> bodyManagerByJointName = new HashMap<>();
@@ -214,7 +217,20 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       balanceManager = managerFactory.getOrCreateBalanceManager();
       comHeightManager = managerFactory.getOrCreateCenterOfMassHeightManager();
-      collisionManager = managerFactory.getOrCreateCollisionAvoidanceManager();
+      
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         CollisionAvoidanceParameters collisionParams = walkingControllerParameters.getShinsCollisionAvoidanceParameters().get(robotSide);
+         if (collisionParams.useCollisionAvoidance())
+         {
+            MovingReferenceFrame shinParent = controllerToolbox.getFullRobotModel().getFrameAfterLegJoint(robotSide, LegJointName.KNEE_PITCH);
+            RigidBodyBasics shinBody = controllerToolbox.getFullRobotModel().getLegJoint(robotSide, LegJointName.KNEE_PITCH).getSuccessor();
+            assert (shinBody.hasChildrenJoints());
+            MovingReferenceFrame shinChild = shinBody.getChildrenJoints().get(0).getFrameBeforeJoint();
+            
+            collisionManagers.add(managerFactory.getOrCreateCollisionAvoidanceManager(shinBody, collisionParams, shinParent, shinChild));
+         }
+      }
 
       this.commandInputManager = commandInputManager;
       this.statusOutputManager = statusOutputManager;
@@ -689,7 +705,13 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
          balanceManager.compute(currentState.getSupportSide(), controlledCoMHeightAcceleration.getDoubleValue(), keepCMPInsideSupportPolygon,
                                 controlHeightWithMomentum);
 
-      collisionManager.compute();
+      for (int collIdx = 0; collIdx < collisionManagers.size(); ++collIdx)
+      {
+         if (collisionManagers.get(collIdx) != null)
+         {
+            collisionManagers.get(collIdx).compute();
+         }
+      }
 
    }
 
@@ -830,7 +852,14 @@ public class WalkingHighLevelHumanoidController implements JointLoadStatusProvid
 
       controllerCoreCommand.addInverseDynamicsCommand(controllerCoreOptimizationSettings.getCommand());
 
-      controllerCoreCommand.addFeedbackControlCommand(collisionManager.getFeedbackControlCommand());
+      for (int collIdx = 0; collIdx < collisionManagers.size(); ++collIdx)
+      {
+         if (collisionManagers.get(collIdx) != null)
+         {
+            controllerCoreCommand.addFeedbackControlCommand(collisionManagers.get(collIdx).getFeedbackControlCommand());
+         }
+      }
+
    }
 
    public ControllerCoreCommand getControllerCoreCommand()

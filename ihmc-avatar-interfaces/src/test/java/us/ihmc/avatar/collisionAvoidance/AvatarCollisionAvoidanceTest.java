@@ -72,6 +72,8 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
    {
 
       VariableHeightStairsEnvironment environment = new VariableHeightStairsEnvironment(stepsHeights, 0.6);
+      getRobotModel().getWalkingControllerParameters().getShinsCollisionAvoidanceParameters().get(RobotSide.LEFT).setUseCollisionAvoidance(true);
+      getRobotModel().getWalkingControllerParameters().getShinsCollisionAvoidanceParameters().get(RobotSide.RIGHT).setUseCollisionAvoidance(true);
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
       drcSimulationTestHelper.createSimulation("WalkingUpToHighPlatformtest");
@@ -106,6 +108,8 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
    {
 
       VariableHeightStairsEnvironment environment = new VariableHeightStairsEnvironment(stepsHeights, 0.6);
+      getRobotModel().getWalkingControllerParameters().getShinsCollisionAvoidanceParameters().get(RobotSide.LEFT).setUseCollisionAvoidance(true);
+      getRobotModel().getWalkingControllerParameters().getShinsCollisionAvoidanceParameters().get(RobotSide.RIGHT).setUseCollisionAvoidance(true);
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
       drcSimulationTestHelper.createSimulation("WalkingUpToHighPlatformtest");

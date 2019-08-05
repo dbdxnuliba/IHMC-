@@ -22,6 +22,7 @@ import us.ihmc.robotics.controllers.pidGains.PIDGainsReadOnly;
 import us.ihmc.robotics.controllers.pidGains.implementations.PDGains;
 import us.ihmc.robotics.controllers.pidGains.implementations.PID3DConfiguration;
 import us.ihmc.robotics.controllers.pidGains.implementations.PIDSE3Configuration;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.sensors.FootSwitchFactory;
 
 public abstract class WalkingControllerParameters
@@ -31,6 +32,7 @@ public abstract class WalkingControllerParameters
    private final DynamicReachabilityParameters dynamicReachabilityParameters;
    private final PelvisOffsetWhileWalkingParameters pelvisOffsetWhileWalkingParameters;
    private final LeapOfFaithParameters leapOfFaithParameters;
+   private final SideDependentList<ShinCollisionAvoidanceParameters> shinsCollisionAvoidanceParameters;
 
    public WalkingControllerParameters()
    {
@@ -39,6 +41,8 @@ public abstract class WalkingControllerParameters
       pelvisOffsetWhileWalkingParameters = new PelvisOffsetWhileWalkingParameters();
       leapOfFaithParameters = new LeapOfFaithParameters();
       legConfigurationParameters = new LegConfigurationParameters();
+      shinsCollisionAvoidanceParameters = new SideDependentList<ShinCollisionAvoidanceParameters>(new ShinCollisionAvoidanceParameters(),
+                                                                                                  new ShinCollisionAvoidanceParameters());
    }
 
    /**
@@ -664,6 +668,15 @@ public abstract class WalkingControllerParameters
    public LeapOfFaithParameters getLeapOfFaithParameters()
    {
       return leapOfFaithParameters;
+   }
+
+   /**
+    * Parameters for the shin collision avoidance managers. They generate a shin body acceleration in the
+    *  direction that brings them far from the obstacle. Such managers are deactivated by default 
+    */
+   public SideDependentList<ShinCollisionAvoidanceParameters> getShinsCollisionAvoidanceParameters()
+   {
+      return shinsCollisionAvoidanceParameters;
    }
 
    /**
