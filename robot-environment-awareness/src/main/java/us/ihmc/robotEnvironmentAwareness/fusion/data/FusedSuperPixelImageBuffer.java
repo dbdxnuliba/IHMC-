@@ -66,9 +66,12 @@ public class FusedSuperPixelImageBuffer
       enableREA = messager.createInput(LidarImageFusionAPI.EnableREA, false);
 
 
-      latestCameraPosition = messager.createInput(LidarImageFusionAPI.CameraPositionState, new Point3D());
-      latestCameraOrientation = messager.createInput(LidarImageFusionAPI.CameraOrientationState, new Quaternion());
-      latestCameraIntrinsicParameters = messager.createInput(LidarImageFusionAPI.CameraIntrinsicParametersState, new IntrinsicParameters());
+//      latestCameraPosition = messager.createInput(LidarImageFusionAPI.CameraPositionState, new Point3D());
+//      latestCameraOrientation = messager.createInput(LidarImageFusionAPI.CameraOrientationState, new Quaternion());
+//      latestCameraIntrinsicParameters = messager.createInput(LidarImageFusionAPI.CameraIntrinsicParametersState, new IntrinsicParameters());
+      latestCameraPosition = new AtomicReference<>(new Point3D());
+      latestCameraOrientation = new AtomicReference<>(new Quaternion());
+      latestCameraIntrinsicParameters = new AtomicReference<>(PointCloudProjectionHelper.multisenseOnCartIntrinsicParameters);
    }
 
    public RawSuperPixelImage pollNewBuffer()
