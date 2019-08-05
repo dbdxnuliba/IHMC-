@@ -30,6 +30,7 @@ import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.screwTheory.SelectionMatrix3D;
 import us.ihmc.robotics.weightMatrices.WeightMatrix3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
@@ -75,6 +76,7 @@ public class CollisionAvoidanceManager
    private final YoDouble measuredDistance, minimumDistanceValue;
    private final YoInteger numberOfPlanarSurfaces;
    private final YoGraphicVector distanceArrow, desiredPositionArrow;
+   private final YoBoolean isActive;
 
    public CollisionAvoidanceManager(ReferenceFrame firstEndLinkFrame, ReferenceFrame otherEndLinkFrame, RigidBodyBasics body,
                            RigidBodyBasics elevator, YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
@@ -103,6 +105,7 @@ public class CollisionAvoidanceManager
       desiredPositionZ = new YoDouble("collision_" + body.getName() + "_desiredPositionZ", registry);
       minimumDistanceValue = new YoDouble("collision_" + body.getName() + "_minDistanceValue", registry);
       closestPlanarRegion = new YoInteger("collision_" + body.getName() + "_closestRegion", registry);
+      isActive = new YoBoolean("collision_" + body.getName() + "_active", registry);
 
       measuredDistance = new YoDouble("collision_" + body.getName() + "measuredLenght", registry);
       
@@ -163,9 +166,10 @@ public class CollisionAvoidanceManager
 
       bodyLine.set(firstEndPose.getPosition(), otherEndPose.getPosition());
 
-      double distanceThreshold = 0.1;
+      double activationThreshold = 0.1;
+      double deactivationThreshold = 1.2 * activationThreshold;
 
-      double minDistance = distanceThreshold;
+      double minDistance = deactivationThreshold;
 
       for (int i = 0; i < planarRegions.size(); ++i)
       {
@@ -199,16 +203,17 @@ public class CollisionAvoidanceManager
       closestBodyPointZ.set(closestPointOnBody.getZ());
       minimumDistanceValue.set(minDistance);
 
-      setupCommands(distanceThreshold, minDistance, minDistanceVector);
+      setupCommands(activationThreshold, deactivationThreshold, minDistance, minDistanceVector);
    }
 
    private RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
    private WeightMatrix3D weights = new WeightMatrix3D();
    private SelectionMatrix3D selection = new SelectionMatrix3D();
 
-   private void setupCommands(double distanceThreshold, double minDistance, FrameVector3D distanceVector)
+   private void setupCommands(double activationThreshold, double deactivationThreshold, double minDistance, FrameVector3D distanceVector)
    {
-      if (minDistance >= 0.0 && minDistance < distanceThreshold)
+      if (minDistance >= 0.0
+            && (((minDistance < activationThreshold) && !isActive.getBooleanValue()) || ((minDistance < deactivationThreshold) && isActive.getBooleanValue())))
       {
          ReferenceFrame closestPointFrame = computeClosestPointFrame();
 
@@ -228,20 +233,20 @@ public class CollisionAvoidanceManager
          pointFeedbackCommand.getGains().setIntegralGains(0.0, 0.0);
          pointFeedbackCommand.getGains().setMaxFeedbackAndFeedbackRate(maxFeedback, maxFeedback * 10);
 
-         double desiredPointMultiplier = 0.9;
          desiredPosition.setToZero(ReferenceFrame.getWorldFrame());
-         desiredPosition.set(closestPointOnBody.getX() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getX(),
-                             closestPointOnBody.getY() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getY(),
-                             closestPointOnBody.getZ() - (distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getZ());
+         desiredPosition.set(closestPointOnBody.getX() - (activationThreshold - minDistance) * distanceVector.getX(),
+                             closestPointOnBody.getY() - (activationThreshold - minDistance) * distanceVector.getY(),
+                             closestPointOnBody.getZ() - (activationThreshold - minDistance) * distanceVector.getZ());
 
          pointFeedbackCommand.setInverseDynamics(desiredPosition, zeroVector, zeroVector);
          
-         desiredPositionX.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getX());
-         desiredPositionY.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getY());
-         desiredPositionZ.set(-(distanceThreshold - minDistance) * desiredPointMultiplier * distanceVector.getZ());
+         desiredPositionX.set(-(activationThreshold - minDistance) * distanceVector.getX());
+         desiredPositionY.set(-(activationThreshold - minDistance) * distanceVector.getY());
+         desiredPositionZ.set(-(activationThreshold - minDistance) * distanceVector.getZ());
 
          distanceArrow.showGraphicObject();
          desiredPositionArrow.showGraphicObject();
+         isActive.set(true);
 
       }
       else
@@ -249,6 +254,7 @@ public class CollisionAvoidanceManager
          distanceArrow.hide();
          desiredPositionArrow.hide();
          closestPlanarRegion.set(-1);
+         isActive.set(false);
 
          selection.clearSelection();
          pointFeedbackCommand.setSelectionMatrix(selection);
