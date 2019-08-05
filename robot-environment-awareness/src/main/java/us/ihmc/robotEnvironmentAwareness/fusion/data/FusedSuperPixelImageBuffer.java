@@ -22,10 +22,14 @@ import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SegmentationRawDataFi
 import us.ihmc.robotEnvironmentAwareness.fusion.parameters.SuperPixelNormalEstimationParameters;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.FusedSuperPixelImageFactory;
 import us.ihmc.robotEnvironmentAwareness.fusion.tools.PointCloudProjectionHelper;
+import us.ihmc.robotEnvironmentAwareness.fusion.tools.SuperPixelGridImageFactory;
 
 public class FusedSuperPixelImageBuffer
 {
+   private static final boolean groupViaColors = false;
+
    private final FusedSuperPixelImageFactory fusedSuperPixelImageFactory = new FusedSuperPixelImageFactory();
+   private final SuperPixelGridImageFactory gridSuperPixelImageFactory = new SuperPixelGridImageFactory();
 
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
    private final AtomicReference<BufferedImage> latestBufferedImage = new AtomicReference<>(null);
@@ -109,11 +113,22 @@ public class FusedSuperPixelImageBuffer
 
       IntStream.range(0, numberOfPoints).parallel().forEach(i -> stereoImage.setPoint(i, createStereoPoint(pointCloudBuffer[i], colorBuffer[i], intrinsicParameters, cameraPosition, cameraOrientation, imageHeight, imageWidth)));
 
-      fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
-      fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
-      fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
+      if (groupViaColors)
+      {
+         fusedSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
+         fusedSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+         fusedSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
 
-      return fusedSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
+         return fusedSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
+      }
+      else
+      {
+         gridSuperPixelImageFactory.setImageSegmentationParameters(latestImageSegmentationParaeters.get());
+         gridSuperPixelImageFactory.setSegmentationRawDataFilteringParameters(latestSegmentationRawDataFilteringParameters.get());
+         gridSuperPixelImageFactory.setNormalEstimationParameters(latestNormalEstimationParameters.get());
+
+         return gridSuperPixelImageFactory.createRawSuperPixelImage(stereoImage);
+      }
    }
 
 
