@@ -31,7 +31,7 @@ public class RawSuperPixelImageFactory
    private static final boolean enableDisplayProjectedPointCloud = false;
 
    private static final int bufferedImageType = BufferedImage.TYPE_INT_RGB;
-   private static final int matType = opencv_core.CV_8UC3;
+//   private static final int matType = opencv_core.CV_8UC3;
 
 
    private BufferedImage segmentedContour;
@@ -204,7 +204,7 @@ public class RawSuperPixelImageFactory
     */
    private static Mat convertStereoImageToMat(StereoImage bufferedImage)
    {
-      Mat imageMat = new Mat(bufferedImage.getHeight(), bufferedImage.getWidth(), matType);
+      Mat imageMat = new Mat(bufferedImage.getHeight(), bufferedImage.getWidth(), opencv_core.CV_8UC3);
       UByteRawIndexer indexer = imageMat.createIndexer();
       for (StereoPoint point : bufferedImage.getPoints())
       {

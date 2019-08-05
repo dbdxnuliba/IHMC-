@@ -43,6 +43,7 @@ import us.ihmc.tools.thread.ExceptionHandlingThreadScheduler;
 public class LidarImageFusionProcessorCommunicationModule
 {
    private final Messager messager;
+   private final Messager reaMessager;
 
    private final Ros2Node ros2Node;
    private final REAModuleStateReporter moduleStateReporter;
@@ -63,6 +64,7 @@ public class LidarImageFusionProcessorCommunicationModule
    private LidarImageFusionProcessorCommunicationModule(Ros2Node ros2Node, Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
+      this.reaMessager = reaMessager;
       this.ros2Node = ros2Node;
 
       moduleStateReporter = new REAModuleStateReporter(reaMessager);
@@ -123,6 +125,9 @@ public class LidarImageFusionProcessorCommunicationModule
 
    private void dispatchImage32(Image32 message)
    {
+      if (message == null)
+         return;
+
       if (messager.isMessagerOpen())
          messager.submitMessage(LidarImageFusionAPI.ImageState, new Image32(message));
 
@@ -147,10 +152,11 @@ public class LidarImageFusionProcessorCommunicationModule
 
    public void stop() throws Exception
    {
-      messager.closeMessager();
+      reaMessager.closeMessager();
       ros2Node.destroy();
       stereoREAModule.stop();
       objectDetectionManager.close();
+      //      messager.closeMessager();
    }
 
    public static LidarImageFusionProcessorCommunicationModule createIntraprocessModule(Ros2Node ros2Node, SharedMemoryJavaFXMessager messager)

@@ -26,6 +26,7 @@ import us.ihmc.ros2.Ros2Node;
 public class LidarImageFusionProcessorUI
 {
    private final SharedMemoryJavaFXMessager messager;
+   private final REAUIMessager reaMessager;
 
    private final BorderPane mainPane;
 
@@ -53,6 +54,7 @@ public class LidarImageFusionProcessorUI
    private LidarImageFusionProcessorUI(Ros2Node ros2Node, SharedMemoryJavaFXMessager messager, REAUIMessager reaMessager, Stage primaryStage) throws Exception
    {
       this.messager = messager;
+      this.reaMessager = reaMessager;
       this.primaryStage = primaryStage;
       FXMLLoader loader = new FXMLLoader();
       loader.setController(this);
@@ -100,11 +102,13 @@ public class LidarImageFusionProcessorUI
 
    public void stop()
    {
+      primaryStage.close();
+
       try
       {
-         messager.closeMessager();
-
+         imageViewer.stop();
          meshViewer.stop();
+         reaMessager.closeMessager();
       }
       catch (Exception e)
       {

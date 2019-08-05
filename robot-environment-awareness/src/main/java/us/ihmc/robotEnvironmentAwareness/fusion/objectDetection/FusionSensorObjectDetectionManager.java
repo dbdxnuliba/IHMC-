@@ -44,6 +44,8 @@ public class FusionSensorObjectDetectionManager
    private final AtomicReference<StereoVisionPointCloudMessage> latestStereoVisionPointCloudMessage = new AtomicReference<>(null);
    private final AtomicReference<BufferedImage> leatestBufferedImage = new AtomicReference<BufferedImage>();
 
+   private final Timer socketTimer;
+
    public FusionSensorObjectDetectionManager(Ros2Node ros2Node, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
@@ -108,7 +110,7 @@ public class FusionSensorObjectDetectionManager
             imageRequested = false;
          }
       };
-      Timer socketTimer = new Timer();
+      socketTimer = new Timer();
       socketTimer.schedule(socketTimerTask, 0, milliSecondsForOneTick);
    }
 
@@ -157,6 +159,7 @@ public class FusionSensorObjectDetectionManager
 
    public void close() throws Exception
    {
+      socketTimer.cancel();
       if (objectDetectionSocket != null)
          if (!objectDetectionSocket.isClosed())
             objectDetectionSocket.close();

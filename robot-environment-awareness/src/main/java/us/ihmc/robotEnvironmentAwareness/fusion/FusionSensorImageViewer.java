@@ -110,6 +110,11 @@ public class FusionSensorImageViewer
       imageStreamer.start();
    }
 
+   public void stop()
+   {
+      imageStreamer.stop();
+   }
+
    public void clearImageView()
    {
       imagesToView.clear();

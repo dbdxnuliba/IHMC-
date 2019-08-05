@@ -5,6 +5,7 @@ import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationPr
 
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -44,11 +45,11 @@ public class StereoREAModule
    private final REAPlanarRegionPublicNetworkProvider planarRegionNetworkProvider;
 
    private static final int THREAD_PERIOD_MILLISECONDS = 200;
-   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 200;
+   private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 300;
 
    private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(3, getClass(), ExceptionHandling.CATCH_AND_REPORT);
 
-   private ScheduledFuture<?> scheduled;
+   private final ArrayList<ScheduledFuture<?>> scheduledFutures = new ArrayList<>();
 
    public StereoREAModule(Ros2Node ros2Node, Messager reaMessager, SharedMemoryJavaFXMessager messager)
    {
@@ -99,12 +100,12 @@ public class StereoREAModule
 
    public void start()
    {
-      if (scheduled == null)
+      if (scheduledFutures.isEmpty())
       {
-         scheduled = executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
-         executorService.scheduleAtFixedRate(rawSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
-         executorService.scheduleAtFixedRate(fusedSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
-         executorService.scheduleAtFixedRate(planarRegionFeatureUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+         scheduledFutures.add(executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
+         scheduledFutures.add(executorService.scheduleAtFixedRate(rawSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
+         scheduledFutures.add(executorService.scheduleAtFixedRate(fusedSuperPixelImageBuffer.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
+         scheduledFutures.add(executorService.scheduleAtFixedRate(planarRegionFeatureUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS));
       }
    }
 
@@ -112,10 +113,11 @@ public class StereoREAModule
    {
       LogTools.info("REA Module is going down.");
 
-      if (scheduled != null)
+      if (!scheduledFutures.isEmpty())
       {
-         scheduled.cancel(true);
-         scheduled = null;
+         for (ScheduledFuture<?> future : scheduledFutures)
+            future.cancel(true);
+         scheduledFutures.clear();
       }
 
       if (executorService != null)
