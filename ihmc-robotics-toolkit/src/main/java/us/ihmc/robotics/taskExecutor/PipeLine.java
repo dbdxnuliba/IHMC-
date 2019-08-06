@@ -73,7 +73,7 @@ public class PipeLine<T>
       masterTaskExecutor = new StateExecutor(clock);
    }
 
-   @Deprecated
+//   @Deprecated
    public PipeLine()
    {
       yoTime = null;

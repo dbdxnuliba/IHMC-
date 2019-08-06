@@ -1,10 +1,10 @@
 package us.ihmc.simulationConstructionSetTools.util.environments;
 
 import com.github.quickhull3d.*;
-import controller_msgs.msg.dds.*;
+
 import javafx.geometry.*;
 import javafx.geometry.Point2D;
-import us.ihmc.communication.*;
+
 import us.ihmc.euclid.axisAngle.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
@@ -16,7 +16,7 @@ import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.graphicsDescription.appearance.*;
 import us.ihmc.graphicsDescription.yoGraphics.*;
-import us.ihmc.humanoidRobotics.communication.packets.*;
+
 import us.ihmc.jMonkeyEngineToolkit.jme.util.*;
 import us.ihmc.robotics.geometry.*;
 import us.ihmc.simulationConstructionSetTools.robotController.*;

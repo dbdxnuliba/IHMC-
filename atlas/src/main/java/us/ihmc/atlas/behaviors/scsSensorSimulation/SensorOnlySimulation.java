@@ -39,7 +39,7 @@ public class SensorOnlySimulation
       scs = new SimulationConstructionSet(robot);
       mysimulation = new Simulation(robot, scs.getSimulationConstructionSetParameters().getDataBufferSize());
       //scs.setDT(0.0001, 100); //this gets set as well
-      aks.setDt(0.0001,100);
+//      aks.setDt(0.0001,100);
       //AvatarKinematicsSimulation.createForManualTest(robotModel,false)
 
       SensorOnlyController controller = new SensorOnlyController(robot, yoGraphicsListRegistry);//, scs);

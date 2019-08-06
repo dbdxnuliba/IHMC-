@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="us.ihmc.humanoidBehaviors.ui.behaviors.SearchAndKickUIController"
+            prefHeight="400.0" prefWidth="600.0">
+    <children>
+        <GridPane hgap="10.0" layoutX="15.0" layoutY="17.0" prefHeight="177.0" prefWidth="215.0" vgap="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <HBox>
+                    <children>
+                        <CheckBox fx:id="enableCheckBox" mnemonicParsing="false" onAction="#enable" text="Enable" />
+                    </children>
+                </HBox>
+                <Button fx:id="startstepping" onAction="#stepping" prefWidth="130.0" text="Start Stepping" GridPane.rowIndex="1" />
+<!--                <Button fx:id="pauseStepping" onAction="#pauseStepping" prefWidth="130.0" text="Pause Stepping" GridPane.rowIndex="2" />-->
+            </children>
+            <columnConstraints>
+                <ColumnConstraints />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints />
+                <RowConstraints />
+                <RowConstraints />
+            </rowConstraints>
+        </GridPane>
+    </children>
+</AnchorPane>
+

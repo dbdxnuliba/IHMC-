@@ -180,6 +180,7 @@ public class AvatarEstimatorThread
                          .setContactableBodiesFactory(contactableBodiesFactory).setEstimatorForceSensorDataHolder(forceSensorDataHolder)
                          .setCenterOfPressureDataHolderFromController(centerOfPressureDataHolderFromController)
                          .setRobotMotionStatusFromController(robotMotionStatusFromController);
+         estimatorFactory.setExternalPelvisCorrectorSubscriber(externalPelvisPoseSubscriber);
          drcStateEstimator = estimatorFactory.createStateEstimator(estimatorRegistry, yoGraphicsListRegistry);
          estimatorController.addRobotController(drcStateEstimator);
       }
@@ -351,10 +352,16 @@ public class AvatarEstimatorThread
 
    public void initializeEstimator(RigidBodyTransform rootJointTransform, TObjectDoubleMap<String> jointPositions)
    {
+      sensorReader.getSensorOutputMapReadOnly().reset();
+
       if (ekfStateEstimator != null)
          ekfStateEstimator.initializeEstimator(rootJointTransform, jointPositions);
       if (drcStateEstimator != null)
          drcStateEstimator.initializeEstimator(rootJointTransform, jointPositions);
+
+      firstTick.set(true);
+      humanoidRobotContextData.setControllerRan(false);
+      humanoidRobotContextData.setEstimatorRan(false);
    }
 
    /**
