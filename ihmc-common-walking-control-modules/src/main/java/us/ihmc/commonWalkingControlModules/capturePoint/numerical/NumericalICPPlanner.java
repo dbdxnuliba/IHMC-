@@ -152,10 +152,12 @@ public class NumericalICPPlanner
       CommonOps.scale(ICP_WEIGHT, WIcp);
 
       // Initialize matrices for CoP equality constraints at start and end
-      Aeq = new DenseMatrix64F(2, 2 * adjustmentSteps);
-      beq = new DenseMatrix64F(2, 1);
+      Aeq = new DenseMatrix64F(4, 2 * adjustmentSteps);
+      beq = new DenseMatrix64F(4, 1);
       Aeq.set(0, 2 * adjustmentSteps - 2, 1.0);
       Aeq.set(1, 2 * adjustmentSteps - 1, 1.0);
+      Aeq.set(2, 0, 1.0);
+      Aeq.set(3, 1, 1.0);
 
       // Initialize finite difference matrices for minimizing CoP velocity
       FD = new DenseMatrix64F(2 * adjustmentSteps - 2, 2 * adjustmentSteps);
@@ -328,6 +330,8 @@ public class NumericalICPPlanner
       // Setup equality constraints
       beq.set(0, cops.get(adjustmentSteps - 1).getX());
       beq.set(1, cops.get(adjustmentSteps - 1).getY());
+      beq.set(2, cops.get(0).getX());
+      beq.set(3, cops.get(0).getY());
 
       // Add CoP reference objective to matrices
       CommonOps.add(f, fCop, f);
