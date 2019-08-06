@@ -8,23 +8,27 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.PlanarRegionMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
 import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
-import us.ihmc.avatar.initialSetup.OffsetAndYawRobotInitialSetup;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
-import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.SingleStepEnvironment;
+import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
 import us.ihmc.simulationconstructionset.PinJoint;
 import us.ihmc.simulationconstructionset.Robot;
@@ -72,11 +76,14 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    protected void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
    {
 
-      SingleStepEnvironment environment = new SingleStepEnvironment(stepHeight, 1.0);
-      OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(0.6, 0.0, 0.0, 0.0);
+      ArrayList<Double> heightsVector = new ArrayList<Double>();
+      heightsVector.add(stepHeight);
+
+      VariableHeightStairsEnvironment environment = new VariableHeightStairsEnvironment(heightsVector, 0.7);
+      //      OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(0.6, 0.0, 0.0, 0.0);
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
-      drcSimulationTestHelper.setStartingLocation(offset);
+      //      drcSimulationTestHelper.setStartingLocation(offset);
       drcSimulationTestHelper.createSimulation("WalkingUpToHighPlatformtest");
       Point3D cameraFix = new Point3D(1.1281, 0.0142, 1.0528);
       Point3D cameraPosition = new Point3D(0.2936, -5.531, 1.7983);
@@ -116,6 +123,9 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       receivedRespond = requester.getRespond(request);
       assertTrue(receivedRespond != null);
 
+      CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForHorizontalSurfaces(environment.getPlanarRegionsList());
+      drcSimulationTestHelper.publishToController(collisionMessage);
+
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
       {
          drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
@@ -133,6 +143,24 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
 
       assertReachedGoal(receivedRespond.getFoostepMessages().getLast());
+   }
+
+   private CollisionAvoidanceManagerMessage createCollisionMessageForHorizontalSurfaces(PlanarRegionsList planarRegions)
+   {
+      CollisionAvoidanceManagerMessage collisionMessage = new CollisionAvoidanceManagerMessage();
+
+      for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
+      {
+         Vector3D normal = planarRegions.getPlanarRegion(i).getNormal();
+         if (Math.abs(normal.getZ()) >= 0.1)
+         {
+            PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
+            collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
+            collisionMessage.setConsiderOnlyEdges(true);
+         }
+      }
+
+      return collisionMessage;
    }
 
    private void assertReachedGoal(FootstepDataListMessage footsteps)
