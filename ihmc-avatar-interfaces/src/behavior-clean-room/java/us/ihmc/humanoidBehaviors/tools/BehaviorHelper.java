@@ -208,6 +208,11 @@ public class BehaviorHelper
    {
       new ROS2Callback<>(ros2Node, FootstepStatusMessage.class, robotModel.getSimpleRobotName(), ROS2Tools.HUMANOID_CONTROLLER, consumer);
    }
+//
+//   public void createFootstepStatusCallback(Consumer<FootstepStatusMessage> consumer)
+//   {
+//      new ROS2Callback<>(ros2Node, FootstepStatusMessage.class, robotModel.getSimpleRobotName(), ROS2Tools.HUMANOID_CONTROLLER, consumer);
+//   }
 
    public HighLevelControllerName getLatestControllerState()
    {

@@ -5,6 +5,8 @@ import org.lwjgl.*;
 import org.omg.PortableInterceptor.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.*;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.lists.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
@@ -19,6 +21,7 @@ import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.fancyPoses.FancyPosesBehavior.*;
 import us.ihmc.humanoidBehaviors.taskExecutor.*;
 import us.ihmc.humanoidBehaviors.tools.*;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.*;
 import us.ihmc.humanoidRobotics.communication.packets.walking.*;
@@ -27,13 +30,16 @@ import us.ihmc.log.*;
 import us.ihmc.mecano.frames.*;
 import us.ihmc.messager.*;
 import us.ihmc.messager.MessagerAPIFactory.*;
+import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
+import us.ihmc.robotics.geometry.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.taskExecutor.*;
 import us.ihmc.ros2.*;
 import us.ihmc.tools.thread.*;
 
 import java.sql.*;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -45,7 +51,15 @@ public class SuppaKickBehavior
    private final AtomicReference<Boolean> enable;
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
 
-   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel)
+//   private final PausablePeriodicThread thread;
+
+   //create notifications for actiating behaviors
+
+   private final Notification goToWalk = new Notification();
+   private boolean flag1 = false;
+
+
+   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
       LogTools.debug("Initializing SearchAndKickBehavior");
 //      flag = behaviorHelper.createBooleanActivationReference(API.Walk,false,true);
@@ -53,16 +67,59 @@ public class SuppaKickBehavior
 
       behaviorHelper.createFootstepStatusCallback(this::acceptFootstepStatus);
       stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
-//      messager.registerTopicListener(API.Abort,this::doOnAbort);
-//      messager.registerTopicListener(API.Walk, object -> goToWalk.set());
+      messager.registerTopicListener(API.Abort,this::doOnAbort);
+      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
 //      controllerState = new ROS2Input<>(ros2Node, HighLevelStateChangeStatusMessage.class, robotName, controllerId, initialState, this::acceptStatusChange);
 
 //      ROS2Tools.createCallbackSubscription(ros2Node, ToolboxStateMessage.class, getSubscriberTopicNameGenerator(), s -> receivedPacket(s.takeNextData()));
       enable = messager.createInput(API.Enable, false);
 
+//      thread = new PausablePeriodicThread(this::process, 0.5, getClass().getSimpleName());
+      ROS2Tools.createCallbackSubscription(ros2Node,
+                                           WalkingStatusMessage.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           this::checkFootTrajectoryMessage);
+
+      ROS2Tools.createCallbackSubscription(ros2Node,
+                                           TaskspaceTrajectoryStatusMessage.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           this::checkTaskspaceTrajectoryMessage);
+
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
 
    }
+   private void process()
+   {
+      System.out.println(behaviorHelper.getLatestControllerState());
+      FootstepDataCommand tmp = new FootstepDataCommand();
+      System.out.println(tmp.getSequenceId());
+
+//      ArrayList<PlanarRegion> combinedRegionsList = new ArrayList<>();
+
+
+//      synchronized (this)
+//      {
+//         combinedRegionsList.addAll(customPlanarRegions.values());
+//         PlanarRegionsList combinedRegions = new PlanarRegionsList(combinedRegionsList);
+//         PlanarRegionsListMessage message = PlanarRegionMessageConverter.convertToPlanarRegionsListMessage(combinedRegions);
+//         planarRegionPublisher.publish(message);
+//      }
+   }
+
+   private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+   {
+      System.out.println("Task Space End - effector Name" +message.takeNextData().getEndEffectorNameAsString());
+   }
+
+   private void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
+   {
+//      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
+      if(message.takeNextData().getWalkingStatus() == 1)
+      {
+         flag1 = true;
+      }
+   }
+
 
 //   public void receivedPacket(ToolboxStateMessage message)
 //   {
@@ -132,14 +189,14 @@ public class SuppaKickBehavior
 //      toolboxTaskScheduled = null;
 //   }
 //
-//   private void doOnAbort(boolean abort)
-//   {
-//      if (abort)
-//      {
-//         LogTools.info("Abort received. Shutting down threadScheduler.");
-//         behaviorHelper.shutdownScheduledThread();
-//      }
-//   }
+   private void doOnAbort(boolean abort)
+   {
+      if (abort)
+      {
+         LogTools.info("Abort received. Shutting down threadScheduler.");
+         behaviorHelper.shutdownScheduledThread();
+      }
+   }
 
    private void acceptFootstepStatus(FootstepStatusMessage footstepStatusMessage)
    {
@@ -176,6 +233,7 @@ public class SuppaKickBehavior
             FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
             FootstepDataListMessage foorStepList = createTwoStepInPlaceSteps(fullHumanoidRobotModel);
             behaviorHelper.publishFootstepList(foorStepList);
+
          }
 
       }
@@ -184,6 +242,82 @@ public class SuppaKickBehavior
       {
          LogTools.info("Stopped Stepping");
       }
+
+      if(goToWalk.poll())
+      {
+//         thread.start();
+         LogTools.info("Walking few steps");
+         FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
+         FootstepDataListMessage footstepDataListMessage = gotoWalk(fullHumanoidRobotModel);
+         behaviorHelper.publishFootstepList(footstepDataListMessage);
+//         System.out.println(behaviorHelper.getLatestControllerState());
+      }
+
+      if(enable.get())
+      {
+         if(flag1)
+         {
+            FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
+//            FootstepDataListMessage footstepDataListMessage = nowTurn(fullHumanoidRobotModel);
+            nowTurn();
+//            behaviorHelper.publishFootstepList(nowTurn());
+         }
+      }
+   }
+
+//   public FootstepDataListMessage nowTurn(FullHumanoidRobotModel fullHumanoidRobotModel)
+   public void nowTurn()
+   {
+//      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
+//      for (RobotSide side : RobotSide.values())
+//      {
+//         MovingReferenceFrame stepFrame = fullHumanoidRobotModel.getSoleFrame(side);
+//         FramePoint3D footLocation = new FramePoint3D(stepFrame);
+//         FrameQuaternion footOrientation = new FrameQuaternion(stepFrame,90.0,0.0,0.0);
+//         footLocation.changeFrame(ReferenceFrame.getWorldFrame());
+//         footOrientation.changeFrame(ReferenceFrame.getWorldFrame());
+//
+//         FootstepDataMessage footstepDataMessage = HumanoidMessageTools.createFootstepDataMessage(side,footLocation,footOrientation);
+//         footstelpList.getFootstepDataList().add().set(footstepDataMessage);
+//
+//      }
+//      return footstelpList;
+      double trajectoryTime = 3.0;
+      behaviorHelper.requestChestGoHome(trajectoryTime);
+      behaviorHelper.requestPelvisGoHome(trajectoryTime);
+
+      double[] jointAngles = new double[] {0.0, -1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
+      behaviorHelper.requestArmTrajectory(RobotSide.LEFT, trajectoryTime, jointAngles);
+
+      jointAngles = new double[] {0.0, 1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
+      behaviorHelper.requestArmTrajectory(RobotSide.RIGHT, trajectoryTime, jointAngles);
+   }
+
+
+   public FootstepDataListMessage gotoWalk(FullHumanoidRobotModel fullHumanoidRobotModel)
+   {
+      double x = 0.0;
+      double y = 0.11;
+      double z = 0.0;
+
+      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
+      for(int i = 0; i < 5; ++i)
+      {
+         for (RobotSide side : RobotSide.values())
+         {
+            MovingReferenceFrame stepFrame = fullHumanoidRobotModel.getSoleFrame(side);
+            FramePoint3D footLocation = new FramePoint3D(stepFrame,x, side.negateIfRightSide(y),z);
+            FrameQuaternion footOrientation = new FrameQuaternion(stepFrame);
+            footLocation.changeFrame(ReferenceFrame.getWorldFrame());
+            footOrientation.changeFrame(ReferenceFrame.getWorldFrame());
+
+            FootstepDataMessage footstepDataMessage = HumanoidMessageTools.createFootstepDataMessage(side,footLocation,footOrientation);
+            footstelpList.getFootstepDataList().add().set(footstepDataMessage);
+            x = x + 0.4;
+         }
+      }
+      footstelpList.setAreFootstepsAdjustable(true);
+      return footstelpList;
    }
 
    private FootstepDataListMessage createTwoStepInPlaceSteps(FullHumanoidRobotModel fullHumanoidRobotModel)
@@ -233,5 +367,11 @@ public class SuppaKickBehavior
       {
          return apiFactory.getAPIAndCloseFactory();
       }
+   }
+
+   public static void main(String[] args)
+   {
+//      BehaviorHelper tmp = new BehaviorHelper();
+//      new SuppaKickBehavior();
    }
 }
