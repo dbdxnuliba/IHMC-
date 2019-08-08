@@ -43,13 +43,11 @@ public class PlanarRegionSegmentationCalculator
    public void compute(NormalOcTreeNode root)
    {
       allRegionNodes.clear();
-
       regionsNodeData.parallelStream().forEach(region -> removeBadNodesFromRegion(boundingBox, parameters, region));
       regionsNodeData = regionsNodeData.parallelStream().filter(region -> !region.isEmpty()).collect(Collectors.toList());
       regionsNodeData.forEach(region -> region.nodeStream().forEach(allRegionNodes::add));
       regionsNodeData.forEach(region -> growPlanarRegion(root, region, boundingBox, parameters));
       regionsNodeData = regionsNodeData.stream().filter(region -> region.getNumberOfNodes() > parameters.getMinRegionSize()).collect(Collectors.toList());
-
       Set<NormalOcTreeNode> nodeSet = new HashSet<>();
       nodeSet.clear();
       new OcTreeIterable<>(root, leafInBoundingBoxWithNormalSetRule(boundingBox)).forEach(nodeSet::add);

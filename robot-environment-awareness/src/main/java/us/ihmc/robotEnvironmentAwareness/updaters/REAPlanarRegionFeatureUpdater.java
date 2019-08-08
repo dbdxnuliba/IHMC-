@@ -164,12 +164,11 @@ public class REAPlanarRegionFeatureUpdater implements RegionFeaturesProvider
       segmentationCalculator.setBoundingBox(octree.getBoundingBox());
       segmentationCalculator.setParameters(planarRegionSegmentationParameters.get());
       segmentationCalculator.setStereoFilterParameters(stereoFilterParameters.get());
-      System.out.println(stereoFilterParameters.get().toString());
 
-      timeReporter.run(() -> segmentationCalculator.compute(octree.getRoot()), segmentationTimeReport);
+//      timeReporter.run(() -> segmentationCalculator.compute(octree.getRoot()), segmentationTimeReport);
 
       List<PlanarRegionSegmentationRawData> rawData = segmentationCalculator.getSegmentationRawData();
-
+      
       List<PlanarRegion> unmergedCustomPlanarRegions;
 
       if (clearCustomRegions.getAndSet(false))

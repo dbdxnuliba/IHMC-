@@ -140,6 +140,7 @@ public class OcTreeBasicsAnchorPaneController extends REABasicUIController
    
    public void endToEndRun()
    {
-      uiMessager.submitMessageInternal(REAModuleAPI.StereoREAEndToEndRun, true);
+      System.out.println("endToEndRun");
+      uiMessager.submitMessageToModule(REAModuleAPI.StereoREAEndToEndRun, true);
    }
 }

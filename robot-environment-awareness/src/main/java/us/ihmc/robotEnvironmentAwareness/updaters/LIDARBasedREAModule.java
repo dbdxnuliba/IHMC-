@@ -71,6 +71,8 @@ public class LIDARBasedREAModule
    private ScheduledFuture<?> scheduled;
    private final Messager reaMessager;
 
+   private final REAOcTreeEndToEndUpdater rEAOcTreeEndToEndUpdater;
+   
    private final AtomicReference<StereoVisionPointCloudMessage> importedStereoVisionPointCloudMessage;
 
    private LIDARBasedREAModule(Messager reaMessager, File configurationFile) throws IOException
@@ -117,6 +119,8 @@ public class LIDARBasedREAModule
 
       importedStereoVisionPointCloudMessage = reaMessager.createInput(REAModuleAPI.StereoVisionPointCloudState);
       reaMessager.registerTopicListener(REAModuleAPI.ImportStereoPointCloudData, (content) -> dispatchImportedStereoVisionPointCloudMessage());
+      
+      rEAOcTreeEndToEndUpdater = new REAOcTreeEndToEndUpdater(reaMessager, ros2Node);
    }
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
@@ -132,6 +136,7 @@ public class LIDARBasedREAModule
       StereoVisionPointCloudMessage message = subscriber.takeNextData();
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
       stereoVisionBufferUpdater.handleStereoVisionPointCloudMessage(message);
+      rEAOcTreeEndToEndUpdater.handleStereoPointCloudMessage(message);
    }
 
    private void dispatchImportedStereoVisionPointCloudMessage()
@@ -139,6 +144,7 @@ public class LIDARBasedREAModule
       StereoVisionPointCloudMessage message = importedStereoVisionPointCloudMessage.getAndSet(null);
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
       stereoVisionBufferUpdater.handleStereoVisionPointCloudMessage(message);
+      rEAOcTreeEndToEndUpdater.handleStereoPointCloudMessage(message);
    }
 
    private void dispatchCustomPlanarRegion(Subscriber<PlanarRegionsListMessage> subscriber)
@@ -225,7 +231,7 @@ public class LIDARBasedREAModule
             timeReporter.run(() -> moduleStateReporter.reportPlanarRegionsState(planarRegionFeatureUpdater), reportPlanarRegionsStateTimeReport);
 
             planarRegionNetworkProvider.update(ocTreeUpdateSuccess);
-            planarRegionNetworkProvider.publishCurrentState();
+            //planarRegionNetworkProvider.publishCurrentState();
          }
 
          if (isThreadInterrupted())
