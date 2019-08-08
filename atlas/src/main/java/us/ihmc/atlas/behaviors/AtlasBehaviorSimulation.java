@@ -1,5 +1,6 @@
 package us.ihmc.atlas.behaviors;
 
+import controller_msgs.msg.dds.*;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -10,7 +11,11 @@ import us.ihmc.avatar.initialSetup.DRCSCSInitialSetup;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ContactableBodiesFactory;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.HighLevelHumanoidControllerFactory;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.graphicsDescription.yoGraphics.*;
+import us.ihmc.humanoidBehaviors.tools.*;
+import us.ihmc.humanoidBehaviors.utilities.*;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
+import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -19,12 +24,16 @@ import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnviro
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
 import us.ihmc.wholeBodyController.RobotContactPointParameters;
+import us.ihmc.yoVariables.registry.*;
+import us.ihmc.yoVariables.variable.*;
 
 import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.DO_NOTHING_BEHAVIOR;
 import static us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName.WALKING;
 
 public class AtlasBehaviorSimulation
 {
+   private static YoVariableRegistry registry = new YoVariableRegistry("test");
+   private static YoDouble yoTime = new YoDouble("test",registry);
    public static SimulationConstructionSet createForManualTest(DRCRobotModel robotModel, CommonAvatarEnvironmentInterface environment, int recordTicksPerControllerTick)
    {
       return create(robotModel, environment, PubSubImplementation.FAST_RTPS, recordTicksPerControllerTick);
@@ -100,7 +109,6 @@ public class AtlasBehaviorSimulation
       SimulationConstructionSet scs = avatarSimulation.getSimulationConstructionSet();
       scs.setupGraph("root.atlas.t");
       scs.setupGraph("root.atlas.DRCSimulation.DRCControllerThread.DRCMomentumBasedController.HumanoidHighLevelControllerManager.highLevelControllerNameCurrentState");
-
       return scs;
    }
 

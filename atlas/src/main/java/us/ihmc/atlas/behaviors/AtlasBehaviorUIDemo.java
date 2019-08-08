@@ -1,5 +1,6 @@
 package us.ihmc.atlas.behaviors;
 
+import controller_msgs.msg.dds.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -9,11 +10,14 @@ import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.footstepPlanning.MultiStageFootstepPlanningModule;
 import us.ihmc.avatar.kinematicsSimulation.AvatarKinematicsSimulation;
 import us.ihmc.avatar.networkProcessor.supportingPlanarRegionPublisher.BipedalSupportPlanarRegionPublisher;
+import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.humanoidBehaviors.BehaviorModule;
 import us.ihmc.humanoidBehaviors.RemoteBehaviorInterface;
-import us.ihmc.humanoidBehaviors.tools.FakeREAModule;
+import us.ihmc.humanoidBehaviors.tools.*;
 import us.ihmc.humanoidBehaviors.ui.BehaviorUI;
 import us.ihmc.humanoidBehaviors.ui.simulation.PatrolSimulationRegionFields;
+import us.ihmc.humanoidBehaviors.utilities.*;
+import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.pubsub.DomainFactory;
@@ -26,6 +30,7 @@ import us.ihmc.simulationConstructionSetTools.util.environments.PlanarRegionsLis
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.wholeBodyController.AdditionalSimulationContactPoints;
 import us.ihmc.wholeBodyController.FootContactPoints;
+import us.ihmc.yoVariables.registry.*;
 
 /**
  * Runs self contained behavior demo.
@@ -37,6 +42,8 @@ public class AtlasBehaviorUIDemo extends Application
    private static final boolean USE_FLAT_GROUND = true;
    private static final boolean USE_KINEMATIC_SIMULATION = false;
    public static final boolean CREATE_YO_VARIABLE_SERVER = false;
+   private double yoTime;
+
 
    // Increase to 10 when you want the sims to run a little faster and don't need all of the YoVariable data.
    private final int recordFrequencySpeedup = 10;
@@ -70,10 +77,16 @@ public class AtlasBehaviorUIDemo extends Application
             CommonAvatarEnvironmentInterface environment = USE_FLAT_GROUND ? new FlatGroundEnvironment()
                   : new PlanarRegionsListDefinedEnvironment(createPlanarRegions(), 0.02, false);
             SimulationConstructionSet scs = AtlasBehaviorSimulation.createForManualTest(createRobotModel(), environment, recordFrequencySpeedup);
-
             scs.simulate();
+            while(true)
+            {
+              yoTime = scs.getTime();
+//              System.out.println(yoTime);
+            }
          }
       }).start();
+
+
 
       new Thread(() -> {
          LogTools.info("Creating footstep toolbox");
@@ -82,7 +95,7 @@ public class AtlasBehaviorUIDemo extends Application
 
       new Thread(() -> {
          LogTools.info("Creating behavior backpack");
-         BehaviorModule.createForBackpack(createRobotModel());
+         BehaviorModule.createForBackpack(createRobotModel(),yoTime);
       }).start();
 
       //      new Thread(() -> {

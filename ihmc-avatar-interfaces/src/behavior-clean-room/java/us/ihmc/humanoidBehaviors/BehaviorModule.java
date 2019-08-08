@@ -19,26 +19,27 @@ import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.messager.kryo.KryoMessager;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.yoVariables.variable.*;
 
 public class BehaviorModule
 {
    private final Messager messager;
 
-   public static BehaviorModule createForBackpack(DRCRobotModel robotModel)
+   public static BehaviorModule createForBackpack(DRCRobotModel robotModel, Double yoTime)
    {
       KryoMessager messager = KryoMessager.createServer(getBehaviorAPI(),
                                                         NetworkPorts.BEHAVIOUR_MODULE_PORT.getPort(),
                                                         new BehaviorMessagerUpdateThread(BehaviorModule.class.getSimpleName(), 5));
       ExceptionTools.handle(() -> messager.startMessager(), DefaultExceptionHandler.RUNTIME_EXCEPTION);
-      return new BehaviorModule(robotModel, messager);
+      return new BehaviorModule(robotModel, messager, yoTime);
    }
 
    public static BehaviorModule createForTest(DRCRobotModel robotModel, Messager messager)
    {
-      return new BehaviorModule(robotModel, messager);
+      return new BehaviorModule(robotModel, messager, null);
    }
 
-   private BehaviorModule(DRCRobotModel robotModel, Messager messager)
+   private BehaviorModule(DRCRobotModel robotModel, Messager messager, Double yoTime)
    {
       this.messager = messager;
 
@@ -53,7 +54,7 @@ public class BehaviorModule
       new PatrolBehavior(behaviorHelper, messager, robotModel);
       new FancyPosesBehavior(behaviorHelper, messager, robotModel);
       new ExploreAreaBehavior(behaviorHelper, messager, robotModel);
-      new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
+      new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node, yoTime);
    }
 
    public static MessagerAPI getBehaviorAPI()

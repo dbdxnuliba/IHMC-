@@ -16,15 +16,18 @@ import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple4D.*;
+import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.humanoidBehaviors.behaviors.*;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
 import us.ihmc.humanoidBehaviors.fancyPoses.FancyPosesBehavior.*;
 import us.ihmc.humanoidBehaviors.taskExecutor.*;
 import us.ihmc.humanoidBehaviors.tools.*;
+import us.ihmc.humanoidBehaviors.utilities.*;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.*;
 import us.ihmc.humanoidRobotics.communication.packets.walking.*;
+import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.log.*;
 import us.ihmc.mecano.frames.*;
@@ -36,7 +39,10 @@ import us.ihmc.robotics.geometry.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.robotics.taskExecutor.*;
 import us.ihmc.ros2.*;
+import us.ihmc.simulationconstructionset.*;
 import us.ihmc.tools.thread.*;
+import us.ihmc.yoVariables.registry.*;
+import us.ihmc.yoVariables.variable.*;
 
 import java.sql.*;
 import java.util.*;
@@ -50,6 +56,10 @@ public class SuppaKickBehavior
    private final ActivationReference<Boolean> stepping;
    private final AtomicReference<Boolean> enable;
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
+   private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+//   private YoDouble yoTime;
+   private final YoGraphicsListRegistry yoGraphicsListRegistry  = new YoGraphicsListRegistry();
+   private double longTime ;
 
 //   private final PausablePeriodicThread thread;
 
@@ -59,7 +69,8 @@ public class SuppaKickBehavior
    private boolean flag1 = false;
 
 
-   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
+
+   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node, double yoTime)
    {
       LogTools.debug("Initializing SearchAndKickBehavior");
 //      flag = behaviorHelper.createBooleanActivationReference(API.Walk,false,true);
@@ -74,25 +85,78 @@ public class SuppaKickBehavior
 //      ROS2Tools.createCallbackSubscription(ros2Node, ToolboxStateMessage.class, getSubscriberTopicNameGenerator(), s -> receivedPacket(s.takeNextData()));
       enable = messager.createInput(API.Enable, false);
 
-//      thread = new PausablePeriodicThread(this::process, 0.5, getClass().getSimpleName());
+//      thread = new PausablePeriodicThread(this::run, 0.5, getClass().getSimpleName());
+//      thread.start();
+
+//      new Thread(() -> {
+//         LogTools.info("For yoTime");
+//         while(true)
+//         {
+//            process(yoTime);
+//         }
+//      }).start();
       ROS2Tools.createCallbackSubscription(ros2Node,
                                            WalkingStatusMessage.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                            this::checkFootTrajectoryMessage);
 
       ROS2Tools.createCallbackSubscription(ros2Node,
+                                           SimulationConstructionSet.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           this::checkSimulationMessage);
+
+      ROS2Tools.createCallbackSubscription(ros2Node,
                                            TaskspaceTrajectoryStatusMessage.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                            this::checkTaskspaceTrajectoryMessage);
 
+
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
+      CapturePointUpdatable capturePointUpdatable = createCapturePointUpdateable(behaviorHelper,registry, yoGraphicsListRegistry);
+      behaviorHelper.addUpdatable(capturePointUpdatable);
+//      yoTime = behaviorHelper.getYoTime();
+//      this.yoTime = yoTime;
+//      longTime = behaviorHelper.getWallTime();
+
+
 
    }
-   private void process()
+
+   private CapturePointUpdatable createCapturePointUpdateable(BehaviorHelper testHelper, YoVariableRegistry registry,
+                                                              YoGraphicsListRegistry yoGraphicsListRegistry)
    {
-      System.out.println(behaviorHelper.getLatestControllerState());
-      FootstepDataCommand tmp = new FootstepDataCommand();
-      System.out.println(tmp.getSequenceId());
+      CapturabilityBasedStatusSubscriber capturabilityBasedStatusSubsrciber = new CapturabilityBasedStatusSubscriber();
+      testHelper.createSubscriberFromController(CapturabilityBasedStatus.class, capturabilityBasedStatusSubsrciber::receivedPacket);
+
+      CapturePointUpdatable ret = new CapturePointUpdatable(capturabilityBasedStatusSubsrciber, yoGraphicsListRegistry, registry);
+
+      return ret; // so this is continuously getting updated
+   }
+
+   private void checkSimulationMessage(Subscriber<SimulationConstructionSet> message)
+   {
+      //      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
+//      if(message.takeNextData().getWalkingStatus() == 1)
+//      {
+//         flag1 = true;
+//      }
+      System.out.println(message.takeNextData().getTime());
+
+
+   }
+
+//   private void run()
+//   {
+//
+//      process();
+//   }
+   private void process(double yoTime)
+   {
+//      System.out.println(behaviorHelper.getLatestControllerState());
+//      FootstepDataCommand tmp = new FootstepDataCommand();
+//      System.out.println(tmp.getSequenceId());
+         longTime = yoTime;
+//         System.out.println(longTime);
 
 //      ArrayList<PlanarRegion> combinedRegionsList = new ArrayList<>();
 
@@ -257,6 +321,7 @@ public class SuppaKickBehavior
       {
          if(flag1)
          {
+//            System.out.println(longTime);
             FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 //            FootstepDataListMessage footstepDataListMessage = nowTurn(fullHumanoidRobotModel);
             nowTurn();
@@ -282,7 +347,7 @@ public class SuppaKickBehavior
 //
 //      }
 //      return footstelpList;
-      double trajectoryTime = 3.0;
+      double trajectoryTime = 1.0;
       behaviorHelper.requestChestGoHome(trajectoryTime);
       behaviorHelper.requestPelvisGoHome(trajectoryTime);
 

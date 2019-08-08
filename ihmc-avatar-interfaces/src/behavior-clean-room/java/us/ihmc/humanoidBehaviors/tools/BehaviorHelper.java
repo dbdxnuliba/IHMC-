@@ -1,17 +1,21 @@
 package us.ihmc.humanoidBehaviors.tools;
 
-import java.util.Arrays;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import controller_msgs.msg.dds.*;
-import us.ihmc.avatar.drcRobot.DRCRobotModel;
+import us.ihmc.avatar.drcRobot.*;
+import us.ihmc.commonWalkingControlModules.controllers.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
+import us.ihmc.commons.*;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Callback;
 import us.ihmc.communication.ROS2Input;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.communication.ROS2Tools.*;
+import us.ihmc.communication.net.*;
 import us.ihmc.communication.packets.PacketDestination;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
@@ -22,23 +26,29 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePose3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameQuaternionReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.graphicsDescription.yoGraphics.*;
 import us.ihmc.humanoidBehaviors.tools.footstepPlanner.RemoteFootstepPlannerInterface;
 import us.ihmc.humanoidBehaviors.tools.footstepPlanner.RemoteFootstepPlannerResult;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.FootstepDataListCommand;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
 import us.ihmc.humanoidRobotics.communication.packets.walking.HumanoidBodyPart;
+import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.messager.Messager;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
+import us.ihmc.robotDataLogger.*;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.sensors.*;
 import us.ihmc.ros2.Ros2Node;
-import us.ihmc.tools.thread.ActivationReference;
-import us.ihmc.tools.thread.TypedNotification;
+import us.ihmc.sensorProcessing.communication.subscribers.*;
+import us.ihmc.tools.thread.*;
 import us.ihmc.util.PeriodicNonRealtimeThreadScheduler;
 import us.ihmc.wholeBodyController.DRCRobotJointMap;
+import us.ihmc.yoVariables.registry.*;
+import us.ihmc.yoVariables.variable.*;
 
 /**
  * Class for entry methods for developing robot behaviors. The idea is to have this be the one-stop
@@ -56,6 +66,7 @@ import us.ihmc.wholeBodyController.DRCRobotJointMap;
  */
 public class BehaviorHelper
 {
+
    private final Messager messager;
    private final DRCRobotModel robotModel;
    private final DRCRobotJointMap drcRobotJointMap;
@@ -73,6 +84,16 @@ public class BehaviorHelper
    private final ROS2Input<PlanarRegionsListMessage> planarRegionsList;
 
    private PeriodicNonRealtimeThreadScheduler threadScheduler;
+   private YoVariableServer yoVariableServer;
+   private final PausablePeriodicThread thread;
+   private YoDouble yoTime;
+   private YoVariableRegistry registry = new YoVariableRegistry("testRegistry");
+   private final RobotDataReceiver robotDataReceiver;
+   private FullHumanoidRobotModel fullRobotModel;
+   private ForceSensorDataHolder forceSensorDataHolder;
+   private final ArrayList<Updatable> updatables = new ArrayList<>();
+   private final YoGraphicsListRegistry yoGraphicsListRegistry  = new YoGraphicsListRegistry();
+   private final SimulatedDRCRobotTimeProvider simulatedDRCRobotTimeProvider;
 
    public BehaviorHelper(Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
@@ -95,6 +116,15 @@ public class BehaviorHelper
       reaStateRequestPublisher = new IHMCROS2Publisher<>(ros2Node, REAStateRequestMessage.class, null, ROS2Tools.REA);
 
       planarRegionsList = new ROS2Input<>(ros2Node, PlanarRegionsListMessage.class, null, ROS2Tools.REA);
+
+      thread = new PausablePeriodicThread(this::run, 0.1,getClass().getSimpleName());
+      yoVariableServer = null;
+      yoTime = new YoDouble("yoTime",registry);
+      fullRobotModel = robotModel.createFullRobotModel();
+      forceSensorDataHolder = new ForceSensorDataHolder(Arrays.asList(fullRobotModel.getForceSensorDefinitions()));
+      robotDataReceiver = new HumanoidRobotDataReceiver(fullRobotModel,forceSensorDataHolder);
+      simulatedDRCRobotTimeProvider = new SimulatedDRCRobotTimeProvider(robotModel.getControllerDT());
+
    }
 
    // Robot Sensing Methods:
@@ -287,5 +317,73 @@ public class BehaviorHelper
       return (controllerState == HighLevelControllerName.WALKING);
    }
 
+   public <T> void createSubscriberFromController(Class<T> messageType, ObjectConsumer<T> consumer)
+   {
+      createSubscriber(messageType, ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()), consumer);
+   }
 
+   public <T> void createSubscriber(Class<T> messageType, MessageTopicNameGenerator generator, ObjectConsumer<T> consumer)
+   {
+      ROS2Tools.createCallbackSubscription(ros2Node, messageType, generator, s -> consumer.consumeObject(s.takeNextData()));
+   }
+
+   private void run()
+   {
+      simulatedDRCRobotTimeProvider.doControl();
+
+      ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           s -> {
+                                              if(robotDataReceiver!=null && s!=null)
+                                                 robotDataReceiver.receivedPacket(s.takeNextData());
+                                           });
+      doControl();
+      if(yoVariableServer != null)
+      {
+         yoVariableServer.update(Conversions.secondsToNanoseconds(yoTime.getDoubleValue()));
+      }
+   }
+
+   private void doControl()
+   {
+      updateRobotState();
+      callUpdatables();
+      yoGraphicsListRegistry.setYoGraphicsUpdatedRemotely(false);
+      yoGraphicsListRegistry.update();
+   }
+
+   private void updateRobotState()
+   {
+      robotDataReceiver.updateRobotModel();
+
+      long simTimestamp = robotDataReceiver.getSimTimestamp();
+
+      if (simTimestamp < 0)
+         return;
+
+      double currentTimeInSeconds = Conversions.nanosecondsToSeconds(simTimestamp);
+      yoTime.set(currentTimeInSeconds);
+   }
+
+   private void callUpdatables()
+   {
+      for (int i = 0; i < updatables.size(); i++)
+      {
+         updatables.get(i).update(yoTime.getDoubleValue());
+      }
+   }
+
+   public void addUpdatable(Updatable updatable)
+   {
+      updatables.add(updatable);
+   }
+
+   public YoDouble getYoTime()
+   {
+      return yoTime;
+   }
+
+   public long getWallTime()
+   {
+      return simulatedDRCRobotTimeProvider.getTimestamp();
+   }
 }
