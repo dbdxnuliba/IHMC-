@@ -45,7 +45,6 @@ import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
-import us.ihmc.robotics.controllers.pidGains.PIDSE3Gains;
 import us.ihmc.robotics.controllers.pidGains.implementations.SymmetricYoPIDSE3Gains;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -597,7 +596,7 @@ public class KinematicsToolboxController extends ToolboxController
       return userFeedbackCommands.containsKey(centerOfMassName);
    }
 
-   protected PIDSE3Gains getDefaultGains()
+   protected SymmetricYoPIDSE3Gains getDefaultGains()
    {
       return gains;
    }

@@ -2,6 +2,7 @@ package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
+import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -16,6 +17,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 public class KinematicsStreamingToolboxController extends HumanoidKinematicsToolboxController
 {
+   private final CommandInputManager ikCommandInputManager;
    private final KinematicsToolboxOutputConverter outputConverter;
    private final WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage = new WholeBodyTrajectoryMessage();
    private final YoDouble streamIntegrationDuration = new YoDouble("streamIntegrationDuration", registry);
@@ -23,14 +25,29 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
    {
    };
 
+   private final CommandInputManager commandInputManager;
+
    public KinematicsStreamingToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
                                                YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry parentRegistry)
    {
-      super(commandInputManager, statusOutputManager, desiredFullRobotModel, yoGraphicsListRegistry, parentRegistry);
+      this(commandInputManager, new CommandInputManager(HumanoidKinematicsToolboxController.class.getSimpleName(), KinematicsToolboxModule.supportedCommands()),
+           statusOutputManager, desiredFullRobotModel, fullRobotModelFactory, yoGraphicsListRegistry, parentRegistry);
+   }
+
+   private KinematicsStreamingToolboxController(CommandInputManager commandInputManager, CommandInputManager ikCommandInputManager,
+                                                StatusMessageOutputManager statusOutputManager, FullHumanoidRobotModel desiredFullRobotModel,
+                                                FullHumanoidRobotModelFactory fullRobotModelFactory, YoGraphicsListRegistry yoGraphicsListRegistry,
+                                                YoVariableRegistry parentRegistry)
+   {
+      super(ikCommandInputManager, statusOutputManager, desiredFullRobotModel, yoGraphicsListRegistry, parentRegistry);
+      this.commandInputManager = commandInputManager;
+      this.ikCommandInputManager = ikCommandInputManager;
 
       streamIntegrationDuration.set(0.05);
       outputConverter = new KinematicsToolboxOutputConverter(fullRobotModelFactory);
+//      getDefaultGains().setProportionalGains(100.0);
+      getDefaultGains().setMaxFeedbackAndFeedbackRate(100.0, Double.POSITIVE_INFINITY);
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -44,18 +61,30 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
       return super.initialize();
    }
 
+   private KinematicsStreamingToolboxInputCommand latestInput = null;
+
    @Override
    public void updateInternal()
    {
       if (commandInputManager.isNewCommandAvailable(KinematicsStreamingToolboxInputCommand.class))
+         latestInput = commandInputManager.pollNewestCommand(KinematicsStreamingToolboxInputCommand.class);
+
+      if (latestInput != null)
       {
-         KinematicsStreamingToolboxInputCommand command = commandInputManager.pollNewestCommand(KinematicsStreamingToolboxInputCommand.class);
-         if (command.getControlCenterOfMass())
-            commandInputManager.submitCommand(command.getCenterOfMassInput());
-         commandInputManager.submitCommands(command.getRigidBodyInputs());
+         if (latestInput.getControlCenterOfMass())
+            ikCommandInputManager.submitCommand(latestInput.getCenterOfMassInput());
+         ikCommandInputManager.submitCommands(latestInput.getRigidBodyInputs());
       }
 
-      super.updateInternal();
+      try
+      {
+         super.updateInternal();
+      }
+      catch (Exception e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
 
       outputConverter.updateFullRobotModel(getSolution());
       outputConverter.setMessageToCreate(wholeBodyTrajectoryMessage);

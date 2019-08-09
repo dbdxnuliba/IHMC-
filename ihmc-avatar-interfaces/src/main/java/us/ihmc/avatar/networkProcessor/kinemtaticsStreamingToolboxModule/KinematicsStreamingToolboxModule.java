@@ -88,6 +88,11 @@ public class KinematicsStreamingToolboxModule extends ToolboxModule
    @Override
    public List<Class<? extends Settable<?>>> createListOfSupportedStatus()
    {
+      return supportedStatus();
+   }
+
+   public static List<Class<? extends Settable<?>>> supportedStatus()
+   {
       List<Class<? extends Settable<?>>> status = new ArrayList<>();
       status.add(KinematicsToolboxOutputStatus.class);
       return status;

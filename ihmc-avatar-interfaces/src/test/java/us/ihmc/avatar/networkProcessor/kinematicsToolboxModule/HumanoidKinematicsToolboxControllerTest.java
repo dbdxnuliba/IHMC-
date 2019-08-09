@@ -429,7 +429,7 @@ public abstract class HumanoidKinematicsToolboxControllerTest implements MultiRo
       randomizeArmJointPositions(random, robotSide, robotModelToModify, 1.0);
    }
 
-   private void randomizeArmJointPositions(Random random, RobotSide robotSide, FullHumanoidRobotModel robotModelToModify, double percentOfMotionRangeAllowed)
+   public static void randomizeArmJointPositions(Random random, RobotSide robotSide, FullHumanoidRobotModel robotModelToModify, double percentOfMotionRangeAllowed)
    {
       RigidBodyBasics chest = robotModelToModify.getChest();
       RigidBodyBasics hand = robotModelToModify.getHand(robotSide);
@@ -441,7 +441,7 @@ public abstract class HumanoidKinematicsToolboxControllerTest implements MultiRo
       randomizeKinematicsChainPositions(random, base, body, 1.0);
    }
 
-   private void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body, double percentOfMotionRangeAllowed)
+   private static void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body, double percentOfMotionRangeAllowed)
    {
       percentOfMotionRangeAllowed = MathTools.clamp(percentOfMotionRangeAllowed, 0.0, 1.0);
 
@@ -450,7 +450,7 @@ public abstract class HumanoidKinematicsToolboxControllerTest implements MultiRo
       randomizeJointPositions(random, joints, percentOfMotionRangeAllowed);
    }
 
-   private void randomizeJointPositions(Random random, OneDoFJointBasics[] joints, double percentOfMotionRangeAllowed)
+   private static void randomizeJointPositions(Random random, OneDoFJointBasics[] joints, double percentOfMotionRangeAllowed)
    {
       for (OneDoFJointBasics joint : joints)
       {
