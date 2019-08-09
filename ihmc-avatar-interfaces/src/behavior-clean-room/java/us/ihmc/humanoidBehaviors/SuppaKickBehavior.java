@@ -58,7 +58,7 @@ public class SuppaKickBehavior
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
    private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final YoGraphicsListRegistry yoGraphicsListRegistry  = new YoGraphicsListRegistry();
-   private double longTime ;
+
 
    private boolean pelvisFlag = false;
    private boolean leftArmFlag = false;
@@ -77,21 +77,15 @@ public class SuppaKickBehavior
    public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
       LogTools.debug("Initializing SearchAndKickBehavior");
-//      flag = behaviorHelper.createBooleanActivationReference(API.Walk,false,true);
+
       this.behaviorHelper = behaviorHelper;
 
       behaviorHelper.createFootstepStatusCallback(this::acceptFootstepStatus);
       stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
       messager.registerTopicListener(API.Abort,this::doOnAbort);
       messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
-//      controllerState = new ROS2Input<>(ros2Node, HighLevelStateChangeStatusMessage.class, robotName, controllerId, initialState, this::acceptStatusChange);
 
-//      ROS2Tools.createCallbackSubscription(ros2Node, ToolboxStateMessage.class, getSubscriberTopicNameGenerator(), s -> receivedPacket(s.takeNextData()));
       enable = messager.createInput(API.Enable, false);
-
-//      thread = new PausablePeriodicThread(this::run, 0.5, getClass().getSimpleName());
-//      thread.start();
-
 
       ROS2Tools.createCallbackSubscription(ros2Node,
                                            WalkingStatusMessage.class,
@@ -112,49 +106,12 @@ public class SuppaKickBehavior
 
 
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
-      CapturePointUpdatable capturePointUpdatable = createCapturePointUpdateable(behaviorHelper,registry, yoGraphicsListRegistry);
-      behaviorHelper.addUpdatable(capturePointUpdatable);
-
 
 
 
    }
 
-   private CapturePointUpdatable createCapturePointUpdateable(BehaviorHelper testHelper, YoVariableRegistry registry,
-                                                              YoGraphicsListRegistry yoGraphicsListRegistry)
-   {
-      CapturabilityBasedStatusSubscriber capturabilityBasedStatusSubsrciber = new CapturabilityBasedStatusSubscriber();
-      testHelper.createSubscriberFromController(CapturabilityBasedStatus.class, capturabilityBasedStatusSubsrciber::receivedPacket);
 
-      CapturePointUpdatable ret = new CapturePointUpdatable(capturabilityBasedStatusSubsrciber, yoGraphicsListRegistry, registry);
-
-      return ret; // so this is continuously getting updated
-   }
-
-//   private void run()
-//   {
-//
-//      process();
-//   }
-   private void process(double yoTime)
-   {
-//      System.out.println(behaviorHelper.getLatestControllerState());
-//      FootstepDataCommand tmp = new FootstepDataCommand();
-//      System.out.println(tmp.getSequenceId());
-         longTime = yoTime;
-//         System.out.println(longTime);
-
-//      ArrayList<PlanarRegion> combinedRegionsList = new ArrayList<>();
-
-
-//      synchronized (this)
-//      {
-//         combinedRegionsList.addAll(customPlanarRegions.values());
-//         PlanarRegionsList combinedRegions = new PlanarRegionsList(combinedRegionsList);
-//         PlanarRegionsListMessage message = PlanarRegionMessageConverter.convertToPlanarRegionsListMessage(combinedRegions);
-//         planarRegionPublisher.publish(message);
-//      }
-   }
 
    private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
@@ -192,74 +149,7 @@ public class SuppaKickBehavior
    }
 
 
-//   public void receivedPacket(ToolboxStateMessage message)
-//   {
-////      if (DEBUG)
-////         LogTools.info("Received a state message.");
-////
-////      if (toolboxTaskScheduled != null)
-////      {
-////         return;
-////      }
-//
-//      switch (ToolboxState.fromByte(message.getRequestedToolboxState()))
-//      {
-//      case WAKE_UP:
-//         wakeUp();
-//         break;
-//      case REINITIALIZE:
-//         reinitialize();
-//         break;
-//      case SLEEP:
-//         sleep();
-//         break;
-//      }
-//   }
 
-//   public void wakeUp()
-//   {
-//      if (toolboxTaskScheduled != null)
-//      {
-//         if (DEBUG)
-//            LogTools.error("This toolbox is already running.");
-//         return;
-//      }
-//
-//      if (DEBUG)
-//         LogTools.debug("Waking up");
-//
-//      createToolboxRunnable();
-//      toolboxTaskScheduled = executorService.scheduleAtFixedRate(toolboxRunnable, 0, updatePeriodMilliseconds, TimeUnit.MILLISECONDS);
-//      getToolboxController().setFutureToListenTo(toolboxTaskScheduled);
-//      reinitialize();
-//      receivedInput.set(true);
-//   }
-//
-//   private void reinitialize()
-//   {
-//      getToolboxController().requestInitialize();
-//   }
-//
-//   public void sleep()
-//   {
-//
-//      if (DEBUG)
-//         LogTools.debug("Going to sleep");
-//
-//      destroyToolboxRunnable();
-//
-//      if (toolboxTaskScheduled == null)
-//      {
-//         if (DEBUG)
-//            LogTools.error("There is no task running.");
-//         return;
-//      }
-//
-//      getToolboxController().setFutureToListenTo(null);
-//      toolboxTaskScheduled.cancel(true);
-//      toolboxTaskScheduled = null;
-//   }
-//
    private void doOnAbort(boolean abort)
    {
       if (abort)
