@@ -27,7 +27,7 @@ public class AtlasBehaviorModule
                  }).start();
 
       LogTools.info("Creating behavior module");
-      BehaviorModule.createForBackpack(createRobotModel(), null);
+      BehaviorModule.createForBackpack(createRobotModel());
 
       Runtime.getRuntime().addShutdownHook(new Thread(() ->
                                                       {

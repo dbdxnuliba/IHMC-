@@ -25,21 +25,21 @@ public class BehaviorModule
 {
    private final Messager messager;
 
-   public static BehaviorModule createForBackpack(DRCRobotModel robotModel, Double yoTime)
+   public static BehaviorModule createForBackpack(DRCRobotModel robotModel)
    {
       KryoMessager messager = KryoMessager.createServer(getBehaviorAPI(),
                                                         NetworkPorts.BEHAVIOUR_MODULE_PORT.getPort(),
                                                         new BehaviorMessagerUpdateThread(BehaviorModule.class.getSimpleName(), 5));
       ExceptionTools.handle(() -> messager.startMessager(), DefaultExceptionHandler.RUNTIME_EXCEPTION);
-      return new BehaviorModule(robotModel, messager, yoTime);
+      return new BehaviorModule(robotModel, messager);
    }
 
    public static BehaviorModule createForTest(DRCRobotModel robotModel, Messager messager)
    {
-      return new BehaviorModule(robotModel, messager, null);
+      return new BehaviorModule(robotModel, messager);
    }
 
-   private BehaviorModule(DRCRobotModel robotModel, Messager messager, Double yoTime)
+   private BehaviorModule(DRCRobotModel robotModel, Messager messager)
    {
       this.messager = messager;
 
@@ -54,7 +54,7 @@ public class BehaviorModule
       new PatrolBehavior(behaviorHelper, messager, robotModel);
       new FancyPosesBehavior(behaviorHelper, messager, robotModel);
       new ExploreAreaBehavior(behaviorHelper, messager, robotModel);
-      new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node, yoTime);
+      new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
    }
 
    public static MessagerAPI getBehaviorAPI()

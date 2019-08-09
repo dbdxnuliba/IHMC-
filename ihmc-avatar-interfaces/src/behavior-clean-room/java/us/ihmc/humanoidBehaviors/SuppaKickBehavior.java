@@ -51,26 +51,30 @@ import java.util.concurrent.atomic.*;
 
 public class SuppaKickBehavior
 {
-//   private final PipeLine<AbstractBehavior> pipeLine;
+
    private final BehaviorHelper behaviorHelper;
    private final ActivationReference<Boolean> stepping;
    private final AtomicReference<Boolean> enable;
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
    private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
-//   private YoDouble yoTime;
    private final YoGraphicsListRegistry yoGraphicsListRegistry  = new YoGraphicsListRegistry();
    private double longTime ;
 
-//   private final PausablePeriodicThread thread;
+   private boolean pelvisFlag = false;
+   private boolean leftArmFlag = false;
+   private boolean rightArmFlag = false;
+   private boolean chestFlag = false;
+   private boolean footStepFlag = false;
+   private boolean LeftLegFlag = false;
+   private boolean RightLegFlag = false;
 
-   //create notifications for actiating behaviors
 
    private final Notification goToWalk = new Notification();
    private boolean flag1 = false;
 
 
 
-   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node, double yoTime)
+   public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
       LogTools.debug("Initializing SearchAndKickBehavior");
 //      flag = behaviorHelper.createBooleanActivationReference(API.Walk,false,true);
@@ -88,22 +92,18 @@ public class SuppaKickBehavior
 //      thread = new PausablePeriodicThread(this::run, 0.5, getClass().getSimpleName());
 //      thread.start();
 
-//      new Thread(() -> {
-//         LogTools.info("For yoTime");
-//         while(true)
-//         {
-//            process(yoTime);
-//         }
-//      }).start();
+
       ROS2Tools.createCallbackSubscription(ros2Node,
                                            WalkingStatusMessage.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                            this::checkFootTrajectoryMessage);
 
       ROS2Tools.createCallbackSubscription(ros2Node,
-                                           SimulationConstructionSet.class,
+                                           JointspaceTrajectoryStatusMessage.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-                                           this::checkSimulationMessage);
+                                           this::checkJointTrajectoryMessage);
+
+
 
       ROS2Tools.createCallbackSubscription(ros2Node,
                                            TaskspaceTrajectoryStatusMessage.class,
@@ -114,9 +114,7 @@ public class SuppaKickBehavior
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
       CapturePointUpdatable capturePointUpdatable = createCapturePointUpdateable(behaviorHelper,registry, yoGraphicsListRegistry);
       behaviorHelper.addUpdatable(capturePointUpdatable);
-//      yoTime = behaviorHelper.getYoTime();
-//      this.yoTime = yoTime;
-//      longTime = behaviorHelper.getWallTime();
+
 
 
 
@@ -131,18 +129,6 @@ public class SuppaKickBehavior
       CapturePointUpdatable ret = new CapturePointUpdatable(capturabilityBasedStatusSubsrciber, yoGraphicsListRegistry, registry);
 
       return ret; // so this is continuously getting updated
-   }
-
-   private void checkSimulationMessage(Subscriber<SimulationConstructionSet> message)
-   {
-      //      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
-//      if(message.takeNextData().getWalkingStatus() == 1)
-//      {
-//         flag1 = true;
-//      }
-      System.out.println(message.takeNextData().getTime());
-
-
    }
 
 //   private void run()
@@ -172,12 +158,33 @@ public class SuppaKickBehavior
 
    private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
-      System.out.println("Task Space End - effector Name" +message.takeNextData().getEndEffectorNameAsString());
+//      System.out.println("Task Space End - effector Name" +message.takeNextData().getEndEffectorNameAsString());
+//      System.out.println(message.takeNextData().getTrajectoryExecutionStatus());
+      if(message.takeNextData().getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+      {
+         System.out.println("Pelvis executed");
+         pelvisFlag = true;
+      }
    }
+   double counter = 0;
+   private void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
+   {
+      //      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
+//      System.out.println(message.takeNextData().getTimestamp());
+//      System.out.println("Actual Joint Position" + message.takeNextData().getActualJointPositions());// + "Desired Joint Position" +
+//                               message.readNextData().getDesiredJointPositions());
+      if(message.takeNextData().getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED)
+      {
+         System.out.println("I am in the joint space trajectory loop and done with hand movements" + counter);
+         counter++;
+      }
+   }
+
 
    private void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {
 //      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
+
       if(message.takeNextData().getWalkingStatus() == 1)
       {
          flag1 = true;
@@ -324,14 +331,15 @@ public class SuppaKickBehavior
 //            System.out.println(longTime);
             FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 //            FootstepDataListMessage footstepDataListMessage = nowTurn(fullHumanoidRobotModel);
-            nowTurn();
+            nowTurn(fullHumanoidRobotModel);
+
 //            behaviorHelper.publishFootstepList(nowTurn());
          }
       }
    }
 
 //   public FootstepDataListMessage nowTurn(FullHumanoidRobotModel fullHumanoidRobotModel)
-   public void nowTurn()
+   public void nowTurn(FullHumanoidRobotModel fullHumanoidRobotModel)
    {
 //      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
 //      for (RobotSide side : RobotSide.values())
@@ -348,14 +356,20 @@ public class SuppaKickBehavior
 //      }
 //      return footstelpList;
       double trajectoryTime = 1.0;
-      behaviorHelper.requestChestGoHome(trajectoryTime);
-      behaviorHelper.requestPelvisGoHome(trajectoryTime);
+//      behaviorHelper.requestChestGoHome(trajectoryTime);
+//      behaviorHelper.requestPelvisGoHome(trajectoryTime);
 
       double[] jointAngles = new double[] {0.0, -1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
       behaviorHelper.requestArmTrajectory(RobotSide.LEFT, trajectoryTime, jointAngles);
 
       jointAngles = new double[] {0.0, 1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
       behaviorHelper.requestArmTrajectory(RobotSide.RIGHT, trajectoryTime, jointAngles);
+
+      FramePoint3D pelvisPOs = new FramePoint3D(ReferenceFrame.getWorldFrame(), 0.0,0.0,9.1);
+      FrameQuaternion pelvisOrientation = new FrameQuaternion();
+      behaviorHelper.requestPelvisTrajectory(trajectoryTime,pelvisPOs,pelvisOrientation);
+      flag1 = false;
+
    }
 
 

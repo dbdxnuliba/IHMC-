@@ -42,7 +42,6 @@ public class AtlasBehaviorUIDemo extends Application
    private static final boolean USE_FLAT_GROUND = true;
    private static final boolean USE_KINEMATIC_SIMULATION = false;
    public static final boolean CREATE_YO_VARIABLE_SERVER = false;
-   private double yoTime;
 
 
    // Increase to 10 when you want the sims to run a little faster and don't need all of the YoVariable data.
@@ -78,11 +77,6 @@ public class AtlasBehaviorUIDemo extends Application
                   : new PlanarRegionsListDefinedEnvironment(createPlanarRegions(), 0.02, false);
             SimulationConstructionSet scs = AtlasBehaviorSimulation.createForManualTest(createRobotModel(), environment, recordFrequencySpeedup);
             scs.simulate();
-            while(true)
-            {
-              yoTime = scs.getTime();
-//              System.out.println(yoTime);
-            }
          }
       }).start();
 
@@ -95,7 +89,7 @@ public class AtlasBehaviorUIDemo extends Application
 
       new Thread(() -> {
          LogTools.info("Creating behavior backpack");
-         BehaviorModule.createForBackpack(createRobotModel(),yoTime);
+         BehaviorModule.createForBackpack(createRobotModel());
       }).start();
 
       //      new Thread(() -> {
