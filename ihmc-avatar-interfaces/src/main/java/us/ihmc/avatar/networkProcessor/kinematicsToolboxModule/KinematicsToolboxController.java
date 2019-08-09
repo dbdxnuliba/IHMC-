@@ -216,7 +216,7 @@ public class KinematicsToolboxController extends ToolboxController
    }
 
    public KinematicsToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
-                                      FloatingJointBasics rootJoint, OneDoFJointBasics[] oneDoFJoints, Collection<RigidBodyBasics> controllableRigidBodies,
+                                      FloatingJointBasics rootJoint, OneDoFJointBasics[] oneDoFJoints, Collection<? extends RigidBodyBasics> controllableRigidBodies,
                                       YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry parentRegistry)
    {
       super(statusOutputManager, parentRegistry);
@@ -298,7 +298,7 @@ public class KinematicsToolboxController extends ToolboxController
     * @return the controller core that will run for the desired robot
     *         {@link #desiredFullRobotModel}.
     */
-   private WholeBodyControllerCore createControllerCore(Collection<RigidBodyBasics> controllableRigidBodies)
+   private WholeBodyControllerCore createControllerCore(Collection<? extends RigidBodyBasics> controllableRigidBodies)
    {
       KinematicsToolboxOptimizationSettings optimizationSettings = new KinematicsToolboxOptimizationSettings();
       JointBasics[] controlledJoints;
@@ -331,7 +331,7 @@ public class KinematicsToolboxController extends ToolboxController
     *           robot will be controllable.
     * @return the template for the controller core.
     */
-   private FeedbackControlCommandList createControllerCoreTemplate(Collection<RigidBodyBasics> controllableRigidBodies)
+   private FeedbackControlCommandList createControllerCoreTemplate(Collection<? extends RigidBodyBasics> controllableRigidBodies)
    {
       FeedbackControlCommandList template = new FeedbackControlCommandList();
       Collection<? extends RigidBodyBasics> rigidBodies;
