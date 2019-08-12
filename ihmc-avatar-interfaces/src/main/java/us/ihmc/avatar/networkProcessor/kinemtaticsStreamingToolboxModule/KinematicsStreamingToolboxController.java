@@ -1,33 +1,48 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.CALIBRATION;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.SLEEP;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.STREAMING;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.VALIDATION;
+
+import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
+import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
+import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxInputCommand;
-import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
-import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputConverter;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.stateMachine.core.State;
+import us.ihmc.robotics.stateMachine.core.StateMachine;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
 
-public class KinematicsStreamingToolboxController extends HumanoidKinematicsToolboxController
+public class KinematicsStreamingToolboxController extends ToolboxController
 {
-   private final CommandInputManager ikCommandInputManager;
-   private final KinematicsToolboxOutputConverter outputConverter;
-   private final WholeBodyTrajectoryMessage wholeBodyTrajectoryMessage = new WholeBodyTrajectoryMessage();
-   private final YoDouble streamIntegrationDuration = new YoDouble("streamIntegrationDuration", registry);
+   public enum StreamingToolboxState
+   {
+      SLEEP, CALIBRATION, VALIDATION, STREAMING
+   };
+
+   private final KSTTools tools;
    private OutputPublisher outputPublisher = message ->
    {
    };
 
-   private final CommandInputManager commandInputManager;
    private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
+
+   private final StateMachine<StreamingToolboxState, State> stateMachine;
+
+   private final KSTSleepState sleepState = new KSTSleepState();
+   private final KSTCalibrationState calibrationState = new KSTCalibrationState();
+   private final KSTValidationState validationState = new KSTValidationState();
+   private final KSTStreamingState streamingState = new KSTStreamingState();
 
    public KinematicsStreamingToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
@@ -42,14 +57,41 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
                                                 FullHumanoidRobotModelFactory fullRobotModelFactory, YoGraphicsListRegistry yoGraphicsListRegistry,
                                                 YoVariableRegistry parentRegistry)
    {
-      super(ikCommandInputManager, statusOutputManager, desiredFullRobotModel, yoGraphicsListRegistry, parentRegistry);
-      this.commandInputManager = commandInputManager;
-      this.ikCommandInputManager = ikCommandInputManager;
+      super(statusOutputManager, parentRegistry);
 
-      streamIntegrationDuration.set(0.05);
-      outputConverter = new KinematicsToolboxOutputConverter(fullRobotModelFactory);
-      getDefaultGains().setMaxFeedbackAndFeedbackRate(100.0, Double.POSITIVE_INFINITY);
+      tools = new KSTTools(commandInputManager,
+                           ikCommandInputManager,
+                           statusOutputManager,
+                           desiredFullRobotModel,
+                           fullRobotModelFactory,
+                           yoGraphicsListRegistry,
+                           registry);
+
       configurationMessage.setJointVelocityWeight(1.0);
+
+      stateMachine = createStateMachine();
+   }
+
+   private StateMachine<StreamingToolboxState, State> createStateMachine()
+   {
+      StateMachineFactory<StreamingToolboxState, State> factory = new StateMachineFactory<>(StreamingToolboxState.class);
+
+      factory.addState(SLEEP, sleepState);
+      factory.addState(CALIBRATION, calibrationState);
+      factory.addState(VALIDATION, validationState);
+      factory.addState(STREAMING, streamingState);
+
+      factory.addTransition(SLEEP, CALIBRATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && !calibrationState.isDone(timeInCurrentState));
+      factory.addTransition(SLEEP, VALIDATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && calibrationState.isDone(timeInCurrentState));
+
+      factory.addDoneTransition(CALIBRATION, VALIDATION);
+
+      factory.addDoneTransition(VALIDATION, STREAMING);
+      factory.addTransition(VALIDATION, CALIBRATION, timeInCurrentState -> validationState.isCalibrationInvalid(timeInCurrentState));
+
+      factory.addDoneTransition(STREAMING, SLEEP);
+
+      return factory.build(StreamingToolboxState.SLEEP);
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -60,16 +102,17 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
    @Override
    public boolean initialize()
    {
-      return super.initialize();
+      return tools.getIKController().initialize();
    }
-
-   private KinematicsStreamingToolboxInputCommand latestInput = null;
 
    @Override
    public void updateInternal()
    {
-      if (commandInputManager.isNewCommandAvailable(KinematicsStreamingToolboxInputCommand.class))
-         latestInput = commandInputManager.pollNewestCommand(KinematicsStreamingToolboxInputCommand.class);
+      stateMachine.doActionAndTransition();
+
+      KinematicsStreamingToolboxInputCommand latestInput = tools.pollInputCommand();
+
+      CommandInputManager ikCommandInputManager = tools.getIKCommandInputManager();
 
       if (latestInput != null)
       {
@@ -80,30 +123,34 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
 
       ikCommandInputManager.submitMessage(configurationMessage);
 
-      super.updateInternal();
+      tools.getIKController().updateInternal();
 
-      outputConverter.updateFullRobotModel(getSolution());
-      outputConverter.setMessageToCreate(wholeBodyTrajectoryMessage);
-      outputConverter.setTrajectoryTime(0.0);
-
-      for (RobotSide robotSide : RobotSide.values)
-         outputConverter.computeArmTrajectoryMessage(robotSide);
-      outputConverter.computeChestTrajectoryMessage();
-      outputConverter.computePelvisTrajectoryMessage();
-
-      HumanoidMessageTools.configureForStreaming(wholeBodyTrajectoryMessage, streamIntegrationDuration.getValue());
-
-      outputPublisher.publish(wholeBodyTrajectoryMessage);
+      outputPublisher.publish(tools.convertIKOutput());
    }
 
    @Override
    public boolean isDone()
    {
-      return super.isDone();
+      return false;
    }
 
    public static interface OutputPublisher
    {
       void publish(WholeBodyTrajectoryMessage messageToPublish);
+   }
+
+   public void updateRobotConfigurationData(RobotConfigurationData newConfigurationData)
+   {
+      tools.getIKController().updateRobotConfigurationData(newConfigurationData);
+   }
+
+   public void updateCapturabilityBasedStatus(CapturabilityBasedStatus newStatus)
+   {
+      tools.getIKController().updateCapturabilityBasedStatus(newStatus);
+   }
+
+   public FullHumanoidRobotModel getDesiredFullRobotModel()
+   {
+      return tools.getDesiredFullRobotModel();
    }
 }

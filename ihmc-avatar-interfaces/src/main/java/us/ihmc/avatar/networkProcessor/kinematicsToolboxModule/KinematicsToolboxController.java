@@ -611,7 +611,7 @@ public class KinematicsToolboxController extends ToolboxController
       return userFeedbackCommands.containsKey(centerOfMassName);
    }
 
-   protected SymmetricYoPIDSE3Gains getDefaultGains()
+   public SymmetricYoPIDSE3Gains getDefaultGains()
    {
       return gains;
    }

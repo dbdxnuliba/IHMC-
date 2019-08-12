@@ -9,7 +9,6 @@ import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.RigidBodyHashCodeResolver;
 import us.ihmc.sensorProcessing.frames.ReferenceFrameHashCodeResolver;
-import us.ihmc.sensorProcessing.frames.ReferenceFrames;
 
 public class KinematicsStreamingToolboxCommandConverter implements CommandConversionInterface
 {
