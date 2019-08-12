@@ -38,13 +38,26 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
             * When remaining close to the privileged configuration is important, raise this weight to a value higher than the
             * weight of the main objectives.
             * Any value less than zero will be ignored.
+            * A value of -1 will result in the solver using its default value.
             */
    public double privileged_weight_ = -1.0;
    /**
             * The feedback proportional gain to use for the privileged configuration.
             * It is coupled to some extent to the privileged_weight
+            * A value of -1 will result in the solver using its default value.
             */
    public double privileged_gain_ = -1.0;
+   /**
+            * Specifies how much high joint velocity values should be penalized in the optimization problem.
+            * A low value generally results in a reduce number of iterations before convergence but it also decreases the general stability of the solver.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public double joint_velocity_weight_ = -1.0;
+   /**
+            * Specifying how much high joint acceleration values should be penalized in the optimization problem.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public double joint_acceleration_weight_ = -1.0;
 
    public KinematicsToolboxConfigurationMessage()
    {
@@ -73,6 +86,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
       privileged_weight_ = other.privileged_weight_;
 
       privileged_gain_ = other.privileged_gain_;
+
+      joint_velocity_weight_ = other.joint_velocity_weight_;
+
+      joint_acceleration_weight_ = other.joint_acceleration_weight_;
 
    }
 
@@ -133,6 +150,7 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
             * When remaining close to the privileged configuration is important, raise this weight to a value higher than the
             * weight of the main objectives.
             * Any value less than zero will be ignored.
+            * A value of -1 will result in the solver using its default value.
             */
    public void setPrivilegedWeight(double privileged_weight)
    {
@@ -143,6 +161,7 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
             * When remaining close to the privileged configuration is important, raise this weight to a value higher than the
             * weight of the main objectives.
             * Any value less than zero will be ignored.
+            * A value of -1 will result in the solver using its default value.
             */
    public double getPrivilegedWeight()
    {
@@ -152,6 +171,7 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
    /**
             * The feedback proportional gain to use for the privileged configuration.
             * It is coupled to some extent to the privileged_weight
+            * A value of -1 will result in the solver using its default value.
             */
    public void setPrivilegedGain(double privileged_gain)
    {
@@ -160,10 +180,47 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
    /**
             * The feedback proportional gain to use for the privileged configuration.
             * It is coupled to some extent to the privileged_weight
+            * A value of -1 will result in the solver using its default value.
             */
    public double getPrivilegedGain()
    {
       return privileged_gain_;
+   }
+
+   /**
+            * Specifies how much high joint velocity values should be penalized in the optimization problem.
+            * A low value generally results in a reduce number of iterations before convergence but it also decreases the general stability of the solver.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public void setJointVelocityWeight(double joint_velocity_weight)
+   {
+      joint_velocity_weight_ = joint_velocity_weight;
+   }
+   /**
+            * Specifies how much high joint velocity values should be penalized in the optimization problem.
+            * A low value generally results in a reduce number of iterations before convergence but it also decreases the general stability of the solver.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public double getJointVelocityWeight()
+   {
+      return joint_velocity_weight_;
+   }
+
+   /**
+            * Specifying how much high joint acceleration values should be penalized in the optimization problem.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public void setJointAccelerationWeight(double joint_acceleration_weight)
+   {
+      joint_acceleration_weight_ = joint_acceleration_weight;
+   }
+   /**
+            * Specifying how much high joint acceleration values should be penalized in the optimization problem.
+            * A value of -1 will result in the solver using its default value.
+            */
+   public double getJointAccelerationWeight()
+   {
+      return joint_acceleration_weight_;
    }
 
 
@@ -196,6 +253,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.privileged_gain_, other.privileged_gain_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.joint_velocity_weight_, other.joint_velocity_weight_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.joint_acceleration_weight_, other.joint_acceleration_weight_, epsilon)) return false;
+
 
       return true;
    }
@@ -218,6 +279,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
       if(this.privileged_weight_ != otherMyClass.privileged_weight_) return false;
 
       if(this.privileged_gain_ != otherMyClass.privileged_gain_) return false;
+
+      if(this.joint_velocity_weight_ != otherMyClass.joint_velocity_weight_) return false;
+
+      if(this.joint_acceleration_weight_ != otherMyClass.joint_acceleration_weight_) return false;
 
 
       return true;
@@ -242,7 +307,11 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
       builder.append("privileged_weight=");
       builder.append(this.privileged_weight_);      builder.append(", ");
       builder.append("privileged_gain=");
-      builder.append(this.privileged_gain_);
+      builder.append(this.privileged_gain_);      builder.append(", ");
+      builder.append("joint_velocity_weight=");
+      builder.append(this.joint_velocity_weight_);      builder.append(", ");
+      builder.append("joint_acceleration_weight=");
+      builder.append(this.joint_acceleration_weight_);
       builder.append("}");
       return builder.toString();
    }

@@ -18,12 +18,25 @@ float32[] privileged_joint_angles
 # When remaining close to the privileged configuration is important, raise this weight to a value higher than the
 # weight of the main objectives.
 # Any value less than zero will be ignored.
+# A value of -1 will result in the solver using its default value.
 # Field default value -1.0
 float64 privileged_weight
 
 # The feedback proportional gain to use for the privileged configuration.
 # It is coupled to some extent to the privileged_weight
+# A value of -1 will result in the solver using its default value.
 # Field default value -1.0
 float64 privileged_gain
+
+# Specifies how much high joint velocity values should be penalized in the optimization problem.
+# A low value generally results in a reduce number of iterations before convergence but it also decreases the general stability of the solver.
+# A value of -1 will result in the solver using its default value.
+# Field default value -1.0
+float64 joint_velocity_weight
+
+# Specifying how much high joint acceleration values should be penalized in the optimization problem.
+# A value of -1 will result in the solver using its default value.
+# Field default value -1.0
+float64 joint_acceleration_weight
 
 
