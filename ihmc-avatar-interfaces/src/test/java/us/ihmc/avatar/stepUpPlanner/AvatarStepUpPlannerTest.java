@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
@@ -18,15 +19,19 @@ import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
@@ -126,6 +131,8 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForHorizontalSurfaces(environment.getPlanarRegionsList());
       drcSimulationTestHelper.publishToController(collisionMessage);
 
+      //      drcSimulationTestHelper.publishToController(createFootstepsForHighStepUp(environment.getStepsCenter()));
+
       for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
       {
          drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
@@ -161,6 +168,41 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
 
       return collisionMessage;
+   }
+
+   //Default way of generating footsteps
+   private FootstepDataListMessage createFootstepsForHighStepUp(ArrayList<Point3D> stepsCenters)
+   {
+      if (stepsCenters == null || stepsCenters.size() < 2)
+      {
+         return new FootstepDataListMessage();
+      }
+
+      RobotSide startingFoot = RobotSide.LEFT;
+
+      RobotSide[] robotSides = drcSimulationTestHelper.createRobotSidesStartingFrom(startingFoot, 2 * (stepsCenters.size() - 1));
+      FootstepDataListMessage newList = new FootstepDataListMessage();
+
+      for (int i = 0; i < robotSides.length; ++i)
+      {
+         MovingReferenceFrame soleFrame = drcSimulationTestHelper.getReferenceFrames().getSoleZUpFrame(robotSides[i]);
+         FramePose3D footPose = new FramePose3D(soleFrame);
+         footPose.changeFrame(ReferenceFrame.getWorldFrame());
+
+         double stepHeight = stepsCenters.get(i / 2 + 1).getZ();
+
+         FootstepDataMessage footstep;
+
+         Point3D location = new Point3D(footPose.getX() + 0.6, footPose.getY(), stepHeight);
+         Quaternion quaternion = new Quaternion();
+         footstep = HumanoidMessageTools.createFootstepDataMessage(robotSides[i], location, quaternion);
+
+         newList.getFootstepDataList().add().set(footstep);
+      }
+
+      newList.setExecutionTiming(ExecutionTiming.CONTROL_ABSOLUTE_TIMINGS.toByte());
+
+      return newList;
    }
 
    private void assertReachedGoal(FootstepDataListMessage footsteps)

@@ -219,7 +219,7 @@ public class StepUpPlannerRequester
 
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
-      double scale = 0.6;
+      double scale = 0.5;
       double rearOfFoot = -steppingParameters.getFootLength() / 2.0;
       double frontOfFoot = steppingParameters.getFootLength() / 2.0;
       double toeWidth = steppingParameters.getToeWidth();
@@ -280,7 +280,7 @@ public class StepUpPlannerRequester
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
-      msg.setStaticFrictionCoefficient(0.5);
+      msg.setStaticFrictionCoefficient(1.0);
       msg.setTorsionalFrictionCoefficient(0.1);
 
       double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
@@ -289,7 +289,7 @@ public class StepUpPlannerRequester
 
       weights.setCop(1.0 / N);
       weights.setTorques(0.1 / N);
-      weights.setMaxTorques(1.0);
+      weights.setMaxTorques(4.0);
       weights.setControlMultipliers(0.1 / N);
       weights.setFinalControl(1.0);
       weights.setMaxControlMultiplier(0.1);

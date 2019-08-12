@@ -63,13 +63,13 @@ public class AtlasStepUpPlannerTest extends AvatarStepUpPlannerTest
          @Override
          public double getWeight()
          {
-            return 2.0;
+            return 2.5;
          }
 
          @Override
          public double getProportionalGain()
          {
-            return 200.0;
+            return 300.0;
          }
       }
 
