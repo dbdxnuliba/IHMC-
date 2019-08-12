@@ -42,6 +42,10 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
       current_alignment += geometry_msgs.msg.dds.PointPubSubType.getMaxCdrSerializedSize(current_alignment);
 
       current_alignment += geometry_msgs.msg.dds.QuaternionPubSubType.getMaxCdrSerializedSize(current_alignment);
@@ -72,6 +76,12 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
       int initial_alignment = current_alignment;
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
       current_alignment += geometry_msgs.msg.dds.PointPubSubType.getCdrSerializedSize(data.getPrivilegedRootJointPosition(), current_alignment);
@@ -106,6 +116,10 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
    {
       cdr.write_type_4(data.getSequenceId());
 
+      cdr.write_type_7(data.getUsePrivilegedRootJointPosition());
+
+      cdr.write_type_7(data.getUsePrivilegedRootJointOrientation());
+
       geometry_msgs.msg.dds.PointPubSubType.write(data.getPrivilegedRootJointPosition(), cdr);
       geometry_msgs.msg.dds.QuaternionPubSubType.write(data.getPrivilegedRootJointOrientation(), cdr);
       if(data.getPrivilegedJointHashCodes().size() <= 100)
@@ -130,6 +144,10 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
    {
       data.setSequenceId(cdr.read_type_4());
       	
+      data.setUsePrivilegedRootJointPosition(cdr.read_type_7());
+      	
+      data.setUsePrivilegedRootJointOrientation(cdr.read_type_7());
+      	
       geometry_msgs.msg.dds.PointPubSubType.read(data.getPrivilegedRootJointPosition(), cdr);	
       geometry_msgs.msg.dds.QuaternionPubSubType.read(data.getPrivilegedRootJointOrientation(), cdr);	
       cdr.read_type_e(data.getPrivilegedJointHashCodes());	
@@ -149,6 +167,8 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
    public final void serialize(controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
+      ser.write_type_7("use_privileged_root_joint_position", data.getUsePrivilegedRootJointPosition());
+      ser.write_type_7("use_privileged_root_joint_orientation", data.getUsePrivilegedRootJointOrientation());
       ser.write_type_a("privileged_root_joint_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getPrivilegedRootJointPosition());
 
       ser.write_type_a("privileged_root_joint_orientation", new geometry_msgs.msg.dds.QuaternionPubSubType(), data.getPrivilegedRootJointOrientation());
@@ -165,6 +185,8 @@ public class KinematicsToolboxConfigurationMessagePubSubType implements us.ihmc.
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage data)
    {
       data.setSequenceId(ser.read_type_4("sequence_id"));
+      data.setUsePrivilegedRootJointPosition(ser.read_type_7("use_privileged_root_joint_position"));
+      data.setUsePrivilegedRootJointOrientation(ser.read_type_7("use_privileged_root_joint_orientation"));
       ser.read_type_a("privileged_root_joint_position", new geometry_msgs.msg.dds.PointPubSubType(), data.getPrivilegedRootJointPosition());
 
       ser.read_type_a("privileged_root_joint_orientation", new geometry_msgs.msg.dds.QuaternionPubSubType(), data.getPrivilegedRootJointOrientation());

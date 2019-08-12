@@ -1,6 +1,12 @@
 # Unique ID used to identify this message, should preferably be consecutively increasing.
 uint32 sequence_id
 
+# Indicates whether the privileged_root_joint_position is to be used or not.
+bool use_privileged_root_joint_position
+
+# Indicates whether the privileged_root_joint_orientation is to be used or not.
+bool use_privileged_root_joint_orientation
+
 # When provided, the solver will attempt to find the solution that is the closest to the privileged configuration.
 geometry_msgs/Point privileged_root_joint_position
 

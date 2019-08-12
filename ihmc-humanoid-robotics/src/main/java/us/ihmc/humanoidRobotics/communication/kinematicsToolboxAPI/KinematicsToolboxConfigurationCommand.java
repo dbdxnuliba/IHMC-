@@ -77,13 +77,13 @@ public class KinematicsToolboxConfigurationCommand implements Command<Kinematics
    public void setFromMessage(KinematicsToolboxConfigurationMessage message)
    {
       sequenceId = message.getSequenceId();
-      hasPrivilegedRootJointPosition = message.getPrivilegedRootJointPosition() != null;
+      hasPrivilegedRootJointPosition = message.getUsePrivilegedRootJointPosition();
       if (hasPrivilegedRootJointPosition)
          privilegedRootJointPosition.set(message.getPrivilegedRootJointPosition());
       else
          privilegedRootJointPosition.setToNaN();
 
-      hasPrivilegedRootJointOrientation = message.getPrivilegedRootJointOrientation() != null;
+      hasPrivilegedRootJointOrientation = message.getUsePrivilegedRootJointOrientation();
       if (hasPrivilegedRootJointOrientation)
          privilegedRootJointOrientation.set(message.getPrivilegedRootJointOrientation());
       else

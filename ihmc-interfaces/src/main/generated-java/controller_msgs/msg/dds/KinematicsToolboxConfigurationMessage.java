@@ -17,6 +17,14 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
             */
    public long sequence_id_;
    /**
+            * Indicates whether the privileged_root_joint_position is to be used or not.
+            */
+   public boolean use_privileged_root_joint_position_;
+   /**
+            * Indicates whether the privileged_root_joint_orientation is to be used or not.
+            */
+   public boolean use_privileged_root_joint_orientation_;
+   /**
             * When provided, the solver will attempt to find the solution that is the closest to the privileged configuration.
             */
    public us.ihmc.euclid.tuple3D.Point3D privileged_root_joint_position_;
@@ -79,6 +87,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
    {
       sequence_id_ = other.sequence_id_;
 
+      use_privileged_root_joint_position_ = other.use_privileged_root_joint_position_;
+
+      use_privileged_root_joint_orientation_ = other.use_privileged_root_joint_orientation_;
+
       geometry_msgs.msg.dds.PointPubSubType.staticCopy(other.privileged_root_joint_position_, privileged_root_joint_position_);
       geometry_msgs.msg.dds.QuaternionPubSubType.staticCopy(other.privileged_root_joint_orientation_, privileged_root_joint_orientation_);
       privileged_joint_hash_codes_.set(other.privileged_joint_hash_codes_);
@@ -106,6 +118,36 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
    public long getSequenceId()
    {
       return sequence_id_;
+   }
+
+   /**
+            * Indicates whether the privileged_root_joint_position is to be used or not.
+            */
+   public void setUsePrivilegedRootJointPosition(boolean use_privileged_root_joint_position)
+   {
+      use_privileged_root_joint_position_ = use_privileged_root_joint_position;
+   }
+   /**
+            * Indicates whether the privileged_root_joint_position is to be used or not.
+            */
+   public boolean getUsePrivilegedRootJointPosition()
+   {
+      return use_privileged_root_joint_position_;
+   }
+
+   /**
+            * Indicates whether the privileged_root_joint_orientation is to be used or not.
+            */
+   public void setUsePrivilegedRootJointOrientation(boolean use_privileged_root_joint_orientation)
+   {
+      use_privileged_root_joint_orientation_ = use_privileged_root_joint_orientation;
+   }
+   /**
+            * Indicates whether the privileged_root_joint_orientation is to be used or not.
+            */
+   public boolean getUsePrivilegedRootJointOrientation()
+   {
+      return use_privileged_root_joint_orientation_;
    }
 
 
@@ -243,6 +285,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.use_privileged_root_joint_position_, other.use_privileged_root_joint_position_, epsilon)) return false;
+
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.use_privileged_root_joint_orientation_, other.use_privileged_root_joint_orientation_, epsilon)) return false;
+
       if (!this.privileged_root_joint_position_.epsilonEquals(other.privileged_root_joint_position_, epsilon)) return false;
       if (!this.privileged_root_joint_orientation_.epsilonEquals(other.privileged_root_joint_orientation_, epsilon)) return false;
       if (!us.ihmc.idl.IDLTools.epsilonEqualsIntegerSequence(this.privileged_joint_hash_codes_, other.privileged_joint_hash_codes_, epsilon)) return false;
@@ -272,6 +318,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
 
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
+      if(this.use_privileged_root_joint_position_ != otherMyClass.use_privileged_root_joint_position_) return false;
+
+      if(this.use_privileged_root_joint_orientation_ != otherMyClass.use_privileged_root_joint_orientation_) return false;
+
       if (!this.privileged_root_joint_position_.equals(otherMyClass.privileged_root_joint_position_)) return false;
       if (!this.privileged_root_joint_orientation_.equals(otherMyClass.privileged_root_joint_orientation_)) return false;
       if (!this.privileged_joint_hash_codes_.equals(otherMyClass.privileged_joint_hash_codes_)) return false;
@@ -296,6 +346,10 @@ public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsTool
       builder.append("KinematicsToolboxConfigurationMessage {");
       builder.append("sequence_id=");
       builder.append(this.sequence_id_);      builder.append(", ");
+      builder.append("use_privileged_root_joint_position=");
+      builder.append(this.use_privileged_root_joint_position_);      builder.append(", ");
+      builder.append("use_privileged_root_joint_orientation=");
+      builder.append(this.use_privileged_root_joint_orientation_);      builder.append(", ");
       builder.append("privileged_root_joint_position=");
       builder.append(this.privileged_root_joint_position_);      builder.append(", ");
       builder.append("privileged_root_joint_orientation=");
