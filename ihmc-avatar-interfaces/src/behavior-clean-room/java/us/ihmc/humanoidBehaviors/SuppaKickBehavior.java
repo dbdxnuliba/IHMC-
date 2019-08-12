@@ -14,6 +14,7 @@ import us.ihmc.communication.net.*;
 import us.ihmc.communication.packets.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
+import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.euclid.tuple3D.*;
 import us.ihmc.euclid.tuple4D.*;
 import us.ihmc.graphicsDescription.yoGraphics.*;
@@ -56,8 +57,9 @@ public class SuppaKickBehavior
    private final ActivationReference<Boolean> stepping;
    private final AtomicReference<Boolean> enable;
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
-   private YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
-   private final YoGraphicsListRegistry yoGraphicsListRegistry  = new YoGraphicsListRegistry();
+   private FullHumanoidRobotModel fullHumanoidRobotModel;
+
+   int footStepCounter = 1;
 
 
    private boolean pelvisFlag = false;
@@ -68,10 +70,15 @@ public class SuppaKickBehavior
    private boolean LeftLegFlag = false;
    private boolean RightLegFlag = false;
 
+   private boolean startBehavior;
+//   private ArrayList<Boolean> pelvisFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
+//   private ArrayList<Boolean> leftArmFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
+//   private ArrayList<Boolean> rightArmFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
+//   private ArrayList<Boolean> legLegFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
+//   private ArrayList<Boolean> rightLegFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
+//   private ArrayList<Boolean> chestFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
 
    private final Notification goToWalk = new Notification();
-   private boolean flag1 = false;
-
 
 
    public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
@@ -84,7 +91,9 @@ public class SuppaKickBehavior
       stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
       messager.registerTopicListener(API.Abort,this::doOnAbort);
       messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
+      fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 
+      //go to walk is the name of the bahavior itself
       enable = messager.createInput(API.Enable, false);
 
       ROS2Tools.createCallbackSubscription(ros2Node,
@@ -105,50 +114,77 @@ public class SuppaKickBehavior
                                            this::checkTaskspaceTrajectoryMessage);
 
 
+
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
 
 
 
    }
 
-
+// footstep counter acts like a counter for sequence of tasks
 
    private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
-//      System.out.println("Task Space End - effector Name" +message.takeNextData().getEndEffectorNameAsString());
-//      System.out.println(message.takeNextData().getTrajectoryExecutionStatus());
-      if(message.takeNextData().getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+
+      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+
+      if(tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
       {
-         System.out.println("Pelvis executed");
-         pelvisFlag = true;
+         if (tmp.getEndEffectorNameAsString().equals("r_foot"))
+         {
+            if(footStepCounter == 2)
+            {
+               chestFlag = true;
+            }
+            else if (footStepCounter == 3)
+            {
+               footStepFlag= true;
+            }
+            else if(footStepCounter == 4)
+            {
+               chestFlag = true;
+            }
+
+            else if (footStepCounter == 6)
+            {
+               onBehaviorDone();
+            }
+
+         }
+
+         if (tmp.getEndEffectorNameAsString().equals("pelvis"))
+         {
+            leftArmFlag = true;
+            rightArmFlag = true;
+         }
       }
    }
-   double counter = 0;
+
    private void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
    {
-      //      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
-//      System.out.println(message.takeNextData().getTimestamp());
-//      System.out.println("Actual Joint Position" + message.takeNextData().getActualJointPositions());// + "Desired Joint Position" +
-//                               message.readNextData().getDesiredJointPositions());
-      if(message.takeNextData().getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED)
+     JointspaceTrajectoryStatusMessage tmp = message.takeNextData();
+
+      if(tmp.getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED)
       {
-         System.out.println("I am in the joint space trajectory loop and done with hand movements" + counter);
-         counter++;
+         if (tmp.getJointNames().getString(0).equals("l_arm_shz"))// || tmp.getJointNames().getString(0).equals("r_arm_shz"))
+         {
+            footStepFlag = true;
+         }
       }
    }
 
 
    private void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {
-//      System.out.println("Walking Status : " + message.takeNextData().getWalkingStatus());
+      WalkingStatusMessage tmp = message.takeNextData();
 
-      if(message.takeNextData().getWalkingStatus() == 1)
+
+      if(tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED)
       {
-         flag1 = true;
+         System.out.println("FootTrajectoryStatusMessage Triggered");
+
       }
    }
-
-
 
    private void doOnAbort(boolean abort)
    {
@@ -164,12 +200,9 @@ public class SuppaKickBehavior
       if (!enable.get())
          return;
 
-      LogTools.info("acceptFootstepStatus: " + footstepStatusMessage);
-
       if (footstepStatusMessage.getFootstepStatus() == FootstepStatus.COMPLETED.toByte())
       {
-         int footstepsTakenSoFar = footstepsTaken.incrementAndGet();
-         LogTools.info("Have taken " + footstepsTakenSoFar + " footsteps.");
+
       }
    }
 
@@ -187,15 +220,6 @@ public class SuppaKickBehavior
             LogTools.info("Sending Steps");
          }
 
-         if (footstepsTaken.compareAndSet(2,0))
-         {
-            LogTools.info("Sending Steps");
-
-            FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
-            FootstepDataListMessage foorStepList = createTwoStepInPlaceSteps(fullHumanoidRobotModel);
-            behaviorHelper.publishFootstepList(foorStepList);
-
-         }
 
       }
 
@@ -206,119 +230,173 @@ public class SuppaKickBehavior
 
       if(goToWalk.poll())
       {
-//         thread.start();
-         LogTools.info("Walking few steps");
-         FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
-         FootstepDataListMessage footstepDataListMessage = gotoWalk(fullHumanoidRobotModel);
-         behaviorHelper.publishFootstepList(footstepDataListMessage);
-//         System.out.println(behaviorHelper.getLatestControllerState());
+
+         getPelvisUp(behaviorHelper.pollHumanoidReferenceFrames());
+         startBehavior = true;
       }
 
-      if(enable.get())
-      {
-         if(flag1)
-         {
-//            System.out.println(longTime);
-            FullHumanoidRobotModel fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
-//            FootstepDataListMessage footstepDataListMessage = nowTurn(fullHumanoidRobotModel);
-            nowTurn(fullHumanoidRobotModel);
 
-//            behaviorHelper.publishFootstepList(nowTurn());
+      if (startBehavior)
+      {
+         if(leftArmFlag && rightArmFlag)
+         {
+            getArmsBack();
+         }
+
+         if(chestFlag)
+         {
+
+            if(footStepCounter ==2)
+            {
+               Chestforward();
+               submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(), footStepCounter);
+               footStepCounter++;
+            }
+
+            else if(footStepCounter == 4)
+            {
+               Chestback();
+               getArmsUp();
+               submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(), footStepCounter);
+               footStepCounter++;
+               submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(), footStepCounter);
+               footStepCounter++;
+            }
+
+         }
+
+         if(footStepFlag)
+         {
+            if (footStepCounter == 1)
+            {
+               submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(), footStepCounter);
+               footStepCounter++;
+            }
+
+            if(footStepCounter == 3)
+            {
+               submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(),footStepCounter);
+               footStepCounter++;
+            }
+
          }
       }
-   }
-
-//   public FootstepDataListMessage nowTurn(FullHumanoidRobotModel fullHumanoidRobotModel)
-   public void nowTurn(FullHumanoidRobotModel fullHumanoidRobotModel)
-   {
-//      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
-//      for (RobotSide side : RobotSide.values())
-//      {
-//         MovingReferenceFrame stepFrame = fullHumanoidRobotModel.getSoleFrame(side);
-//         FramePoint3D footLocation = new FramePoint3D(stepFrame);
-//         FrameQuaternion footOrientation = new FrameQuaternion(stepFrame,90.0,0.0,0.0);
-//         footLocation.changeFrame(ReferenceFrame.getWorldFrame());
-//         footOrientation.changeFrame(ReferenceFrame.getWorldFrame());
-//
-//         FootstepDataMessage footstepDataMessage = HumanoidMessageTools.createFootstepDataMessage(side,footLocation,footOrientation);
-//         footstelpList.getFootstepDataList().add().set(footstepDataMessage);
-//
-//      }
-//      return footstelpList;
-      double trajectoryTime = 1.0;
-//      behaviorHelper.requestChestGoHome(trajectoryTime);
-//      behaviorHelper.requestPelvisGoHome(trajectoryTime);
-
-      double[] jointAngles = new double[] {0.0, -1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
-      behaviorHelper.requestArmTrajectory(RobotSide.LEFT, trajectoryTime, jointAngles);
-
-      jointAngles = new double[] {0.0, 1.4, 0.0, 0.0, 0.0, 0.0, 0.0};
-      behaviorHelper.requestArmTrajectory(RobotSide.RIGHT, trajectoryTime, jointAngles);
-
-      FramePoint3D pelvisPOs = new FramePoint3D(ReferenceFrame.getWorldFrame(), 0.0,0.0,9.1);
-      FrameQuaternion pelvisOrientation = new FrameQuaternion();
-      behaviorHelper.requestPelvisTrajectory(trajectoryTime,pelvisPOs,pelvisOrientation);
-      flag1 = false;
 
    }
 
-
-   public FootstepDataListMessage gotoWalk(FullHumanoidRobotModel fullHumanoidRobotModel)
+   private void onBehaviorDone()
    {
-      double x = 0.0;
-      double y = 0.11;
-      double z = 0.0;
+      double goHomeTime = 1.0;
+      behaviorHelper.requestChestGoHome(goHomeTime);
+      behaviorHelper.requestPelvisGoHome(goHomeTime);
+      FramePose3D tmp = new FramePose3D();
+      tmp.setReferenceFrame(behaviorHelper.pollHumanoidReferenceFrames().getAnkleZUpFrame(RobotSide.RIGHT));
+      tmp.set(new Pose3D(0.0,-0.11,0.0,0.0,0.0,0.0));
+      behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,goHomeTime,tmp);
+      startBehavior = false;
+   }
 
-      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
-      for(int i = 0; i < 5; ++i)
+   private void Chestforward()
+   {
+      System.out.println("Doing chest motion");
+      double chestTrajectoryTime = 0.5;
+      FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
+      chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(),0.0, Math.toRadians(30.0), 0.0);
+      behaviorHelper.requestChestOrientationTrajectory(chestTrajectoryTime,chestOrientation, ReferenceFrame.getWorldFrame(), behaviorHelper.pollHumanoidReferenceFrames().getPelvisZUpFrame());
+      chestFlag = false;
+   }
+
+   private void Chestback()
+   {
+      System.out.println("Doing chest motion");
+      double chestTrajectoryTime = 0.5;
+      FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
+      chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(),0.0, Math.toRadians(-10.0), 0.0);
+      behaviorHelper.requestChestOrientationTrajectory(chestTrajectoryTime,chestOrientation, ReferenceFrame.getWorldFrame(), behaviorHelper.pollHumanoidReferenceFrames().getPelvisZUpFrame());
+      chestFlag = false;
+   }
+
+   public void getPelvisUp(HumanoidReferenceFrames humanoidReferenceFrames)
+   {
+
+      System.out.println("Doing pelvis motion");
+      double pelvisTrajectoryTime = 1.50;
+      FramePose3D pelvisZUp = new FramePose3D();
+      pelvisZUp.setFromReferenceFrame(humanoidReferenceFrames.getPelvisZUpFrame());
+      FramePoint3D pelvis_1 = new FramePoint3D(ReferenceFrame.getWorldFrame(), pelvisZUp.getX(),pelvisZUp.getY()+0.1,pelvisZUp.getZ());
+      FrameQuaternion orientation = new FrameQuaternion();
+      orientation.setYawPitchRoll(0,0.0,0.0);
+      behaviorHelper.requestPelvisTrajectory(pelvisTrajectoryTime,pelvis_1, orientation);
+      pelvisFlag = false;
+
+   }
+
+
+   public void getArmsBack()
+   {
+      System.out.println("Doing Arms motion");
+      double armTrajectoryTime = 0.5;
+      double[] jointAngles = new double[] {Math.toRadians(15.0),Math.toRadians(-90.0),Math.toRadians(90.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0)};
+      behaviorHelper.requestArmTrajectory(RobotSide.LEFT, armTrajectoryTime, jointAngles);
+      jointAngles = new double[] {0.0,Math.toRadians(90.0),0.0,0.0,0.0,0.0,0.0};
+      behaviorHelper.requestArmTrajectory(RobotSide.RIGHT, armTrajectoryTime, jointAngles);
+      leftArmFlag = false;
+      rightArmFlag = false;
+   }
+
+   public void getArmsUp()
+   {
+      System.out.println("Doing Arms motion");
+      double armTrajectoryTime = 0.5;
+      double[] jointAngles = new double[] {Math.toRadians(0.0),Math.toRadians(-90.0),Math.toRadians(75.0),Math.toRadians(60.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0)};
+      behaviorHelper.requestArmTrajectory(RobotSide.LEFT, armTrajectoryTime, jointAngles);
+      jointAngles = new double[] {0.0,Math.toRadians(90.0),Math.toRadians(75.0),Math.toRadians(-60.0),0.0,0.0,0.0};
+      behaviorHelper.requestArmTrajectory(RobotSide.RIGHT, armTrajectoryTime, jointAngles);
+   }
+
+//   3
+   public void submitFootPostion(HumanoidReferenceFrames humanoidReferenceFrames, int counter)
+   {
+      FramePose3D tmp = new FramePose3D();
+
+      if (counter == 1)
       {
-         for (RobotSide side : RobotSide.values())
-         {
-            MovingReferenceFrame stepFrame = fullHumanoidRobotModel.getSoleFrame(side);
-            FramePoint3D footLocation = new FramePoint3D(stepFrame,x, side.negateIfRightSide(y),z);
-            FrameQuaternion footOrientation = new FrameQuaternion(stepFrame);
-            footLocation.changeFrame(ReferenceFrame.getWorldFrame());
-            footOrientation.changeFrame(ReferenceFrame.getWorldFrame());
-
-            FootstepDataMessage footstepDataMessage = HumanoidMessageTools.createFootstepDataMessage(side,footLocation,footOrientation);
-            footstelpList.getFootstepDataList().add().set(footstepDataMessage);
-            x = x + 0.4;
-         }
+         tmp.setReferenceFrame(humanoidReferenceFrames.getAnkleZUpFrame(RobotSide.RIGHT));
+         tmp.set(new Pose3D(0.0,-0.25,0.127,0.0,0.0,0.0));
+         behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,0.5,tmp);
+         footStepFlag = false;
       }
-      footstelpList.setAreFootstepsAdjustable(true);
-      return footstelpList;
-   }
-
-   private FootstepDataListMessage createTwoStepInPlaceSteps(FullHumanoidRobotModel fullHumanoidRobotModel)
-   {
-      FootstepDataListMessage footstelpList = new FootstepDataListMessage();
-      RecyclingArrayList<FootstepDataMessage> footstepDataMessages = footstelpList.getFootstepDataList();
-
-      double x = 0;
-      double y = -0.10;
-      double z = 0;
-      for(RobotSide side : RobotSide.values())
+      else if (counter == 2)
       {
-//         RobotSide tmpside = RobotSide.LEFT;
-         MovingReferenceFrame stepFrame = fullHumanoidRobotModel.getSoleFrame(side);
-         FramePoint3D footLocation = new FramePoint3D(stepFrame);
-         FrameQuaternion footOrientation = new FrameQuaternion(stepFrame);
-         footLocation.changeFrame(ReferenceFrame.getWorldFrame());
-         footOrientation.changeFrame(ReferenceFrame.getWorldFrame());
-
-         FootstepDataMessage footstepDataMessage = HumanoidMessageTools.createFootstepDataMessage(side,footLocation,footOrientation);
-         footstepDataMessages.add().set(footstepDataMessage);
-         x = x + 0.4;
+         tmp.setReferenceFrame(humanoidReferenceFrames.getAnkleZUpFrame(RobotSide.RIGHT));
+         tmp.set(new Pose3D(-0.35,-0.15,0.127,0.0,0.0,0.0));
+         behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,0.5,tmp);
+         chestFlag = false; // redundant but safe measure
       }
-      footstelpList.setAreFootstepsAdjustable(true);
-      return footstelpList;
+      else if (counter == 3)
+      {
+         tmp.setReferenceFrame(humanoidReferenceFrames.getAnkleZUpFrame(RobotSide.RIGHT));
+         tmp.set(new Pose3D(-0.35,-0.15,0.127,0.0,0.0,0.0));
+         behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,0.5,tmp);
+         footStepFlag = false;
+      }
+
+      else if (counter == 4)
+      {
+         tmp.setReferenceFrame(humanoidReferenceFrames.getAnkleZUpFrame(RobotSide.RIGHT));
+         tmp.set(new Pose3D(0.3,-0.15,0.05,0.0,0.0,0.0));
+         behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,0.5,tmp);
+         chestFlag = false;
+      }
+      else if (counter == 5)
+      {
+         tmp.setReferenceFrame(humanoidReferenceFrames.getAnkleZUpFrame(RobotSide.RIGHT));
+         tmp.set(new Pose3D(0.0,-0.25,0.127,0.0,0.0,0.0));
+         behaviorHelper.requestFootTrajectory(RobotSide.RIGHT,0.5,tmp);
+         chestFlag = false;
+      }
+
    }
-
-//   public HighLevelControllerName latestControllerState()
-//   {
-//      return HighLevelControllerName.fromByte(controllerState.getLatest().getEndHighLevelControllerName());
-//   }
-
 
    public static class API
    {
@@ -338,9 +416,4 @@ public class SuppaKickBehavior
       }
    }
 
-   public static void main(String[] args)
-   {
-//      BehaviorHelper tmp = new BehaviorHelper();
-//      new SuppaKickBehavior();
-   }
 }
