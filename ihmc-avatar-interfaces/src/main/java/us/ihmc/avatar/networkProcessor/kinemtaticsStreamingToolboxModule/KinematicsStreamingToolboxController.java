@@ -12,16 +12,18 @@ import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
+import us.ihmc.commons.Conversions;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxInputCommand;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
+import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
 
 public class KinematicsStreamingToolboxController extends ToolboxController
 {
@@ -31,18 +33,16 @@ public class KinematicsStreamingToolboxController extends ToolboxController
    };
 
    private final KSTTools tools;
-   private OutputPublisher outputPublisher = message ->
-   {
-   };
 
    private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
 
+   private final YoDouble time = new YoDouble("time", registry);
    private final StateMachine<StreamingToolboxState, State> stateMachine;
 
-   private final KSTSleepState sleepState = new KSTSleepState();
-   private final KSTCalibrationState calibrationState = new KSTCalibrationState();
-   private final KSTValidationState validationState = new KSTValidationState();
-   private final KSTStreamingState streamingState = new KSTStreamingState();
+   private final KSTSleepState sleepState;
+   private final KSTCalibrationState calibrationState;
+   private final KSTValidationState validationState;
+   private final KSTStreamingState streamingState;
 
    public KinematicsStreamingToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
@@ -69,63 +69,60 @@ public class KinematicsStreamingToolboxController extends ToolboxController
 
       configurationMessage.setJointVelocityWeight(1.0);
 
-      stateMachine = createStateMachine();
+      sleepState = new KSTSleepState(tools);
+      calibrationState = new KSTCalibrationState(tools);
+      validationState = new KSTValidationState(tools);
+      streamingState = new KSTStreamingState(tools);
+
+      stateMachine = createStateMachine(time);
    }
 
-   private StateMachine<StreamingToolboxState, State> createStateMachine()
+   private StateMachine<StreamingToolboxState, State> createStateMachine(DoubleProvider timeProvider)
    {
       StateMachineFactory<StreamingToolboxState, State> factory = new StateMachineFactory<>(StreamingToolboxState.class);
+      factory.setNamePrefix("mainStateMachine").setRegistry(registry).buildYoClock(timeProvider);
 
       factory.addState(SLEEP, sleepState);
       factory.addState(CALIBRATION, calibrationState);
       factory.addState(VALIDATION, validationState);
       factory.addState(STREAMING, streamingState);
 
-      factory.addTransition(SLEEP, CALIBRATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && !calibrationState.isDone(timeInCurrentState));
-      factory.addTransition(SLEEP, VALIDATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && calibrationState.isDone(timeInCurrentState));
+//      factory.addTransition(SLEEP, CALIBRATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && !calibrationState.isDone(timeInCurrentState));
+//      factory.addTransition(SLEEP, VALIDATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && calibrationState.isDone(timeInCurrentState));
+//
+//      factory.addDoneTransition(CALIBRATION, VALIDATION);
+//
+//      factory.addDoneTransition(VALIDATION, STREAMING);
+//      factory.addTransition(VALIDATION, CALIBRATION, timeInCurrentState -> validationState.isCalibrationInvalid(timeInCurrentState));
+//
+//      factory.addDoneTransition(STREAMING, SLEEP);
 
-      factory.addDoneTransition(CALIBRATION, VALIDATION);
-
-      factory.addDoneTransition(VALIDATION, STREAMING);
-      factory.addTransition(VALIDATION, CALIBRATION, timeInCurrentState -> validationState.isCalibrationInvalid(timeInCurrentState));
-
-      factory.addDoneTransition(STREAMING, SLEEP);
+      // TODO change transitions to SLEEP -> CALIBRATION -> VALIDATION -> STREAMING
+      factory.addDoneTransition(SLEEP, STREAMING);
 
       return factory.build(StreamingToolboxState.SLEEP);
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
    {
-      this.outputPublisher = outputPublisher;
+      streamingState.setOutputPublisher(outputPublisher);
    }
 
    @Override
    public boolean initialize()
    {
-      return tools.getIKController().initialize();
+      return true;
    }
+
+   private long initialTimestamp = -1L;
 
    @Override
    public void updateInternal()
    {
+      if (initialTimestamp == -1L)
+         initialTimestamp = System.nanoTime();
+      time.set(Conversions.nanosecondsToSeconds(System.nanoTime() - initialTimestamp));
       stateMachine.doActionAndTransition();
-
-      KinematicsStreamingToolboxInputCommand latestInput = tools.pollInputCommand();
-
-      CommandInputManager ikCommandInputManager = tools.getIKCommandInputManager();
-
-      if (latestInput != null)
-      {
-         if (latestInput.getControlCenterOfMass())
-            ikCommandInputManager.submitCommand(latestInput.getCenterOfMassInput());
-         ikCommandInputManager.submitCommands(latestInput.getRigidBodyInputs());
-      }
-
-      ikCommandInputManager.submitMessage(configurationMessage);
-
-      tools.getIKController().updateInternal();
-
-      outputPublisher.publish(tools.convertIKOutput());
    }
 
    @Override

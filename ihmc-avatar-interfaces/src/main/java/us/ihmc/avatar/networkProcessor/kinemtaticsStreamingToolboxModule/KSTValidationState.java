@@ -4,6 +4,10 @@ import us.ihmc.robotics.stateMachine.core.State;
 
 public class KSTValidationState implements State
 {
+   public KSTValidationState(KSTTools tools)
+   {
+   }
+
    @Override
    public void onEntry()
    {
