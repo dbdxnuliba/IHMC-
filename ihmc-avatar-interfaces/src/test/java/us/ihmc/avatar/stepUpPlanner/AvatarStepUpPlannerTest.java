@@ -8,17 +8,23 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
 import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
 import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
+import us.ihmc.avatar.networkProcessor.DRCNetworkModuleParameters;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.IHMCROS2Publisher;
+import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
@@ -30,8 +36,10 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.ros2.Ros2Node;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.VariableHeightStairsEnvironment;
 import us.ihmc.simulationconstructionset.Joint;
@@ -81,14 +89,19 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    protected void walkUpToHighStep(double stepHeight) throws SimulationExceededMaximumTimeException
    {
 
+      boolean useStepUpPlannerTrajectories = true;
+
       ArrayList<Double> heightsVector = new ArrayList<Double>();
       heightsVector.add(stepHeight);
 
       VariableHeightStairsEnvironment environment = new VariableHeightStairsEnvironment(heightsVector, 0.7);
-      //      OffsetAndYawRobotInitialSetup offset = new OffsetAndYawRobotInitialSetup(0.6, 0.0, 0.0, 0.0);
 
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, getRobotModel(), environment);
-      //      drcSimulationTestHelper.setStartingLocation(offset);
+      DRCNetworkModuleParameters networkProcessorParameters = new DRCNetworkModuleParameters();
+      networkProcessorParameters.enableNetworkProcessor(false);
+      networkProcessorParameters.enableLocalControllerCommunicator(false); // Force the controller to use FAST_RTPS and not INTRAPROCESS
+      drcSimulationTestHelper.setNetworkProcessorParameters(networkProcessorParameters);
+
       drcSimulationTestHelper.createSimulation("WalkingUpToHighPlatformtest");
       Point3D cameraFix = new Point3D(1.1281, 0.0142, 1.0528);
       Point3D cameraPosition = new Point3D(0.2936, -5.531, 1.7983);
@@ -115,6 +128,22 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
                                                                                                                               .getSteppingParameters(),
                                                                                                                heightDifference,
                                                                                                                maxLegLength());
+
+      parameters.setSendComMessages(useStepUpPlannerTrajectories);
+      parameters.setIncludeComMessages(false);
+      parameters.setComMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                            .generateTopicName(CenterOfMassTrajectoryMessage.class));
+
+      parameters.setSendFootstepMessages(useStepUpPlannerTrajectories);
+      parameters.setIncludeFootstepMessages(true);
+      parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                                 .generateTopicName(FootstepDataListMessage.class));
+
+      parameters.setSendPelvisHeightMessages(useStepUpPlannerTrajectories);
+      parameters.setIncludePelvisHeightMessages(false);
+      parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                                     .generateTopicName(PelvisHeightTrajectoryMessage.class));
+
       LogTools.info("Sending parameters.");
       boolean ok = requester.publishParametersAndWaitAck(parameters);
       assertTrue(ok);
@@ -129,20 +158,18 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       assertTrue(receivedRespond != null);
 
       CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForHorizontalSurfaces(environment.getPlanarRegionsList());
-      drcSimulationTestHelper.publishToController(collisionMessage);
+      Ros2Node stepUpNode = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "ihmc_simulation_step_up_node");
+      IHMCROS2Publisher<CollisionAvoidanceManagerMessage> collisionPublisher = ROS2Tools.createPublisher(stepUpNode,
+                                                                                                         CollisionAvoidanceManagerMessage.class,
+                                                                                                         ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName()));
+      collisionPublisher.publish(collisionMessage);
 
-      //      drcSimulationTestHelper.publishToController(createFootstepsForHighStepUp(environment.getStepsCenter()));
-
-      for (int i = 0; i < receivedRespond.getFoostepMessages().size(); ++i)
+      if (!useStepUpPlannerTrajectories)
       {
-         drcSimulationTestHelper.publishToController(receivedRespond.getFoostepMessages().get(i));
-      }
-
-      for (int i = 0; i < receivedRespond.getComMessages().size(); ++i)
-      {
-         drcSimulationTestHelper.publishToController(receivedRespond.getComMessages().get(i));
-         drcSimulationTestHelper.publishToController(receivedRespond.getPelvisHeightMessages().get(i));
-
+         IHMCROS2Publisher<FootstepDataListMessage> footStepPublisher = ROS2Tools.createPublisher(stepUpNode,
+                                                                                                  FootstepDataListMessage.class,
+                                                                                                  ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName()));
+         footStepPublisher.publish(createFootstepsForHighStepUp(environment.getStepsCenter()));
       }
 
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(receivedRespond.getTotalDuration() * 1.2);

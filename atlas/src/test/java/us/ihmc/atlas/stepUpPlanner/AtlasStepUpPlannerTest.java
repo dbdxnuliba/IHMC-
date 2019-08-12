@@ -1,5 +1,7 @@
 package us.ihmc.atlas.stepUpPlanner;
 
+import java.io.InputStream;
+
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.atlas.AtlasJointMap;
@@ -12,6 +14,7 @@ import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.stepUpPlanner.AvatarStepUpPlannerTest;
 import us.ihmc.commonWalkingControlModules.configurations.ShinCollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
+import us.ihmc.robotics.Assert;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 
@@ -52,6 +55,14 @@ public class AtlasStepUpPlannerTest extends AvatarStepUpPlannerTest
 
    public class AtlasRobotModelForCollisionAvoidanceTest extends AtlasRobotModel
    {
+      @Override
+      public InputStream getParameterOverwrites()
+      {
+         InputStream overwrites = AvatarStepUpPlannerTest.class.getResourceAsStream("/dynamic_step_up.xml");
+         Assert.assertNotNull(overwrites);
+         return overwrites;
+      }
+
       public class EnabledShinCollisionAvoidanceParameters extends ShinCollisionAvoidanceParameters
       {
          @Override
