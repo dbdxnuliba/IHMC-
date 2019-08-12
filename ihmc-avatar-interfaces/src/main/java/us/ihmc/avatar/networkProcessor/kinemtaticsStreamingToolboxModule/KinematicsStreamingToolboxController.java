@@ -1,5 +1,6 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
+import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
@@ -26,6 +27,7 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
    };
 
    private final CommandInputManager commandInputManager;
+   private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
 
    public KinematicsStreamingToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
@@ -46,8 +48,8 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
 
       streamIntegrationDuration.set(0.05);
       outputConverter = new KinematicsToolboxOutputConverter(fullRobotModelFactory);
-//      getDefaultGains().setProportionalGains(100.0);
       getDefaultGains().setMaxFeedbackAndFeedbackRate(100.0, Double.POSITIVE_INFINITY);
+      configurationMessage.setJointVelocityWeight(1.0);
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -76,15 +78,9 @@ public class KinematicsStreamingToolboxController extends HumanoidKinematicsTool
          ikCommandInputManager.submitCommands(latestInput.getRigidBodyInputs());
       }
 
-      try
-      {
-         super.updateInternal();
-      }
-      catch (Exception e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
+      ikCommandInputManager.submitMessage(configurationMessage);
+
+      super.updateInternal();
 
       outputConverter.updateFullRobotModel(getSolution());
       outputConverter.setMessageToCreate(wholeBodyTrajectoryMessage);

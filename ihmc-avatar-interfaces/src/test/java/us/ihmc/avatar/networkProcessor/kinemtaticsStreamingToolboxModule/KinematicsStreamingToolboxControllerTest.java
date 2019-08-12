@@ -5,6 +5,9 @@ import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKi
 import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest.extractRobotConfigurationData;
 import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest.randomizeArmJointPositions;
 
+import java.awt.Color;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,6 +23,8 @@ import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
+import us.ihmc.avatar.jointAnglesWriter.JointAnglesWriter;
+import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
@@ -30,15 +35,21 @@ import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.JointStateType;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
+import us.ihmc.robotics.robotDescription.RobotDescription;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
+import us.ihmc.simulationConstructionSetTools.util.HumanoidFloatingRootJointRobot;
+import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
+import us.ihmc.simulationconstructionset.Robot;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.simulationconstructionset.util.simulationTesting.SimulationTestingParameters;
 import us.ihmc.tools.MemoryTools;
@@ -51,6 +62,7 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
 {
    protected static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private static final YoAppearanceRGBColor ghostApperance = new YoAppearanceRGBColor(Color.YELLOW, 0.75);
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
@@ -60,7 +72,15 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
    private FullHumanoidRobotModel desiredFullRobotModel;
    private KinematicsStreamingToolboxController toolboxController;
 
+   private HumanoidFloatingRootJointRobot ghost;
+
    private ScheduledExecutorService scheduledExecutorService;
+
+   /**
+    * Returns a separate instance of the robot model that will be modified in this test to create a
+    * ghost robot.
+    */
+   public abstract DRCRobotModel getGhostRobotModel();
 
    @BeforeEach
    public void setup()
@@ -69,7 +89,26 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
 
       DRCRobotModel robotModel = getRobotModel();
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
-      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel);
+
+      DRCRobotModel ghostRobotModel = getGhostRobotModel();
+      RobotDescription robotDescription = ghostRobotModel.getRobotDescription();
+      robotDescription.setName("Ghost");
+      KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), ghostApperance);
+      ghost = ghostRobotModel.createHumanoidFloatingRootJointRobot(false);
+      ghost.getRootJoint().setPinned(true);
+      ghost.setDynamic(false);
+      ghost.setGravity(0);
+      hideGhost();
+
+      FlatGroundEnvironment testEnvironment = new FlatGroundEnvironment()
+      {
+         @Override
+         public List<Robot> getEnvironmentRobots()
+         {
+            return Collections.singletonList(ghost);
+         }
+      };
+      drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, testEnvironment);
 
       desiredFullRobotModel = robotModel.createFullRobotModel();
 
@@ -98,6 +137,18 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
 
       drcSimulationTestHelper.createSimulation(getClass().getSimpleName());
       drcSimulationTestHelper.getSimulationConstructionSet().addYoVariableRegistry(mainRegistry);
+   }
+
+   private void hideGhost()
+   {
+      ghost.setPositionInWorld(new Point3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
+   }
+
+   private void snapGhostToFullRobotModel(FullHumanoidRobotModel fullHumanoidRobotModel)
+   {
+      JointAnglesWriter jointAnglesWriter = new JointAnglesWriter(ghost, fullHumanoidRobotModel);
+      jointAnglesWriter.setWriteJointVelocities(false);
+      jointAnglesWriter.updateRobotConfigurationBasedOnFullRobotModel();
    }
 
    @AfterEach
@@ -171,7 +222,11 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
          public void notifyOfVariableChange(YoVariable<?> v)
          {
             if (task == null)
-               task = scheduledExecutorService.scheduleAtFixedRate(() -> toolboxController.update(), 0, 500, TimeUnit.MILLISECONDS);
+               task = scheduledExecutorService.scheduleAtFixedRate(() ->
+               {
+                  toolboxController.update();
+                  snapGhostToFullRobotModel(toolboxController.getDesiredFullRobotModel());
+               }, 0, 500, TimeUnit.MILLISECONDS);
 
             if (yoTime.getValue() >= terminalTime)
                task.cancel(true);

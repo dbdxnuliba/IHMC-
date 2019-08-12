@@ -11,7 +11,8 @@ import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulatio
 
 public class AtlasKinematicsStreamingToolboxControllerTest extends KinematicsStreamingToolboxControllerTest
 {
-   private DRCRobotModel robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+   private final DRCRobotModel robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
+   private final DRCRobotModel ghostRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
 
    @Test
    @Override
@@ -24,5 +25,11 @@ public class AtlasKinematicsStreamingToolboxControllerTest extends KinematicsStr
    public DRCRobotModel getRobotModel()
    {
       return robotModel;
+   }
+
+   @Override
+   public DRCRobotModel getGhostRobotModel()
+   {
+      return ghostRobotModel;
    }
 }
