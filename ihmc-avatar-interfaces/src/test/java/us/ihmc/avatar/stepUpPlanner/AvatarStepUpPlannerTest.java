@@ -20,6 +20,7 @@ import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.networkProcessor.DRCNetworkModuleParameters;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
+import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
@@ -59,6 +60,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
+   private final Ros2Node stepUpNode = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "ihmc_simulation_step_up_node");
 
    @BeforeEach
    public void showMemoryUsageBeforeTest()
@@ -115,50 +117,10 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       boolean success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5);
       assertTrue(success);
 
-      ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
-      FramePose3D comPose = new FramePose3D(initialCoMFrame);
-      comPose.changeFrame(ReferenceFrame.getWorldFrame());
-
-      MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
-      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-      double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
-
-      StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
-                                                                                                                              .getSteppingParameters(),
-                                                                                                               heightDifference,
-                                                                                                               maxLegLength());
-
-      parameters.setSendComMessages(useStepUpPlannerTrajectories);
-      parameters.setIncludeComMessages(false);
-      parameters.setComMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
-                                                            .generateTopicName(CenterOfMassTrajectoryMessage.class));
-
-      parameters.setSendFootstepMessages(useStepUpPlannerTrajectories);
-      parameters.setIncludeFootstepMessages(true);
-      parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
-                                                                 .generateTopicName(FootstepDataListMessage.class));
-
-      parameters.setSendPelvisHeightMessages(useStepUpPlannerTrajectories);
-      parameters.setIncludePelvisHeightMessages(false);
-      parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
-                                                                     .generateTopicName(PelvisHeightTrajectoryMessage.class));
-
-      LogTools.info("Sending parameters.");
-      boolean ok = requester.publishParametersAndWaitAck(parameters);
-      assertTrue(ok);
-
-      StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(0.6,
-                                                                                                      0.0,
-                                                                                                      stepHeight,
-                                                                                                      desiredLegLength(),
-                                                                                                      drcSimulationTestHelper.getReferenceFrames());
-      LogTools.info("Sending request.");
-      receivedRespond = requester.getRespond(request);
-      assertTrue(receivedRespond != null);
+      double totalDuration;
+      FootstepDataListMessage lastFootStep;
 
       CollisionAvoidanceManagerMessage collisionMessage = createCollisionMessageForHorizontalSurfaces(environment.getPlanarRegionsList());
-      Ros2Node stepUpNode = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "ihmc_simulation_step_up_node");
       IHMCROS2Publisher<CollisionAvoidanceManagerMessage> collisionPublisher = ROS2Tools.createPublisher(stepUpNode,
                                                                                                          CollisionAvoidanceManagerMessage.class,
                                                                                                          ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName()));
@@ -169,14 +131,70 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          IHMCROS2Publisher<FootstepDataListMessage> footStepPublisher = ROS2Tools.createPublisher(stepUpNode,
                                                                                                   FootstepDataListMessage.class,
                                                                                                   ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName()));
-         footStepPublisher.publish(createFootstepsForHighStepUp(environment.getStepsCenter()));
+         FootstepDataListMessage footsteps = createFootstepsForHighStepUp(environment.getStepsCenter());
+         footStepPublisher.publish(footsteps);
+
+         WalkingControllerParameters walkingControllerParameters = getRobotModel().getWalkingControllerParameters();
+         int numberOfSteps = footsteps.getFootstepDataList().size();
+         double stepTime = walkingControllerParameters.getDefaultSwingTime() + walkingControllerParameters.getDefaultTransferTime();
+         double initialFinalTransfer = walkingControllerParameters.getDefaultInitialTransferTime();
+         totalDuration = numberOfSteps * stepTime + 2.0 * initialFinalTransfer + 3.0;
+         lastFootStep = footsteps;
+      }
+      else
+      {
+
+         ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
+         FramePose3D comPose = new FramePose3D(initialCoMFrame);
+         comPose.changeFrame(ReferenceFrame.getWorldFrame());
+
+         MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
+         FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
+         pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
+         double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
+
+         StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
+                                                                                                                                 .getSteppingParameters(),
+                                                                                                                  heightDifference,
+                                                                                                                  maxLegLength());
+
+         parameters.setSendComMessages(useStepUpPlannerTrajectories);
+         parameters.setIncludeComMessages(false);
+         parameters.setComMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                               .generateTopicName(CenterOfMassTrajectoryMessage.class));
+
+         parameters.setSendFootstepMessages(useStepUpPlannerTrajectories);
+         parameters.setIncludeFootstepMessages(true);
+         parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                                    .generateTopicName(FootstepDataListMessage.class));
+
+         parameters.setSendPelvisHeightMessages(useStepUpPlannerTrajectories);
+         parameters.setIncludePelvisHeightMessages(false);
+         parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
+                                                                        .generateTopicName(PelvisHeightTrajectoryMessage.class));
+
+         LogTools.info("Sending parameters.");
+         boolean ok = requester.publishParametersAndWaitAck(parameters);
+         assertTrue(ok);
+
+         StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(0.6,
+                                                                                                         0.0,
+                                                                                                         stepHeight,
+                                                                                                         desiredLegLength(),
+                                                                                                         drcSimulationTestHelper.getReferenceFrames());
+         LogTools.info("Sending request.");
+         receivedRespond = requester.getRespond(request);
+         assertTrue(receivedRespond != null);
+
+         totalDuration = receivedRespond.getTotalDuration() * 1.2;
+         lastFootStep = receivedRespond.getFoostepMessages().getLast();
       }
 
-      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(receivedRespond.getTotalDuration() * 1.2);
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(totalDuration);
 
       printMinMax(drcSimulationTestHelper.getSimulationConstructionSet());
 
-      assertReachedGoal(receivedRespond.getFoostepMessages().getLast());
+      assertReachedGoal(lastFootStep);
    }
 
    private CollisionAvoidanceManagerMessage createCollisionMessageForHorizontalSurfaces(PlanarRegionsList planarRegions)
@@ -190,9 +208,9 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          {
             PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
             collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
-            collisionMessage.setConsiderOnlyEdges(true);
          }
       }
+      collisionMessage.setConsiderOnlyEdges(true);
 
       return collisionMessage;
    }
