@@ -8,6 +8,7 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionsListCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
+import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedRobotics.controlModules.foot.QuadrupedFootControlModuleParameters;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.quadrupedRobotics.controller.toolbox.LinearInvertedPendulumModel;
@@ -29,6 +30,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class QuadrupedStepAdjustmentController
 {
@@ -126,7 +128,7 @@ public class QuadrupedStepAdjustmentController
       reachabilityProjection.completedStep(robotQuadrant);
    }
 
-   public RecyclingArrayList<QuadrupedStep> computeStepAdjustment(ArrayList<YoQuadrupedTimedStep> activeSteps, FramePoint3DReadOnly desiredDCMPosition,
+   public RecyclingArrayList<QuadrupedStep> computeStepAdjustment(List<? extends QuadrupedTimedStep> activeSteps, FramePoint3DReadOnly desiredDCMPosition,
                                                                   boolean stepPlanIsAdjustable)
    {
       reachabilityProjection.update();
@@ -147,7 +149,7 @@ public class QuadrupedStepAdjustmentController
       // adjust nominal step goal positions in foot state machine
       for (int i = 0; i < activeSteps.size(); i++)
       {
-         YoQuadrupedTimedStep activeStep = activeSteps.get(i);
+         QuadrupedTimedStep activeStep = activeSteps.get(i);
 
          double stepDuration = activeStep.getTimeInterval().getDuration();
          double timeRemainingInStep = Math.max(activeStep.getTimeInterval().getEndTime() - controllerTime.getDoubleValue(), 0.0);

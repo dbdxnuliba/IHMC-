@@ -1,6 +1,5 @@
 package us.ihmc.quadrupedRobotics.messageHandling;
 
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.commons.lists.RecyclingArrayList;
@@ -16,9 +15,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajecto
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
-import us.ihmc.quadrupedRobotics.stepStream.QuadrupedPreplannedStepStream;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepStreamManager;
-import us.ihmc.quadrupedRobotics.stepStream.QuadrupedXGaitStepStream;
 import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
 import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
@@ -38,35 +35,20 @@ import java.util.List;
 public class QuadrupedStepMessageHandler
 {
    private static final double timeEpsilonForStepSelection = 0.05;
-   public static final int STEP_QUEUE_SIZE = 200;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final QuadrantDependentList<RecyclingArrayDeque<SoleTrajectoryCommand>> upcomingFootTrajectoryCommandList = new QuadrantDependentList<>();
 
    private final YoInteger numberOfStepsToRecover = new YoInteger("numberOfStepsToRecover", registry);
-   private final BooleanProvider shiftTimesBasedOnLateTouchdown = new BooleanParameter("shiftTimesBasedOnLateTouchdown", registry, true);
-   private final YoDouble initialTransferDurationForShifting = new YoDouble("initialTransferDurationForShifting", registry);
-
-   private final ArrayList<YoQuadrupedTimedStep> activeSteps = new ArrayList<>();
-   private final YoDouble robotTimestamp;
-   private final YoPreallocatedList<YoQuadrupedTimedStep> receivedStepSequence;
 
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
 
    private final QuadrupedStepStreamManager stepStreamManager;
 
-   private final double controlDt;
-
    public QuadrupedStepMessageHandler(YoDouble robotTimestamp, double controlDt, QuadrupedReferenceFrames referenceFrames, YoVariableRegistry parentRegistry)
    {
-      this.robotTimestamp = robotTimestamp;
-      this.controlDt = controlDt;
-      this.receivedStepSequence = new YoPreallocatedList<>(YoQuadrupedTimedStep.class, "receivedStepSequence", STEP_QUEUE_SIZE, registry);
-
-      initialTransferDurationForShifting.set(1.00);
-
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
          upcomingFootTrajectoryCommandList.put(robotQuadrant, new RecyclingArrayDeque<>(SoleTrajectoryCommand.class, SoleTrajectoryCommand::set));
@@ -109,15 +91,6 @@ public class QuadrupedStepMessageHandler
    public void process()
    {
       stepStreamManager.doAction();
-
-      PreallocatedList<? extends QuadrupedTimedStep> steps = stepStreamManager.getSteps();
-      receivedStepSequence.clear();
-      for (int i = 0; i < steps.size(); i++)
-      {
-         receivedStepSequence.add().set(steps.get(i));
-      }
-
-      updateActiveSteps();
    }
 
    private static boolean isValidStepPlan(QuadrupedTimedStepListCommand command)
@@ -150,8 +123,7 @@ public class QuadrupedStepMessageHandler
 
    public void clearSteps()
    {
-      receivedStepSequence.clear();
-      activeSteps.clear();
+      // TODO
    }
 
    public void handleSoleTrajectoryCommand(List<SoleTrajectoryCommand> commands)
@@ -190,7 +162,7 @@ public class QuadrupedStepMessageHandler
 
    public void clearUpcomingSteps()
    {
-      TimeIntervalTools.removeStartTimesGreaterThan(robotTimestamp.getDoubleValue(), receivedStepSequence);
+      // TODO
    }
 
    public void clearFootTrajectory(RobotQuadrant robotQuadrant)
@@ -206,7 +178,7 @@ public class QuadrupedStepMessageHandler
 
    public boolean isDoneWithStepSequence()
    {
-      return receivedStepSequence.isEmpty();
+      return stepStreamManager.getSteps().isEmpty();
    }
 
    public boolean isStepPlanAdjustable()
@@ -224,36 +196,20 @@ public class QuadrupedStepMessageHandler
       stepStreamManager.onLiftOff(quadrant);
    }
 
-   public void shiftPlanTimeBasedOnTouchdown(RobotQuadrant robotQuadrant, double currentTime)
-   {
-      int index = getIndexOfFirstStep(robotQuadrant, timeEpsilonForStepSelection);
-      if (index == -1 || !shiftTimesBasedOnLateTouchdown.getValue())
-         return;
-
-      QuadrupedTimedStep completedStep = receivedStepSequence.remove(index);
-      double stepDelay = currentTime - completedStep.getTimeInterval().getEndTime();
-      if (stepDelay > 0.0)
-      {
-         for (int i = 0; i < receivedStepSequence.size(); i++)
-         {
-            receivedStepSequence.get(i).getTimeInterval().shiftInterval(stepDelay);
-         }
-      }
-   }
-
    private final FramePoint3D tempStep = new FramePoint3D();
 
    // Fixme this isn't working properly anymore
    public void shiftPlanPositionBasedOnStepAdjustment(FrameVector3DReadOnly stepAdjustment)
    {
-      int numberOfStepsToAdjust = Math.min(numberOfStepsToRecover.getIntegerValue(), receivedStepSequence.size());
-      for (int i = 0; i < numberOfStepsToAdjust; i++)
-      {
-         double multiplier = (numberOfStepsToRecover.getIntegerValue() - i) / (double) numberOfStepsToRecover.getIntegerValue();
-         tempStep.setIncludingFrame(receivedStepSequence.get(i).getReferenceFrame(), receivedStepSequence.get(i).getGoalPosition());
-         tempStep.scaleAdd(multiplier, stepAdjustment, tempStep);
-         receivedStepSequence.get(i).setGoalPosition(tempStep);
-      }
+      // TODO
+//      int numberOfStepsToAdjust = Math.min(numberOfStepsToRecover.getIntegerValue(), receivedStepSequence.size());
+//      for (int i = 0; i < numberOfStepsToAdjust; i++)
+//      {
+//         double multiplier = (numberOfStepsToRecover.getIntegerValue() - i) / (double) numberOfStepsToRecover.getIntegerValue();
+//         tempStep.setIncludingFrame(receivedStepSequence.get(i).getReferenceFrame(), receivedStepSequence.get(i).getGoalPosition());
+//         tempStep.scaleAdd(multiplier, stepAdjustment, tempStep);
+//         receivedStepSequence.get(i).setGoalPosition(tempStep);
+//      }
    }
 
    private final FrameVector3D stepOffsetVector = new FrameVector3D();
@@ -272,55 +228,41 @@ public class QuadrupedStepMessageHandler
       stepOffsetVector.setY(0.0);
       stepOffsetVector.scale(offsetHeightCorrectionScale.getValue());
 
-      for (int i = 0; i < receivedStepSequence.size(); i++)
-      {
-         YoQuadrupedTimedStep step = receivedStepSequence.get(i);
-         tempStep.setIncludingFrame(step.getReferenceFrame(), step.getGoalPosition());
-         tempStep.add(stepOffsetVector);
-         step.setGoalPosition(tempStep);
-      }
+//      for (int i = 0; i < receivedStepSequence.size(); i++)
+//      {
+//         YoQuadrupedTimedStep step = receivedStepSequence.get(i);
+//         tempStep.setIncludingFrame(step.getReferenceFrame(), step.getGoalPosition());
+//         tempStep.add(stepOffsetVector);
+//         step.setGoalPosition(tempStep);
+//      }
    }
 
-   public YoPreallocatedList<YoQuadrupedTimedStep> getStepSequence()
+   public List<? extends QuadrupedTimedStep> getStepSequence()
    {
-      return receivedStepSequence;
+      return stepStreamManager.getSteps();
    }
 
-   public ArrayList<YoQuadrupedTimedStep> getActiveSteps()
+   public List<? extends QuadrupedTimedStep> getActiveSteps()
    {
-      return activeSteps;
-   }
-
-   public void updateActiveSteps()
-   {
-      activeSteps.clear();
-      double currentTime = robotTimestamp.getDoubleValue();
-
-      for (int i = 0; i < receivedStepSequence.size(); i++)
-      {
-         double startTime = receivedStepSequence.get(i).getTimeInterval().getStartTime();
-         if (currentTime >= startTime)
-         {
-            activeSteps.add(receivedStepSequence.get(i));
-         }
-      }
+      return stepStreamManager.getActiveSteps();
    }
 
    public void reset()
    {
-      receivedStepSequence.clear();
+//      receivedStepSequence.clear();
+      // TODO
    }
 
-   private int getIndexOfFirstStep(RobotQuadrant robotQuadrant, double timeEpsilon)
-   {
-      for (int i = 0;i  < receivedStepSequence.size(); i++)
-      {
-         QuadrupedTimedStep step = receivedStepSequence.get(i);
-
-         if (step.getRobotQuadrant() == robotQuadrant && step.getTimeInterval().epsilonContains(robotTimestamp.getDoubleValue(), timeEpsilon))
-            return i;
-      }
-
-      return -1;
-   }
+//   private int getIndexOfFirstStep(RobotQuadrant robotQuadrant, double timeEpsilon)
+//   {
+//      for (int i = 0;i  < receivedStepSequence.size(); i++)
+//      {
+//         QuadrupedTimedStep step = receivedStepSequence.get(i);
+//
+//         if (step.getRobotQuadrant() == robotQuadrant && step.getTimeInterval().epsilonContains(robotTimestamp.getDoubleValue(), timeEpsilon))
+//            return i;
+//      }
+//
+//      return -1;
+//   }
 }

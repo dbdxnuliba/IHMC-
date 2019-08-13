@@ -289,7 +289,6 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
 
       stepMessageHandler.onTouchDown(thisStepQuadrant);
       stepMessageHandler.shiftPlanPositionBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
-      stepMessageHandler.shiftPlanTimeBasedOnTouchdown(thisStepQuadrant, currentTime);
       tempVector.sub(footstepStatusMessage.getActualTouchdownPositionInWorld(), footstepStatusMessage.getDesiredTouchdownPositionInWorld());
       stepMessageHandler.addOffsetVectorOnTouchdown(tempVector);
 

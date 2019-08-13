@@ -1,5 +1,6 @@
 package us.ihmc.quadrupedRobotics.stepStream;
 
+import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
@@ -12,19 +13,18 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<QuadrupedTimedStepListCommand>
 {
-   private final DoubleProvider initialTransferDurationForShifting = new DoubleParameter("initialTransferDurationForShifting", registry, 1.0);
+   private final DoubleProvider timestamp;
 
-   public QuadrupedPreplannedStepStream(YoDouble timestamp, YoVariableRegistry parentRegistry)
+   public QuadrupedPreplannedStepStream(DoubleProvider timestamp)
    {
-      super("preplanned_", timestamp);
-      parentRegistry.addChild(registry);
+      this.timestamp = timestamp;
    }
 
    @Override
-   public void onEntryInternal(QuadrupedTimedStepListCommand stepSequenceCommand)
+   public void onEntryInternal(QuadrupedTimedStepListCommand stepSequenceCommand, PreallocatedList<? extends QuadrupedTimedStep> stepSequence, DoubleProvider initialTransferDurationForShifting)
    {
       RecyclingArrayList<QuadrupedTimedStepCommand> stepCommands = stepSequenceCommand.getStepCommands();
-      double timeShift = stepSequenceCommand.isExpressedInAbsoluteTime() ? 0.0 : timestamp.getDoubleValue() + initialTransferDurationForShifting.getValue();
+      double timeShift = stepSequenceCommand.isExpressedInAbsoluteTime() ? 0.0 : timestamp.getValue() + initialTransferDurationForShifting.getValue();
 
       for (int i = 0; i < stepCommands.size(); i++)
       {
@@ -35,14 +35,8 @@ public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<Quadruped
    }
 
    @Override
-   public void doActionInternal(QuadrupedTimedStepListCommand stepSequenceCommand)
+   public void doActionInternal(QuadrupedTimedStepListCommand stepSequenceCommand, PreallocatedList<? extends QuadrupedTimedStep> stepSequence)
    {
       // Do nothing, upcoming step sequence should not be changed
-   }
-
-   @Override
-   int getPlanCapacity()
-   {
-      return QuadrupedStepMessageHandler.STEP_QUEUE_SIZE;
    }
 }
