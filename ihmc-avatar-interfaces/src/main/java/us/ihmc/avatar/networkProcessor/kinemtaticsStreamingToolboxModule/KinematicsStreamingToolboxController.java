@@ -1,9 +1,9 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
-import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.CALIBRATION;
-import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.SLEEP;
-import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.STREAMING;
-import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.StreamingToolboxState.VALIDATION;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.CALIBRATION;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.SLEEP;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.STREAMING;
+import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.VALIDATION;
 
 import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
@@ -27,7 +27,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 public class KinematicsStreamingToolboxController extends ToolboxController
 {
-   public enum StreamingToolboxState
+   public enum KSTState
    {
       SLEEP, CALIBRATION, VALIDATION, STREAMING
    };
@@ -37,7 +37,7 @@ public class KinematicsStreamingToolboxController extends ToolboxController
    private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
 
    private final YoDouble time = new YoDouble("time", registry);
-   private final StateMachine<StreamingToolboxState, State> stateMachine;
+   private final StateMachine<KSTState, State> stateMachine;
 
    private final KSTSleepState sleepState;
    private final KSTCalibrationState calibrationState;
@@ -77,9 +77,9 @@ public class KinematicsStreamingToolboxController extends ToolboxController
       stateMachine = createStateMachine(time);
    }
 
-   private StateMachine<StreamingToolboxState, State> createStateMachine(DoubleProvider timeProvider)
+   private StateMachine<KSTState, State> createStateMachine(DoubleProvider timeProvider)
    {
-      StateMachineFactory<StreamingToolboxState, State> factory = new StateMachineFactory<>(StreamingToolboxState.class);
+      StateMachineFactory<KSTState, State> factory = new StateMachineFactory<>(KSTState.class);
       factory.setNamePrefix("mainStateMachine").setRegistry(registry).buildYoClock(timeProvider);
 
       factory.addState(SLEEP, sleepState);
@@ -98,9 +98,10 @@ public class KinematicsStreamingToolboxController extends ToolboxController
 //      factory.addDoneTransition(STREAMING, SLEEP);
 
       // TODO change transitions to SLEEP -> CALIBRATION -> VALIDATION -> STREAMING
-      factory.addDoneTransition(SLEEP, STREAMING);
+      factory.addDoneTransition(SLEEP, CALIBRATION);
+      factory.addDoneTransition(CALIBRATION, STREAMING);
 
-      return factory.build(StreamingToolboxState.SLEEP);
+      return factory.build(KSTState.SLEEP);
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -136,14 +137,19 @@ public class KinematicsStreamingToolboxController extends ToolboxController
       void publish(WholeBodyTrajectoryMessage messageToPublish);
    }
 
+   KSTState getCurrentStateKey()
+   {
+      return stateMachine.getCurrentStateKey();
+   }
+
    public void updateRobotConfigurationData(RobotConfigurationData newConfigurationData)
    {
-      tools.getIKController().updateRobotConfigurationData(newConfigurationData);
+      tools.updateRobotConfigurationData(newConfigurationData);
    }
 
    public void updateCapturabilityBasedStatus(CapturabilityBasedStatus newStatus)
    {
-      tools.getIKController().updateCapturabilityBasedStatus(newStatus);
+      tools.updateCapturabilityBasedStatus(newStatus);
    }
 
    public FullHumanoidRobotModel getDesiredFullRobotModel()

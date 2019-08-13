@@ -1,5 +1,6 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest.createCapturabilityBasedStatus;
 import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest.extractRobotConfigurationData;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import controller_msgs.msg.dds.KinematicsStreamingToolboxCalibrationMessage;
 import controller_msgs.msg.dds.KinematicsStreamingToolboxInputMessage;
 import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
@@ -25,6 +27,7 @@ import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.jointAnglesWriter.JointAnglesWriter;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
+import us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
@@ -184,10 +187,33 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
    @Test
    public void testFixedGoal() throws SimulationExceededMaximumTimeException
    {
-      simulationTestingParameters.setKeepSCSUp(true);
+//      simulationTestingParameters.setKeepSCSUp(true);
       Random random = new Random(456415);
 
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5));
+
+      // First calibration: Just verifying the proper functioning of the internal state-machine.
+      FullHumanoidRobotModel zeroPoseFullRobotModel = getRobotModel().createFullRobotModel();
+      zeroPoseFullRobotModel.updateFrames();
+      KinematicsStreamingToolboxCalibrationMessage calibrationMessage = new KinematicsStreamingToolboxCalibrationMessage();
+      calibrationMessage.setUseGroundHeight(true);
+      calibrationMessage.setUseHeadPose(true);
+      calibrationMessage.setUseLeftHandPose(true);
+      calibrationMessage.setUseRightHandPose(true);
+      calibrationMessage.setGroundHeight(0.0);
+      calibrationMessage.getHeadPose().set(zeroPoseFullRobotModel.getHead().getBodyFixedFrame().getTransformToRoot());
+      calibrationMessage.getLeftHandPose().set(zeroPoseFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame().getTransformToRoot());
+
+      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
+      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
+      toolboxController.update();
+      assertEquals(KSTState.SLEEP, toolboxController.getCurrentStateKey());
+      toolboxController.update();
+      assertEquals(KSTState.CALIBRATION, toolboxController.getCurrentStateKey());
+      commandInputManager.submitMessage(calibrationMessage);
+      toolboxController.update();
+      toolboxController.update();
+      assertEquals(KSTState.STREAMING, toolboxController.getCurrentStateKey());
 
       KinematicsStreamingToolboxInputMessage inputMessage = new KinematicsStreamingToolboxInputMessage();
       FullHumanoidRobotModel randomizedFullRobotModel = getRobotModel().createFullRobotModel();
@@ -206,8 +232,6 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       }
 
       commandInputManager.submitMessage(inputMessage);
-      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
-      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
 
       double simDuration = 5.0;
 

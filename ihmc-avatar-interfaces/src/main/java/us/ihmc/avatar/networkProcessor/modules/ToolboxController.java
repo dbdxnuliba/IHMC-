@@ -10,7 +10,7 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 
 public abstract class ToolboxController
 {
-   protected static final boolean DEBUG = false;
+   protected static final boolean DEBUG = true;
 
    protected final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    protected final StatusMessageOutputManager statusOutputManager;

@@ -28,6 +28,7 @@ public class KSTStreamingState implements State
    @Override
    public void onEntry()
    {
+      tools.getIKController().getDefaultGains().setMaxFeedbackAndFeedbackRate(100.0, Double.POSITIVE_INFINITY);
    }
 
    @Override

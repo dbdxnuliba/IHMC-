@@ -1,0 +1,28 @@
+#ifndef __controller_msgs__msg__KinematicsStreamingToolboxCalibrationStatusMessage__idl__
+#define __controller_msgs__msg__KinematicsStreamingToolboxCalibrationStatusMessage__idl__
+
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * This message is part of the KinematicsStreamingToolbox API.
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::KinematicsStreamingToolboxCalibrationStatusMessage_")
+      struct KinematicsStreamingToolboxCalibrationStatusMessage
+      {
+        /**
+         * Unique ID used to identify this message, should preferably be consecutively increasing.
+         */
+        unsigned long sequence_id;
+        string current_status;
+        boolean is_calibration_done;
+      };
+    };
+  };
+};
+
+#endif
