@@ -158,11 +158,12 @@ public class QuadrupedStepMessageHandler
 
    public void handlePauseWalkingCommand(PauseWalkingCommand pauseWalkingCommand)
    {
+      // TODO
    }
 
-   public void clearUpcomingSteps()
+   public void abortWalking()
    {
-      // TODO
+      stepStreamManager.requestStop();
    }
 
    public void clearFootTrajectory(RobotQuadrant robotQuadrant)
@@ -245,12 +246,6 @@ public class QuadrupedStepMessageHandler
    public List<? extends QuadrupedTimedStep> getActiveSteps()
    {
       return stepStreamManager.getActiveSteps();
-   }
-
-   public void reset()
-   {
-//      receivedStepSequence.clear();
-      // TODO
    }
 
 //   private int getIndexOfFirstStep(RobotQuadrant robotQuadrant, double timeEpsilon)

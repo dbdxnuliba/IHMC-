@@ -12,6 +12,7 @@ import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
+import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -53,6 +54,9 @@ public class QuadrupedStepStreamManager
 
    /** Holds current or next step on each robot end. Helper object for calculating step delay */
    private final EndDependentList<YoQuadrupedTimedStep> currentSteps = new EndDependentList<>();
+
+   private final YoBoolean pausedRequested = new YoBoolean("pauseRequested", registry);
+   private final YoBoolean stopRequested = new YoBoolean("stopRequested", registry);
 
    private final YoDouble timestamp;
 
@@ -103,6 +107,8 @@ public class QuadrupedStepStreamManager
          touchdownFlags.get(quadrant).set(true);
       }
 
+      stopRequested.set(false);
+
       stepSequence.clear();
       getStepStream().onEntry(stepSequence, initialTransferDurationForShifting);
 
@@ -133,12 +139,19 @@ public class QuadrupedStepStreamManager
       TimeIntervalTools.removeEndTimesLessThan(timestamp.getDoubleValue(), stepSequence);
 
       // Update current steps
-      for(RobotEnd end : RobotEnd.values)
+      for (RobotEnd end : RobotEnd.values)
       {
          currentSteps.put(end, getFirstStep(end));
       }
 
-      getStepStream().doAction(stepSequence);
+      if (stopRequested.getValue())
+      {
+         TimeIntervalTools.removeStartTimesGreaterThan(timestamp.getDoubleValue(), stepSequence);
+      }
+      else
+      {
+         getStepStream().doAction(stepSequence);
+      }
 
       // Ensure step sequence is ordered according to start time
       stepSequence.sort(TimeIntervalTools.startTimeComparator);
@@ -232,18 +245,16 @@ public class QuadrupedStepStreamManager
 
    public void acceptTeleopCommand(QuadrupedTeleopCommand teleopCommand)
    {
-      if(teleopCommand.isWalkingRequested())
-      {
-         xGaitStepStream.accept(teleopCommand);
-      }
-      else
-      {
-         // TODO register stop
-      }
+      xGaitStepStream.accept(teleopCommand);
    }
 
    private QuadrupedStepStream getStepStream()
    {
       return stepMode.getEnumValue() == QuadrupedStepMode.PREPLANNED ? preplannedStepStream : xGaitStepStream;
+   }
+
+   public void requestStop()
+   {
+      stopRequested.set(true);
    }
 }
