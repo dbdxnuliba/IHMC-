@@ -20,6 +20,8 @@ import us.ihmc.euclid.referenceFrame.tools.EuclidFrameTools;
 import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
@@ -28,6 +30,7 @@ import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionAvo
 import us.ihmc.humanoidRobotics.communication.packets.collisionAvoidance.CollisionAvoidanceMessageMode;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
+import us.ihmc.robotics.referenceFrames.TransformReferenceFrame;
 import us.ihmc.robotics.screwTheory.SelectionMatrix3D;
 import us.ihmc.robotics.weightMatrices.WeightMatrix3D;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -65,6 +68,7 @@ public class CollisionAvoidanceManager
    private final LineSegment2D edge = new LineSegment2D();
    private final FramePoint3D desiredPosition = new FramePoint3D();
    private final FrameVector3D zeroVector = new FrameVector3D();
+   private final TransformReferenceFrame closestPointFrame;
 
    private final RecyclingArrayList<AtomicBoolean> considerOnlyEdgesVector = new RecyclingArrayList<>(100, AtomicBoolean.class);
    private final RecyclingArrayList<PlanarRegion> planarRegions = new RecyclingArrayList<>(100, PlanarRegion.class);
@@ -99,6 +103,9 @@ public class CollisionAvoidanceManager
                                                                                                      otherEndLinkFrame,
                                                                                                      parameters.getSecondFrameOffset());
       this.body = body;
+
+      closestPointFrame = new TransformReferenceFrame(body.getName() + "_collisionFrame", body.getBodyFixedFrame());
+
       registry = new YoVariableRegistry(getClass().getSimpleName() + "_" + body.getName());
       parentRegistry.addChild(registry);
       bodyOriginX = new YoDouble("collision_" + body.getName() + "_originX", registry);
@@ -221,7 +228,7 @@ public class CollisionAvoidanceManager
             && (((minDistance < param.getActivationThreshold()) && !isActive.getBooleanValue())
                   || ((minDistance < param.getDeactivationThreshold()) && isActive.getBooleanValue())))
       {
-         ReferenceFrame closestPointFrame = computeClosestPointFrame();
+         updateClosestPointFrame();
 
          selection.setSelectionFrame(closestPointFrame);
          selection.setAxisSelection(false, false, true);
@@ -267,7 +274,7 @@ public class CollisionAvoidanceManager
       }
    }
 
-   private ReferenceFrame computeClosestPointFrame()
+   private void updateClosestPointFrame()
    {
       EuclidFrameTools.orientation3DFromFirstToSecondVector3D(zAxis, minDistanceVector, worldZToDistanceVectorRotation);
 
@@ -281,10 +288,7 @@ public class CollisionAvoidanceManager
 
       body_H_closestPointAsRBT.set(body_H_closestPoint.getOrientation(), body_H_closestPoint.getPosition());
 
-      ReferenceFrame closestPointFrame = ReferenceFrameTools.constructFrameWithUnchangingTransformFromParent(body.getName() + "_collisionFrame",
-                                                                                                             body.getBodyFixedFrame(),
-                                                                                                             body_H_closestPointAsRBT); //This is allocating memory
-      return closestPointFrame;
+      closestPointFrame.setTransformAndUpdate(body_H_closestPointAsRBT);
    }
 
    public FeedbackControlCommand<?> getFeedbackControlCommand()
@@ -314,6 +318,7 @@ public class CollisionAvoidanceManager
    
    private FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
    private FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
+   private final Point3D shinIntersectionWithRegion = new Point3D();
 
    private double computeDistanceFromPlanarRegion(PlanarRegion region, boolean considerOnlyEdges, FrameVector3D distanceVectorToPack, FramePoint3D pointOnBodyToPack)
    {
@@ -326,19 +331,26 @@ public class CollisionAvoidanceManager
       firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
       otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
 
-      double minDistance = -1.0;
+      boolean probablyIntersecting = firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0; //The two points are in two different semiplanes or at least one of them is on the plane
 
+      if (!probablyIntersecting
+            && Math.min(Math.abs(firstEndPoseInPlaneCoordinates.getZ()), Math.abs(otherEndPoseInPlaneCoordinates.getZ())) > param.getDeactivationThreshold()) //The plane is too distant
+      {
+         return -1.0;
+      }
+
+      double minDistance = -1.0;
 
       if (!considerOnlyEdges)
       {
-         if (firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0) //The two points are in two different semiplanes or at least one of them is on the plane
+         if (probablyIntersecting)
          {
-            Point3D intersection = region.intersectWithLine(bodyLine); //This is allocating memory
+            boolean intersecting = intersectRegionWithLine(region, bodyLine, shinIntersectionWithRegion);
 
-            if (intersection != null)
+            if (intersecting)
             {
                distanceVectorToPack.set(region.getNormal());
-               pointOnBodyToPack.set(intersection);
+               pointOnBodyToPack.set(shinIntersectionWithRegion);
                return 0.0;
             }
          }
@@ -445,6 +457,40 @@ public class CollisionAvoidanceManager
       }
 
       return minDistance;
+   }
+
+   private Point3D genericPointOnPlane = new Point3D();
+   private Point3D pointOnLineInLocal = new Point3D();
+   private Vector3D directionOfLineInLocal = new Vector3D();
+   private final Vector3DReadOnly genericPlaneNormal = new Vector3D(0.0, 0.0, 1.0);
+
+   private boolean intersectRegionWithLine(PlanarRegion region, Line3D projectionLineInWorld, Point3D intersectionWithPlaneToPack)
+   {
+      genericPointOnPlane.set(region.getConvexPolygon(0).getVertex(0));
+
+      pointOnLineInLocal.set(projectionLineInWorld.getPoint());
+      directionOfLineInLocal.set(projectionLineInWorld.getDirection());
+
+      region.transformFromWorldToLocal(pointOnLineInLocal);
+      region.transformFromWorldToLocal(directionOfLineInLocal);
+
+      boolean success = EuclidGeometryTools.intersectionBetweenLine3DAndPlane3D(genericPointOnPlane,
+                                                                                genericPlaneNormal,
+                                                                                pointOnLineInLocal,
+                                                                                directionOfLineInLocal,
+                                                                                intersectionWithPlaneToPack);
+      if (!success) // line was parallel to plane
+      {
+         return false;
+      }
+
+      if (region.isPointInside(intersectionWithPlaneToPack.getX(), intersectionWithPlaneToPack.getY()))
+      {
+         region.transformFromLocalToWorld(intersectionWithPlaneToPack);
+         return true;
+      }
+
+      return false; // line does not intersect
    }
 
 }
