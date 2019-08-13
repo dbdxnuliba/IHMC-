@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 import us.ihmc.pubsub.TopicDataType;
 
 /**
-       * This message is part of the IHMC hole-body inverse kinematics module.
+       * This message is part of the IHMC whole-body inverse kinematics module.
        * It contains auxiliary information that allows to further customized the behavior of the solver.
        */
 public class KinematicsToolboxConfigurationMessage extends Packet<KinematicsToolboxConfigurationMessage> implements Settable<KinematicsToolboxConfigurationMessage>, EpsilonComparable<KinematicsToolboxConfigurationMessage>
