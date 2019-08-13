@@ -191,6 +191,9 @@ public class CollisionAvoidanceManager
          }
       }
       
+      distanceX.set(minDistanceVector.getX() * minDistance);
+      distanceY.set(minDistanceVector.getY() * minDistance);
+      distanceZ.set(minDistanceVector.getZ() * minDistance);
 
       if (minDistanceVector.getZ() > param.getMaximumVerticalDistanceComponent())
       {
@@ -198,9 +201,6 @@ public class CollisionAvoidanceManager
          minDistanceVector.normalize();
       }
       
-      distanceX.set(minDistanceVector.getX() * minDistance);
-      distanceY.set(minDistanceVector.getY() * minDistance);
-      distanceZ.set(minDistanceVector.getZ() * minDistance);
       closestBodyPointX.set(closestPointOnBody.getX());
       closestBodyPointY.set(closestPointOnBody.getY());
       closestBodyPointZ.set(closestPointOnBody.getZ());
@@ -324,23 +324,23 @@ public class CollisionAvoidanceManager
       firstEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
       otherEndPoseInPlaneCoordinates.applyTransform(planeFromWorldTransform);
 
-
-      if (firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0) //The two points are in two different semiplanes or at least one of them is on the plane
-      {
-         Point3D intersection = region.intersectWithLine(bodyLine); //This is allocating memory
-
-         if (intersection != null)
-         {
-            distanceVector.set(region.getNormal());
-            pointOnBody.set(intersection);
-            return 0.0;
-         }
-      }
-      
       double minDistance = -1.0;
-      
+
+
       if (!considerOnlyEdges)
       {
+         if (firstEndPoseInPlaneCoordinates.getZ() * otherEndPoseInPlaneCoordinates.getZ() <= 0) //The two points are in two different semiplanes or at least one of them is on the plane
+         {
+            Point3D intersection = region.intersectWithLine(bodyLine); //This is allocating memory
+
+            if (intersection != null)
+            {
+               distanceVector.set(region.getNormal());
+               pointOnBody.set(intersection);
+               return 0.0;
+            }
+         }
+
          boolean firstProjectionIsInside = region.isPointInside(firstEndPoseInPlaneCoordinates.getX(), firstEndPoseInPlaneCoordinates.getY());
 
          boolean otherProjectionIsInside = region.isPointInside(otherEndPoseInPlaneCoordinates.getX(), otherEndPoseInPlaneCoordinates.getY());
