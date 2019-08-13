@@ -56,6 +56,8 @@ public class CollisionAvoidanceManager
    private final Point3D secondMinDistanceSegmentPoint = new Point3D();
    private final Point3D firstConcaveHullVertex = new Point3D();
    private final Point3D secondConcaveHullVertex = new Point3D();
+   private final Point3D firstConcaveHullVertexInPlaneCoordinates = new Point3D();
+   private final Point3D secondConcaveHullVertexInPlaneCoordinates = new Point3D();
    private final FrameVector3D minDistanceVector = new FrameVector3D();
    private final FrameVector3D zAxis = new FrameVector3D(ReferenceFrame.getWorldFrame(), 0.0, 0.0, 1.0);
    private final FramePoint3D closestPointOnBody = new FramePoint3D();
@@ -182,7 +184,7 @@ public class CollisionAvoidanceManager
                                                            templPlaneDistanceVector,
                                                            templPlaneClosestPointOnBody);
 
-         if (distance < minDistance)
+         if ((distance >= 0) && (distance < minDistance))
          {
             minDistance = distance;
             minDistanceVector.set(templPlaneDistanceVector);
@@ -313,7 +315,7 @@ public class CollisionAvoidanceManager
    private FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
    private FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
 
-   private double computeDistanceFromPlanarRegion(PlanarRegion region, boolean considerOnlyEdges, FrameVector3D distanceVector, FramePoint3D pointOnBody)
+   private double computeDistanceFromPlanarRegion(PlanarRegion region, boolean considerOnlyEdges, FrameVector3D distanceVectorToPack, FramePoint3D pointOnBodyToPack)
    {
       firstEndPoseInPlaneCoordinates.set(firstEndPose);
       otherEndPoseInPlaneCoordinates.set(otherEndPose);
@@ -335,8 +337,8 @@ public class CollisionAvoidanceManager
 
             if (intersection != null)
             {
-               distanceVector.set(region.getNormal());
-               pointOnBody.set(intersection);
+               distanceVectorToPack.set(region.getNormal());
+               pointOnBodyToPack.set(intersection);
                return 0.0;
             }
          }
@@ -353,11 +355,11 @@ public class CollisionAvoidanceManager
             if (firstIsCloser)
             {
                minDistance = Math.abs(firstEndPoseInPlaneCoordinates.getZ());
-               pointOnBody.set(firstEndPose.getPosition());
+               pointOnBodyToPack.set(firstEndPose.getPosition());
 
                firstEndPoseInPlaneCoordinates.setZ(0.0);
                firstEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-               distanceVector.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
+               distanceVectorToPack.set(firstEndPoseInPlaneCoordinates.getX() - firstEndPose.getPosition().getX(),
                                   firstEndPoseInPlaneCoordinates.getY() - firstEndPose.getPosition().getY(),
                                   firstEndPoseInPlaneCoordinates.getZ() - firstEndPose.getPosition().getZ());
                firstEndPoseInPlaneCoordinates.set(firstEndPose);
@@ -367,11 +369,11 @@ public class CollisionAvoidanceManager
             else
             {
                minDistance = Math.abs(otherEndPoseInPlaneCoordinates.getZ());
-               pointOnBody.set(otherEndPose.getPosition());
+               pointOnBodyToPack.set(otherEndPose.getPosition());
 
                otherEndPoseInPlaneCoordinates.setZ(0.0);
                otherEndPoseInPlaneCoordinates.applyTransform(planeToWorldTransform);
-               distanceVector.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
+               distanceVectorToPack.set(otherEndPoseInPlaneCoordinates.getX() - otherEndPose.getPosition().getX(),
                                   otherEndPoseInPlaneCoordinates.getY() - otherEndPose.getPosition().getY(),
                                   otherEndPoseInPlaneCoordinates.getZ() - otherEndPose.getPosition().getZ());
                otherEndPoseInPlaneCoordinates.set(otherEndPose);
@@ -384,48 +386,61 @@ public class CollisionAvoidanceManager
       {
          double distance = computeMinimumDistanceFromConvexHullEdges(region.getConvexPolygon(polygon), tempEdgeDistanceVector, tempEdgeBodyClosestPoint);
 
-         if ((minDistance < -0.5) || (distance < minDistance))
+         if ((minDistance < 0) || ((distance >= 0) && (distance < minDistance)))
          {
             minDistance = distance;
-            distanceVector.set(tempEdgeDistanceVector);
-            pointOnBody.set(tempEdgeBodyClosestPoint);
+            distanceVectorToPack.set(tempEdgeDistanceVector);
+            pointOnBodyToPack.set(tempEdgeBodyClosestPoint);
          }
       }
 
-      distanceVector.normalize();
+      distanceVectorToPack.normalize();
 
       return minDistance;
    }
 
-   private double computeMinimumDistanceFromConvexHullEdges(ConvexPolygon2D polygon, FrameVector3D distanceVector, FramePoint3D pointOnBody)
+   private double computeMinimumDistanceFromConvexHullEdges(ConvexPolygon2D polygon, FrameVector3D distanceVectorToPack, FramePoint3D pointOnBodyToPack)
    {
       double minDistance = -1.0;
       for (int v = 0; v < polygon.getNumberOfVertices(); ++v)
       {
          polygon.getEdge(v, edge);
 
-         firstConcaveHullVertex.set(edge.getFirstEndpoint());
-         secondConcaveHullVertex.set(edge.getSecondEndpoint());
+         firstConcaveHullVertexInPlaneCoordinates.set(edge.getFirstEndpoint());
+         secondConcaveHullVertexInPlaneCoordinates.set(edge.getSecondEndpoint());
 
-         double distance = EuclidGeometryTools.closestPoint3DsBetweenTwoLineSegment3Ds(firstEndPoseInPlaneCoordinates.getPosition(),
-                                                                                       otherEndPoseInPlaneCoordinates.getPosition(),
-                                                                                       firstConcaveHullVertex,
-                                                                                       secondConcaveHullVertex,
-                                                                                       firstMinDistanceSegmentPointInPlaneCoordinates,
-                                                                                       secondMinDistanceSegmentPointInPlaneCoordinates);
+         firstConcaveHullVertex.set(firstConcaveHullVertexInPlaneCoordinates);
+         firstConcaveHullVertex.applyTransform(planeToWorldTransform);
+         secondConcaveHullVertex.set(secondConcaveHullVertexInPlaneCoordinates);
+         secondConcaveHullVertex.applyTransform(planeToWorldTransform);
 
-         if ((minDistance < -0.5) || (distance < minDistance))
+         if (!param.ignoreEdgesAtLowerHeight()
+               || (Math.max(firstConcaveHullVertex.getZ(), secondConcaveHullVertex.getZ()) > Math.min(firstEndPose.getZ(), otherEndPose.getZ())))
          {
-            firstMinDistanceSegmentPoint.set(firstMinDistanceSegmentPointInPlaneCoordinates);
-            firstMinDistanceSegmentPoint.applyTransform(planeToWorldTransform);
-            secondMinDistanceSegmentPoint.set(secondMinDistanceSegmentPointInPlaneCoordinates);
-            secondMinDistanceSegmentPoint.applyTransform(planeToWorldTransform);
+            double distance = EuclidGeometryTools.closestPoint3DsBetweenTwoLineSegment3Ds(firstEndPoseInPlaneCoordinates.getPosition(),
+                                                                                          otherEndPoseInPlaneCoordinates.getPosition(),
+                                                                                          firstConcaveHullVertexInPlaneCoordinates,
+                                                                                          secondConcaveHullVertexInPlaneCoordinates,
+                                                                                          firstMinDistanceSegmentPointInPlaneCoordinates,
+                                                                                          secondMinDistanceSegmentPointInPlaneCoordinates);
 
-            minDistance = distance;
-            distanceVector.set(secondMinDistanceSegmentPoint.getX() - firstMinDistanceSegmentPoint.getX(),
-                               secondMinDistanceSegmentPoint.getY() - firstMinDistanceSegmentPoint.getY(),
-                               secondMinDistanceSegmentPoint.getZ() - firstMinDistanceSegmentPoint.getZ());
-            pointOnBody.set(firstMinDistanceSegmentPoint);
+            if ((minDistance < 0) || (distance < minDistance))
+            {
+               firstMinDistanceSegmentPoint.set(firstMinDistanceSegmentPointInPlaneCoordinates);
+               firstMinDistanceSegmentPoint.applyTransform(planeToWorldTransform);
+               secondMinDistanceSegmentPoint.set(secondMinDistanceSegmentPointInPlaneCoordinates);
+               secondMinDistanceSegmentPoint.applyTransform(planeToWorldTransform);
+
+               if (!param.ignoreEdgesAtLowerHeight() || (secondMinDistanceSegmentPoint.getZ() > Math.min(firstEndPose.getZ(), otherEndPose.getZ())))
+               {
+                  minDistance = distance;
+                  distanceVectorToPack.set(secondMinDistanceSegmentPoint.getX() - firstMinDistanceSegmentPoint.getX(),
+                                           secondMinDistanceSegmentPoint.getY() - firstMinDistanceSegmentPoint.getY(),
+                                           secondMinDistanceSegmentPoint.getZ() - firstMinDistanceSegmentPoint.getZ());
+                  pointOnBodyToPack.set(firstMinDistanceSegmentPoint);
+               }
+
+            }
          }
       }
 
