@@ -77,6 +77,8 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
          RobotEnd robotEnd = xGaitPreviewSteps.get(i).getRobotQuadrant().getEnd();
          currentSteps.get(robotEnd).set(xGaitPreviewSteps.get(i));
       }
+
+      addStepsToSequence(stepSequence);
    }
 
    @Override
@@ -95,6 +97,11 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, currentSteps, desiredVelocity, timestamp.getValue(), bodyYaw.getDoubleValue(), xGaitSettings);
 
       // add steps to sequence
+      addStepsToSequence(stepSequence);
+   }
+
+   private void addStepsToSequence(PreallocatedList<? extends QuadrupedTimedStep> stepSequence)
+   {
       stepSequence.clear();
       for(RobotEnd end : RobotEnd.values)
       {

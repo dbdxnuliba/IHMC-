@@ -73,7 +73,7 @@ public class QuadrupedXGaitPlanner
          step.getTimeInterval().setInterval(thisStepStartTime, thisStepEndTime);
 
          // compute xGait rectangle pose at end of step
-         extrapolatePose(xGaitRectanglePoseAtSoS, xGaitRectanglePose, planarVelocity, thisStepEndTime - timeAtSoS);
+         extrapolatePose(xGaitRectanglePose, xGaitRectanglePoseAtSoS, planarVelocity, thisStepEndTime - timeAtSoS);
          xGaitRectangleFrame.setPoseAndUpdate(xGaitRectanglePose);
 
          // compute step goal position by sampling the corner position of the xGait rectangle at touch down
@@ -173,15 +173,14 @@ public class QuadrupedXGaitPlanner
          // compensate for position error
          for (int i = 0; i < plannedSteps.size(); i++)
          {
-            goalPosition.set(plannedSteps.get(i).getGoalPosition());
-            goalPosition.changeFrame(worldFrame);
+            goalPosition.setIncludingFrame(ReferenceFrame.getWorldFrame(), plannedSteps.get(i).getGoalPosition());
             goalPosition.add(goalPositionAdjustment);
             plannedSteps.get(i).setGoalPosition(goalPosition);
          }
       }
    }
 
-   private void extrapolatePose(FramePose3D finalPose, FramePose3D initialPose, Tuple3DReadOnly planarVelocity, double deltaTime)
+   private static void extrapolatePose(FramePose3D finalPose, FramePose3D initialPose, Tuple3DReadOnly planarVelocity, double deltaTime)
    {
       double a0 = initialPose.getYaw();
       double x0 = initialPose.getX();
