@@ -63,11 +63,19 @@ public class CollisionAvoidanceParameters
    /**
     * When computing the minimum distance direction, it is possible to set an upper-bound to the vertical component.
     * This allow to constrain the corresponding motion to have always an upward component (the motion is in the direction 
-    * opposite to the minimum distance direction).
+    * opposite to the minimum distance direction). Set to a value greater than +1.0 to disable such saturation
     */
    public double getMaximumVerticalDistanceComponent()
    {
       return -0.1;
+   }
+
+   /**
+    * If the closest point on the obstacle has a z-component lower than that of both end points, the collision avoidance is disabled.
+    */
+   public boolean ignoreEdgesAtLowerHeight()
+   {
+      return false;
    }
 
    /**

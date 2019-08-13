@@ -13,4 +13,14 @@ public class ShinCollisionAvoidanceParameters extends CollisionAvoidanceParamete
    {
       return new Vector3D(0.11, 0.0, 0.0);
    }
+
+   /**
+    * {@inheritDoc}
+    * This is useful when stepping over some edges. The collision avoidance may be triggered when placing the foot over an obstacle.
+    */
+   @Override
+   public boolean ignoreEdgesAtLowerHeight()
+   {
+      return true;
+   }
 }
