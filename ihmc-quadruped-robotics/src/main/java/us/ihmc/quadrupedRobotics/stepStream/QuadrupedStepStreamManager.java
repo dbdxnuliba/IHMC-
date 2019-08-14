@@ -17,6 +17,7 @@ import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.time.TimeInterval;
 import us.ihmc.robotics.time.TimeIntervalTools;
+import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -60,6 +61,8 @@ public class QuadrupedStepStreamManager
    /** Holds current or next step on each robot end. Helper object for calculating step delay */
    private final EndDependentList<YoQuadrupedTimedStep> currentSteps = new EndDependentList<>();
 
+   private final BooleanParameter delayToEnsureContactOnEachEnd = new BooleanParameter("delayToEnsureContactOnEachEnd", registry, true);
+
    /**
     * Variables for stopping and pausing. The expected behavior is:
     *  Stop: finishes the current step and clears any upcoming steps
@@ -82,7 +85,7 @@ public class QuadrupedStepStreamManager
 
       for (RobotQuadrant quadrant : RobotQuadrant.values)
       {
-         touchdownFlags.put(quadrant, new YoBoolean("stepStreamTouchdown" + quadrant.getShortName().toLowerCase(), registry));
+         touchdownFlags.put(quadrant, new YoBoolean("stepStreamTouchdown_" + quadrant.getShortName(), registry));
       }
 
       Supplier<YoQuadrupedTimedStep> stepSupplier = SupplierBuilder.indexedSupplier(i -> new YoQuadrupedTimedStep("step" + i, registry));
@@ -137,14 +140,17 @@ public class QuadrupedStepStreamManager
 
    public void doAction()
    {
-      // Delay current steps and shift subsequent steps by maximum delay amount
-      double currentStepDelay = getCurrentStepDelay();
-      for (int i = 0; i < stepSequence.size(); i++)
+      if(delayToEnsureContactOnEachEnd.getValue())
       {
-         QuadrupedTimedStep step = stepSequence.get(i);
-         if(currentSteps.get(step.getRobotQuadrant().getEnd()) != step)
+         // Delay current steps and shift subsequent steps by maximum delay amount
+         double currentStepDelay = getCurrentStepDelay();
+         for (int i = 0; i < stepSequence.size(); i++)
          {
-            step.getTimeInterval().shiftInterval(currentStepDelay);
+            QuadrupedTimedStep step = stepSequence.get(i);
+            if(currentSteps.get(step.getRobotQuadrant().getEnd()) != step)
+            {
+               step.getTimeInterval().shiftInterval(currentStepDelay);
+            }
          }
       }
 
