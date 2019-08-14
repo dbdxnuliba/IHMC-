@@ -4,10 +4,6 @@
 # Unique ID used to identify this message, should preferably be consecutively increasing.
 uint32 sequence_id
 
-# Flag to request walking or standing. If true the robot will start or continue to walk with the specified parameters.
-# If false the robot will stop walking and the parameters below are ignored.
-bool request_walk
-
 # Defines if the step list is adjustable
 bool are_steps_adjustable true
 

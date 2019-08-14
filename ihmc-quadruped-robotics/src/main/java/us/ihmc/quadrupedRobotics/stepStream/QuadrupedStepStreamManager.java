@@ -5,6 +5,7 @@ import us.ihmc.commons.lists.SupplierBuilder;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
+import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
@@ -33,6 +34,8 @@ public class QuadrupedStepStreamManager
 
    static final int MAXIMUM_PLAN_CAPACITY = 200;
 
+   private final YoDouble timestamp;
+
    /** Preplanned step stream generates steps from QuadrupedTimedStepListCommand */
    private final QuadrupedPreplannedStepStream preplannedStepStream;
 
@@ -57,17 +60,22 @@ public class QuadrupedStepStreamManager
    /** Holds current or next step on each robot end. Helper object for calculating step delay */
    private final EndDependentList<YoQuadrupedTimedStep> currentSteps = new EndDependentList<>();
 
-   private final YoBoolean pausedRequested = new YoBoolean("pauseRequested", registry);
+   /**
+    * Variables for stopping and pausing. The expected behavior is:
+    *  Stop: finishes the current step and clears any upcoming steps
+    *  Pause: finishes the current step but keeps upcoming steps. When resume is requested, these steps will continue to stream
+    */
    private final YoBoolean stopRequested = new YoBoolean("stopRequested", registry);
-   private final FramePoint3D tempPoint = new FramePoint3D();
+   private final YoBoolean pausedRequested = new YoBoolean("pauseRequested", registry);
+   private final PreallocatedList<QuadrupedTimedStep> pausedSteps = new PreallocatedList<>(QuadrupedTimedStep.class, QuadrupedTimedStep::new, MAXIMUM_PLAN_CAPACITY);
 
-   private final YoDouble timestamp;
+   private final FramePoint3D tempPoint = new FramePoint3D();
 
    public QuadrupedStepStreamManager(YoDouble timestamp, QuadrupedReferenceFrames referenceFrames, double controlDt, QuadrupedXGaitSettings xGaitSettings,
                                      YoVariableRegistry parentRegistry)
    {
       this.timestamp = timestamp;
-      this.preplannedStepStream = new QuadrupedPreplannedStepStream(timestamp);
+      this.preplannedStepStream = new QuadrupedPreplannedStepStream(timestamp, registry);
       this.xGaitStepStream = new QuadrupedXGaitStepStream(referenceFrames, timestamp, controlDt, xGaitSettings, registry);
 
       this.stepMode.set(QuadrupedStepMode.PREPLANNED);
@@ -85,7 +93,7 @@ public class QuadrupedStepStreamManager
 
    public boolean isStepPlanAvailable()
    {
-      return preplannedStepStream.isPlanAvailable() || xGaitStepStream.isPlanAvailable();
+      return preplannedStepStream.isPlanAvailable() || xGaitStepStream.isPlanAvailable() || (!pausedRequested.getValue() && !pausedSteps.isEmpty());
    }
 
    public void onEntry()
@@ -111,6 +119,8 @@ public class QuadrupedStepStreamManager
       }
 
       stopRequested.set(false);
+      pausedRequested.set(false);
+      pausedSteps.clear();
 
       stepSequence.clear();
       getStepStream().onEntry(stepSequence, initialTransferDurationForShifting);
@@ -147,17 +157,13 @@ public class QuadrupedStepStreamManager
          currentSteps.put(end, getFirstStep(end));
       }
 
-      if (stopRequested.getValue())
-      {
-         TimeIntervalTools.removeStartTimesGreaterThan(timestamp.getDoubleValue(), stepSequence);
-      }
-      else
+      if (!stopRequested.getValue() && !pausedRequested.getValue())
       {
          getStepStream().doAction(stepSequence);
-      }
 
-      // Ensure step sequence is ordered according to start time
-      stepSequence.sort(TimeIntervalTools.startTimeComparator);
+         // Ensure step sequence is ordered according to start time
+         stepSequence.sort(TimeIntervalTools.startTimeComparator);
+      }
 
       updateActiveSteps();
    }
@@ -256,11 +262,57 @@ public class QuadrupedStepStreamManager
       return stepMode.getEnumValue() == QuadrupedStepMode.PREPLANNED ? preplannedStepStream : xGaitStepStream;
    }
 
+   public boolean stepPlanIsAdjustable()
+   {
+      return getStepStream().stepPlanIsAdjustable();
+   }
+
    public void requestStop()
    {
+      TimeIntervalTools.removeStartTimesGreaterThan(timestamp.getDoubleValue(), stepSequence);
       stopRequested.set(true);
    }
 
+   public void requestPause()
+   {
+      if(pausedRequested.getValue())
+      {
+         return;
+      }
+
+      pausedSteps.clear();
+      for (int i = 0; i < stepSequence.size(); i++)
+      {
+         if(stepSequence.get(i).getTimeInterval().getStartTime() > timestamp.getDoubleValue())
+         {
+            pausedSteps.add().set(stepSequence.get(i));
+         }
+      }
+
+      TimeIntervalTools.removeStartTimesGreaterThan(timestamp.getDoubleValue(), stepSequence);
+      pausedRequested.set(true);
+   }
+
+   public void requestResume()
+   {
+      pausedRequested.set(false);
+      double timeShift = timestamp.getDoubleValue() + initialTransferDurationForShifting.getValue() - pausedSteps.get(0).getTimeInterval().getStartTime();
+
+      for (int i = 0; i < pausedSteps.size(); i++)
+      {
+         pausedSteps.get(i).getTimeInterval().shiftInterval(timeShift);
+         stepSequence.add().set(pausedSteps.get(i));
+      }
+   }
+
+   public boolean isDone()
+   {
+      return stepSequence.isEmpty();
+   }
+
+   /**
+    * Manually adjust all steps by the given offset vector
+    */
    public void adjustSteps(FrameVector3DReadOnly adjustmentVector)
    {
       for (int i = 0; i < stepSequence.size(); i++)

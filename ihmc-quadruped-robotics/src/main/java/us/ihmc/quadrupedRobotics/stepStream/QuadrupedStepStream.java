@@ -23,8 +23,18 @@ import java.util.function.Consumer;
  */
 public abstract class QuadrupedStepStream<T extends Command> implements Consumer<T>
 {
+   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+
    /** Latest step stream command */
    private final MutableObject<T> command = new MutableObject<>();
+
+   protected final YoBoolean stepPlanIsAdjustable;
+
+   public QuadrupedStepStream(String namePrefix, YoVariableRegistry parentRegistry)
+   {
+      stepPlanIsAdjustable = new YoBoolean(namePrefix + "_stepsAreAdjustable", registry);
+      parentRegistry.addChild(registry);
+   }
 
    /**
     * Resets step stream
@@ -72,5 +82,10 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
    public boolean isPlanAvailable()
    {
       return command.getValue() != null;
+   }
+
+   public boolean stepPlanIsAdjustable()
+   {
+      return stepPlanIsAdjustable.getValue();
    }
 }

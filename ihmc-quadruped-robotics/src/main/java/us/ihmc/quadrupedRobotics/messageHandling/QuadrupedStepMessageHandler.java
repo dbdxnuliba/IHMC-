@@ -1,47 +1,33 @@
 package us.ihmc.quadrupedRobotics.messageHandling;
 
-import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.RecyclingArrayDeque;
 import us.ihmc.commons.lists.RecyclingArrayList;
-import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PauseWalkingCommand;
-import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.SoleTrajectoryCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
+import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedRobotics.stepStream.QuadrupedStepStreamManager;
-import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
-import us.ihmc.robotics.lists.YoPreallocatedList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeIntervalTools;
-import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
-import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoInteger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class QuadrupedStepMessageHandler
 {
-   private static final double timeEpsilonForStepSelection = 0.05;
-
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final QuadrantDependentList<RecyclingArrayDeque<SoleTrajectoryCommand>> upcomingFootTrajectoryCommandList = new QuadrantDependentList<>();
-
-   private final YoInteger numberOfStepsToRecover = new YoInteger("numberOfStepsToRecover", registry);
-
    private final YoBoolean offsettingHeightPlanWithStepError = new YoBoolean("offsettingHeightPlanWithStepError", registry);
    private final DoubleParameter offsetHeightCorrectionScale = new DoubleParameter("stepHeightCorrectionErrorScaleFactor", registry, 0.25);
 
@@ -53,10 +39,6 @@ public class QuadrupedStepMessageHandler
       {
          upcomingFootTrajectoryCommandList.put(robotQuadrant, new RecyclingArrayDeque<>(SoleTrajectoryCommand.class, SoleTrajectoryCommand::set));
       }
-
-      // the look-ahead step adjustment was doing integer division which was 1.0 for step 0 and 0.0 after, so effectively having a one step recovery
-      // TODO tune this value
-      numberOfStepsToRecover.set(1);
 
       this.stepStreamManager = new QuadrupedStepStreamManager(robotTimestamp, referenceFrames, controlDt, new QuadrupedXGaitSettings(), registry);
       parentRegistry.addChild(registry);
@@ -121,11 +103,6 @@ public class QuadrupedStepMessageHandler
       return true;
    }
 
-   public void clearSteps()
-   {
-      // TODO
-   }
-
    public void handleSoleTrajectoryCommand(List<SoleTrajectoryCommand> commands)
    {
       for (int i = 0; i < commands.size(); i++)
@@ -158,7 +135,14 @@ public class QuadrupedStepMessageHandler
 
    public void handlePauseWalkingCommand(PauseWalkingCommand pauseWalkingCommand)
    {
-      // TODO
+      if (pauseWalkingCommand.isPauseRequested())
+      {
+         stepStreamManager.requestPause();
+      }
+      else
+      {
+         stepStreamManager.requestResume();
+      }
    }
 
    public void abortWalking()
@@ -179,12 +163,12 @@ public class QuadrupedStepMessageHandler
 
    public boolean isDoneWithStepSequence()
    {
-      return stepStreamManager.getSteps().isEmpty();
+      return stepStreamManager.isDone();
    }
 
    public boolean isStepPlanAdjustable()
    {
-      return true;
+      return stepStreamManager.stepPlanIsAdjustable();
    }
 
    public void onTouchDown(RobotQuadrant robotQuadrant)
@@ -195,20 +179,6 @@ public class QuadrupedStepMessageHandler
    public void onLiftOff(RobotQuadrant quadrant)
    {
       stepStreamManager.onLiftOff(quadrant);
-   }
-
-   // Fixme this isn't working properly anymore
-   public void shiftPlanPositionBasedOnStepAdjustment(FrameVector3DReadOnly stepAdjustment)
-   {
-      // TODO
-//      int numberOfStepsToAdjust = Math.min(numberOfStepsToRecover.getIntegerValue(), receivedStepSequence.size());
-//      for (int i = 0; i < numberOfStepsToAdjust; i++)
-//      {
-//         double multiplier = (numberOfStepsToRecover.getIntegerValue() - i) / (double) numberOfStepsToRecover.getIntegerValue();
-//         tempStep.setIncludingFrame(receivedStepSequence.get(i).getReferenceFrame(), receivedStepSequence.get(i).getGoalPosition());
-//         tempStep.scaleAdd(multiplier, stepAdjustment, tempStep);
-//         receivedStepSequence.get(i).setGoalPosition(tempStep);
-//      }
    }
 
    private final FrameVector3D stepOffsetVector = new FrameVector3D();
@@ -239,17 +209,4 @@ public class QuadrupedStepMessageHandler
    {
       return stepStreamManager.getActiveSteps();
    }
-
-//   private int getIndexOfFirstStep(RobotQuadrant robotQuadrant, double timeEpsilon)
-//   {
-//      for (int i = 0;i  < receivedStepSequence.size(); i++)
-//      {
-//         QuadrupedTimedStep step = receivedStepSequence.get(i);
-//
-//         if (step.getRobotQuadrant() == robotQuadrant && step.getTimeInterval().epsilonContains(robotTimestamp.getDoubleValue(), timeEpsilon))
-//            return i;
-//      }
-//
-//      return -1;
-//   }
 }

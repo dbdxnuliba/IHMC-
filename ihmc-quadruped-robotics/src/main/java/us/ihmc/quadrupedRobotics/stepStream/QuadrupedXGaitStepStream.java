@@ -43,6 +43,7 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
    public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, DoubleProvider timestamp, double controlDT, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
                                    YoVariableRegistry parentRegistry)
    {
+      super("xgait_", parentRegistry);
       this.xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, registry);
 
       for (int i = 0; i < NUMBER_OF_PREVIEW_STEPS; i++)
@@ -79,6 +80,7 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
          currentSteps.get(robotEnd).set(xGaitPreviewSteps.get(i));
       }
 
+      this.stepPlanIsAdjustable.set(teleopCommand.areStepsAdjustable());
       addStepsToSequence(stepSequence);
    }
 

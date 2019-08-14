@@ -288,7 +288,6 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       statusMessageOutputManager.reportStatusMessage(footstepStatusMessage);
 
       stepMessageHandler.onTouchDown(thisStepQuadrant);
-      stepMessageHandler.shiftPlanPositionBasedOnStepAdjustment(balanceManager.getStepAdjustment(thisStepQuadrant));
       tempVector.sub(footstepStatusMessage.getActualTouchdownPositionInWorld(), footstepStatusMessage.getDesiredTouchdownPositionInWorld());
       stepMessageHandler.addOffsetVectorOnTouchdown(tempVector);
 
@@ -312,7 +311,6 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
          jointDesiredOutputList.getJointDesiredOutput(i).setControlMode(JointDesiredControlMode.EFFORT);
 
       stepMessageHandler.clearFootTrajectory();
-      stepMessageHandler.clearSteps();
 
       // initialize ground plane
       groundPlaneEstimator.clearContactPoints();
