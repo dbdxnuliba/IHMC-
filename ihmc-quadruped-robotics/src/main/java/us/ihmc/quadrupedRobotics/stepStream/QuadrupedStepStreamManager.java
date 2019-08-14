@@ -2,6 +2,8 @@ package us.ihmc.quadrupedRobotics.stepStream;
 
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.SupplierBuilder;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
@@ -57,6 +59,7 @@ public class QuadrupedStepStreamManager
 
    private final YoBoolean pausedRequested = new YoBoolean("pauseRequested", registry);
    private final YoBoolean stopRequested = new YoBoolean("stopRequested", registry);
+   private final FramePoint3D tempPoint = new FramePoint3D();
 
    private final YoDouble timestamp;
 
@@ -256,5 +259,16 @@ public class QuadrupedStepStreamManager
    public void requestStop()
    {
       stopRequested.set(true);
+   }
+
+   public void adjustSteps(FrameVector3DReadOnly adjustmentVector)
+   {
+      for (int i = 0; i < stepSequence.size(); i++)
+      {
+         YoQuadrupedTimedStep step = stepSequence.get(i);
+         tempPoint.setIncludingFrame(step.getReferenceFrame(), step.getGoalPosition());
+         tempPoint.add(adjustmentVector);
+         step.setGoalPosition(tempPoint);
+      }
    }
 }

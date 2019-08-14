@@ -197,8 +197,6 @@ public class QuadrupedStepMessageHandler
       stepStreamManager.onLiftOff(quadrant);
    }
 
-   private final FramePoint3D tempStep = new FramePoint3D();
-
    // Fixme this isn't working properly anymore
    public void shiftPlanPositionBasedOnStepAdjustment(FrameVector3DReadOnly stepAdjustment)
    {
@@ -229,13 +227,7 @@ public class QuadrupedStepMessageHandler
       stepOffsetVector.setY(0.0);
       stepOffsetVector.scale(offsetHeightCorrectionScale.getValue());
 
-//      for (int i = 0; i < receivedStepSequence.size(); i++)
-//      {
-//         YoQuadrupedTimedStep step = receivedStepSequence.get(i);
-//         tempStep.setIncludingFrame(step.getReferenceFrame(), step.getGoalPosition());
-//         tempStep.add(stepOffsetVector);
-//         step.setGoalPosition(tempStep);
-//      }
+      stepStreamManager.adjustSteps(stepOffsetVector);
    }
 
    public List<? extends QuadrupedTimedStep> getStepSequence()

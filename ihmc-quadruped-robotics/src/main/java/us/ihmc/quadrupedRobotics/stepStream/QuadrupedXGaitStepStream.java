@@ -3,6 +3,7 @@ package us.ihmc.quadrupedRobotics.stepStream;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
