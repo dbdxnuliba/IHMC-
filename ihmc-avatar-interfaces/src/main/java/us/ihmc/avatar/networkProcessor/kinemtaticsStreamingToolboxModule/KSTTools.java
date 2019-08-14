@@ -6,6 +6,8 @@ import controller_msgs.msg.dds.CapturabilityBasedStatus;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
+import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxCommandConverter;
+import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
@@ -42,25 +44,25 @@ public class KSTTools
    private final AtomicReference<RobotConfigurationData> latestRobotConfigurationDataReference = new AtomicReference<>(null);
    private final AtomicReference<CapturabilityBasedStatus> latestCapturabilityBasedStatusReference = new AtomicReference<>(null);
 
-   private final KSTUserInputTransform userInputTransform = new KSTUserInputTransform(); 
+   private final KSTUserInputTransform userInputTransform = new KSTUserInputTransform();
 
-   public KSTTools(CommandInputManager commandInputManager, CommandInputManager ikCommandInputManager, StatusMessageOutputManager statusOutputManager,
-                   FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
-                   YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry registry)
+   public KSTTools(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager, FullHumanoidRobotModel desiredFullRobotModel,
+                   FullHumanoidRobotModelFactory fullRobotModelFactory, YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry registry)
    {
       this.commandInputManager = commandInputManager;
-      this.ikCommandInputManager = ikCommandInputManager;
       this.statusOutputManager = statusOutputManager;
       this.desiredFullRobotModel = desiredFullRobotModel;
       this.fullRobotModelFactory = fullRobotModelFactory;
       this.yoGraphicsListRegistry = yoGraphicsListRegistry;
       this.registry = registry;
 
+      ikCommandInputManager = new CommandInputManager(HumanoidKinematicsToolboxController.class.getSimpleName(), KinematicsToolboxModule.supportedCommands());
       ikController = new HumanoidKinematicsToolboxController(ikCommandInputManager,
                                                              statusOutputManager,
                                                              desiredFullRobotModel,
                                                              yoGraphicsListRegistry,
                                                              registry);
+      ikCommandInputManager.registerConversionHelper(new KinematicsToolboxCommandConverter(desiredFullRobotModel));
       outputConverter = new KinematicsToolboxOutputConverter(fullRobotModelFactory);
 
       streamIntegrationDuration = new YoDouble("streamIntegrationDuration", registry);
@@ -84,6 +86,7 @@ public class KSTTools
 
       for (RobotSide robotSide : RobotSide.values)
          outputConverter.computeArmTrajectoryMessage(robotSide);
+      outputConverter.computeHeadTrajectoryMessage();
       outputConverter.computeChestTrajectoryMessage();
       outputConverter.computePelvisTrajectoryMessage();
 

@@ -164,6 +164,7 @@ public class HumanoidKinematicsToolboxController extends KinematicsToolboxContro
    {
       List<RigidBodyBasics> listOfControllableRigidBodies = new ArrayList<>();
 
+      listOfControllableRigidBodies.add(desiredFullRobotModel.getHead());
       listOfControllableRigidBodies.add(desiredFullRobotModel.getChest());
       listOfControllableRigidBodies.add(desiredFullRobotModel.getPelvis());
 
@@ -173,8 +174,6 @@ public class HumanoidKinematicsToolboxController extends KinematicsToolboxContro
             listOfControllableRigidBodies.add(desiredFullRobotModel.getHand(robotSide));
          listOfControllableRigidBodies.add(desiredFullRobotModel.getFoot(robotSide));
       }
-
-      listOfControllableRigidBodies.add(desiredFullRobotModel.getHead());
 
       return listOfControllableRigidBodies;
    }

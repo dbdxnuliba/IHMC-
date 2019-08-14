@@ -26,6 +26,7 @@ import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.jointAnglesWriter.JointAnglesWriter;
+import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxControllerTest;
 import us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
@@ -37,6 +38,7 @@ import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
@@ -309,9 +311,6 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       copyFullRobotModelState(drcSimulationTestHelper.getControllerFullRobotModel(), randomizedOperatorFullRobotModel);
       randomizedOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
 
-      RigidBodyBasics head = randomizedOperatorFullRobotModel.getHead();
-      inputMessage.getHeadInput().set(KinematicsToolboxMessageFactory.holdRigidBodyCurrentPose(head));
-
       for (RobotSide robotSide : RobotSide.values)
       {
          randomizeArmJointPositions(random, robotSide, randomizedOperatorFullRobotModel, 0.6);
@@ -326,6 +325,14 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
          else
             inputMessage.getRightHandInput().set(message);
       }
+
+      RigidBodyBasics head = randomizedOperatorFullRobotModel.getHead();
+      HumanoidKinematicsToolboxControllerTest.randomizeKinematicsChainPositions(random, randomizedOperatorFullRobotModel.getChest(), head);
+      FrameQuaternion headOrientation = new FrameQuaternion(head.getBodyFixedFrame());
+      headOrientation.changeFrame(worldFrame);
+      KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(head, headOrientation);
+      message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
+      inputMessage.getHeadInput().set(message);
 
       snapSCSRobotToFullRobotModel(randomizedOperatorFullRobotModel, operator);
 

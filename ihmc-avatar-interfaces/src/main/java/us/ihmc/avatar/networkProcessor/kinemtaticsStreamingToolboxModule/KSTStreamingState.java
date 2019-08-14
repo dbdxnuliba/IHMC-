@@ -1,8 +1,11 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
 import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
+import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
 import us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.OutputPublisher;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
+import us.ihmc.communication.packets.MessageTools;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxInputCommand;
 import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToolboxRigidBodyCommand;
 import us.ihmc.log.LogTools;
@@ -20,6 +23,9 @@ public class KSTStreamingState implements State
    private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
    private final KSTUserInputTransform userInputTransform;
    private final FullHumanoidRobotModel desiredFullRobotModel;
+   private final CommandInputManager ikCommandInputManager;
+
+   private final KinematicsToolboxRigidBodyMessage pelvisOrientationMessage = new KinematicsToolboxRigidBodyMessage();
 
    public KSTStreamingState(KSTTools tools)
    {
@@ -27,6 +33,13 @@ public class KSTStreamingState implements State
       userInputTransform = tools.getUserInputTransform();
       configurationMessage.setJointVelocityWeight(1.0);
       desiredFullRobotModel = tools.getDesiredFullRobotModel();
+      ikCommandInputManager = tools.getIKCommandInputManager();
+
+      pelvisOrientationMessage.setEndEffectorHashCode(desiredFullRobotModel.getPelvis().hashCode());
+      pelvisOrientationMessage.getDesiredOrientationInWorld().setToZero();
+      pelvisOrientationMessage.getLinearSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(false, false, false));
+      pelvisOrientationMessage.getAngularSelectionMatrix().set(MessageTools.createSelectionMatrix3DMessage(true, true, false, ReferenceFrame.getWorldFrame()));
+      pelvisOrientationMessage.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(1.0));
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -38,6 +51,7 @@ public class KSTStreamingState implements State
    public void onEntry()
    {
       tools.getIKController().getDefaultGains().setMaxFeedbackAndFeedbackRate(100.0, Double.POSITIVE_INFINITY);
+      ikCommandInputManager.submitMessage(configurationMessage);
    }
 
    @Override
@@ -45,7 +59,6 @@ public class KSTStreamingState implements State
    {
       KinematicsStreamingToolboxInputCommand latestInput = tools.pollInputCommand();
 
-      CommandInputManager ikCommandInputManager = tools.getIKCommandInputManager();
 
       if (latestInput != null)
       {
@@ -82,9 +95,8 @@ public class KSTStreamingState implements State
          ikCommandInputManager.submitCommand(headInput);
          ikCommandInputManager.submitCommand(leftHandInput);
          ikCommandInputManager.submitCommand(rightHandInput);
+         ikCommandInputManager.submitMessage(pelvisOrientationMessage);
       }
-
-      ikCommandInputManager.submitMessage(configurationMessage);
 
       tools.getIKController().updateInternal();
 

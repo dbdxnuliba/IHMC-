@@ -436,12 +436,12 @@ public abstract class HumanoidKinematicsToolboxControllerTest implements MultiRo
       randomizeKinematicsChainPositions(random, chest, hand, percentOfMotionRangeAllowed);
    }
 
-   private void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body)
+   public static void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body)
    {
       randomizeKinematicsChainPositions(random, base, body, 1.0);
    }
 
-   private static void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body, double percentOfMotionRangeAllowed)
+   public static void randomizeKinematicsChainPositions(Random random, RigidBodyBasics base, RigidBodyBasics body, double percentOfMotionRangeAllowed)
    {
       percentOfMotionRangeAllowed = MathTools.clamp(percentOfMotionRangeAllowed, 0.0, 1.0);
 

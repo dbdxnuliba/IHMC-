@@ -6,11 +6,8 @@ import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.
 import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.VALIDATION;
 
 import controller_msgs.msg.dds.CapturabilityBasedStatus;
-import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxController;
-import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
 import us.ihmc.commons.Conversions;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
@@ -34,8 +31,6 @@ public class KinematicsStreamingToolboxController extends ToolboxController
 
    private final KSTTools tools;
 
-   private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
-
    private final YoDouble time = new YoDouble("time", registry);
    private final StateMachine<KSTState, State> stateMachine;
 
@@ -48,26 +43,9 @@ public class KinematicsStreamingToolboxController extends ToolboxController
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
                                                YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry parentRegistry)
    {
-      this(commandInputManager, new CommandInputManager(HumanoidKinematicsToolboxController.class.getSimpleName(), KinematicsToolboxModule.supportedCommands()),
-           statusOutputManager, desiredFullRobotModel, fullRobotModelFactory, yoGraphicsListRegistry, parentRegistry);
-   }
-
-   private KinematicsStreamingToolboxController(CommandInputManager commandInputManager, CommandInputManager ikCommandInputManager,
-                                                StatusMessageOutputManager statusOutputManager, FullHumanoidRobotModel desiredFullRobotModel,
-                                                FullHumanoidRobotModelFactory fullRobotModelFactory, YoGraphicsListRegistry yoGraphicsListRegistry,
-                                                YoVariableRegistry parentRegistry)
-   {
       super(statusOutputManager, parentRegistry);
 
-      tools = new KSTTools(commandInputManager,
-                           ikCommandInputManager,
-                           statusOutputManager,
-                           desiredFullRobotModel,
-                           fullRobotModelFactory,
-                           yoGraphicsListRegistry,
-                           registry);
-
-      configurationMessage.setJointVelocityWeight(1.0);
+      tools = new KSTTools(commandInputManager, statusOutputManager, desiredFullRobotModel, fullRobotModelFactory, yoGraphicsListRegistry, registry);
 
       sleepState = new KSTSleepState(tools);
       calibrationState = new KSTCalibrationState(tools);
@@ -87,15 +65,15 @@ public class KinematicsStreamingToolboxController extends ToolboxController
       factory.addState(VALIDATION, validationState);
       factory.addState(STREAMING, streamingState);
 
-//      factory.addTransition(SLEEP, CALIBRATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && !calibrationState.isDone(timeInCurrentState));
-//      factory.addTransition(SLEEP, VALIDATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && calibrationState.isDone(timeInCurrentState));
-//
-//      factory.addDoneTransition(CALIBRATION, VALIDATION);
-//
-//      factory.addDoneTransition(VALIDATION, STREAMING);
-//      factory.addTransition(VALIDATION, CALIBRATION, timeInCurrentState -> validationState.isCalibrationInvalid(timeInCurrentState));
-//
-//      factory.addDoneTransition(STREAMING, SLEEP);
+      //      factory.addTransition(SLEEP, CALIBRATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && !calibrationState.isDone(timeInCurrentState));
+      //      factory.addTransition(SLEEP, VALIDATION, timeInCurrentState -> sleepState.isDone(timeInCurrentState) && calibrationState.isDone(timeInCurrentState));
+      //
+      //      factory.addDoneTransition(CALIBRATION, VALIDATION);
+      //
+      //      factory.addDoneTransition(VALIDATION, STREAMING);
+      //      factory.addTransition(VALIDATION, CALIBRATION, timeInCurrentState -> validationState.isCalibrationInvalid(timeInCurrentState));
+      //
+      //      factory.addDoneTransition(STREAMING, SLEEP);
 
       // TODO change transitions to SLEEP -> CALIBRATION -> VALIDATION -> STREAMING
       factory.addDoneTransition(SLEEP, CALIBRATION);
