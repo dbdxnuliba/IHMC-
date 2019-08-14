@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  */
 public abstract class QuadrupedStepStream<T extends Command> implements Consumer<T>
 {
-   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
+   protected final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    /** Latest step stream command */
    private final MutableObject<T> command = new MutableObject<>();

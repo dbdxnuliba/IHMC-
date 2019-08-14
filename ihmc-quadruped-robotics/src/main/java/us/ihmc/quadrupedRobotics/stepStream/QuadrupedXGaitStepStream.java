@@ -24,7 +24,6 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
 {
    private static final int NUMBER_OF_PREVIEW_STEPS = 16;
 
-   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final QuadrupedXGaitPlanner xGaitStepPlanner = new QuadrupedXGaitPlanner();
    private final YoQuadrupedXGaitSettings xGaitSettings;
 
@@ -55,8 +54,6 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       this.bodyZUpFrame = referenceFrames.getBodyZUpFrame();
       this.controlDT = controlDT;
       this.timestamp = timestamp;
-
-      parentRegistry.addChild(registry);
    }
 
    @Override
