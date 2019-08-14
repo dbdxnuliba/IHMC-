@@ -287,10 +287,16 @@ public class MessageTools
 
    public static SelectionMatrix3DMessage createSelectionMatrix3DMessage(boolean xSelected, boolean ySelected, boolean zSelected)
    {
+      return createSelectionMatrix3DMessage(xSelected, ySelected, zSelected, null);
+   }
+
+   public static SelectionMatrix3DMessage createSelectionMatrix3DMessage(boolean xSelected, boolean ySelected, boolean zSelected, ReferenceFrame selectionFrame)
+   {
       SelectionMatrix3DMessage message = new SelectionMatrix3DMessage();
       message.setXSelected(xSelected);
       message.setYSelected(ySelected);
       message.setZSelected(zSelected);
+      message.setSelectionFrameId(toFrameId(selectionFrame));
       return message;
    }
 
