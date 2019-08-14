@@ -130,7 +130,6 @@ public class GenericQuadrupedAllocationTest
 
       double walkTime = 5.0;
       double walkSpeed = 0.25;
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkSpeed, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTerminalGoal(YoVariableTestGoal.timeInFuture(variables.getYoTime(), walkTime));

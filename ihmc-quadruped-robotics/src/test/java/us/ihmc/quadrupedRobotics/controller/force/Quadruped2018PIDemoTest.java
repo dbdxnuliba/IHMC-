@@ -96,7 +96,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
       stepTeleopManager.setStepDuration(quadrupedSpeed, endPhaseShift, 0.15);
       stepTeleopManager.setStepGroundClearance(0.05);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.5 * walkingSpeed, 0.0, 0.0);
 
       double initialWalkTime = initialDoubleSupportDuration + singleSupportDuration;
@@ -144,7 +143,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
 
 
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
-      stepTeleopManager.requestXGait();
 
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), 5.0);
@@ -219,7 +217,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
 
       double startingStanceDuration = stepTeleopManager.getXGaitSettings().getEndDoubleSupportDuration();
 
-      stepTeleopManager.requestXGait();
 
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addDurationGoal(variables.getYoTime(), 1.5);
@@ -339,7 +336,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), walkTime);
@@ -401,7 +397,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), walkTime);
@@ -440,7 +435,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.3, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), 30.0);
@@ -481,7 +475,6 @@ public abstract class Quadruped2018PIDemoTest implements QuadrupedMultiRobotTest
       stepTeleopManager.setStepDuration(QuadrupedSpeed.FAST, QuadrupedGait.TROT.getEndPhaseShift(), 0.25);
       stepTeleopManager.setStanceWidth(0.35);
       stepTeleopManager.setStepGroundClearance(0.08);
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.4, 0.0, 0.0);
       conductor.addSustainGoal(YoVariableTestGoal.doubleGreaterThan(variables.getRobotBodyZ(), 0.0));
       conductor.addTimeLimit(variables.getYoTime(), 20.0);

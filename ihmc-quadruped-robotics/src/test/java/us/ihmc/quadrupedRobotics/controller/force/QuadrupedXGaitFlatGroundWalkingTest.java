@@ -168,7 +168,6 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
       stepTeleopManager.setEndPhaseShift(endPhaseShift);
 
       double walkTime = 6.0;
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
 
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
@@ -291,7 +290,6 @@ public abstract class QuadrupedXGaitFlatGroundWalkingTest implements QuadrupedMu
       stepTeleopManager.setEndPhaseShift(0.0);
 
       double walkTime = 5.0;
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
       stepTeleopManager.setQuadrupedSpeed(QuadrupedSpeed.MEDIUM);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));

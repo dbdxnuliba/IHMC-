@@ -128,7 +128,6 @@ public abstract class QuadrupedXGaitWalkOverRoughTerrainTest implements Quadrupe
       stepTeleopManager.submitPlanarRegionsList(environment.getPlanarRegionsList());
 
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTerminalGoal(YoVariableTestGoal.doubleGreaterThan(variables.getRobotBodyX(), minimumXPositionAfterWalking));

@@ -59,7 +59,6 @@ public abstract class QuadrupedXGaitBumpyTerrainWalkingTest implements Quadruped
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(speed, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), 10.0);
@@ -87,7 +86,6 @@ public abstract class QuadrupedXGaitBumpyTerrainWalkingTest implements Quadruped
 
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
 
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.5, 0.0, 0.1);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addSustainGoal(YoVariableTestGoal.doubleLessThan(variables.getYoTime(), 15.0));
@@ -114,7 +112,6 @@ public abstract class QuadrupedXGaitBumpyTerrainWalkingTest implements Quadruped
       stepTeleopManager.setStepDuration(QuadrupedSpeed.FAST, QuadrupedGait.TROT.getEndPhaseShift(), 0.35);
       stepTeleopManager.setStanceWidth(0.35);
       stepTeleopManager.setStepGroundClearance(0.1);
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.5, 0.0, 0.0);
       conductor.addSustainGoal(YoVariableTestGoal.doubleGreaterThan(variables.getRobotBodyZ(), 0.0));
       conductor.addTimeLimit(variables.getYoTime(), 20.0);

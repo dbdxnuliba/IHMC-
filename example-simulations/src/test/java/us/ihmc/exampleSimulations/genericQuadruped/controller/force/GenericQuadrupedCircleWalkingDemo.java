@@ -27,7 +27,6 @@ public class GenericQuadrupedCircleWalkingDemo
          stepTeleopManager.setEndPhaseShift(180);
          double walkingSpeed = 0.25;
          double angularSpeed = 0.1;
-         stepTeleopManager.requestXGait();
          stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, angularSpeed);
          conductor.addTerminalGoal(new YoVariableTestGoal()
          {

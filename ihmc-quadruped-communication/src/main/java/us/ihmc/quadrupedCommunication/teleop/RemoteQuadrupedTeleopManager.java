@@ -167,11 +167,6 @@ public class RemoteQuadrupedTeleopManager
       abortWalkingMessagePublisher.publish(new AbortWalkingMessage());
    }
 
-   public void requestXGait()
-   {
-      setDesiredVelocity(0.0, 0.0, 0.0);
-   }
-
    public void requestStanding()
    {
       requestStopWalking();

@@ -71,7 +71,6 @@ public class QuadrupedTestBehaviors
       double initialEndPhaseShift = stepTeleopManager.getXGaitSettings().getEndPhaseShift();
 
       stepTeleopManager.setEndPhaseShift(180.0);
-      stepTeleopManager.requestXGait();
       stepTeleopManager.setDesiredVelocity(0.0, 0.0, 0.0);
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addSustainGoal(QuadrupedTestGoals.bodyHeight(variables, 0.25));

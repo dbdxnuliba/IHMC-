@@ -88,7 +88,6 @@ public abstract class QuadrupedXGaitPushRecoveryTest implements QuadrupedMultiRo
 
       stepTeleopManager.setEndPhaseShift(endPhaseShift);
       stepTeleopManager.setDesiredVelocity(walkingSpeed, 0.0, 0.0);
-      stepTeleopManager.requestXGait();
 
       conductor.addSustainGoal(QuadrupedTestGoals.notFallen(variables));
       conductor.addTimeLimit(variables.getYoTime(), 5.0);

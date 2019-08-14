@@ -75,12 +75,10 @@ public abstract class QuadrupedXGaitRandomWalkingTest implements QuadrupedMultiR
    public void testExtremeRandomWalking() throws SimulationExceededMaximumTimeException, ControllerFailureException, IOException
    {
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
-      stepTeleopManager.requestXGait();
 
       Random random = new Random(1447L);
       double runningDuration = variables.getYoTime().getDoubleValue();
 
-      stepTeleopManager.requestXGait();
 
       for (int i = 0; i < 10; i++)
       {
@@ -100,7 +98,6 @@ public abstract class QuadrupedXGaitRandomWalkingTest implements QuadrupedMultiR
       Random random = new Random(1547L);
       double runningDuration = variables.getYoTime().getDoubleValue();
 
-      stepTeleopManager.requestXGait();
       for (int i = 0; i < 10; i++)
       {
          runningDuration += randomSimulationDuration(random);
@@ -125,7 +122,6 @@ public abstract class QuadrupedXGaitRandomWalkingTest implements QuadrupedMultiR
       Random random = new Random(2456L);
       double runningDuration = variables.getYoTime().getDoubleValue();
 
-      stepTeleopManager.requestXGait();
 
       for (int i = 0; i < 6; i++)
       {
@@ -149,7 +145,6 @@ public abstract class QuadrupedXGaitRandomWalkingTest implements QuadrupedMultiR
    public void testWalkingRandomVelocitiesStoppingAndTurning() throws SimulationExceededMaximumTimeException, ControllerFailureException, IOException
    {
       QuadrupedTestBehaviors.readyXGait(conductor, variables, stepTeleopManager);
-      stepTeleopManager.requestXGait();
 
       Random random = new Random(1557L);
       double runningDuration = variables.getYoTime().getDoubleValue();
