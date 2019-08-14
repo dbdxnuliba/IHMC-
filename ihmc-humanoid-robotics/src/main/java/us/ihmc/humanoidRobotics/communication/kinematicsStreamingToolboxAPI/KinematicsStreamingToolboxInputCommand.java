@@ -1,9 +1,7 @@
 package us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI;
 
 import controller_msgs.msg.dds.KinematicsStreamingToolboxInputMessage;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.controllerAPI.command.Command;
-import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToolboxCenterOfMassCommand;
 import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToolboxRigidBodyCommand;
 import us.ihmc.robotModels.RigidBodyHashCodeResolver;
 import us.ihmc.sensorProcessing.frames.ReferenceFrameHashCodeResolver;
@@ -11,30 +9,26 @@ import us.ihmc.sensorProcessing.frames.ReferenceFrameHashCodeResolver;
 public class KinematicsStreamingToolboxInputCommand implements Command<KinematicsStreamingToolboxInputCommand, KinematicsStreamingToolboxInputMessage>
 {
    private long sequenceId;
-   private boolean controlCenterOfMass = false;
-   private final KinematicsToolboxCenterOfMassCommand centerOfMassInput = new KinematicsToolboxCenterOfMassCommand();
-   private final RecyclingArrayList<KinematicsToolboxRigidBodyCommand> rigidBodyInputs = new RecyclingArrayList<>(KinematicsToolboxRigidBodyCommand::new);
+   private final KinematicsToolboxRigidBodyCommand headInput = new KinematicsToolboxRigidBodyCommand();
+   private final KinematicsToolboxRigidBodyCommand leftHandInput = new KinematicsToolboxRigidBodyCommand();
+   private final KinematicsToolboxRigidBodyCommand rightHandInput = new KinematicsToolboxRigidBodyCommand();
 
    @Override
    public void clear()
    {
       sequenceId = 0;
-      controlCenterOfMass = false;
-      centerOfMassInput.clear();
-      for (int i = 0; i < rigidBodyInputs.size(); i++)
-         rigidBodyInputs.get(i).clear();
-      rigidBodyInputs.clear();
+      headInput.clear();
+      leftHandInput.clear();
+      rightHandInput.clear();
    }
 
    @Override
    public void set(KinematicsStreamingToolboxInputCommand other)
    {
       sequenceId = other.sequenceId;
-      controlCenterOfMass = other.controlCenterOfMass;
-      centerOfMassInput.set(other.centerOfMassInput);
-      rigidBodyInputs.clear();
-      for (int i = 0; i < other.rigidBodyInputs.size(); i++)
-         rigidBodyInputs.add().set(other.rigidBodyInputs.get(i));
+      headInput.set(other.headInput);
+      leftHandInput.set(other.leftHandInput);
+      rightHandInput.set(other.rightHandInput);
    }
 
    @Override
@@ -47,26 +41,24 @@ public class KinematicsStreamingToolboxInputCommand implements Command<Kinematic
                    ReferenceFrameHashCodeResolver referenceFrameResolver)
    {
       sequenceId = message.getSequenceId();
-      controlCenterOfMass = message.getControlCenterOfMass();
-      centerOfMassInput.setFromMessage(message.getCenterOfMassInput());
-      rigidBodyInputs.clear();
-      for (int i = 0; i < message.getRigidBodyInputs().size(); i++)
-         rigidBodyInputs.add().set(message.getRigidBodyInputs().get(i), rigidBodyHashCodeResolver, referenceFrameResolver);
+      headInput.set(message.getHeadInput(), rigidBodyHashCodeResolver, referenceFrameResolver);
+      leftHandInput.set(message.getLeftHandInput(), rigidBodyHashCodeResolver, referenceFrameResolver);
+      rightHandInput.set(message.getRightHandInput(), rigidBodyHashCodeResolver, referenceFrameResolver);
    }
 
-   public boolean getControlCenterOfMass()
+   public KinematicsToolboxRigidBodyCommand getHeadInput()
    {
-      return controlCenterOfMass;
+      return headInput;
    }
 
-   public KinematicsToolboxCenterOfMassCommand getCenterOfMassInput()
+   public KinematicsToolboxRigidBodyCommand getLeftHandInput()
    {
-      return centerOfMassInput;
+      return leftHandInput;
    }
 
-   public RecyclingArrayList<KinematicsToolboxRigidBodyCommand> getRigidBodyInputs()
+   public KinematicsToolboxRigidBodyCommand getRightHandInput()
    {
-      return rigidBodyInputs;
+      return rightHandInput;
    }
 
    @Override
@@ -78,7 +70,7 @@ public class KinematicsStreamingToolboxInputCommand implements Command<Kinematic
    @Override
    public boolean isCommandValid()
    {
-      return controlCenterOfMass || !rigidBodyInputs.isEmpty();
+      return true;
    }
 
    @Override

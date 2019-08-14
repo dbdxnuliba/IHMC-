@@ -19,11 +19,6 @@ module controller_msgs
          * Unique ID used to identify this message, should preferably be consecutively increasing.
          */
         unsigned long sequence_id;
-        boolean use_ground_height;
-        boolean use_head_pose;
-        boolean use_left_hand_pose;
-        boolean use_right_hand_pose;
-        double ground_height;
         geometry_msgs::msg::dds::Pose head_pose;
         geometry_msgs::msg::dds::Pose left_hand_pose;
         geometry_msgs::msg::dds::Pose right_hand_pose;

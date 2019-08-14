@@ -42,16 +42,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
-
       current_alignment += geometry_msgs.msg.dds.PosePubSubType.getMaxCdrSerializedSize(current_alignment);
 
       current_alignment += geometry_msgs.msg.dds.PosePubSubType.getMaxCdrSerializedSize(current_alignment);
@@ -74,21 +64,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-
-      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
-
-
       current_alignment += geometry_msgs.msg.dds.PosePubSubType.getCdrSerializedSize(data.getHeadPose(), current_alignment);
 
       current_alignment += geometry_msgs.msg.dds.PosePubSubType.getCdrSerializedSize(data.getLeftHandPose(), current_alignment);
@@ -103,16 +78,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
    {
       cdr.write_type_4(data.getSequenceId());
 
-      cdr.write_type_7(data.getUseGroundHeight());
-
-      cdr.write_type_7(data.getUseHeadPose());
-
-      cdr.write_type_7(data.getUseLeftHandPose());
-
-      cdr.write_type_7(data.getUseRightHandPose());
-
-      cdr.write_type_6(data.getGroundHeight());
-
       geometry_msgs.msg.dds.PosePubSubType.write(data.getHeadPose(), cdr);
       geometry_msgs.msg.dds.PosePubSubType.write(data.getLeftHandPose(), cdr);
       geometry_msgs.msg.dds.PosePubSubType.write(data.getRightHandPose(), cdr);
@@ -121,16 +86,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
    public static void read(controller_msgs.msg.dds.KinematicsStreamingToolboxCalibrationMessage data, us.ihmc.idl.CDR cdr)
    {
       data.setSequenceId(cdr.read_type_4());
-      	
-      data.setUseGroundHeight(cdr.read_type_7());
-      	
-      data.setUseHeadPose(cdr.read_type_7());
-      	
-      data.setUseLeftHandPose(cdr.read_type_7());
-      	
-      data.setUseRightHandPose(cdr.read_type_7());
-      	
-      data.setGroundHeight(cdr.read_type_6());
       	
       geometry_msgs.msg.dds.PosePubSubType.read(data.getHeadPose(), cdr);	
       geometry_msgs.msg.dds.PosePubSubType.read(data.getLeftHandPose(), cdr);	
@@ -142,11 +97,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
    public final void serialize(controller_msgs.msg.dds.KinematicsStreamingToolboxCalibrationMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
-      ser.write_type_7("use_ground_height", data.getUseGroundHeight());
-      ser.write_type_7("use_head_pose", data.getUseHeadPose());
-      ser.write_type_7("use_left_hand_pose", data.getUseLeftHandPose());
-      ser.write_type_7("use_right_hand_pose", data.getUseRightHandPose());
-      ser.write_type_6("ground_height", data.getGroundHeight());
       ser.write_type_a("head_pose", new geometry_msgs.msg.dds.PosePubSubType(), data.getHeadPose());
 
       ser.write_type_a("left_hand_pose", new geometry_msgs.msg.dds.PosePubSubType(), data.getLeftHandPose());
@@ -159,11 +109,6 @@ public class KinematicsStreamingToolboxCalibrationMessagePubSubType implements u
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.KinematicsStreamingToolboxCalibrationMessage data)
    {
       data.setSequenceId(ser.read_type_4("sequence_id"));
-      data.setUseGroundHeight(ser.read_type_7("use_ground_height"));
-      data.setUseHeadPose(ser.read_type_7("use_head_pose"));
-      data.setUseLeftHandPose(ser.read_type_7("use_left_hand_pose"));
-      data.setUseRightHandPose(ser.read_type_7("use_right_hand_pose"));
-      data.setGroundHeight(ser.read_type_6("ground_height"));
       ser.read_type_a("head_pose", new geometry_msgs.msg.dds.PosePubSubType(), data.getHeadPose());
 
       ser.read_type_a("left_hand_pose", new geometry_msgs.msg.dds.PosePubSubType(), data.getLeftHandPose());

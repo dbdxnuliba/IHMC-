@@ -7,7 +7,7 @@ import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKi
 import static us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.HumanoidKinematicsToolboxControllerTest.randomizeArmJointPositions;
 
 import java.awt.Color;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -39,8 +39,11 @@ import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearanceRGBColor;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxMessageFactory;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.mecano.tools.JointStateType;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
@@ -66,6 +69,7 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
    protected static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final YoAppearanceRGBColor ghostApperance = new YoAppearanceRGBColor(Color.YELLOW, 0.75);
+   private static final YoAppearanceRGBColor operatorApperance = new YoAppearanceRGBColor(Color.BLUE, 0.75);
 
    private DRCSimulationTestHelper drcSimulationTestHelper;
 
@@ -75,15 +79,15 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
    private FullHumanoidRobotModel desiredFullRobotModel;
    private KinematicsStreamingToolboxController toolboxController;
 
-   private HumanoidFloatingRootJointRobot ghost;
+   private HumanoidFloatingRootJointRobot ghost, operator;
 
    private ScheduledExecutorService scheduledExecutorService;
 
    /**
-    * Returns a separate instance of the robot model that will be modified in this test to create a
-    * ghost robot.
+    * Returns a <b>new</b> instance of the robot model that will be modified in this test to create
+    * ghost robots.
     */
-   public abstract DRCRobotModel getGhostRobotModel();
+   public abstract DRCRobotModel newRobotModel();
 
    @BeforeEach
    public void setup()
@@ -93,22 +97,17 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       DRCRobotModel robotModel = getRobotModel();
       BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
 
-      DRCRobotModel ghostRobotModel = getGhostRobotModel();
-      RobotDescription robotDescription = ghostRobotModel.getRobotDescription();
-      robotDescription.setName("Ghost");
-      KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), ghostApperance);
-      ghost = ghostRobotModel.createHumanoidFloatingRootJointRobot(false);
-      ghost.getRootJoint().setPinned(true);
-      ghost.setDynamic(false);
-      ghost.setGravity(0);
-      hideGhost();
+      ghost = createSCSRobot(newRobotModel(), "ghost", ghostApperance);
+      hideRobot(ghost);
+      operator = createSCSRobot(newRobotModel(), "operator", operatorApperance);
+      hideRobot(operator);
 
       FlatGroundEnvironment testEnvironment = new FlatGroundEnvironment()
       {
          @Override
          public List<Robot> getEnvironmentRobots()
          {
-            return Collections.singletonList(ghost);
+            return Arrays.asList(ghost, operator);
          }
       };
       drcSimulationTestHelper = new DRCSimulationTestHelper(simulationTestingParameters, robotModel, testEnvironment);
@@ -142,14 +141,26 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       drcSimulationTestHelper.getSimulationConstructionSet().addYoVariableRegistry(mainRegistry);
    }
 
-   private void hideGhost()
+   public static HumanoidFloatingRootJointRobot createSCSRobot(DRCRobotModel ghostRobotModel, String robotName, AppearanceDefinition robotAppearance)
    {
-      ghost.setPositionInWorld(new Point3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
+      RobotDescription robotDescription = ghostRobotModel.getRobotDescription();
+      robotDescription.setName(robotName);
+      KinematicsToolboxControllerTest.recursivelyModifyGraphics(robotDescription.getChildrenJoints().get(0), robotAppearance);
+      HumanoidFloatingRootJointRobot scsRobot = ghostRobotModel.createHumanoidFloatingRootJointRobot(false);
+      scsRobot.getRootJoint().setPinned(true);
+      scsRobot.setDynamic(false);
+      scsRobot.setGravity(0);
+      return scsRobot;
    }
 
-   private void snapGhostToFullRobotModel(FullHumanoidRobotModel fullHumanoidRobotModel)
+   private static void hideRobot(HumanoidFloatingRootJointRobot robot)
    {
-      JointAnglesWriter jointAnglesWriter = new JointAnglesWriter(ghost, fullHumanoidRobotModel);
+      robot.setPositionInWorld(new Point3D(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
+   }
+
+   private static void snapSCSRobotToFullRobotModel(FullHumanoidRobotModel fullHumanoidRobotModel, HumanoidFloatingRootJointRobot robotToSnap)
+   {
+      JointAnglesWriter jointAnglesWriter = new JointAnglesWriter(robotToSnap, fullHumanoidRobotModel);
       jointAnglesWriter.setWriteJointVelocities(false);
       jointAnglesWriter.updateRobotConfigurationBasedOnFullRobotModel();
    }
@@ -187,7 +198,6 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
    @Test
    public void testFixedGoal() throws SimulationExceededMaximumTimeException
    {
-//      simulationTestingParameters.setKeepSCSUp(true);
       Random random = new Random(456415);
 
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5));
@@ -196,13 +206,9 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       FullHumanoidRobotModel zeroPoseFullRobotModel = getRobotModel().createFullRobotModel();
       zeroPoseFullRobotModel.updateFrames();
       KinematicsStreamingToolboxCalibrationMessage calibrationMessage = new KinematicsStreamingToolboxCalibrationMessage();
-      calibrationMessage.setUseGroundHeight(true);
-      calibrationMessage.setUseHeadPose(true);
-      calibrationMessage.setUseLeftHandPose(true);
-      calibrationMessage.setUseRightHandPose(true);
-      calibrationMessage.setGroundHeight(0.0);
       calibrationMessage.getHeadPose().set(zeroPoseFullRobotModel.getHead().getBodyFixedFrame().getTransformToRoot());
       calibrationMessage.getLeftHandPose().set(zeroPoseFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame().getTransformToRoot());
+      calibrationMessage.getRightHandPose().set(zeroPoseFullRobotModel.getHand(RobotSide.RIGHT).getBodyFixedFrame().getTransformToRoot());
 
       toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
       toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
@@ -219,6 +225,9 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       FullHumanoidRobotModel randomizedFullRobotModel = getRobotModel().createFullRobotModel();
       copyFullRobotModelState(drcSimulationTestHelper.getControllerFullRobotModel(), randomizedFullRobotModel);
 
+      RigidBodyBasics head = randomizedFullRobotModel.getHead();
+      inputMessage.getHeadInput().set(KinematicsToolboxMessageFactory.holdRigidBodyCurrentPose(head));
+
       for (RobotSide robotSide : RobotSide.values)
       {
          randomizeArmJointPositions(random, robotSide, randomizedFullRobotModel, 0.6);
@@ -228,7 +237,10 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
          KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(hand, desiredPosition);
          message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
          message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
-         inputMessage.getRigidBodyInputs().add().set(message);
+         if (robotSide == RobotSide.LEFT)
+            inputMessage.getLeftHandInput().set(message);
+         else
+            inputMessage.getRightHandInput().set(message);
       }
 
       commandInputManager.submitMessage(inputMessage);
@@ -249,7 +261,93 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
                task = scheduledExecutorService.scheduleAtFixedRate(() ->
                {
                   toolboxController.update();
-                  snapGhostToFullRobotModel(toolboxController.getDesiredFullRobotModel());
+                  snapSCSRobotToFullRobotModel(toolboxController.getDesiredFullRobotModel(), ghost);
+               }, 0, 500, TimeUnit.MILLISECONDS);
+
+            if (yoTime.getValue() >= terminalTime)
+               task.cancel(true);
+         }
+      });
+
+      drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(10.0);
+   }
+
+   @Test
+   public void testFixedGoalOperatorOffset() throws SimulationExceededMaximumTimeException
+   {
+      Random random = new Random(456415);
+
+      assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5));
+
+      Vector3D operatorOffset = new Vector3D(-1.73, 1.31, 0.0);
+
+      FullHumanoidRobotModel zeroPoseOperatorFullRobotModel = getRobotModel().createFullRobotModel();
+      zeroPoseOperatorFullRobotModel.updateFrames();
+      zeroPoseOperatorFullRobotModel.getRootJoint().getJointPose()
+                                    .setZ(-zeroPoseOperatorFullRobotModel.getSoleFrame(RobotSide.LEFT).getTransformToRoot().getTranslationZ());
+      zeroPoseOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
+      zeroPoseOperatorFullRobotModel.updateFrames();
+      snapSCSRobotToFullRobotModel(zeroPoseOperatorFullRobotModel, operator);
+      KinematicsStreamingToolboxCalibrationMessage calibrationMessage = new KinematicsStreamingToolboxCalibrationMessage();
+      calibrationMessage.getHeadPose().set(zeroPoseOperatorFullRobotModel.getHead().getBodyFixedFrame().getTransformToRoot());
+      calibrationMessage.getLeftHandPose().set(zeroPoseOperatorFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame().getTransformToRoot());
+      calibrationMessage.getRightHandPose().set(zeroPoseOperatorFullRobotModel.getHand(RobotSide.RIGHT).getBodyFixedFrame().getTransformToRoot());
+
+      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
+      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
+      toolboxController.update();
+      assertEquals(KSTState.SLEEP, toolboxController.getCurrentStateKey());
+      toolboxController.update();
+      assertEquals(KSTState.CALIBRATION, toolboxController.getCurrentStateKey());
+      commandInputManager.submitMessage(calibrationMessage);
+      toolboxController.update();
+      toolboxController.update();
+      assertEquals(KSTState.STREAMING, toolboxController.getCurrentStateKey());
+
+      KinematicsStreamingToolboxInputMessage inputMessage = new KinematicsStreamingToolboxInputMessage();
+      FullHumanoidRobotModel randomizedOperatorFullRobotModel = getRobotModel().createFullRobotModel();
+      copyFullRobotModelState(drcSimulationTestHelper.getControllerFullRobotModel(), randomizedOperatorFullRobotModel);
+      randomizedOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
+
+      RigidBodyBasics head = randomizedOperatorFullRobotModel.getHead();
+      inputMessage.getHeadInput().set(KinematicsToolboxMessageFactory.holdRigidBodyCurrentPose(head));
+
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         randomizeArmJointPositions(random, robotSide, randomizedOperatorFullRobotModel, 0.6);
+         RigidBodyBasics hand = randomizedOperatorFullRobotModel.getHand(robotSide);
+         FramePoint3D desiredPosition = new FramePoint3D(hand.getBodyFixedFrame());
+         desiredPosition.changeFrame(worldFrame);
+         KinematicsToolboxRigidBodyMessage message = MessageTools.createKinematicsToolboxRigidBodyMessage(hand, desiredPosition);
+         message.getAngularWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
+         message.getLinearWeightMatrix().set(MessageTools.createWeightMatrix3DMessage(20.0));
+         if (robotSide == RobotSide.LEFT)
+            inputMessage.getLeftHandInput().set(message);
+         else
+            inputMessage.getRightHandInput().set(message);
+      }
+
+      snapSCSRobotToFullRobotModel(randomizedOperatorFullRobotModel, operator);
+
+      commandInputManager.submitMessage(inputMessage);
+
+      double simDuration = 5.0;
+
+      YoDouble yoTime = drcSimulationTestHelper.getRobot().getYoTime();
+      double terminalTime = yoTime.getValue() + simDuration;
+
+      yoTime.addVariableChangedListener(new VariableChangedListener()
+      {
+         ScheduledFuture<?> task;
+
+         @Override
+         public void notifyOfVariableChange(YoVariable<?> v)
+         {
+            if (task == null)
+               task = scheduledExecutorService.scheduleAtFixedRate(() ->
+               {
+                  toolboxController.update();
+                  snapSCSRobotToFullRobotModel(toolboxController.getDesiredFullRobotModel(), ghost);
                }, 0, 500, TimeUnit.MILLISECONDS);
 
             if (yoTime.getValue() >= terminalTime)

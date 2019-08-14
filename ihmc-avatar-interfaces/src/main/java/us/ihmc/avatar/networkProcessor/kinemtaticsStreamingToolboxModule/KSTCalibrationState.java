@@ -1,16 +1,16 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
-import java.util.List;
-
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxCalibrationCommand;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
+import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -22,10 +22,7 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 public class KSTCalibrationState implements State
 {
    private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-
-   private Pose3D operatorHeadPose;
-   private final SideDependentList<Pose3D> operatorHandPoses = new SideDependentList<>();
-   private double operatorGroundHeight;
+   private final double armSpanToHeightRatio = 1.135;
 
    private final YoBoolean isCalibrated;
    private final KSTTools tools;
@@ -46,7 +43,6 @@ public class KSTCalibrationState implements State
       }
    };
 
-   private double operatorHeight;
    private final double robotHeight;
 
    private double operatorHeadHandDistance;
@@ -88,10 +84,6 @@ public class KSTCalibrationState implements State
    public void onEntry()
    {
       tools.getIKController().getDefaultGains().setMaxFeedbackAndFeedbackRate(1200.0, Double.POSITIVE_INFINITY);
-
-      operatorHeadPose = null;
-      operatorHandPoses.clear();
-      operatorGroundHeight = Double.NaN;
    }
 
    @Override
@@ -99,36 +91,23 @@ public class KSTCalibrationState implements State
    {
       if (commandInputManager.isNewCommandAvailable(KinematicsStreamingToolboxCalibrationCommand.class))
       {
-         List<KinematicsStreamingToolboxCalibrationCommand> commands = commandInputManager.pollNewCommands(KinematicsStreamingToolboxCalibrationCommand.class);
+         KinematicsStreamingToolboxCalibrationCommand command = commandInputManager.pollNewestCommand(KinematicsStreamingToolboxCalibrationCommand.class);
 
-         for (KinematicsStreamingToolboxCalibrationCommand command : commands)
-         {
-            if (command.hasGroundHeight())
-               operatorGroundHeight = command.getGroundHeight();
-            if (command.hasHeadPose())
-               operatorHeadPose = new Pose3D(command.getHeadPose());
-            for (RobotSide robotSide : RobotSide.values)
-            {
-               if (command.hasHandPose(robotSide))
-                  operatorHandPoses.put(robotSide, new Pose3D(command.getHandPose(robotSide)));
-            }
-         }
-      }
+         Pose3D operatorHeadPose = command.getHeadPose();
+         SideDependentList<Pose3D> operatorHandPoses = command.getHandPoses();
 
-      if (hasAllInputs())
-      {
          KSTTools.updateFullRobotModel(tools.getRobotConfigurationData(), currentFullRobotModel);
          currentReferenceFrames.updateFrames();
+         double operatorHeight = operatorHandPoses.get(RobotSide.LEFT).getPositionDistance(operatorHandPoses.get(RobotSide.RIGHT)) / armSpanToHeightRatio;
 
          Point3D operatorMidFootZUpPosition = operatorMidFootZUpPose.getPosition();
-         operatorMidFootZUpPosition.setX(operatorHeadPose.getX());
-         operatorMidFootZUpPosition.setY(operatorHeadPose.getY());
-         operatorMidFootZUpPosition.setZ(operatorGroundHeight);
+         operatorMidFootZUpPosition.set(operatorHeadPose.getPosition());
+         operatorMidFootZUpPosition.subZ(operatorHeight);
          operatorMidFootZUpPose.getOrientation().setToYawOrientation(operatorHeadPose.getYaw());
          operatorMidFootZUpGroundFrame.update();
 
-         operatorHeight = operatorHeadPose.getZ() - operatorGroundHeight;
-         userInputTransform.setOperatorToRobotHeightScale(robotHeight / operatorHeight);
+         double operatorToRobotHeightScale = robotHeight / operatorHeight;
+         userInputTransform.setOperatorToRobotHeightScale(operatorToRobotHeightScale);
 
          operatorHeadHandDistance = 0.0;
 
@@ -139,19 +118,15 @@ public class KSTCalibrationState implements State
          userInputTransform.setOperatorMidFootZupGroundFrame(operatorMidFootZUpGroundFrame);
          userInputTransform.setRobotMidFootZUpGroundFrame(currentMidFootZUpGroundFrame);
 
+         FramePoint3D framePoint3D = new FramePoint3D(operatorMidFootZUpGroundFrame);
+         framePoint3D.changeFrame(currentMidFootZUpGroundFrame);
+         FrameVector3D frameVector3D = new FrameVector3D(framePoint3D);
+         frameVector3D.changeFrame(worldFrame);
+         LogTools.info("Calibration result: height scale = " + operatorToRobotHeightScale + ", arm length scale = "
+               + (robotHeadHandDistance / operatorHeadHandDistance) + ", operator world offset = " + frameVector3D);
+
          isCalibrated.set(true);
       }
-   }
-
-   private boolean hasAllInputs()
-   {
-      if (operatorHeadPose == null)
-         return false;
-      if (operatorHandPoses.get(RobotSide.LEFT) == null || operatorHandPoses.get(RobotSide.RIGHT) == null)
-         return false;
-      if (Double.isNaN(operatorGroundHeight))
-         return false;
-      return true;
    }
 
    @Override

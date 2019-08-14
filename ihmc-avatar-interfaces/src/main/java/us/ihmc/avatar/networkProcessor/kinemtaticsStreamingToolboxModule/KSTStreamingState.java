@@ -4,6 +4,11 @@ import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
 import us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.OutputPublisher;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxInputCommand;
+import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToolboxRigidBodyCommand;
+import us.ihmc.log.LogTools;
+import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
+import us.ihmc.robotModels.FullHumanoidRobotModel;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.State;
 
 public class KSTStreamingState implements State
@@ -13,11 +18,15 @@ public class KSTStreamingState implements State
    {
    };
    private final KinematicsToolboxConfigurationMessage configurationMessage = new KinematicsToolboxConfigurationMessage();
+   private final KSTUserInputTransform userInputTransform;
+   private final FullHumanoidRobotModel desiredFullRobotModel;
 
    public KSTStreamingState(KSTTools tools)
    {
       this.tools = tools;
+      userInputTransform = tools.getUserInputTransform();
       configurationMessage.setJointVelocityWeight(1.0);
+      desiredFullRobotModel = tools.getDesiredFullRobotModel();
    }
 
    public void setOutputPublisher(OutputPublisher outputPublisher)
@@ -40,9 +49,39 @@ public class KSTStreamingState implements State
 
       if (latestInput != null)
       {
-         if (latestInput.getControlCenterOfMass())
-            ikCommandInputManager.submitCommand(latestInput.getCenterOfMassInput());
-         ikCommandInputManager.submitCommands(latestInput.getRigidBodyInputs());
+         KinematicsToolboxRigidBodyCommand headInput = latestInput.getHeadInput();
+         KinematicsToolboxRigidBodyCommand leftHandInput = latestInput.getLeftHandInput();
+         KinematicsToolboxRigidBodyCommand rightHandInput = latestInput.getRightHandInput();
+
+         RigidBodyBasics head = desiredFullRobotModel.getHead();
+         RigidBodyBasics leftHand = desiredFullRobotModel.getHand(RobotSide.LEFT);
+         RigidBodyBasics rightHand = desiredFullRobotModel.getHand(RobotSide.RIGHT);
+
+         if (headInput.getEndEffector() != head)
+         {
+            LogTools.error("Received head input that is not for the head: " + headInput.getEndEffector().getName());
+            return;
+         }
+
+         if (leftHandInput.getEndEffector() != leftHand)
+         {
+            LogTools.error("Received left hand input that is not for the left hand: " + leftHandInput.getEndEffector().getName());
+            return;
+         }
+
+         if (rightHandInput.getEndEffector() != rightHand)
+         {
+            LogTools.error("Received right hand input that is not for the right hand: " + rightHandInput.getEndEffector().getName());
+            return;
+         }
+
+         headInput = userInputTransform.transformHeadInput(headInput);
+         leftHandInput = userInputTransform.transformHandInput(leftHandInput);
+         rightHandInput = userInputTransform.transformHandInput(rightHandInput);
+
+         ikCommandInputManager.submitCommand(headInput);
+         ikCommandInputManager.submitCommand(leftHandInput);
+         ikCommandInputManager.submitCommand(rightHandInput);
       }
 
       ikCommandInputManager.submitMessage(configurationMessage);

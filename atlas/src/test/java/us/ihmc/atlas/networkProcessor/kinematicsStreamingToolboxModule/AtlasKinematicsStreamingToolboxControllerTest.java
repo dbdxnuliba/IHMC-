@@ -12,13 +12,19 @@ import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulatio
 public class AtlasKinematicsStreamingToolboxControllerTest extends KinematicsStreamingToolboxControllerTest
 {
    private final DRCRobotModel robotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
-   private final DRCRobotModel ghostRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
 
    @Test
    @Override
    public void testFixedGoal() throws SimulationExceededMaximumTimeException
    {
       super.testFixedGoal();
+   }
+
+   @Test
+   @Override
+   public void testFixedGoalOperatorOffset() throws SimulationExceededMaximumTimeException
+   {
+      super.testFixedGoalOperatorOffset();
    }
 
    @Override
@@ -28,8 +34,8 @@ public class AtlasKinematicsStreamingToolboxControllerTest extends KinematicsStr
    }
 
    @Override
-   public DRCRobotModel getGhostRobotModel()
+   public DRCRobotModel newRobotModel()
    {
-      return ghostRobotModel;
+      return new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.SCS, false);
    }
 }
