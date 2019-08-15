@@ -83,7 +83,7 @@ public class CollisionAvoidanceParameters
     */
    public double getWeight()
    {
-      return 10.0;
+      return 5.0;
    }
 
    /**

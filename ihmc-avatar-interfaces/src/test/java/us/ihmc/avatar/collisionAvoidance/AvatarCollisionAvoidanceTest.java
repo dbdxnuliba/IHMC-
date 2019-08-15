@@ -16,10 +16,14 @@ import controller_msgs.msg.dds.PlanarRegionMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelStates.CollisionAvoidanceManager;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.packets.ExecutionTiming;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
+import us.ihmc.euclid.geometry.ConvexPolygon2D;
+import us.ihmc.euclid.geometry.LineSegment2D;
+import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -27,6 +31,7 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
+import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.trajectories.TrajectoryType;
@@ -178,15 +183,44 @@ public abstract class AvatarCollisionAvoidanceTest implements MultiRobotTestInte
    private CollisionAvoidanceManagerMessage createCollisionMessageForHorizontalSurfaces(PlanarRegionsList planarRegions)
    {
       CollisionAvoidanceManagerMessage collisionMessage = new CollisionAvoidanceManagerMessage();
+      int horizontalRegions = 0;
 
       for (int i = 0; i < planarRegions.getNumberOfPlanarRegions(); ++i)
       {
          Vector3D normal = planarRegions.getPlanarRegion(i).getNormal();
          if (Math.abs(normal.getZ()) >= 0.1)
          {
-            PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(planarRegions.getPlanarRegion(i));
-            collisionMessage.getPlanarRegionsList().add().set(newPlanarRegionMessage);
-            collisionMessage.setConsiderOnlyEdges(true);
+            horizontalRegions++;
+            CollisionAvoidanceManager.addVerticalRegionsFromHorizontalRegions(planarRegions.getPlanarRegion(i), collisionMessage);
+         }
+      }
+
+      //Test the newly generated planar regions
+      assertTrue(collisionMessage.getPlanarRegionsList().size() == 4 * horizontalRegions);
+      for (int i = 0; i < collisionMessage.getPlanarRegionsList().size(); ++i)
+      {
+         PlanarRegionMessage verticalRegionMessage = collisionMessage.getPlanarRegionsList().get(i);
+         PlanarRegion verticalRegion = PlanarRegionMessageConverter.convertToPlanarRegion(verticalRegionMessage);
+         
+         for (int p = 0; p < verticalRegion.getNumberOfConvexPolygons(); ++p) {
+            ConvexPolygon2D polygon = verticalRegion.getConvexPolygon(p);
+            for (int v = 0; v < polygon.getNumberOfVertices(); ++v)
+            {
+               LineSegment2D edge = new LineSegment2D();
+               polygon.getEdge(v, edge);
+               LineSegment3D edgeInWorld = new LineSegment3D(new Point3D(edge.getFirstEndpoint()), new Point3D(edge.getSecondEndpoint()));
+
+               verticalRegion.transformFromLocalToWorld(edgeInWorld); //Edge in world coordinates
+
+               double tolerance = 1e-10;
+
+               boolean sameHeight = Math.abs(edgeInWorld.getFirstEndpointZ() - edgeInWorld.getSecondEndpointZ()) < tolerance; //Here I am assuming that the original horizontal region was parallel to the ground
+               boolean oneEndPointOnGround = Math.abs(edgeInWorld.getFirstEndpointZ()) < tolerance || Math.abs(edgeInWorld.getSecondEndpointZ()) < tolerance;
+               boolean verticalLine = Math.abs(edgeInWorld.getFirstEndpointX() - edgeInWorld.getSecondEndpointX()) < tolerance
+                     && Math.abs(edgeInWorld.getFirstEndpointY() - edgeInWorld.getSecondEndpointY()) < tolerance;
+
+               assertTrue((oneEndPointOnGround && verticalLine) || sameHeight);
+            }
          }
       }
 
