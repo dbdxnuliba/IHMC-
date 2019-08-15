@@ -6,6 +6,8 @@ import us.ihmc.robotics.robotSide.SideDependentList;
 
 public interface CommonHumanoidReferenceFrames extends CommonLeggedReferenceFrames<RobotSide>
 {
+   MovingReferenceFrame getCenterOfMassFrame();
+
    SideDependentList<MovingReferenceFrame> getAnkleZUpReferenceFrames();
 
    SideDependentList<MovingReferenceFrame> getFootReferenceFrames();

@@ -33,6 +33,7 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.YoArtifactPosition;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactableFoot;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.mecano.frames.CenterOfMassReferenceFrame;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.JointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
@@ -73,7 +74,7 @@ public class HighLevelHumanoidControllerToolbox
    private final String name = getClass().getSimpleName();
    private final YoVariableRegistry registry = new YoVariableRegistry(name);
 
-   private final ReferenceFrame centerOfMassFrame;
+   private final MovingReferenceFrame centerOfMassFrame;
    private final FullHumanoidRobotModel fullRobotModel;
    private final CapturePointCalculator capturePointCalculator;
 
@@ -174,7 +175,7 @@ public class HighLevelHumanoidControllerToolbox
 
       referenceFrameHashCodeResolver = new ReferenceFrameHashCodeResolver(fullRobotModel, referenceFrames);
 
-      capturePointCalculator = new CapturePointCalculator(centerOfMassFrame, fullRobotModel.getElevator());
+      capturePointCalculator = new CapturePointCalculator(centerOfMassFrame);
 
       MathTools.checkIntervalContains(gravityZ, 0.0, Double.POSITIVE_INFINITY);
 
@@ -743,7 +744,7 @@ public class HighLevelHumanoidControllerToolbox
          yoPlaneContactState.clear();
    }
 
-   public ReferenceFrame getCenterOfMassFrame()
+   public MovingReferenceFrame getCenterOfMassFrame()
    {
       return centerOfMassFrame;
    }
