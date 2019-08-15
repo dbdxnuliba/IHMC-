@@ -5,7 +5,6 @@ import us.ihmc.commons.lists.SupplierBuilder;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
-import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
@@ -15,7 +14,7 @@ import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeInterval;
+import us.ihmc.robotics.time.TimeIntervalBasics;
 import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
@@ -140,10 +139,12 @@ public class QuadrupedStepStreamManager
 
    public void doAction()
    {
+      // Delay end time of active steps if touchdown not triggered and end time has passed
+      double currentStepDelay = handleActiveStepDelay();
+
       if(delayToEnsureContactOnEachEnd.getValue())
       {
-         // Delay current steps and shift subsequent steps by maximum delay amount
-         double currentStepDelay = getCurrentStepDelay();
+         // Delay upcoming steps to ensure each end has contact
          for (int i = 0; i < stepSequence.size(); i++)
          {
             QuadrupedTimedStep step = stepSequence.get(i);
@@ -175,9 +176,9 @@ public class QuadrupedStepStreamManager
    }
 
    /**
-    * Shifts time interval of active steps to current include current time. Returns maximum shift value
+    * Extends time interval of active steps to current include current time. Returns maximum shift value
     */
-   private double getCurrentStepDelay()
+   private double handleActiveStepDelay()
    {
       double currentStepDelay = 0.0;
       double delayEpsilon = 1e-3;
@@ -195,7 +196,9 @@ public class QuadrupedStepStreamManager
          if (touchdownHasNotTriggered && endTimeHasExpired)
          {
             double delay = timestamp.getDoubleValue() - currentStep.getTimeInterval().getEndTime() + delayEpsilon;
-            currentStep.getTimeInterval().shiftInterval(delay);
+            TimeIntervalBasics stepTimeInterval = currentStep.getTimeInterval();
+            stepTimeInterval.setInterval(stepTimeInterval.getStartTime(), stepTimeInterval.getEndTime() + delay);
+
             currentStepDelay = Math.max(delay, currentStepDelay);
          }
       }
