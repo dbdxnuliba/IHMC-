@@ -2,16 +2,21 @@ package us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.highLevelSt
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
+import controller_msgs.msg.dds.PlanarRegionMessage;
 import us.ihmc.commonWalkingControlModules.configurations.CollisionAvoidanceParameters;
 import us.ihmc.commonWalkingControlModules.controllerCore.WholeBodyControllerCoreMode;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.PointFeedbackControlCommand;
 import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.Line3D;
 import us.ihmc.euclid.geometry.LineSegment2D;
+import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
+import us.ihmc.euclid.matrix.RotationMatrix;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -21,6 +26,7 @@ import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.euclid.tuple3D.interfaces.Vector3DBasics;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
@@ -491,6 +497,103 @@ public class CollisionAvoidanceManager
       }
 
       return false; // line does not intersect
+   }
+
+   /**
+    * Computes the vertical planar regions which have as top edge one edge of the horizontal planar region, while the bottom edge is the projection on
+    * the ground of the top edge. By assumption, the ground is at 0. If not, it should be enough to modify the computation of the newPosition. In fact
+    * it is assumed that the origin of the plane frame is located in the centroid of the 4 edges.
+    * @param horizontalRegion Region from which the vertical regions are generated
+    * @param messageToModify Message to which add the planar regions
+    * @return true if successful
+    */
+   public static boolean addVerticalRegionsFromHorizontalRegions(PlanarRegion horizontalRegion, CollisionAvoidanceManagerMessage messageToModify)
+   {
+      assert (horizontalRegion != null);
+      assert (messageToModify != null);
+
+      if (Math.abs(horizontalRegion.getNormal().getZ()) < 0.1)
+         return false;
+
+      final LineSegment2D edge = new LineSegment2D();
+      final LineSegment3D edgeInWorld = new LineSegment3D();
+      final Point3D firstEndPointInWorld = new Point3D();
+      final Point3D secondEndPointInWorld = new Point3D();
+      final ConvexPolygon2D newPolygon = new ConvexPolygon2D();
+      final Vector3D gravityDirection = new Vector3D(0, 0, 1.0);
+      final Vector3D planeNormal = new Vector3D();
+      final Vector3D newPosition = new Vector3D();
+      final Vector3D originsDistance = new Vector3D();
+      final Vector3D planeYDirection = new Vector3D();
+      final RotationMatrix planeRotation = new RotationMatrix();
+      final RigidBodyTransform planeTransform = new RigidBodyTransform();
+      final LineSegment3D edgeInNewPlane = new LineSegment3D();
+      final PlanarRegion newRegion = new PlanarRegion();
+      final RecyclingArrayList<ConvexPolygon2D> newList = new RecyclingArrayList<>(1, ConvexPolygon2D.class);
+
+      for (int p = 0; p < horizontalRegion.getNumberOfConvexPolygons(); ++p)
+      {
+         ConvexPolygon2D polygon = horizontalRegion.getConvexPolygon(p);
+         newPolygon.clear();
+
+         for (int v = 0; v < polygon.getNumberOfVertices(); ++v)
+         {
+            polygon.getEdge(v, edge);
+            firstEndPointInWorld.set(edge.getFirstEndpoint());
+            secondEndPointInWorld.set(edge.getSecondEndpoint());
+            edgeInWorld.set(firstEndPointInWorld, secondEndPointInWorld);
+
+            horizontalRegion.transformFromLocalToWorld(edgeInWorld); //Edge in world coordinates
+            Vector3DBasics edgeDirection = edgeInWorld.getDirection(true); //Get its normalized direction
+
+            planeNormal.set(gravityDirection);
+            planeNormal.cross(edgeDirection); //The plane is formed by the edge direction and by the gravity direction
+            planeNormal.normalize();
+
+            newPosition.set((edgeInWorld.getFirstEndpointX() + edgeInWorld.getSecondEndpointX()) * 0.5,
+                            (edgeInWorld.getFirstEndpointY() + edgeInWorld.getSecondEndpointY()) * 0.5,
+                            (edgeInWorld.getFirstEndpointZ() + edgeInWorld.getSecondEndpointZ()) * 0.25); //The centroid of the plane assuming two points having 0 as coordinate
+
+            originsDistance.setToZero();
+            horizontalRegion.transformFromLocalToWorld(originsDistance); //Horizontal plane origin in world coordinates
+            originsDistance.sub(newPosition); //Distance vector between the two origins in world coordinates
+
+            if (originsDistance.dot(planeNormal) < 0) // I want the normal to be pointing inward
+            {
+               planeNormal.scale(-1);
+            }
+
+            planeYDirection.set(planeNormal);
+            planeYDirection.cross(gravityDirection); //Find the y direction. The normal has been computed before, while the x is parallel to gravity
+            planeYDirection.normalize();
+
+            planeRotation.setColumns(gravityDirection, planeYDirection, planeNormal);
+            planeRotation.normalize();
+
+            planeTransform.setTranslation(newPosition);
+            planeTransform.setRotation(planeRotation);
+
+            edgeInNewPlane.set(edgeInWorld);
+            edgeInNewPlane.applyInverseTransform(planeTransform);
+
+            assert (Math.abs(edgeInNewPlane.getFirstEndpointZ()) < 1e-6);
+            assert (Math.abs(edgeInNewPlane.getSecondEndpointZ()) < 1e-6);
+
+            newPolygon.addVertex(edgeInNewPlane.getFirstEndpointX(), edgeInNewPlane.getFirstEndpointY());
+            newPolygon.addVertex(-edgeInNewPlane.getFirstEndpointX(), edgeInNewPlane.getFirstEndpointY());
+            newPolygon.addVertex(-edgeInNewPlane.getSecondEndpointX(), edgeInNewPlane.getSecondEndpointX());
+            newPolygon.addVertex(edgeInNewPlane.getSecondEndpointX(), edgeInNewPlane.getSecondEndpointX());
+            newPolygon.update();
+
+            newList.clear();
+            newList.add().set(newPolygon);
+            newRegion.set(planeTransform, newList);
+            PlanarRegionMessage newPlanarRegionMessage = PlanarRegionMessageConverter.convertToPlanarRegionMessage(newRegion);
+            messageToModify.getPlanarRegionsList().add().set(newPlanarRegionMessage);
+         }
+      }
+
+      return true;
    }
 
 }
