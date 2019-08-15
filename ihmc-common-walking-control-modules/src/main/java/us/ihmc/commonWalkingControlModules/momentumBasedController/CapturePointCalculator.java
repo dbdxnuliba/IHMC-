@@ -10,12 +10,14 @@ import us.ihmc.euclid.referenceFrame.interfaces.FramePoint2DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector2DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector2DReadOnly;
 import us.ihmc.mecano.algorithms.CenterOfMassJacobian;
+import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 
 public class CapturePointCalculator
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
+   private final MovingReferenceFrame movingCenterOfMassFrame;
    private final ReferenceFrame centerOfMassFrame;
    private final CenterOfMassJacobian centerOfMassJacobian;
 
@@ -24,17 +26,33 @@ public class CapturePointCalculator
    private final FramePoint2D centerOfMassPosition2d = new FramePoint2D();
    private final FrameVector2D centerOfMassVelocity2d = new FrameVector2D();
 
+   public CapturePointCalculator(MovingReferenceFrame centerOfMassFrame)
+   {
+      this.movingCenterOfMassFrame = centerOfMassFrame;
+      this.centerOfMassFrame = centerOfMassFrame;
+      this.centerOfMassJacobian = null;
+   }
+
    public CapturePointCalculator(ReferenceFrame centerOfMassFrame, RigidBodyBasics elevator)
    {
+      this.movingCenterOfMassFrame = null;
       this.centerOfMassFrame = centerOfMassFrame;
       this.centerOfMassJacobian = new CenterOfMassJacobian(elevator, worldFrame);
    }
 
    public void compute(FramePoint2DBasics capturePointToPack, double omega0)
    {
-      centerOfMassJacobian.reset();
+      if (this.movingCenterOfMassFrame == null)
+      {
+         centerOfMassJacobian.reset();
+         centerOfMassVelocity.setIncludingFrame(centerOfMassJacobian.getCenterOfMassVelocity());
+      }
+      else
+      {
+         centerOfMassVelocity.setIncludingFrame(movingCenterOfMassFrame.getTwistOfFrame().getLinearPart());
+      }
+
       centerOfMassPosition.setToZero(centerOfMassFrame);
-      centerOfMassVelocity.setIncludingFrame(centerOfMassJacobian.getCenterOfMassVelocity());
 
       centerOfMassPosition.changeFrame(worldFrame);
       centerOfMassVelocity.changeFrame(worldFrame);

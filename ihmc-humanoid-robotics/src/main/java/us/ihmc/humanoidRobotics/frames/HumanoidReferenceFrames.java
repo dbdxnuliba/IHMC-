@@ -4,7 +4,7 @@ import java.util.EnumMap;
 
 import gnu.trove.map.hash.TLongObjectHashMap;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.mecano.frames.CenterOfMassReferenceFrame;
+import us.ihmc.mecano.frames.MovingCenterOfMassReferenceFrame;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -49,7 +49,7 @@ public class HumanoidReferenceFrames implements CommonHumanoidReferenceFrames
    private final MovingMidFootZUpGroundFrame midFootZUpGroundFrame;
    private final MovingReferenceFrame midFeetUnderPelvisWalkDirectionFrame;
 
-   private final ReferenceFrame centerOfMassFrame;
+   private final MovingReferenceFrame centerOfMassFrame;
 
    public HumanoidReferenceFrames(FullHumanoidRobotModel fullRobotModel)
    {
@@ -145,7 +145,7 @@ public class HumanoidReferenceFrames implements CommonHumanoidReferenceFrames
       midFeetUnderPelvisWalkDirectionFrame = new MovingWalkingReferenceFrame("walkingFrame", pelvisFrame, midFootZUpGroundFrame);
 
       RigidBodyBasics elevator = fullRobotModel.getElevator();
-      centerOfMassFrame = new CenterOfMassReferenceFrame("centerOfMass", worldFrame, elevator);
+      centerOfMassFrame = new MovingCenterOfMassReferenceFrame("centerOfMass", worldFrame, elevator);
 
       // set default CommonHumanoidReferenceFrameIds for certain frames used commonly for control
       addDefaultIDToReferenceFrame(CommonReferenceFrameIds.MIDFEET_ZUP_FRAME, getMidFeetZUpFrame());
@@ -331,7 +331,7 @@ public class HumanoidReferenceFrames implements CommonHumanoidReferenceFrames
    }
 
    @Override
-   public ReferenceFrame getCenterOfMassFrame()
+   public MovingReferenceFrame getCenterOfMassFrame()
    {
       return centerOfMassFrame;
    }

@@ -26,6 +26,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicVector;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.mecano.frames.CenterOfMassReferenceFrame;
+import us.ihmc.mecano.frames.MovingCenterOfMassReferenceFrame;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.multiBodySystem.RevoluteJoint;
 import us.ihmc.mecano.multiBodySystem.RigidBody;
@@ -2016,7 +2017,7 @@ public class VirtualModelControllerTestHelper
    private static class LegReferenceFrames implements CommonHumanoidReferenceFrames
    {
       private final MovingReferenceFrame pelvisFrame;
-      private final ReferenceFrame centerOfMassFrame;
+      private final MovingReferenceFrame centerOfMassFrame;
 
       private final SideDependentList<MovingReferenceFrame> footReferenceFrames = new SideDependentList<>();
       private final SideDependentList<MovingReferenceFrame> soleReferenceFrames = new SideDependentList<>();
@@ -2024,7 +2025,7 @@ public class VirtualModelControllerTestHelper
       LegReferenceFrames(RigidBodyBasics pelvis, RigidBodyBasics elevator, SideDependentList<RigidBodyBasics> feet, SideDependentList<MovingReferenceFrame> soleFrames)
       {
          pelvisFrame = pelvis.getBodyFixedFrame();
-         centerOfMassFrame = new CenterOfMassReferenceFrame("centerOfMass", ReferenceFrame.getWorldFrame(), elevator);
+         centerOfMassFrame = new MovingCenterOfMassReferenceFrame("centerOfMass", ReferenceFrame.getWorldFrame(), elevator);
 
          for (RobotSide robotSide : RobotSide.values)
          {
@@ -2123,7 +2124,7 @@ public class VirtualModelControllerTestHelper
       }
 
       @Override
-      public ReferenceFrame getCenterOfMassFrame()
+      public MovingReferenceFrame getCenterOfMassFrame()
       {
          return centerOfMassFrame;
       }
