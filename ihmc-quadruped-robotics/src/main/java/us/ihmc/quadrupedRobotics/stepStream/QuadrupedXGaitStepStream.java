@@ -93,6 +93,15 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       // update body orientation
       bodyYaw.add(desiredVelocity.getZ() * controlDT);
 
+      for (int i = 0; i < xGaitPreviewSteps.size(); i++)
+      {
+         QuadrupedTimedStep step = xGaitPreviewSteps.get(i);
+         if(step.getTimeInterval().getStartTime() < timestamp.getValue())
+         {
+            currentSteps.get(step.getRobotQuadrant().getEnd()).set(step);
+         }
+      }
+
       // update xgait preview steps
       xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, currentSteps, desiredVelocity, timestamp.getValue(), bodyYaw.getDoubleValue(), xGaitSettings);
 
@@ -112,7 +121,10 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       }
       for (int i = 0; i < xGaitPreviewSteps.size(); i++)
       {
-         stepSequence.add().set(xGaitPreviewSteps.get(i));
+         if(xGaitPreviewSteps.get(i).getTimeInterval().getEndTime() >= timestamp.getValue())
+         {
+            stepSequence.add().set(xGaitPreviewSteps.get(i));
+         }
       }
    }
 }
