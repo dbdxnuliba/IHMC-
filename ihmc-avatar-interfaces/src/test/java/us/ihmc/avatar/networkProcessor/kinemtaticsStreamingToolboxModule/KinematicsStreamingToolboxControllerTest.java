@@ -212,8 +212,9 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       calibrationMessage.getLeftHandPose().set(zeroPoseFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame().getTransformToRoot());
       calibrationMessage.getRightHandPose().set(zeroPoseFullRobotModel.getHand(RobotSide.RIGHT).getBodyFixedFrame().getTransformToRoot());
 
-      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
-      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
+      FullHumanoidRobotModel controllerFullRobotModel = drcSimulationTestHelper.getControllerFullRobotModel();
+      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(controllerFullRobotModel));
+      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(controllerFullRobotModel, getRobotModel(), true, true));
       toolboxController.update();
       assertEquals(KSTState.SLEEP, toolboxController.getCurrentStateKey());
       toolboxController.update();
@@ -225,7 +226,7 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
 
       KinematicsStreamingToolboxInputMessage inputMessage = new KinematicsStreamingToolboxInputMessage();
       FullHumanoidRobotModel randomizedFullRobotModel = getRobotModel().createFullRobotModel();
-      copyFullRobotModelState(drcSimulationTestHelper.getControllerFullRobotModel(), randomizedFullRobotModel);
+      copyFullRobotModelState(controllerFullRobotModel, randomizedFullRobotModel);
 
       RigidBodyBasics head = randomizedFullRobotModel.getHead();
       inputMessage.getHeadInput().set(KinematicsToolboxMessageFactory.holdRigidBodyCurrentPose(head));
@@ -295,8 +296,9 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       calibrationMessage.getLeftHandPose().set(zeroPoseOperatorFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame().getTransformToRoot());
       calibrationMessage.getRightHandPose().set(zeroPoseOperatorFullRobotModel.getHand(RobotSide.RIGHT).getBodyFixedFrame().getTransformToRoot());
 
-      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(drcSimulationTestHelper.getControllerFullRobotModel()));
-      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(true, true));
+      FullHumanoidRobotModel controllerFullRobotModel = drcSimulationTestHelper.getControllerFullRobotModel();
+      toolboxController.updateRobotConfigurationData(extractRobotConfigurationData(controllerFullRobotModel));
+      toolboxController.updateCapturabilityBasedStatus(createCapturabilityBasedStatus(controllerFullRobotModel, getRobotModel(), true, true));
       toolboxController.update();
       assertEquals(KSTState.SLEEP, toolboxController.getCurrentStateKey());
       toolboxController.update();
@@ -308,7 +310,7 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
 
       KinematicsStreamingToolboxInputMessage inputMessage = new KinematicsStreamingToolboxInputMessage();
       FullHumanoidRobotModel randomizedOperatorFullRobotModel = getRobotModel().createFullRobotModel();
-      copyFullRobotModelState(drcSimulationTestHelper.getControllerFullRobotModel(), randomizedOperatorFullRobotModel);
+      copyFullRobotModelState(controllerFullRobotModel, randomizedOperatorFullRobotModel);
       randomizedOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
 
       for (RobotSide robotSide : RobotSide.values)
