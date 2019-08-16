@@ -7,6 +7,7 @@ import us.ihmc.commonWalkingControlModules.controlModules.pelvis.CenterOfMassHei
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisAndCenterOfMassHeightControlState;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisHeightControlMode;
 import us.ihmc.commonWalkingControlModules.controlModules.pelvis.PelvisHeightControlState;
+import us.ihmc.commonWalkingControlModules.controlModules.pelvis.UserCenterOfMassHeightControlState;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommandList;
 import us.ihmc.commonWalkingControlModules.desiredFootStep.TransferToAndNextFootstepsData;
@@ -51,6 +52,9 @@ public class CenterOfMassHeightManager
    /** User Controlled Pelvis Height Mode, tries to achieve a desired pelvis height regardless of the robot configuration**/
    private final PelvisHeightControlState pelvisHeightControlState;
 
+   /** User Controlled CoM Height Mode, tries to achieve a desired CoM height regardless of the robot configuration**/
+   private final UserCenterOfMassHeightControlState userCoMHeightControlState;
+
    /** if the manager is in user mode before walking then stay in it while walking (PelvisHeightControlState) **/
    private final YoBoolean enableUserPelvisControlDuringWalking = new YoBoolean("centerOfMassHeightManagerEnableUserPelvisControlDuringWalking", registry);
    private final YoBoolean doPrepareForLocomotion = new YoBoolean("doPrepareCenterOfMassHeightForLocomotion", registry);
@@ -73,6 +77,7 @@ public class CenterOfMassHeightManager
          String namePrefix = getClass().getSimpleName();
          requestedState = new YoEnum<>(namePrefix + "RequestedControlMode", registry, PelvisHeightControlMode.class, true);
          centerOfMassHeightControlState = new CenterOfMassHeightControlState(controllerToolbox, walkingControllerParameters, registry);
+         userCoMHeightControlState = new UserCenterOfMassHeightControlState(controllerToolbox, registry);
 
          stateMachine = setupStateMachine(namePrefix, yoTime);
       }
@@ -80,6 +85,7 @@ public class CenterOfMassHeightManager
       {
          requestedState = null;
          centerOfMassHeightControlState = null;
+         userCoMHeightControlState = null;
          stateMachine = null;
       }
    }
@@ -91,6 +97,7 @@ public class CenterOfMassHeightManager
 
       factory.addState(PelvisHeightControlMode.WALKING_CONTROLLER, centerOfMassHeightControlState);
       factory.addState(PelvisHeightControlMode.USER, pelvisHeightControlState);
+      factory.addState(PelvisHeightControlMode.USER_COM, userCoMHeightControlState);
 
       for (PelvisHeightControlMode from : PelvisHeightControlMode.values())
          factory.addRequestedTransition(from, requestedState);
@@ -292,6 +299,11 @@ public class CenterOfMassHeightManager
    {
       if (useStateMachine)
       {
+         if (userCoMHeightControlState.isCoMHeightTrajectoryAvailable())
+         {
+            requestState(PelvisHeightControlMode.USER_COM);
+         }
+
          return stateMachine.getCurrentState().computeDesiredCoMHeightAcceleration(desiredICPVelocity, isInDoubleSupport, omega0, isRecoveringFromPush,
                                                                                    feetManager);
       }
@@ -348,7 +360,8 @@ public class CenterOfMassHeightManager
    {
       if (useStateMachine)
       {
-         return stateMachine.getCurrentStateKey().equals(PelvisHeightControlMode.WALKING_CONTROLLER);
+         return stateMachine.getCurrentStateKey().equals(PelvisHeightControlMode.WALKING_CONTROLLER)
+               || stateMachine.getCurrentStateKey().equals(PelvisHeightControlMode.USER_COM);
       }
       else
       {
@@ -357,13 +370,14 @@ public class CenterOfMassHeightManager
    }
 
    public void setComHeightGains(PIDGainsReadOnly walkingControllerComHeightGains, DoubleProvider walkingControllerMaxComHeightVelocity,
-                                 PIDGainsReadOnly userModeComHeightGains)
+                                 PIDGainsReadOnly userModePelvisHeightGains, PIDGainsReadOnly userModeCoMHeightGains)
    {
       if (useStateMachine)
       {
          centerOfMassHeightControlState.setGains(walkingControllerComHeightGains, walkingControllerMaxComHeightVelocity);
       }
-      pelvisHeightControlState.setGains(userModeComHeightGains);
+      pelvisHeightControlState.setGains(userModePelvisHeightGains);
+      userCoMHeightControlState.setGains(userModeCoMHeightGains);
    }
 
    public void step(Point3DReadOnly stanceFootPosition, Point3DReadOnly touchdownPosition, double swingTime, RobotSide swingSide, double toeOffHeight)

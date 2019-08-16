@@ -115,6 +115,36 @@ public class CenterOfMassTrajectoryHandler extends EuclideanTrajectoryHandler
       return true;
    }
 
+   public boolean packDesiredCoMState(double controllerTime, FramePoint3D comPositionToPack, FrameVector3D comVelocityToPack)
+   {
+      if (!isWithinInterval(controllerTime))
+      {
+         if (comPositionToPack != null)
+         {
+            comPositionToPack.setToNaN(ReferenceFrame.getWorldFrame());
+         }
+
+         if (comVelocityToPack != null)
+         {
+            comVelocityToPack.setToNaN(ReferenceFrame.getWorldFrame());
+         }
+         return false;
+      }
+
+      if (comPositionToPack != null)
+      {
+         comPositionToPack.setIncludingFrame(ReferenceFrame.getWorldFrame(), getPosition());
+         comPositionToPack.add(offset);
+      }
+
+      if (comVelocityToPack != null)
+      {
+         comVelocityToPack.setIncludingFrame(ReferenceFrame.getWorldFrame(), getVelocity());
+      }
+
+      return true;
+   }
+
    public void setPositionOffset(FrameVector3DReadOnly offset)
    {
       this.offset.setIncludingFrame(offset);

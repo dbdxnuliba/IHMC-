@@ -89,7 +89,8 @@ public class HighLevelControlManagerFactory
 
    private PIDGainsReadOnly walkingControllerComHeightGains;
    private DoubleProvider walkingControllerMaxComHeightVelocity;
-   private PIDGainsReadOnly userModeComHeightGains;
+   private PIDGainsReadOnly userModePelvisHeightGains;
+   private PIDGainsReadOnly userModeCoMHeightGains;
 
    public HighLevelControlManagerFactory(YoVariableRegistry parentRegistry)
    {
@@ -130,7 +131,11 @@ public class HighLevelControlManagerFactory
 
       walkingControllerComHeightGains = new ParameterizedPIDGains("WalkingControllerComHeight", walkingControllerParameters.getCoMHeightControlGains(), comHeightGainRegistry);
       walkingControllerMaxComHeightVelocity = new DoubleParameter("MaximumVelocityWalkingControllerComHeight", comHeightGainRegistry, 0.25);
-      userModeComHeightGains = new ParameterizedPIDGains("UserModeComHeight", walkingControllerParameters.getCoMHeightControlGains(), comHeightGainRegistry);
+      userModePelvisHeightGains = new ParameterizedPIDGains("UserModePelvisHeight",
+                                                            walkingControllerParameters.getCoMHeightControlGains(),
+                                                            comHeightGainRegistry);
+      userModeCoMHeightGains = new ParameterizedPIDGains("UserModeCoMHeight", walkingControllerParameters.getCoMHeightControlGains(), comHeightGainRegistry);
+
    }
 
    public void setCapturePointPlannerParameters(ICPWithTimeFreezingPlannerParameters capturePointPlannerParameters)
@@ -172,7 +177,10 @@ public class HighLevelControlManagerFactory
       centerOfMassHeightManager = new CenterOfMassHeightManager(controllerToolbox, walkingControllerParameters, registry);
       centerOfMassHeightManager.setPelvisTaskspaceWeights(pelvisLinearWeight);
       centerOfMassHeightManager.setPrepareForLocomotion(walkingControllerParameters.doPreparePelvisForLocomotion());
-      centerOfMassHeightManager.setComHeightGains(walkingControllerComHeightGains, walkingControllerMaxComHeightVelocity, userModeComHeightGains);
+      centerOfMassHeightManager.setComHeightGains(walkingControllerComHeightGains,
+                                                  walkingControllerMaxComHeightVelocity,
+                                                  userModePelvisHeightGains,
+                                                  userModeCoMHeightGains);
       return centerOfMassHeightManager;
    }
 
