@@ -17,6 +17,8 @@ import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.log.*;
 import us.ihmc.messager.*;
 import us.ihmc.messager.MessagerAPIFactory.*;
+import us.ihmc.pubsub.attributes.*;
+import us.ihmc.pubsub.common.*;
 import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.robotSide.*;
@@ -61,11 +63,13 @@ public class newSuppaKickBehavior
    //   private ArrayList<Boolean> chestFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
 
    private final Notification goToWalk = new Notification();
+   private final Notification taskspaceNotification = new Notification();
+   private final Notification pelvisNotification = new Notification();
    private final Notification doOnlyOnce = new Notification();
 //   private boolean tmp = false;
    private final boolean triggerfromAnotherBehavior = false;
 
-//   private PausablePeriodicThread thread;
+   private PausablePeriodicThread taskSpaceThread;
 
    BehaviorAction chestAction = new BehaviorAction()
    {
@@ -88,7 +92,24 @@ public class newSuppaKickBehavior
       }
    };
 
-   BehaviorAction armsAction = new BehaviorAction()
+   BehaviorAction chestAction1 = new BehaviorAction()
+   {
+      @Override
+      public void onEntry()
+      {
+
+         System.out.println("Doing chest motion");
+         double chestTrajectoryTime = 0.5;
+         FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
+         chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(), 0.0, Math.toRadians(0.0), 0.0);
+         behaviorHelper.requestChestOrientationTrajectory(chestTrajectoryTime,
+                                                          chestOrientation,
+                                                          ReferenceFrame.getWorldFrame(),
+                                                          behaviorHelper.pollHumanoidReferenceFrames().getChestFrame());
+      }
+   };
+
+         BehaviorAction armsAction = new BehaviorAction()
    {
       @Override
       public void onEntry()
@@ -114,6 +135,38 @@ public class newSuppaKickBehavior
          FramePoint3D pelvis_1 = new FramePoint3D(ReferenceFrame.getWorldFrame(), pelvisZUp.getX(),pelvisZUp.getY(),pelvisZUp.getZ());
          FrameQuaternion orientation = new FrameQuaternion();
          orientation.setYawPitchRoll(0,0.0,0.0);
+         behaviorHelper.requestPelvisTrajectory(pelvisTrajectoryTime,pelvis_1, orientation);
+      }
+   };
+
+   BehaviorAction pelvisAction1 = new BehaviorAction()
+   {
+      @Override
+      public void onEntry()
+      {
+         System.out.println("Doing pelvis1 motion");
+         double pelvisTrajectoryTime = 1.0;
+         FramePose3D pelvisZUp = new FramePose3D();
+         pelvisZUp.setFromReferenceFrame(behaviorHelper.pollHumanoidReferenceFrames().getPelvisZUpFrame());
+         FramePoint3D pelvis_1 = new FramePoint3D(ReferenceFrame.getWorldFrame(), pelvisZUp.getX(),pelvisZUp.getY(),pelvisZUp.getZ());
+         FrameQuaternion orientation = new FrameQuaternion();
+         orientation.setYawPitchRoll(Math.toRadians(55),0.0,0.0);
+         behaviorHelper.requestPelvisTrajectory(pelvisTrajectoryTime,pelvis_1, orientation);
+      }
+   };
+
+   BehaviorAction pelvisAction2 = new BehaviorAction()
+   {
+      @Override
+      public void onEntry()
+      {
+         System.out.println("Doing pelvis2 motion");
+         double pelvisTrajectoryTime = 1.0;
+         FramePose3D pelvisZUp = new FramePose3D();
+         pelvisZUp.setFromReferenceFrame(behaviorHelper.pollHumanoidReferenceFrames().getPelvisZUpFrame());
+         FramePoint3D pelvis_1 = new FramePoint3D(ReferenceFrame.getWorldFrame(), pelvisZUp.getX(),pelvisZUp.getY(),pelvisZUp.getZ());
+         FrameQuaternion orientation = new FrameQuaternion();
+         orientation.setYawPitchRoll(Math.toRadians(55),0.0,0.0);
          behaviorHelper.requestPelvisTrajectory(pelvisTrajectoryTime,pelvis_1, orientation);
       }
    };
@@ -156,6 +209,8 @@ public class newSuppaKickBehavior
 //      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
       fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 
+
+
       //go to walk is the name of the bahavior itself
       enable = messager.createInput(API.Enable, false);
 
@@ -188,13 +243,17 @@ public class newSuppaKickBehavior
 //      }
       // current they are being added in reverse.
 //      BehaviorBuilder build6 = new BehaviorBuilder(actionTypes.LeftLeg,leftLEgAction);
-//      BehaviorBuilder build5 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction);
-      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction);
-      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, chestAction );//, ros2Node, robotModel);
-      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,armsAction); // both arms
+      BehaviorBuilder build7 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction2);
+      BehaviorBuilder build6 = new BehaviorBuilder(actionTypes.Chest, chestAction1 );//, ros2Node, robotModel);
+      BehaviorBuilder build5 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction1);
+
+//      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, chestAction );//, ros2Node, robotModel);
+//      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,armsAction); // both arms
       BehaviorBuilder build4 = new BehaviorBuilder(actionTypes.LeftLeg,leftLEgAction);
+      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction);
 //      BehaviorBuilder build5 = new BehaviorBuilder(actionTypes.RightLeg,rightLegAction);
 
+//      taskSpaceThread = new PausablePeriodicThread(this::triggerAppropriateListener, 0.1, "");
       goToWalk.set();
       doOnlyOnce.set();
       //, ros2Node, robotModel) ;
@@ -273,7 +332,8 @@ public class newSuppaKickBehavior
 
 
 //   private void triggerAppropriateListener(ArrayList<BehaviorBuilder.actionTypes> actions)
-private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
+   private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
+//   private void triggerAppropriateListener()
    {
 
 //      actionTypesArrayList =  BehaviorBuilder.getActionTypes();
@@ -282,14 +342,33 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
 //         if (actionTypesArrayList.get(i).equals(actionTypes.Chest) || actionTypesArrayList.get(i).equals(actionTypes.Pelvis) ||
 //               actionTypesArrayList.get(i).equals(actionTypes.LeftLeg) || actionTypesArrayList.get(i).equals(actionTypes.RightLeg))
 
-         if(actions.equals(actionTypes.Chest) || actions.equals(actionTypes.Pelvis) || actions.equals(actionTypes.LeftLeg) || actions.equals(actionTypes.RightLeg))
-         {
-            ROS2Tools.createCallbackSubscription(ros2Node,
-                                                 TaskspaceTrajectoryStatusMessage.class,
-                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-                                                 this::checkTaskspaceTrajectoryMessage);
+//         if(actions.equals(actionTypes.LeftLeg))
+//         {
+//            ROS2Tools.createCallbackSubscription(ros2Node,
+//                                                 TaskspaceTrajectoryStatusMessage.class,
+//                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+//                                                 this::checkTaskspaceTrajectoryMessage);
+//
+//         }
+//         if (actions.equals(actionTypes.Pelvis))
+//         {
+//            pelvisNotification.set();
+//            ROS2Tools.createCallbackSubscription(ros2Node,
+//                                                 TaskspaceTrajectoryStatusMessage.class,
+//                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+//                                                 this::checkTaskspaceTrajectoryMessagePelvis);
+//         }
 
+         if(actions.equals(actionTypes.LeftLeg) || actions.equals(actionTypes.Pelvis) || actions.equals(actionTypes.RightLeg) || actions.equals(actionTypes.Chest))
+         {
+            taskspaceNotification.set();
+            ROS2Tools.createCallbackSubscription(ros2Node,
+                                           TaskspaceTrajectoryStatusMessage.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           this::checkTaskspaceTrajectoryMessageLfoot);
          }
+
+
 
 //         else if (actionTypesArrayList.get(i).equals(actionTypes.LeftArm) || actionTypesArrayList.get(i).equals(actionTypes.RightArm))
          else if(actions.equals(actionTypes.LeftArm) || actions.equals(actionTypes.RightArm))
@@ -300,42 +379,59 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
                                                  this::checkJointTrajectoryMessage);
          }
 
-         else
-         {
-            ROS2Tools.createCallbackSubscription(ros2Node,
-                                                 WalkingStatusMessage.class,
-                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-                                                 this::checkFootTrajectoryMessage);
-         }
+//         else
+//         {
+//            ROS2Tools.createCallbackSubscription(ros2Node,
+//                                                 WalkingStatusMessage.class,
+//                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+//                                                 this::checkFootTrajectoryMessage);
+//         }
 //      }
 
 
    }
 
-   int tmp_counter = 1;
+//   int tmp_counter = 1;
    // when sending the arms message due to left and and right arms, counter++ gets triggered twice.
+//   int triggerOnce = 1;
+
+
    public void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
    {
+
+//      triggerOnce++;
       JointspaceTrajectoryStatusMessage tmp = message.takeNextData();
 
       if (tmp.getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
       {
-//         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
-        if(tmp_counter == 1)
-        {
+
+//        {
            if(tmp.getJointNames().getString(0).equals("r_arm_shz"))
            {
+
+
               if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
               {
-                 ActionBehaviors.get(behaviorCounter).isDone();
-                 behaviorCounter++;
+
+                 if(ActionBehaviors.get(behaviorCounter).isDone())
+                 {
+                    behaviorCounter++;
+
+                 }
+
+
               }
-              goToWalk.set();
-           }
+//              if (triggerOnce == 3)
+//              {
+                 goToWalk.set();
+//              }
+
+//           }
 //           tmp_counter++;
         }
       }
    }
+
 
    private void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
    {
@@ -343,6 +439,7 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
 
       if (tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED)
       {
+
 //         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
 //         ActionBehaviors.get(behaviorCounter).isDone();
 
@@ -355,23 +452,99 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
       }
    }
 
-   private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+//   private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+//   {
+//
+//      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+//
+//      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+//      {
+////         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
+////         ActionBehaviors.get(behaviorCounter).isDone();
+//         if(tmp.getEndEffectorNameAsString().equals("l_foot"))
+//         {
+//            System.out.println("Am I printed twice???");
+//            if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
+//            {
+//               ActionBehaviors.get(behaviorCounter).isDone();
+//               behaviorCounter++;
+//            }
+//            goToWalk.set();
+//         }
+//
+//      }
+//
+//   }
+
+
+   private void checkTaskspaceTrajectoryMessagePelvis(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
 
+
       TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+//      System.out.println(tmp);
+
+//      System.out.println("Sew how many time I get printed");
 
       if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
       {
-//         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
-//         ActionBehaviors.get(behaviorCounter).isDone();
-         if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
+         if(pelvisNotification.poll())
          {
-            ActionBehaviors.get(behaviorCounter).isDone();
-            behaviorCounter++;
+            tmp.setTrajectoryExecutionStatus(TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED);
+            if (tmp.getEndEffectorNameAsString().equals("pelvis"))
+            {
+
+               if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
+               {
+                  System.out.println("Executing Done method for :" + ActionBehaviors.get(behaviorCounter));
+                  if (ActionBehaviors.get(behaviorCounter).isDone())
+                  {
+                     behaviorCounter++;
+                  }
+
+               }
+               goToWalk.set();
+               //            taskSpaceThread.stop();
+
+            }
+
          }
-         goToWalk.set();
+         //         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
+         //         ActionBehaviors.get(behaviorCounter).isDone();
+
       }
 
+   }
+
+   private void checkTaskspaceTrajectoryMessageLfoot(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+   {
+
+         TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+         //      System.out.println(tmp);
+
+         //      System.out.println("Sew how many time I get printed");
+         if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+         {
+            if(taskspaceNotification.poll())
+            {
+               System.out.println("I Should be printed exactly once");
+               tmp.setTrajectoryExecutionStatus(TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED);
+//               if (tmp.getEndEffectorNameAsString().equals("l_foot"))
+//               {
+                  if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
+                  {
+                     System.out.println("Executing Done method for :" + ActionBehaviors.get(behaviorCounter));
+                     if (ActionBehaviors.get(behaviorCounter).isDone())
+                     {
+                        behaviorCounter++;
+                     }
+                  }
+                  goToWalk.set();
+//               }
+            }
+         }
+            //         BehaviorBuilder.getActionsBehavior().get(behaviorCounter).isDone();
+            //         ActionBehaviors.get(behaviorCounter).isDone();
    }
 
    public void doBehavior()
@@ -394,10 +567,33 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
 
          ActionBehaviors.get(behaviorCounter).onEntry();
          // pass in the counter for the previous behavior or the previous behavior type
+         System.out.println("Triggering behavior" + BehaviorBuilder.getActionTypes().get(behaviorCounter));
          triggerAppropriateListener(BehaviorBuilder.getActionTypes().get(behaviorCounter));
+//         triggerAppropriateListener();
+//         taskSpaceThread.start();
+//         taskSpaceThread.stop();
       }
 
 
+
+
+   }
+
+   public void doControl()
+   {
+//      if(goToWalk.poll())
+//      {
+//         System.out.println("Triggering Behavior"  + (behaviorCounter));
+//         if(behaviorCounter == ActionBehaviors.size())
+//         {
+//            doOnAbort(true);
+//         }
+//
+//         ActionBehaviors.get(behaviorCounter).onEntry();
+//         // pass in the counter for the previous behavior or the previous behavior type
+//         System.out.println("Triggering behavior" + BehaviorBuilder.getActionTypes().get(behaviorCounter));
+//         triggerAppropriateListener(BehaviorBuilder.getActionTypes().get(behaviorCounter));
+//      }
    }
 
 
@@ -410,8 +606,6 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
          behaviorHelper.shutdownScheduledThread();
       }
    }
-
-
 
 //   public void doBehavior()
 //   {
@@ -629,9 +823,6 @@ private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
 //      //      enable = new AtomicReference<Boolean>(true);
 //      //      goToWalk.set();
 //   }
-
-
-
 
 
    public static class API

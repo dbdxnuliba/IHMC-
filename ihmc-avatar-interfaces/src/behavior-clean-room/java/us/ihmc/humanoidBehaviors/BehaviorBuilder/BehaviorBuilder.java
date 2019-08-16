@@ -139,64 +139,76 @@ public class BehaviorBuilder
       return flags;
    }
 
-//   public void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
-//   {
-//      JointspaceTrajectoryStatusMessage tmp = message.takeNextData();
-//
-//      if (tmp.getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED);
-//
-//   }
-//
-//   public void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
-//   {
-//      WalkingStatusMessage tmp = message.takeNextData();
-//
-//      if (tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED);
-//   }
-//
-//   public void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
-//   {
-//
-//      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
-//
-//      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
-//         ;
-//   }
+   public static void methodcollection()
+   {
 
-//   public static void main(String[] args)
-//   {
-//      BehaviorAction action1 = new BehaviorAction()
-//      {
-//         @Override
-//         public void onEntry()
-//         {
-//
-//         }
-//      };
-//
-//      BehaviorAction action2 = new BehaviorAction()
-//      {
-//         @Override
-//         public void onEntry()
-//         {
-//
-//         }
-//      };
-//
-//
-//      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Pelvis, action1);// , ros2Node, robotModel);
-//      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,action2);//, ros2Node, robotModel) ;
-//
-//      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest,action1);
-//      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.Pelvis,action2);
-//      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Pelvis,action2);
-//      BehaviorBuilder build2 = new BehaviorBuilder( actionTypes.Pelvis,action2);
+   }
+   public void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
+   {
+      JointspaceTrajectoryStatusMessage tmp = message.takeNextData();
+
+      if (tmp.getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED);
+
+   }
+
+   public void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
+   {
+      WalkingStatusMessage tmp = message.takeNextData();
+
+      if (tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED);
+   }
+
+   public void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+   {
+
+      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+
+      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+         ;
+   }
+
+   public static void main(String[] args)
+   {
+      BehaviorAction action1 = new BehaviorAction()
+      {
+         @Override
+         public void onEntry()
+         {
+
+         }
+      };
+
+      BehaviorAction action2 = new BehaviorAction()
+      {
+         @Override
+         public void onEntry()
+         {
+
+         }
+      };
+
+
+      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Pelvis, action1);// , ros2Node, robotModel);
+      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,action2);//, ros2Node, robotModel) ;
+
+      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Chest,action1);
+      BehaviorBuilder build4 = new BehaviorBuilder(actionTypes.Pelvis,action2);
+      BehaviorBuilder build6 = new BehaviorBuilder(actionTypes.Pelvis,action2);
+      BehaviorBuilder build5 = new BehaviorBuilder( actionTypes.Pelvis,action2);
 //      ArrayList<Integer> flug =  BehaviorBuilder.buildFlags();
-//      ArrayList<BehaviorBuilder.actionTypes> flug =  BehaviorBuilder.buildFlags();
-//      System.out.println(BehaviorBuilder.getActionTypes());
+      ArrayList<BehaviorBuilder.actionTypes> flug =  BehaviorBuilder.buildFlags();
+      System.out.println(BehaviorBuilder.getActionTypes());
+
+      for(int i = 0; i< getActionTypes().size(); i++)
+      {
+         if(getActionTypes().get(i).equals("Pelvis"))
+         {
+            System.out.println("Pelvis Match - should be 1 times");
+         }
+      }
 //      System.out.println(BehaviorBuilder.getActionsBehavior());
-//
-//
-//
-//   }
+
+
+
+   }
 }
