@@ -205,6 +205,15 @@ public class BehaviorHelper
       remoteRobotControllerInterface.requestGoHome(pelvisGoHomeMessage);
    }
 
+   public void requestArmsGoHome(double trajectoryTime)
+   {
+      GoHomeMessage armsGoHomeMessage = HumanoidMessageTools.createGoHomeMessage(HumanoidBodyPart.ARM, trajectoryTime);
+      armsGoHomeMessage.setDestination(PacketDestination.CONTROLLER.ordinal());
+      remoteRobotControllerInterface.requestGoHome(armsGoHomeMessage);
+   }
+
+
+
    public void requestChestOrientationTrajectory(double trajectoryTime, FrameQuaternion chestOrientation, ReferenceFrame dataFrame,
                                                  ReferenceFrame trajectoryFrame)
    {

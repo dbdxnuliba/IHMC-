@@ -1,52 +1,26 @@
 package us.ihmc.humanoidBehaviors;
 
 import controller_msgs.msg.dds.*;
-import org.lwjgl.*;
-import org.omg.PortableInterceptor.*;
 import us.ihmc.avatar.drcRobot.*;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
-import us.ihmc.commons.lists.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
-import us.ihmc.communication.net.*;
-import us.ihmc.communication.packets.*;
 import us.ihmc.euclid.geometry.*;
 import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.euclid.referenceFrame.interfaces.*;
-import us.ihmc.euclid.tuple3D.*;
-import us.ihmc.euclid.tuple4D.*;
-import us.ihmc.graphicsDescription.yoGraphics.*;
-import us.ihmc.humanoidBehaviors.behaviors.*;
-import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
-import us.ihmc.humanoidBehaviors.fancyPoses.FancyPosesBehavior.*;
-import us.ihmc.humanoidBehaviors.taskExecutor.*;
+import us.ihmc.humanoidBehaviors.BehaviorBuilder.*;
+import us.ihmc.humanoidBehaviors.BehaviorBuilder.BehaviorBuilder.*;
+import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
 import us.ihmc.humanoidBehaviors.tools.*;
-import us.ihmc.humanoidBehaviors.utilities.*;
-import us.ihmc.humanoidRobotics.communication.controllerAPI.command.*;
-import us.ihmc.humanoidRobotics.communication.packets.*;
-import us.ihmc.humanoidRobotics.communication.packets.dataobjects.*;
 import us.ihmc.humanoidRobotics.communication.packets.walking.*;
-import us.ihmc.humanoidRobotics.communication.subscribers.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.log.*;
-import us.ihmc.mecano.frames.*;
 import us.ihmc.messager.*;
 import us.ihmc.messager.MessagerAPIFactory.*;
 import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
-import us.ihmc.robotics.geometry.*;
 import us.ihmc.robotics.robotSide.*;
-import us.ihmc.robotics.taskExecutor.*;
 import us.ihmc.ros2.*;
-import us.ihmc.simulationconstructionset.*;
 import us.ihmc.tools.thread.*;
-import us.ihmc.yoVariables.registry.*;
-import us.ihmc.yoVariables.variable.*;
-
-import java.sql.*;
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -55,7 +29,7 @@ public class SuppaKickBehavior
 
    private final BehaviorHelper behaviorHelper;
    private final ActivationReference<Boolean> stepping;
-   private final AtomicReference<Boolean> enable;
+   private AtomicReference<Boolean> enable;
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
    private FullHumanoidRobotModel fullHumanoidRobotModel;
 
@@ -79,18 +53,23 @@ public class SuppaKickBehavior
 //   private ArrayList<Boolean> chestFlags = new ArrayList<>(Arrays.asList(false,false,false,false,false));
 
    private final Notification goToWalk = new Notification();
+   private boolean tmp = false;
+   private final boolean triggerfromAnotherBehavior = false;
+
+
+
 
 
    public SuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
-      LogTools.debug("Initializing SearchAndKickBehavior");
+      LogTools.debug("Initializing SuppaKickBehavior");
 
       this.behaviorHelper = behaviorHelper;
 
       behaviorHelper.createFootstepStatusCallback(this::acceptFootstepStatus);
       stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
       messager.registerTopicListener(API.Abort,this::doOnAbort);
-      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
+//      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
       fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 
       //go to walk is the name of the bahavior itself
@@ -113,15 +92,48 @@ public class SuppaKickBehavior
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                            this::checkTaskspaceTrajectoryMessage);
 
+//      BehaviorBuilder build1 = new BehaviorBuilder( actionTypes.Chest,action1);
+//      BehaviorBuilder build2 = new BehaviorBuilder( actionTypes.Pelvis,action2);
+
+
+
 
 
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
+//      goToWalk.set();
+      if(triggerfromAnotherBehavior)
+      {
+         enable = new AtomicReference<Boolean>(true);
+         goToWalk.set();
+      }
 
-
+      action2.isDone();
 
    }
 
 // footstep counter acts like a counter for sequence of tasks
+
+   BehaviorAction action1 = new BehaviorAction()
+   {
+      @Override
+      public void onEntry()
+      {
+
+      }
+   };
+
+   BehaviorAction action2 = new BehaviorAction()
+   {
+      @Override
+      public void onEntry()
+      {
+
+      }
+   };
+
+
+
+
 
    private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
@@ -206,8 +218,9 @@ public class SuppaKickBehavior
       }
    }
 
-   private void doBehavior()
+   public void doBehavior()
    {
+//      System.out.println("NOw in doBehavior loop");
       if(!enable.get())
       {
          return;
@@ -219,8 +232,6 @@ public class SuppaKickBehavior
          {
             LogTools.info("Sending Steps");
          }
-
-
       }
 
       else if (stepping.hasChanged())
@@ -228,9 +239,12 @@ public class SuppaKickBehavior
          LogTools.info("Stopped Stepping");
       }
 
+
+
       if(goToWalk.poll())
       {
 
+         System.out.println("Inside doBehavior and goToWalk poll");
          getPelvisUp(behaviorHelper.pollHumanoidReferenceFrames());
          startBehavior = true;
       }
@@ -238,6 +252,10 @@ public class SuppaKickBehavior
 
       if (startBehavior)
       {
+         // write a helper class that build sequence of flags for you given as an input a sequence of actions
+         // given a pelvis action with as #1 it add the first flag as pelvis
+         // #2 getArmsBack -> armsFlag
+         // #3 chestForward() and submitFootPosition() -> either chestFlag or WalkingStatusFLag and so on
          if(leftArmFlag && rightArmFlag)
          {
             getArmsBack();
@@ -281,6 +299,15 @@ public class SuppaKickBehavior
 
          }
       }
+
+   }
+
+   private void resetRobotPose()
+   {
+      double goHomeTime = 2.0;
+      behaviorHelper.requestChestGoHome(goHomeTime);
+      behaviorHelper.requestPelvisGoHome(goHomeTime);
+      behaviorHelper.requestArmsGoHome(goHomeTime);
 
    }
 
@@ -398,6 +425,20 @@ public class SuppaKickBehavior
 
    }
 
+   public void setGoToWalk()
+
+   {
+//      System.out.println("Setting Walking Notification");
+//      goToWalk.poll();
+//      System.out.println(goToWalk.read());
+//      enable = new AtomicReference<Boolean>(true);
+//      goToWalk.set();
+   }
+
+
+
+
+
    public static class API
    {
       private static final MessagerAPIFactory apiFactory = new MessagerAPIFactory();
@@ -415,5 +456,7 @@ public class SuppaKickBehavior
          return apiFactory.getAPIAndCloseFactory();
       }
    }
+
+
 
 }

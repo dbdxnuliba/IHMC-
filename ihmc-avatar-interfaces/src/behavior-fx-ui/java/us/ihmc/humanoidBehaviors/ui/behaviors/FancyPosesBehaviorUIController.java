@@ -42,7 +42,7 @@ public class FancyPosesBehaviorUIController
    @FXML
    public void enable()
    {
-      behaviorMessager.submitMessage(SuppaKickBehavior.API.Enable, enableCheckBox.isSelected());
+      behaviorMessager.submitMessage(SearchAndKickBehavior.API.Enable, enableCheckBox.isSelected());
    }
 
    //   @FXML
@@ -54,7 +54,7 @@ public class FancyPosesBehaviorUIController
       @FXML
       public void requestSingleSupport()
       {
-         behaviorMessager.submitMessage(SuppaKickBehavior.API.Walk, true);
+         behaviorMessager.submitMessage(SearchAndKickBehavior.API.SearchAndKick, true);
       }
 
    @FXML
