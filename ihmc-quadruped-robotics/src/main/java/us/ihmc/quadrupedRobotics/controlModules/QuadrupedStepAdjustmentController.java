@@ -1,5 +1,6 @@
 package us.ihmc.quadrupedRobotics.controlModules;
 
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -9,16 +10,13 @@ import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PlanarRegionsListCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedStep;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
+import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.controlModules.foot.QuadrupedFootControlModuleParameters;
 import us.ihmc.quadrupedRobotics.controller.QuadrupedControllerToolbox;
 import us.ihmc.quadrupedRobotics.controller.toolbox.LinearInvertedPendulumModel;
-import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedStepCrossoverProjection;
 import us.ihmc.quadrupedRobotics.planning.QuadrupedStepPlanarRegionProjection;
-import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
-import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.robotics.math.DeadbandTools;
-import us.ihmc.robotics.math.filters.AccelerationLimitedYoFrameVector3D;
 import us.ihmc.robotics.math.filters.RateLimitedYoFrameVector;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
@@ -29,7 +27,6 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class QuadrupedStepAdjustmentController
@@ -39,6 +36,7 @@ public class QuadrupedStepAdjustmentController
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final QuadrantDependentList<FixedFrameVector3DBasics> instantaneousStepAdjustments = new QuadrantDependentList<>();
    private final QuadrantDependentList<RateLimitedYoFrameVector> limitedInstantaneousStepAdjustments = new QuadrantDependentList<>();
+   private final QuadrantDependentList<FixedFrameVector3DBasics> stepAdjustmentGradients = new QuadrantDependentList<>();
 
    private final DoubleParameter maxStepAdjustmentRate = new DoubleParameter("maxStepAdjustmentRate", registry, 5.0);
 
@@ -91,6 +89,7 @@ public class QuadrupedStepAdjustmentController
                                                                                                     maxStepAdjustmentRate,// maxStepAdjustmentAcceleration,
                                                                                                     controllerToolbox.getRuntimeEnvironment().getControlDT(),
                                                                                                     instantaneousStepAdjustment);
+         YoFrameVector3D stepAdjustmentGradient = new YoFrameVector3D(prefix + "StepAdjustmentGradient", worldFrame, registry);
 
          YoDouble dcmStepAdjustmentMultiplier = new YoDouble(prefix + "DcmStepAdjustmentMultiplier", registry);
          YoDouble recursionMultiplier = new YoDouble(prefix + "RecursionMultiplier", registry);
@@ -102,6 +101,7 @@ public class QuadrupedStepAdjustmentController
 
          instantaneousStepAdjustments.put(robotQuadrant, instantaneousStepAdjustment);
          limitedInstantaneousStepAdjustments.put(robotQuadrant, limitedInstantaneousStepAdjustment);
+         stepAdjustmentGradients.put(robotQuadrant, stepAdjustmentGradient);
          dcmStepAdjustmentMultipliers.put(robotQuadrant, dcmStepAdjustmentMultiplier);
          recursionMultipliers.put(robotQuadrant, recursionMultiplier);
       }
@@ -122,6 +122,7 @@ public class QuadrupedStepAdjustmentController
    {
       instantaneousStepAdjustments.get(robotQuadrant).setToNaN();
       limitedInstantaneousStepAdjustments.get(robotQuadrant).setToZero();
+      stepAdjustmentGradients.get(robotQuadrant).setToZero();
       dcmStepAdjustmentMultipliers.get(robotQuadrant).setToNaN();
       recursionMultipliers.get(robotQuadrant).setToNaN();
       planarRegionProjection.completedStep(robotQuadrant);
@@ -212,7 +213,10 @@ public class QuadrupedStepAdjustmentController
          {
             instantaneousStepAdjustment.setToZero();
          }
+
+         stepAdjustmentGradients.get(robotQuadrant).set(limitedInstantaneousStepAdjustment);
          limitedInstantaneousStepAdjustment.update();
+         stepAdjustmentGradients.get(robotQuadrant).sub(limitedInstantaneousStepAdjustment);
 
          tempPoint.setIncludingFrame(activeStep.getReferenceFrame(), activeStep.getGoalPosition());
          tempPoint.changeFrame(worldFrame);
@@ -242,6 +246,11 @@ public class QuadrupedStepAdjustmentController
    public FrameVector3DReadOnly getStepAdjustment(RobotQuadrant robotQuadrant)
    {
       return limitedInstantaneousStepAdjustments.get(robotQuadrant);
+   }
+
+   public FrameVector3DReadOnly getStepAdjustmentGradient(RobotQuadrant robotQuadrant)
+   {
+      return stepAdjustmentGradients.get(robotQuadrant);
    }
 
    public boolean stepHasBeenAdjusted()

@@ -3,6 +3,8 @@ package us.ihmc.quadrupedRobotics.stepStream;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.commons.lists.SupplierBuilder;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameVector3D;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.QuadrupedTimedStepListCommand;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
@@ -16,6 +18,8 @@ import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.robotics.time.TimeIntervalBasics;
 import us.ihmc.robotics.time.TimeIntervalTools;
+import us.ihmc.tools.ArrayTools;
+import us.ihmc.tools.lists.QuickSort;
 import us.ihmc.yoVariables.parameters.BooleanParameter;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -23,9 +27,14 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class QuadrupedStepStreamManager
@@ -61,6 +70,19 @@ public class QuadrupedStepStreamManager
    private final EndDependentList<YoQuadrupedTimedStep> currentSteps = new EndDependentList<>();
 
    private final BooleanParameter delayToEnsureContactOnEachEnd = new BooleanParameter("delayToEnsureContactOnEachEnd", registry, true);
+
+   private final BooleanParameter shiftPlanBasedOnStepAdjustment = new BooleanParameter("shiftPlanBasedOnStepAdjustment", registry, true);
+
+   /**
+    * If shiftPlanBasedOnStepAdjustment is true, upcoming steps will shifted by
+    * {@code alpha * x}, where
+    * {@code alpha} is this parameter and
+    * {@code x} is the instantaneous step adjustment of the active step with the latest end time
+    */
+   private final DoubleParameter stepAdjustmentShiftFactor = new DoubleParameter("stepAdjustmentShiftFactor", registry, 0.0);
+
+   /** Net amount that steps have been shifted from propogating step adjustment */
+   private final YoFrameVector3D accumulatedStepShift = new YoFrameVector3D("accumulatedStepShift", ReferenceFrame.getWorldFrame(), registry);
 
    /**
     * Variables for stopping and pausing. The expected behavior is:
@@ -123,6 +145,7 @@ public class QuadrupedStepStreamManager
       stopRequested.set(false);
       pausedRequested.set(false);
       pausedSteps.clear();
+      accumulatedStepShift.setToZero();
 
       stepSequence.clear();
       getStepStream().onEntry(stepSequence, initialTransferDurationForShifting);
@@ -173,6 +196,17 @@ public class QuadrupedStepStreamManager
       }
 
       updateActiveSteps();
+
+      // shift upcoming steps
+      for (int i = 0; i < stepSequence.size(); i++)
+      {
+         if (!activeSteps.contains(stepSequence.get(i)))
+         {
+            tempPoint.set(stepSequence.get(i).getGoalPosition());
+            tempPoint.add(accumulatedStepShift);
+            stepSequence.get(i).setGoalPosition(tempPoint);
+         }
+      }
    }
 
    /**
@@ -331,5 +365,17 @@ public class QuadrupedStepStreamManager
          tempPoint.add(adjustmentVector);
          step.setGoalPosition(tempPoint);
       }
+   }
+
+   public void processInstantaneousStepAdjustment(Function<RobotQuadrant, FrameVector3DReadOnly> instantaneousStepAdjustment)
+   {
+      if(!shiftPlanBasedOnStepAdjustment.getValue() || stepAdjustmentShiftFactor.getValue() <= 0.0 || activeSteps.isEmpty())
+      {
+         return;
+      }
+
+      QuickSort.sort(activeSteps, TimeIntervalTools.endTimeComparator);
+      RobotQuadrant latestStepQuadrant = activeSteps.get(activeSteps.size() - 1).getRobotQuadrant();
+      accumulatedStepShift.scaleAdd(stepAdjustmentShiftFactor.getValue(), instantaneousStepAdjustment.apply(latestStepQuadrant), accumulatedStepShift);
    }
 }

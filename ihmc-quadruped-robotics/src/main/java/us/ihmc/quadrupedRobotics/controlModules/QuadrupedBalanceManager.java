@@ -440,4 +440,9 @@ public class QuadrupedBalanceManager
    {
       return stepAdjustmentController.getStepAdjustment(robotQuadrant);
    }
+
+   public FrameVector3DReadOnly getStepAdjustmentGradient(RobotQuadrant robotQuadrant)
+   {
+      return stepAdjustmentController.getStepAdjustmentGradient(robotQuadrant);
+   }
 }

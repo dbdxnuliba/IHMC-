@@ -15,6 +15,7 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
@@ -38,6 +39,7 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
    private final YoFrameVector3D desiredVelocity = new YoFrameVector3D("desiredVelocity", ReferenceFrame.getWorldFrame(), registry);
    private final double controlDT;
    private final DoubleProvider timestamp;
+   private final YoDouble firstStepStartTime = new YoDouble("firstStepStartTime", registry);
 
    public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, DoubleProvider timestamp, double controlDT, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
                                    YoVariableRegistry parentRegistry)
@@ -68,8 +70,8 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       // initialize step queue
       supportCentroid.setToZero(supportFrame);
       RobotQuadrant initialQuadrant = (xGaitSettings.getEndPhaseShift() < 90) ? RobotQuadrant.HIND_LEFT : RobotQuadrant.FRONT_LEFT;
-      double initialTime = timestamp.getValue() + initialTransferDurationForShifting.getValue();
-      xGaitStepPlanner.computeInitialPlan(xGaitPreviewSteps, desiredVelocity, initialQuadrant, supportCentroid, initialTime, bodyYaw.getValue(), xGaitSettings);
+      firstStepStartTime.set(timestamp.getValue() + initialTransferDurationForShifting.getValue());
+      xGaitStepPlanner.computeInitialPlan(xGaitPreviewSteps, desiredVelocity, initialQuadrant, supportCentroid, firstStepStartTime.getDoubleValue(), bodyYaw.getValue(), xGaitSettings);
 
       for (int i = 0; i < 2; i++)
       {
@@ -91,7 +93,8 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
       }
 
       // update body orientation
-      bodyYaw.add(desiredVelocity.getZ() * controlDT);
+      if(timestamp.getValue() >= firstStepStartTime.getDoubleValue())
+         bodyYaw.add(desiredVelocity.getZ() * controlDT);
 
       for (int i = 0; i < xGaitPreviewSteps.size(); i++)
       {

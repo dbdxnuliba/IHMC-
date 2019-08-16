@@ -22,6 +22,7 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
 import java.util.List;
+import java.util.function.Function;
 
 public class QuadrupedStepMessageHandler
 {
@@ -101,6 +102,11 @@ public class QuadrupedStepMessageHandler
       }
 
       return true;
+   }
+
+   public void processInstantaneousStepAdjustment(Function<RobotQuadrant, FrameVector3DReadOnly> instantaneousStepAdjustment)
+   {
+      stepStreamManager.processInstantaneousStepAdjustment(instantaneousStepAdjustment);
    }
 
    public void handleSoleTrajectoryCommand(List<SoleTrajectoryCommand> commands)

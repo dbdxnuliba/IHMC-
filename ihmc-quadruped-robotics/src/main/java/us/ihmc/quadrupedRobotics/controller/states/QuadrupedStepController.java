@@ -79,13 +79,13 @@ public class QuadrupedStepController implements EventState
    {
       stepMessageHandler.process();
 
-//      List<? extends QuadrupedTimedStep> activeSteps = stepDelayer.delayStepsIfNecessary(stepMessageHandler.getActiveSteps(),
-//                                                                                         stepMessageHandler.getStepSequence(),
-//                                                                                         balanceManager.getDesiredDcmPosition(),
-//                                                                                         controllerToolbox.getDCMPositionEstimate(),
-//                                                                                         balanceManager.computeNormalizedEllipticDcmErrorForDelayedLiftOff());
+      List<? extends QuadrupedTimedStep> activeSteps = stepDelayer.delayStepsIfNecessary(stepMessageHandler.getActiveSteps(),
+                                                                                         stepMessageHandler.getStepSequence(),
+                                                                                         balanceManager.getDesiredDcmPosition(),
+                                                                                         controllerToolbox.getDCMPositionEstimate(),
+                                                                                         balanceManager.computeNormalizedEllipticDcmErrorForDelayedLiftOff());
       // trigger step events
-      feetManager.triggerSteps(stepMessageHandler.getActiveSteps());
+      feetManager.triggerSteps(activeSteps);
 
       // update desired contact state and sole forces
       feetManager.compute();
@@ -105,8 +105,10 @@ public class QuadrupedStepController implements EventState
       {
          feetManager.adjustSteps(adjustedSteps);
       }
-      requestSwingSpeedUpIfNeeded();
 
+      stepMessageHandler.processInstantaneousStepAdjustment(balanceManager::getStepAdjustmentGradient);
+
+      requestSwingSpeedUpIfNeeded();
 
       // update desired body orientation, angular velocity, and torque
       bodyOrientationManager.compute();
