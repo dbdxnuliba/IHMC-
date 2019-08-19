@@ -159,8 +159,9 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       ChannelData pauseWalkingChannel = channelDataMap.get(XBoxOneMapping.SELECT);
       if (pauseWalkingChannel.hasNewData() && pauseWalkingChannel.getValue() > 0.5)
       {
-         boolean walking = currentSteppingState.get() != null && currentSteppingState.get() == QuadrupedSteppingStateEnum.STEP;
-         messager.submitMessage(QuadrupedUIMessagerAPI.PauseWalkingTopic, walking);
+         boolean requestPause = currentSteppingState.get() != null && currentSteppingState.get() == QuadrupedSteppingStateEnum.STEP;
+         messager.submitMessage(QuadrupedUIMessagerAPI.PauseWalkingTopic, requestPause);
+         stepTeleopEnabled.set(!requestPause);
       }
    }
 

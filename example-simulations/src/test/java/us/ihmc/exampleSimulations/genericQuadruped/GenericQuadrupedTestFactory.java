@@ -178,7 +178,6 @@ public class GenericQuadrupedTestFactory implements QuadrupedTestFactory
 
       // enable teleop modules
       networkModuleParameters.enableFootstepPlanningModule(true);
-      networkModuleParameters.enableStepTeleopModule(true);
 
       graphicsListRegistry = new YoGraphicsListRegistry();
       networkProcessor = new GenericQuadrupedNetworkProcessor(modelFactory,

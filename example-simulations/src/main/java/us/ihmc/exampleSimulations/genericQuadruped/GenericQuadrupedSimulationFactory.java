@@ -6,6 +6,8 @@ import us.ihmc.exampleSimulations.genericQuadruped.model.GenericQuadrupedPhysica
 import us.ihmc.exampleSimulations.genericQuadruped.model.GenericQuadrupedSensorInformation;
 import us.ihmc.exampleSimulations.genericQuadruped.parameters.*;
 import us.ihmc.exampleSimulations.genericQuadruped.simulation.GenericQuadrupedGroundContactParameters;
+import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelControllerName;
+import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
 import us.ihmc.quadrupedRobotics.parameters.QuadrupedFallDetectionParameters;
 import us.ihmc.quadrupedRobotics.estimator.stateEstimator.QuadrupedSensorInformation;
@@ -103,6 +105,8 @@ public class GenericQuadrupedSimulationFactory
       simulationFactory.setSitDownParameters(sitDownParameters);
       simulationFactory.setPrivilegedConfigurationParameters(privilegedConfigurationParameters);
       simulationFactory.setFallDetectionParameters(fallDetectionParameters);
+      simulationFactory.setPubSubImplementation(PubSubImplementation.FAST_RTPS);
+      simulationFactory.setInitialForceControlState(HighLevelControllerName.FREEZE_STATE);
 
       return simulationFactory.createSimulation();
    }

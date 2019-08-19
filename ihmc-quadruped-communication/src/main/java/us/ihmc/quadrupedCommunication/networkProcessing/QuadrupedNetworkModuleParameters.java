@@ -4,7 +4,6 @@ public class QuadrupedNetworkModuleParameters
 {
    private boolean useNetworkProcessor = true;
    private boolean useRobotEnvironmentAwarenessModule;
-   private boolean useStepTeleopModule;
    private boolean visualizeStepTeleopModule;
    private boolean logStepTeleopModule;
    private boolean useQuadrupedSupportPlanarRegionPublisher;
@@ -52,16 +51,6 @@ public class QuadrupedNetworkModuleParameters
    public boolean isQuadrupedSupportPlanarRegionPublisherEnabled()
    {
       return useQuadrupedSupportPlanarRegionPublisher;
-   }
-
-   public void enableStepTeleopModule(boolean enable)
-   {
-      this.useStepTeleopModule = enable;
-   }
-
-   public boolean isStepTeleopModuleEnabled()
-   {
-      return useStepTeleopModule;
    }
 
    public void setVisualizeStepTeleopModule(boolean visualize)

@@ -181,8 +181,6 @@ public class QuadrupedUIMessageConverter
       /* publishers */
       MessageTopicNameGenerator controllerSubGenerator = QuadrupedControllerAPIDefinition.getSubscriberTopicNameGenerator(robotName);
 
-      MessageTopicNameGenerator stepTeleopInputTopicGenerator = getTopicNameGenerator(robotName, ROS2Tools.STEP_TELEOP_TOOLBOX, ROS2Tools.ROS2TopicQualifier.INPUT);
-
       desiredHighLevelStatePublisher = ROS2Tools.createPublisher(ros2Node, HighLevelStateMessage.class, controllerSubGenerator);
       desiredSteppingStatePublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedRequestedSteppingStateMessage.class, controllerSubGenerator);
       soleTrajectoryMessagePublisher = ROS2Tools.createPublisher(ros2Node, SoleTrajectoryMessage.class, controllerSubGenerator);
@@ -192,13 +190,8 @@ public class QuadrupedUIMessageConverter
       bodyHeightPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyHeightMessage.class, controllerSubGenerator);
       desiredBodyPosePublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedBodyTrajectoryMessage.class, controllerSubGenerator);
 
-      enableStepTeleopPublisher = ROS2Tools.createPublisher(ros2Node, ToolboxStateMessage.class, stepTeleopInputTopicGenerator);
       enableFootstepPlanningPublisher = ROS2Tools.createPublisher(ros2Node, ToolboxStateMessage.class, footstepPlannerInputTopicGenerator);
-
-      stepTeleopXGaitSettingsPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedXGaitSettingsPacket.class, stepTeleopInputTopicGenerator);
       footstepPlanningXGaitSettingsPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedXGaitSettingsPacket.class, footstepPlannerInputTopicGenerator);
-
-      desiredTeleopVelocityPublisher = ROS2Tools.createPublisher(ros2Node, QuadrupedTeleopMessage.class, stepTeleopInputTopicGenerator);
 
       footstepPlannerParametersPublisher = ROS2Tools.createPublisher(ros2Node, PawStepPlannerParametersPacket.class, footstepPlannerInputTopicGenerator);
       visibilityGraphsParametersPublisher = ROS2Tools.createPublisher(ros2Node, VisibilityGraphsParametersPacket.class, footstepPlannerInputTopicGenerator);
@@ -515,7 +508,6 @@ public class QuadrupedUIMessageConverter
          PrintTools.info("Sending out a sleep request to the footstep planner.");
       enableFootstepPlanningPublisher.publish(MessageTools.createToolboxStateMessage(ToolboxState.SLEEP));
    }
-
 
    private static PawStepPlan convertToFootstepPlan(QuadrupedTimedStepListMessage footstepDataListMessage)
    {
