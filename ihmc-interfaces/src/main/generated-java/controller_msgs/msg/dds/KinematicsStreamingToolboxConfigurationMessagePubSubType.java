@@ -42,6 +42,8 @@ public class KinematicsStreamingToolboxConfigurationMessagePubSubType implements
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
 
       return current_alignment - initial_alignment;
    }
@@ -58,6 +60,9 @@ public class KinematicsStreamingToolboxConfigurationMessagePubSubType implements
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -66,11 +71,15 @@ public class KinematicsStreamingToolboxConfigurationMessagePubSubType implements
    {
       cdr.write_type_4(data.getSequenceId());
 
+      cdr.write_type_7(data.getRequestCalibration());
+
    }
 
    public static void read(controller_msgs.msg.dds.KinematicsStreamingToolboxConfigurationMessage data, us.ihmc.idl.CDR cdr)
    {
       data.setSequenceId(cdr.read_type_4());
+      	
+      data.setRequestCalibration(cdr.read_type_7());
       	
 
    }
@@ -79,12 +88,15 @@ public class KinematicsStreamingToolboxConfigurationMessagePubSubType implements
    public final void serialize(controller_msgs.msg.dds.KinematicsStreamingToolboxConfigurationMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
+      ser.write_type_7("request_calibration", data.getRequestCalibration());
    }
 
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.KinematicsStreamingToolboxConfigurationMessage data)
    {
-      data.setSequenceId(ser.read_type_4("sequence_id"));   }
+      data.setSequenceId(ser.read_type_4("sequence_id"));
+      data.setRequestCalibration(ser.read_type_7("request_calibration"));
+   }
 
    public static void staticCopy(controller_msgs.msg.dds.KinematicsStreamingToolboxConfigurationMessage src, controller_msgs.msg.dds.KinematicsStreamingToolboxConfigurationMessage dest)
    {

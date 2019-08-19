@@ -89,8 +89,13 @@ public class KSTStreamingState implements State
          }
 
          headInput = userInputTransform.transformHeadInput(headInput);
-         leftHandInput = userInputTransform.transformHandInput(leftHandInput);
-         rightHandInput = userInputTransform.transformHandInput(rightHandInput);
+         leftHandInput = userInputTransform.transformHandInput(RobotSide.LEFT, leftHandInput);
+         rightHandInput = userInputTransform.transformHandInput(RobotSide.RIGHT, rightHandInput);
+
+         leftHandInput.getControlFramePose().setToZero(desiredFullRobotModel.getHandControlFrame(RobotSide.LEFT));
+         leftHandInput.getControlFramePose().changeFrame(desiredFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame());
+         rightHandInput.getControlFramePose().setToZero(desiredFullRobotModel.getHandControlFrame(RobotSide.RIGHT));
+         rightHandInput.getControlFramePose().changeFrame(desiredFullRobotModel.getHand(RobotSide.RIGHT).getBodyFixedFrame());
 
          ikCommandInputManager.submitCommand(headInput);
          ikCommandInputManager.submitCommand(leftHandInput);

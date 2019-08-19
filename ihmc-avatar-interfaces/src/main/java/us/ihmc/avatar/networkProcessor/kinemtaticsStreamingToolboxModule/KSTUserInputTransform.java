@@ -1,10 +1,14 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
+import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.humanoidRobotics.communication.kinematicsToolboxAPI.KinematicsToolboxRigidBodyCommand;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 
 public class KSTUserInputTransform
 {
@@ -14,6 +18,9 @@ public class KSTUserInputTransform
    private double operatorToRobotHeightScale = 1.0;
    private double operatorToRobotArmScale = 1.0;
    private Point3D operatorHeadPosition;
+
+   private final Quaternion headOrientationOffset = new Quaternion();
+   private final SideDependentList<Quaternion> handOrientationOffsets = new SideDependentList<>(Quaternion::new);
 
    private final ReferenceFrame headCenteredFrame = new ReferenceFrame("headCenteredFrame", ReferenceFrame.getWorldFrame())
    {
@@ -48,6 +55,16 @@ public class KSTUserInputTransform
       this.robotMidFootZUpGroundFrame = robotMidFootZUpGroundFrame;
    }
 
+   public void setHeadOrientationOffset(Orientation3DReadOnly offset)
+   {
+      headOrientationOffset.set(offset);
+   }
+
+   public void setHandOrientationOffset(RobotSide robotSide, Orientation3DReadOnly offset)
+   {
+      handOrientationOffsets.get(robotSide).set(offset);
+   }
+
    public KinematicsToolboxRigidBodyCommand transformHeadInput(KinematicsToolboxRigidBodyCommand headInput)
    {
       KinematicsToolboxRigidBodyCommand transformed = new KinematicsToolboxRigidBodyCommand();
@@ -57,18 +74,20 @@ public class KSTUserInputTransform
       desiredPose.changeFrame(operatorMidFootZupGroundFrame);
       desiredPose.setReferenceFrame(robotMidFootZUpGroundFrame);
       desiredPose.getPosition().scale(operatorToRobotHeightScale);
+      desiredPose.getOrientation().appendInvertOther(headOrientationOffset);
       desiredPose.changeFrame(ReferenceFrame.getWorldFrame());
       operatorHeadPosition = new Point3D(desiredPose.getPosition());
 
       return transformed;
    }
 
-   public KinematicsToolboxRigidBodyCommand transformHandInput(KinematicsToolboxRigidBodyCommand handInput)
+   public KinematicsToolboxRigidBodyCommand transformHandInput(RobotSide robotSide, KinematicsToolboxRigidBodyCommand handInput)
    {
       KinematicsToolboxRigidBodyCommand transformed = new KinematicsToolboxRigidBodyCommand();
       transformed.set(handInput);
 
       FramePose3D desiredPose = transformed.getDesiredPose();
+      desiredPose.getOrientation().appendInvertOther(handOrientationOffsets.get(robotSide));
       desiredPose.changeFrame(operatorMidFootZupGroundFrame);
       desiredPose.setReferenceFrame(robotMidFootZUpGroundFrame);
       desiredPose.changeFrame(headCenteredFrame);

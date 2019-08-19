@@ -5,7 +5,12 @@ import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.
 import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.STREAMING;
 import static us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule.KinematicsStreamingToolboxController.KSTState.VALIDATION;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang.mutable.MutableBoolean;
+
 import controller_msgs.msg.dds.CapturabilityBasedStatus;
+import controller_msgs.msg.dds.KinematicsStreamingToolboxStatusMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
 import us.ihmc.avatar.networkProcessor.modules.ToolboxController;
@@ -13,6 +18,7 @@ import us.ihmc.commons.Conversions;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxConfigurationCommand;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
 import us.ihmc.robotics.stateMachine.core.State;
@@ -26,7 +32,21 @@ public class KinematicsStreamingToolboxController extends ToolboxController
 {
    public enum KSTState
    {
-      SLEEP, CALIBRATION, VALIDATION, STREAMING
+      SLEEP, CALIBRATION, VALIDATION, STREAMING;
+
+      private static final KSTState[] values = values();
+
+      public byte toByte()
+      {
+         return (byte) ordinal();
+      }
+
+      public static KSTState fromByte(byte enumAsByte)
+      {
+         if (enumAsByte == -1)
+            return null;
+         return values[enumAsByte];
+      }
    };
 
    private final KSTTools tools;
@@ -39,11 +59,16 @@ public class KinematicsStreamingToolboxController extends ToolboxController
    private final KSTValidationState validationState;
    private final KSTStreamingState streamingState;
 
+   private final MutableBoolean isCalibrationStateRequested = new MutableBoolean(false);
+
+   private final CommandInputManager commandInputManager;
+
    public KinematicsStreamingToolboxController(CommandInputManager commandInputManager, StatusMessageOutputManager statusOutputManager,
                                                FullHumanoidRobotModel desiredFullRobotModel, FullHumanoidRobotModelFactory fullRobotModelFactory,
                                                YoGraphicsListRegistry yoGraphicsListRegistry, YoVariableRegistry parentRegistry)
    {
       super(statusOutputManager, parentRegistry);
+      this.commandInputManager = commandInputManager;
 
       tools = new KSTTools(commandInputManager, statusOutputManager, desiredFullRobotModel, fullRobotModelFactory, yoGraphicsListRegistry, registry);
 
@@ -79,6 +104,13 @@ public class KinematicsStreamingToolboxController extends ToolboxController
       factory.addDoneTransition(SLEEP, CALIBRATION);
       factory.addDoneTransition(CALIBRATION, STREAMING);
 
+      factory.addTransition(Arrays.asList(VALIDATION, STREAMING), CALIBRATION, t -> isCalibrationStateRequested.booleanValue());
+      factory.addStateChangedListener((from, to) ->
+      {
+         if (to == CALIBRATION)
+            isCalibrationStateRequested.setValue(false);
+      });
+
       return factory.build(KSTState.SLEEP);
    }
 
@@ -101,7 +133,18 @@ public class KinematicsStreamingToolboxController extends ToolboxController
       if (initialTimestamp == -1L)
          initialTimestamp = System.nanoTime();
       time.set(Conversions.nanosecondsToSeconds(System.nanoTime() - initialTimestamp));
+
+      if (commandInputManager.isNewCommandAvailable(KinematicsStreamingToolboxConfigurationCommand.class))
+      {
+         KinematicsStreamingToolboxConfigurationCommand command = commandInputManager.pollNewestCommand(KinematicsStreamingToolboxConfigurationCommand.class);
+         if (command.getRequestCalibration())
+            isCalibrationStateRequested.setValue(true);
+      }
+
       stateMachine.doActionAndTransition();
+      KinematicsStreamingToolboxStatusMessage statusMessage = new KinematicsStreamingToolboxStatusMessage();
+      statusMessage.setCurrentState(stateMachine.getCurrentStateKey().toByte());
+      statusOutputManager.reportStatusMessage(statusMessage);
    }
 
    @Override

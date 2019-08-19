@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import controller_msgs.msg.dds.CapturabilityBasedStatus;
+import controller_msgs.msg.dds.KinematicsStreamingToolboxStatusMessage;
 import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.WholeBodyTrajectoryMessage;
@@ -96,6 +97,7 @@ public class KinematicsStreamingToolboxModule extends ToolboxModule
    public static List<Class<? extends Settable<?>>> supportedStatus()
    {
       List<Class<? extends Settable<?>>> status = new ArrayList<>();
+      status.add(KinematicsStreamingToolboxStatusMessage.class);
       status.add(KinematicsToolboxOutputStatus.class);
       return status;
    }

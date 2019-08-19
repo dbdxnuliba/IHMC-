@@ -2,10 +2,14 @@ package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple2D.Vector2D;
+import us.ihmc.euclid.tuple2D.interfaces.Vector2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxCalibrationCommand;
@@ -22,6 +26,7 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 public class KSTCalibrationState implements State
 {
    private final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
+   private final Vector2DReadOnly yAxis2D = new Vector2D(0.0, 1.0);
    private final double armSpanToHeightRatio = 1.135;
 
    private final YoBoolean isCalibrated;
@@ -50,6 +55,8 @@ public class KSTCalibrationState implements State
 
    private final KSTUserInputTransform userInputTransform;
 
+   private final SideDependentList<FrameQuaternion> zeroPoseHandOrientations = new SideDependentList<>(FrameQuaternion::new);
+
    public KSTCalibrationState(KSTTools tools)
    {
       this.tools = tools;
@@ -73,11 +80,17 @@ public class KSTCalibrationState implements State
       zeroPoseHeadPosition.changeFrame(zeroPoseMidFootZUpGroundFrame);
       robotHeight = zeroPoseHeadPosition.getZ();
 
-      FramePoint3D zeroPoseHandPosition = new FramePoint3D(zeroPoseFullRobotModel.getHand(RobotSide.LEFT).getBodyFixedFrame());
+      FramePoint3D zeroPoseHandPosition = new FramePoint3D(zeroPoseFullRobotModel.getHandControlFrame(RobotSide.LEFT));
       zeroPoseHandPosition.changeFrame(zeroPoseMidFootZUpGroundFrame);
       Vector3D headToHand = new Vector3D();
       headToHand.sub(zeroPoseHandPosition, zeroPoseHeadPosition);
       robotHeadHandDistance = headToHand.length();
+
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         zeroPoseHandOrientations.get(robotSide).setToZero(zeroPoseFullRobotModel.getHandControlFrame(robotSide));
+         zeroPoseHandOrientations.get(robotSide).changeFrame(zeroPoseMidFootZUpGroundFrame);
+      }
    }
 
    @Override
@@ -103,7 +116,10 @@ public class KSTCalibrationState implements State
          Point3D operatorMidFootZUpPosition = operatorMidFootZUpPose.getPosition();
          operatorMidFootZUpPosition.set(operatorHeadPose.getPosition());
          operatorMidFootZUpPosition.subZ(operatorHeight);
-         operatorMidFootZUpPose.getOrientation().setToYawOrientation(operatorHeadPose.getYaw());
+         Vector3D handToHand3D = new Vector3D();
+         handToHand3D.sub(operatorHandPoses.get(RobotSide.LEFT).getPosition(), operatorHandPoses.get(RobotSide.RIGHT).getPosition());
+         Vector2D handToHand2D = new Vector2D(handToHand3D);
+         operatorMidFootZUpPose.getOrientation().setToYawOrientation(-handToHand2D.angle(yAxis2D));
          operatorMidFootZUpGroundFrame.update();
 
          double operatorToRobotHeightScale = robotHeight / operatorHeight;
@@ -114,6 +130,17 @@ public class KSTCalibrationState implements State
          for (RobotSide robotSide : RobotSide.values)
             operatorHeadHandDistance += 0.5 * operatorHeadPose.getPositionDistance(operatorHandPoses.get(robotSide));
          userInputTransform.setOperatorToRobotArmScale(robotHeadHandDistance / operatorHeadHandDistance);
+
+         FrameQuaternion headOrientation = new FrameQuaternion(worldFrame, operatorHeadPose.getOrientation());
+         headOrientation.changeFrame(operatorMidFootZUpGroundFrame);
+         userInputTransform.setHeadOrientationOffset(headOrientation);
+         for (RobotSide robotSide : RobotSide.values)
+         {
+            FrameQuaternion handOrientation = new FrameQuaternion(worldFrame, operatorHandPoses.get(robotSide).getOrientation());
+            handOrientation.changeFrame(operatorMidFootZUpGroundFrame);
+            handOrientation.prependInvertOther((Orientation3DReadOnly) zeroPoseHandOrientations.get(robotSide));
+            userInputTransform.setHandOrientationOffset(robotSide, handOrientation);
+         }
 
          userInputTransform.setOperatorMidFootZupGroundFrame(operatorMidFootZUpGroundFrame);
          userInputTransform.setRobotMidFootZUpGroundFrame(currentMidFootZUpGroundFrame);

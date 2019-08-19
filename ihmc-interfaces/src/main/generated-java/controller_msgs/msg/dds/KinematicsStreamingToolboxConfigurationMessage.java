@@ -16,6 +16,10 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
             * Unique ID used to identify this message, should preferably be consecutively increasing.
             */
    public long sequence_id_;
+   /**
+            * Request a re-calibration. If the toolbox is currently streaming or validating, then it stops and falls back to the calibration state.
+            */
+   public boolean request_calibration_;
 
    public KinematicsStreamingToolboxConfigurationMessage()
    {
@@ -30,6 +34,8 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
    public void set(KinematicsStreamingToolboxConfigurationMessage other)
    {
       sequence_id_ = other.sequence_id_;
+
+      request_calibration_ = other.request_calibration_;
 
    }
 
@@ -46,6 +52,21 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
    public long getSequenceId()
    {
       return sequence_id_;
+   }
+
+   /**
+            * Request a re-calibration. If the toolbox is currently streaming or validating, then it stops and falls back to the calibration state.
+            */
+   public void setRequestCalibration(boolean request_calibration)
+   {
+      request_calibration_ = request_calibration;
+   }
+   /**
+            * Request a re-calibration. If the toolbox is currently streaming or validating, then it stops and falls back to the calibration state.
+            */
+   public boolean getRequestCalibration()
+   {
+      return request_calibration_;
    }
 
 
@@ -68,6 +89,9 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.request_calibration_, other.request_calibration_, epsilon)) return false;
+
+
       return true;
    }
 
@@ -82,6 +106,8 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
 
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
+      if(this.request_calibration_ != otherMyClass.request_calibration_) return false;
+
 
       return true;
    }
@@ -93,7 +119,9 @@ public class KinematicsStreamingToolboxConfigurationMessage extends Packet<Kinem
 
       builder.append("KinematicsStreamingToolboxConfigurationMessage {");
       builder.append("sequence_id=");
-      builder.append(this.sequence_id_);
+      builder.append(this.sequence_id_);      builder.append(", ");
+      builder.append("request_calibration=");
+      builder.append(this.request_calibration_);
       builder.append("}");
       return builder.toString();
    }

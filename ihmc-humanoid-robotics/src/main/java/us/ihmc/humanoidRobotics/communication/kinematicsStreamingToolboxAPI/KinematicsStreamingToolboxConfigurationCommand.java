@@ -6,22 +6,32 @@ import us.ihmc.communication.controllerAPI.command.Command;
 public class KinematicsStreamingToolboxConfigurationCommand implements Command<KinematicsStreamingToolboxConfigurationCommand, KinematicsStreamingToolboxConfigurationMessage>
 {
    private long sequenceId;
+   private boolean requestCalibration = false;
 
    @Override
    public void clear()
    {
+      sequenceId = 0;
+      requestCalibration = false;
    }
 
    @Override
    public void set(KinematicsStreamingToolboxConfigurationCommand other)
    {
       sequenceId = other.sequenceId;
+      requestCalibration = other.requestCalibration;
    }
 
    @Override
    public void setFromMessage(KinematicsStreamingToolboxConfigurationMessage message)
    {
       sequenceId = message.getSequenceId();
+      requestCalibration = message.getRequestCalibration();
+   }
+
+   public boolean getRequestCalibration()
+   {
+      return requestCalibration;
    }
 
    @Override

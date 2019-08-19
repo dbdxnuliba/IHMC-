@@ -33,6 +33,7 @@ import gnu.trove.list.array.TLongArrayList;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
 import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -228,6 +229,11 @@ public class MessageTools
       message.getLinearSelectionMatrix().setYSelected(false);
       message.getLinearSelectionMatrix().setZSelected(false);
       return message;
+   }
+
+   public static KinematicsToolboxRigidBodyMessage createKinematicsToolboxRigidBodyMessage(RigidBodyBasics endEffector, Pose3DReadOnly desiredPose)
+   {
+      return createKinematicsToolboxRigidBodyMessage(endEffector, desiredPose.getPosition(), desiredPose.getOrientation());
    }
 
    /**

@@ -283,12 +283,14 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       assertTrue(drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(0.5));
 
       Vector3D operatorOffset = new Vector3D(-1.73, 1.31, 0.0);
+      double operatorYawOffset = Math.PI / 2.0;
 
       FullHumanoidRobotModel zeroPoseOperatorFullRobotModel = getRobotModel().createFullRobotModel();
       zeroPoseOperatorFullRobotModel.updateFrames();
       zeroPoseOperatorFullRobotModel.getRootJoint().getJointPose()
                                     .setZ(-zeroPoseOperatorFullRobotModel.getSoleFrame(RobotSide.LEFT).getTransformToRoot().getTranslationZ());
       zeroPoseOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
+      zeroPoseOperatorFullRobotModel.getRootJoint().getJointPose().appendYawRotation(operatorYawOffset);
       zeroPoseOperatorFullRobotModel.updateFrames();
       snapSCSRobotToFullRobotModel(zeroPoseOperatorFullRobotModel, operator);
       KinematicsStreamingToolboxCalibrationMessage calibrationMessage = new KinematicsStreamingToolboxCalibrationMessage();
@@ -312,6 +314,7 @@ public abstract class KinematicsStreamingToolboxControllerTest implements MultiR
       FullHumanoidRobotModel randomizedOperatorFullRobotModel = getRobotModel().createFullRobotModel();
       copyFullRobotModelState(controllerFullRobotModel, randomizedOperatorFullRobotModel);
       randomizedOperatorFullRobotModel.getRootJoint().getJointPose().getPosition().add(operatorOffset);
+      randomizedOperatorFullRobotModel.getRootJoint().getJointPose().appendYawRotation(operatorYawOffset);
 
       for (RobotSide robotSide : RobotSide.values)
       {
