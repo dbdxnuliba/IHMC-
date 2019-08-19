@@ -17,7 +17,7 @@ public class QuadrupedPreplannedStepStream extends QuadrupedStepStream<Quadruped
 
    public QuadrupedPreplannedStepStream(DoubleProvider timestamp, YoVariableRegistry parentRegistry)
    {
-      super("preplanned_", parentRegistry);
+      super("preplanned", parentRegistry);
       this.timestamp = timestamp;
    }
 
