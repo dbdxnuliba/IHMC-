@@ -41,12 +41,14 @@ public class newSuppaKickBehavior
    private final AtomicInteger footstepsTaken = new AtomicInteger(2);
    private FullHumanoidRobotModel fullHumanoidRobotModel;
    private ArrayList<BehaviorBuilder.actionTypes> actionTypesArrayList;
+   private ArrayList<List<BehaviorBuilder.actionTypes>> newList;
 //   private BehaviorBuilder forRunnable;
    private Ros2Node ros2Node;
    private DRCRobotModel robotModel;
    private ArrayList<BehaviorAction>  ActionBehaviors;
 
    private int behaviorCounter = 0;
+   private int tempActionSize;
 
 
 //   private boolean pelvisFlag = false;
@@ -70,6 +72,7 @@ public class newSuppaKickBehavior
    private final Notification jointSpaceNotification = new Notification();
    private final Notification walkingNotification = new Notification();
    private final Notification doOnlyOnce = new Notification();
+   private final Notification subtract = new Notification();
 //   private boolean tmp = false;
    private final boolean triggerfromAnotherBehavior = false;
 
@@ -286,12 +289,12 @@ public class newSuppaKickBehavior
 //      BehaviorBuilder build5 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction1);
 //      BehaviorBuilder build8 = new BehaviorBuilder(actionTypes.Footstep, walking);
 
-//      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, chestAction );//, ros2Node, robotModel);
-      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, multipleActions );
-      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,armsAction); // both arms
-//      BehaviorBuilder build4 = new BehaviorBuilder(actionTypes.LeftLeg,leftLEgAction);
-//      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction);
-//      BehaviorBuilder build4 = new BehaviorBuilder(actionTypes.RightLeg,rightLegAction);
+      BehaviorBuilder build2 = new BehaviorBuilder(chestAction, actionTypes.Chest);//, ros2Node, robotModel);
+//      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, multipleActions );
+//      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,armsAction); // both arms
+//      BehaviorBuilder build4 = new BehaviorBuilder(leftLEgAction, actionTypes.LeftLeg);
+      BehaviorBuilder build3 = new BehaviorBuilder(pelvisAction, actionTypes.Pelvis);
+      BehaviorBuilder build1 = new BehaviorBuilder(rightLegAction, actionTypes.RightLeg);
 
 //      taskSpaceThread = new PausablePeriodicThread(this::triggerAppropriateListener, 0.1, "");
       goToWalk.set();
@@ -372,17 +375,19 @@ public class newSuppaKickBehavior
 
 
 //   private void triggerAppropriateListener(ArrayList<BehaviorBuilder.actionTypes> actions)
-   private void triggerAppropriateListener(BehaviorBuilder.actionTypes actions)
+   private void triggerAppropriateListener(List<BehaviorBuilder.actionTypes>  actions)
    {
-         if(actions.equals(actionTypes.LeftLeg) || actions.equals(actionTypes.Pelvis) || actions.equals(actionTypes.RightLeg) || actions.equals(actionTypes.Chest))
+      if(actions.size() == 1)
+      {
+         if(actions.get(0).equals(actionTypes.LeftLeg) || actions.get(0).equals(actionTypes.Pelvis) || actions.get(0).equals(actionTypes.RightLeg) || actions.get(0).equals(actionTypes.Chest))
          {
             taskspaceNotification.set();
             ROS2Tools.createCallbackSubscription(ros2Node,
-                                           TaskspaceTrajectoryStatusMessage.class,
-                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-                                           this::checkTaskspaceTrajectoryMessage);
+                                                 TaskspaceTrajectoryStatusMessage.class,
+                                                 ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                                 this::checkTaskspaceTrajectoryMessage);
          }
-         else if(actions.equals(actionTypes.LeftArm) || actions.equals(actionTypes.RightArm))
+         else if(actions.get(0).equals(actionTypes.LeftArm) || actions.get(0).equals(actionTypes.RightArm))
          {
             jointSpaceNotification.set();
             ROS2Tools.createCallbackSubscription(ros2Node,
@@ -398,6 +403,42 @@ public class newSuppaKickBehavior
                                                  ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
                                                  this::checkFootTrajectoryMessage);
          }
+      }
+
+      else
+      {
+         System.out.println("Work in progress");
+
+         for(int i = 0; i < actions.size(); ++i)
+         {
+            if(actions.get(i).equals(actionTypes.LeftLeg) || actions.get(i).equals(actionTypes.Pelvis) || actions.get(i).equals(actionTypes.RightLeg) ||
+                  actions.get(i).equals(actionTypes.Chest))
+            {
+               taskspaceNotification.set();
+               ROS2Tools.createCallbackSubscription(ros2Node,
+                                                    TaskspaceTrajectoryStatusMessage.class,
+                                                    ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                                    this::checkTaskspaceTrajectoryMessage);
+            }
+            else if(actions.get(i).equals(actionTypes.LeftArm) || actions.get(i).equals(actionTypes.RightArm))
+            {
+               jointSpaceNotification.set();
+               ROS2Tools.createCallbackSubscription(ros2Node,
+                                                    JointspaceTrajectoryStatusMessage.class,
+                                                    ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                                    this::checkJointTrajectoryMessage);
+            }
+            else
+            {
+               walkingNotification.set();
+               ROS2Tools.createCallbackSubscription(ros2Node,
+                                                    WalkingStatusMessage.class,
+                                                    ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                                    this::checkFootTrajectoryMessage);
+            }
+         }
+      }
+
    }
 
 
@@ -532,12 +573,19 @@ public class newSuppaKickBehavior
       if(doOnlyOnce.poll())
       {
          System.out.println("inside newSuppaKickBehavior doBehavior loop");
-         actionTypesArrayList =  BehaviorBuilder.getActionTypes();
+//         actionTypesArrayList =  BehaviorBuilder.getActionTypes();
+         newList = BehaviorBuilder.getActionsTypeList();
          ActionBehaviors = BehaviorBuilder.getActionsBehavior();
       }
 
       if(goToWalk.poll())
       {
+         if(subtract.poll())
+         {
+            behaviorCounter = behaviorCounter - (tempActionSize -1);
+         }
+
+
          System.out.println("Triggering Behavior"  + (behaviorCounter));
          if(behaviorCounter == ActionBehaviors.size())
          {
@@ -545,8 +593,17 @@ public class newSuppaKickBehavior
          }
          ActionBehaviors.get(behaviorCounter).onEntry();
          // pass in the counter for the previous behavior or the previous behavior type
-         System.out.println("Triggering behavior" + BehaviorBuilder.getActionTypes().get(behaviorCounter));
-         triggerAppropriateListener(BehaviorBuilder.getActionTypes().get(behaviorCounter));
+//         System.out.println("Triggering behavior" + BehaviorBuilder.getActionTypes().get(behaviorCounter));
+//         triggerAppropriateListener(BehaviorBuilder.getActionTypes().get(behaviorCounter));
+         triggerAppropriateListener(BehaviorBuilder.getActionsTypeList().get(behaviorCounter));
+
+
+
+         if (BehaviorBuilder.getActionsTypeList().get(behaviorCounter).size() > 1)
+         {
+            tempActionSize = BehaviorBuilder.getActionsTypeList().get(behaviorCounter).size();
+            subtract.set();
+         }
       }
    }
 
