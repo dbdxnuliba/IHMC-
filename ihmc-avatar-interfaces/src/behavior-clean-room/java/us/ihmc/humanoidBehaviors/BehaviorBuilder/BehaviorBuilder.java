@@ -165,6 +165,7 @@ public class BehaviorBuilder
 
    public static ArrayList<BehaviorAction> getActionsBehavior()
    {
+      Collections.reverse(actionsBehavior);
       return actionsBehavior;
    }
 
@@ -276,6 +277,8 @@ public class BehaviorBuilder
       BehaviorBuilder build1 = new BehaviorBuilder(action1, actionTypes.Pelvis);// , ros2Node, robotModel);
       BehaviorBuilder build2 = new BehaviorBuilder(action2,actionTypes.LeftArm);//, ros2Node, robotModel) ;
       BehaviorBuilder build3 = new BehaviorBuilder(action1, actionTypes.RightLeg,actionTypes.RightArm);
+
+
 
 //      submitTaskForParallelExecution(action1, actionTypes.LeftArm);
 //      submitSingleTask(action2);

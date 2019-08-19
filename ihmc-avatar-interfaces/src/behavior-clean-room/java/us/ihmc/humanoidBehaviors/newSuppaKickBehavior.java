@@ -73,6 +73,7 @@ public class newSuppaKickBehavior
    private final Notification walkingNotification = new Notification();
    private final Notification doOnlyOnce = new Notification();
    private final Notification subtract = new Notification();
+   private final Notification goToWalkCounter = new Notification();
 //   private boolean tmp = false;
    private final boolean triggerfromAnotherBehavior = false;
 
@@ -87,7 +88,7 @@ public class newSuppaKickBehavior
          System.out.println("Doing chest motion");
          double chestTrajectoryTime = 0.5;
          FrameQuaternion chestOrientation = new FrameQuaternion(ReferenceFrame.getWorldFrame());
-         chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(),0.0, Math.toRadians(55.0), 0.0);
+         chestOrientation.setYawPitchRollIncludingFrame(ReferenceFrame.getWorldFrame(),0.0, Math.toRadians(0.0), 0.0);
          behaviorHelper.requestChestOrientationTrajectory(chestTrajectoryTime,chestOrientation, ReferenceFrame.getWorldFrame(), behaviorHelper.pollHumanoidReferenceFrames().getChestFrame());
 
          FramePose3D tmp = new FramePose3D();
@@ -289,12 +290,14 @@ public class newSuppaKickBehavior
 //      BehaviorBuilder build5 = new BehaviorBuilder(actionTypes.Pelvis,pelvisAction1);
 //      BehaviorBuilder build8 = new BehaviorBuilder(actionTypes.Footstep, walking);
 
-      BehaviorBuilder build2 = new BehaviorBuilder(chestAction, actionTypes.Chest);//, ros2Node, robotModel);
+      //, ros2Node, robotModel);
 //      BehaviorBuilder build1 = new BehaviorBuilder(actionTypes.Chest, multipleActions );
-//      BehaviorBuilder build2 = new BehaviorBuilder(actionTypes.LeftArm,armsAction); // both arms
+      BehaviorBuilder build4 = new BehaviorBuilder(armsAction, actionTypes.LeftArm); // both arms
 //      BehaviorBuilder build4 = new BehaviorBuilder(leftLEgAction, actionTypes.LeftLeg);
       BehaviorBuilder build3 = new BehaviorBuilder(pelvisAction, actionTypes.Pelvis);
-      BehaviorBuilder build1 = new BehaviorBuilder(rightLegAction, actionTypes.RightLeg);
+      BehaviorBuilder build2 = new BehaviorBuilder(multipleActions, actionTypes.Chest, actionTypes.RightLeg);
+
+//      BehaviorBuilder build1 = new BehaviorBuilder(rightLegAction, actionTypes.RightLeg);
 
 //      taskSpaceThread = new PausablePeriodicThread(this::triggerAppropriateListener, 0.1, "");
       goToWalk.set();
@@ -562,7 +565,22 @@ public class newSuppaKickBehavior
                      behaviorCounter++;
                   }
                }
-               goToWalk.set();
+
+               if(BehaviorBuilder.getActionsTypeList().get(--behaviorCounter).size() > 1)
+               {
+                  ++behaviorCounter;
+                  if(goToWalkCounter.poll())
+                  {
+                     goToWalk.set();
+                  }
+               }
+               else
+               {
+                  goToWalk.set();
+                  ++behaviorCounter;
+               }
+
+//               goToWalk.set();
             }
          }
 
@@ -582,7 +600,7 @@ public class newSuppaKickBehavior
       {
          if(subtract.poll())
          {
-            behaviorCounter = behaviorCounter - (tempActionSize -1);
+//            behaviorCounter = behaviorCounter - (tempActionSize- 1);
          }
 
 
@@ -591,10 +609,14 @@ public class newSuppaKickBehavior
          {
             doOnAbort(true);
          }
+//         System.out.println(behaviorCounter);
+//         System.out.println(ActionBehaviors);
+//         System.out.println(ActionBehaviors.get(behaviorCounter));
          ActionBehaviors.get(behaviorCounter).onEntry();
          // pass in the counter for the previous behavior or the previous behavior type
 //         System.out.println("Triggering behavior" + BehaviorBuilder.getActionTypes().get(behaviorCounter));
 //         triggerAppropriateListener(BehaviorBuilder.getActionTypes().get(behaviorCounter));
+         System.out.println(BehaviorBuilder.getActionsTypeList());
          triggerAppropriateListener(BehaviorBuilder.getActionsTypeList().get(behaviorCounter));
 
 
@@ -602,6 +624,7 @@ public class newSuppaKickBehavior
          if (BehaviorBuilder.getActionsTypeList().get(behaviorCounter).size() > 1)
          {
             tempActionSize = BehaviorBuilder.getActionsTypeList().get(behaviorCounter).size();
+            goToWalkCounter.set();
             subtract.set();
          }
       }
