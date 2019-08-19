@@ -10,7 +10,6 @@ import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, QuadrupedTeleopMessage>
 {
    private long sequenceId;
-   private boolean requestWalk;
    private boolean areStepsAdjustable;
    private final Vector3D desiredVelocity = new Vector3D();
    private final QuadrupedXGaitSettings xGaitSettings = new QuadrupedXGaitSettings();
@@ -19,7 +18,6 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    public void clear()
    {
       sequenceId = 0;
-      requestWalk = false;
       areStepsAdjustable = true;
       desiredVelocity.setToZero();
    }
@@ -29,7 +27,6 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    {
       sequenceId = message.getSequenceId();
       areStepsAdjustable = message.getAreStepsAdjustable();
-      requestWalk = message.getRequestWalk();
       desiredVelocity.set(message.getDesiredVelocity());
       xGaitSettings.set(message.getXGaitSettings());
    }
@@ -56,15 +53,9 @@ public class QuadrupedTeleopCommand implements Command<QuadrupedTeleopCommand, Q
    public void set(QuadrupedTeleopCommand other)
    {
       this.sequenceId = other.sequenceId;
-      this.requestWalk = other.requestWalk;
       this.areStepsAdjustable = other.areStepsAdjustable;
       this.desiredVelocity.set(other.desiredVelocity);
       this.xGaitSettings.set(other.xGaitSettings);
-   }
-
-   public boolean isWalkingRequested()
-   {
-      return requestWalk;
    }
 
    public boolean areStepsAdjustable()

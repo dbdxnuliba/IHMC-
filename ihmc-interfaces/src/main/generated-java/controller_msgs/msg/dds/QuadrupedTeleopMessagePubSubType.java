@@ -44,8 +44,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
       current_alignment += geometry_msgs.msg.dds.Vector3PubSubType.getMaxCdrSerializedSize(current_alignment);
 
       current_alignment += controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.getMaxCdrSerializedSize(current_alignment);
@@ -69,9 +67,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-
       current_alignment += geometry_msgs.msg.dds.Vector3PubSubType.getCdrSerializedSize(data.getDesiredVelocity(), current_alignment);
 
       current_alignment += controller_msgs.msg.dds.QuadrupedXGaitSettingsPacketPubSubType.getCdrSerializedSize(data.getXGaitSettings(), current_alignment);
@@ -84,8 +79,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    {
       cdr.write_type_4(data.getSequenceId());
 
-      cdr.write_type_7(data.getRequestWalk());
-
       cdr.write_type_7(data.getAreStepsAdjustable());
 
       geometry_msgs.msg.dds.Vector3PubSubType.write(data.getDesiredVelocity(), cdr);
@@ -95,8 +88,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    public static void read(controller_msgs.msg.dds.QuadrupedTeleopMessage data, us.ihmc.idl.CDR cdr)
    {
       data.setSequenceId(cdr.read_type_4());
-      	
-      data.setRequestWalk(cdr.read_type_7());
       	
       data.setAreStepsAdjustable(cdr.read_type_7());
       	
@@ -109,7 +100,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    public final void serialize(controller_msgs.msg.dds.QuadrupedTeleopMessage data, us.ihmc.idl.InterchangeSerializer ser)
    {
       ser.write_type_4("sequence_id", data.getSequenceId());
-      ser.write_type_7("request_walk", data.getRequestWalk());
       ser.write_type_7("are_steps_adjustable", data.getAreStepsAdjustable());
       ser.write_type_a("desired_velocity", new geometry_msgs.msg.dds.Vector3PubSubType(), data.getDesiredVelocity());
 
@@ -121,7 +111,6 @@ public class QuadrupedTeleopMessagePubSubType implements us.ihmc.pubsub.TopicDat
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, controller_msgs.msg.dds.QuadrupedTeleopMessage data)
    {
       data.setSequenceId(ser.read_type_4("sequence_id"));
-      data.setRequestWalk(ser.read_type_7("request_walk"));
       data.setAreStepsAdjustable(ser.read_type_7("are_steps_adjustable"));
       ser.read_type_a("desired_velocity", new geometry_msgs.msg.dds.Vector3PubSubType(), data.getDesiredVelocity());
 

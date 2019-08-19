@@ -17,11 +17,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
             */
    public long sequence_id_;
    /**
-            * Flag to request walking or standing. If true the robot will start or continue to walk with the specified parameters.
-            * If false the robot will stop walking and the parameters below are ignored.
-            */
-   public boolean request_walk_;
-   /**
             * Defines if the step list is adjustable
             */
    public boolean are_steps_adjustable_ = true;
@@ -50,8 +45,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
    {
       sequence_id_ = other.sequence_id_;
 
-      request_walk_ = other.request_walk_;
-
       are_steps_adjustable_ = other.are_steps_adjustable_;
 
       geometry_msgs.msg.dds.Vector3PubSubType.staticCopy(other.desired_velocity_, desired_velocity_);
@@ -71,23 +64,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
    public long getSequenceId()
    {
       return sequence_id_;
-   }
-
-   /**
-            * Flag to request walking or standing. If true the robot will start or continue to walk with the specified parameters.
-            * If false the robot will stop walking and the parameters below are ignored.
-            */
-   public void setRequestWalk(boolean request_walk)
-   {
-      request_walk_ = request_walk;
-   }
-   /**
-            * Flag to request walking or standing. If true the robot will start or continue to walk with the specified parameters.
-            * If false the robot will stop walking and the parameters below are ignored.
-            */
-   public boolean getRequestWalk()
-   {
-      return request_walk_;
    }
 
    /**
@@ -143,8 +119,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.sequence_id_, other.sequence_id_, epsilon)) return false;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.request_walk_, other.request_walk_, epsilon)) return false;
-
       if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.are_steps_adjustable_, other.are_steps_adjustable_, epsilon)) return false;
 
       if (!this.desired_velocity_.epsilonEquals(other.desired_velocity_, epsilon)) return false;
@@ -164,8 +138,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
 
       if(this.sequence_id_ != otherMyClass.sequence_id_) return false;
 
-      if(this.request_walk_ != otherMyClass.request_walk_) return false;
-
       if(this.are_steps_adjustable_ != otherMyClass.are_steps_adjustable_) return false;
 
       if (!this.desired_velocity_.equals(otherMyClass.desired_velocity_)) return false;
@@ -182,8 +154,6 @@ public class QuadrupedTeleopMessage extends Packet<QuadrupedTeleopMessage> imple
       builder.append("QuadrupedTeleopMessage {");
       builder.append("sequence_id=");
       builder.append(this.sequence_id_);      builder.append(", ");
-      builder.append("request_walk=");
-      builder.append(this.request_walk_);      builder.append(", ");
       builder.append("are_steps_adjustable=");
       builder.append(this.are_steps_adjustable_);      builder.append(", ");
       builder.append("desired_velocity=");

@@ -298,7 +298,6 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
          double yawRate = 0.5 * (leftTurnChannel.getValue() - rightTurnChannel.getValue()) * maxVelocityYaw.getValue();
 
          QuadrupedTeleopMessage desiredVelocity = new QuadrupedTeleopMessage();
-         desiredVelocity.setRequestWalk(true);
          desiredVelocity.getDesiredVelocity().set(xVelocity, yVelocity, yawRate);
          messager.submitMessage(QuadrupedUIMessagerAPI.DesiredTeleopVelocity, desiredVelocity);
       }

@@ -142,7 +142,6 @@ public class QuadrupedMessageTools
    public static QuadrupedTeleopMessage createQuadrupedTeleopDesiredVelocity(double xVelocity, double yVelocity, double yawVelocity, QuadrupedXGaitSettingsReadOnly xGaitSettings)
    {
       QuadrupedTeleopMessage teleopMessage = new QuadrupedTeleopMessage();
-      teleopMessage.setRequestWalk(true);
       teleopMessage.getDesiredVelocity().set(xVelocity, yVelocity, yawVelocity);
       teleopMessage.getXGaitSettings().set(xGaitSettings.getAsPacket());
       return teleopMessage;
