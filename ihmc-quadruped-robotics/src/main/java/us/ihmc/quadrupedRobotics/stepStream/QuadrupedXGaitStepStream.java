@@ -4,22 +4,23 @@ import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
 import us.ihmc.quadrupedBasics.referenceFrames.QuadrupedReferenceFrames;
-import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedCommunication.QuadrupedTeleopCommand;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.YoQuadrupedXGaitSettings;
 import us.ihmc.robotics.robotSide.EndDependentList;
 import us.ihmc.robotics.robotSide.RobotEnd;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleopCommand>
 {
@@ -34,17 +35,19 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
 
    private final ArrayList<QuadrupedTimedStep> xGaitPreviewSteps = new ArrayList<>();
    private final EndDependentList<QuadrupedTimedStep> currentSteps = new EndDependentList<>(QuadrupedTimedStep::new);
+   private final YoFrameVector3D accumulatedStepAdjustment = new YoFrameVector3D("accumulatedStepAdjustment", ReferenceFrame.getWorldFrame(), registry);
 
    private final YoDouble bodyYaw = new YoDouble("bodyYaw", registry);
    private final YoFrameVector3D desiredVelocity = new YoFrameVector3D("desiredVelocity", ReferenceFrame.getWorldFrame(), registry);
    private final double controlDT;
    private final DoubleProvider timestamp;
    private final YoDouble firstStepStartTime = new YoDouble("firstStepStartTime", registry);
+   private final Point3D tempPoint = new Point3D();
 
-   public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, DoubleProvider timestamp, double controlDT, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
+   public QuadrupedXGaitStepStream(QuadrupedReferenceFrames referenceFrames, DoubleProvider timestamp, double controlDT, FrameVector3DReadOnly upcomingStepAdjustment, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings,
                                    YoVariableRegistry parentRegistry)
    {
-      super("xgait", parentRegistry);
+      super("xgait", upcomingStepAdjustment, parentRegistry);
       this.xGaitSettings = new YoQuadrupedXGaitSettings(defaultXGaitSettings, registry);
 
       for (int i = 0; i < NUMBER_OF_PREVIEW_STEPS; i++)
@@ -81,6 +84,7 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
 
       this.stepPlanIsAdjustable.set(teleopCommand.areStepsAdjustable());
       addStepsToSequence(stepSequence);
+      accumulatedStepAdjustment.setToZero();
    }
 
    @Override
@@ -107,6 +111,15 @@ public class QuadrupedXGaitStepStream extends QuadrupedStepStream<QuadrupedTeleo
 
       // update xgait preview steps
       xGaitStepPlanner.computeOnlinePlan(xGaitPreviewSteps, currentSteps, desiredVelocity, timestamp.getValue(), bodyYaw.getDoubleValue(), xGaitSettings);
+
+      // handle shifting upcoming steps
+      accumulatedStepAdjustment.add(upcomingStepAdjustment);
+      for (int i = 0; i < xGaitPreviewSteps.size(); i++)
+      {
+         tempPoint.set(xGaitPreviewSteps.get(i).getGoalPosition());
+         tempPoint.add(accumulatedStepAdjustment);
+         xGaitPreviewSteps.get(i).setGoalPosition(tempPoint);
+      }
 
       // add steps to sequence
       addStepsToSequence(stepSequence);

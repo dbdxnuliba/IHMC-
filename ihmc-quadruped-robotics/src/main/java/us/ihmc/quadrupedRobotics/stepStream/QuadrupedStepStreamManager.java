@@ -79,10 +79,10 @@ public class QuadrupedStepStreamManager
     * {@code alpha} is this parameter and
     * {@code x} is the instantaneous step adjustment of the active step with the latest end time
     */
-   private final DoubleParameter stepAdjustmentShiftFactor = new DoubleParameter("stepAdjustmentShiftFactor", registry, 0.0);
+   private final DoubleParameter stepAdjustmentShiftFactor = new DoubleParameter("stepAdjustmentShiftFactor", registry, 0.1);
 
-   /** Net amount that steps have been shifted from propogating step adjustment */
-   private final YoFrameVector3D accumulatedStepShift = new YoFrameVector3D("accumulatedStepShift", ReferenceFrame.getWorldFrame(), registry);
+   /** Net amount that upcoming steps will be shifted */
+   private final YoFrameVector3D upcomingStepAdjustment = new YoFrameVector3D("upcomingStepAdjustment", ReferenceFrame.getWorldFrame(), registry);
 
    /**
     * Variables for stopping and pausing. The expected behavior is:
@@ -99,8 +99,8 @@ public class QuadrupedStepStreamManager
                                      YoVariableRegistry parentRegistry)
    {
       this.timestamp = timestamp;
-      this.preplannedStepStream = new QuadrupedPreplannedStepStream(timestamp, registry);
-      this.xGaitStepStream = new QuadrupedXGaitStepStream(referenceFrames, timestamp, controlDt, xGaitSettings, registry);
+      this.preplannedStepStream = new QuadrupedPreplannedStepStream(timestamp, upcomingStepAdjustment, registry);
+      this.xGaitStepStream = new QuadrupedXGaitStepStream(referenceFrames, timestamp, controlDt, upcomingStepAdjustment, xGaitSettings, registry);
 
       this.stepMode.set(QuadrupedStepMode.PREPLANNED);
 
@@ -145,7 +145,6 @@ public class QuadrupedStepStreamManager
       stopRequested.set(false);
       pausedRequested.set(false);
       pausedSteps.clear();
-      accumulatedStepShift.setToZero();
 
       stepSequence.clear();
       getStepStream().onEntry(stepSequence, initialTransferDurationForShifting);
@@ -196,17 +195,6 @@ public class QuadrupedStepStreamManager
       }
 
       updateActiveSteps();
-
-      // shift upcoming steps
-      for (int i = 0; i < stepSequence.size(); i++)
-      {
-         if (!activeSteps.contains(stepSequence.get(i)))
-         {
-            tempPoint.set(stepSequence.get(i).getGoalPosition());
-            tempPoint.add(accumulatedStepShift);
-            stepSequence.get(i).setGoalPosition(tempPoint);
-         }
-      }
    }
 
    /**
@@ -374,8 +362,11 @@ public class QuadrupedStepStreamManager
          return;
       }
 
-      QuickSort.sort(activeSteps, TimeIntervalTools.endTimeComparator);
-      RobotQuadrant latestStepQuadrant = activeSteps.get(activeSteps.size() - 1).getRobotQuadrant();
-      accumulatedStepShift.scaleAdd(stepAdjustmentShiftFactor.getValue(), instantaneousStepAdjustment.apply(latestStepQuadrant), accumulatedStepShift);
+      for (int i = 0; i < activeSteps.size(); i++)
+      {
+         upcomingStepAdjustment.add(instantaneousStepAdjustment.apply(activeSteps.get(i).getRobotQuadrant()));
+      }
+
+      upcomingStepAdjustment.scale(stepAdjustmentShiftFactor.getValue() / ((double) activeSteps.size()));
    }
 }

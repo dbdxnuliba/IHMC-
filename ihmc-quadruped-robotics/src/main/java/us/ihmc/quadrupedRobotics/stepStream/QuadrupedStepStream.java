@@ -3,18 +3,13 @@ package us.ihmc.quadrupedRobotics.stepStream;
 import org.apache.commons.lang3.mutable.MutableObject;
 import us.ihmc.commons.lists.PreallocatedList;
 import us.ihmc.communication.controllerAPI.command.Command;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.quadrupedBasics.gait.QuadrupedTimedStep;
-import us.ihmc.quadrupedRobotics.util.YoQuadrupedTimedStep;
-import us.ihmc.robotics.robotSide.EndDependentList;
-import us.ihmc.robotics.robotSide.QuadrantDependentList;
-import us.ihmc.robotics.robotSide.RobotEnd;
-import us.ihmc.robotics.robotSide.RobotQuadrant;
-import us.ihmc.robotics.time.TimeIntervalTools;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -28,11 +23,19 @@ public abstract class QuadrupedStepStream<T extends Command> implements Consumer
    /** Latest step stream command */
    private final MutableObject<T> command = new MutableObject<>();
 
+   /**
+    * How much to shift upcoming steps each tick. This value is set externally but is handled separately for each stream.
+    * Since XGAIT does continuous replanning, this value is integrated and added after planning, while PREPLANNED does not recompute,
+    * so this value is simply added to upcoming steps each tick.
+    */
+   protected final FrameVector3DReadOnly upcomingStepAdjustment;
+
    protected final YoBoolean stepPlanIsAdjustable;
 
-   public QuadrupedStepStream(String namePrefix, YoVariableRegistry parentRegistry)
+   public QuadrupedStepStream(String namePrefix, FrameVector3DReadOnly upcomingStepAdjustment, YoVariableRegistry parentRegistry)
    {
       stepPlanIsAdjustable = new YoBoolean(namePrefix + "_stepsAreAdjustable", registry);
+      this.upcomingStepAdjustment = upcomingStepAdjustment;
       parentRegistry.addChild(registry);
    }
 

@@ -217,6 +217,7 @@ public class QuadrupedStepAdjustmentController
          stepAdjustmentGradients.get(robotQuadrant).set(limitedInstantaneousStepAdjustment);
          limitedInstantaneousStepAdjustment.update();
          stepAdjustmentGradients.get(robotQuadrant).sub(limitedInstantaneousStepAdjustment);
+         stepAdjustmentGradients.get(robotQuadrant).negate();
 
          tempPoint.setIncludingFrame(activeStep.getReferenceFrame(), activeStep.getGoalPosition());
          tempPoint.changeFrame(worldFrame);
