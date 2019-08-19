@@ -300,6 +300,7 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
 
          QuadrupedTeleopMessage desiredVelocity = new QuadrupedTeleopMessage();
          desiredVelocity.getDesiredVelocity().set(xVelocity, yVelocity, yawRate);
+         desiredVelocity.getXGaitSettings().set(xGaitSettings.getAsPacket());
          messager.submitMessage(QuadrupedUIMessagerAPI.DesiredTeleopVelocity, desiredVelocity);
       }
    }
