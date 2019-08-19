@@ -296,6 +296,7 @@ public class newSuppaKickBehavior
 //      BehaviorBuilder build4 = new BehaviorBuilder(leftLEgAction, actionTypes.LeftLeg);
       BehaviorBuilder build3 = new BehaviorBuilder(pelvisAction, actionTypes.Pelvis);
       BehaviorBuilder build2 = new BehaviorBuilder(multipleActions, actionTypes.Chest, actionTypes.RightLeg);
+      BehaviorBuilder build5 = new BehaviorBuilder(pelvisAction1, actionTypes.Pelvis);
 
 //      BehaviorBuilder build1 = new BehaviorBuilder(rightLegAction, actionTypes.RightLeg);
 
@@ -600,7 +601,7 @@ public class newSuppaKickBehavior
       {
          if(subtract.poll())
          {
-//            behaviorCounter = behaviorCounter - (tempActionSize- 1);
+            behaviorCounter = behaviorCounter - (tempActionSize- 1);
          }
 
 
