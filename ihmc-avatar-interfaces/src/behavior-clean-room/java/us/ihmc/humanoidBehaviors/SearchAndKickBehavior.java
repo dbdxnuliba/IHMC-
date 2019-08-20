@@ -1,15 +1,12 @@
 package us.ihmc.humanoidBehaviors;
 
 import controller_msgs.msg.dds.*;
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.*;
 import us.ihmc.avatar.drcRobot.*;
-import us.ihmc.commonWalkingControlModules.capturePoint.smoothCMPBasedICPPlanner.CoPGeneration.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.lists.*;
 import us.ihmc.commons.thread.*;
 import us.ihmc.communication.*;
 import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.humanoidBehaviors.SuppaKickBehavior.*;
 import us.ihmc.humanoidBehaviors.tools.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.log.*;
@@ -21,8 +18,6 @@ import us.ihmc.robotModels.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.ros2.*;
 
-import java.util.*;
-import java.util.Locale.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -37,7 +32,7 @@ public class SearchAndKickBehavior
    private DRCRobotModel drcRobotModel;
    private Ros2Node ros2Node;
    private ResetRobotPoseBehavior resetRobotPoseBehavior;
-   private newSuppaKickBehavior tmp;
+   private newEventBasedBehaviorSample tmp;
 
 
    private int behaviorCounter = 1;
@@ -143,7 +138,7 @@ public class SearchAndKickBehavior
          fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 //         behaviorHelper.publishFootstepList(walk());
 //         resetRobotPoseBehavior = new ResetRobotPoseBehavior(behaviorHelper, messager, drcRobotModel,ros2Node);
-         tmp = new newSuppaKickBehavior(behaviorHelper, messager, drcRobotModel, ros2Node);
+         tmp = new newEventBasedBehaviorSample(behaviorHelper, messager, drcRobotModel, ros2Node);
       }
    }
 

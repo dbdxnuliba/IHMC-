@@ -1,9 +1,15 @@
 package us.ihmc.humanoidBehaviors.BehaviorBuilder;
 
 import controller_msgs.msg.dds.*;
+import us.ihmc.avatar.drcRobot.*;
+import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
+import us.ihmc.commons.thread.Notification;
+import us.ihmc.communication.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
 import us.ihmc.pubsub.subscriber.*;
+import us.ihmc.ros2.*;
 
+import javax.management.*;
 import java.util.*;
 
 public class BehaviorBuilder
@@ -25,6 +31,8 @@ public class BehaviorBuilder
    private static ArrayList<BehaviorBuilder.actionTypes> actionsType = new ArrayList<>(100);
    private static ArrayList<List<actionTypes>> actionsTypeList = new ArrayList<>();
    private static ArrayList<List<actionTypes>> finaList = new ArrayList<>();
+   private static Ros2Node ros2node;
+   private static DRCRobotModel robotModel;
 //   private static List<actionTypes> actionsTypeList = new ArrayList<>();
 
    private static ArrayList<BehaviorAction> actionsBehavior = new ArrayList<>(100);
@@ -37,51 +45,33 @@ public class BehaviorBuilder
    private static final ArrayDeque<BehaviorAction> taskQueue = new ArrayDeque<>();
    private BehaviorAction behaviorAction;
 
+   private ArrayList<BehaviorAction>  ActionBehaviors;
+
+
+   private Notification taskspaceNotification;
+   private Notification goToWalk;
+
 
 //   public BehaviorBuilder(BehaviorAction behaviorAction,actionTypes... type)//, Ros2Node ros2Node, DRCRobotModel robotModel)
    public BehaviorBuilder(BehaviorAction behaviorAction,actionTypes... type)
    {
-//      actions = new ArrayList<BehaviorAction>();
-//      for(int i = 0 ; i < behaviorAction.length; i++)
-//      {
-//         behaviorAction1 = behaviorAction[i];
-//         helperMethod(behaviorAction1);
-//      }
+      this(null, null, behaviorAction, type);
+   }
+
+   public BehaviorBuilder(Ros2Node ros2Node, DRCRobotModel robotModel, BehaviorAction behaviorAction, actionTypes... type)
+   {
+      this.ros2node = ros2Node;
+      this.robotModel = robotModel;
+
       for(int i = 0; i< type.length ; i++)
       {
          this.type = type[i];
       }
       this.behaviorAction = behaviorAction;
-//      if (type.length == 1)
-//      {
-//         helperMethodforactiontype(type[0]);
-//      }
-//
-//      else
-//      {
       buildActionsTypeList(type.length , type);
       helperMethodforactions(behaviorAction);
-//      buildFinalList(type);
 
 
-      //      parentHelperMethod();
-
-//      ROS2Tools.createCallbackSubscription(ros2Node,
-//                                           WalkingStatusMessage.class,
-//                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-//                                           this::checkFootTrajectoryMessage);
-//
-//      ROS2Tools.createCallbackSubscription(ros2Node,
-//                                           JointspaceTrajectoryStatusMessage.class,
-//                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-//                                           this::checkJointTrajectoryMessage);
-//
-//
-//
-//      ROS2Tools.createCallbackSubscription(ros2Node,
-//                                           TaskspaceTrajectoryStatusMessage.class,
-//                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-//                                           this::checkTaskspaceTrajectoryMessage);
    }
 
 
@@ -188,7 +178,7 @@ public class BehaviorBuilder
 //   LeftLeg -> 6
 //   RightLeg -> 7
 
-   private static ArrayList<BehaviorBuilder.actionTypes> buildFlags()
+   public static ArrayList<BehaviorBuilder.actionTypes> buildFlags()
    {
       ArrayList<BehaviorBuilder.actionTypes> listforFlags =  getActionTypes();
       for(int i = 0; i< listforFlags.size() ; i ++)
@@ -225,9 +215,15 @@ public class BehaviorBuilder
    }
 
 
-   public static void methodcollection()
+   public void checkTaskspaceTrajectoryMethod(Notification taskspaceNotification, Notification goToWalk)
    {
-
+      ActionBehaviors = getActionsBehavior();
+      this.taskspaceNotification = taskspaceNotification;
+      this.goToWalk = goToWalk;
+      ROS2Tools.createCallbackSubscription(ros2node,
+                                           TaskspaceTrajectoryStatusMessage.class,
+                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
+                                           this::checkTaskspaceTrajectoryMessage);
    }
    public void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
    {
@@ -244,14 +240,41 @@ public class BehaviorBuilder
       if (tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED);
    }
 
-   public void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+//   public void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+//   {
+//
+//      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+//
+//      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+//         ;
+//   }
+
+   public Notification getGoToWalk()
    {
-
-      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
-
-      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
-         ;
+      return goToWalk;
    }
+
+   private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
+{
+   TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
+   if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
+   {
+      if(taskspaceNotification.poll())
+      {
+         if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
+         {
+            System.out.println("Executing Done method for :" + ActionBehaviors.get(behaviorCounter));
+            if (ActionBehaviors.get(behaviorCounter).isDone())
+            {
+               behaviorCounter++;
+            }
+         }
+
+         System.out.println("Triggering goToWalk notification");
+         goToWalk.set();
+      }
+   }
+}
 
    public static void main(String[] args)
    {
@@ -272,6 +295,7 @@ public class BehaviorBuilder
 
          }
       };
+
 
 //
       BehaviorBuilder build1 = new BehaviorBuilder(action1, actionTypes.Pelvis);// , ros2Node, robotModel);
