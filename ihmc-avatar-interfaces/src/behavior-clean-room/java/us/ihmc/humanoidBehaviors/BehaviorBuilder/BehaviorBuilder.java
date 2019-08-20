@@ -1,15 +1,9 @@
 package us.ihmc.humanoidBehaviors.BehaviorBuilder;
 
-import controller_msgs.msg.dds.*;
 import us.ihmc.avatar.drcRobot.*;
-import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.thread.Notification;
-import us.ihmc.communication.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
-import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.ros2.*;
-
-import javax.management.*;
 import java.util.*;
 
 public class BehaviorBuilder
@@ -31,28 +25,19 @@ public class BehaviorBuilder
    private static ArrayList<BehaviorBuilder.actionTypes> actionsType = new ArrayList<>(100);
    private static ArrayList<List<actionTypes>> actionsTypeList = new ArrayList<>();
    private static ArrayList<List<actionTypes>> finaList = new ArrayList<>();
-   private static Ros2Node ros2node;
-   private static DRCRobotModel robotModel;
-//   private static List<actionTypes> actionsTypeList = new ArrayList<>();
+   private Ros2Node ros2node;
+   private DRCRobotModel robotModel;
+
 
    private static ArrayList<BehaviorAction> actionsBehavior = new ArrayList<>(100);
    private static ArrayList<BehaviorBuilder.actionTypes> flags = new ArrayList<>();
-   private static final Map<BehaviorAction,actionTypes> executionMap = new LinkedHashMap<>();
-   private static final ArrayDeque<actionTypes> KeyQueue = new ArrayDeque<>();
+
 
    private BehaviorBuilder.actionTypes  type;
-//   private static final ArrayDeque<BehaviorBuilder.actionTypes> taskQueue = new ArrayDeque<>();
+
    private static final ArrayDeque<BehaviorAction> taskQueue = new ArrayDeque<>();
-   private BehaviorAction behaviorAction;
-
-   private ArrayList<BehaviorAction>  ActionBehaviors;
 
 
-   private Notification taskspaceNotification;
-   private Notification goToWalk;
-
-
-//   public BehaviorBuilder(BehaviorAction behaviorAction,actionTypes... type)//, Ros2Node ros2Node, DRCRobotModel robotModel)
    public BehaviorBuilder(BehaviorAction behaviorAction,actionTypes... type)
    {
       this(null, null, behaviorAction, type);
@@ -67,41 +52,18 @@ public class BehaviorBuilder
       {
          this.type = type[i];
       }
-      this.behaviorAction = behaviorAction;
+
       buildActionsTypeList(type.length , type);
       helperMethodforactions(behaviorAction);
 
-
    }
 
-
-//   private void parentHelperMethod()
-//   {
-////      for(int i = 0; i < type ; i++)
-////      {
-////         helperMethodforactiontype(type);
-////      }
-//
-//      helperMethodforactions(behaviorAction);
-//
-//
-//   }
 
    private void helperMethodforactions(BehaviorAction action)
    {
-//      actions.get(counter);
       actionsBehavior.add(behaviorCounter, action);
       behaviorCounter++;
    }
-//   private void helperMethodforactiontype(BehaviorBuilder.actionTypes type)
-//   {
-//      //      actions.get(counter);
-//      actionsType.add(typeCounter, type);
-//
-//      typeCounter++;
-//
-//   }
-
 
    private static void buildActionsTypeList(int number, actionTypes... actionsType)
    {
@@ -112,45 +74,6 @@ public class BehaviorBuilder
          tmp.add(actionsType[i]);
       }
       actionsTypeList.add(tmp);
-   }
-
-   //   private static void submitSingleTask(BehaviorBuilder.actionTypes type)
-//   private static void submitSingleTask(BehaviorAction behaviorAction, actionTypes type)
-//   {
-//      taskQueue.add(behaviorAction);
-//      buildtaskType(type);
-//   }
-
-   private static void buildtaskType(actionTypes key)
-   {
-      KeyQueue.add(key);
-   }
-
-//   private static void submitTaskForParallelExecution(ArrayList<List<actionTypes>> abc)
-//   {
-////      actionTypes type =  executionMap.get(key);
-////      //      BehaviorBuilder tmp = new BehaviorBuilder();
-////      //      tmp.submitSingleTask();
-////      submitSingleTask(action, key);
-//
-//      actionsTypeList.add(abc);
-//
-//
-//   }
-
-
-
-
-
-
-   public static ArrayDeque<BehaviorAction> getTaskQueue()
-   {
-      return taskQueue;
-   }
-
-   public static ArrayDeque<actionTypes> getKeyQueue()
-   {
-      return KeyQueue;
    }
 
    public static ArrayList<BehaviorAction> getActionsBehavior()
@@ -213,68 +136,6 @@ public class BehaviorBuilder
 
       return flags;
    }
-
-
-   public void checkTaskspaceTrajectoryMethod(Notification taskspaceNotification, Notification goToWalk)
-   {
-      ActionBehaviors = getActionsBehavior();
-      this.taskspaceNotification = taskspaceNotification;
-      this.goToWalk = goToWalk;
-      ROS2Tools.createCallbackSubscription(ros2node,
-                                           TaskspaceTrajectoryStatusMessage.class,
-                                           ControllerAPIDefinition.getPublisherTopicNameGenerator(robotModel.getSimpleRobotName()),
-                                           this::checkTaskspaceTrajectoryMessage);
-   }
-   public void checkJointTrajectoryMessage(Subscriber<JointspaceTrajectoryStatusMessage> message)
-   {
-      JointspaceTrajectoryStatusMessage tmp = message.takeNextData();
-
-      if (tmp.getTrajectoryExecutionStatus() == JointspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_STARTED);
-
-   }
-
-   public void checkFootTrajectoryMessage(Subscriber<WalkingStatusMessage> message)
-   {
-      WalkingStatusMessage tmp = message.takeNextData();
-
-      if (tmp.getWalkingStatus() == WalkingStatusMessage.COMPLETED);
-   }
-
-//   public void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
-//   {
-//
-//      TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
-//
-//      if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
-//         ;
-//   }
-
-   public Notification getGoToWalk()
-   {
-      return goToWalk;
-   }
-
-   private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
-{
-   TaskspaceTrajectoryStatusMessage tmp = message.takeNextData();
-   if (tmp.getTrajectoryExecutionStatus() == TaskspaceTrajectoryStatusMessage.TRAJECTORY_EXECUTION_STATUS_COMPLETED)
-   {
-      if(taskspaceNotification.poll())
-      {
-         if (behaviorCounter != ActionBehaviors.size()) // don't call get after the last action is done as it will be out of bounds
-         {
-            System.out.println("Executing Done method for :" + ActionBehaviors.get(behaviorCounter));
-            if (ActionBehaviors.get(behaviorCounter).isDone())
-            {
-               behaviorCounter++;
-            }
-         }
-
-         System.out.println("Triggering goToWalk notification");
-         goToWalk.set();
-      }
-   }
-}
 
    public static void main(String[] args)
    {

@@ -95,12 +95,32 @@ public class DynamicKick extends AbstractBehavior
       //adding all the footstep trajectories into an array sending this independently
       final RobotSide kickFoot = RobotSide.RIGHT;
 
+      //take arms slightly backwards - taken from TheFinalTab class
+      final double armTrajectorTime = 0.5;
+      //      double[] jointAngles = new double[] {0.765356719493866, 0.024195531383156776, 2.9822821617126465, 1.6808037757873535, -0.3247416913509369, 0.67205411195755, 0.15090779960155487};
+      double[] jointAngles = new double[] {Math.toRadians(15.0),Math.toRadians(-90.0),Math.toRadians(90.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0)};
+      //      double[] jointAngles = new double[] {0,Math.toRadians(-90.0),Math.toRadians(75), Math.toRadians(60.0),0,0,0};
+      ArmTrajectoryMessage armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT, armTrajectorTime, jointAngles);
+
+
+      ArmTrajectoryTask leftArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
+      pipeLine.submitSingleTaskStage(leftArmTask);
+
+      //      jointAngles = new double[] {0.10722935199737549, -0.23587453365325928, 2.419130802154541, -0.9118338823318481, -2.2621233463287354, -0.5176281929016113, 0.005108347628265619};
+      jointAngles = new double[] {0.0,Math.toRadians(90.0),0.0,0.0,0.0,0.0,0.0};
+      //      jointAngles = new double[] {0,Math.toRadians(90.0),Math.toRadians(75), Math.toRadians(-60.0),0,0,0};
+      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT, armTrajectorTime, jointAngles);
+
+      ArmTrajectoryTask rightArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
+      pipeLine.submitSingleTaskStage(rightArmTask);
+
+
       //Get Pelvis up
       MovingReferenceFrame pelvisZUpFrame = referenceFrames.getPelvisZUpFrame();
       FramePoint3D pelvisReference = new FramePoint3D(pelvisZUpFrame);
       pelvisReference.changeFrame(referenceFrames.getWorldFrame());
 
-      final double pelvisTrajectoryTime = 0.25;
+      final double pelvisTrajectoryTime = 0.5;
       Pose3D desiredpelvisPose = new Pose3D(pelvisReference.getX(),pelvisReference.getY() + 0.1,pelvisReference.getZ(),0.0,0.0,0.0);
       PelvisTrajectoryMessage pelvismesssage = HumanoidMessageTools.createPelvisTrajectoryMessage(pelvisTrajectoryTime,desiredpelvisPose);
       pelvismesssage.enable_user_pelvis_control_= true;
@@ -108,24 +128,7 @@ public class DynamicKick extends AbstractBehavior
       PelvisTrajectoryTask pelvisTask = new PelvisTrajectoryTask(pelvismesssage,pelvisTrajectoryBehavior);
       pipeLine.submitSingleTaskStage(pelvisTask);
 
-      //take arms slightly backwards - taken from TheFinalTab class
-      final double armTrajectorTime = 0.5;
-//      double[] jointAngles = new double[] {0.765356719493866, 0.024195531383156776, 2.9822821617126465, 1.6808037757873535, -0.3247416913509369, 0.67205411195755, 0.15090779960155487};
-      double[] jointAngles = new double[] {Math.toRadians(15.0),Math.toRadians(-90.0),Math.toRadians(90.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0),Math.toRadians(0.0)};
-//      double[] jointAngles = new double[] {0,Math.toRadians(-90.0),Math.toRadians(75), Math.toRadians(60.0),0,0,0};
-      ArmTrajectoryMessage armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.LEFT, armTrajectorTime, jointAngles);
 
-
-      ArmTrajectoryTask leftArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
-      pipeLine.submitSingleTaskStage(leftArmTask);
-
-//      jointAngles = new double[] {0.10722935199737549, -0.23587453365325928, 2.419130802154541, -0.9118338823318481, -2.2621233463287354, -0.5176281929016113, 0.005108347628265619};
-      jointAngles = new double[] {0.0,Math.toRadians(90.0),0.0,0.0,0.0,0.0,0.0};
-//      jointAngles = new double[] {0,Math.toRadians(90.0),Math.toRadians(75), Math.toRadians(-60.0),0,0,0};
-      armTrajectoryMessage = HumanoidMessageTools.createArmTrajectoryMessage(RobotSide.RIGHT, armTrajectorTime, jointAngles);
-
-      ArmTrajectoryTask rightArmTask = new ArmTrajectoryTask(armTrajectoryMessage,armTrajectoryBehavior);
-      pipeLine.submitSingleTaskStage(rightArmTask);
 
 
       //take leg up c = 1
@@ -181,8 +184,8 @@ public class DynamicKick extends AbstractBehavior
 
 
       //after 1 sec gap move right leg forward c = 4, 5
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.15,0.05));
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.0,-0.25,0.127));
+      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.15,0.1));
+      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.25,0.0));
 
 
       //while the above two action happen move right hand to till hip position and let left hand rotate more upwards
