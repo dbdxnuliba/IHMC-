@@ -41,7 +41,7 @@ public class SearchAndKickBehavior
    private newSuppaKickBehavior suppaKickBehavior;
    private ArrayList<BehaviorAction> ActionBehaviors;
 
-   private int behaviorCounter = 1;
+   private int behaviorCounter = 0;
    private boolean flag = false;
 
    private final Notification flagNotification = new Notification();
@@ -53,6 +53,10 @@ public class SearchAndKickBehavior
    private final Notification goToWalk = new Notification();
    private final Notification doOnlyOnce = new Notification();
 
+   private final boolean triggerfromAnotherBehavior = true;
+
+
+
    public SearchAndKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
       LogTools.debug("Initializing SearchAndKickBehavior");
@@ -61,18 +65,26 @@ public class SearchAndKickBehavior
       this.robotModel = robotModel;
       this.ros2Node = ros2Node;
 
-
-
-      enable = messager.createInput(API.Enable, false);
       messager.registerTopicListener(API.Abort, this::doOnAbort);
       messager.registerTopicListener(API.SearchAndKick, object -> WalkNotification.set());
 
 //      goToWalk.set();
-//      doOnlyOnce.set();
+      doOnlyOnce.set();
 
-//      new BehaviorBuilder(action, actionTypes.Footstep);
+      new BehaviorBuilder(action, actionTypes.Footstep);
 
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
+
+      if(triggerfromAnotherBehavior)
+      {
+         enable = new AtomicReference<Boolean>(true);
+         goToWalk.set();
+      }
+      else
+      {
+         enable = messager.createInput(API.Enable, false);
+      }
+
 
    }
 
@@ -183,15 +195,19 @@ public class SearchAndKickBehavior
 
    public void doBehavior()
    {
-      System.out.println(WalkNotification.read());
-
-      if(enable.get())
+//      System.out.println(WalkNotification.read());
+      if(!enable.get())
       {
-         System.out.println("inside newEventBasedBehaviorSample doBehavior loop");
+         return;
+      }
+
+      if(doOnlyOnce.poll())
+      {
+         System.out.println("inside doBehavior loop");
          ActionBehaviors = BehaviorBuilder.getActionsBehavior();
       }
 
-      if(walkingNotification.poll())
+      if(WalkNotification.poll())
       {
 
          System.out.println("Triggering Behavior"  + (behaviorCounter));
@@ -418,9 +434,10 @@ public class SearchAndKickBehavior
 
    public FootstepDataListMessage walk()
    {
+      System.out.println("inside walk method");
       FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
       RecyclingArrayList<FootstepDataMessage> footstepDataMessages = footstepDataListMessage.getFootstepDataList();
-
+      fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
       double x = 0.0;
       double y = 0.09;
       double z = 0.0;
@@ -447,13 +464,14 @@ public class SearchAndKickBehavior
    public static class API
    {
       private static final MessagerAPIFactory apiFactory = new MessagerAPIFactory();
-      private static final MessagerAPIFactory.Category RootCategory = apiFactory.createRootCategory("Behaviors");
-      private static final MessagerAPIFactory.CategoryTheme Kicking = apiFactory.createCategoryTheme("LookibfAndSearching");
+      private static final Category RootCategory = apiFactory.createRootCategory("Behaviors");
+      private static final CategoryTheme Kicking = apiFactory.createCategoryTheme("LookibfAndSearching");
+      private static final Category KickingCategory = RootCategory.child(Kicking);
 //      private static final MessagerAPIFactory.Category SearchAndKickCategory = RootCategory.child()
 
-      public static final Topic<Boolean> Enable = RootCategory.topic(apiFactory.createTypedTopicTheme("enable"));
-      public static final Topic<Boolean> SearchAndKick = RootCategory.topic(apiFactory.createTypedTopicTheme("Initialize Behavior"));
-      public static final Topic<Boolean> Abort = RootCategory.topic(apiFactory.createTypedTopicTheme("Abort Behavior"));
+      public static final Topic<Boolean> Enable = KickingCategory.topic(apiFactory.createTypedTopicTheme("enable"));
+      public static final Topic<Boolean> SearchAndKick = KickingCategory.topic(apiFactory.createTypedTopicTheme("Initialize Behavior"));
+      public static final Topic<Boolean> Abort = KickingCategory.topic(apiFactory.createTypedTopicTheme("Abort Behavior"));
 
       public static final MessagerAPI create()
       {

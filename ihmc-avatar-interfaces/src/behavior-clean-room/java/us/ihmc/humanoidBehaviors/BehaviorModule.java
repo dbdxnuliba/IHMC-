@@ -55,7 +55,8 @@ public class BehaviorModule
       new FancyPosesBehavior(behaviorHelper, messager, robotModel);
       new ExploreAreaBehavior(behaviorHelper, messager, robotModel);
       new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
-      new SearchAndKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
+//      new SearchAndKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
+      new newSuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
    }
 
    public static MessagerAPI getBehaviorAPI()
@@ -68,7 +69,8 @@ public class BehaviorModule
       apiFactory.includeMessagerAPIs(FancyPosesBehavior.API.create());
       apiFactory.includeMessagerAPIs(ExploreAreaBehavior.ExploreAreaBehaviorAPI.create());
       apiFactory.includeMessagerAPIs(SuppaKickBehavior.API.create());
-      apiFactory.includeMessagerAPIs(SearchAndKickBehavior.API.create());
+//      apiFactory.includeMessagerAPIs(SearchAndKickBehavior.API.create());
+      apiFactory.includeMessagerAPIs(newSuppaKickBehavior.API.create());
       return apiFactory.getAPIAndCloseFactory();
    }
 }

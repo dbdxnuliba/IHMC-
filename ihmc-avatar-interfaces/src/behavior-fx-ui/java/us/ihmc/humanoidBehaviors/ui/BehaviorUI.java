@@ -38,7 +38,6 @@ public class BehaviorUI
    @FXML private ExploreAreaBehaviorUIController exploreAreaBehaviorUIController;
    @FXML private PlannerParametersUIController plannerParametersUIController;
    @FXML private DirectRobotUIController directRobotUIController;
-   @FXML private SearchAndKickUIController suppaKickUIControler;
 
    public BehaviorUI(Stage primaryStage,
                      Messager behaviorMessager,
@@ -75,7 +74,7 @@ public class BehaviorUI
       patrolBehaviorUIController.init(subScene, behaviorMessager, robotModel);
       plannerParametersUIController.init(behaviorMessager, robotModel);
       directRobotUIController.init(ros2Node, robotModel);
-//      suppaKickUIControler.init(behaviorMessager);
+
 
 
 

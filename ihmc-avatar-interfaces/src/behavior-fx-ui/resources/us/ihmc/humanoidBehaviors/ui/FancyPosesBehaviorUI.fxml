@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<AnchorPane prefHeight="102.0" prefWidth="167.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.humanoidBehaviors.ui.behaviors.FancyPosesBehaviorUIController">
+<AnchorPane prefHeight="102.0" prefWidth="167.0" xmlns="http://javafx.com/javafx/8.0.999-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.humanoidBehaviors.ui.behaviors.FancyPosesBehaviorUIController">
     <children>
         <GridPane hgap="10.0" layoutX="15.0" layoutY="17.0" vgap="5.0">
             <children>
@@ -24,6 +24,8 @@
             <Button fx:id="karateKid3Button" onAction="#requestKarateKid3" text="KarateKid3" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <Button fx:id="presentButton" onAction="#requestPresent" text="Present" GridPane.columnIndex="1" GridPane.rowIndex="3" />
             <Button fx:id="shutdownPoseButton" onAction="#requestShutdownPose" text="ShutdownPose" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+            <Button fx:id="oldSuppaKickButton" layoutX="240.0" layoutY="97.0" onAction="#requestoldSuppaKick" text="oldSuppaKick" GridPane.columnIndex="2" />
+            <Button fx:id="newSuppaKickButton" onAction="#requestnewSuppaKick" text="newSuppaKick" GridPane.columnIndex="2" GridPane.rowIndex="1" />
             </children>
          <columnConstraints>
             <ColumnConstraints />

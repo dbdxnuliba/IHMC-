@@ -4,7 +4,7 @@ import javafx.fxml.*;
 import javafx.scene.control.*;
 import us.ihmc.humanoidBehaviors.*;
 import us.ihmc.humanoidBehaviors.SuppaKickBehavior.*;
-import us.ihmc.messager.*;
+import us.ihmc.messager.Messager;
 
 public class SearchAndKickUIController
 {
@@ -24,12 +24,12 @@ public class SearchAndKickUIController
    @FXML
    public void enable()
    {
-      behaviorMessager.submitMessage(SuppaKickBehavior.API.Enable, enableCheckBox.isSelected());
+      behaviorMessager.submitMessage(SearchAndKickBehavior.API.Enable, enableCheckBox.isSelected());
    }
 
    @FXML
    public void stepping()
    {
-      behaviorMessager.submitMessage(SuppaKickBehavior.API.Stepping, false);
+      behaviorMessager.submitMessage(SearchAndKickBehavior.API.SearchAndKick, false);
    }
 }

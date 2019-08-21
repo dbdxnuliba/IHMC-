@@ -26,6 +26,13 @@ public class FancyPosesBehaviorUIController
    @FXML
    private Button shutdownPoseButton;
 
+   @FXML
+   private Button oldSuppaKickButton;
+
+   @FXML
+   private Button newSuppaKickButton;
+
+
    private Messager behaviorMessager;
 
    public void init(Messager behaviorMessager)
@@ -33,29 +40,29 @@ public class FancyPosesBehaviorUIController
       this.behaviorMessager = behaviorMessager;
    }
 
-//   @FXML
-//   public void enable()
-//   {
-//      behaviorMessager.submitMessage(FancyPosesBehavior.API.Enable, enableCheckBox.isSelected());
-//   }
-
    @FXML
    public void enable()
    {
-      behaviorMessager.submitMessage(SearchAndKickBehavior.API.Enable, enableCheckBox.isSelected());
+      behaviorMessager.submitMessage(FancyPosesBehavior.API.Enable, enableCheckBox.isSelected());
    }
 
-   //   @FXML
-//   public void requestSingleSupport()
-//   {
-//      behaviorMessager.submitMessage(FancyPosesBehavior.API.GoToSingleSupport, true);
-//   }
+   @FXML
+   public void requestSingleSupport()
+   {
+      behaviorMessager.submitMessage(FancyPosesBehavior.API.GoToSingleSupport, true);
+   }
 
-      @FXML
-      public void requestSingleSupport()
-      {
-         behaviorMessager.submitMessage(SearchAndKickBehavior.API.SearchAndKick, true);
-      }
+   @FXML
+   public void requestoldSuppaKick()
+   {
+      behaviorMessager.submitMessage(SuppaKickBehavior.API.Walk, true);
+   }
+
+   @FXML
+   public void requestnewSuppaKick()
+   {
+      behaviorMessager.submitMessage(newSuppaKickBehavior.API.Walk, true);
+   }
 
    @FXML
    public void requestRunningMan()

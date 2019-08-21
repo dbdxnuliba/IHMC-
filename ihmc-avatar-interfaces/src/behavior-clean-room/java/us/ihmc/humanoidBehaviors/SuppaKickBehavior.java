@@ -54,9 +54,7 @@ public class SuppaKickBehavior
 
    private final Notification goToWalk = new Notification();
    private boolean tmp = false;
-   private final boolean triggerfromAnotherBehavior = false;
-
-
+   private final boolean triggerfromAnotherBehavior = true;
 
 
 
@@ -69,11 +67,11 @@ public class SuppaKickBehavior
       behaviorHelper.createFootstepStatusCallback(this::acceptFootstepStatus);
       stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
       messager.registerTopicListener(API.Abort,this::doOnAbort);
-//      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
+      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
       fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 
       //go to walk is the name of the bahavior itself
-      enable = messager.createInput(API.Enable, false);
+
 
       ROS2Tools.createCallbackSubscription(ros2Node,
                                            WalkingStatusMessage.class,
@@ -104,37 +102,17 @@ public class SuppaKickBehavior
       if(triggerfromAnotherBehavior)
       {
          enable = new AtomicReference<Boolean>(true);
-         goToWalk.set();
+//         goToWalk.set();
       }
 
-      action2.isDone();
+      else
+      {
+         enable = messager.createInput(API.Enable, false);
+      }
 
    }
 
 // footstep counter acts like a counter for sequence of tasks
-
-   BehaviorAction action1 = new BehaviorAction()
-   {
-      @Override
-      public void onEntry()
-      {
-
-      }
-   };
-
-   BehaviorAction action2 = new BehaviorAction()
-   {
-      @Override
-      public void onEntry()
-      {
-
-      }
-   };
-
-
-
-
-
    private void checkTaskspaceTrajectoryMessage(Subscriber<TaskspaceTrajectoryStatusMessage> message)
    {
 
@@ -279,6 +257,7 @@ public class SuppaKickBehavior
                footStepCounter++;
                submitFootPostion(behaviorHelper.pollHumanoidReferenceFrames(), footStepCounter);
                footStepCounter++;
+               doOnAbort(true);
             }
 
          }
@@ -424,20 +403,6 @@ public class SuppaKickBehavior
       }
 
    }
-
-   public void setGoToWalk()
-
-   {
-//      System.out.println("Setting Walking Notification");
-//      goToWalk.poll();
-//      System.out.println(goToWalk.read());
-//      enable = new AtomicReference<Boolean>(true);
-//      goToWalk.set();
-   }
-
-
-
-
 
    public static class API
    {

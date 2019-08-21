@@ -15,6 +15,7 @@ import us.ihmc.humanoidBehaviors.tools.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.log.*;
 import us.ihmc.messager.*;
+import us.ihmc.messager.MessagerAPIFactory.*;
 import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.robotSide.*;
@@ -31,8 +32,8 @@ public class newSuppaKickBehavior
    private Ros2Node ros2Node;
    private DRCRobotModel robotModel;
 
-   private AtomicReference<Boolean> enable;
-   private final ActivationReference<Boolean> stepping;
+//   private AtomicReference<Boolean> enable;
+//   private final ActivationReference<Boolean> stepping;
    private FullHumanoidRobotModel fullHumanoidRobotModel;
    private ArrayList<BehaviorAction> ActionBehaviors;
    private int behaviorCounter = 0;
@@ -57,15 +58,17 @@ public class newSuppaKickBehavior
       this.behaviorHelper = behaviorHelper;
       this.ros2Node = ros2Node;
       this.robotModel = robotModel;
-      stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
-      messager.registerTopicListener(API.Abort,this::doOnAbort);
+//      stepping = behaviorHelper.createBooleanActivationReference(API.Stepping, false, true);
+//      messager.registerTopicListener(API.Abort,this::doOnAbort);
       //      messager.registerTopicListener(API.Walk, object -> goToWalk.set()); //triggers the notification class set method (like a ping)
       fullHumanoidRobotModel = behaviorHelper.pollFullRobotModel();
 
+      messager.registerTopicListener(API.Abort,this::doOnAbort);
+      messager.registerTopicListener(API.Walk, object -> goToWalk.set());
 
 
       //go to walk is the name of the bahavior itself
-      enable = messager.createInput(API.Enable, false);
+//      enable = messager.createInput(API.Enable, false);
 
       new BehaviorBuilder(getArmsBack, actionTypes.LeftArm);
       new BehaviorBuilder(getPelvisup, actionTypes.Pelvis);
@@ -77,7 +80,7 @@ public class newSuppaKickBehavior
       new BehaviorBuilder(FinalAction,actionTypes.Chest, actionTypes.RightLeg);
 
 
-      goToWalk.set();
+//      goToWalk.set();
       doOnlyOnce.set();
       behaviorHelper.startScheduledThread(getClass().getSimpleName(), this::doBehavior, 1, TimeUnit.SECONDS);
    }
@@ -447,4 +450,22 @@ public class newSuppaKickBehavior
          behaviorHelper.shutdownScheduledThread();
       }
    }
+
+   public static class API
+   {
+      private static final MessagerAPIFactory apiFactory = new MessagerAPIFactory();
+      private static final Category RootCategory = apiFactory.createRootCategory("KickingBehaviors");
+      private static final CategoryTheme Kicking = apiFactory.createCategoryTheme("newKickingFramework");
+      private static final Category KickingCategory = RootCategory.child(Kicking);
+      //      private static final MessagerAPIFactory.Category SearchAndKickCategory = RootCategory.child()
+
+      public static final Topic<Boolean> Walk = KickingCategory.topic(apiFactory.createTypedTopicTheme("Initialize Behavior"));
+      public static final Topic<Boolean> Abort = KickingCategory.topic(apiFactory.createTypedTopicTheme("Abort Behavior"));
+
+      public static final MessagerAPI create()
+      {
+         return apiFactory.getAPIAndCloseFactory();
+      }
+   }
+
 }
