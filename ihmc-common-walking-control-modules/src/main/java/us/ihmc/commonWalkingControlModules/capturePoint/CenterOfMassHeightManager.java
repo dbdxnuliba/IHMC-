@@ -302,6 +302,18 @@ public class CenterOfMassHeightManager
          if (userCoMHeightControlState.isCoMHeightTrajectoryAvailable())
          {
             requestState(PelvisHeightControlMode.USER_COM);
+            if (stateMachine.getCurrentStateKey() != PelvisHeightControlMode.USER_COM)
+            {
+               LogTools.warn("Wrong state 1");
+            }
+         }
+         else
+         {
+            requestState(PelvisHeightControlMode.WALKING_CONTROLLER);
+            if (stateMachine.getCurrentStateKey() != PelvisHeightControlMode.WALKING_CONTROLLER)
+            {
+               LogTools.warn("Wrong state 2");
+            }
          }
 
          return stateMachine.getCurrentState().computeDesiredCoMHeightAcceleration(desiredICPVelocity, isInDoubleSupport, omega0, isRecoveringFromPush,

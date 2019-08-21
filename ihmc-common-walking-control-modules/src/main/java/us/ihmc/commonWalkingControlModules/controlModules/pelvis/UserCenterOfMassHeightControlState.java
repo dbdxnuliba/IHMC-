@@ -9,6 +9,7 @@ import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
+import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotics.controllers.AbstractPDController;
 import us.ihmc.robotics.controllers.pidGains.PIDGainsReadOnly;
@@ -29,6 +30,7 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
    private final FramePoint3D desiredCenterOfMassPosition = new FramePoint3D();
    private final FrameVector3D centerOfMassVelocity = new FrameVector3D();
    private final FrameVector3D desiredCenterOfMassVelocity = new FrameVector3D();
+   private final FrameVector3D desiredCenterOfMassAcceleration = new FrameVector3D();
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final YoDouble yoTime;
 
@@ -97,13 +99,28 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
 
       centerOfMassPosition.changeFrame(worldFrame);
       centerOfMassVelocity.changeFrame(worldFrame);
+      
+      if (!isCoMHeightTrajectoryAvailable())
+      {
+         LogTools.warn("The trajectory was empty");
+         return 0.0;
+      }
 
-      comTrajectoryHandler.packDesiredCoMState(yoTime.getDoubleValue(), desiredCenterOfMassPosition, desiredCenterOfMassVelocity);
+      boolean ok = comTrajectoryHandler.packDesiredCoMState(yoTime.getDoubleValue(),
+                                                            desiredCenterOfMassPosition,
+                                                            desiredCenterOfMassVelocity,
+                                                            desiredCenterOfMassAcceleration);
 
-      return linearMomentumZPDController.compute(centerOfMassPosition.getZ(),
-                                                 desiredCenterOfMassPosition.getZ(),
-                                                 centerOfMassVelocity.getZ(),
-                                                 desiredCenterOfMassVelocity.getZ());
+      if (!ok)
+      {
+         LogTools.warn("Failed to pack the desired CoM state.");
+         return 0.0;
+      }
+
+      return desiredCenterOfMassAcceleration.getZ() + linearMomentumZPDController.compute(centerOfMassPosition.getZ(),
+                                                                                          desiredCenterOfMassPosition.getZ(),
+                                                                                          centerOfMassVelocity.getZ(),
+                                                                                          desiredCenterOfMassVelocity.getZ());
    }
 
    public boolean isCoMHeightTrajectoryAvailable()
