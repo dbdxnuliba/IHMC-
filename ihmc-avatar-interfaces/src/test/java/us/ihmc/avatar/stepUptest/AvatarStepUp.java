@@ -487,7 +487,7 @@ private Pose3D startingFromFiducial = new Pose3D(7.25 - (0.15 + 0.25) ,0.0,0.0,0
    private void callDoorTiminingBehavior()
    {
 
-//      SearchAndKickBehavior searchAndKickBehavior = new SearchAndKickBehavior(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
+//      SearchAndKickBehaviornewFramework searchAndKickBehavior = new SearchAndKickBehaviornewFramework(getSimpleRobotName(), ros2Node, yoTime, referenceFrames, fullRobotModel, robotModel, yoDoubleSupport, atlasPrimitiveActions,stepUpDoor);
 //      HumanoidBehaviorTypePacket requestkickball = HumanoidMessageTools.createHumanoidBehaviorTypePacket(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR);
 //      drcSimulationTestHelper.createPublisher(HumanoidBehaviorTypePacket.class, IHMCHumanoidBehaviorManager.getSubscriberTopicNameGenerator(drcSimulationTestHelper.getRobotName())).publish(requestkickball);
 //      behaviorDispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK_BEHAVIOR, searchAndKickBehavior);

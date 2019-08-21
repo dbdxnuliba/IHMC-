@@ -39,7 +39,7 @@ public class DynamicKick extends AbstractBehavior
    private final YoDouble trajectoryTime;
    private HumanoidReferenceFrames referenceFrames;
    private double counter = 1.0;
-   private double tuningParam = 0.5;
+   private double tuningParam = 1.5;
 
 //   private FootTrajectoryTask[] tasks = new FootTrajectoryTask[6];
 

@@ -157,47 +157,14 @@ public class BehaviorBuilder
          }
       };
 
-
-//
       BehaviorBuilder build1 = new BehaviorBuilder(action1, actionTypes.Pelvis);// , ros2Node, robotModel);
       BehaviorBuilder build2 = new BehaviorBuilder(action2,actionTypes.LeftArm);//, ros2Node, robotModel) ;
       BehaviorBuilder build3 = new BehaviorBuilder(action1, actionTypes.RightLeg,actionTypes.RightArm);
 
-
-
-//      submitTaskForParallelExecution(action1, actionTypes.LeftArm);
-//      submitSingleTask(action2);
-//      submitTaskForParallelExecution(action2, actionTypes.Chest);
-//      submitSingleTask(action1, actionTypes.LeftArm);
-//
-//      System.out.println(getTaskQueue());
-//      System.out.println(getKeyQueue());
-//      abc(getActionTypes());
-//
-//      buildActionsTypeList(2,actionTypes.RightArm, actionTypes.RightLeg);
-//      buildActionsTypeList(1,actionTypes.Pelvis);
-//      System.out.println(getActionTypes());
       System.out.println(getActionsBehavior());
       System.out.println(getActionsTypeList());
       System.out.println(getActionsTypeList().get(1).size());
 
-      //
-//      BehaviorBuilder build3 = new BehaviorBuilder(actionTypes.Chest,action1);
-//      BehaviorBuilder build4 = new BehaviorBuilder(actionTypes.Pelvis,action2);
-//      BehaviorBuilder build6 = new BehaviorBuilder(actionTypes.Pelvis,action2);
-//      BehaviorBuilder build5 = new BehaviorBuilder( actionTypes.Pelvis,action2);
-//      ArrayList<Integer> flug =  BehaviorBuilder.buildFlags();
-//      ArrayList<BehaviorBuilder.actionTypes> flug =  BehaviorBuilder.buildFlags();
-//      System.out.println(BehaviorBuilder.getActionTypes());
-//
-//      for(int i = 0; i< getActionTypes().size(); i++)
-//      {
-//         if(getActionTypes().get(i).equals("Pelvis"))
-//         {
-//            System.out.println("Pelvis Match - should be 1 times");
-//         }
-//      }
-//      System.out.println(BehaviorBuilder.getActionsBehavior());
 
 
 

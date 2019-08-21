@@ -407,7 +407,7 @@ public class SuppaKickBehavior
    public static class API
    {
       private static final MessagerAPIFactory apiFactory = new MessagerAPIFactory();
-      private static final Category RootCategory = apiFactory.createRootCategory("SearchAndKickBehavior");
+      private static final Category RootCategory = apiFactory.createRootCategory("SearchAndKickBehaviornewFramework");
       private static final CategoryTheme SearchAndKick = apiFactory.createCategoryTheme("KickThings");
       private static final Category SearchAndKickCategory = RootCategory.child(SearchAndKick);
 

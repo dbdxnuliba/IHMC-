@@ -75,7 +75,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private final WalkToLocationBehavior walkToLocationBehavior;
    private final WalkToLocationBehavior yawAccordingToGoalPost;
    private final WalkToLocationBehavior walkToOffsetPoint1;
-   private final KickBehavior kickTheBall;
+   private final DynamicKick kickTheBall;
    private FullHumanoidRobotModel model;
    private final SearchForDoorBehavior sphereLocationDetectionBehavior;
    private final FiducialDetectorBehaviorService fiducialDetectorBehaviorService;
@@ -112,7 +112,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       this.atlasPrimitiveActions = atlasPrimitiveActions;
       this.model = fullHumanoidRobotModel;
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
-      kickTheBall = new KickBehavior(robotName,ros2Node,yoTime,yoDoubleSupport, fullHumanoidRobotModel,referenceFrames);
+      kickTheBall = new  DynamicKick(robotName,ros2Node,yoTime,yoDoubleSupport,referenceFrames);
       this.environment = environment;
       this.yoDoubleSuport = yoDoubleSupport;
       yawAccordingToGoalPost = new WalkToLocationBehavior(robotName,ros2Node,fullHumanoidRobotModel,referenceFrames,wholeBodyControllerParameters.getWalkingControllerParameters());
@@ -274,7 +274,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
             publishTextToSpeech("Kicking the ball");
             FramePoint2D balltoKickLocation = new FramePoint2D(getoffsetPoint().getPosition());
-            kickTheBall.setObjectToKickPoint(balltoKickLocation); //create a new method for orienting the robot
+            kickTheBall.setObjectToKickPose(balltoKickLocation);  //create a new method for orienting the robot
          }
 
 

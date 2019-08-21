@@ -1,14 +1,12 @@
 package us.ihmc.humanoidBehaviors;
 
 import controller_msgs.msg.dds.*;
-import org.apache.poi.ss.formula.functions.*;
 import us.ihmc.avatar.drcRobot.*;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.*;
 import us.ihmc.commons.lists.*;
 import us.ihmc.commons.thread.Notification;
 import us.ihmc.communication.*;
 import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.humanoidBehaviors.SearchAndKickBehavior.*;
 import us.ihmc.humanoidBehaviors.tools.*;
 import us.ihmc.humanoidRobotics.communication.packets.*;
 import us.ihmc.log.*;
@@ -18,11 +16,8 @@ import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.ros2.*;
-import us.ihmc.commons.thread.Notification;
 
-import javax.management.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 // this is behavior that should be purely called from the another behavior and will not have the ability to triggered from the ui.
 // if you need a reset for some reason embedded in your behavior and write your own :|

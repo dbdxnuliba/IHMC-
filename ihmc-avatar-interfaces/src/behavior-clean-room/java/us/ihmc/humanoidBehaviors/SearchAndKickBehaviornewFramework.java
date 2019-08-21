@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-public class SearchAndKickBehavior
+public class SearchAndKickBehaviornewFramework
 {
 
    private final BehaviorHelper behaviorHelper;
@@ -57,9 +57,9 @@ public class SearchAndKickBehavior
 
 
 
-   public SearchAndKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
+   public SearchAndKickBehaviornewFramework(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
-      LogTools.debug("Initializing SearchAndKickBehavior");
+      LogTools.debug("Initializing SearchAndKickBehaviornewFramework");
       this.behaviorHelper = behaviorHelper;
       this.messager = messager;
       this.robotModel = robotModel;
