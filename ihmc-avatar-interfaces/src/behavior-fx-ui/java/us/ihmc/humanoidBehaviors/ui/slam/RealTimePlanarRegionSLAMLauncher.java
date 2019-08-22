@@ -5,7 +5,6 @@ import javafx.stage.Stage;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.javaFXToolkit.messager.SharedMemoryJavaFXMessager;
 import us.ihmc.pubsub.DomainFactory;
-import us.ihmc.robotEnvironmentAwareness.communication.LidarImageFusionAPI;
 import us.ihmc.ros2.Ros2Node;
 
 public class RealTimePlanarRegionSLAMLauncher extends Application
@@ -19,7 +18,7 @@ public class RealTimePlanarRegionSLAMLauncher extends Application
    public void start(Stage primaryStage) throws Exception
    {
       Ros2Node ros2Node = ROS2Tools.createRos2Node(DomainFactory.PubSubImplementation.FAST_RTPS, "real_time_planar_region_slam_ui");
-      messager = new SharedMemoryJavaFXMessager(LidarImageFusionAPI.API);
+      messager = new SharedMemoryJavaFXMessager(RealTimePlanarRegionSLAMAPI.API);
       messager.startMessager();
       module = RealTimePlanarRegionSLAMModule.createIntraprocessModule(ros2Node, messager);
       ui = new RealTimePlanarRegionSLAMUI(ros2Node, messager, primaryStage);
