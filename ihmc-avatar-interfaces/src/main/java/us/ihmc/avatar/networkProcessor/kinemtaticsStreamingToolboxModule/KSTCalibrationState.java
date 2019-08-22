@@ -1,9 +1,12 @@
 package us.ihmc.avatar.networkProcessor.kinemtaticsStreamingToolboxModule;
 
+import java.util.Arrays;
+
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -15,12 +18,10 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.kinematicsStreamingToolboxAPI.KinematicsStreamingToolboxCalibrationCommand;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.log.LogTools;
-import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.stateMachine.core.State;
-import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
 public class KSTCalibrationState implements State
@@ -32,13 +33,13 @@ public class KSTCalibrationState implements State
    private final YoBoolean isCalibrated;
    private final KSTTools tools;
    private final CommandInputManager commandInputManager;
-   private final FullHumanoidRobotModel currentFullRobotModel;
 
-   private final HumanoidReferenceFrames currentReferenceFrames;
+   private final FullHumanoidRobotModel desiredFullRobotModel, currentFullRobotModel;
+   private final HumanoidReferenceFrames desiredReferenceFrames, currentReferenceFrames;
+   private final ReferenceFrame desiredMidFootZUpGroundFrame, currentMidFootZUpGroundFrame;
 
    private final Pose3D operatorMidFootZUpPose = new Pose3D();
 
-   private MovingReferenceFrame currentMidFootZUpGroundFrame;
    private final ReferenceFrame operatorMidFootZUpGroundFrame = new ReferenceFrame("operatorMidFootZUpGroundFrame", worldFrame, true, true)
    {
       @Override
@@ -62,19 +63,21 @@ public class KSTCalibrationState implements State
       this.tools = tools;
       userInputTransform = tools.getUserInputTransform();
       commandInputManager = tools.getCommandInputManager();
-      YoVariableRegistry registry = tools.getRegistry();
+      isCalibrated = new YoBoolean("isCalibrated", tools.getRegistry());
 
-      isCalibrated = new YoBoolean("isCalibrated", registry);
+      desiredFullRobotModel = tools.getDesiredFullRobotModel();
+      desiredReferenceFrames = new HumanoidReferenceFrames(desiredFullRobotModel);
+      desiredMidFootZUpGroundFrame = desiredReferenceFrames.getMidFootZUpGroundFrame();
 
       currentFullRobotModel = tools.getFullRobotModelFactory().createFullRobotModel();
-      FullHumanoidRobotModel zeroPoseFullRobotModel = tools.getFullRobotModelFactory().createFullRobotModel();
-
       currentReferenceFrames = new HumanoidReferenceFrames(currentFullRobotModel);
-      HumanoidReferenceFrames zeroPoseReferenceFrames = new HumanoidReferenceFrames(zeroPoseFullRobotModel);
-      zeroPoseReferenceFrames.updateFrames();
-
-      MovingReferenceFrame zeroPoseMidFootZUpGroundFrame = zeroPoseReferenceFrames.getMidFootZUpGroundFrame();
       currentMidFootZUpGroundFrame = currentReferenceFrames.getMidFootZUpGroundFrame();
+
+      FullHumanoidRobotModel zeroPoseFullRobotModel = tools.getFullRobotModelFactory().createFullRobotModel();
+      HumanoidReferenceFrames zeroPoseReferenceFrames = new HumanoidReferenceFrames(zeroPoseFullRobotModel);
+      ReferenceFrame zeroPoseMidFootZUpGroundFrame = zeroPoseReferenceFrames.getMidFootZUpGroundFrame();
+
+      zeroPoseReferenceFrames.updateFrames();
 
       FramePoint3D zeroPoseHeadPosition = new FramePoint3D(zeroPoseFullRobotModel.getHead().getBodyFixedFrame());
       zeroPoseHeadPosition.changeFrame(zeroPoseMidFootZUpGroundFrame);
@@ -97,6 +100,15 @@ public class KSTCalibrationState implements State
    public void onEntry()
    {
       tools.getIKController().getDefaultGains().setMaxFeedbackAndFeedbackRate(1200.0, Double.POSITIVE_INFINITY);
+
+      KSTTools.updateFullRobotModel(tools.getRobotConfigurationData(), currentFullRobotModel);
+      currentReferenceFrames.updateFrames();
+
+      Arrays.asList(desiredFullRobotModel.getOneDoFJoints()).forEach(joint -> joint.setQ(0.0));
+      desiredReferenceFrames.updateFrames();
+      FramePose3D deltaPose = new FramePose3D(currentMidFootZUpGroundFrame);
+      deltaPose.changeFrame(desiredMidFootZUpGroundFrame);
+      desiredFullRobotModel.getRootJoint().getJointPose().appendTransform(new RigidBodyTransform(deltaPose.getOrientation(), deltaPose.getPosition()));
    }
 
    @Override
