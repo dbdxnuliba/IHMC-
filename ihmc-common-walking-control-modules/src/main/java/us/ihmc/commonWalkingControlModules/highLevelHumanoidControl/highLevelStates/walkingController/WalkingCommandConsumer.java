@@ -505,7 +505,9 @@ public class WalkingCommandConsumer
 
       if (commandConsumerWithDelayBuffers.isNewCommandAvailable(CenterOfMassTrajectoryCommand.class))
       {
-         walkingMessageHandler.handleComTrajectoryCommand(commandConsumerWithDelayBuffers.pollNewestCommand(CenterOfMassTrajectoryCommand.class));
+         CenterOfMassTrajectoryCommand command = commandConsumerWithDelayBuffers.pollNewestCommand(CenterOfMassTrajectoryCommand.class);
+         walkingMessageHandler.handleComTrajectoryCommand(command);
+         comHeightManager.handleCenterOfMassTrajectoryCommand(command);
       }
 
    }
