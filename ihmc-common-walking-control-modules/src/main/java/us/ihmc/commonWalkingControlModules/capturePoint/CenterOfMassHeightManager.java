@@ -15,6 +15,7 @@ import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHuma
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CenterOfMassTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisHeightTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.PelvisTrajectoryCommand;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.StopAllTrajectoryCommand;
@@ -220,7 +221,7 @@ public class CenterOfMassHeightManager
    }
 
    /**
-    * switches to center of mass height controller, this is the standard height manager
+    * switches to pelvis height controller, this is the standard height manager
     * the height in this command will be adjusted based on the legs
     * @param command
     */
@@ -247,6 +248,24 @@ public class CenterOfMassHeightManager
       {
          enableUserPelvisControlDuringWalking.set(command.isEnableUserPelvisControlDuringWalking());
          pelvisHeightControlState.handlePelvisHeightTrajectoryCommand(command);
+      }
+   }
+   
+   /**
+    * Switches to a state where the loop is closed on the actual center of mass position.
+    * @param command The input command
+    */
+   public void handleCenterOfMassTrajectoryCommand(CenterOfMassTrajectoryCommand command)
+   {
+      if (useStateMachine)
+      {
+         if (userCoMHeightControlState.handleCenterOfMassTrajectoryCommand(command))
+         {
+            //            requestState(PelvisHeightControlMode.USER_COM);
+            return;
+         }
+         LogTools.info("userCoMHeightControlState failed to handle CenterOfMassTrajectoryCommand");
+         return;
       }
    }
 
@@ -302,20 +321,8 @@ public class CenterOfMassHeightManager
          if (userCoMHeightControlState.isCoMHeightTrajectoryAvailable())
          {
             requestState(PelvisHeightControlMode.USER_COM);
-            if (stateMachine.getCurrentStateKey() != PelvisHeightControlMode.USER_COM)
-            {
-               LogTools.warn("Wrong state 1");
-            }
+            //            compute();
          }
-         else
-         {
-            requestState(PelvisHeightControlMode.WALKING_CONTROLLER);
-            if (stateMachine.getCurrentStateKey() != PelvisHeightControlMode.WALKING_CONTROLLER)
-            {
-               LogTools.warn("Wrong state 2");
-            }
-         }
-
          return stateMachine.getCurrentState().computeDesiredCoMHeightAcceleration(desiredICPVelocity, isInDoubleSupport, omega0, isRecoveringFromPush,
                                                                                    feetManager);
       }
