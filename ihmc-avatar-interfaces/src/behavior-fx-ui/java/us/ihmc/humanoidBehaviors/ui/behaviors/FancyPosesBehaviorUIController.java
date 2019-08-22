@@ -3,6 +3,8 @@ package us.ihmc.humanoidBehaviors.ui.behaviors;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import us.ihmc.humanoidBehaviors.*;
+import us.ihmc.humanoidBehaviors.SuppaKickBehavior.*;
 import us.ihmc.humanoidBehaviors.fancyPoses.FancyPosesBehavior;
 import us.ihmc.messager.Messager;
 
@@ -24,6 +26,13 @@ public class FancyPosesBehaviorUIController
    @FXML
    private Button shutdownPoseButton;
 
+   @FXML
+   private Button oldSuppaKickButton;
+
+   @FXML
+   private Button newSuppaKickButton;
+
+
    private Messager behaviorMessager;
 
    public void init(Messager behaviorMessager)
@@ -41,6 +50,18 @@ public class FancyPosesBehaviorUIController
    public void requestSingleSupport()
    {
       behaviorMessager.submitMessage(FancyPosesBehavior.API.GoToSingleSupport, true);
+   }
+
+   @FXML
+   public void requestoldSuppaKick()
+   {
+      behaviorMessager.submitMessage(SuppaKickBehavior.API.Walk, true);
+   }
+
+   @FXML
+   public void requestnewSuppaKick()
+   {
+      behaviorMessager.submitMessage(newSuppaKickBehavior.API.Walk, true);
    }
 
    @FXML

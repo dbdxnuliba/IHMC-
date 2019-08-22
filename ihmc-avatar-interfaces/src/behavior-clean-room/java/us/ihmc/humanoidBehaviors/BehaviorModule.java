@@ -19,6 +19,7 @@ import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.messager.kryo.KryoMessager;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.ros2.Ros2Node;
+import us.ihmc.yoVariables.variable.*;
 
 public class BehaviorModule
 {
@@ -53,6 +54,8 @@ public class BehaviorModule
       new PatrolBehavior(behaviorHelper, messager, robotModel);
       new FancyPosesBehavior(behaviorHelper, messager, robotModel);
       new ExploreAreaBehavior(behaviorHelper, messager, robotModel);
+      new SuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
+      new newSuppaKickBehavior(behaviorHelper, messager, robotModel, ros2Node);
    }
 
    public static MessagerAPI getBehaviorAPI()
@@ -64,7 +67,8 @@ public class BehaviorModule
       apiFactory.includeMessagerAPIs(PatrolBehaviorAPI.create());
       apiFactory.includeMessagerAPIs(FancyPosesBehavior.API.create());
       apiFactory.includeMessagerAPIs(ExploreAreaBehavior.ExploreAreaBehaviorAPI.create());
-
+      apiFactory.includeMessagerAPIs(SuppaKickBehavior.API.create());
+      apiFactory.includeMessagerAPIs(newSuppaKickBehavior.API.create());
       return apiFactory.getAPIAndCloseFactory();
    }
 }
