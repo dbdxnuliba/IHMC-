@@ -50,7 +50,7 @@ public class LIDARBasedREAModule
 
    private static final int THREAD_PERIOD_MILLISECONDS = 200;
    private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
-   private static final double OCTREE_RESOLUTION = 0.02;
+   private static final double OCTREE_RESOLUTION = 0.03;
    protected static final boolean DEBUG = true;
 
    private final Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, ROS2Tools.REA.getNodeName());
