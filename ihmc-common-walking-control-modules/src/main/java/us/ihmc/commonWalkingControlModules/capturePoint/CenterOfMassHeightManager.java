@@ -261,7 +261,7 @@ public class CenterOfMassHeightManager
       {
          if (userCoMHeightControlState.handleCenterOfMassTrajectoryCommand(command))
          {
-            //            requestState(PelvisHeightControlMode.USER_COM);
+            requestState(PelvisHeightControlMode.USER_COM);
             return;
          }
          LogTools.info("userCoMHeightControlState failed to handle CenterOfMassTrajectoryCommand");
@@ -318,11 +318,6 @@ public class CenterOfMassHeightManager
    {
       if (useStateMachine)
       {
-         if (userCoMHeightControlState.isCoMHeightTrajectoryAvailable())
-         {
-            requestState(PelvisHeightControlMode.USER_COM);
-            //            compute();
-         }
          return stateMachine.getCurrentState().computeDesiredCoMHeightAcceleration(desiredICPVelocity, isInDoubleSupport, omega0, isRecoveringFromPush,
                                                                                    feetManager);
       }
