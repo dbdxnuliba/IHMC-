@@ -280,16 +280,7 @@ public class SuppaKickBehavior
       }
 
    }
-
-   private void resetRobotPose()
-   {
-      double goHomeTime = 2.0;
-      behaviorHelper.requestChestGoHome(goHomeTime);
-      behaviorHelper.requestPelvisGoHome(goHomeTime);
-      behaviorHelper.requestArmsGoHome(goHomeTime);
-
-   }
-
+   
    private void onBehaviorDone()
    {
       double goHomeTime = 1.0;

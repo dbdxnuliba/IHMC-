@@ -34,7 +34,7 @@ public class AtlasBehaviorUIDemo extends Application
 {
    private static final AtlasRobotVersion ATLAS_VERSION = AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS;
    private static final RobotTarget ATLAS_TARGET = RobotTarget.SCS;
-   private static final boolean USE_FLAT_GROUND = false;
+   private static final boolean USE_FLAT_GROUND = true;
    private static final boolean USE_KINEMATIC_SIMULATION = false;
 
    // Increase to 10 when you want the sims to run a little faster and don't need all of the YoVariable data.

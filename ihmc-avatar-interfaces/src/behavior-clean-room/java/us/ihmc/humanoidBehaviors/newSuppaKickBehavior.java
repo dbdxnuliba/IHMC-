@@ -10,7 +10,6 @@ import us.ihmc.euclid.referenceFrame.*;
 import us.ihmc.humanoidBehaviors.BehaviorBuilder.*;
 import us.ihmc.humanoidBehaviors.BehaviorBuilder.BehaviorBuilder.*;
 import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
-import us.ihmc.humanoidBehaviors.newEventBasedBehaviorSample.*;
 import us.ihmc.humanoidBehaviors.tools.*;
 import us.ihmc.humanoidRobotics.frames.*;
 import us.ihmc.log.*;
@@ -20,11 +19,9 @@ import us.ihmc.pubsub.subscriber.*;
 import us.ihmc.robotModels.*;
 import us.ihmc.robotics.robotSide.*;
 import us.ihmc.ros2.*;
-import us.ihmc.tools.thread.*;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 
 public class newSuppaKickBehavior
 {
@@ -49,7 +46,6 @@ public class newSuppaKickBehavior
    private final Notification rlegtaskspaceNotification = new Notification();
    private final Notification llegtaskspaceNotification = new Notification();
 
-   private ResetRobotPoseBehavior resetRobotPoseBehavior;
 
    public newSuppaKickBehavior(BehaviorHelper behaviorHelper, Messager messager, DRCRobotModel robotModel, Ros2Node ros2Node)
    {
