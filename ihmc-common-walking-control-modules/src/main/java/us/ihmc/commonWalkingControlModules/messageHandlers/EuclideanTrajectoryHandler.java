@@ -90,10 +90,12 @@ public class EuclideanTrajectoryHandler
 
    protected void handleTrajectory(EuclideanTrajectoryControllerCommand command)
    {
+      double offsetTime = 0.0;
+
       switch (command.getExecutionMode())
       {
       case OVERRIDE:
-         command.addTimeOffset(yoTime.getValue());
+         offsetTime = yoTime.getValue();
          while (!trajectoryPoints.isEmpty())
          {
             trajectoryPoints.removeFirst();
@@ -116,8 +118,7 @@ public class EuclideanTrajectoryHandler
             return;
          }
          trajectoryPoints.peekLast(lastPoint);
-         double lastTime = lastPoint.getTime();
-         command.addTimeOffset(lastTime);
+         offsetTime = lastPoint.getTime();
          break;
       default:
          throw new RuntimeException("Unhadled execution mode.");
@@ -127,7 +128,9 @@ public class EuclideanTrajectoryHandler
 
       for (int idx = 0; idx < command.getNumberOfTrajectoryPoints(); idx++)
       {
-         trajectoryPoints.addLast(command.getTrajectoryPoint(idx));
+         lastPoint.set(command.getTrajectoryPoint(idx));
+         lastPoint.addTimeOffset(offsetTime);
+         trajectoryPoints.addLast(lastPoint);
       }
 
       numberOfPoints.set(trajectoryPoints.size());
