@@ -511,6 +511,7 @@ public class KinematicsToolboxController extends ToolboxController
          for (int i = 0; i < commands.size(); i++)
          {
             SpatialFeedbackControlCommand rigidBodyCommand = KinematicsToolboxHelper.consumeRigidBodyCommand(commands.get(i), rootBody, gains);
+            rigidBodyCommand.setPrimaryBase(getEndEffectorPrimaryBase(rigidBodyCommand.getEndEffector()));
             String endEffectorName = rigidBodyCommand.getEndEffector().getName();
             userFeedbackCommands.put(endEffectorName, rigidBodyCommand);
          }
@@ -532,6 +533,11 @@ public class KinematicsToolboxController extends ToolboxController
    protected void robotConfigurationReinitialized()
    {
       // Do nothing here
+   }
+
+   protected RigidBodyBasics getEndEffectorPrimaryBase(RigidBodyBasics endEffector)
+   {
+      return null;
    }
 
    /**
