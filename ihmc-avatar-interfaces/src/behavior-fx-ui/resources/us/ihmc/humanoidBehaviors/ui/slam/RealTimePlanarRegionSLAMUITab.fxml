@@ -23,8 +23,8 @@
                      </font>
                   </Label>
                   <ToggleButton fx:id="enableIncomingPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Enable Incoming" />
-                  <Button fx:id="importingPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Import Data" />
-                  <Button fx:id="clearPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Clear" />
+                  <Button fx:id="importingPlanarRegions" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#importingPlanarRegions" text="Import Data" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearPlanarRegions" text="Clear" />
                   <TextField fx:id="planarRegionUpdaterStatus" editable="false" />
                </children>
             </VBox>
@@ -38,7 +38,7 @@
                   <ToggleButton fx:id="enableSLAM" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Enable SLAM" />
                   <ToggleButton fx:id="visualizeResult" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Visualize Result" />
                   <ToggleButton fx:id="visualizeMap" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Visualize Map" />
-                  <Button fx:id="clearMap" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Clear Map" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearPlanarRegions" text="Clear Map" />
                </children>
             </VBox>
             <VBox spacing="5.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">

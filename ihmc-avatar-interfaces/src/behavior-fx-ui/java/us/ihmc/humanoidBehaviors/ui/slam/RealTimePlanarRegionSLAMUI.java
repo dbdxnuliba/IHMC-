@@ -17,6 +17,8 @@ public class RealTimePlanarRegionSLAMUI
 {
    private final SharedMemoryJavaFXMessager messager;
    private final Stage primaryStage;
+   
+   private final PlanarRegionSLAMResultViewer slamResultViewer;
 
    @FXML
    private RealTimePlanarRegionSLAMUITabController realTimePlanarRegionSLAMUITabController;
@@ -41,7 +43,8 @@ public class RealTimePlanarRegionSLAMUI
       SubScene subScene = view3dFactory.getSubScene();
       Pane subSceneWrappedInsidePane = view3dFactory.getSubSceneWrappedInsidePane();
 
-      view3dFactory.addNodeToView(realTimePlanarRegionSLAMUITabController.getRoot());
+      slamResultViewer = new PlanarRegionSLAMResultViewer(ros2Node, messager);
+      view3dFactory.addNodeToView(slamResultViewer.getRoot());
 
       mainPane.setCenter(subSceneWrappedInsidePane);
       primaryStage.setTitle(getClass().getSimpleName());
@@ -67,6 +70,5 @@ public class RealTimePlanarRegionSLAMUI
    public void show()
    {
       primaryStage.show();
-
    }
 }
