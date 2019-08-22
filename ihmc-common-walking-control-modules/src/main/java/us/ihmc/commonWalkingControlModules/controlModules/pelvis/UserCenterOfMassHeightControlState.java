@@ -3,7 +3,6 @@ package us.ihmc.commonWalkingControlModules.controlModules.pelvis;
 import us.ihmc.commonWalkingControlModules.controlModules.TaskspaceTrajectoryStatusMessageHelper;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
-import us.ihmc.commonWalkingControlModules.messageHandlers.CenterOfMassTrajectoryHandler;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
@@ -39,9 +38,6 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
    private final FrameVector3D desiredCenterOfMassAcceleration = new FrameVector3D();
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final YoDouble yoTime;
-   private final YoDouble desiredCenterOfMassHeightFromController, desiredCenterOfMassHeightFromManager;
-
-   private final CenterOfMassTrajectoryHandler comHandler;
 
    public UserCenterOfMassHeightControlState(HighLevelHumanoidControllerToolbox controllerToolbox, YoVariableRegistry parentRegistry)
    {
@@ -61,10 +57,6 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
 
       parentRegistry.addChild(registry);
       
-      comHandler = controllerToolbox.getWalkingMessageHandler().getComTrajectoryHandler();
-      desiredCenterOfMassHeightFromController = new YoDouble("DesiredCoMHeight_controller", registry);
-      desiredCenterOfMassHeightFromManager = new YoDouble("DesiredCoMHeight_manager", registry);
-
    }
 
    public void setGains(PIDGainsReadOnly gains)
@@ -138,29 +130,13 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
       centerOfMassPosition.changeFrame(worldFrame);
       centerOfMassVelocity.changeFrame(worldFrame);
 
-      boolean ok = comHandler.packDesiredCoMState(yoTime.getDoubleValue(), desiredCenterOfMassPosition, desiredCenterOfMassVelocity, desiredCenterOfMassAcceleration);
-
       desiredCenterOfMassPosition.set(positionController.getDesiredPosition());
       desiredCenterOfMassVelocity.set(positionController.getDesiredVelocity());
       desiredCenterOfMassAcceleration.set(positionController.getFeedForwardAcceleration());
-
-      if (!ok)
-      {
-         return 0.0;
-      }
-      
-      desiredCenterOfMassHeightFromController.set(positionController.getDesiredPosition().getZ());
-      desiredCenterOfMassHeightFromManager.set(desiredCenterOfMassPosition.getZ());
 
       return desiredCenterOfMassAcceleration.getZ() + linearMomentumZPDController.compute(centerOfMassPosition.getZ(),
                                                                                           desiredCenterOfMassPosition.getZ(),
                                                                                           centerOfMassVelocity.getZ(),
                                                                                           desiredCenterOfMassVelocity.getZ());
    }
-
-   public boolean isCoMHeightTrajectoryAvailable()
-   {
-      return comHandler.isWithinInterval(yoTime.getDoubleValue());
-   }
-
 }
