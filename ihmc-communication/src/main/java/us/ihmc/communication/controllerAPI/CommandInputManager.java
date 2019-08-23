@@ -226,6 +226,8 @@ public class CommandInputManager
 
       Class<?> commandClass = nextCommand.getClass();
 
+      nextCommand.clear();
+
       if (!performCustomConversion(message, nextCommand))
       {
          nextCommand.setFromMessage(message);
@@ -305,6 +307,7 @@ public class CommandInputManager
          LogTools.warn("{}The buffer for the command: {} is full. Command ignored.", printStatementPrefix, command.getClass().getSimpleName());
          return;
       }
+      nextModifiableMessage.clear();
       nextModifiableMessage.set(command);
       buffer.commit();
 
@@ -453,7 +456,9 @@ public class CommandInputManager
          C command;
          while ((command = buffer.read()) != null)
          {
-            commandsToPack.add().set(command);
+            C localCommand = commandsToPack.add();
+            localCommand.clear();
+            localCommand.set(command);
             command.clear();
          }
          buffer.flush();
