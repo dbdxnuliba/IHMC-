@@ -5,9 +5,9 @@ import java.util.Random;
 
 import controller_msgs.msg.dds.JointspaceTrajectoryMessage;
 import controller_msgs.msg.dds.OneDoFJointTrajectoryMessage;
+import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.communication.controllerAPI.command.QueueableCommand;
 import us.ihmc.robotics.math.trajectories.trajectorypoints.OneDoFTrajectoryPoint;
-import us.ihmc.commons.lists.RecyclingArrayList;
 
 public final class JointspaceTrajectoryCommand extends QueueableCommand<JointspaceTrajectoryCommand, JointspaceTrajectoryMessage>
 {
@@ -64,6 +64,7 @@ public final class JointspaceTrajectoryCommand extends QueueableCommand<Jointspa
 
    private void set(List<OneDoFJointTrajectoryMessage> trajectoryPointListArray)
    {
+      jointTrajectoryInputs.clear();
       for (int i = 0; i < trajectoryPointListArray.size(); i++)
       {
          OneDoFJointTrajectoryCommand oneDoFJointTrajectoryCommand = jointTrajectoryInputs.add();
