@@ -25,6 +25,7 @@ public class RealTimePlanarRegionSLAMUITabController
    public void initialize(Ros2Node ros2Node, SharedMemoryJavaFXMessager messager)
    {
       this.messager = messager;
+      enableIncomingPlanarRegions.setSelected(true);
 
       messager.bindBidirectional(RealTimePlanarRegionSLAMAPI.EnablePlanarRegionIncoming, enableIncomingPlanarRegions.selectedProperty(), true);
       messager.bindBidirectional(RealTimePlanarRegionSLAMAPI.PlanarRegionStatus, planarRegionUpdaterStatus.textProperty(), true);
