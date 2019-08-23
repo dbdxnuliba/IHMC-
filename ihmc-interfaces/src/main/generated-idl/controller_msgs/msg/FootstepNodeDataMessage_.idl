@@ -57,7 +57,7 @@ module controller_msgs
       const octet STEP_TOO_WIDE =
       12;
 
-      const octet OBSTACLE_BLOCKING_BODY =
+      const octet OBSTACLE_HITTING_ANKLE =
       13;
 
       const octet OBSTACLE_HITTING_BODY =

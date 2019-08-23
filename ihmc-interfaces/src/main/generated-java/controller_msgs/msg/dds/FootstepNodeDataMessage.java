@@ -30,7 +30,7 @@ public class FootstepNodeDataMessage extends Packet<FootstepNodeDataMessage> imp
    public static final byte TOO_MUCH_PENETRATION_AFTER_WIGGLE = (byte) 10;
    public static final byte STEP_NOT_LONG_ENOUGH = (byte) 11;
    public static final byte STEP_TOO_WIDE = (byte) 12;
-   public static final byte OBSTACLE_BLOCKING_BODY = (byte) 13;
+   public static final byte OBSTACLE_HITTING_ANKLE = (byte) 13;
    public static final byte OBSTACLE_HITTING_BODY = (byte) 14;
    public static final byte AT_CLIFF_BOTTOM = (byte) 15;
    /**

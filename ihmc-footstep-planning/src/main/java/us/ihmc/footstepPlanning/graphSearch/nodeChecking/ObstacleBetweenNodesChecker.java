@@ -25,8 +25,6 @@ public class ObstacleBetweenNodesChecker implements SnapBasedCheckerComponent
    private final FootstepPlannerParametersReadOnly parameters;
    private final FootstepNodeSnapper snapper;
 
-   private BipedalFootstepPlannerNodeRejectionReason rejectionReason;
-
    public ObstacleBetweenNodesChecker(FootstepPlannerParametersReadOnly parameters, FootstepNodeSnapper snapper)
    {
       this.parameters = parameters;
@@ -74,11 +72,9 @@ public class ObstacleBetweenNodesChecker implements SnapBasedCheckerComponent
          {
             PrintTools.debug("Found a obstacle between the nodes " + node + " and " + previousNode);
          }
-         rejectionReason = BipedalFootstepPlannerNodeRejectionReason.OBSTACLE_BLOCKING_BODY;
          return false;
       }
 
-      rejectionReason = null;
       return true;
    }
 
@@ -146,6 +142,6 @@ public class ObstacleBetweenNodesChecker implements SnapBasedCheckerComponent
    @Override
    public BipedalFootstepPlannerNodeRejectionReason getRejectionReason()
    {
-      return rejectionReason;
+      return BipedalFootstepPlannerNodeRejectionReason.OBSTACLE_HITTING_ANKLE;
    }
 }
