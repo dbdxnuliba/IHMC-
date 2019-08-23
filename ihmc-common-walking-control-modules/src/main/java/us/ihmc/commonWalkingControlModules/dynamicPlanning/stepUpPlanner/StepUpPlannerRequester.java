@@ -33,7 +33,7 @@ public class StepUpPlannerRequester
 {
    private Ros2Publisher<StepUpPlannerParametersMessage> parametersPublisher;
    private Ros2Publisher<StepUpPlannerRequestMessage> requestPublisher;
-   private StepUpPlannerRespondMessage receivedRespondMessage;
+   private final StepUpPlannerRespondMessage receivedRespondMessage = new StepUpPlannerRespondMessage();
    private int numberOfExceptions = 0;
    private static final int NUMBER_OF_EXCEPTIONS_TO_PRINT = 5;
    private boolean parametersAcked = false;
@@ -46,7 +46,7 @@ public class StepUpPlannerRequester
       if (incomingData != null)
       {
          respondReceived = true;
-         receivedRespondMessage = incomingData;
+         receivedRespondMessage.set(incomingData);
       }
       else
       {
