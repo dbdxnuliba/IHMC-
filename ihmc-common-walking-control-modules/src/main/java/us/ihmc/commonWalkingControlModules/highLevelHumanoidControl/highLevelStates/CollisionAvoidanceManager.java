@@ -34,6 +34,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.humanoidRobotics.communication.controllerAPI.command.CollisionAvoidanceManagerCommand;
 import us.ihmc.humanoidRobotics.communication.packets.collisionAvoidance.CollisionAvoidanceMessageMode;
+import us.ihmc.log.LogTools;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.referenceFrames.TransformReferenceFrame;
@@ -96,8 +97,12 @@ public class CollisionAvoidanceManager
                                     RigidBodyBasics body, RigidBodyBasics elevator, YoVariableRegistry parentRegistry,
                                     YoGraphicsListRegistry yoGraphicsListRegistry)
    {
-      assert (parameters.useCollisionAvoidance());
-      assert (parameters.getActivationThreshold() <= parameters.getDeactivationThreshold());
+      if (!parameters.useCollisionAvoidance())
+         throw new IllegalArgumentException("The CollisionAvoidanceManager is created but the useCollisionAvoidance parameter is set to false.");
+
+      if (parameters.getActivationThreshold() > parameters.getDeactivationThreshold())
+         throw new IllegalArgumentException("The activation threshold is supposed to be lower or equal to the deactivation threshold for the module to work properly.");
+
       param = parameters;
       pointFeedbackCommand.set(elevator, body);
       pointFeedbackCommand.setControlMode(WholeBodyControllerCoreMode.INVERSE_DYNAMICS);
@@ -166,8 +171,8 @@ public class CollisionAvoidanceManager
       
    }
 
-   private FrameVector3D templPlaneDistanceVector = new FrameVector3D();
-   private FramePoint3D templPlaneClosestPointOnBody = new FramePoint3D();
+   private final FrameVector3D templPlaneDistanceVector = new FrameVector3D();
+   private final FramePoint3D templPlaneClosestPointOnBody = new FramePoint3D();
 
    public void compute()
    {
@@ -224,9 +229,9 @@ public class CollisionAvoidanceManager
       setupCommands(minDistance, minDistanceVector);
    }
 
-   private RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
-   private WeightMatrix3D weights = new WeightMatrix3D();
-   private SelectionMatrix3D selection = new SelectionMatrix3D();
+   private final RigidBodyTransform body_H_closestPointAsRBT = new RigidBodyTransform();
+   private final WeightMatrix3D weights = new WeightMatrix3D();
+   private final SelectionMatrix3D selection = new SelectionMatrix3D();
 
    private void setupCommands(double minDistance, FrameVector3D distanceVector)
    {
@@ -322,8 +327,8 @@ public class CollisionAvoidanceManager
       }
    }
    
-   private FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
-   private FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
+   private final FrameVector3D tempEdgeDistanceVector = new FrameVector3D();
+   private final FramePoint3D tempEdgeBodyClosestPoint = new FramePoint3D();
    private final Point3D shinIntersectionWithRegion = new Point3D();
 
    private double computeDistanceFromPlanarRegion(PlanarRegion region, boolean considerOnlyEdges, FrameVector3D distanceVectorToPack, FramePoint3D pointOnBodyToPack)
@@ -465,9 +470,9 @@ public class CollisionAvoidanceManager
       return minDistance;
    }
 
-   private Point3D genericPointOnPlane = new Point3D();
-   private Point3D pointOnLineInLocal = new Point3D();
-   private Vector3D directionOfLineInLocal = new Vector3D();
+   private final Point3D genericPointOnPlane = new Point3D();
+   private final Point3D pointOnLineInLocal = new Point3D();
+   private final Vector3D directionOfLineInLocal = new Vector3D();
    private final Vector3DReadOnly genericPlaneNormal = new Vector3D(0.0, 0.0, 1.0);
 
    private boolean intersectRegionWithLine(PlanarRegion region, Line3D projectionLineInWorld, Point3D intersectionWithPlaneToPack)
@@ -509,11 +514,22 @@ public class CollisionAvoidanceManager
     */
    public static boolean addVerticalRegionsFromHorizontalRegions(PlanarRegion horizontalRegion, CollisionAvoidanceManagerMessage messageToModify)
    {
-      assert (horizontalRegion != null);
-      assert (messageToModify != null);
+      if (horizontalRegion == null)
+      {
+         LogTools.error("The input horizontal region is null.");
+         return false;
+      }
+      if (messageToModify == null)
+      {
+         LogTools.error("The message to modify is null.");
+         return false;
+      }
 
       if (Math.abs(horizontalRegion.getNormal().getZ()) < 0.1)
+      {
+         LogTools.error("The input horizontal region seems to be vertical.");
          return false;
+      }
 
       final LineSegment2D edge = new LineSegment2D();
       final LineSegment3D edgeInWorld = new LineSegment3D();
@@ -575,9 +591,6 @@ public class CollisionAvoidanceManager
 
             edgeInNewPlane.set(edgeInWorld);
             edgeInNewPlane.applyInverseTransform(planeTransform);
-
-            assert (Math.abs(edgeInNewPlane.getFirstEndpointZ()) < 1e-6);
-            assert (Math.abs(edgeInNewPlane.getSecondEndpointZ()) < 1e-6);
 
             newPolygon.addVertex(edgeInNewPlane.getFirstEndpointX(), edgeInNewPlane.getFirstEndpointY());
             newPolygon.addVertex(-edgeInNewPlane.getFirstEndpointX(), edgeInNewPlane.getFirstEndpointY());
