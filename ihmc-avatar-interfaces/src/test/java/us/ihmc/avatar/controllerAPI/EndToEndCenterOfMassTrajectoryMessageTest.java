@@ -1,5 +1,6 @@
 package us.ihmc.avatar.controllerAPI;
 
+import static org.junit.Assert.assertEquals;
 import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -15,12 +16,14 @@ import controller_msgs.msg.dds.TaskspaceTrajectoryStatusMessage;
 import us.ihmc.avatar.DRCObstacleCourseStartingLocation;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
+import us.ihmc.avatar.testTools.EndToEndTestTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.humanoidRobotics.communication.packets.TrajectoryExecutionStatus;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -111,10 +114,7 @@ public abstract class EndToEndCenterOfMassTrajectoryMessageTest implements Multi
 
       CenterOfMassTrajectoryMessage comTrajectoryMessage = new CenterOfMassTrajectoryMessage();
 
-      // - A single point does not work
-      // - After the end of the trajectory it goes back to the initial position
-      // - The state transition does not happen immediately
-
+      // - A single point does not make the CoM move in the x-y plane
       Vector3D zeroLinearVelocity = new Vector3D();
       comTrajectoryMessage.getEuclideanTrajectory().getTaskspaceTrajectoryPoints().add()
                           .set(HumanoidMessageTools.createEuclideanTrajectoryPointMessage(0.0, currentCoMPosition, zeroLinearVelocity));
@@ -123,7 +123,9 @@ public abstract class EndToEndCenterOfMassTrajectoryMessageTest implements Multi
 
       drcSimulationTestHelper.publishToController(comTrajectoryMessage);
 
-      success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime);
+      double controllerDT = getRobotModel().getControllerDT();
+
+      success = drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(trajectoryTime + 2 * controllerDT);
       assertTrue(success);
 
       referenceFrames.updateFrames();
@@ -131,34 +133,24 @@ public abstract class EndToEndCenterOfMassTrajectoryMessageTest implements Multi
       currentCoMPosition.changeFrame(ReferenceFrame.getWorldFrame());
       assertTrue(desiredPosition.epsilonEquals(desiredPosition, 0.01));
 
-      //      SimulationConstructionSet scs = drcSimulationTestHelper.getSimulationConstructionSet();
-      //
-      //      // Hard to figure out how to verify the desired there
-      //      //      trajOutput = scs.getVariable("pelvisHeightOffsetSubTrajectoryCubicPolynomialTrajectoryGenerator", "pelvisHeightOffsetSubTrajectoryCurrentValue").getValueAsDouble();
-      //      //      assertEquals(desiredPosition.getZ(), trajOutput, epsilon);
-      //      // Ending up doing a rough check on the actual height
-      //      double pelvisHeight = scs.getVariable("PelvisLinearStateUpdater", "estimatedRootJointPositionZ").getValueAsDouble();
-      //      assertEquals(desiredPosition.getZ(), pelvisHeight, 0.01);
-      //
-      //      assertEquals(2, statusMessages.size());
-      //      Point3D expectedPosition = new Point3D(Double.NaN, Double.NaN, pelvisHeight);
-      //      EndToEndTestTools.assertTaskspaceTrajectoryStatus(pelvisHeightTrajectoryMessage.getSequenceId(),
-      //                                                        TrajectoryExecutionStatus.STARTED,
-      //                                                        0.0,
-      //                                                        "pelvisHeight",
-      //                                                        statusMessages.remove(0),
-      //                                                        controllerDT);
-      //      EndToEndTestTools.assertTaskspaceTrajectoryStatus(pelvisHeightTrajectoryMessage.getSequenceId(),
-      //                                                        TrajectoryExecutionStatus.COMPLETED,
-      //                                                        trajectoryTime,
-      //                                                        expectedPosition,
-      //                                                        null,
-      //                                                        "pelvisHeight",
-      //                                                        statusMessages.remove(0),
-      //                                                        1.0e-3,
-      //                                                        controllerDT);
-      //
-      //      drcSimulationTestHelper.createVideo(getSimpleRobotName(), 2);
+      assertEquals(2, statusMessages.size());
+
+      EndToEndTestTools.assertTaskspaceTrajectoryStatus(comTrajectoryMessage.getSequenceId(),
+                                                        TrajectoryExecutionStatus.STARTED,
+                                                        0.0,
+                                                        "centerOfMass",
+                                                        statusMessages.remove(0),
+                                                        controllerDT);
+      EndToEndTestTools.assertTaskspaceTrajectoryStatus(comTrajectoryMessage.getSequenceId(),
+                                                        TrajectoryExecutionStatus.COMPLETED,
+                                                        trajectoryTime,
+                                                        desiredPosition,
+                                                        null,
+                                                        "centerOfMass",
+                                                        statusMessages.remove(0),
+                                                        1.0e-3,
+                                                        controllerDT);
+
    }
    
    protected FramePoint3D getRandomCoMPosition(Random random, MovingReferenceFrame comFrame)

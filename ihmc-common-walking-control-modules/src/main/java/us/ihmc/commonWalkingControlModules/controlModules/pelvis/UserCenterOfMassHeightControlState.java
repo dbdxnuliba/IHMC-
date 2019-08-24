@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.controlModules.pelvis;
 
+import controller_msgs.msg.dds.TaskspaceTrajectoryStatusMessage;
 import us.ihmc.commonWalkingControlModules.controlModules.TaskspaceTrajectoryStatusMessageHelper;
 import us.ihmc.commonWalkingControlModules.controlModules.foot.FeetManager;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.feedbackController.FeedbackControlCommand;
@@ -24,7 +25,9 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
    /** Handles the trajectory and the queuing. It is used as a hack  **/
    private final UserCenterOfMassHeightController positionController;
 
-   private final TaskspaceTrajectoryStatusMessageHelper statusHelper = new TaskspaceTrajectoryStatusMessageHelper("centerOfMassHeight");
+   private final FramePoint3D statusDesiredPosition = new FramePoint3D();
+   private final FramePoint3D statusActualPosition = new FramePoint3D();
+   private final TaskspaceTrajectoryStatusMessageHelper statusHelper = new TaskspaceTrajectoryStatusMessageHelper("centerOfMass");
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -138,5 +141,13 @@ public class UserCenterOfMassHeightControlState implements PelvisAndCenterOfMass
                                                                                           desiredCenterOfMassPosition.getZ(),
                                                                                           centerOfMassVelocity.getZ(),
                                                                                           desiredCenterOfMassVelocity.getZ());
+   }
+
+   @Override
+   public TaskspaceTrajectoryStatusMessage pollStatusToReport()
+   {
+      statusDesiredPosition.setIncludingFrame(positionController.getDesiredPosition());
+      statusActualPosition.setIncludingFrame(centerOfMassPosition);
+      return statusHelper.pollStatusMessage(statusDesiredPosition, statusActualPosition);
    }
 }
