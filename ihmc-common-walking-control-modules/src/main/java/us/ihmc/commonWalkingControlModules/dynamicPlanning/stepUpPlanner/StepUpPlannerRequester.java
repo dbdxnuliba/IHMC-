@@ -2,15 +2,7 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner;
 
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.StepUpPlannerCostWeights;
-import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerPhase;
-import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
-import controller_msgs.msg.dds.StepUpPlannerStepParameters;
-import controller_msgs.msg.dds.StepUpPlannerVector2;
+import controller_msgs.msg.dds.*;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
@@ -20,6 +12,7 @@ import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
@@ -280,7 +273,7 @@ public class StepUpPlannerRequester
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
-      msg.setStaticFrictionCoefficient(1.0);
+      msg.setStaticFrictionCoefficient(0.5);
       msg.setTorsionalFrictionCoefficient(0.1);
 
       double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
@@ -316,7 +309,7 @@ public class StepUpPlannerRequester
       return msg;
    }
 
-   static public StepUpPlannerRequestMessage getDefaultFivePhasesRequestMessage(double xDelta, double yDelta, double zDelta, double desiredlegLength,
+   static public StepUpPlannerRequestMessage getDefaultFivePhasesRequestMessage(Vector3D desiredDeltaInMidFeetCoordinates, double desiredlegLength,
                                                                                 CommonHumanoidReferenceFrames referenceFrames)
    {
       StepUpPlannerRequestMessage msg = new StepUpPlannerRequestMessage();
@@ -325,10 +318,20 @@ public class StepUpPlannerRequester
       FramePose3D comPose = new FramePose3D(initialCoMFrame);
       comPose.changeFrame(ReferenceFrame.getWorldFrame());
       double initialCoMHeight = comPose.getZ();
+      
+      ReferenceFrame initialMidFeetFrame = referenceFrames.getMidFeetZUpFrame();
+      FramePose3D desiredMidFeetPose = new FramePose3D(initialMidFeetFrame);
+      
+      desiredMidFeetPose.setX(desiredDeltaInMidFeetCoordinates.getX());
+      desiredMidFeetPose.setY(desiredDeltaInMidFeetCoordinates.getY());
+      desiredMidFeetPose.setZ(desiredDeltaInMidFeetCoordinates.getZ());
+      
+      desiredMidFeetPose.changeFrame(ReferenceFrame.getWorldFrame());
+           
 
       msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialCoMHeight);
       msg.getInitialComVelocity().setToZero();
-      msg.getDesiredComPosition().set(comPose.getX() + xDelta, comPose.getY() + yDelta, initialCoMHeight + zDelta);
+      msg.getDesiredComPosition().set(comPose.getX() + desiredMidFeetPose.getX(), comPose.getY() + desiredMidFeetPose.getY(), initialCoMHeight + desiredMidFeetPose.getZ());
       msg.getDesiredComVelocity().setToZero();
 
       FrameQuaternion identityQuaternion = new FrameQuaternion();
@@ -366,9 +369,9 @@ public class StepUpPlannerRequester
       newPhase.setDesiredDuration(1.2);
 
       l2.set(l1);
-      l2.getPosition().setX(l1.getPosition().getX() + xDelta);
-      l2.getPosition().setY(l1.getPosition().getY() + yDelta);
-      l2.getPosition().setZ(l1.getPosition().getZ() + zDelta);
+      l2.getPosition().setX(l1.getPosition().getX() + desiredMidFeetPose.getX());
+      l2.getPosition().setY(l1.getPosition().getY() + desiredMidFeetPose.getY());
+      l2.getPosition().setZ(l1.getPosition().getZ() + desiredMidFeetPose.getZ());
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(l2);
@@ -384,9 +387,9 @@ public class StepUpPlannerRequester
       newPhase.setDesiredDuration(1.2);
 
       r2.set(r1);
-      r2.getPosition().setX(r1.getPosition().getX() + xDelta);
-      r2.getPosition().setY(r1.getPosition().getY() + yDelta);
-      r2.getPosition().setZ(r1.getPosition().getZ() + zDelta);
+      r2.getPosition().setX(r1.getPosition().getX() + desiredMidFeetPose.getX());
+      r2.getPosition().setY(r1.getPosition().getY() + desiredMidFeetPose.getY());
+      r2.getPosition().setZ(r1.getPosition().getZ() + desiredMidFeetPose.getZ());
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(l2);

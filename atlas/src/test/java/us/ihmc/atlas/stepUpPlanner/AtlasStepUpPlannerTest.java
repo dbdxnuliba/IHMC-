@@ -34,6 +34,12 @@ public class AtlasStepUpPlannerTest extends AvatarStepUpPlannerTest
    {
       return "Atlas";
    }
+   
+   @Test
+   public void testStepUpPlannerNoStep() throws SimulationExceededMaximumTimeException
+   {
+      super.walkUpToHighStep(0.0);
+   }
 
    @Test
    public void testStepUpPlannerLowStep() throws SimulationExceededMaximumTimeException
@@ -95,6 +101,7 @@ public class AtlasStepUpPlannerTest extends AvatarStepUpPlannerTest
                                                                                                         new EnabledShinCollisionAvoidanceParameters());
          }
 
+         @Override
          public SideDependentList<ShinCollisionAvoidanceParameters> getShinsCollisionAvoidanceParameters()
          {
             return shinsCollisionAvoidanceParameters;
