@@ -4,13 +4,7 @@ import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
-import controller_msgs.msg.dds.RobotConfigurationData;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -20,6 +14,7 @@ import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
@@ -88,8 +83,8 @@ public class AtlasStepUpPlannerDemo
 
       double maxLegLength = 1.15;
       double desiredLegLength = 1.05;
-      double stepHeight = 0.3;
-      double stepLength = 0.6;
+      double stepHeight = 0.0;
+      double stepLength = 0.45;
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -135,9 +130,7 @@ public class AtlasStepUpPlannerDemo
       ok = demo.updateFullRobotModel();
       assertTrue(ok);
 
-      StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(stepLength,
-                                                                                                      0.0,
-                                                                                                      stepHeight,
+      StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(new Vector3D(stepLength, 0.0, stepHeight),
                                                                                                       desiredLegLength,
                                                                                                       demo.referenceFrames);
       LogTools.info("Sending request.");
