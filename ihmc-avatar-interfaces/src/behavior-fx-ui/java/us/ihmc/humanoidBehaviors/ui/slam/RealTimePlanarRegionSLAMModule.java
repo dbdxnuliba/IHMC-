@@ -97,11 +97,12 @@ public class RealTimePlanarRegionSLAMModule
          {
             System.out.println("update");
             PlanarRegionsList newData = planarRegionBuffer.getAndSet(null);
-            ConcaveHullMergerListener listener = new ConcaveHullGraphicalMergerListener();
+            //ConcaveHullMergerListener listener = new ConcaveHullGraphicalMergerListener();
+            ConcaveHullMergerListener listener = null;
             PlanarRegionSLAMResult slamResult = PlanarRegionSLAM.slam(map, newData, planarRegionSLAMParameters, listener);
             
             RigidBodyTransform transformFromIncomingToMap = slamResult.getTransformFromIncomingToMap();
-            System.out.println(new Quaternion(transformFromIncomingToMap.getRotation()));
+            messager.submitMessage(RealTimePlanarRegionSLAMAPI.LatestSLAMTransform, transformFromIncomingToMap);
             map = slamResult.getMergedMap();
          }
       }

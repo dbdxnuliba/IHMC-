@@ -1,5 +1,6 @@
 package us.ihmc.humanoidBehaviors.ui.slam;
 
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.messager.MessagerAPIFactory;
 import us.ihmc.messager.MessagerAPIFactory.Category;
 import us.ihmc.messager.MessagerAPIFactory.CategoryTheme;
@@ -22,6 +23,7 @@ public class RealTimePlanarRegionSLAMAPI
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
    private static final TypedTopicTheme<Boolean> Clear = apiFactory.createTypedTopicTheme("Clear");
    private static final TypedTopicTheme<Boolean> Show = apiFactory.createTypedTopicTheme("Show");
+   private static final TypedTopicTheme<RigidBodyTransform> Transform = apiFactory.createTypedTopicTheme("Transform");
    private static final TypedTopicTheme<String> Status = apiFactory.createTypedTopicTheme("Status");
 
    private static final TopicTheme Data = apiFactory.createTopicTheme("Data");
@@ -35,6 +37,7 @@ public class RealTimePlanarRegionSLAMAPI
 
    public static final Topic<Boolean> EnableSLAM = Root.child(SLAM).topic(Enable);
    public static final Topic<Boolean> ShowSLAMResult = Root.child(SLAM).child(Result).topic(Show);
+   public static final Topic<RigidBodyTransform> LatestSLAMTransform = Root.child(SLAM).child(Result).topic(Transform);
    public static final Topic<Boolean> ShowSLAMMap = Root.child(SLAM).child(Map).topic(Show);
    public static final Topic<Boolean> ClearSLAMMap = Root.child(SLAM).topic(Clear);
 
