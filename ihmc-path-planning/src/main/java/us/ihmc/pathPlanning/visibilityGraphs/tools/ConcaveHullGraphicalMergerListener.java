@@ -40,19 +40,19 @@ public class ConcaveHullGraphicalMergerListener implements ConcaveHullMergerList
    @Override
    public void originalHulls(ArrayList<Point2D> hullOne, ArrayList<Point2D> hullTwo)
    {
-//      drawAFrameWithTheHulls("Original Hulls", hullOne, hullTwo);
-//
-//      drawThePoints(plotter, hullOne, colorOne);
-//      drawThePoints(plotter, hullTwo, colorTwo);
+      drawAFrameWithTheHulls("Original Hulls", hullOne, hullTwo);
+
+      drawThePoints(plotter, hullOne, colorOne);
+      drawThePoints(plotter, hullTwo, colorTwo);
    }
 
    @Override
    public void preprocessedHull(ArrayList<Point2D> hullOne, ArrayList<Point2D> hullTwo)
    {
-//      drawAFrameWithTheHulls("Hulls after preprocessing", hullOne, hullTwo);
-//
-//      drawThePoints(plotter, hullOne, colorOne);
-//      drawThePoints(plotter, hullTwo, colorTwo);
+      drawAFrameWithTheHulls("Hulls after preprocessing", hullOne, hullTwo);
+
+      drawThePoints(plotter, hullOne, colorOne);
+      drawThePoints(plotter, hullTwo, colorTwo);
    }
 
 
