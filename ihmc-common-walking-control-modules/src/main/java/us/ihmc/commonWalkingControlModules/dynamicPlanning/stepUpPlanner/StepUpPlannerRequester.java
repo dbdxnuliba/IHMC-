@@ -8,7 +8,7 @@ import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Tools;
-import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -206,13 +206,12 @@ public class StepUpPlannerRequester
    }
 
    static public StepUpPlannerParametersMessage getDefaultFivePhasesParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta,
-                                                                                      double maxLegLength)
+                                                                                      double maxLegLength, double footScale)
    {
       StepUpPlannerParametersMessage msg = new StepUpPlannerParametersMessage();
 
       ArrayList<StepUpPlannerStepParameters> leftSteps = new ArrayList<StepUpPlannerStepParameters>();
       ArrayList<StepUpPlannerStepParameters> rightSteps = new ArrayList<StepUpPlannerStepParameters>();
-      double scale = 0.5;
       double rearOfFoot = -steppingParameters.getFootLength() / 2.0;
       double frontOfFoot = steppingParameters.getFootLength() / 2.0;
       double toeWidth = steppingParameters.getToeWidth();
@@ -239,7 +238,7 @@ public class StepUpPlannerRequester
          newVertex.setY(heelWidth / 2.0);
          newStep.getFootVertices().add().set(newVertex);
 
-         newStep.setScale(scale);
+         newStep.setScale(footScale);
 
          leftSteps.add(new StepUpPlannerStepParameters(newStep));
          rightSteps.add(new StepUpPlannerStepParameters(newStep));
@@ -313,25 +312,21 @@ public class StepUpPlannerRequester
                                                                                 CommonHumanoidReferenceFrames referenceFrames)
    {
       StepUpPlannerRequestMessage msg = new StepUpPlannerRequestMessage();
+      ReferenceFrame midFeetFrame = referenceFrames.getMidFeetZUpFrame();
+      ReferenceFrame comFrame = referenceFrames.getCenterOfMassFrame();
+      ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-      ReferenceFrame initialCoMFrame = referenceFrames.getCenterOfMassFrame();
-      FramePose3D comPose = new FramePose3D(initialCoMFrame);
-      comPose.changeFrame(ReferenceFrame.getWorldFrame());
-      double initialCoMHeight = comPose.getZ();
+      FramePoint3D initialCoMPosition = new FramePoint3D(comFrame);
+      initialCoMPosition.changeFrame(ReferenceFrame.getWorldFrame());
       
-      ReferenceFrame initialMidFeetFrame = referenceFrames.getMidFeetZUpFrame();
-      FramePose3D desiredMidFeetPose = new FramePose3D(initialMidFeetFrame);
-      
-      desiredMidFeetPose.setX(desiredDeltaInMidFeetCoordinates.getX());
-      desiredMidFeetPose.setY(desiredDeltaInMidFeetCoordinates.getY());
-      desiredMidFeetPose.setZ(desiredDeltaInMidFeetCoordinates.getZ());
-      
-      desiredMidFeetPose.changeFrame(ReferenceFrame.getWorldFrame());
-           
+      FramePoint3D desiredCoMPosition = new FramePoint3D(comFrame);
+      desiredCoMPosition.changeFrame(midFeetFrame);
+      desiredCoMPosition.add(desiredDeltaInMidFeetCoordinates);      
+      desiredCoMPosition.changeFrame(worldFrame);
 
-      msg.getInitialComPosition().set(comPose.getX(), comPose.getY(), initialCoMHeight);
+      msg.getInitialComPosition().set(initialCoMPosition);
       msg.getInitialComVelocity().setToZero();
-      msg.getDesiredComPosition().set(comPose.getX() + desiredMidFeetPose.getX(), comPose.getY() + desiredMidFeetPose.getY(), initialCoMHeight + desiredMidFeetPose.getZ());
+      msg.getDesiredComPosition().set(desiredCoMPosition);
       msg.getDesiredComVelocity().setToZero();
 
       FrameQuaternion identityQuaternion = new FrameQuaternion();
@@ -339,61 +334,55 @@ public class StepUpPlannerRequester
 
       msg.getPhases().clear();
 
-      MovingReferenceFrame initialLeft = referenceFrames.getSoleZUpFrame(RobotSide.LEFT);
-      FramePose3D initialLeftPose = new FramePose3D(initialLeft);
-      initialLeftPose.changeFrame(ReferenceFrame.getWorldFrame());
+      MovingReferenceFrame leftSoleFrame = referenceFrames.getSoleZUpFrame(RobotSide.LEFT);
+      FramePose3D initialLeftPose = new FramePose3D(leftSoleFrame);
+      initialLeftPose.changeFrame(worldFrame);
+      
+      FramePose3D desiredLeftPose = new FramePose3D(leftSoleFrame);
+      desiredLeftPose.changeFrame(midFeetFrame);
+      desiredLeftPose.getPosition().add(desiredDeltaInMidFeetCoordinates);
+      desiredLeftPose.changeFrame(worldFrame);
+      
 
-      MovingReferenceFrame initialRight = referenceFrames.getSoleZUpFrame(RobotSide.RIGHT);
-      FramePose3D initialRightPose = new FramePose3D(initialRight);
-      initialRightPose.changeFrame(ReferenceFrame.getWorldFrame());
+      MovingReferenceFrame rightSoleFrame = referenceFrames.getSoleZUpFrame(RobotSide.RIGHT);
+      FramePose3D initialRightPose = new FramePose3D(rightSoleFrame);
+      initialRightPose.changeFrame(worldFrame);
+      
+      FramePose3D desiredRightPose = new FramePose3D(rightSoleFrame);
+      desiredRightPose.changeFrame(midFeetFrame);
+      desiredRightPose.getPosition().add(desiredDeltaInMidFeetCoordinates);
+      desiredRightPose.changeFrame(worldFrame);
 
-      Pose3D l1 = new Pose3D();
-      Pose3D l2 = new Pose3D();
-      Pose3D r1 = new Pose3D();
-      Pose3D r2 = new Pose3D();
-
-      l1.set(initialLeftPose);
-      r1.set(initialRightPose);
 
       StepUpPlannerPhase newPhase = msg.getPhases().add();
-      newPhase.getLeftFootPose().set(l1);
-      newPhase.getRightFootPose().set(r1);
+      newPhase.getLeftFootPose().set(initialLeftPose);
+      newPhase.getRightFootPose().set(initialRightPose);
       newPhase.setMinimumDuration(0.5);
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(0.8);
 
       newPhase = msg.getPhases().add();
-      newPhase.getRightFootPose().set(r1);
+      newPhase.getRightFootPose().set(initialRightPose);
       newPhase.setMinimumDuration(0.9);
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(1.2);
 
-      l2.set(l1);
-      l2.getPosition().setX(l1.getPosition().getX() + desiredMidFeetPose.getX());
-      l2.getPosition().setY(l1.getPosition().getY() + desiredMidFeetPose.getY());
-      l2.getPosition().setZ(l1.getPosition().getZ() + desiredMidFeetPose.getZ());
-
       newPhase = msg.getPhases().add();
-      newPhase.getLeftFootPose().set(l2);
-      newPhase.getRightFootPose().set(r1);
+      newPhase.getLeftFootPose().set(desiredLeftPose);
+      newPhase.getRightFootPose().set(initialRightPose);
       newPhase.setMinimumDuration(0.5);
       newPhase.setMaximumDuration(1.5);
       newPhase.setDesiredDuration(0.8);
 
       newPhase = msg.getPhases().add();
-      newPhase.getLeftFootPose().set(l2);
+      newPhase.getLeftFootPose().set(desiredLeftPose);
       newPhase.setMinimumDuration(0.5);
       newPhase.setMaximumDuration(1.5);
       newPhase.setDesiredDuration(1.2);
 
-      r2.set(r1);
-      r2.getPosition().setX(r1.getPosition().getX() + desiredMidFeetPose.getX());
-      r2.getPosition().setY(r1.getPosition().getY() + desiredMidFeetPose.getY());
-      r2.getPosition().setZ(r1.getPosition().getZ() + desiredMidFeetPose.getZ());
-
       newPhase = msg.getPhases().add();
-      newPhase.getLeftFootPose().set(l2);
-      newPhase.getRightFootPose().set(r2);
+      newPhase.getLeftFootPose().set(desiredLeftPose);
+      newPhase.getRightFootPose().set(desiredRightPose);
       newPhase.setMinimumDuration(0.5);
       newPhase.setMaximumDuration(2.0);
       newPhase.setDesiredDuration(0.8);
@@ -404,11 +393,11 @@ public class StepUpPlannerRequester
       msg.getLeftDesiredFinalControl().getCop().setY(0.0);
       msg.getRightDesiredFinalControl().set(msg.getLeftDesiredFinalControl());
 
-      double desiredLeftMultiplier = 9.81 / (2.0 * (msg.getDesiredComPosition().getZ() - l2.getPosition().getZ()));
+      double desiredLeftMultiplier = 9.81 / (2.0 * (msg.getDesiredComPosition().getZ() - desiredLeftPose.getPosition().getZ()));
 
       msg.getLeftDesiredFinalControl().setMultiplier(desiredLeftMultiplier);
 
-      double desiredRightMultiplier = 9.81 / (2.0 * (msg.getDesiredComPosition().getZ() - r2.getPosition().getZ()));
+      double desiredRightMultiplier = 9.81 / (2.0 * (msg.getDesiredComPosition().getZ() - desiredRightPose.getPosition().getZ()));
 
       msg.getRightDesiredFinalControl().setMultiplier(desiredRightMultiplier);
 
