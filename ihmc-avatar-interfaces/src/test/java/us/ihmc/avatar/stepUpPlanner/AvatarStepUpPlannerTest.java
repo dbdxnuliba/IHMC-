@@ -181,7 +181,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
                                                                     .generateTopicName(FootstepDataListMessage.class));
 
-         parameters.setSendPelvisHeightMessages(useStepUpPlannerTrajectories);
+         parameters.setSendPelvisHeightMessages(false);
          parameters.setIncludePelvisHeightMessages(false);
          parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName())
                                                                         .generateTopicName(PelvisHeightTrajectoryMessage.class));
