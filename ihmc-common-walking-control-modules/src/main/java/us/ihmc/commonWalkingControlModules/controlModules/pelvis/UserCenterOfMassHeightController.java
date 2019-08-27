@@ -246,18 +246,18 @@ public class UserCenterOfMassHeightController extends RigidBodyTaskspaceControlS
          return false;
       }
       
-      if (!handleCommandInternal(command))
-      {
-         clear();
-         return false;
-      }
-
       if (command.getExecutionMode() == ExecutionMode.OVERRIDE || isEmpty())
       {
          // Record the current desired position and the control frame pose.
          getDesiredPosition(desiredPosition);
 
          clear();
+
+         if (!handleCommandInternal(command))
+         {
+            clear();
+            return false;
+         }
 
          trajectoryGenerator.changeFrame(command.getTrajectoryFrame());
 
@@ -272,6 +272,14 @@ public class UserCenterOfMassHeightController extends RigidBodyTaskspaceControlS
                + " without override.");
          clear();
          return false;
+      }
+      else
+      {
+         if (!handleCommandInternal(command))
+         {
+            clear();
+            return false;
+         }
       }
 
       command.getTrajectoryPointList().changeFrame(trajectoryGenerator.getReferenceFrame());
