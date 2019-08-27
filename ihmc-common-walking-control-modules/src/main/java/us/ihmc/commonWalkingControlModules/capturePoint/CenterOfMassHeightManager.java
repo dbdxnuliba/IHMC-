@@ -264,7 +264,7 @@ public class CenterOfMassHeightManager
             requestState(PelvisHeightControlMode.USER_COM);
             return;
          }
-         LogTools.info("userCoMHeightControlState failed to handle CenterOfMassTrajectoryCommand");
+         LogTools.info("UserCoMHeightControlState failed to handle CenterOfMassTrajectoryCommand");
          return;
       }
    }
