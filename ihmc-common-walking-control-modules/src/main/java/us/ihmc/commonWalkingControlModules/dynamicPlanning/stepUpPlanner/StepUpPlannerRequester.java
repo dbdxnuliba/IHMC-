@@ -357,35 +357,35 @@ public class StepUpPlannerRequester
       StepUpPlannerPhase newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(initialLeftPose);
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(0.5);
+      newPhase.setMinimumDuration(1.8);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(0.8);
+      newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(0.9);
+      newPhase.setMinimumDuration(1.8);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.2);
+      newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(0.5);
-      newPhase.setMaximumDuration(1.5);
-      newPhase.setDesiredDuration(0.8);
+      newPhase.setMinimumDuration(1.8);
+      newPhase.setMaximumDuration(2.0);
+      newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
-      newPhase.setMinimumDuration(0.5);
-      newPhase.setMaximumDuration(1.5);
-      newPhase.setDesiredDuration(1.2);
+      newPhase.setMinimumDuration(1.8);
+      newPhase.setMaximumDuration(2.0);
+      newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
       newPhase.getRightFootPose().set(desiredRightPose);
-      newPhase.setMinimumDuration(0.5);
+      newPhase.setMinimumDuration(1.8);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(0.8);
+      newPhase.setDesiredDuration(1.8);
 
       msg.setDesiredLegLength(desiredlegLength);
 
