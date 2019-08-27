@@ -148,7 +148,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
                                                                                                                                  .getSteppingParameters(),
                                                                                                                   heightDifference,
-                                                                                                                  maxLegLength());
+                                                                                                                  maxLegLength(), 0.5);
 
          parameters.setSendComMessages(useStepUpPlannerTrajectories);
          parameters.setIncludeComMessages(false);

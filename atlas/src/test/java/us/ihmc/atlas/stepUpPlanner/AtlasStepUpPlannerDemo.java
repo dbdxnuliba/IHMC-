@@ -72,6 +72,7 @@ public class AtlasStepUpPlannerDemo
                                            RobotConfigurationData.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotName),
                                            s -> latestRobotConfigurationData.set(s.takeNextData()));
+      ThreadTools.sleep(1000);
 
    }
 
@@ -83,8 +84,9 @@ public class AtlasStepUpPlannerDemo
 
       double maxLegLength = 1.15;
       double desiredLegLength = 1.05;
-      double stepHeight = 0.0;
+      double stepHeight = 0.154;
       double stepLength = 0.45;
+      double footScale = 0.4;
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -105,8 +107,7 @@ public class AtlasStepUpPlannerDemo
       StepUpPlannerRequester requester = new StepUpPlannerRequester();
       StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(atlasRobotModel.getWalkingControllerParameters()
                                                                                                                               .getSteppingParameters(),
-                                                                                                               heightDifference,
-                                                                                                               maxLegLength);
+                                                                                                               heightDifference, maxLegLength, footScale);
 
       parameters.setSendComMessages(true);
       parameters.setIncludeComMessages(false);
