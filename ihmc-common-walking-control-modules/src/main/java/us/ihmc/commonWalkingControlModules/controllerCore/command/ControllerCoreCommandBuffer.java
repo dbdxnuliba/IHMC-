@@ -98,6 +98,22 @@ public class ControllerCoreCommandBuffer implements ControllerCoreCommandInterfa
       return lowLevelOneDoFJointDesiredDataHolder;
    }
 
+   public void set(ControllerCoreCommandBuffer other)
+   {
+      set((ControllerCoreCommandInterface) other);
+   }
+
+   public void set(ControllerCoreCommandInterface other)
+   {
+      reinitialize = other.isReinitializationRequested();
+      controllerCoreMode = other.getControllerCoreMode();
+      inverseDynamicsCommandBuffer.set(other.getInverseDynamicsCommandList());
+      inverseKinematicsCommandBuffer.set(other.getInverseKinematicsCommandList());
+      virtualModelControlCommandBuffer.set(other.getVirtualModelControlCommandList());
+      feedbackControlCommandBuffer.set(other.getFeedbackControlCommandList());
+      lowLevelOneDoFJointDesiredDataHolder.set(other.getLowLevelOneDoFJointDesiredDataHolder());
+   }
+
    @Override
    public boolean equals(Object object)
    {

@@ -121,6 +121,11 @@ public class CrossRobotCommandResolver
       this.jointHashCodeResolver = jointHashCodeResolver;
    }
 
+   public void resolveControllerCoreCommandBuffer(ControllerCoreCommandBuffer in, ControllerCoreCommandBuffer out)
+   {
+      resolveControllerCoreCommand(in, out);
+   }
+
    public void resolveControllerCoreCommand(ControllerCoreCommandInterface in, ControllerCoreCommandBuffer out)
    {
       out.clear();
@@ -183,6 +188,7 @@ public class CrossRobotCommandResolver
    {
       resolveHumanoidRobotContextDataScheduler(in, out);
       resolveHumanoidRobotContextDataController(in, out);
+      resolveHumanoidRobotContextDataWalkingStateMachine(in, out);
       resolveHumanoidRobotContextDataEstimator(in, out);
    }
 
@@ -204,7 +210,18 @@ public class CrossRobotCommandResolver
       resolveCenterOfPressureDataHolder(in.getCenterOfPressureDataHolder(), out.getCenterOfPressureDataHolder());
       resolveRobotMotionStatusHolder(in.getRobotMotionStatusHolder(), out.getRobotMotionStatusHolder());
       resolveLowLevelOneDoFJointDesiredDataHolder(in.getJointDesiredOutputList(), out.getJointDesiredOutputList());
+      resolveLinearMomentumRateControlModuleOutput(in.getLinearMomentumRateControlModuleOutput(), out.getLinearMomentumRateControlModuleOutput());
+      resolveControllerCoreOutput(in.getControllerCoreOutput(), out.getControllerCoreOutput());
       out.setControllerRan(in.getControllerRan());
+   }
+
+   /**
+    * Resolves only the part of the context data that is updated by the walking state machine.
+    */
+   public void resolveHumanoidRobotContextDataWalkingStateMachine(HumanoidRobotContextData in, HumanoidRobotContextData out)
+   {
+      resolveLinearMomentumRateControlModuleInput(in.getLinearMomentumRateControlModuleInput(), out.getLinearMomentumRateControlModuleInput());
+      resolveControllerCoreCommand(in.getControllerCoreCommandBuffer(), out.getControllerCoreCommandBuffer());
    }
 
    /**

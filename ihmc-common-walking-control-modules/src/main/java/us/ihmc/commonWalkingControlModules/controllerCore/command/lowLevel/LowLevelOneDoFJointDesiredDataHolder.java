@@ -148,6 +148,11 @@ public class LowLevelOneDoFJointDesiredDataHolder implements JointDesiredOutputL
 
    public void set(LowLevelOneDoFJointDesiredDataHolder other)
    {
+      set((JointDesiredOutputListReadOnly) other);
+   }
+
+   public void set(JointDesiredOutputListReadOnly other)
+   {
       overwriteWith(other);
    }
 

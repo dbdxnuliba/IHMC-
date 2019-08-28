@@ -18,14 +18,14 @@ import us.ihmc.commons.lists.RecyclingArrayList;
  */
 public class InverseKinematicsCommandBuffer extends InverseKinematicsCommandList
 {
-   private final RecyclingArrayList<InverseKinematicsOptimizationSettingsCommand> inverseKinematicsOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(InverseKinematicsOptimizationSettingsCommand.class);
-   private final RecyclingArrayList<JointLimitReductionCommand> jointLimitReductionCommandBuffer = new RecyclingArrayList<>(JointLimitReductionCommand.class);
-   private final RecyclingArrayList<JointLimitEnforcementMethodCommand> jointLimitEnforcementMethodCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementMethodCommand.class);
-   private final RecyclingArrayList<JointspaceVelocityCommand> jointspaceVelocityCommandBuffer = new RecyclingArrayList<>(JointspaceVelocityCommand.class);
-   private final RecyclingArrayList<MomentumCommand> momentumCommandBuffer = new RecyclingArrayList<>(MomentumCommand.class);
-   private final RecyclingArrayList<PrivilegedConfigurationCommand> privilegedConfigurationCommandBuffer = new RecyclingArrayList<>(PrivilegedConfigurationCommand.class);
-   private final RecyclingArrayList<PrivilegedJointSpaceCommand> privilegedJointSpaceCommandBuffer = new RecyclingArrayList<>(PrivilegedJointSpaceCommand.class);
-   private final RecyclingArrayList<SpatialVelocityCommand> spatialVelocityCommandBuffer = new RecyclingArrayList<>(SpatialVelocityCommand.class);
+   private final transient RecyclingArrayList<InverseKinematicsOptimizationSettingsCommand> inverseKinematicsOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(InverseKinematicsOptimizationSettingsCommand.class);
+   private final transient RecyclingArrayList<JointLimitReductionCommand> jointLimitReductionCommandBuffer = new RecyclingArrayList<>(JointLimitReductionCommand.class);
+   private final transient RecyclingArrayList<JointLimitEnforcementMethodCommand> jointLimitEnforcementMethodCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementMethodCommand.class);
+   private final transient RecyclingArrayList<JointspaceVelocityCommand> jointspaceVelocityCommandBuffer = new RecyclingArrayList<>(JointspaceVelocityCommand.class);
+   private final transient RecyclingArrayList<MomentumCommand> momentumCommandBuffer = new RecyclingArrayList<>(MomentumCommand.class);
+   private final transient RecyclingArrayList<PrivilegedConfigurationCommand> privilegedConfigurationCommandBuffer = new RecyclingArrayList<>(PrivilegedConfigurationCommand.class);
+   private final transient RecyclingArrayList<PrivilegedJointSpaceCommand> privilegedJointSpaceCommandBuffer = new RecyclingArrayList<>(PrivilegedJointSpaceCommand.class);
+   private final transient RecyclingArrayList<SpatialVelocityCommand> spatialVelocityCommandBuffer = new RecyclingArrayList<>(SpatialVelocityCommand.class);
 
    public InverseKinematicsCommandBuffer()
    {
@@ -49,31 +49,53 @@ public class InverseKinematicsCommandBuffer extends InverseKinematicsCommandList
       spatialVelocityCommandBuffer.clear();
    }
 
-   /**
-    * Unsupported operation.
-    */
+   public void set(InverseKinematicsCommandBuffer other)
+   {
+      set((InverseKinematicsCommandList) other);
+   }
+
    @Override
    public void set(InverseKinematicsCommandList other)
    {
-      throw new UnsupportedOperationException();
+      clear();
+      addCommandList(other);
    }
 
-   /**
-    * Unsupported operation.
-    */
    @Override
    public void addCommand(InverseKinematicsCommand<?> command)
    {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * Unsupported operation.
-    */
-   @Override
-   public void addCommandList(InverseKinematicsCommandList commandList)
-   {
-      throw new UnsupportedOperationException();
+      switch (command.getCommandType())
+      {
+      case OPTIMIZATION_SETTINGS:
+         addInverseKinematicsOptimizationSettingsCommand().set((InverseKinematicsOptimizationSettingsCommand) command);
+         break;
+      case LIMIT_REDUCTION:
+         addJointLimitReductionCommand().set((JointLimitReductionCommand) command);
+         break;
+      case JOINT_LIMIT_ENFORCEMENT:
+         addJointLimitEnforcementMethodCommand().set((JointLimitEnforcementMethodCommand) command);
+         break;
+      case JOINTSPACE:
+         addJointspaceVelocityCommand().set((JointspaceVelocityCommand) command);
+         break;
+      case MOMENTUM:
+         addMomentumCommand().set((MomentumCommand) command);
+         break;
+      case PRIVILEGED_CONFIGURATION:
+         addPrivilegedConfigurationCommand().set((PrivilegedConfigurationCommand) command);
+         break;
+      case PRIVILEGED_JOINTSPACE_COMMAND:
+         addPrivilegedJointSpaceCommand().set((PrivilegedJointSpaceCommand) command);
+         break;
+      case TASKSPACE:
+         addSpatialVelocityCommand().set((SpatialVelocityCommand) command);
+         break;
+      case COMMAND_LIST:
+         addCommandList((InverseKinematicsCommandList) command);
+         break;
+      default:
+         throw new RuntimeException("The command type: " + command.getCommandType() + " is not handled.");
+      }
    }
 
    /**

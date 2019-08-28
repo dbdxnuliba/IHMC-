@@ -23,18 +23,18 @@ import us.ihmc.commons.lists.RecyclingArrayList;
  */
 public class VirtualModelControlCommandBuffer extends VirtualModelControlCommandList
 {
-   private final RecyclingArrayList<CenterOfPressureCommand> centerOfPressureCommandBuffer = new RecyclingArrayList<>(CenterOfPressureCommand.class);
-   private final RecyclingArrayList<ContactWrenchCommand> contactWrenchCommandBuffer = new RecyclingArrayList<>(ContactWrenchCommand.class);
-   private final RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandBuffer = new RecyclingArrayList<>(PlaneContactStateCommand.class);
-   private final RecyclingArrayList<MomentumRateCommand> momentumRateCommandBuffer = new RecyclingArrayList<>(MomentumRateCommand.class);
-   private final RecyclingArrayList<ExternalWrenchCommand> externalWrenchCommandBuffer = new RecyclingArrayList<>(ExternalWrenchCommand.class);
-   private final RecyclingArrayList<JointAccelerationIntegrationCommand> jointAccelerationIntegrationCommandBuffer = new RecyclingArrayList<>(JointAccelerationIntegrationCommand.class);
-   private final RecyclingArrayList<JointLimitEnforcementCommand> jointLimitEnforcementCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementCommand.class);
-   private final RecyclingArrayList<JointTorqueCommand> jointTorqueCommandBuffer = new RecyclingArrayList<>(JointTorqueCommand.class);
-   private final RecyclingArrayList<VirtualForceCommand> virtualForceCommandBuffer = new RecyclingArrayList<>(VirtualForceCommand.class);
-   private final RecyclingArrayList<VirtualTorqueCommand> virtualTorqueCommandBuffer = new RecyclingArrayList<>(VirtualTorqueCommand.class);
-   private final RecyclingArrayList<VirtualWrenchCommand> virtualWrenchCommandBuffer = new RecyclingArrayList<>(VirtualWrenchCommand.class);
-   private final RecyclingArrayList<VirtualModelControlOptimizationSettingsCommand> virtualModelControlOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(VirtualModelControlOptimizationSettingsCommand.class);
+   private final transient RecyclingArrayList<CenterOfPressureCommand> centerOfPressureCommandBuffer = new RecyclingArrayList<>(CenterOfPressureCommand.class);
+   private final transient RecyclingArrayList<ContactWrenchCommand> contactWrenchCommandBuffer = new RecyclingArrayList<>(ContactWrenchCommand.class);
+   private final transient RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandBuffer = new RecyclingArrayList<>(PlaneContactStateCommand.class);
+   private final transient RecyclingArrayList<MomentumRateCommand> momentumRateCommandBuffer = new RecyclingArrayList<>(MomentumRateCommand.class);
+   private final transient RecyclingArrayList<ExternalWrenchCommand> externalWrenchCommandBuffer = new RecyclingArrayList<>(ExternalWrenchCommand.class);
+   private final transient RecyclingArrayList<JointAccelerationIntegrationCommand> jointAccelerationIntegrationCommandBuffer = new RecyclingArrayList<>(JointAccelerationIntegrationCommand.class);
+   private final transient RecyclingArrayList<JointLimitEnforcementCommand> jointLimitEnforcementCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementCommand.class);
+   private final transient RecyclingArrayList<JointTorqueCommand> jointTorqueCommandBuffer = new RecyclingArrayList<>(JointTorqueCommand.class);
+   private final transient RecyclingArrayList<VirtualForceCommand> virtualForceCommandBuffer = new RecyclingArrayList<>(VirtualForceCommand.class);
+   private final transient RecyclingArrayList<VirtualTorqueCommand> virtualTorqueCommandBuffer = new RecyclingArrayList<>(VirtualTorqueCommand.class);
+   private final transient RecyclingArrayList<VirtualWrenchCommand> virtualWrenchCommandBuffer = new RecyclingArrayList<>(VirtualWrenchCommand.class);
+   private final transient RecyclingArrayList<VirtualModelControlOptimizationSettingsCommand> virtualModelControlOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(VirtualModelControlOptimizationSettingsCommand.class);
 
    public VirtualModelControlCommandBuffer()
    {
@@ -62,31 +62,65 @@ public class VirtualModelControlCommandBuffer extends VirtualModelControlCommand
       virtualModelControlOptimizationSettingsCommandBuffer.clear();
    }
 
-   /**
-    * Unsupported operation.
-    */
+   public void set(VirtualModelControlCommandBuffer other)
+   {
+      set((VirtualModelControlCommandList) other);
+   }
+
    @Override
    public void set(VirtualModelControlCommandList other)
    {
-      throw new UnsupportedOperationException();
+      clear();
+      addCommandList(other);
    }
 
-   /**
-    * Unsupported operation.
-    */
    @Override
    public void addCommand(VirtualModelControlCommand<?> command)
    {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * Unsupported operation.
-    */
-   @Override
-   public void addCommandList(VirtualModelControlCommandList commandList)
-   {
-      throw new UnsupportedOperationException();
+      switch (command.getCommandType())
+      {
+      case CENTER_OF_PRESSURE:
+         addCenterOfPressureCommand().set((CenterOfPressureCommand) command);
+         break;
+      case CONTACT_WRENCH:
+         addContactWrenchCommand().set((ContactWrenchCommand) command);
+         break;
+      case EXTERNAL_WRENCH:
+         addExternalWrenchCommand().set((ExternalWrenchCommand) command);
+         break;
+      case OPTIMIZATION_SETTINGS:
+         addVirtualModelControlOptimizationSettingsCommand().set((VirtualModelControlOptimizationSettingsCommand) command);
+         break;
+      case JOINT_ACCELERATION_INTEGRATION:
+         addJointAccelerationIntegrationCommand().set((JointAccelerationIntegrationCommand) command);
+         break;
+      case JOINT_LIMIT_ENFORCEMENT:
+         addJointLimitEnforcementCommand().set((JointLimitEnforcementCommand) command);
+         break;
+      case JOINTSPACE:
+         addJointTorqueCommand().set((JointTorqueCommand) command);
+         break;
+      case MOMENTUM:
+         addMomentumRateCommand().set((MomentumRateCommand) command);
+         break;
+      case PLANE_CONTACT_STATE:
+         addPlaneContactStateCommand().set((PlaneContactStateCommand) command);
+         break;
+      case VIRTUAL_FORCE:
+         addVirtualForceCommand().set((VirtualForceCommand) command);
+         break;
+      case VIRTUAL_TORQUE:
+         addVirtualTorqueCommand().set((VirtualTorqueCommand) command);
+         break;
+      case VIRTUAL_WRENCH:
+         addVirtualWrenchCommand().set((VirtualWrenchCommand) command);
+         break;
+      case COMMAND_LIST:
+         addCommandList((VirtualModelControlCommandList) command);
+         break;
+      default:
+         throw new RuntimeException("The command type: " + command.getCommandType() + " is not handled.");
+      }
    }
 
    /**

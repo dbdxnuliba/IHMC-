@@ -20,19 +20,19 @@ import us.ihmc.commons.lists.RecyclingArrayList;
  */
 public class InverseDynamicsCommandBuffer extends InverseDynamicsCommandList
 {
-   private final RecyclingArrayList<CenterOfPressureCommand> centerOfPressureCommandBuffer = new RecyclingArrayList<>(CenterOfPressureCommand.class);
-   private final RecyclingArrayList<ContactWrenchCommand> contactWrenchCommandBuffer = new RecyclingArrayList<>(ContactWrenchCommand.class);
-   private final RecyclingArrayList<ExternalWrenchCommand> externalWrenchCommandBuffer = new RecyclingArrayList<>(ExternalWrenchCommand.class);
-   private final RecyclingArrayList<InverseDynamicsOptimizationSettingsCommand> inverseDynamicsOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(InverseDynamicsOptimizationSettingsCommand.class);
-   private final RecyclingArrayList<JointAccelerationIntegrationCommand> jointAccelerationIntegrationCommandBuffer = new RecyclingArrayList<>(JointAccelerationIntegrationCommand.class);
-   private final RecyclingArrayList<JointLimitEnforcementMethodCommand> jointLimitEnforcementMethodCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementMethodCommand.class);
-   private final RecyclingArrayList<JointspaceAccelerationCommand> jointspaceAccelerationCommandBuffer = new RecyclingArrayList<>(JointspaceAccelerationCommand.class);
-   private final RecyclingArrayList<MomentumRateCommand> momentumRateCommandBuffer = new RecyclingArrayList<>(MomentumRateCommand.class);
-   private final RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandBuffer = new RecyclingArrayList<>(PlaneContactStateCommand.class);
-   private final RecyclingArrayList<SpatialAccelerationCommand> spatialAccelerationCommandBuffer = new RecyclingArrayList<>(SpatialAccelerationCommand.class);
-   private final RecyclingArrayList<JointLimitReductionCommand> jointLimitReductionCommandBuffer = new RecyclingArrayList<>(JointLimitReductionCommand.class);
-   private final RecyclingArrayList<PrivilegedJointSpaceCommand> privilegedJointSpaceCommandBuffer = new RecyclingArrayList<>(PrivilegedJointSpaceCommand.class);
-   private final RecyclingArrayList<PrivilegedConfigurationCommand> privilegedConfigurationCommandBuffer = new RecyclingArrayList<>(PrivilegedConfigurationCommand.class);
+   private final transient RecyclingArrayList<CenterOfPressureCommand> centerOfPressureCommandBuffer = new RecyclingArrayList<>(CenterOfPressureCommand.class);
+   private final transient RecyclingArrayList<ContactWrenchCommand> contactWrenchCommandBuffer = new RecyclingArrayList<>(ContactWrenchCommand.class);
+   private final transient RecyclingArrayList<ExternalWrenchCommand> externalWrenchCommandBuffer = new RecyclingArrayList<>(ExternalWrenchCommand.class);
+   private final transient RecyclingArrayList<InverseDynamicsOptimizationSettingsCommand> inverseDynamicsOptimizationSettingsCommandBuffer = new RecyclingArrayList<>(InverseDynamicsOptimizationSettingsCommand.class);
+   private final transient RecyclingArrayList<JointAccelerationIntegrationCommand> jointAccelerationIntegrationCommandBuffer = new RecyclingArrayList<>(JointAccelerationIntegrationCommand.class);
+   private final transient RecyclingArrayList<JointLimitEnforcementMethodCommand> jointLimitEnforcementMethodCommandBuffer = new RecyclingArrayList<>(JointLimitEnforcementMethodCommand.class);
+   private final transient RecyclingArrayList<JointspaceAccelerationCommand> jointspaceAccelerationCommandBuffer = new RecyclingArrayList<>(JointspaceAccelerationCommand.class);
+   private final transient RecyclingArrayList<MomentumRateCommand> momentumRateCommandBuffer = new RecyclingArrayList<>(MomentumRateCommand.class);
+   private final transient RecyclingArrayList<PlaneContactStateCommand> planeContactStateCommandBuffer = new RecyclingArrayList<>(PlaneContactStateCommand.class);
+   private final transient RecyclingArrayList<SpatialAccelerationCommand> spatialAccelerationCommandBuffer = new RecyclingArrayList<>(SpatialAccelerationCommand.class);
+   private final transient RecyclingArrayList<JointLimitReductionCommand> jointLimitReductionCommandBuffer = new RecyclingArrayList<>(JointLimitReductionCommand.class);
+   private final transient RecyclingArrayList<PrivilegedJointSpaceCommand> privilegedJointSpaceCommandBuffer = new RecyclingArrayList<>(PrivilegedJointSpaceCommand.class);
+   private final transient RecyclingArrayList<PrivilegedConfigurationCommand> privilegedConfigurationCommandBuffer = new RecyclingArrayList<>(PrivilegedConfigurationCommand.class);
 
    public InverseDynamicsCommandBuffer()
    {
@@ -61,31 +61,68 @@ public class InverseDynamicsCommandBuffer extends InverseDynamicsCommandList
       privilegedConfigurationCommandBuffer.clear();
    }
 
-   /**
-    * Unsupported operation.
-    */
+   public void set(InverseDynamicsCommandBuffer other)
+   {
+      set((InverseDynamicsCommandList) other);
+   }
+
    @Override
    public void set(InverseDynamicsCommandList other)
    {
-      throw new UnsupportedOperationException();
+      clear();
+      addCommandList(other);
    }
 
-   /**
-    * Unsupported operation.
-    */
    @Override
    public void addCommand(InverseDynamicsCommand<?> command)
    {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * Unsupported operation.
-    */
-   @Override
-   public void addCommandList(InverseDynamicsCommandList commandList)
-   {
-      throw new UnsupportedOperationException();
+      switch (command.getCommandType())
+      {
+      case CENTER_OF_PRESSURE:
+         addCenterOfPressureCommand().set((CenterOfPressureCommand) command);
+         break;
+      case CONTACT_WRENCH:
+         addContactWrenchCommand().set((ContactWrenchCommand) command);
+         break;
+      case EXTERNAL_WRENCH:
+         addExternalWrenchCommand().set((ExternalWrenchCommand) command);
+         break;
+      case OPTIMIZATION_SETTINGS:
+         addInverseDynamicsOptimizationSettingsCommand().set((InverseDynamicsOptimizationSettingsCommand) command);
+         break;
+      case JOINT_ACCELERATION_INTEGRATION:
+         addJointAccelerationIntegrationCommand().set((JointAccelerationIntegrationCommand) command);
+         break;
+      case JOINT_LIMIT_ENFORCEMENT:
+         addJointLimitEnforcementMethodCommand().set((JointLimitEnforcementMethodCommand) command);
+         break;
+      case JOINTSPACE:
+         addJointspaceAccelerationCommand().set((JointspaceAccelerationCommand) command);
+         break;
+      case MOMENTUM:
+         addMomentumRateCommand().set((MomentumRateCommand) command);
+         break;
+      case PLANE_CONTACT_STATE:
+         addPlaneContactStateCommand().set((PlaneContactStateCommand) command);
+         break;
+      case TASKSPACE:
+         addSpatialAccelerationCommand().set((SpatialAccelerationCommand) command);
+         break;
+      case PRIVILEGED_CONFIGURATION:
+         addPrivilegedConfigurationCommand().set((PrivilegedConfigurationCommand) command);
+         break;
+      case PRIVILEGED_JOINTSPACE_COMMAND:
+         addPrivilegedJointSpaceCommand().set((PrivilegedJointSpaceCommand) command);
+         break;
+      case LIMIT_REDUCTION:
+         addJointLimitReductionCommand().set((JointLimitReductionCommand) command);
+         break;
+      case COMMAND_LIST:
+         addCommandList((InverseDynamicsCommandList) command);
+         break;
+      default:
+         throw new RuntimeException("The command type: " + command.getCommandType() + " is not handled.");
+      }
    }
 
    /**

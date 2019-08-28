@@ -17,11 +17,11 @@ import us.ihmc.commons.lists.RecyclingArrayList;
  */
 public class FeedbackControlCommandBuffer extends FeedbackControlCommandList
 {
-   private final RecyclingArrayList<OneDoFJointFeedbackControlCommand> oneDoFJointFeedbackControlCommandBuffer = new RecyclingArrayList<>(OneDoFJointFeedbackControlCommand.class);
-   private final RecyclingArrayList<OrientationFeedbackControlCommand> orientationFeedbackControlCommandBuffer = new RecyclingArrayList<>(OrientationFeedbackControlCommand.class);
-   private final RecyclingArrayList<PointFeedbackControlCommand> pointFeedbackControlCommandBuffer = new RecyclingArrayList<>(PointFeedbackControlCommand.class);
-   private final RecyclingArrayList<SpatialFeedbackControlCommand> spatialFeedbackControlCommandBuffer = new RecyclingArrayList<>(SpatialFeedbackControlCommand.class);
-   private final RecyclingArrayList<CenterOfMassFeedbackControlCommand> centerOfMassFeedbackControlCommandBuffer = new RecyclingArrayList<>(CenterOfMassFeedbackControlCommand.class);
+   private final transient RecyclingArrayList<OneDoFJointFeedbackControlCommand> oneDoFJointFeedbackControlCommandBuffer = new RecyclingArrayList<>(OneDoFJointFeedbackControlCommand.class);
+   private final transient RecyclingArrayList<OrientationFeedbackControlCommand> orientationFeedbackControlCommandBuffer = new RecyclingArrayList<>(OrientationFeedbackControlCommand.class);
+   private final transient RecyclingArrayList<PointFeedbackControlCommand> pointFeedbackControlCommandBuffer = new RecyclingArrayList<>(PointFeedbackControlCommand.class);
+   private final transient RecyclingArrayList<SpatialFeedbackControlCommand> spatialFeedbackControlCommandBuffer = new RecyclingArrayList<>(SpatialFeedbackControlCommand.class);
+   private final transient RecyclingArrayList<CenterOfMassFeedbackControlCommand> centerOfMassFeedbackControlCommandBuffer = new RecyclingArrayList<>(CenterOfMassFeedbackControlCommand.class);
 
    public FeedbackControlCommandBuffer()
    {
@@ -42,31 +42,44 @@ public class FeedbackControlCommandBuffer extends FeedbackControlCommandList
       centerOfMassFeedbackControlCommandBuffer.clear();
    }
 
-   /**
-    * Unsupported operation.
-    */
+   public void set(FeedbackControlCommandBuffer other)
+   {
+      set((FeedbackControlCommandList) other);
+   }
+
    @Override
    public void set(FeedbackControlCommandList other)
    {
-      throw new UnsupportedOperationException();
+      clear();
+      addCommandList(other);
    }
 
-   /**
-    * Unsupported operation.
-    */
    @Override
    public void addCommand(FeedbackControlCommand<?> command)
    {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * Unsupported operation.
-    */
-   @Override
-   public void addCommandList(FeedbackControlCommandList commandList)
-   {
-      throw new UnsupportedOperationException();
+      switch (command.getCommandType())
+      {
+      case JOINTSPACE:
+         addOneDoFJointFeedbackControlCommand().set((OneDoFJointFeedbackControlCommand) command);
+         break;
+      case ORIENTATION:
+         addOrientationFeedbackControlCommand().set((OrientationFeedbackControlCommand) command);
+         break;
+      case POINT:
+         addPointFeedbackControlCommand().set((PointFeedbackControlCommand) command);
+         break;
+      case TASKSPACE:
+         addSpatialFeedbackControlCommand().set((SpatialFeedbackControlCommand) command);
+         break;
+      case MOMENTUM:
+         addCenterOfMassFeedbackControlCommand().set((CenterOfMassFeedbackControlCommand) command);
+         break;
+      case COMMAND_LIST:
+         addCommandList((FeedbackControlCommandList) command);
+         break;
+      default:
+         throw new RuntimeException("The command type: " + command.getCommandType() + " is not handled.");
+      }
    }
 
    /**

@@ -2,6 +2,10 @@ package us.ihmc.commonWalkingControlModules.barrierScheduler.context;
 
 import java.util.Arrays;
 
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleInput;
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleOutput;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommandBuffer;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreOutput;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.LowLevelOneDoFJointDesiredDataHolder;
 import us.ihmc.concurrent.runtime.barrierScheduler.implicitContext.tasks.InPlaceCopyable;
 import us.ihmc.euclid.interfaces.Settable;
@@ -77,6 +81,30 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
     */
    private final LowLevelOneDoFJointDesiredDataHolder jointDesiredOutputList;
 
+   /**
+    * The input to the linear momentum rate controller containing data like the desired ICP.
+    * Set by the walking state machine.
+    */
+   private final LinearMomentumRateControlModuleInput linearMomentumRateControlModuleInput;
+
+   /**
+    * The output of the linear momentum rate controller containing data like the desired CMP.
+    * Set by the controller.
+    */
+   private final LinearMomentumRateControlModuleOutput linearMomentumRateControlModuleOutput;
+
+   /**
+    * The input to the controller core. Contains objectives and feedback commands.
+    * Set by the walking state machine.
+    */
+   private final ControllerCoreCommandBuffer controllerCoreCommandBuffer;
+
+   /**
+    * The output of the controller core. Contains desired joint data and ground reaction forces.
+    * Set by the controller.
+    */
+   private final ControllerCoreOutput controllerCoreOutput;
+
    public HumanoidRobotContextData()
    {
       processedJointData = new HumanoidRobotContextJointData();
@@ -85,11 +113,18 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
       robotMotionStatusHolder = new RobotMotionStatusHolder();
       jointDesiredOutputList = new LowLevelOneDoFJointDesiredDataHolder();
       sensorDataContext = new SensorDataContext();
+      linearMomentumRateControlModuleInput = new LinearMomentumRateControlModuleInput();
+      linearMomentumRateControlModuleOutput = new LinearMomentumRateControlModuleOutput();
+      controllerCoreCommandBuffer = new ControllerCoreCommandBuffer();
+      controllerCoreOutput = new ControllerCoreOutput();
    }
 
    public HumanoidRobotContextData(HumanoidRobotContextJointData processedJointData, ForceSensorDataHolder forceSensorDataHolder,
                                    CenterOfPressureDataHolder centerOfPressureDataHolder, RobotMotionStatusHolder robotMotionStatusHolder,
-                                   LowLevelOneDoFJointDesiredDataHolder jointDesiredOutputList, SensorDataContext sensorDataContext)
+                                   LowLevelOneDoFJointDesiredDataHolder jointDesiredOutputList, SensorDataContext sensorDataContext,
+                                   LinearMomentumRateControlModuleInput linearMomentumRateControlModuleInput,
+                                   LinearMomentumRateControlModuleOutput linearMomentumRateControlModuleOutput,
+                                   ControllerCoreCommandBuffer controllerCoreCommandBuffer, ControllerCoreOutput controllerCoreOutput)
    {
       this.processedJointData = processedJointData;
       this.forceSensorDataHolder = forceSensorDataHolder;
@@ -97,6 +132,10 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
       this.robotMotionStatusHolder = robotMotionStatusHolder;
       this.jointDesiredOutputList = jointDesiredOutputList;
       this.sensorDataContext = sensorDataContext;
+      this.linearMomentumRateControlModuleInput = linearMomentumRateControlModuleInput;
+      this.linearMomentumRateControlModuleOutput = linearMomentumRateControlModuleOutput;
+      this.controllerCoreCommandBuffer = controllerCoreCommandBuffer;
+      this.controllerCoreOutput = controllerCoreOutput;
    }
 
    public HumanoidRobotContextData(FullHumanoidRobotModel fullRobotModel)
@@ -107,6 +146,10 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
       robotMotionStatusHolder = new RobotMotionStatusHolder();
       jointDesiredOutputList = new LowLevelOneDoFJointDesiredDataHolder(fullRobotModel.getControllableOneDoFJoints());
       sensorDataContext = new SensorDataContext(fullRobotModel);
+      linearMomentumRateControlModuleInput = new LinearMomentumRateControlModuleInput();
+      linearMomentumRateControlModuleOutput = new LinearMomentumRateControlModuleOutput();
+      controllerCoreCommandBuffer = new ControllerCoreCommandBuffer();
+      controllerCoreOutput = new ControllerCoreOutput();
    }
 
    public HumanoidRobotContextJointData getProcessedJointData()
@@ -139,6 +182,26 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
       return sensorDataContext;
    }
 
+   public LinearMomentumRateControlModuleOutput getLinearMomentumRateControlModuleOutput()
+   {
+      return linearMomentumRateControlModuleOutput;
+   }
+
+   public LinearMomentumRateControlModuleInput getLinearMomentumRateControlModuleInput()
+   {
+      return linearMomentumRateControlModuleInput;
+   }
+
+   public ControllerCoreCommandBuffer getControllerCoreCommandBuffer()
+   {
+      return controllerCoreCommandBuffer;
+   }
+
+   public ControllerCoreOutput getControllerCoreOutput()
+   {
+      return controllerCoreOutput;
+   }
+
    @Override
    public void set(HumanoidRobotContextData other)
    {
@@ -158,6 +221,10 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
       this.robotMotionStatusHolder.set(src.robotMotionStatusHolder);
       this.jointDesiredOutputList.set(src.jointDesiredOutputList);
       this.sensorDataContext.set(src.sensorDataContext);
+      this.linearMomentumRateControlModuleInput.set(src.linearMomentumRateControlModuleInput);
+      this.linearMomentumRateControlModuleOutput.set(src.linearMomentumRateControlModuleOutput);
+      this.controllerCoreCommandBuffer.set(src.controllerCoreCommandBuffer);
+      this.controllerCoreOutput.set(src.controllerCoreOutput);
    }
 
    public long getTimestamp()
@@ -229,6 +296,14 @@ public class HumanoidRobotContextData implements InPlaceCopyable<HumanoidRobotCo
          if (!jointDesiredOutputList.equals(other.jointDesiredOutputList))
             return false;
          if (!sensorDataContext.equals(other.sensorDataContext))
+            return false;
+         if (!linearMomentumRateControlModuleInput.equals(other.linearMomentumRateControlModuleInput))
+            return false;
+         if (!linearMomentumRateControlModuleOutput.equals(other.linearMomentumRateControlModuleOutput))
+            return false;
+         if (!controllerCoreCommandBuffer.equals(other.controllerCoreCommandBuffer))
+            return false;
+         if (!controllerCoreOutput.equals(other.controllerCoreOutput))
             return false;
          return true;
       }

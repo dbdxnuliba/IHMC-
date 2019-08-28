@@ -1,5 +1,9 @@
 package us.ihmc.commonWalkingControlModules.barrierScheduler.context;
 
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleInput;
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleOutput;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommandBuffer;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreOutput;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.LowLevelOneDoFJointDesiredDataHolder;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
@@ -32,9 +36,13 @@ public class AtlasHumanoidRobotContextData extends HumanoidRobotContextData
    public AtlasHumanoidRobotContextData(HumanoidRobotContextJointData processedJointData, ForceSensorDataHolder forceSensorDataHolder,
                                         CenterOfPressureDataHolder centerOfPressureDataHolder, RobotMotionStatusHolder robotMotionStatusHolder,
                                         LowLevelOneDoFJointDesiredDataHolder jointDesiredOutputList, SensorDataContext sensorDataContext,
+                                        LinearMomentumRateControlModuleInput linearMomentumRateControlModuleInput,
+                                        LinearMomentumRateControlModuleOutput linearMomentumRateControlModuleOutput,
+                                        ControllerCoreCommandBuffer controllerCoreCommandBuffer, ControllerCoreOutput controllerCoreOutput,
                                         RawJointSensorDataHolderMap rawJointSensorDataHolderMap)
    {
-      super(processedJointData, forceSensorDataHolder, centerOfPressureDataHolder, robotMotionStatusHolder, jointDesiredOutputList, sensorDataContext);
+      super(processedJointData, forceSensorDataHolder, centerOfPressureDataHolder, robotMotionStatusHolder, jointDesiredOutputList, sensorDataContext,
+            linearMomentumRateControlModuleInput, linearMomentumRateControlModuleOutput, controllerCoreCommandBuffer, controllerCoreOutput);
       this.rawJointSensorDataHolderMap = rawJointSensorDataHolderMap;
    }
 

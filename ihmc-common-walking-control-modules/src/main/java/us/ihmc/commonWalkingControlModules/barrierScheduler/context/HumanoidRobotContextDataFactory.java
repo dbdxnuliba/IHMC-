@@ -1,5 +1,9 @@
 package us.ihmc.commonWalkingControlModules.barrierScheduler.context;
 
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleInput;
+import us.ihmc.commonWalkingControlModules.capturePoint.LinearMomentumRateControlModuleOutput;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreCommandBuffer;
+import us.ihmc.commonWalkingControlModules.controllerCore.command.ControllerCoreOutput;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel.LowLevelOneDoFJointDesiredDataHolder;
 import us.ihmc.humanoidRobotics.model.CenterOfPressureDataHolder;
 import us.ihmc.robotics.sensors.ForceSensorDataHolder;
@@ -19,13 +23,25 @@ public class HumanoidRobotContextDataFactory
    protected final RequiredFactoryField<RobotMotionStatusHolder> robotMotionStatusHolder = new RequiredFactoryField<>("robotMotionStatusHolder");
    protected final RequiredFactoryField<LowLevelOneDoFJointDesiredDataHolder> jointDesiredOutputList = new RequiredFactoryField<>("jointDesiredOutputList");
    protected final RequiredFactoryField<SensorDataContext> sensorDataContext = new RequiredFactoryField<>("sensorDataContext");
+   protected final RequiredFactoryField<LinearMomentumRateControlModuleInput> linearMomentumRateControlModuleInput = new RequiredFactoryField<>("linearMomentumRateControlModuleInput");
+   protected final RequiredFactoryField<LinearMomentumRateControlModuleOutput> linearMomentumRateControlModuleOutput = new RequiredFactoryField<>("linearMomentumRateControlModuleOutput");
+   protected final RequiredFactoryField<ControllerCoreCommandBuffer> controllerCoreCommandBuffer = new RequiredFactoryField<>("controllerCoreCommandBuffer");
+   protected final RequiredFactoryField<ControllerCoreOutput> controllerCoreOutput = new RequiredFactoryField<>("controllerCoreOutput");
 
    public HumanoidRobotContextData createHumanoidRobotContextData()
    {
       FactoryTools.checkAllFactoryFieldsAreSet(this);
 
-      return new HumanoidRobotContextData(processedJointData.get(), forceSensorDataHolder.get(), centerOfPressureDataHolder.get(),
-                                          robotMotionStatusHolder.get(), jointDesiredOutputList.get(), sensorDataContext.get());
+      return new HumanoidRobotContextData(processedJointData.get(),
+                                          forceSensorDataHolder.get(),
+                                          centerOfPressureDataHolder.get(),
+                                          robotMotionStatusHolder.get(),
+                                          jointDesiredOutputList.get(),
+                                          sensorDataContext.get(),
+                                          linearMomentumRateControlModuleInput.get(),
+                                          linearMomentumRateControlModuleOutput.get(),
+                                          controllerCoreCommandBuffer.get(),
+                                          controllerCoreOutput.get());
    }
 
    public void setProcessedJointData(HumanoidRobotContextJointData value)

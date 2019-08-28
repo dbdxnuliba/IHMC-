@@ -211,13 +211,23 @@ public class ControllerCoreCommand implements ControllerCoreCommandInterface
     */
    public void set(ControllerCoreCommand other)
    {
-      controllerCoreMode = other.controllerCoreMode;
-      inverseDynamicsCommandList.set(other.inverseDynamicsCommandList);
-      feedbackControlCommandList.set(other.feedbackControlCommandList);
-      inverseKinematicsCommandList.set(other.inverseKinematicsCommandList);
-      virtualModelControlCommandList.set(other.virtualModelControlCommandList);
-      lowLevelOneDoFJointDesiredDataHolder.set(other.lowLevelOneDoFJointDesiredDataHolder);
-      reinitialize = other.reinitialize;
+      set((ControllerCoreCommandInterface) other);
+   }
+
+    /**
+    * Set the controller core command data from an existing command.
+    * 
+    * @param other other controller core command to overwrite the current command.
+    */
+   public void set(ControllerCoreCommandInterface other)
+   {
+      controllerCoreMode = other.getControllerCoreMode();
+      reinitialize = other.isReinitializationRequested();
+      inverseDynamicsCommandList.set(other.getInverseDynamicsCommandList());
+      feedbackControlCommandList.set(other.getFeedbackControlCommandList());
+      inverseKinematicsCommandList.set(other.getInverseKinematicsCommandList());
+      virtualModelControlCommandList.set(other.getVirtualModelControlCommandList());
+      lowLevelOneDoFJointDesiredDataHolder.set(other.getLowLevelOneDoFJointDesiredDataHolder());
    }
 
    /**

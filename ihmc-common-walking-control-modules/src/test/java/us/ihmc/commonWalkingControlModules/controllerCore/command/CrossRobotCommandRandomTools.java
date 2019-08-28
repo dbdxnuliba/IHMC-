@@ -154,6 +154,7 @@ public class CrossRobotCommandRandomTools
       set.add(LinearMomentumRateControlModuleInput.class);
       set.add(LinearMomentumRateControlModuleOutput.class);
       set.add(ControllerCoreCommand.class);
+      set.add(ControllerCoreCommandBuffer.class);
       set.add(ControllerCoreOutput.class);
       set.add(CenterOfPressureDataHolder.class);
       set.add(HumanoidRobotContextJointData.class);
@@ -1113,6 +1114,26 @@ public class CrossRobotCommandRandomTools
       return next;
    }
 
+   public static InverseDynamicsCommandBuffer nextInverseDynamicsCommandBuffer(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      return nextInverseDynamicsCommandBuffer(random,
+                                              getInverseDynamicsCommandTypes(InverseDynamicsCommandList.class, InverseDynamicsCommandBuffer.class),
+                                              rootBody,
+                                              possibleFrames);
+   }
+
+   @SuppressWarnings("rawtypes")
+   public static InverseDynamicsCommandBuffer nextInverseDynamicsCommandBuffer(Random random,
+                                                                               Collection<Class<? extends InverseDynamicsCommand>> commandsToGenerate,
+                                                                               RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      InverseDynamicsCommandBuffer next = new InverseDynamicsCommandBuffer();
+      next.set(nextInverseDynamicsCommandList(random, commandsToGenerate, rootBody, possibleFrames));
+      return next;
+   }
+
    public static InverseDynamicsCommandList nextInverseDynamicsCommandList(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
          throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
@@ -1148,6 +1169,26 @@ public class CrossRobotCommandRandomTools
          InverseDynamicsCommand<?> command = (InverseDynamicsCommand<?>) randomGenerator.invoke(null, random, rootBody, possibleFrames);
          next.addCommand(command);
       }
+      return next;
+   }
+
+   public static InverseKinematicsCommandBuffer nextInverseKinematicsCommandBuffer(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      return nextInverseKinematicsCommandBuffer(random,
+                                                getInverseKinematicsCommandTypes(InverseKinematicsCommand.class, InverseKinematicsCommandBuffer.class),
+                                                rootBody,
+                                                possibleFrames);
+   }
+
+   @SuppressWarnings("rawtypes")
+   public static InverseKinematicsCommandBuffer nextInverseKinematicsCommandBuffer(Random random,
+                                                                                   Collection<Class<? extends InverseKinematicsCommand>> commandsToGenerate,
+                                                                                   RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      InverseKinematicsCommandBuffer next = new InverseKinematicsCommandBuffer();
+      next.set(nextInverseKinematicsCommandList(random, commandsToGenerate, rootBody, possibleFrames));
       return next;
    }
 
@@ -1190,6 +1231,27 @@ public class CrossRobotCommandRandomTools
       return next;
    }
 
+   public static VirtualModelControlCommandBuffer nextVirtualModelControlCommandBuffer(Random random, RigidBodyBasics rootBody,
+                                                                                       ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      return nextVirtualModelControlCommandBuffer(random,
+                                                  getVirtualModelControlCommandTypes(VirtualModelControlCommand.class, VirtualModelControlCommandBuffer.class),
+                                                  rootBody,
+                                                  possibleFrames);
+   }
+
+   @SuppressWarnings("rawtypes")
+   public static VirtualModelControlCommandBuffer nextVirtualModelControlCommandBuffer(Random random,
+                                                                                       Collection<Class<? extends VirtualModelControlCommand>> commandsToGenerate,
+                                                                                       RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      VirtualModelControlCommandBuffer next = new VirtualModelControlCommandBuffer();
+      next.set(nextVirtualModelControlCommandList(random, commandsToGenerate, rootBody, possibleFrames));
+      return next;
+   }
+
    public static VirtualModelControlCommandList nextVirtualModelControlCommandList(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
          throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
    {
@@ -1226,6 +1288,26 @@ public class CrossRobotCommandRandomTools
          VirtualModelControlCommand<?> command = (VirtualModelControlCommand<?>) randomGenerator.invoke(null, random, rootBody, possibleFrames);
          next.addCommand(command);
       }
+      return next;
+   }
+
+   public static FeedbackControlCommandBuffer nextFeedbackControlCommandBuffer(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      return nextFeedbackControlCommandBuffer(random,
+                                              getFeedbackControlCommandTypes(FeedbackControlCommand.class, FeedbackControlCommandBuffer.class),
+                                              rootBody,
+                                              possibleFrames);
+   }
+
+   @SuppressWarnings("rawtypes")
+   public static FeedbackControlCommandBuffer nextFeedbackControlCommandBuffer(Random random,
+                                                                               Collection<Class<? extends FeedbackControlCommand>> commandsToGenerate,
+                                                                               RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      FeedbackControlCommandBuffer next = new FeedbackControlCommandBuffer();
+      next.set(nextFeedbackControlCommandList(random, commandsToGenerate, rootBody, possibleFrames));
       return next;
    }
 
@@ -1409,13 +1491,13 @@ public class CrossRobotCommandRandomTools
       return next;
    }
 
-   public static HumanoidRobotContextData nextHumanoidRobotContextData(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+   public static HumanoidRobotContextData nextHumanoidRobotContextData(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames) throws Exception
    {
       return nextHumanoidRobotContextData(random, false, rootBody, possibleFrames);
    }
 
    public static HumanoidRobotContextData nextHumanoidRobotContextData(Random random, boolean ensureNonEmptyCommand, RigidBodyBasics rootBody,
-                                                                       ReferenceFrame... possibleFrames)
+                                                                       ReferenceFrame... possibleFrames) throws Exception
    {
       HumanoidRobotContextJointData processedJointData = nextHumanoidRobotContextJointData(random, ensureNonEmptyCommand);
       ForceSensorDataHolder forceSensorDataHolder = nextForceSensorDataHolder(random, ensureNonEmptyCommand, rootBody, possibleFrames);
@@ -1424,8 +1506,20 @@ public class CrossRobotCommandRandomTools
       LowLevelOneDoFJointDesiredDataHolder jointDesiredOutputList = nextLowLevelOneDoFJointDesiredDataHolder(random, ensureNonEmptyCommand, rootBody,
                                                                                                              possibleFrames);
       SensorDataContext sensorDataContext = nextSensorDataContext(random, ensureNonEmptyCommand, rootBody);
-      HumanoidRobotContextData next = new HumanoidRobotContextData(processedJointData, forceSensorDataHolder, centerOfPressureDataHolder,
-                                                                   robotMotionStatusHolder, jointDesiredOutputList, sensorDataContext);
+      LinearMomentumRateControlModuleInput linearMomentumRateControlModuleInput = nextLinearMomentumRateControlModuleInput(random, rootBody, possibleFrames);
+      LinearMomentumRateControlModuleOutput linearMomentumRateControlModuleOutput = nextLinearMomentumRateControlModuleOutput(random, possibleFrames);
+      ControllerCoreCommandBuffer controllerCoreCommandBuffer = nextControllerCoreCommandBuffer(random, rootBody, possibleFrames);
+      ControllerCoreOutput controllerCoreOutput = nextControllerCoreOutput(random, rootBody, possibleFrames);
+      HumanoidRobotContextData next = new HumanoidRobotContextData(processedJointData,
+                                                                   forceSensorDataHolder,
+                                                                   centerOfPressureDataHolder,
+                                                                   robotMotionStatusHolder,
+                                                                   jointDesiredOutputList,
+                                                                   sensorDataContext,
+                                                                   linearMomentumRateControlModuleInput,
+                                                                   linearMomentumRateControlModuleOutput,
+                                                                   controllerCoreCommandBuffer,
+                                                                   controllerCoreOutput);
       next.setTimestamp(random.nextLong());
       next.setSchedulerTick(random.nextLong());
       next.setControllerRan(random.nextBoolean());
@@ -1433,13 +1527,13 @@ public class CrossRobotCommandRandomTools
       return next;
    }
 
-   public static AtlasHumanoidRobotContextData nextAtlasHumanoidRobotContextData(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+   public static AtlasHumanoidRobotContextData nextAtlasHumanoidRobotContextData(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames) throws Exception
    {
       return nextAtlasHumanoidRobotContextData(random, false, rootBody, possibleFrames);
    }
 
    public static AtlasHumanoidRobotContextData nextAtlasHumanoidRobotContextData(Random random, boolean ensureNonEmptyCommand, RigidBodyBasics rootBody,
-                                                                                 ReferenceFrame... possibleFrames)
+                                                                                 ReferenceFrame... possibleFrames) throws Exception
    {
       HumanoidRobotContextJointData processedJointData = nextHumanoidRobotContextJointData(random, ensureNonEmptyCommand);
       ForceSensorDataHolder forceSensorDataHolder = nextForceSensorDataHolder(random, ensureNonEmptyCommand, rootBody, possibleFrames);
@@ -1449,8 +1543,20 @@ public class CrossRobotCommandRandomTools
                                                                                                              possibleFrames);
       SensorDataContext sensorDataContext = nextSensorDataContext(random, ensureNonEmptyCommand, rootBody);
       RawJointSensorDataHolderMap rawJointSensorDataHolderMap = nextRawJointSensorDataHolderMap(random, ensureNonEmptyCommand, rootBody);
-      AtlasHumanoidRobotContextData next = new AtlasHumanoidRobotContextData(processedJointData, forceSensorDataHolder, centerOfPressureDataHolder,
-                                                                             robotMotionStatusHolder, jointDesiredOutputList, sensorDataContext,
+      LinearMomentumRateControlModuleInput linearMomentumRateControlModuleInput = nextLinearMomentumRateControlModuleInput(random, rootBody, possibleFrames);
+      LinearMomentumRateControlModuleOutput linearMomentumRateControlModuleOutput = nextLinearMomentumRateControlModuleOutput(random, possibleFrames);
+      ControllerCoreCommandBuffer controllerCoreCommandBuffer = nextControllerCoreCommandBuffer(random, rootBody, possibleFrames);
+      ControllerCoreOutput controllerCoreOutput = nextControllerCoreOutput(random, rootBody, possibleFrames);
+      AtlasHumanoidRobotContextData next = new AtlasHumanoidRobotContextData(processedJointData,
+                                                                             forceSensorDataHolder,
+                                                                             centerOfPressureDataHolder,
+                                                                             robotMotionStatusHolder,
+                                                                             jointDesiredOutputList,
+                                                                             sensorDataContext,
+                                                                             linearMomentumRateControlModuleInput,
+                                                                             linearMomentumRateControlModuleOutput,
+                                                                             controllerCoreCommandBuffer,
+                                                                             controllerCoreOutput,
                                                                              rawJointSensorDataHolderMap);
       next.setTimestamp(random.nextLong());
       next.setSchedulerTick(random.nextLong());
@@ -1597,6 +1703,41 @@ public class CrossRobotCommandRandomTools
    {
       ControllerCoreCommand next = new ControllerCoreCommand(nextElementIn(random, WholeBodyControllerCoreMode.values()));
 
+      next.getInverseDynamicsCommandList().set(nextInverseDynamicsCommandList(random, inverseDynamicsCommandsToGenerate, rootBody, possibleFrames));
+      next.getInverseKinematicsCommandList().set(nextInverseKinematicsCommandList(random, inverseKinematicsCommandsToGenerate, rootBody, possibleFrames));
+      next.getVirtualModelControlCommandList().set(nextVirtualModelControlCommandList(random, virtualModelControlCommandsToGenerate, rootBody, possibleFrames));
+      next.getFeedbackControlCommandList().set(nextFeedbackControlCommandList(random, feedbackControlCommandsToGenerate, rootBody, possibleFrames));
+      next.getLowLevelOneDoFJointDesiredDataHolder().overwriteWith(nextLowLevelOneDoFJointDesiredDataHolder(random, rootBody, possibleFrames));
+      if (random.nextBoolean())
+         next.requestReinitialization();
+      return next;
+   }
+
+   public static ControllerCoreCommandBuffer nextControllerCoreCommandBuffer(Random random, RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+   {
+      return nextControllerCoreCommandBuffer(random,
+                                             getInverseDynamicsCommandTypes(InverseDynamicsCommandList.class, InverseDynamicsCommandBuffer.class),
+                                             getInverseKinematicsCommandTypes(InverseKinematicsCommandList.class, InverseKinematicsCommandBuffer.class),
+                                             getVirtualModelControlCommandTypes(VirtualModelControlCommandList.class,
+                                                                                VirtualModelControlCommandBuffer.class,
+                                                                                VirtualEffortCommand.class),
+                                             getFeedbackControlCommandTypes(FeedbackControlCommandList.class, FeedbackControlCommandBuffer.class),
+                                             rootBody,
+                                             possibleFrames);
+   }
+
+   @SuppressWarnings("rawtypes")
+   public static ControllerCoreCommandBuffer nextControllerCoreCommandBuffer(Random random,
+                                                                             Collection<Class<? extends InverseDynamicsCommand>> inverseDynamicsCommandsToGenerate,
+                                                                             Collection<Class<? extends InverseKinematicsCommand>> inverseKinematicsCommandsToGenerate,
+                                                                             Collection<Class<? extends VirtualModelControlCommand>> virtualModelControlCommandsToGenerate,
+                                                                             Collection<Class<? extends FeedbackControlCommand>> feedbackControlCommandsToGenerate,
+                                                                             RigidBodyBasics rootBody, ReferenceFrame... possibleFrames)
+         throws NoSuchMethodException, IllegalAccessException, InvocationTargetException
+   {
+      ControllerCoreCommandBuffer next = new ControllerCoreCommandBuffer();
+      next.setControllerCoreMode(nextElementIn(random, WholeBodyControllerCoreMode.values()));
       next.getInverseDynamicsCommandList().set(nextInverseDynamicsCommandList(random, inverseDynamicsCommandsToGenerate, rootBody, possibleFrames));
       next.getInverseKinematicsCommandList().set(nextInverseKinematicsCommandList(random, inverseKinematicsCommandsToGenerate, rootBody, possibleFrames));
       next.getVirtualModelControlCommandList().set(nextVirtualModelControlCommandList(random, virtualModelControlCommandsToGenerate, rootBody, possibleFrames));
