@@ -86,7 +86,7 @@ public class AtlasStepUpPlannerDemo
       double desiredLegLength = 1.05;
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
-      double footScale = 0.3;
+      double footScale = 0.4;
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
