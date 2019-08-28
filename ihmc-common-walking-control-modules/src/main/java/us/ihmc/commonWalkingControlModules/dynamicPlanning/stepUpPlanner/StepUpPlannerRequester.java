@@ -267,7 +267,7 @@ public class StepUpPlannerRequester
          msg.getPhasesParameters().add().set(newSettings);
       }
 
-      msg.setPhaseLength(20);
+      msg.setPhaseLength(40);
       msg.setSolverVerbosity(1);
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
@@ -357,9 +357,9 @@ public class StepUpPlannerRequester
       StepUpPlannerPhase newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(initialLeftPose);
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(1.8);
+      newPhase.setMinimumDuration(1.2);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.8);
+      newPhase.setDesiredDuration(1.2);
 
       newPhase = msg.getPhases().add();
       newPhase.getRightFootPose().set(initialRightPose);
@@ -383,9 +383,9 @@ public class StepUpPlannerRequester
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
       newPhase.getRightFootPose().set(desiredRightPose);
-      newPhase.setMinimumDuration(1.8);
+      newPhase.setMinimumDuration(1.2);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.8);
+      newPhase.setDesiredDuration(1.2);
 
       msg.setDesiredLegLength(desiredlegLength);
 

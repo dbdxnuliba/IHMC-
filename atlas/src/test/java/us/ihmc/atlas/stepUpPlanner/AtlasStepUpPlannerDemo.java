@@ -56,7 +56,7 @@ public class AtlasStepUpPlannerDemo
    {
       while (!updateFullRobotModel())
       {
-         ThreadTools.sleep(100);
+         ThreadTools.sleep(500);
       }
    }
 
@@ -119,7 +119,7 @@ public class AtlasStepUpPlannerDemo
       parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(atlasRobotModel.getSimpleRobotName())
                                                                  .generateTopicName(FootstepDataListMessage.class));
 
-      parameters.setSendPelvisHeightMessages(true);
+      parameters.setSendPelvisHeightMessages(false);
       parameters.setIncludePelvisHeightMessages(false);
       parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(atlasRobotModel.getSimpleRobotName())
                                                                      .generateTopicName(PelvisHeightTrajectoryMessage.class));
