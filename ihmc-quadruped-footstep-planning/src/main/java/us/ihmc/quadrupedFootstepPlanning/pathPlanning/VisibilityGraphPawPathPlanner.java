@@ -8,6 +8,7 @@ import us.ihmc.pathPlanning.visibilityGraphs.NavigableRegionsManager;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.VisibilityMapWithNavigableRegion;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityMapHolder;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
+import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.ObstacleAndCliffAvoidanceProcessor;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.PawStepPlanningResult;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -29,7 +30,7 @@ public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPl
    public VisibilityGraphPawPathPlanner(String prefix, VisibilityGraphsParametersReadOnly visibilityGraphsParameters, YoVariableRegistry registry)
    {
       super(prefix, registry);
-      this.navigableRegionsManager = new NavigableRegionsManager(visibilityGraphsParameters);
+      this.navigableRegionsManager = new NavigableRegionsManager(visibilityGraphsParameters, null, new ObstacleAndCliffAvoidanceProcessor(visibilityGraphsParameters));
    }
 
    public PawStepPlanningResult planWaypoints()
