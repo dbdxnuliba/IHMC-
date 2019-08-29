@@ -22,39 +22,51 @@ import us.ihmc.ros2.Ros2Node;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SimulatedStereoCamera implements Runnable
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
-   private final MovingReferenceFrame cameraSensorFrame;
-   private final IntrinsicParameters intrinsicParameters;
+   private final ReferenceFrame cameraSensorFrame;
 
    private PlanarRegionsList planarRegionsList;
 
+   private final int widthPixels;
+   private final int heightPixels;
+   private final double minimumDistance;
    private final double widthFieldOfView;
    private final double heightFieldOfView;
 
-   private final DoubleProvider timeProvider;
-
    private final IHMCROS2Publisher<StereoVisionPointCloudMessage> stereoVisionPublisher;
+   private double startTime = Double.NaN;
 
    private boolean start = false;
    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1, ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
    private final ScheduledFuture<?> scheduledFuture;
 
+   public SimulatedStereoCamera(Ros2Node ros2Node, ReferenceFrame cameraSensorFrame, RGBDSensorDescription sensorDescription,
+                                double updateFrequencyHz)
+   {
+      this(ros2Node, cameraSensorFrame, sensorDescription.getPixelsWide(), sensorDescription.getPixelsHigh(),
+           sensorDescription.getWidthFieldOfView(), sensorDescription.getHeightFieldOfView(), sensorDescription.getMinimumRange(), updateFrequencyHz);
+   }
+
    /**
     * The camera sensor frame is defined with a positive x forward and z up, as if you were looking at the picture.
     */
-   public SimulatedStereoCamera(DoubleProvider timeProvider, Ros2Node ros2Node, MovingReferenceFrame cameraSensorFrame, IntrinsicParameters intrinsicParameters,
-                                double widthFieldOfView, double heightFieldOfView, double updateFrequencyHz)
+   public SimulatedStereoCamera(Ros2Node ros2Node, ReferenceFrame cameraSensorFrame, int widthPixels, int heightPixels,
+                                double widthFieldOfView, double heightFieldOfView, double minimumDistance, double updateFrequencyHz)
    {
-      this.timeProvider = timeProvider;
+      this.widthPixels = widthPixels;
+      this.heightPixels = heightPixels;
       this.cameraSensorFrame = cameraSensorFrame;
-      this.intrinsicParameters = intrinsicParameters;
       this.widthFieldOfView = widthFieldOfView;
       this.heightFieldOfView = heightFieldOfView;
+      this.minimumDistance = minimumDistance;
 
       stereoVisionPublisher = ROS2Tools.createPublisher(ros2Node, StereoVisionPointCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
 
@@ -70,7 +82,7 @@ public class SimulatedStereoCamera implements Runnable
    {
       start = true;
    }
-   
+
    public void stop()
    {
       start = false;
@@ -84,25 +96,25 @@ public class SimulatedStereoCamera implements Runnable
    @Override
    public void run()
    {
+      if (Double.isNaN(startTime))
+         startTime = Conversions.nanosecondsToSeconds(System.nanoTime());
+
       if (!start)
          return;
 
-      int numberWide = (int) intrinsicParameters.getFx();
-      int numberHigh = (int) intrinsicParameters.getFy();
-      double widthIncrement = widthFieldOfView / numberWide;
-      double heightIncrement = heightFieldOfView / numberHigh;
+      double widthIncrement = widthFieldOfView / widthPixels;
+      double heightIncrement = heightFieldOfView / heightPixels;
 
       FrameVector3D rayDirection = new FrameVector3D(cameraSensorFrame);
       FramePoint3D rayOrigin = new FramePoint3D(cameraSensorFrame);
       rayOrigin.changeFrame(worldFrame);
 
-      int numberOfPoints = numberHigh * numberWide;
-      Point3DReadOnly[] pointCloud = new Point3DReadOnly[numberOfPoints];
-      Color[] colors = new Color[numberOfPoints];
+      List<Point3DReadOnly> pointCloud = new ArrayList<>();
+      List<Color> colors = new ArrayList<>();
 
-      for (int widthIdx = 0; widthIdx < numberWide; widthIdx++)
+      for (int widthIdx = 0; widthIdx < widthPixels; widthIdx++)
       {
-         for (int heightIdx = 0; heightIdx < numberHigh; heightIdx++)
+         for (int heightIdx = 0; heightIdx < heightPixels; heightIdx++)
          {
             double widthAngle = 0.5 * widthFieldOfView - widthIdx * widthIncrement;
             double heightAngle = 0.5 * heightFieldOfView - heightIdx * heightIncrement;
@@ -113,27 +125,29 @@ public class SimulatedStereoCamera implements Runnable
             Pair<Point3D, PlanarRegion> intersectionPair = PlanarRegionTools.intersectRegionsWithRay(planarRegionsList, rayOrigin, rayDirection);
             FramePoint3D intersectionWidthWorld = new FramePoint3D(worldFrame, intersectionPair.getLeft());
             intersectionWidthWorld.changeFrame(cameraSensorFrame);
+            if (intersectionPair.getLeft().distanceFromOrigin() < minimumDistance)
+               continue;
 
-            pointCloud[widthIdx * numberWide + heightIdx] = intersectionWidthWorld;
+            pointCloud.add(intersectionWidthWorld);
             javafx.scene.paint.Color color = IdMappedColorFunction.INSTANCE.apply(intersectionPair.getRight().getRegionId());
-            colors[widthIdx * numberWide + heightIdx] = new Color((int) (255.0 * color.getRed()), (int) (255.0 * color.getGreen()),
-                                                                  (int) (255.0 * color.getBlue()), (int) (255.0 *color.getOpacity()));
+            colors.add(new Color((int) (255.0 * color.getRed()), (int) (255.0 * color.getGreen()), (int) (255.0 * color.getBlue()), (int) (255.0 *color.getOpacity())));
          }
       }
 
-      long timestamp = Conversions.secondsToNanoseconds(timeProvider.getValue());
+      int numberOfPoints = pointCloud.size();
+      long timestamp = (long) (Conversions.nanosecondsToSeconds(System.nanoTime()) - startTime);
       float[] pointCloudBuffer = new float[3 * numberOfPoints];
       int[] colorsInteger = new int[numberOfPoints];
 
       for (int i = 0; i < numberOfPoints; i++)
       {
-         Point3DReadOnly scanPoint = pointCloud[i];
+         Point3DReadOnly scanPoint = pointCloud.get(i);
 
          pointCloudBuffer[3 * i + 0] = (float) scanPoint.getX();
          pointCloudBuffer[3 * i + 1] = (float) scanPoint.getY();
          pointCloudBuffer[3 * i + 2] = (float) scanPoint.getZ();
 
-         colorsInteger[i] = colors[i].getRGB();
+         colorsInteger[i] = colors.get(i).getRGB();
       }
 
       StereoVisionPointCloudMessage stereoVisionMessage = MessageTools.createStereoVisionPointCloudMessage(timestamp, pointCloudBuffer, colorsInteger);
