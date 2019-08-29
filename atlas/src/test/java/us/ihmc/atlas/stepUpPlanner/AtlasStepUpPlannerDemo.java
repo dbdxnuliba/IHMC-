@@ -4,7 +4,13 @@ import static us.ihmc.robotics.Assert.assertTrue;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import controller_msgs.msg.dds.*;
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
+import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.RobotConfigurationData;
+import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
+import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
+import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -82,6 +88,7 @@ public class AtlasStepUpPlannerDemo
       // Other hard coded parameters are in the methods StepUpPlannerRequester.getDefaultFivePhasesParametersMessage and 
       // StepUpPlannerRequester.getDefaultFivePhasesRequestMessage
 
+      double minLegLength = 0.75;
       double maxLegLength = 1.15;
       double desiredLegLength = 1.05;
       double stepHeight = 0.154*2;
@@ -107,7 +114,10 @@ public class AtlasStepUpPlannerDemo
       StepUpPlannerRequester requester = new StepUpPlannerRequester();
       StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(atlasRobotModel.getWalkingControllerParameters()
                                                                                                                               .getSteppingParameters(),
-                                                                                                               heightDifference, maxLegLength, footScale);
+                                                                                                               heightDifference,
+                                                                                                               minLegLength,
+                                                                                                               maxLegLength,
+                                                                                                               footScale);
 
       parameters.setSendComMessages(true);
       parameters.setIncludeComMessages(false);
