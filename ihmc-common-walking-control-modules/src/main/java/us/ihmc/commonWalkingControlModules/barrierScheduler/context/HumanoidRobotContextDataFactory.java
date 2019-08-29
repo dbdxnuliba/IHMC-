@@ -73,4 +73,24 @@ public class HumanoidRobotContextDataFactory
    {
       this.sensorDataContext.set(value);
    }
+
+   public void setLinearMomentumRateControlModuleInput(LinearMomentumRateControlModuleInput value)
+   {
+      this.linearMomentumRateControlModuleInput.set(value);
+   }
+
+   public void setLinearMomentumRateControlModuleOutput(LinearMomentumRateControlModuleOutput value)
+   {
+      this.linearMomentumRateControlModuleOutput.set(value);
+   }
+
+   public void setControllerCoreCommandBuffer(ControllerCoreCommandBuffer value)
+   {
+      this.controllerCoreCommandBuffer.set(value);
+   }
+
+   public void setControllerCoreOutput(ControllerCoreOutput value)
+   {
+      this.controllerCoreOutput.set(value);
+   }
 }
