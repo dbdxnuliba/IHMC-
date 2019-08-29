@@ -33,6 +33,10 @@ module controller_msgs
         @defaultValue(value=2.0)
         double max_leg_length;
         /**
+         * Minimum distance between the CoM and the foot
+         */
+        double min_leg_length;
+        /**
          * Ipopt internal linear solver
          */
         string ipopt_linear_solver;

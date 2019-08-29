@@ -13,6 +13,9 @@ uint64 solver_verbosity
 # Field default value 2.0
 float64 max_leg_length
 
+# Minimum distance between the CoM and the foot
+float64 min_leg_length
+
 # Ipopt internal linear solver
 string ipopt_linear_solver
 

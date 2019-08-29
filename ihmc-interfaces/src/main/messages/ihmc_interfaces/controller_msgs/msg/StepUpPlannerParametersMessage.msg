@@ -10,6 +10,9 @@ uint64 solver_verbosity 1
 # Maximum distance between the CoM and the foot
 float64 max_leg_length 2.0
 
+# Minimum distance between the CoM and the foot
+float64 min_leg_length 0.0
+
 # Ipopt internal linear solver
 string ipopt_linear_solver
 

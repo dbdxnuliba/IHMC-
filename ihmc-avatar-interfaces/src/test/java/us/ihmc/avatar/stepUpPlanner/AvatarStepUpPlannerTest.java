@@ -8,7 +8,15 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import controller_msgs.msg.dds.*;
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
+import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
+import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.FootstepDataMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.PlanarRegionMessage;
+import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
+import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
+import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.avatar.MultiRobotTestInterface;
 import us.ihmc.avatar.networkProcessor.DRCNetworkModuleParameters;
 import us.ihmc.avatar.testTools.DRCSimulationTestHelper;
@@ -148,7 +156,9 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
                                                                                                                                  .getSteppingParameters(),
                                                                                                                   heightDifference,
-                                                                                                                  maxLegLength(), 0.5);
+                                                                                                                  minLegLength(),
+                                                                                                                  maxLegLength(),
+                                                                                                                  0.4);
 
          parameters.setSendComMessages(useStepUpPlannerTrajectories);
          parameters.setIncludeComMessages(false);
@@ -169,7 +179,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          boolean ok = requester.publishParametersAndWaitAck(parameters);
          assertTrue(ok);
 
-         StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(new Vector3D(0.6, 0.0, stepHeight),
+         StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(new Vector3D(0.55, 0.0, stepHeight),
                                                                                                          desiredLegLength(),
                                                                                                          drcSimulationTestHelper.getReferenceFrames());
          LogTools.info("Sending request.");
@@ -342,6 +352,11 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
    protected double maxLegLength()
    {
       return 1.15;
+   }
+
+   protected double minLegLength()
+   {
+      return 0.75;
    }
 
    protected double desiredLegLength()

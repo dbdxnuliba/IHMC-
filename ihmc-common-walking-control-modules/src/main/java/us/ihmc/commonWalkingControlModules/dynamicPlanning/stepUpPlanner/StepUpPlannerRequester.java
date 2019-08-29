@@ -2,7 +2,15 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner;
 
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.*;
+import controller_msgs.msg.dds.StepUpPlannerCostWeights;
+import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
+import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
+import controller_msgs.msg.dds.StepUpPlannerPhase;
+import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
+import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
+import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
+import controller_msgs.msg.dds.StepUpPlannerStepParameters;
+import controller_msgs.msg.dds.StepUpPlannerVector2;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
@@ -175,7 +183,7 @@ public class StepUpPlannerRequester
       publishRequest(requestMessage);
       int loop = 0;
 
-      while (!isRespondAvailable() && loop < 50 && !anErrorOccurred())
+      while (!isRespondAvailable() && loop < 100 && !anErrorOccurred())
       {
          LogTools.info("Waiting to receive respond.");
          ThreadTools.sleep(millisecondsToSleep);
@@ -206,7 +214,7 @@ public class StepUpPlannerRequester
    }
 
    static public StepUpPlannerParametersMessage getDefaultFivePhasesParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta,
-                                                                                      double maxLegLength, double footScale)
+                                                                                      double minLegLength, double maxLegLength, double footScale)
    {
       StepUpPlannerParametersMessage msg = new StepUpPlannerParametersMessage();
 
@@ -267,8 +275,9 @@ public class StepUpPlannerRequester
          msg.getPhasesParameters().add().set(newSettings);
       }
 
-      msg.setPhaseLength(40);
+      msg.setPhaseLength(30);
       msg.setSolverVerbosity(1);
+      msg.setMinLegLength(minLegLength);
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
