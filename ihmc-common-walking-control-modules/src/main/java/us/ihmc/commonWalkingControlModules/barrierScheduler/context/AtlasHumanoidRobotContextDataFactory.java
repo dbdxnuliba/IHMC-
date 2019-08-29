@@ -22,7 +22,7 @@ public class AtlasHumanoidRobotContextDataFactory extends HumanoidRobotContextDa
                                                sensorDataContext.get(),
                                                linearMomentumRateControlModuleInput.get(),
                                                linearMomentumRateControlModuleOutput.get(),
-                                               controllerCoreCommand.get(),
+                                               controllerCoreCommandBuffer.get(),
                                                controllerCoreOutput.get(),
                                                rawJointData.get());
    }
