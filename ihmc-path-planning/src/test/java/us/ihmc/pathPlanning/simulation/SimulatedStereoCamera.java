@@ -9,6 +9,7 @@ import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
+import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SimulatedStereoCamera implements Runnable
+public class SimulatedStereoCamera
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
@@ -68,9 +69,13 @@ public class SimulatedStereoCamera implements Runnable
       this.heightFieldOfView = heightFieldOfView;
       this.minimumDistance = minimumDistance;
 
+
+      Runnable runnable = this::update;
+
+      scheduledFuture = executorService.scheduleAtFixedRate(runnable, 0, Conversions.secondsToNanoseconds(1.0 / updateFrequencyHz), TimeUnit.NANOSECONDS);
+
       stereoVisionPublisher = ROS2Tools.createPublisher(ros2Node, StereoVisionPointCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
 
-      scheduledFuture = executorService.scheduleAtFixedRate(this, 0, (long) (1.0 / updateFrequencyHz), TimeUnit.SECONDS);
    }
 
    public void setPlanarRegionsEnvironment(PlanarRegionsList planarRegionsList)
@@ -93,13 +98,12 @@ public class SimulatedStereoCamera implements Runnable
       scheduledFuture.cancel(true);
    }
 
-   @Override
-   public void run()
+   public void update()
    {
       if (Double.isNaN(startTime))
          startTime = Conversions.nanosecondsToSeconds(System.nanoTime());
 
-      if (!start)
+      if (!start || planarRegionsList == null)
          return;
 
       double widthIncrement = widthFieldOfView / widthPixels;
@@ -123,12 +127,14 @@ public class SimulatedStereoCamera implements Runnable
             rayDirection.changeFrame(worldFrame);
 
             Pair<Point3D, PlanarRegion> intersectionPair = PlanarRegionTools.intersectRegionsWithRay(planarRegionsList, rayOrigin, rayDirection);
-            FramePoint3D intersectionWidthWorld = new FramePoint3D(worldFrame, intersectionPair.getLeft());
-            intersectionWidthWorld.changeFrame(cameraSensorFrame);
-            if (intersectionPair.getLeft().distanceFromOrigin() < minimumDistance)
+            if (intersectionPair == null)
                continue;
 
-            pointCloud.add(intersectionWidthWorld);
+            FramePoint3D intersectionWithWorld = new FramePoint3D(worldFrame, intersectionPair.getLeft());
+            if (intersectionWithWorld.distance(rayOrigin) < minimumDistance)
+               continue;
+
+            pointCloud.add(intersectionWithWorld);
             javafx.scene.paint.Color color = IdMappedColorFunction.INSTANCE.apply(intersectionPair.getRight().getRegionId());
             colors.add(new Color((int) (255.0 * color.getRed()), (int) (255.0 * color.getGreen()), (int) (255.0 * color.getBlue()), (int) (255.0 *color.getOpacity())));
          }
@@ -151,6 +157,10 @@ public class SimulatedStereoCamera implements Runnable
       }
 
       StereoVisionPointCloudMessage stereoVisionMessage = MessageTools.createStereoVisionPointCloudMessage(timestamp, pointCloudBuffer, colorsInteger);
+      FramePose3D sensorPose = new FramePose3D(cameraSensorFrame);
+      sensorPose.changeFrame(worldFrame);
+      stereoVisionMessage.getSensorPosition().set(sensorPose.getPosition());
+      stereoVisionMessage.getSensorOrientation().set(sensorPose.getOrientation());
 
       stereoVisionPublisher.publish(stereoVisionMessage);
    }
