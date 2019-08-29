@@ -14,6 +14,7 @@ import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.geometry.LineSegment3D;
 import us.ihmc.euclid.geometry.Plane3D;
 import us.ihmc.euclid.geometry.interfaces.LineSegment3DReadOnly;
+import us.ihmc.euclid.geometry.interfaces.Pose3DReadOnly;
 import us.ihmc.euclid.geometry.tools.EuclidGeometryTools;
 import us.ihmc.euclid.shape.primitives.Ellipsoid3D;
 import us.ihmc.euclid.tuple2D.Point2D;
@@ -33,6 +34,8 @@ import us.ihmc.pathPlanning.visibilityGraphs.interfaces.PlanarRegionFilter;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.DefaultVisibilityGraphParameters;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersBasics;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
+import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.ObstacleAndCliffAvoidanceProcessor;
+import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.PathOrientationCalculator;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.messager.UIVisibilityGraphsTopics;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
@@ -92,6 +95,9 @@ public class VisibilityGraphsFrameworkTest
    {
       VisibilityGraphsParametersBasics parameters = new DefaultVisibilityGraphParameters();
       parameters.setNormalZThresholdForAccessibleRegions(Math.cos(Math.toRadians(30.0)));
+      parameters.setPerformPostProcessingNodeShifting(true);
+      parameters.setIntroduceMidpointsInPostProcessing(true);
+      parameters.setComputeOrientationsToAvoidObstacles(true);
       return parameters;
    }
 
@@ -551,14 +557,18 @@ public class VisibilityGraphsFrameworkTest
    private String calculateAndTestVizGraphsBodyPath(String datasetName, Point3D start, Point3D goal, PlanarRegionsList planarRegionsList,
                                                     List<Point3DReadOnly> bodyPathToPack, boolean simulateOcclusions)
    {
-      NavigableRegionsManager manager = new NavigableRegionsManager(parameters);
+      NavigableRegionsManager manager = new NavigableRegionsManager(parameters, null, new ObstacleAndCliffAvoidanceProcessor(parameters));
+      PathOrientationCalculator orientationCalculator = new PathOrientationCalculator(parameters);
       manager.setPlanarRegions(planarRegionsList.getPlanarRegionsAsList());
 
       List<Point3DReadOnly> path = null;
+      List<? extends Pose3DReadOnly> pathPoses = null;
 
       try
       {
          path = manager.calculateBodyPath(start, goal, fullyExpandVisibilityGraph);
+         pathPoses = orientationCalculator.computePosesFromPath(path, manager.getVisibilityMapSolution());
+         path = pathPoses.parallelStream().map(pose -> new Point3D(pose.getPosition())).collect(Collectors.toList());
 //         path = manager.calculateBodyPathWithOcclusions(start, goal,);
       }
       catch (Exception e)
