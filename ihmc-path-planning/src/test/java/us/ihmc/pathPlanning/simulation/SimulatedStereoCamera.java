@@ -2,7 +2,9 @@ package us.ihmc.pathPlanning.simulation;
 
 import boofcv.struct.calib.IntrinsicParameters;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import org.apache.commons.lang3.tuple.Pair;
 import us.ihmc.commons.Conversions;
+import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.MessageTools;
@@ -14,17 +16,15 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.javaFXVisualizers.IdMappedColorFunction;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
-import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
-import us.ihmc.robotEnvironmentAwareness.hardware.MultisenseInformation;
+import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
-import us.ihmc.robotics.geometry.Ray3d;
 import us.ihmc.ros2.Ros2Node;
-import us.ihmc.utilities.ros.RosMainNode;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
 import java.awt.*;
+import java.util.concurrent.*;
 
-public class SimulatedStereoCamera
+public class SimulatedStereoCamera implements Runnable
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
@@ -40,14 +40,15 @@ public class SimulatedStereoCamera
 
    private final IHMCROS2Publisher<StereoVisionPointCloudMessage> stereoVisionPublisher;
 
-   private final Ros2Node ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, "stereoVisionPublisherNode");
-
-
+   private boolean start = false;
+   private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1, ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
+   private final ScheduledFuture<?> scheduledFuture;
 
    /**
     * The camera sensor frame is defined with a positive x forward and z up, as if you were looking at the picture.
     */
-   public SimulatedStereoCamera(DoubleProvider timeProvider, MovingReferenceFrame cameraSensorFrame, IntrinsicParameters intrinsicParameters, double widthFieldOfView, double heightFieldOfView)
+   public SimulatedStereoCamera(DoubleProvider timeProvider, Ros2Node ros2Node, MovingReferenceFrame cameraSensorFrame, IntrinsicParameters intrinsicParameters,
+                                double widthFieldOfView, double heightFieldOfView, double updateFrequencyHz)
    {
       this.timeProvider = timeProvider;
       this.cameraSensorFrame = cameraSensorFrame;
@@ -55,14 +56,9 @@ public class SimulatedStereoCamera
       this.widthFieldOfView = widthFieldOfView;
       this.heightFieldOfView = heightFieldOfView;
 
-      // FIX THIS
-      RosMainNode rosMainNode = new RosMainNode(masterURI, "StereoVisionPublisher", true);
-      rosMainNode.attachSubscriber(MultisenseInformation.getStereoVisionPointCloudTopicName(), this);
-
-      rosMainNode.execute();
-
       stereoVisionPublisher = ROS2Tools.createPublisher(ros2Node, StereoVisionPointCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
 
+      scheduledFuture = executorService.scheduleAtFixedRate(this, 0, (long) (1.0 / updateFrequencyHz), TimeUnit.SECONDS);
    }
 
    public void setPlanarRegionsEnvironment(PlanarRegionsList planarRegionsList)
@@ -70,8 +66,27 @@ public class SimulatedStereoCamera
       this.planarRegionsList = planarRegionsList;
    }
 
-   private void update()
+   public void start()
    {
+      start = true;
+   }
+   
+   public void stop()
+   {
+      start = false;
+   }
+
+   public void destroy()
+   {
+      scheduledFuture.cancel(true);
+   }
+
+   @Override
+   public void run()
+   {
+      if (!start)
+         return;
+
       int numberWide = (int) intrinsicParameters.getFx();
       int numberHigh = (int) intrinsicParameters.getFy();
       double widthIncrement = widthFieldOfView / numberWide;
@@ -95,11 +110,14 @@ public class SimulatedStereoCamera
             rayDirection.set(Math.cos(widthAngle) * Math.cos(heightAngle), Math.cos(heightAngle) * Math.sin(widthAngle), Math.sin(heightAngle));
             rayDirection.changeFrame(worldFrame);
 
-            FramePoint3D intersectionWidthWorld = new FramePoint3D(worldFrame, PlanarRegionTools.intersectRegionsWithRay(planarRegionsList, rayOrigin, rayDirection));
+            Pair<Point3D, PlanarRegion> intersectionPair = PlanarRegionTools.intersectRegionsWithRay(planarRegionsList, rayOrigin, rayDirection);
+            FramePoint3D intersectionWidthWorld = new FramePoint3D(worldFrame, intersectionPair.getLeft());
             intersectionWidthWorld.changeFrame(cameraSensorFrame);
 
             pointCloud[widthIdx * numberWide + heightIdx] = intersectionWidthWorld;
-            colors[widthIdx * numberWide + heightIdx] = IdMappedColorFunction.INSTANCE.apply(regionId);
+            javafx.scene.paint.Color color = IdMappedColorFunction.INSTANCE.apply(intersectionPair.getRight().getRegionId());
+            colors[widthIdx * numberWide + heightIdx] = new Color((int) (255.0 * color.getRed()), (int) (255.0 * color.getGreen()),
+                                                                  (int) (255.0 * color.getBlue()), (int) (255.0 *color.getOpacity()));
          }
       }
 
