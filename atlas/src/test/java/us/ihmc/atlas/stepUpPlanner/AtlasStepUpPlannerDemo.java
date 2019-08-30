@@ -1,13 +1,13 @@
 package us.ihmc.atlas.stepUpPlanner;
 
-import static us.ihmc.robotics.Assert.assertTrue;
-
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
+import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
 import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
@@ -17,6 +17,7 @@ import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner.StepUpPlannerRequester;
 import us.ihmc.commonWalkingControlModules.highLevelHumanoidControl.factories.ControllerAPIDefinition;
 import us.ihmc.commons.thread.ThreadTools;
+import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -36,6 +37,7 @@ public class AtlasStepUpPlannerDemo
    private final FullHumanoidRobotModel fullRobotModel;
    private final OneDoFJointBasics[] allJointsExcludingHands;
    private final AtomicReference<RobotConfigurationData> latestRobotConfigurationData = new AtomicReference<>(null);
+   private final IHMCROS2Publisher<PelvisOrientationTrajectoryMessage> orientationPublisher;
 
    private boolean updateFullRobotModel()
    {
@@ -78,6 +80,11 @@ public class AtlasStepUpPlannerDemo
                                            RobotConfigurationData.class,
                                            ControllerAPIDefinition.getPublisherTopicNameGenerator(robotName),
                                            s -> latestRobotConfigurationData.set(s.takeNextData()));
+
+      orientationPublisher = ROS2Tools.createPublisher(ros2Node,
+                                                       PelvisOrientationTrajectoryMessage.class,
+                                                       ControllerAPIDefinition.getSubscriberTopicNameGenerator(robotName));
+
       ThreadTools.sleep(1000);
 
    }
@@ -136,17 +143,42 @@ public class AtlasStepUpPlannerDemo
 
       LogTools.info("Sending parameters.");
       boolean ok = requester.publishParametersAndWaitAck(parameters);
-      assertTrue(ok);
+      if (!ok)
+         return;
 
       ok = demo.updateFullRobotModel();
-      assertTrue(ok);
+      if (!ok)
+         return;
+      
+      FramePose3D midFeetFrame = new FramePose3D(demo.referenceFrames.getMidFeetZUpFrame());
+      PelvisOrientationTrajectoryMessage orientationMessage = new PelvisOrientationTrajectoryMessage();
+
+      orientationMessage.setEnableUserPelvisControlDuringWalking(true);
+      SO3TrajectoryPointMessage so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
+      so3Point.setTime(2.0);
+      so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+
+      LogTools.info("Sending orientation message.");
+
+      demo.orientationPublisher.publish(orientationMessage);
 
       StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(new Vector3D(stepLength, 0.0, stepHeight),
                                                                                                       desiredLegLength,
                                                                                                       demo.referenceFrames);
       LogTools.info("Sending request.");
+
       receivedRespond = requester.getRespond(request);
-      assertTrue(receivedRespond != null);
+      if (receivedRespond == null)
+         return;
+
+      LogTools.info("Reset orientation.");
+
+      orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().clear();
+      so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
+      so3Point.setTime(receivedRespond.getTotalDuration() * 1.1);
+      so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), 0.0, 0.0);
+
+      demo.orientationPublisher.publish(orientationMessage);
 
    }
 
