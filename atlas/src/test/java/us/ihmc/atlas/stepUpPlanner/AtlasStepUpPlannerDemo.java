@@ -2,15 +2,7 @@ package us.ihmc.atlas.stepUpPlanner;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
-import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
-import controller_msgs.msg.dds.RobotConfigurationData;
-import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -22,6 +14,8 @@ import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple3D.Vector3D;
+import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.humanoidRobotics.communication.packets.walking.HumanoidBodyPart;
 import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
@@ -38,6 +32,8 @@ public class AtlasStepUpPlannerDemo
    private final OneDoFJointBasics[] allJointsExcludingHands;
    private final AtomicReference<RobotConfigurationData> latestRobotConfigurationData = new AtomicReference<>(null);
    private final IHMCROS2Publisher<PelvisOrientationTrajectoryMessage> orientationPublisher;
+   private final IHMCROS2Publisher<GoHomeMessage> pelviHomePublisher;
+
 
    private boolean updateFullRobotModel()
    {
@@ -85,6 +81,10 @@ public class AtlasStepUpPlannerDemo
                                                        PelvisOrientationTrajectoryMessage.class,
                                                        ControllerAPIDefinition.getSubscriberTopicNameGenerator(robotName));
 
+      pelviHomePublisher = ROS2Tools.createPublisher(ros2Node,
+                                                     GoHomeMessage.class,
+                                                     ControllerAPIDefinition.getSubscriberTopicNameGenerator(robotName));
+      
       ThreadTools.sleep(1000);
 
    }
@@ -100,7 +100,7 @@ public class AtlasStepUpPlannerDemo
       double desiredLegLength = 1.05;
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
-      double footScale = 0.4;
+      double footScale = 0.3;
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -113,9 +113,9 @@ public class AtlasStepUpPlannerDemo
       comPose.changeFrame(ReferenceFrame.getWorldFrame());
 
       MovingReferenceFrame pelvisZUpFrame = demo.referenceFrames.getPelvisZUpFrame();
-      FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-      double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
+      FramePose3D pelvisPose = new FramePose3D(pelvisZUpFrame);
+      pelvisPose.changeFrame(ReferenceFrame.getWorldFrame());
+      double heightDifference = pelvisPose.getPosition().getZ() - comPose.getPosition().getZ();
 
       StepUpPlannerRespondMessage receivedRespond;
       StepUpPlannerRequester requester = new StepUpPlannerRequester();
@@ -150,13 +150,14 @@ public class AtlasStepUpPlannerDemo
       if (!ok)
          return;
       
-      FramePose3D midFeetFrame = new FramePose3D(demo.referenceFrames.getMidFeetZUpFrame());
+      FramePose3D pelvisFrame = new FramePose3D(demo.referenceFrames.getPelvisFrame());
+      pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
       PelvisOrientationTrajectoryMessage orientationMessage = new PelvisOrientationTrajectoryMessage();
 
       orientationMessage.setEnableUserPelvisControlDuringWalking(true);
       SO3TrajectoryPointMessage so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
       so3Point.setTime(2.0);
-      so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+      so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-3));
 
       LogTools.info("Sending orientation message.");
 
@@ -171,14 +172,12 @@ public class AtlasStepUpPlannerDemo
       if (receivedRespond == null)
          return;
 
+      double secondsToWait = receivedRespond.getTotalDuration() * 1.2;
+      ThreadTools.sleep((int)(secondsToWait * 1000));
       LogTools.info("Reset orientation.");
-
-      orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().clear();
-      so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
-      so3Point.setTime(receivedRespond.getTotalDuration() * 1.1);
-      so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), 0.0, 0.0);
-
-      demo.orientationPublisher.publish(orientationMessage);
+   
+      GoHomeMessage goHomeMessage = HumanoidMessageTools.createGoHomeMessage(HumanoidBodyPart.PELVIS, 2.0);
+      demo.pelviHomePublisher.publish(goHomeMessage);
 
    }
 

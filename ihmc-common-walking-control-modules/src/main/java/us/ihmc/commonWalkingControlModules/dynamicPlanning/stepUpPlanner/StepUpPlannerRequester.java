@@ -2,15 +2,7 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner;
 
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.StepUpPlannerCostWeights;
-import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerPhase;
-import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
-import controller_msgs.msg.dds.StepUpPlannerStepParameters;
-import controller_msgs.msg.dds.StepUpPlannerVector2;
+import controller_msgs.msg.dds.*;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
@@ -366,9 +358,9 @@ public class StepUpPlannerRequester
       StepUpPlannerPhase newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(initialLeftPose);
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(1.4);
+      newPhase.setMinimumDuration(1.8);
       newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.4);
+      newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getRightFootPose().set(initialRightPose);
