@@ -13,7 +13,9 @@ import controller_msgs.msg.dds.CollisionAvoidanceManagerMessage;
 import controller_msgs.msg.dds.FootstepDataListMessage;
 import controller_msgs.msg.dds.FootstepDataMessage;
 import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
 import controller_msgs.msg.dds.PlanarRegionMessage;
+import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
 import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
 import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
 import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
@@ -143,6 +145,9 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
       }
       else
       {
+         IHMCROS2Publisher<PelvisOrientationTrajectoryMessage> orientationPublisher = ROS2Tools.createPublisher(stepUpNode,
+                                                                                                                PelvisOrientationTrajectoryMessage.class,
+                                                                                                                ControllerAPIDefinition.getSubscriberTopicNameGenerator(getRobotModel().getSimpleRobotName()));
 
          ReferenceFrame initialCoMFrame = drcSimulationTestHelper.getReferenceFrames().getCenterOfMassFrame();
          FramePose3D comPose = new FramePose3D(initialCoMFrame);
@@ -188,6 +193,24 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
          totalDuration = receivedRespond.getTotalDuration() * 1.2;
          lastFootStep = receivedRespond.getFoostepMessages().getLast();
+
+         FramePose3D midFeetFrame = new FramePose3D(drcSimulationTestHelper.getReferenceFrames().getMidFeetZUpFrame());
+         PelvisOrientationTrajectoryMessage orientationMessage = new PelvisOrientationTrajectoryMessage();
+
+         orientationMessage.setEnableUserPelvisControlDuringWalking(true);
+         SO3TrajectoryPointMessage so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
+         so3Point.setTime(1.0);
+         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+
+         so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
+         so3Point.setTime(receivedRespond.getTotalDuration() * 0.8);
+         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+
+         so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
+         so3Point.setTime(totalDuration);
+         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), 0.0, 0.0);
+
+         orientationPublisher.publish(orientationMessage);
       }
 
       drcSimulationTestHelper.simulateAndBlockAndCatchExceptions(totalDuration);
