@@ -26,10 +26,15 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
             * Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
             */
    public double scale_ = 1.0;
+   /**
+            * Offset to be applied to the foot vertices. Eventual footsteps will be sent without considering this offset.
+            */
+   public controller_msgs.msg.dds.StepUpPlannerVector2 center_offset_;
 
    public StepUpPlannerStepParameters()
    {
       foot_vertices_ = new us.ihmc.idl.IDLSequence.Object<controller_msgs.msg.dds.StepUpPlannerVector2> (10, new controller_msgs.msg.dds.StepUpPlannerVector2PubSubType());
+      center_offset_ = new controller_msgs.msg.dds.StepUpPlannerVector2();
 
    }
 
@@ -46,6 +51,7 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       foot_vertices_.set(other.foot_vertices_);
       scale_ = other.scale_;
 
+      controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.staticCopy(other.center_offset_, center_offset_);
    }
 
    /**
@@ -89,6 +95,15 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
    }
 
 
+   /**
+            * Offset to be applied to the foot vertices. Eventual footsteps will be sent without considering this offset.
+            */
+   public controller_msgs.msg.dds.StepUpPlannerVector2 getCenterOffset()
+   {
+      return center_offset_;
+   }
+
+
    public static Supplier<StepUpPlannerStepParametersPubSubType> getPubSubType()
    {
       return StepUpPlannerStepParametersPubSubType::new;
@@ -117,6 +132,7 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.scale_, other.scale_, epsilon)) return false;
 
+      if (!this.center_offset_.epsilonEquals(other.center_offset_, epsilon)) return false;
 
       return true;
    }
@@ -135,6 +151,7 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       if (!this.foot_vertices_.equals(otherMyClass.foot_vertices_)) return false;
       if(this.scale_ != otherMyClass.scale_) return false;
 
+      if (!this.center_offset_.equals(otherMyClass.center_offset_)) return false;
 
       return true;
    }
@@ -150,7 +167,9 @@ public class StepUpPlannerStepParameters extends Packet<StepUpPlannerStepParamet
       builder.append("foot_vertices=");
       builder.append(this.foot_vertices_);      builder.append(", ");
       builder.append("scale=");
-      builder.append(this.scale_);
+      builder.append(this.scale_);      builder.append(", ");
+      builder.append("center_offset=");
+      builder.append(this.center_offset_);
       builder.append("}");
       return builder.toString();
    }

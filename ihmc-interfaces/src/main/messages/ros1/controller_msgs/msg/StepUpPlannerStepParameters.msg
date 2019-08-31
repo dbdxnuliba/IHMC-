@@ -14,4 +14,7 @@ controller_msgs/StepUpPlannerVector2[] foot_vertices
 # Field default value 1.0
 float64 scale
 
+# Offset to be applied to the foot vertices. Eventual footsteps will be sent without considering this offset.
+controller_msgs/StepUpPlannerVector2 center_offset
+
 

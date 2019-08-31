@@ -33,6 +33,7 @@ import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.euclid.geometry.BoundingBox3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -154,16 +155,21 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          comPose.changeFrame(ReferenceFrame.getWorldFrame());
 
          MovingReferenceFrame pelvisZUpFrame = drcSimulationTestHelper.getReferenceFrames().getPelvisZUpFrame();
-         FramePose3D pelvisFrame = new FramePose3D(pelvisZUpFrame);
-         pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
-         double heightDifference = pelvisFrame.getPosition().getZ() - comPose.getPosition().getZ();
+         FramePose3D pelvisPose = new FramePose3D(pelvisZUpFrame);
+         pelvisPose.changeFrame(ReferenceFrame.getWorldFrame());
+         double heightDifference = pelvisPose.getPosition().getZ() - comPose.getPosition().getZ();
+
+         Vector2D leftOffset = new Vector2D(0.0, -0.01);
+         Vector2D rightOffset = new Vector2D(0.0, 0.01);
 
          StepUpPlannerParametersMessage parameters = StepUpPlannerRequester.getDefaultFivePhasesParametersMessage(getRobotModel().getWalkingControllerParameters()
                                                                                                                                  .getSteppingParameters(),
                                                                                                                   heightDifference,
                                                                                                                   minLegLength(),
                                                                                                                   maxLegLength(),
-                                                                                                                  0.4);
+                                                                                                                  0.4,
+                                                                                                                  leftOffset,
+                                                                                                                  rightOffset);
 
          parameters.setSendComMessages(useStepUpPlannerTrajectories);
          parameters.setIncludeComMessages(false);
@@ -194,21 +200,22 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
          totalDuration = receivedRespond.getTotalDuration() * 1.2;
          lastFootStep = receivedRespond.getFoostepMessages().getLast();
 
-         FramePose3D midFeetFrame = new FramePose3D(drcSimulationTestHelper.getReferenceFrames().getMidFeetZUpFrame());
+         FramePose3D pelvisFrame = new FramePose3D(drcSimulationTestHelper.getReferenceFrames().getPelvisFrame());
+         pelvisFrame.changeFrame(ReferenceFrame.getWorldFrame());
          PelvisOrientationTrajectoryMessage orientationMessage = new PelvisOrientationTrajectoryMessage();
 
          orientationMessage.setEnableUserPelvisControlDuringWalking(true);
          SO3TrajectoryPointMessage so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
          so3Point.setTime(1.0);
-         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+         so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
 
          so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
          so3Point.setTime(receivedRespond.getTotalDuration() * 0.8);
-         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
+         so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-5));
 
          so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
          so3Point.setTime(totalDuration);
-         so3Point.getOrientation().setYawPitchRoll(midFeetFrame.getOrientation().getYaw(), 0.0, 0.0);
+         so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), 0.0, 0.0);
 
          orientationPublisher.publish(orientationMessage);
       }

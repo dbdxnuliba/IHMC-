@@ -47,6 +47,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
           current_alignment += controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.getMaxCdrSerializedSize(current_alignment);}
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
+      current_alignment += controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.getMaxCdrSerializedSize(current_alignment);
+
 
       return current_alignment - initial_alignment;
    }
@@ -71,6 +73,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
 
+      current_alignment += controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.getCdrSerializedSize(data.getCenterOffset(), current_alignment);
+
 
       return current_alignment - initial_alignment;
    }
@@ -85,6 +89,7 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
 
       cdr.write_type_6(data.getScale());
 
+      controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.write(data.getCenterOffset(), cdr);
    }
 
    public static void read(controller_msgs.msg.dds.StepUpPlannerStepParameters data, us.ihmc.idl.CDR cdr)
@@ -94,6 +99,7 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       cdr.read_type_e(data.getFootVertices());	
       data.setScale(cdr.read_type_6());
       	
+      controller_msgs.msg.dds.StepUpPlannerVector2PubSubType.read(data.getCenterOffset(), cdr);	
 
    }
 
@@ -103,6 +109,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       ser.write_type_9("state", data.getState());
       ser.write_type_e("foot_vertices", data.getFootVertices());
       ser.write_type_6("scale", data.getScale());
+      ser.write_type_a("center_offset", new controller_msgs.msg.dds.StepUpPlannerVector2PubSubType(), data.getCenterOffset());
+
    }
 
    @Override
@@ -111,6 +119,8 @@ public class StepUpPlannerStepParametersPubSubType implements us.ihmc.pubsub.Top
       data.setState(ser.read_type_9("state"));
       ser.read_type_e("foot_vertices", data.getFootVertices());
       data.setScale(ser.read_type_6("scale"));
+      ser.read_type_a("center_offset", new controller_msgs.msg.dds.StepUpPlannerVector2PubSubType(), data.getCenterOffset());
+
    }
 
    public static void staticCopy(controller_msgs.msg.dds.StepUpPlannerStepParameters src, controller_msgs.msg.dds.StepUpPlannerStepParameters dest)
