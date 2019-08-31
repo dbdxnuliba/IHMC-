@@ -2,7 +2,16 @@ package us.ihmc.atlas.stepUpPlanner;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import controller_msgs.msg.dds.*;
+import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
+import controller_msgs.msg.dds.FootstepDataListMessage;
+import controller_msgs.msg.dds.GoHomeMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
+import controller_msgs.msg.dds.RobotConfigurationData;
+import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
+import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
+import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
+import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -13,6 +22,7 @@ import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.humanoidRobotics.communication.packets.walking.HumanoidBodyPart;
@@ -101,6 +111,8 @@ public class AtlasStepUpPlannerDemo
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
       double footScale = 0.3;
+      Vector2D leftOffset = new Vector2D(0.0, -0.01);
+      Vector2D rightOffset = new Vector2D(0.0, 0.01);
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -124,7 +136,9 @@ public class AtlasStepUpPlannerDemo
                                                                                                                heightDifference,
                                                                                                                minLegLength,
                                                                                                                maxLegLength,
-                                                                                                               footScale);
+                                                                                                               footScale,
+                                                                                                               leftOffset,
+                                                                                                               rightOffset);
 
       parameters.setSendComMessages(true);
       parameters.setIncludeComMessages(false);

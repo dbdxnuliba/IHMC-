@@ -2,7 +2,15 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner;
 
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.*;
+import controller_msgs.msg.dds.StepUpPlannerCostWeights;
+import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
+import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
+import controller_msgs.msg.dds.StepUpPlannerPhase;
+import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
+import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
+import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
+import controller_msgs.msg.dds.StepUpPlannerStepParameters;
+import controller_msgs.msg.dds.StepUpPlannerVector2;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
@@ -12,6 +20,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.log.LogTools;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
@@ -206,7 +215,8 @@ public class StepUpPlannerRequester
    }
 
    static public StepUpPlannerParametersMessage getDefaultFivePhasesParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta,
-                                                                                      double minLegLength, double maxLegLength, double footScale)
+                                                                                      double minLegLength, double maxLegLength, double footScale,
+                                                                                      Vector2D leftOffset, Vector2D rightOffset)
    {
       StepUpPlannerParametersMessage msg = new StepUpPlannerParametersMessage();
 
@@ -240,7 +250,12 @@ public class StepUpPlannerRequester
 
          newStep.setScale(footScale);
 
+         newStep.getCenterOffset().setX(leftOffset.getX());
+         newStep.getCenterOffset().setY(leftOffset.getY());
          leftSteps.add(new StepUpPlannerStepParameters(newStep));
+
+         newStep.getCenterOffset().setX(rightOffset.getX());
+         newStep.getCenterOffset().setY(rightOffset.getY());
          rightSteps.add(new StepUpPlannerStepParameters(newStep));
       }
 

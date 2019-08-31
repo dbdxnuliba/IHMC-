@@ -11,3 +11,6 @@ StepUpPlannerVector2[<=10] foot_vertices
 
 # Scale factor to be applied to the foot when planning the trajectories (eventual footsteps will be sent without using such scaling).
 float64 scale 1.0
+
+# Offset to be applied to the foot vertices. Eventual footsteps will be sent without considering this offset.
+StepUpPlannerVector2 center_offset

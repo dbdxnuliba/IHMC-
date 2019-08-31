@@ -35,6 +35,10 @@ module controller_msgs
          */
         @defaultValue(value=1.0)
         double scale;
+        /**
+         * Offset to be applied to the foot vertices. Eventual footsteps will be sent without considering this offset.
+         */
+        controller_msgs::msg::dds::StepUpPlannerVector2 center_offset;
       };
     };
   };
