@@ -2,16 +2,7 @@ package us.ihmc.atlas.stepUpPlanner;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import controller_msgs.msg.dds.CenterOfMassTrajectoryMessage;
-import controller_msgs.msg.dds.FootstepDataListMessage;
-import controller_msgs.msg.dds.GoHomeMessage;
-import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
-import controller_msgs.msg.dds.PelvisOrientationTrajectoryMessage;
-import controller_msgs.msg.dds.RobotConfigurationData;
-import controller_msgs.msg.dds.SO3TrajectoryPointMessage;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.atlas.AtlasRobotModel;
 import us.ihmc.atlas.AtlasRobotVersion;
 import us.ihmc.avatar.drcRobot.RobotTarget;
@@ -105,14 +96,14 @@ public class AtlasStepUpPlannerDemo
       // Other hard coded parameters are in the methods StepUpPlannerRequester.getDefaultFivePhasesParametersMessage and 
       // StepUpPlannerRequester.getDefaultFivePhasesRequestMessage
 
-      double minLegLength = 0.75;
+      double minLegLength = 0.85;
       double maxLegLength = 1.15;
       double desiredLegLength = 1.05;
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
       double footScale = 0.3;
-      Vector2D leftOffset = new Vector2D(0.0, -0.01);
-      Vector2D rightOffset = new Vector2D(0.0, 0.01);
+      Vector2D leftOffset = new Vector2D(0.0, -0.015);
+      Vector2D rightOffset = new Vector2D(0.0, 0.015);
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -139,6 +130,16 @@ public class AtlasStepUpPlannerDemo
                                                                                                                footScale,
                                                                                                                leftOffset,
                                                                                                                rightOffset);
+      
+      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setX(0.0);
+      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setY(0.0);
+      
+      parameters.getPhasesParameters().get(4).getLeftStepParameters().getCenterOffset().setX(0.0);
+      parameters.getPhasesParameters().get(4).getLeftStepParameters().getCenterOffset().setY(0.0);
+      
+      parameters.getPhasesParameters().get(4).getRightStepParameters().getCenterOffset().setX(0.0);
+      parameters.getPhasesParameters().get(4).getRightStepParameters().getCenterOffset().setY(0.0);
+
 
       parameters.setSendComMessages(true);
       parameters.setIncludeComMessages(false);
@@ -150,7 +151,7 @@ public class AtlasStepUpPlannerDemo
       parameters.setFootstepMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(atlasRobotModel.getSimpleRobotName())
                                                                  .generateTopicName(FootstepDataListMessage.class));
 
-      parameters.setSendPelvisHeightMessages(false);
+      parameters.setSendPelvisHeightMessages(true);
       parameters.setIncludePelvisHeightMessages(false);
       parameters.setPelvisHeightMessagesTopic(ControllerAPIDefinition.getSubscriberTopicNameGenerator(atlasRobotModel.getSimpleRobotName())
                                                                      .generateTopicName(PelvisHeightTrajectoryMessage.class));
@@ -171,11 +172,11 @@ public class AtlasStepUpPlannerDemo
       orientationMessage.setEnableUserPelvisControlDuringWalking(true);
       SO3TrajectoryPointMessage so3Point = orientationMessage.getSo3Trajectory().getTaskspaceTrajectoryPoints().add();
       so3Point.setTime(2.0);
-      so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), Math.toRadians(-15), Math.toRadians(-3));
+      so3Point.getOrientation().setYawPitchRoll(pelvisFrame.getOrientation().getYaw(), Math.toRadians(-10), Math.toRadians(0));
 
       LogTools.info("Sending orientation message.");
 
-      demo.orientationPublisher.publish(orientationMessage);
+//      demo.orientationPublisher.publish(orientationMessage);
 
       StepUpPlannerRequestMessage request = StepUpPlannerRequester.getDefaultFivePhasesRequestMessage(new Vector3D(stepLength, 0.0, stepHeight),
                                                                                                       desiredLegLength,
@@ -191,7 +192,7 @@ public class AtlasStepUpPlannerDemo
       LogTools.info("Reset orientation.");
    
       GoHomeMessage goHomeMessage = HumanoidMessageTools.createGoHomeMessage(HumanoidBodyPart.PELVIS, 2.0);
-      demo.pelviHomePublisher.publish(goHomeMessage);
+//      demo.pelviHomePublisher.publish(goHomeMessage);
 
    }
 
