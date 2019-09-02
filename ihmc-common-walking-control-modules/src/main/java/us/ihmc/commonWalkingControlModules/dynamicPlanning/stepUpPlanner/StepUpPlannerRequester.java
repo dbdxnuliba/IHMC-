@@ -2,15 +2,7 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.stepUpPlanner;
 
 import java.util.ArrayList;
 
-import controller_msgs.msg.dds.StepUpPlannerCostWeights;
-import controller_msgs.msg.dds.StepUpPlannerErrorMessage;
-import controller_msgs.msg.dds.StepUpPlannerParametersMessage;
-import controller_msgs.msg.dds.StepUpPlannerPhase;
-import controller_msgs.msg.dds.StepUpPlannerPhaseParameters;
-import controller_msgs.msg.dds.StepUpPlannerRequestMessage;
-import controller_msgs.msg.dds.StepUpPlannerRespondMessage;
-import controller_msgs.msg.dds.StepUpPlannerStepParameters;
-import controller_msgs.msg.dds.StepUpPlannerVector2;
+import controller_msgs.msg.dds.*;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commons.exception.DefaultExceptionHandler;
 import us.ihmc.commons.exception.ExceptionTools;
@@ -288,7 +280,7 @@ public class StepUpPlannerRequester
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
-      msg.setStaticFrictionCoefficient(0.7);
+      msg.setStaticFrictionCoefficient(0.5);
       msg.setTorsionalFrictionCoefficient(0.1);
 
       double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
