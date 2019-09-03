@@ -37,6 +37,10 @@ module controller_msgs
          */
         double min_leg_length;
         /**
+         * Minimum height of the CoM with respect the higher foot in contact
+         */
+        double min_com_height;
+        /**
          * Ipopt internal linear solver
          */
         string ipopt_linear_solver;

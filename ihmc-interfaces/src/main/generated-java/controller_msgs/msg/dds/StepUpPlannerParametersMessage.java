@@ -29,6 +29,10 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
             */
    public double min_leg_length_;
    /**
+            * Minimum height of the CoM with respect the higher foot in contact
+            */
+   public double min_com_height_;
+   /**
             * Ipopt internal linear solver
             */
    public java.lang.StringBuilder ipopt_linear_solver_;
@@ -128,6 +132,8 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       max_leg_length_ = other.max_leg_length_;
 
       min_leg_length_ = other.min_leg_length_;
+
+      min_com_height_ = other.min_com_height_;
 
       ipopt_linear_solver_.setLength(0);
       ipopt_linear_solver_.append(other.ipopt_linear_solver_);
@@ -237,6 +243,21 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
    public double getMinLegLength()
    {
       return min_leg_length_;
+   }
+
+   /**
+            * Minimum height of the CoM with respect the higher foot in contact
+            */
+   public void setMinComHeight(double min_com_height)
+   {
+      min_com_height_ = min_com_height;
+   }
+   /**
+            * Minimum height of the CoM with respect the higher foot in contact
+            */
+   public double getMinComHeight()
+   {
+      return min_com_height_;
    }
 
    /**
@@ -572,6 +593,8 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.min_leg_length_, other.min_leg_length_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.min_com_height_, other.min_com_height_, epsilon)) return false;
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.ipopt_linear_solver_, other.ipopt_linear_solver_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.final_state_anticipation_, other.final_state_anticipation_, epsilon)) return false;
@@ -629,6 +652,8 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
 
       if(this.min_leg_length_ != otherMyClass.min_leg_length_) return false;
 
+      if(this.min_com_height_ != otherMyClass.min_com_height_) return false;
+
       if (!us.ihmc.idl.IDLTools.equals(this.ipopt_linear_solver_, otherMyClass.ipopt_linear_solver_)) return false;
 
       if(this.final_state_anticipation_ != otherMyClass.final_state_anticipation_) return false;
@@ -684,6 +709,8 @@ public class StepUpPlannerParametersMessage extends Packet<StepUpPlannerParamete
       builder.append(this.max_leg_length_);      builder.append(", ");
       builder.append("min_leg_length=");
       builder.append(this.min_leg_length_);      builder.append(", ");
+      builder.append("min_com_height=");
+      builder.append(this.min_com_height_);      builder.append(", ");
       builder.append("ipopt_linear_solver=");
       builder.append(this.ipopt_linear_solver_);      builder.append(", ");
       builder.append("final_state_anticipation=");

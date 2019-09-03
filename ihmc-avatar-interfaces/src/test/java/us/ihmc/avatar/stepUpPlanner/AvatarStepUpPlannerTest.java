@@ -167,6 +167,7 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
                                                                                                                   heightDifference,
                                                                                                                   minLegLength(),
                                                                                                                   maxLegLength(),
+                                                                                                                  minCoMHeight(),
                                                                                                                   0.4,
                                                                                                                   leftOffset,
                                                                                                                   rightOffset);
@@ -386,7 +387,12 @@ public abstract class AvatarStepUpPlannerTest implements MultiRobotTestInterface
 
    protected double minLegLength()
    {
-      return 0.75;
+      return 0.0;
+   }
+
+   protected double minCoMHeight()
+   {
+      return 0.7;
    }
 
    protected double desiredLegLength()

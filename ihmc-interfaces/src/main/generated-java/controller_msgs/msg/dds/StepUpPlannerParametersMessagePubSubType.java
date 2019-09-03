@@ -51,6 +51,8 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 255 + 1;
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
@@ -100,6 +102,9 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       for(int i0 = 0; i0 < data.getPhasesParameters().size(); ++i0)
       {
           current_alignment += controller_msgs.msg.dds.StepUpPlannerPhaseParametersPubSubType.getCdrSerializedSize(data.getPhasesParameters().get(i0), current_alignment);}
+
+      current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
+
 
       current_alignment += 8 + us.ihmc.idl.CDR.alignment(current_alignment, 8);
 
@@ -180,6 +185,8 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
 
       cdr.write_type_6(data.getMinLegLength());
 
+      cdr.write_type_6(data.getMinComHeight());
+
       if(data.getIpoptLinearSolver().length() <= 255)
       cdr.write_type_d(data.getIpoptLinearSolver());else
           throw new RuntimeException("ipopt_linear_solver field exceeds the maximum length");
@@ -236,6 +243,8 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       	
       data.setMinLegLength(cdr.read_type_6());
       	
+      data.setMinComHeight(cdr.read_type_6());
+      	
       cdr.read_type_d(data.getIpoptLinearSolver());	
       data.setFinalStateAnticipation(cdr.read_type_6());
       	
@@ -278,6 +287,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       ser.write_type_12("solver_verbosity", data.getSolverVerbosity());
       ser.write_type_6("max_leg_length", data.getMaxLegLength());
       ser.write_type_6("min_leg_length", data.getMinLegLength());
+      ser.write_type_6("min_com_height", data.getMinComHeight());
       ser.write_type_d("ipopt_linear_solver", data.getIpoptLinearSolver());
       ser.write_type_6("final_state_anticipation", data.getFinalStateAnticipation());
       ser.write_type_6("static_friction_coefficient", data.getStaticFrictionCoefficient());
@@ -307,6 +317,7 @@ public class StepUpPlannerParametersMessagePubSubType implements us.ihmc.pubsub.
       data.setSolverVerbosity(ser.read_type_12("solver_verbosity"));
       data.setMaxLegLength(ser.read_type_6("max_leg_length"));
       data.setMinLegLength(ser.read_type_6("min_leg_length"));
+      data.setMinComHeight(ser.read_type_6("min_com_height"));
       ser.read_type_d("ipopt_linear_solver", data.getIpoptLinearSolver());
       data.setFinalStateAnticipation(ser.read_type_6("final_state_anticipation"));
       data.setStaticFrictionCoefficient(ser.read_type_6("static_friction_coefficient"));

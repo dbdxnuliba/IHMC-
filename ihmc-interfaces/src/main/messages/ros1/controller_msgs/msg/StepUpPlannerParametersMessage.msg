@@ -16,6 +16,9 @@ float64 max_leg_length
 # Minimum distance between the CoM and the foot
 float64 min_leg_length
 
+# Minimum height of the CoM with respect the higher foot in contact
+float64 min_com_height
+
 # Ipopt internal linear solver
 string ipopt_linear_solver
 

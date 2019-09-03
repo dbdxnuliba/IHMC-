@@ -107,6 +107,7 @@ public class AtlasStepUpPlannerDemo
 
       double minLegLength = 0.75;
       double maxLegLength = 1.15;
+      double minCoMHeight = 0.7; //compared to the maximum step height
       double desiredLegLength = 1.05;
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
@@ -136,6 +137,7 @@ public class AtlasStepUpPlannerDemo
                                                                                                                heightDifference,
                                                                                                                minLegLength,
                                                                                                                maxLegLength,
+                                                                                                               minCoMHeight,
                                                                                                                footScale,
                                                                                                                leftOffset,
                                                                                                                rightOffset);

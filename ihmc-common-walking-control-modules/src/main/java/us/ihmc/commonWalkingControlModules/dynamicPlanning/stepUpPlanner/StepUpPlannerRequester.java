@@ -215,8 +215,8 @@ public class StepUpPlannerRequester
    }
 
    static public StepUpPlannerParametersMessage getDefaultFivePhasesParametersMessage(SteppingParameters steppingParameters, double pelvisHeightDelta,
-                                                                                      double minLegLength, double maxLegLength, double footScale,
-                                                                                      Vector2D leftOffset, Vector2D rightOffset)
+                                                                                      double minLegLength, double maxLegLength, double minCoMHeight,
+                                                                                      double footScale, Vector2D leftOffset, Vector2D rightOffset)
    {
       StepUpPlannerParametersMessage msg = new StepUpPlannerParametersMessage();
 
@@ -286,6 +286,7 @@ public class StepUpPlannerRequester
       msg.setSolverVerbosity(1);
       msg.setMinLegLength(minLegLength);
       msg.setMaxLegLength(maxLegLength);
+      msg.setMinComHeight(0.7);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
       msg.setStaticFrictionCoefficient(0.7);
