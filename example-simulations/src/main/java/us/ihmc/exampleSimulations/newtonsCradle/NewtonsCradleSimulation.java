@@ -13,6 +13,7 @@ import us.ihmc.exampleSimulations.collidingArms.SingleCylinderRobotDescription;
 import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.simulationConstructionSetTools.util.environments.GroundAsABoxEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.ground.CombinedTerrainObject3D;
 import us.ihmc.simulationconstructionset.FloatingJoint;
 import us.ihmc.simulationconstructionset.Robot;
@@ -20,6 +21,7 @@ import us.ihmc.simulationconstructionset.RobotFromDescription;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.simulationconstructionset.SimulationConstructionSetParameters;
 import us.ihmc.simulationconstructionset.physics.CollisionHandler;
+import us.ihmc.simulationconstructionset.physics.collision.DefaultCollisionHandler;
 import us.ihmc.simulationconstructionset.physics.collision.HybridImpulseSpringDamperCollisionHandler;
 import us.ihmc.simulationconstructionset.physics.collision.simple.CollisionManager;
 import us.ihmc.simulationconstructionset.util.LinearStickSlipGroundContactModel;
@@ -27,45 +29,37 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class NewtonsCradleSimulation
 {
-   private static CollisionHandler createCollisionHandler(double coefficientOfRestitution, double coefficientOfFriction, YoVariableRegistry registry,
-                                                          YoGraphicsListRegistry yoGraphicsListRegistry)
+   private enum CollisionHandlerType
    {
-      //      CollisionHandler collisionHandler =  new DefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
-      CollisionHandler collisionHandler = new HybridImpulseSpringDamperCollisionHandler(coefficientOfRestitution, coefficientOfFriction, registry,
-                                                                                        yoGraphicsListRegistry);
+      DEFAULT, HYBRID_IMPULSE;
+      // TODO: add handler type for CollisionHandler collisionHandler = new SpringCollisionHandler(2.0, 1.1, 1.1, robot.getRobotsYoVariableRegistry());
+   }
 
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(2.0, 1.1, 1.1, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(1, 1000, 10.0, robot.getRobotsYoVariableRegistry());
-
+   private static CollisionHandler createDefaultCollisionHandler(double coefficientOfRestitution, double coefficientOfFriction)
+   {
+      CollisionHandler collisionHandler = new DefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
       return collisionHandler;
    }
 
-   public static void createNewtonsCradleSimulation()
+   private static CollisionHandler createHybridImpulseCollisionHandler(double coefficientOfRestitution, double coefficientOfFriction,
+                                                                       YoVariableRegistry registry, YoGraphicsListRegistry yoGraphicsListRegistry, double kp,
+                                                                       double kd)
    {
-      NewtonsCradleRobot robot = new NewtonsCradleRobot();
-
-      SimulationConstructionSet scs = new SimulationConstructionSet(robot);
-      scs.setDT(0.0001, 100);
-
-      YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
-      scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
-      
-      CollisionHandler collisionHandler = createCollisionHandler(0.99, 0.15, scs.getRootRegistry(), yoGraphicsListRegistry);
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
-      scs.initializeShapeCollision(collisionManager);
-      scs.startOnAThread();
+      HybridImpulseSpringDamperCollisionHandler collisionHandler = new HybridImpulseSpringDamperCollisionHandler(coefficientOfRestitution,
+                                                                                                                 coefficientOfFriction, registry,
+                                                                                                                 yoGraphicsListRegistry);
+      collisionHandler.setKd(kp);
+      collisionHandler.setKd(kd);
+      return collisionHandler;
    }
 
-   public static void createSpinningCoinSimulation()
+
+   public static void createSpinningCoinSimulation(CollisionHandlerType collisionHandlerType)
    {
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
+      
       SpinningCoinRobot spinningCoinRobot = new SpinningCoinRobot();
       ArrayList<Robot> robots = spinningCoinRobot.getRobots();
-
-      int estimatedNumberOfContactPoints = 32;
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setAddWalls(false);
-      robots.add(groundAsABoxRobot.createRobot());
 
       SimulationConstructionSetParameters parameters = new SimulationConstructionSetParameters(10000);
 
@@ -80,18 +74,28 @@ public class NewtonsCradleSimulation
 
       double epsilon = 0.3;
       double mu = 0.7;
-      CollisionHandler collisionHandler = createCollisionHandler(epsilon, mu, scs.getRootRegistry(), yoGraphicsListRegistry);
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(epsilon, mu);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(epsilon, mu, scs.getRootRegistry(), yoGraphicsListRegistry, 20000, 5000);
+         break;
+      }
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
-
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
+      
       scs.startOnAThread();
 
       scs.setSimulateDuration(60.0);
       scs.simulate();
    }
 
-   public static void createStackOfBouncyBallsSimulation()
+   public static void createStackOfBouncyBallsSimulation(CollisionHandlerType collisionHandlerType)
    {
       ArrayList<Robot> robots = new ArrayList<>();
 
@@ -112,12 +116,8 @@ public class NewtonsCradleSimulation
       StackOfBouncyBallsRobot robot = new StackOfBouncyBallsRobot(numberOfBalls, radiusScaleFactor, massScaleFactor);
       robots.add(robot);
 
-      int estimatedNumberOfContactPoints = 4;
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setAddWalls(false);
-      robots.add(groundAsABoxRobot.createRobot());
-
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
+      
       Robot[] robotArray = new Robot[robots.size()];
       robots.toArray(robotArray);
 
@@ -127,26 +127,35 @@ public class NewtonsCradleSimulation
 
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      double coefficientOfRestitution = 0.9;
-      double coefficientOfFriction = 0.0;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(2.0, 1.1, 1.1, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(1, 1000, 10.0, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler collisionHandler = new DefaultCollisionHandler(0.98, 0.1, robot);
-      //      CollisionHandler collisionHandler = new DefaultCollisionHandler(0.3, 0.7, robot);
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      double kp = 20000;
+      double kd = 5000;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
+
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
       scs.startOnAThread();
    }
 
-   public static void createBoxDownRampSimulation()
+   public static void createBoxDownRampSimulation(CollisionHandlerType collisionHandlerType)
    {
       double coefficientOfRestitution = 0.3;
       double coefficientOfFriction = 0.4;
-
+      
       ArrayList<Robot> robots = new ArrayList<>();
       double mass = 1.0;
       double xLength = 0.2;
@@ -168,16 +177,8 @@ public class NewtonsCradleSimulation
       robots.add(boxRobot);
 
       double groundAngle = Math.PI / 8.0;
-
-      int estimatedNumberOfContactPoints = 32;
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setGroundAngle(groundAngle);
-      groundAsABoxRobot.setAddWalls(false);
-      groundAsABoxRobot.setCollisionGroup(0xffff);
-      groundAsABoxRobot.setCollisionMask(0xffff);
-      robots.add(groundAsABoxRobot.createRobot());
-
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment(false, groundAngle);
+      
       Robot[] robotArray = new Robot[robots.size()];
       robots.toArray(robotArray);
 
@@ -204,21 +205,29 @@ public class NewtonsCradleSimulation
 
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(2.0, 1.1, 1.1, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler collisionHandler = new SpringCollisionHandler(1, 1000, 10.0, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler collisionHandler = new DefaultCollisionHandler(0.98, 0.1, robot);
-      //      CollisionHandler collisionHandler = new DefaultCollisionHandler(0.3, 0.7, robot);
+      double kp = 20000;
+      double kd = 5000;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
 
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
       scs.startOnAThread();
    }
 
-   public static void createRollingObjectsSimulation()
+   public static void createRollingObjectsSimulation(CollisionHandlerType collisionHandlerType)
    {
       ArrayList<Robot> robots = new ArrayList<>();
 
@@ -259,17 +268,8 @@ public class NewtonsCradleSimulation
       capsuleRootJoint.setVelocity(initialVelocity, 0.0, 0.0);
       capsuleRootJoint.setYawPitchRoll(0.0, 0.0, Math.PI / 2.00);
 
-      int estimatedNumberOfContactPoints = 30;
-      double groundAngle = 0.0;
-
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setGroundAngle(groundAngle);
-      groundAsABoxRobot.setAddWalls(false);
-      groundAsABoxRobot.setCollisionGroup(0xffff);
-      groundAsABoxRobot.setCollisionMask(0xffff);
-      robots.add(groundAsABoxRobot.createRobot());
-
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
+      
       Robot[] robotArray = new Robot[robots.size()];
       robots.toArray(robotArray);
 
@@ -282,19 +282,31 @@ public class NewtonsCradleSimulation
 
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      double coefficientOfRestitution = 0.3;
-      double coefficientOfFriction = 0.1;//0.7;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      double kp = 20000;
+      double kd = 5000;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
 
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
       scs.startOnAThread();
    }
 
-   public static void createTeeteringEdgeToEdgeContactSimulation()
+   public static void createTeeteringEdgeToEdgeContactSimulation(CollisionHandlerType collisionHandlerType)
    {
       ArrayList<Robot> robots = new ArrayList<>();
 
@@ -308,31 +320,16 @@ public class NewtonsCradleSimulation
       double initialVelocity = 0.0;
 
       double groundWidth = 1.0;
-      double groundLength = 1.0;
 
       RobotFromDescription boxRobot = createASingleBoxRobot(boxXLength, boxYWidth, boxZHeight, boxMass, boxRadiusOfGyrationPercent);
       robots.add(boxRobot);
       FloatingJoint boxRootJoint = (FloatingJoint) boxRobot.getRootJoints().get(0);
-      boxRootJoint.setPosition(0.0, groundWidth/2.0 - 0.002, boxZHeight / 2.0 * 1.05 + boxYWidth / 2.0 * Math.sin(Math.abs(initialBoxRoll)));
+      boxRootJoint.setPosition(0.0, groundWidth / 2.0 - 0.002, boxZHeight / 2.0 * 1.05 + boxYWidth / 2.0 * Math.sin(Math.abs(initialBoxRoll)));
       boxRootJoint.setVelocity(initialVelocity, 0.0, 0.0);
       boxRootJoint.setYawPitchRoll(0.0, 0.0, initialBoxRoll);
       boxRootJoint.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
 
-      int estimatedNumberOfContactPoints = 30;
-      double groundAngle = 0.0;
-
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setGroundAngle(groundAngle);
-      groundAsABoxRobot.setAddWalls(false);
-
-      groundAsABoxRobot.setGroundLength(groundLength);
-      groundAsABoxRobot.setGroundWidth(groundWidth);
-
-      groundAsABoxRobot.setCollisionGroup(0xffff);
-      groundAsABoxRobot.setCollisionMask(0xffff);
-
-      robots.add(groundAsABoxRobot.createRobot());
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
 
       Robot[] robotArray = new Robot[robots.size()];
       robots.toArray(robotArray);
@@ -346,19 +343,31 @@ public class NewtonsCradleSimulation
 
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      double coefficientOfRestitution = 0.3;
-      double coefficientOfFriction = 0.4;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      double kp = 20000;
+      double kd = 5000;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
 
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
       scs.startOnAThread();
    }
 
-   public static void createSpinningAndDroppingObjectsSimulation()
+   public static void createSpinningAndDroppingObjectsSimulation(CollisionHandlerType collisionHandlerType)
    {
       ArrayList<Robot> robots = new ArrayList<>();
 
@@ -406,24 +415,24 @@ public class NewtonsCradleSimulation
       cylinderRootJoint.setYawPitchRoll(0.0, initialPitch, 0.0);
       cylinderRootJoint.setAngularVelocityInBody(new Vector3D(initialCylinderSpinRotationalVelocity, 0.0, 0.0));
 
-//      RobotFromDescription cylinderRobotTwo = createASingleCylinderRobot("cylinderTwo", cylinderRadius, cylinderHeight, cylinderMass,
-//                                                                         cylinderRadiusOfGyrationPercent);
-//      robots.add(cylinderRobotTwo);
-//      FloatingJoint cylinderRootJointTwo = (FloatingJoint) cylinderRobotTwo.getRootJoints().get(0);
-//      cylinderRootJointTwo.setPosition(0.0, 0.0, cylinderHeight / 2.0 * 1.05 + cylinderRadius * Math.abs(Math.sin(initialPitch)));
-//      cylinderRootJointTwo.setVelocity(initialVelocity, 0.0, 0.0);
-//      cylinderRootJointTwo.setYawPitchRoll(0.0, 0.0, 0.0);
-//      cylinderRootJointTwo.setAngularVelocityInBody(new Vector3D(0.0, 0.0, initialRotationalVelocity));
-//
-//      RobotFromDescription cylinderRobotThree = createASingleCylinderRobot("cylinderThree", cylinderRadius, cylinderHeight, cylinderMass,
-//                                                                           cylinderRadiusOfGyrationPercent);
-//      robots.add(cylinderRobotThree);
-//      FloatingJoint cylinderRootJointThree = (FloatingJoint) cylinderRobotThree.getRootJoints().get(0);
-//      cylinderRootJointThree.setPosition(0.0, -cylinderRadius * 3.0, cylinderHeight / 2.0 * 1.05 + cylinderRadius * Math.abs(Math.sin(initialPitch)));
-//      cylinderRootJointThree.setVelocity(initialVelocity, 0.0, 0.0);
-//      cylinderRootJointThree.setYawPitchRoll(0.0, initialPitch, 0.0);
-//      cylinderRootJointThree.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
-//
+      //      RobotFromDescription cylinderRobotTwo = createASingleCylinderRobot("cylinderTwo", cylinderRadius, cylinderHeight, cylinderMass,
+      //                                                                         cylinderRadiusOfGyrationPercent);
+      //      robots.add(cylinderRobotTwo);
+      //      FloatingJoint cylinderRootJointTwo = (FloatingJoint) cylinderRobotTwo.getRootJoints().get(0);
+      //      cylinderRootJointTwo.setPosition(0.0, 0.0, cylinderHeight / 2.0 * 1.05 + cylinderRadius * Math.abs(Math.sin(initialPitch)));
+      //      cylinderRootJointTwo.setVelocity(initialVelocity, 0.0, 0.0);
+      //      cylinderRootJointTwo.setYawPitchRoll(0.0, 0.0, 0.0);
+      //      cylinderRootJointTwo.setAngularVelocityInBody(new Vector3D(0.0, 0.0, initialRotationalVelocity));
+      //
+      //      RobotFromDescription cylinderRobotThree = createASingleCylinderRobot("cylinderThree", cylinderRadius, cylinderHeight, cylinderMass,
+      //                                                                           cylinderRadiusOfGyrationPercent);
+      //      robots.add(cylinderRobotThree);
+      //      FloatingJoint cylinderRootJointThree = (FloatingJoint) cylinderRobotThree.getRootJoints().get(0);
+      //      cylinderRootJointThree.setPosition(0.0, -cylinderRadius * 3.0, cylinderHeight / 2.0 * 1.05 + cylinderRadius * Math.abs(Math.sin(initialPitch)));
+      //      cylinderRootJointThree.setVelocity(initialVelocity, 0.0, 0.0);
+      //      cylinderRootJointThree.setYawPitchRoll(0.0, initialPitch, 0.0);
+      //      cylinderRootJointThree.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
+      //
       RobotFromDescription capsuleRobot = createASingleCapsuleRobot(capsuleRadius, capsuleHeight, capsuleMass, capsuleRadiusOfGyrationPercent);
       robots.add(capsuleRobot);
       FloatingJoint capsuleRootJoint = (FloatingJoint) capsuleRobot.getRootJoints().get(0);
@@ -433,26 +442,15 @@ public class NewtonsCradleSimulation
       capsuleRootJoint.setYawPitchRoll(0.0, 0.0, Math.PI / 2.0 + initialCapsuleRoll);
       capsuleRootJoint.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
 
-//      RobotFromDescription boxRobot = createASingleBoxRobot(boxXLength, boxYWidth, boxZHeight, boxMass, boxRadiusOfGyrationPercent);
-//      robots.add(boxRobot);
-//      FloatingJoint boxRootJoint = (FloatingJoint) boxRobot.getRootJoints().get(0);
-//      boxRootJoint.setPosition(0.0, 2.0 * cylinderRadius + boxYWidth, boxZHeight / 2.0 * 1.05 + boxYWidth / 2.0 * Math.sin(Math.abs(initialBoxRoll)));
-//      boxRootJoint.setVelocity(initialVelocity, 0.0, 0.0);
-//      boxRootJoint.setYawPitchRoll(0.0, 0.0, initialBoxRoll);
-//      boxRootJoint.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
+      //      RobotFromDescription boxRobot = createASingleBoxRobot(boxXLength, boxYWidth, boxZHeight, boxMass, boxRadiusOfGyrationPercent);
+      //      robots.add(boxRobot);
+      //      FloatingJoint boxRootJoint = (FloatingJoint) boxRobot.getRootJoints().get(0);
+      //      boxRootJoint.setPosition(0.0, 2.0 * cylinderRadius + boxYWidth, boxZHeight / 2.0 * 1.05 + boxYWidth / 2.0 * Math.sin(Math.abs(initialBoxRoll)));
+      //      boxRootJoint.setVelocity(initialVelocity, 0.0, 0.0);
+      //      boxRootJoint.setYawPitchRoll(0.0, 0.0, initialBoxRoll);
+      //      boxRootJoint.setAngularVelocityInBody(new Vector3D(0.0, 0.0, 0.0));
 
-      int estimatedNumberOfContactPoints = 100;
-      double groundAngle = 0.0;
-
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setGroundAngle(groundAngle);
-      groundAsABoxRobot.setAddWalls(false);
-      groundAsABoxRobot.setCollisionGroup(0xffff);
-      groundAsABoxRobot.setCollisionMask(0xffff);
-
-      robots.add(groundAsABoxRobot.createRobot());
-
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
       Robot[] robotArray = new Robot[robots.size()];
       robots.toArray(robotArray);
 
@@ -465,14 +463,26 @@ public class NewtonsCradleSimulation
 
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      double coefficientOfRestitution = 0.3;
-      double coefficientOfFriction = 0.4;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      double kp = 20000;
+      double kd = 5000;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
 
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
       scs.startOnAThread();
    }
@@ -561,7 +571,7 @@ public class NewtonsCradleSimulation
       return ballRobot;
    }
 
-   public static void createRowOfDominosSimulation()
+   public static void createRowOfDominosSimulation(CollisionHandlerType collisionHandlerType)
    {
       ArrayList<Robot> robots = new ArrayList<>();
       int numberOfDominos = 30;
@@ -601,11 +611,16 @@ public class NewtonsCradleSimulation
 
       double coefficientOfRestitution = 0.3;
       double coefficientOfFriction = 0.7;
-      //      CollisionHandler handler = new SpringCollisionHandler(2.0, 1.1, 1.1, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler handler = new SpringCollisionHandler(1, 1000, 10.0, robot.getRobotsYoVariableRegistry());
-      //      CollisionHandler handler = new DefaultCollisionHandler(0.98, 0.1, robot);
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(0.99, 0.15);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(0.99, 0.15, scs.getRootRegistry(), yoGraphicsListRegistry, 20000, 5000);
+         break;
+      }
 
       CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
       scs.initializeShapeCollision(collisionManager);
@@ -614,7 +629,7 @@ public class NewtonsCradleSimulation
       scs.startOnAThread();
    }
 
-   public static void createStackOfBlocksSimulation()
+   public static void createStackOfBlocksSimulation(CollisionHandlerType collisionHandlerType)
    {
       int numberOfBlocks = 6;
       StackOfBlocksRobot stackOfBlocksRobot = new StackOfBlocksRobot(numberOfBlocks);
@@ -640,13 +655,20 @@ public class NewtonsCradleSimulation
       scs.setGroundVisible(false);
       scs.setSimulateDuration(2.0);
 
-      //      DefaultCollisionVisualizer collisionVisualizer = null;
       YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
 
-      double coefficientOfRestitution = 0.3;
-      double coefficientOfFriction = 0.7;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry, 20000, 5000);
+         break;
+      }
       CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
@@ -654,20 +676,15 @@ public class NewtonsCradleSimulation
       scs.startOnAThread();
    }
 
-   public static void createPileOfRandomObjectsSimulation()
+   public static void createPileOfRandomObjectsSimulation(CollisionHandlerType collisionHandlerType)
    {
-      int numberOfObjects = 60;
+      int numberOfObjects = 100;
 
       PileOfRandomObjectsRobot pileOfRandomObjectsRobot = new PileOfRandomObjectsRobot();
       pileOfRandomObjectsRobot.setNumberOfObjects(numberOfObjects);
       ArrayList<Robot> robots = pileOfRandomObjectsRobot.createAndGetRobots();
 
-      int estimatedNumberOfContactPoints = 2 * numberOfObjects * 8;//500;
-      GroundAsABoxRobot groundAsABoxRobot = new GroundAsABoxRobot();
-      groundAsABoxRobot.setEstimatedNumberOfContactPoints(estimatedNumberOfContactPoints);
-      groundAsABoxRobot.setAddWalls(true);
-      robots.add(groundAsABoxRobot.createRobot());
-
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment(true);
       boolean showGUI = true;
 
       Robot[] robotArray = new Robot[robots.size()];
@@ -683,18 +700,28 @@ public class NewtonsCradleSimulation
 
       double coefficientOfRestitution = 0.3;
       double coefficientOfFriction = 0.7;
-      CollisionHandler collisionHandler = createCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(),
-                                                                 yoGraphicsListRegistry);
-      CollisionManager collisionManager = new CollisionManager(null, collisionHandler);
+      double kp = 200;
+      double kd = 10;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
       scs.initializeShapeCollision(collisionManager);
       scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
 
-      scs.setDT(0.00025, 10);
+      scs.setDT(0.00025, 1);
       scs.setFastSimulate(true);
       scs.setGroundVisible(false);
       scs.startOnAThread();
-
-      //      scs.simulate();
 
       long wallStartTime = System.currentTimeMillis();
       while (true)
@@ -709,19 +736,62 @@ public class NewtonsCradleSimulation
          System.out.println("Real Time Rate = " + realTimeRate);
       }
    }
+   
+
+   public static void createNewtonsCradleSimulation(CollisionHandlerType collisionHandlerType)
+   {
+      NewtonsCradleRobot robot = new NewtonsCradleRobot();
+
+      SimulationConstructionSet scs = new SimulationConstructionSet(robot);
+      scs.setDT(0.0001, 100);
+
+      GroundAsABoxEnvironment environment = new GroundAsABoxEnvironment();
+      
+      YoGraphicsListRegistry yoGraphicsListRegistry = new YoGraphicsListRegistry();
+
+      double coefficientOfRestitution = 0.99;
+      double coefficientOfFriction = 0.15;
+      double kp = 200;
+      double kd = 10;
+      CollisionHandler collisionHandler = null;
+      switch (collisionHandlerType)
+      {
+      case DEFAULT:
+         collisionHandler = createDefaultCollisionHandler(coefficientOfRestitution, coefficientOfFriction);
+         break;
+      case HYBRID_IMPULSE:
+         collisionHandler = createHybridImpulseCollisionHandler(coefficientOfRestitution, coefficientOfFriction, scs.getRootRegistry(), yoGraphicsListRegistry,
+                                                                kp, kd);
+         break;
+      }
+
+      CollisionManager collisionManager = new CollisionManager(environment.getTerrainObject3D(), collisionHandler);
+      scs.initializeShapeCollision(collisionManager);
+      scs.addYoGraphicsListRegistry(yoGraphicsListRegistry);
+      scs.addStaticLinkGraphics(environment.getTerrainObject3D().getLinkGraphics());
+      
+      scs.startOnAThread();
+   }
 
    public static void main(String[] args)
    {
-//                  createNewtonsCradleSimulation();
-      //    createSpinningCoinSimulation();
-      //            createStackOfBouncyBallsSimulation();
-      //            createBoxDownRampSimulation();
-//                  createRowOfDominosSimulation();
-      //      createStackOfBlocksSimulation();
-//            createRollingObjectsSimulation();
-//            createSpinningAndDroppingObjectsSimulation();
-//      createTeeteringEdgeToEdgeContactSimulation();
-            createPileOfRandomObjectsSimulation();
+//      createNewtonsCradleSimulation(CollisionHandlerType.DEFAULT);
+      
+            createNewtonsCradleSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createSpinningCoinSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createStackOfBouncyBallsSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createBoxDownRampSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createRowOfDominosSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createStackOfBlocksSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      
+//            createRollingObjectsSimulation(CollisionHandlerType.DEFAULT);
+//            createRollingObjectsSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+//            createSpinningAndDroppingObjectsSimulation(CollisionHandlerType.DEFAULT);
+//            createSpinningAndDroppingObjectsSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+//      createTeeteringEdgeToEdgeContactSimulation(CollisionHandlerType.DEFAULT);
+//      createTeeteringEdgeToEdgeContactSimulation(CollisionHandlerType.HYBRID_IMPULSE);
+      //      createPileOfRandomObjectsSimulation(CollisionHandlerType.DEFAULT);
+//            createPileOfRandomObjectsSimulation(CollisionHandlerType.HYBRID_IMPULSE);
    }
 
 }
