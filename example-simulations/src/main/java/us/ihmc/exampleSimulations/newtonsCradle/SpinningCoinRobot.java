@@ -1,6 +1,7 @@
 package us.ihmc.exampleSimulations.newtonsCradle;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import us.ihmc.euclid.matrix.Matrix3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -8,14 +9,14 @@ import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.AppearanceDefinition;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
-import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoFrameVector3D;
 import us.ihmc.robotics.robotDescription.CollisionMeshDescription;
 import us.ihmc.simulationconstructionset.FloatingJoint;
 import us.ihmc.simulationconstructionset.FunctionToIntegrate;
 import us.ihmc.simulationconstructionset.Link;
 import us.ihmc.simulationconstructionset.Robot;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoFrameVector3D;
 
 public class SpinningCoinRobot
 {
@@ -25,6 +26,7 @@ public class SpinningCoinRobot
    private double spinningAngularVelocity = 10.0 * 2.0 * Math.PI;
 
    private final ArrayList<Robot> robots = new ArrayList<>();
+   private List<Link> links = new ArrayList<Link>();
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final YoFrameVector3D linearMomentum = new YoFrameVector3D("linearMomentum", ReferenceFrame.getWorldFrame(), registry);
@@ -42,6 +44,7 @@ public class SpinningCoinRobot
       FloatingJoint floatingJoint = new FloatingJoint("root", offset, coinRobot);
 
       Link link = createCylinderCoin(coinRobot);
+      links.add(link);
 
       floatingJoint.setLink(link);
       coinRobot.addRootJoint(floatingJoint);
@@ -138,5 +141,9 @@ public class SpinningCoinRobot
    {
       return robots;
    }
-
+   
+   public List<Link> getLinks()
+   {
+      return links;
+   }
 }

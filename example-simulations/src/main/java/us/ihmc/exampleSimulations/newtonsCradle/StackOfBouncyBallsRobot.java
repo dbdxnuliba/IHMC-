@@ -1,5 +1,8 @@
 package us.ihmc.exampleSimulations.newtonsCradle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.Graphics3DObject;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -13,6 +16,8 @@ import us.ihmc.simulationconstructionset.Robot;
 
 public class StackOfBouncyBallsRobot extends Robot
 {
+   private List<Link> links = new ArrayList<Link>();
+   
    public StackOfBouncyBallsRobot()
    {
       this(4, 0.6, 0.2);
@@ -37,6 +42,7 @@ public class StackOfBouncyBallsRobot extends Robot
       double ballRadius = largestBallRadius;
       double ballMass = largestBallMass;
 
+      links.clear();
       for (int i = 0; i < numberOfBalls; i++)
       {
          if (i != 0)
@@ -65,6 +71,8 @@ public class StackOfBouncyBallsRobot extends Robot
          collisionMeshDescription.setCollisionMask(0xff);
          link.addCollisionMesh(collisionMeshDescription);
 
+         links.add(link);
+         
          floatingJoint.setLink(link);
          this.addRootJoint(floatingJoint);
 
@@ -111,5 +119,9 @@ public class StackOfBouncyBallsRobot extends Robot
 
       this.addFunctionToIntegrate(functionToIntegrate);
    }
-
+   
+   public List<Link> getLinks()
+   {
+      return links;
+   }
 }

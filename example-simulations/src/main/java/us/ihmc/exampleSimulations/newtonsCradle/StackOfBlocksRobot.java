@@ -1,6 +1,7 @@
 package us.ihmc.exampleSimulations.newtonsCradle;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import us.ihmc.commons.RandomNumbers;
@@ -16,7 +17,8 @@ import us.ihmc.simulationconstructionset.Robot;
 public class StackOfBlocksRobot
 {
    private final ArrayList<Robot> robots = new ArrayList<Robot>();
-
+   private List<Link> links = new ArrayList<Link>();
+   
    public StackOfBlocksRobot(int numberOfBlocks)
    {
       Random random = new Random(1886L);
@@ -26,7 +28,7 @@ public class StackOfBlocksRobot
    private void createFallingObjects(int numberOfObjects, Random random)
    {
       double objectHeight = 0.1;
-
+      links.clear();
       for (int i = 0; i < numberOfObjects; i++)
       {
          Robot robot = new Robot("StackOfBlocksRobot" + i);
@@ -34,7 +36,8 @@ public class StackOfBlocksRobot
          Vector3D offset = new Vector3D(0.0, 0.0, 0.0);
          FloatingJoint floatingJoint = new FloatingJoint("object" + i, "object" + i, offset, robot);
          Link link = createBox(objectHeight, random, i, robot);
-
+         links.add(link);
+         
          floatingJoint.setLink(link);
          robot.addRootJoint(floatingJoint);
 
@@ -69,12 +72,12 @@ public class StackOfBlocksRobot
       linkGraphics.addCube(objectLength, objectWidth, objectHeight, randomColor);
       link.setLinkGraphics(linkGraphics);
 
-
       CollisionMeshDescription collisionMeshDescription = new CollisionMeshDescription();
       collisionMeshDescription.addCubeReferencedAtCenter(objectLength, objectWidth, objectHeight);
       collisionMeshDescription.setCollisionGroup(0xff);
       collisionMeshDescription.setCollisionMask(0xff);
       link.addCollisionMesh(collisionMeshDescription);
+      
       return link;
    }
 
@@ -83,4 +86,8 @@ public class StackOfBlocksRobot
       return robots;
    }
 
+   public List<Link> getLinks()
+   {
+      return links;
+   }
 }

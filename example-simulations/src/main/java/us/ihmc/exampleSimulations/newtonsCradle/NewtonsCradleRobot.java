@@ -1,5 +1,8 @@
 package us.ihmc.exampleSimulations.newtonsCradle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import us.ihmc.euclid.Axis;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.graphicsDescription.Graphics3DObject;
@@ -12,6 +15,8 @@ import us.ihmc.simulationconstructionset.Robot;
 
 public class NewtonsCradleRobot extends Robot
 {
+   private List<Link> links = new ArrayList<Link>();
+   
    public NewtonsCradleRobot()
    {
       super("NewtonsCradle");
@@ -27,6 +32,7 @@ public class NewtonsCradleRobot extends Robot
       double pinJointHeight = 1.1 * stringLength;
       double pinJointSeparation = 2.001 * ballRadius;
 
+      links.clear();
       for (int i = 0; i < numberOfBalls; i++)
       {
          Vector3D offset = new Vector3D(i * pinJointSeparation, 1.0, pinJointHeight);
@@ -50,6 +56,7 @@ public class NewtonsCradleRobot extends Robot
          collisionMeshDescription.setCollisionGroup(0xff);
          collisionMeshDescription.setCollisionMask(0xff);
          link.addCollisionMesh(collisionMeshDescription);
+         links.add(link);
 
          pinJoint.setLink(link);
          this.addRootJoint(pinJoint);
@@ -64,6 +71,9 @@ public class NewtonsCradleRobot extends Robot
       Graphics3DObject barAbove = new Graphics3DObject();
       this.addStaticLinkGraphics(barAbove);
    }
-
-
+   
+   public List<Link> getLinks()
+   {
+      return links;
+   }
 }

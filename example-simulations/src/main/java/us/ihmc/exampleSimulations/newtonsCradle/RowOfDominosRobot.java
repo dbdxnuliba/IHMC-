@@ -1,5 +1,7 @@
 package us.ihmc.exampleSimulations.newtonsCradle;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -17,6 +19,8 @@ import us.ihmc.simulationconstructionset.Robot;
 
 public class RowOfDominosRobot extends Robot
 {
+   private List<Link> links = new ArrayList<Link>();
+   
    public RowOfDominosRobot(int numberOfDominos, boolean firstDominoFalling)
    {
       super("RowOfDominosRobot");
@@ -40,6 +44,7 @@ public class RowOfDominosRobot extends Robot
       RigidBodyTransform tempTransform = new RigidBodyTransform();
       RigidBodyTransform tempTransform2 = new RigidBodyTransform();
 
+      links.clear();
       for (int i = 0; i < numberOfDominos; i++)
       {
          Vector3D offset = new Vector3D(0.0, 0.0, 0.0);
@@ -60,6 +65,7 @@ public class RowOfDominosRobot extends Robot
          collisionMeshDescription.setCollisionGroup(0xff);
          collisionMeshDescription.setCollisionMask(0xff);
          link.addCollisionMesh(collisionMeshDescription);
+         links.add(link);
 
          floatingJoint.setLink(link);
          this.addRootJoint(floatingJoint);
@@ -113,4 +119,8 @@ public class RowOfDominosRobot extends Robot
       this.addFunctionToIntegrate(functionToIntegrate);
    }
 
+   public List<Link> getLinks()
+   {
+      return links;
+   }
 }
