@@ -1,9 +1,9 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.optimization;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
@@ -17,10 +17,11 @@ import us.ihmc.commonWalkingControlModules.configurations.ToeOffParameters;
 import us.ihmc.commonWalkingControlModules.configurations.WalkingControllerParameters;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.optimization.MomentumOptimizationSettings;
 import us.ihmc.euclid.referenceFrame.FramePoint2D;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
+import us.ihmc.euclid.referenceFrame.FrameQuaternion;
 import us.ihmc.euclid.referenceFrame.FrameVector2D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.tools.ReferenceFrameTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.humanoidRobotics.footstep.FootSpoof;
 import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
@@ -46,10 +47,61 @@ public class ICPOptimizationControllerTest
    private final SideDependentList<FramePose3D> footPosesAtTouchdown = new SideDependentList<>(new FramePose3D(), new FramePose3D());
    private final SideDependentList<ReferenceFrame> soleZUpFrames = new SideDependentList<>();
 
-   @AfterEach
-   public void tearDown()
+   @Test
+   public void testSmallFeet() throws Exception
    {
-      ReferenceFrameTools.clearWorldFrameTree();
+      YoVariableRegistry registry = new YoVariableRegistry("robert");
+
+      double controlDT = 0.004;
+      double initialTime = 2.0;
+      double currentTime = initialTime + 0.2;
+      FramePoint2D desiredICP = new FramePoint2D(worldFrame, 0.5873, 0.0378);
+      FrameVector2D desiredICPVelocity = new FrameVector2D(worldFrame, 0.1569, 0.264);
+      FramePoint2D currentICP = new FramePoint2D(worldFrame, 0.588, 0.0405);
+      FrameVector2D currentICPVelocity = new FrameVector2D(worldFrame, 0.1634, 0.3188);
+      FramePoint2D perfectCMP = new FramePoint2D(worldFrame, 0.554, -0.0183);
+      FramePoint3D leftFootPosition = new FramePoint3D(worldFrame, 0.5983, 0.0581, 0.0001);
+      FrameQuaternion leftFootOrientation = new FrameQuaternion(worldFrame, 0.0018, -0.0657, -0.0038, 0.9978);
+      FramePoint3D rightFootPosition = new FramePoint3D(worldFrame, 0.5087, -0.0844, -0.003);
+      FrameQuaternion rightFootOrientation = new FrameQuaternion(worldFrame, 0.0021, 0.0236, 0.0019, 0.9997);
+      double xToAnkle = 0.0;
+      double zToAnkle = 0.0;
+
+      // Small feet so the desired cop distance to edge will be un-achievable:
+      List<Point2D> leftContactPoints = Arrays.asList(new Point2D(-0.036, 0.017), new Point2D(-0.036, -0.017));
+      List<Point2D> rightContactPoints = Arrays.asList(new Point2D(0.036, 0.011), new Point2D(0.036, -0.011));
+
+      ICPOptimizationParameters optimizationParameters = new TestICPOptimizationParameters()
+      {
+         @Override
+         public double getSafeCoPDistanceToEdge()
+         {
+            return 0.002;
+         }
+      };
+
+      WalkingControllerParameters walkingControllerParameters = new TestWalkingControllerParameters();
+
+      FootSpoof leftFoot = new FootSpoof("leftFoot", xToAnkle, 0.0, zToAnkle, leftContactPoints, 0.0);
+      leftFoot.setSoleFrame(leftFootPosition, leftFootOrientation);
+      FootSpoof rightFoot = new FootSpoof("rightFoot", xToAnkle, 0.0, zToAnkle, rightContactPoints, 0.0);
+      rightFoot.setSoleFrame(rightFootPosition, rightFootOrientation);
+      SideDependentList<FootSpoof> contactableFeet = new SideDependentList<>(leftFoot, rightFoot);
+      BipedSupportPolygons bipedSupportPolygons = setupBipedSupportPolygons(contactableFeet, registry);
+      ICPOptimizationController controller = new ICPOptimizationController(walkingControllerParameters,
+                                                                           optimizationParameters,
+                                                                           soleZUpFrames,
+                                                                           bipedSupportPolygons,
+                                                                           null,
+                                                                           contactableFeet,
+                                                                           controlDT,
+                                                                           registry,
+                                                                           null);
+      new DefaultParameterReader().readParametersInRegistry(registry);
+
+      controller.initializeForStanding(initialTime);
+      controller.compute(currentTime, desiredICP, desiredICPVelocity, perfectCMP, currentICP, currentICPVelocity, walkingControllerParameters.getOmega0());
+      Assert.assertEquals(0, registry.getVariable("controllerHasNotConvergedCounts").getValueAsLongBits());
    }
 
    @Test
