@@ -384,9 +384,12 @@ public class StepUpPlannerRequester
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
-      newPhase.setMinimumDuration(1.2);
-      newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.2);
+//      newPhase.setMinimumDuration(1.2);
+//      newPhase.setMaximumDuration(2.0);
+//      newPhase.setDesiredDuration(1.2);
+      newPhase.setMinimumDuration(0.7);
+      newPhase.setMaximumDuration(1.3);
+      newPhase.setDesiredDuration(0.7);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
