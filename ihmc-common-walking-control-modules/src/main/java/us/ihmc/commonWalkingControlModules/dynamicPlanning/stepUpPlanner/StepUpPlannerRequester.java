@@ -280,7 +280,7 @@ public class StepUpPlannerRequester
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
-      msg.setStaticFrictionCoefficient(0.5);
+      msg.setStaticFrictionCoefficient(0.6);
       msg.setTorsionalFrictionCoefficient(0.1);
 
       double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
@@ -371,25 +371,25 @@ public class StepUpPlannerRequester
 
       newPhase = msg.getPhases().add();
       newPhase.getRightFootPose().set(initialRightPose);
-      newPhase.setMinimumDuration(1.2);
-      newPhase.setMaximumDuration(2.0);
-      newPhase.setDesiredDuration(1.2);
-
-      newPhase = msg.getPhases().add();
-      newPhase.getLeftFootPose().set(desiredLeftPose);
-      newPhase.getRightFootPose().set(initialRightPose);
       newPhase.setMinimumDuration(1.8);
-      newPhase.setMaximumDuration(2.0);
+      newPhase.setMaximumDuration(2.5);
       newPhase.setDesiredDuration(1.8);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);
-//      newPhase.setMinimumDuration(1.2);
-//      newPhase.setMaximumDuration(2.0);
-//      newPhase.setDesiredDuration(1.2);
-      newPhase.setMinimumDuration(0.7);
-      newPhase.setMaximumDuration(1.3);
-      newPhase.setDesiredDuration(0.7);
+      newPhase.getRightFootPose().set(initialRightPose);
+      newPhase.setMinimumDuration(1.4);
+      newPhase.setMaximumDuration(2.0);
+      newPhase.setDesiredDuration(1.4);
+
+      newPhase = msg.getPhases().add();
+      newPhase.getLeftFootPose().set(desiredLeftPose);
+      newPhase.setMinimumDuration(1.0);
+      newPhase.setMaximumDuration(1.4);
+      newPhase.setDesiredDuration(1.0);
+//      newPhase.setMinimumDuration(0.7);
+//      newPhase.setMaximumDuration(1.3);
+//      newPhase.setDesiredDuration(0.7);
 
       newPhase = msg.getPhases().add();
       newPhase.getLeftFootPose().set(desiredLeftPose);

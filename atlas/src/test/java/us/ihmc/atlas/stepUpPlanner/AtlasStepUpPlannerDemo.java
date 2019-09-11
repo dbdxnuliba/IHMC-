@@ -132,7 +132,7 @@ public class AtlasStepUpPlannerDemo
                                                                                                                rightOffset);
       
       parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setX(0.0);
-      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setY(0.0);
+      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setY(-0.01);
       
       parameters.getPhasesParameters().get(4).getLeftStepParameters().getCenterOffset().setX(0.0);
       parameters.getPhasesParameters().get(4).getLeftStepParameters().getCenterOffset().setY(0.0);
