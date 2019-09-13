@@ -102,8 +102,8 @@ public class AtlasStepUpPlannerDemo
       double stepHeight = 0.154*2;
       double stepLength = 0.55;
       double footScale = 0.3;
-      Vector2D leftOffset = new Vector2D(0.0, -0.015);
-      Vector2D rightOffset = new Vector2D(0.0, 0.015);
+      Vector2D leftOffset = new Vector2D(0.0, -0.02);
+      Vector2D rightOffset = new Vector2D(0.0, 0.02);
       /*------------------------------------------------*/
 
       AtlasRobotModel atlasRobotModel = new AtlasRobotModel(AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_HANDS, RobotTarget.REAL_ROBOT);
@@ -131,7 +131,7 @@ public class AtlasStepUpPlannerDemo
                                                                                                                leftOffset,
                                                                                                                rightOffset);
       
-      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setX(0.0);
+      parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setX(0.02);
       parameters.getPhasesParameters().get(3).getLeftStepParameters().getCenterOffset().setY(0.0);
       
       parameters.getPhasesParameters().get(4).getLeftStepParameters().getCenterOffset().setX(0.0);
