@@ -15,7 +15,6 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.quadrupedCommunication.teleop.RemoteQuadrupedTeleopManager;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
 import us.ihmc.quadrupedRobotics.*;
-import us.ihmc.quadrupedRobotics.controller.QuadrupedControlMode;
 import us.ihmc.quadrupedRobotics.model.QuadrupedInitialOffsetAndYaw;
 import us.ihmc.quadrupedRobotics.simulation.QuadrupedGroundContactModelType;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -26,7 +25,6 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.testing.YoVariableTestGoal;
 import us.ihmc.robotics.trajectories.TrajectoryType;
 import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.LittleWallsWithIncreasingHeightPlanarRegionEnvironment;
-import us.ihmc.simulationConstructionSetTools.util.environments.planarRegionEnvironments.WideWallsWithIncreasingHeightPlanarRegionEnvironment;
 import us.ihmc.simulationConstructionSetTools.util.simulationrunner.GoalOrientedTestConductor;
 import us.ihmc.simulationconstructionset.util.simulationRunner.BlockingSimulationRunner.SimulationExceededMaximumTimeException;
 import us.ihmc.tools.MemoryTools;
@@ -34,11 +32,11 @@ import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 import java.io.IOException;
 
-@Tag("humanoid-rough-terrain")
+@Tag("quadruped-xgait-2")
 public abstract class QuadrupedSwingOverPlanarRegionsSimulationTest implements QuadrupedMultiRobotTestInterface
 {
    private GoalOrientedTestConductor conductor;
-   private QuadrupedForceTestYoVariables variables;
+   private QuadrupedTestYoVariables variables;
    private RemoteQuadrupedTeleopManager stepTeleopManager;
    private QuadrupedTestFactory quadrupedTestFactory;
 
@@ -227,11 +225,9 @@ public abstract class QuadrupedSwingOverPlanarRegionsSimulationTest implements Q
 
          quadrupedTestFactory.setGroundProfile3D(environment.getTerrainObject3D());
          quadrupedTestFactory.setInitialOffset(new QuadrupedInitialOffsetAndYaw(-0.5, 0.0, 0.0, 0.0));
-         quadrupedTestFactory.setControlMode(QuadrupedControlMode.FORCE);
          quadrupedTestFactory.setGroundContactModelType(QuadrupedGroundContactModelType.FLAT);
-         quadrupedTestFactory.setUseNetworking(true);
          conductor = quadrupedTestFactory.createTestConductor();
-         variables = new QuadrupedForceTestYoVariables(conductor.getScs());
+         variables = new QuadrupedTestYoVariables(conductor.getScs());
          stepTeleopManager = quadrupedTestFactory.getRemoteStepTeleopManager();
       }
       catch (IOException e)
