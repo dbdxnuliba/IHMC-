@@ -50,6 +50,7 @@ public class LIDARBasedREAModule
 
    private static final int THREAD_PERIOD_MILLISECONDS = 200;
    private static final int BUFFER_THREAD_PERIOD_MILLISECONDS = 10;
+   private static final double OCTREE_RESOLUTION = 0.03;
    private static final double DEFAULT_OCTREE_RESOLUTION = 0.02;
 
    protected static final boolean DEBUG = true;
