@@ -121,6 +121,8 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
 
       if (ENABLE_STEREO_PUBLISHER)
       {
+         stereoVisionPointCloudPublisher.setFilterThreshold(0.5, Math.PI/10);
+         stereoVisionPointCloudPublisher.enableFilter(true);
          stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
          stereoVisionPointCloudPublisher.start();
       }
