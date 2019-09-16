@@ -307,7 +307,8 @@ public class MTLLoader implements AssetLoader {
     @SuppressWarnings("empty-statement")
     public Object load(AssetInfo info) throws IOException{
         reset();
-        
+        System.out.println("MTLLoader override: Loading " + info.getKey());
+
         this.key = info.getKey();
         this.assetManager = info.getManager();
         folderName = info.getKey().getFolder();
