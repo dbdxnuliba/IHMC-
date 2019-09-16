@@ -326,7 +326,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
          footCollisionSphere.setToZero(worldFrame);
          footCollisionSphere.setRadius(collisionSphereRadius);
-         footCollisionSphere.getSphere3d().setPosition(trajectoryPosition);
+         footCollisionSphere.getSphere3d().getPosition().set(trajectoryPosition);
 
          for (int regionIndex = 0; regionIndex < planarRegionsList.getNumberOfPlanarRegions(); regionIndex++)
          {
@@ -401,7 +401,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
          footCollisionSphere.setToZero(worldFrame);
          footCollisionSphere.setRadius(collisionSphereRadius);
-         footCollisionSphere.getSphere3d().setPosition(trajectoryPosition);
+         footCollisionSphere.getSphere3d().getPosition().set(trajectoryPosition);
 
          for (int regionIndex = 0; regionIndex < planarRegionsList.getNumberOfPlanarRegions(); regionIndex++)
          {
