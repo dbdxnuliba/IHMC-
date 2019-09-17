@@ -20,14 +20,29 @@ public abstract class YoVariableTestGoal extends GoalOrientedTestGoal
       String getString();
    }
 
-   protected YoVariableTestGoal(YoVariable<?>... yoVariables)
-   {
-      this("", yoVariables);
-   }
+//   protected YoVariableTestGoal(YoVariable<?>... yoVariables)
+//   {
+//      this("", yoVariables);
+//   }
+//
+//   protected YoVariableTestGoal(String failurePrefix, YoVariable<?>... yoVariables)
+//   {
+//      this(failurePrefix);
+//
+//      for (YoVariable<?> yoVariable : yoVariables)
+//      {
+//         yoVariable.addVariableChangedListener(this::notifyOfVariableChange);
+//      }
+//   }
 
-   protected YoVariableTestGoal(String failurePrefix, YoVariable<?>... yoVariables)
+   public YoVariableTestGoal(String variableOperandDescription,
+                             String operatorDescription,
+                             String constantOperandDescription,
+                             YoVariable<?>... yoVariables)
    {
-      this(failurePrefix);
+      super(variableOperandDescription,
+            operatorDescription,
+            constantOperandDescription);
 
       for (YoVariable<?> yoVariable : yoVariables)
       {
@@ -35,20 +50,15 @@ public abstract class YoVariableTestGoal extends GoalOrientedTestGoal
       }
    }
 
-   public YoVariableTestGoal()
-   {
-      this("");
-   }
-
-   public YoVariableTestGoal(String failurePrefix)
-   {
-      this.failurePrefix = failurePrefix;
-   }
-
-   public YoVariableTestGoal(StringProvider stringProvider)
-   {
-      this.stringProvider = stringProvider;
-   }
+//   public YoVariableTestGoal(String failurePrefix)
+//   {
+//      this.failurePrefix = failurePrefix;
+//   }
+//
+//   public YoVariableTestGoal(StringProvider stringProvider)
+//   {
+//      this.stringProvider = stringProvider;
+//   }
 
    public void notifyOfVariableChange(YoVariable<?> v)
    {
@@ -74,6 +84,18 @@ public abstract class YoVariableTestGoal extends GoalOrientedTestGoal
             if (stringProvider != null)
                failurePrefix = stringProvider.getString();
             return failurePrefix + numberStringOne + " (+/- " + epsilonString + ") == " + numberStringTwo;
+         }
+
+         @Override
+         public String getOperatorDescription()
+         {
+            return "equal to";
+         }
+
+         @Override
+         public String getConstantOperandDescription()
+         {
+            return String.valueOf(epsilon);
          }
       };
    }

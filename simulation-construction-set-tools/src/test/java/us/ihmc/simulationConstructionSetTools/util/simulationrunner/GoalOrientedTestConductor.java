@@ -128,24 +128,28 @@ public class GoalOrientedTestConductor implements SimulationDoneListener
    
    private void printSimulatingMessage()
    {
-      StringBuffer message = new StringBuffer();
-      message.append("Simulating with goals:");
+      LogTools.info("Simulating:");
       for (GoalOrientedTestGoal goal : sustainGoals)
       {
-         message.append("\nSustain goal: ");
-         message.append(goal.toString());
+         LogTools.info("asserting that {} remains {} {}",
+                       goal.getVariableOperandDescription(),
+                       goal.getOperatorDescription(),
+                       goal.getConstantOperandDescription());
       }
       for (GoalOrientedTestGoal goal : waypointGoals)
       {
-         message.append("\nWaypoint goal: ");
-         message.append(goal.toString());
+         LogTools.info("asserting that {} is {} {} at least once",
+                       goal.getVariableOperandDescription(),
+                       goal.getOperatorDescription(),
+                       goal.getConstantOperandDescription());
       }
       for (GoalOrientedTestGoal goal : terminalGoals)
       {
-         message.append("\nTerminal goal: ");
-         message.append(goal.toString());
+         LogTools.info("until {} is {} {}",
+                       goal.getVariableOperandDescription(),
+                       goal.getOperatorDescription(),
+                       goal.getConstantOperandDescription());
       }
-      LogTools.info(message.toString());
    }
 
    private void createAssertionFailedException()
