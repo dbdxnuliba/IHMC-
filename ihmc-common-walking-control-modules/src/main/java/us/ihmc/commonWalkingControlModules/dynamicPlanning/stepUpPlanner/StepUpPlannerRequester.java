@@ -280,7 +280,7 @@ public class StepUpPlannerRequester
       msg.setMaxLegLength(maxLegLength);
       msg.setIpoptLinearSolver("mumps");
       msg.setFinalStateAnticipation(0.3);
-      msg.setStaticFrictionCoefficient(0.7);
+      msg.setStaticFrictionCoefficient(0.55);
       msg.setTorsionalFrictionCoefficient(0.1);
 
       double N = msg.getPhaseLength() * msg.getPhasesParameters().size();
