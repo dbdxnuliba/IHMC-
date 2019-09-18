@@ -20,6 +20,7 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.ihmcPerception.camera.CameraDataReceiver;
 import us.ihmc.ihmcPerception.camera.SCSCameraDataReceiver;
 import us.ihmc.ihmcPerception.depthData.CollisionBoxProvider;
+import us.ihmc.log.LogTools;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
 import us.ihmc.robotModels.FullRobotModel;
@@ -47,6 +48,9 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
 
    private final String robotName;
+   
+   // This is needed when stereo topic is multisense/image_points2_color.
+   private final boolean stereoROSTopicIsLocal = true;
 
    public ValkyrieSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory fullRobotModelFactory, CollisionBoxProvider collisionBoxProvider,
                                      RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation,
@@ -108,7 +112,8 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
       AvatarRobotCameraParameters multisenseLeftEyeCameraParameters = sensorInformation.getCameraParameters(ValkyrieSensorInformation.MULTISENSE_SL_LEFT_CAMERA_ID);
       AvatarRobotLidarParameters multisenseLidarParameters = sensorInformation.getLidarParameters(ValkyrieSensorInformation.MULTISENSE_LIDAR_ID);
       AvatarRobotPointCloudParameters multisenseStereoParameters = sensorInformation.getPointCloudParameters(ValkyrieSensorInformation.MULTISENSE_STEREO_ID);
-      boolean shouldUseRosParameterSetters = sensorInformation.setupROSParameterSetters();
+      boolean shouldUseRosParameterSetters = true;
+      //boolean shouldUseRosParameterSetters = sensorInformation.setupROSParameterSetters();
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(fullRobotModelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -121,7 +126,7 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
 
       if (ENABLE_STEREO_PUBLISHER)
       {
-         stereoVisionPointCloudPublisher.setFilterThreshold(0.5, Math.PI/10);
+         stereoVisionPointCloudPublisher.setFilterThreshold(0.10, Math.PI/15);  // 0.125
          stereoVisionPointCloudPublisher.enableFilter(true);
          stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
          stereoVisionPointCloudPublisher.start();
@@ -146,9 +151,18 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
          @Override
          public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack, Pose3DBasics sensorPoseToPack)
          {
+            RigidBodyTransform transformerFromStereoToCamera = new RigidBodyTransform(transformFromHeadToUpperNeckPitchLink);
+            if(stereoROSTopicIsLocal)
+            {
+               transformerFromStereoToCamera.appendYawRotation(-Math.PI/2);
+               transformerFromStereoToCamera.appendRollRotation(-Math.PI/2);   
+            }
+            
+            fullRobotModel.updateFrames();
             ReferenceFrame neckFrame = fullRobotModel.getHeadBaseFrame();
             neckFrame.getTransformToDesiredFrame(transformToWorldToPack, ReferenceFrame.getWorldFrame());
-            transformToWorldToPack.multiply(transformFromHeadToUpperNeckPitchLink);
+            //transformToWorldToPack.multiply(transformFromHeadToUpperNeckPitchLink);
+            transformToWorldToPack.multiply(transformerFromStereoToCamera);
             sensorPoseToPack.set(transformToWorldToPack);
          }
       };
