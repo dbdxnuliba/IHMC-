@@ -46,6 +46,8 @@ public class ROS2Tools
    public static final String REA_MODULE = "/rea";
 
    public static final String SREA_MODULE = "/srea";
+   
+   public static final ROS2ModuleIdentifier REA = new ROS2ModuleIdentifier("REA_module", "/rea");
 
    public enum ROS2TopicQualifier
    {

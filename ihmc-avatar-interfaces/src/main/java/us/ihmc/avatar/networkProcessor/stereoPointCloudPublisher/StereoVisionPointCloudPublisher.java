@@ -7,10 +7,15 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.util.concurrent.AtomicDouble;
+
+import controller_msgs.msg.dds.FootstepStatusMessage;
+import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import sensor_msgs.PointCloud2;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
+import us.ihmc.commons.Conversions;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
@@ -19,7 +24,10 @@ import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.log.LogTools;
+import us.ihmc.mecano.multiBodySystem.RigidBody;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -53,11 +61,20 @@ public class StereoVisionPointCloudPublisher
    private final IHMCROS2Publisher<StereoVisionPointCloudMessage> pointcloudPublisher;
    private final IHMCRealtimeROS2Publisher<StereoVisionPointCloudMessage> pointcloudRealtimePublisher;
 
+   /**
+    * units of velocities are meter/sec and rad/sec.
+    */
+   private long previousTimeStamp = 0;
+   private final Point3D previousSensorPosition = new Point3D();
+   private final Quaternion previousSensorOrientation = new Quaternion();
+   private final AtomicReference<Boolean> enableFilter = new AtomicReference<Boolean>(false);
+   private final AtomicDouble linearVelocityThreshold = new AtomicDouble(Double.MAX_VALUE);
+   private final AtomicDouble angularVelocityThreshold = new AtomicDouble(Double.MAX_VALUE);
+
    public StereoVisionPointCloudPublisher(FullRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
    {
       this(modelFactory.getRobotDescription().getName(), modelFactory.createFullRobotModel(), ros2Node, null, robotConfigurationDataTopicName);
    }
-
 
    public StereoVisionPointCloudPublisher(String robotName, FullRobotModel fullRobotModel, RealtimeRos2Node ros2Node, String robotConfigurationDataTopicName)
    {
@@ -72,23 +89,32 @@ public class StereoVisionPointCloudPublisher
 
       if (ros2Node != null)
       {
-         ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, robotConfigurationDataTopicName,
+         ROS2Tools.createCallbackSubscription(ros2Node,
+                                              RobotConfigurationData.class,
+                                              robotConfigurationDataTopicName,
                                               s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
          pointcloudPublisher = ROS2Tools.createPublisher(ros2Node, StereoVisionPointCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
          pointcloudRealtimePublisher = null;
       }
       else
       {
-         ROS2Tools.createCallbackSubscription(realtimeRos2Node, RobotConfigurationData.class, robotConfigurationDataTopicName,
+         ROS2Tools.createCallbackSubscription(realtimeRos2Node,
+                                              RobotConfigurationData.class,
+                                              robotConfigurationDataTopicName,
                                               s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
          pointcloudPublisher = null;
-         pointcloudRealtimePublisher = ROS2Tools.createPublisher(realtimeRos2Node, StereoVisionPointCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+         pointcloudRealtimePublisher = ROS2Tools.createPublisher(realtimeRos2Node,
+                                                                 StereoVisionPointCloudMessage.class,
+                                                                 ROS2Tools.getDefaultTopicNameGenerator());
 
       }
+      
+//      ROS2Tools.createCallbackSubscription(ros2Node, FootstepStatusMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
    }
 
    public void start()
    {
+      LogTools.info("Start. For DOUBLE CHECK.");
       publisherTask = executorService.scheduleAtFixedRate(this::readAndPublishInternal, 0L, 1L, TimeUnit.MILLISECONDS);
    }
 
@@ -117,7 +143,7 @@ public class StereoVisionPointCloudPublisher
 
    public void setCustomStereoVisionTransformer(StereoVisionWorldTransformCalculator transformer)
    {
-      LogTools.info("setCustomStereoVisionTransformer()");
+      LogTools.info("HELLO CUSTOM TRANSFORMER.");
       stereoVisionTransformer = transformer;
    }
 
@@ -165,6 +191,7 @@ public class StereoVisionPointCloudPublisher
       }
    }
 
+   //TODO : update SensorPose faster.
    private void transformDataAndPublish()
    {
       ColorPointCloudData pointCloudData = rosPointCloud2ToPublish.getAndSet(null);
@@ -189,29 +216,51 @@ public class StereoVisionPointCloudPublisher
             return;
       }
 
+      // get neck pose first here before transform all points.
       if (stereoVisionTransformer != null)
       {
          stereoVisionTransformer.computeTransformToWorld(fullRobotModel, stereoVisionPointsFrame, transformToWorld, sensorPose);
-         pointCloudData.applyTransform(transformToWorld);
       }
       else
       {
-         if (!stereoVisionPointsFrame.isWorldFrame())
-         {
-            stereoVisionPointsFrame.getTransformToDesiredFrame(transformToWorld, worldFrame);
-            pointCloudData.applyTransform(transformToWorld);
-         }
-
          fullRobotModel.getHeadBaseFrame().getTransformToDesiredFrame(transformToWorld, worldFrame);
          sensorPose.set(transformToWorld);
       }
 
+      if (enableFilter.get())
+      {
+         double timeDiff = Conversions.nanosecondsToSeconds(robotTimestamp - previousTimeStamp);
+         double linearDistance = sensorPose.getPosition().distance(previousSensorPosition);
+         double linearVelocity = linearDistance / timeDiff;
+         double angularDistance = sensorPose.getOrientation().distance(previousSensorOrientation);
+         double angularVelocity = angularDistance / timeDiff;
+
+         if (linearVelocity > linearVelocityThreshold.get() || angularVelocity > angularVelocityThreshold.get())
+         {
+            LogTools.info("timeDiff " + timeDiff);
+            LogTools.info("linearVelocity " + linearVelocity + " " + linearVelocityThreshold.get());
+            LogTools.info("angularVelocity " + angularVelocity + " " + angularVelocityThreshold.get());
+
+            LogTools.info("linearVelocity " + (linearVelocity > linearVelocityThreshold.get()) + " angularVelocity "
+                  + (angularVelocity > angularVelocityThreshold.get()));
+            return;
+         }
+      }
+
+      // transform points.
+      pointCloudData.applyTransform(transformToWorld);
+
       StereoVisionPointCloudMessage message = pointCloudData.toStereoVisionPointCloudMessage();
       message.getSensorPosition().set(sensorPose.getPosition());
       message.getSensorOrientation().set(sensorPose.getOrientation());
-
+      
       if (Debug)
          System.out.println("Publishing stereo data, number of points: " + (message.getPointCloud().size() / 3));
+
+      previousTimeStamp = robotTimestamp;
+      previousSensorPosition.set(sensorPose.getPosition());
+      previousSensorOrientation.set(sensorPose.getOrientation());
+
       if (pointcloudPublisher != null)
          pointcloudPublisher.publish(message);
       else
@@ -222,5 +271,16 @@ public class StereoVisionPointCloudPublisher
    {
       public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack,
                                           Pose3DBasics sensorPoseToPack);
+   }
+
+   public void enableFilter(boolean enable)
+   {
+      enableFilter.set(enable);
+   }
+
+   public void setFilterThreshold(double linearVelocityThreshold, double angularVelocityThreshold)
+   {
+      this.linearVelocityThreshold.set(linearVelocityThreshold);
+      this.angularVelocityThreshold.set(angularVelocityThreshold);
    }
 }

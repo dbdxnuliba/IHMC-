@@ -4,6 +4,7 @@ public class QuadrupedNetworkModuleParameters
 {
    private boolean useNetworkProcessor = true;
    private boolean useRobotEnvironmentAwarenessModule;
+   private boolean useStereoBufferForREA = false;
    private boolean useStepTeleopModule;
    private boolean visualizeStepTeleopModule;
    private boolean logStepTeleopModule;
@@ -19,11 +20,21 @@ public class QuadrupedNetworkModuleParameters
       this.useRobotEnvironmentAwarenessModule = enable;
    }
    
+   public void enableStereoBufferForREA(boolean enable)
+   {
+      useStereoBufferForREA = enable;
+   }
+   
+   public boolean useStereoBufferOnlyForREA()
+   {
+      return useStereoBufferForREA;
+   }
+   
    public void enableAutoREAStateUpdater(boolean enable)
    {
       this.useAutoREAStateUpdater = enable;
    }
-   
+
    public boolean isAutoREAStateUpdaterEnabled()
    {
       return useAutoREAStateUpdater;
