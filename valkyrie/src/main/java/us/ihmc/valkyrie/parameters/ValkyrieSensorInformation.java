@@ -43,7 +43,7 @@ public class ValkyrieSensorInformation implements HumanoidRobotSensorInformation
    private static final SideDependentList<String> urdfFeetForceSensorNames = new SideDependentList<>("leftFootSixAxis_Offset", "rightFootSixAxis_Offset");
    public static final SideDependentList<LinkedHashMap<String, LinkedHashMap<String,ContactSensorType>>> contactSensors = new SideDependentList<LinkedHashMap<String,LinkedHashMap<String,ContactSensorType>>>();
 
-   private static final RigidBodyTransform transformFromHeadToUpperNeckPitchLink = new RigidBodyTransform(new YawPitchRoll(0.0, 0.130899694, -Math.PI), new Vector3D(0.183585961, 0.0, 0.075353826));
+   private static final RigidBodyTransform transformFromUpperNeckPitchLinkToHead = new RigidBodyTransform(new YawPitchRoll(0.0, 0.130899694, -Math.PI), new Vector3D(0.183585961, 0.0, 0.075353826));
 
    public static final boolean USE_JSC_FOOT_MASS_TARING = false;
 
@@ -121,7 +121,8 @@ public class ValkyrieSensorInformation implements HumanoidRobotSensorInformation
 //   private static final String rightCameraTopic = "/v1/rightHazardCamera/compressed";
 
    private static final String stereoSensorName = "stereo_camera";
-   private static final String stereoColorTopic = multisense_namespace + "/image_points2_color_world";
+   //private static final String stereoColorTopic = multisense_namespace + "/image_points2_color_world";
+   private static final String stereoColorTopic = multisense_namespace + "/image_points2_color";
    private static final String stereoBaseFrame = multisense_namespace + "/head";
    private static final String stereoEndFrame = multisense_namespace + "/left_camera_frame";
 
@@ -356,7 +357,7 @@ public class ValkyrieSensorInformation implements HumanoidRobotSensorInformation
 
    private void setupStaticTransformsForRos()
    {
-      RigidBodyTransform staticTransform = new RigidBodyTransform(transformFromHeadToUpperNeckPitchLink);
+      RigidBodyTransform staticTransform = new RigidBodyTransform(transformFromUpperNeckPitchLinkToHead);
       staticTranformsForRos.add(new ImmutableTriple<>("upperNeckPitchLink", "multisense/head", staticTransform));
 
       for (RobotSide robotSide : RobotSide.values)
@@ -370,6 +371,6 @@ public class ValkyrieSensorInformation implements HumanoidRobotSensorInformation
 
    public static RigidBodyTransform getTransformFromHeadToUpperNeckPitchLink()
    {
-      return transformFromHeadToUpperNeckPitchLink;
+      return transformFromUpperNeckPitchLinkToHead;
    }
 }
