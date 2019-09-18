@@ -56,6 +56,7 @@ public class StereoVisionPointCloudDataExporter
 
          Path path = Paths.get(dataDirectoryPath.get());
          File file = new File(path.toFile(), "stereovision_pointcloud_" + PlanarRegionFileTools.getDate() + "_" + message.timestamp_ + ".txt");
+
          FileWriter fileWriter;
          try
          {

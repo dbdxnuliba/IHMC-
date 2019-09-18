@@ -34,7 +34,7 @@ public class QuadrupedNetworkModuleParameters
    {
       this.useAutoREAStateUpdater = enable;
    }
-   
+
    public boolean isAutoREAStateUpdaterEnabled()
    {
       return useAutoREAStateUpdater;
