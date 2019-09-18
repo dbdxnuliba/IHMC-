@@ -24,6 +24,7 @@ import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.net.PacketConsumer;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
+import us.ihmc.log.LogTools;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.tools.processManagement.ProcessStreamGobbler;
 import us.ihmc.utilities.ros.RosMainNode;
@@ -90,6 +91,13 @@ public class MultiSenseParamaterSetter implements PacketConsumer<MultisenseParam
                + lidarSpindleVelocity + "; rosrun dynamic_reconfigure dynparam set /multisense network_time_sync true"};
          return shellOutSpindleSpeedCommand(indigoSpindleSpeedShellString);
       }
+      else if (useRosKinetic(rosPrefix))
+      {
+         PrintTools.info(this, "Using ROS Kinetic");
+         String[] indigoSpindleSpeedShellString = {"sh", "-c", ". /opt/ros/kinetic/setup.sh; rosrun dynamic_reconfigure dynparam set /multisense motor_speed "
+               + lidarSpindleVelocity + "; rosrun dynamic_reconfigure dynparam set /multisense network_time_sync true"};
+         return shellOutSpindleSpeedCommand(indigoSpindleSpeedShellString);
+      }
 
       throw new RuntimeException();
    }
@@ -153,6 +161,11 @@ public class MultiSenseParamaterSetter implements PacketConsumer<MultisenseParam
    private boolean useRosIndigo(String rosPrefix)
    {
       return new File(rosPrefix + "/indigo").exists();
+   }
+   
+   private boolean useRosKinetic(String rosPrefix)
+   {
+      return new File(rosPrefix + "/kinetic").exists();
    }
 
    public void setupMultisenseSpindleSpeedPublisher(RosMainNode rosMainNode, final double lidarSpindleVelocity)
@@ -442,6 +455,7 @@ public class MultiSenseParamaterSetter implements PacketConsumer<MultisenseParam
    public void receivedPacket(MultisenseParameterPacket object)
    {
       handleMultisenseParameters(object);
+      LogTools.info("received "+object.getAutoExposure());
    }
 
 }
