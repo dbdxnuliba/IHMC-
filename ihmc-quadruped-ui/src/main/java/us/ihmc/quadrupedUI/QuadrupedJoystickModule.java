@@ -259,7 +259,7 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
 
       if (increaseEndPhaseShiftChannel.hasNewData() && increaseEndPhaseShiftChannel.getValue() > 0.5)
       {
-         xGaitSettings.setEndPhaseShift(xGaitSettings.getEndPhaseShift() + endPhaseDeltaPerClick);
+         xGaitSettings.setEndPhaseShift(MathTools.clamp(xGaitSettings.getEndPhaseShift() + endPhaseDeltaPerClick, 90.0, 180.0));
          messager.submitMessage(QuadrupedUIMessagerAPI.XGaitSettingsTopic, xGaitSettings);
       }
       else if (decreaseEndPhaseShiftChannel.hasNewData() && decreaseEndPhaseShiftChannel.getValue() > 0.5)
@@ -276,11 +276,6 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       {
          messager.submitMessage(QuadrupedUIMessagerAPI.EnableStepTeleopTopic, !stepTeleopEnabled.get());
       }
-
-      if (!stepTeleopEnabled.get())
-      {
-         return;
-      }
       
       ChannelData heightChannel = channelDataMap.get(XBoxOneMapping.DPAD);
       boolean hasNewData = heightChannel.hasNewData();
@@ -293,6 +288,11 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
          messager.submitMessage(QuadrupedUIMessagerAPI.XGaitSettingsTopic, xGaitSettings);         
       }
 
+      if (!stepTeleopEnabled.get())
+      {
+         return;
+      }
+      
       ChannelData xVelocityChannel = channelDataMap.get(xVelocityMapping);
       ChannelData yVelocityChannel = channelDataMap.get(yVelocityMapping);
       ChannelData leftTurnChannel = channelDataMap.get(leftTurnMapping);
