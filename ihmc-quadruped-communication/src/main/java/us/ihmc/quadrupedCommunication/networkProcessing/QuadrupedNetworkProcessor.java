@@ -3,6 +3,7 @@ package us.ihmc.quadrupedCommunication.networkProcessing;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
+import us.ihmc.log.LogTools;
 import us.ihmc.multicastLogDataProtocol.modelLoaders.LogModelProvider;
 import us.ihmc.pubsub.DomainFactory;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
@@ -32,29 +33,33 @@ public class QuadrupedNetworkProcessor
    private QuadrupedSupportPlanarRegionPublisher supportPublisher = null;
 
    public QuadrupedNetworkProcessor(FullQuadrupedRobotModelFactory robotModel, QuadrupedNetworkModuleParameters params,
-                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints,
-                                    FootstepPlannerParameters footstepPlannerParameters, QuadrupedXGaitSettings xGaitSettings,
-                                    PointFootSnapperParameters pointFootSnapperParameters)
+                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints, FootstepPlannerParameters footstepPlannerParameters,
+                                    QuadrupedXGaitSettings xGaitSettings, PointFootSnapperParameters pointFootSnapperParameters)
    {
       this(robotModel, params, groundContactPoints, footstepPlannerParameters, xGaitSettings, pointFootSnapperParameters,
            DomainFactory.PubSubImplementation.FAST_RTPS);
    }
 
    public QuadrupedNetworkProcessor(FullQuadrupedRobotModelFactory robotModel, QuadrupedNetworkModuleParameters params,
-                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints,
-                                    FootstepPlannerParameters footstepPlannerParameters, QuadrupedXGaitSettingsReadOnly xGaitSettings,
-                                    PointFootSnapperParameters pointFootSnapperParameters, DomainFactory.PubSubImplementation pubSubImplementation)
+                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints, FootstepPlannerParameters footstepPlannerParameters,
+                                    QuadrupedXGaitSettingsReadOnly xGaitSettings, PointFootSnapperParameters pointFootSnapperParameters,
+                                    DomainFactory.PubSubImplementation pubSubImplementation)
    {
       this(robotModel, null, params, groundContactPoints, footstepPlannerParameters, xGaitSettings, pointFootSnapperParameters, pubSubImplementation);
    }
 
    public QuadrupedNetworkProcessor(FullQuadrupedRobotModelFactory robotModel, LogModelProvider logModelProvider, QuadrupedNetworkModuleParameters params,
-                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints,
-                                    FootstepPlannerParameters footstepPlannerParameters, QuadrupedXGaitSettingsReadOnly xGaitSettings,
-                                    PointFootSnapperParameters pointFootSnapperParameters, DomainFactory.PubSubImplementation pubSubImplementation)
+                                    QuadrantDependentList<ArrayList<Point2D>> groundContactPoints, FootstepPlannerParameters footstepPlannerParameters,
+                                    QuadrupedXGaitSettingsReadOnly xGaitSettings, PointFootSnapperParameters pointFootSnapperParameters,
+                                    DomainFactory.PubSubImplementation pubSubImplementation)
    {
-      tryToStartModule(() -> setupFootstepPlanningModule(robotModel, footstepPlannerParameters, xGaitSettings, pointFootSnapperParameters, logModelProvider,
-                                                         params, pubSubImplementation));
+      tryToStartModule(() -> setupFootstepPlanningModule(robotModel,
+                                                         footstepPlannerParameters,
+                                                         xGaitSettings,
+                                                         pointFootSnapperParameters,
+                                                         logModelProvider,
+                                                         params,
+                                                         pubSubImplementation));
       tryToStartModule(() -> setupStepTeleopModule(robotModel, xGaitSettings, pointFootSnapperParameters, logModelProvider, params, pubSubImplementation));
       tryToStartModule(() -> setupRobotEnvironmentAwarenessModule(params, pubSubImplementation));
       tryToStartModule(() -> setupREAStateUpdater(robotModel.getRobotDescription().getName(), params));
@@ -92,8 +97,13 @@ public class QuadrupedNetworkProcessor
    {
       if (!params.isStepTeleopModuleEnabled())
          return;
-      stepTeleopModule = new QuadrupedStepTeleopModule(modelFactory, xGaitSettings, pointFootSnapperParameters, logModelProvider,
-                                                       params.visualizeStepTeleopModuleEnabled(), params.logStepTeleopModuleEnabled(), pubSubImplementation);
+      stepTeleopModule = new QuadrupedStepTeleopModule(modelFactory,
+                                                       xGaitSettings,
+                                                       pointFootSnapperParameters,
+                                                       logModelProvider,
+                                                       params.visualizeStepTeleopModuleEnabled(),
+                                                       params.logStepTeleopModuleEnabled(),
+                                                       pubSubImplementation);
       modules.add(stepTeleopModule);
    }
 
@@ -104,15 +114,20 @@ public class QuadrupedNetworkProcessor
    {
       if (!params.isFootstepPlanningModuleEnabled())
          return;
-      modules.add(new QuadrupedFootstepPlanningModule(modelFactory, footstepPlannerParameters, xGaitSettings, pointFootSnapperParameters, logModelProvider,
-                                                      params.visualizeFootstepPlanningModuleEnabled(), params.logFootstepPlanningModuleEnabled(),
+      modules.add(new QuadrupedFootstepPlanningModule(modelFactory,
+                                                      footstepPlannerParameters,
+                                                      xGaitSettings,
+                                                      pointFootSnapperParameters,
+                                                      logModelProvider,
+                                                      params.visualizeFootstepPlanningModuleEnabled(),
+                                                      params.logFootstepPlanningModuleEnabled(),
                                                       pubSubImplementation));
    }
 
-
    private void setupQuadrupedSupportPlanarRegionPublisherModule(FullQuadrupedRobotModelFactory modelFactory,
                                                                  QuadrantDependentList<ArrayList<Point2D>> groundContactPoints,
-                                                                 QuadrupedNetworkModuleParameters params, DomainFactory.PubSubImplementation pubSubImplementation)
+                                                                 QuadrupedNetworkModuleParameters params,
+                                                                 DomainFactory.PubSubImplementation pubSubImplementation)
    {
       if (params.isQuadrupedSupportPlanarRegionPublisherEnabled())
       {
@@ -127,22 +142,15 @@ public class QuadrupedNetworkProcessor
       {
          try
          {
-            if(params.useStereoBufferOnlyForREA())
+            if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
+            //LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
             {
-               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
-                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
-               else
-                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt")
-                                     .start();
+               LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
+               LogTools.info("Inhos check Point.");
             }
             else
-            {
-               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
-                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
-               else
-                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt")
-                                     .start();
-            }
+               LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt")
+                                  .start();
 
          }
          catch (Exception e)
