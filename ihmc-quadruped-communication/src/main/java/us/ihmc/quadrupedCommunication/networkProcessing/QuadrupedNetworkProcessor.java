@@ -1,27 +1,26 @@
 package us.ihmc.quadrupedCommunication.networkProcessing;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
-import us.ihmc.log.LogTools;
 import us.ihmc.multicastLogDataProtocol.modelLoaders.LogModelProvider;
 import us.ihmc.pubsub.DomainFactory;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
+import us.ihmc.quadrupedCommunication.networkProcessing.footstepPlanning.QuadrupedFootstepPlanningModule;
+import us.ihmc.quadrupedCommunication.networkProcessing.reaUpdater.QuadrupedREAStateUpdater;
+import us.ihmc.quadrupedCommunication.networkProcessing.stepTeleop.QuadrupedStepTeleopModule;
 import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.footstepChooser.PointFootSnapperParameters;
-import us.ihmc.quadrupedCommunication.networkProcessing.footstepPlanning.QuadrupedFootstepPlanningModule;
-import us.ihmc.quadrupedCommunication.networkProcessing.reaUpdater.QuadrupedREAStateUpdater;
-import us.ihmc.quadrupedCommunication.networkProcessing.stepTeleop.QuadrupedStepTeleopModule;
 import us.ihmc.robotEnvironmentAwareness.updaters.LIDARBasedREAModule;
 import us.ihmc.robotModels.FullQuadrupedRobotModelFactory;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class QuadrupedNetworkProcessor
 {
@@ -143,15 +142,9 @@ public class QuadrupedNetworkProcessor
          try
          {
             if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
-            //LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
-            {
                LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
-               LogTools.info("Inhos check Point.");
-            }
             else
-               LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt")
-                                  .start();
-
+               LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
          }
          catch (Exception e)
          {
