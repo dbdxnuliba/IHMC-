@@ -13,12 +13,14 @@ import us.ihmc.humanoidBehaviors.communication.ConcurrentListeningQueue;
 import us.ihmc.humanoidRobotics.communication.packets.HumanoidMessageTools;
 import us.ihmc.ros2.Ros2Node;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class SearchForDoorBehavior extends AbstractBehavior
 {
    private Pose3D doorTransformToWorld;
    private boolean recievedNewDoorLocation = false;
 
-   protected final ConcurrentListeningQueue<DoorLocationPacket> doorLocationQueue = new ConcurrentListeningQueue<DoorLocationPacket>(10);
+   protected final AtomicReference<DoorLocationPacket> doorLocationQueue = new AtomicReference<DoorLocationPacket>();
    private final FiducialDetectorBehaviorService fiducialDetectorBehaviorService;
    private final IHMCROS2Publisher<DoorLocationPacket> publisher;
 
@@ -26,7 +28,7 @@ public class SearchForDoorBehavior extends AbstractBehavior
    public SearchForDoorBehavior(String robotName,String yoNamePrefix, Ros2Node ros2Node, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       super(robotName, yoNamePrefix, ros2Node);
-      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationQueue::put);
+      createBehaviorInputSubscriber(DoorLocationPacket.class, doorLocationQueue::set);
       fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(robotName, yoNamePrefix+"SearchForDoorFiducial1", ros2Node, yoGraphicsListRegistry);
       fiducialDetectorBehaviorService.setTargetIDToLocate(50);
       fiducialDetectorBehaviorService.setExpectedFiducialSize(0.2032);
@@ -40,14 +42,16 @@ public class SearchForDoorBehavior extends AbstractBehavior
    @Override
    public void onBehaviorEntered()
    {
+      doorLocationQueue.set(null);
+      doorTransformToWorld = null;
    }
 
    @Override
    public void doControl()
    {
-      if (doorLocationQueue.isNewPacketAvailable())
+      if (doorLocationQueue.get()!=null)
       {
-         recievedDoorLocation(doorLocationQueue.getLatestPacket());
+         recievedDoorLocation(doorLocationQueue.get());
          
       }
       if (fiducialDetectorBehaviorService.getGoalHasBeenLocated())

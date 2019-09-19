@@ -282,8 +282,7 @@ public class IHMCHumanoidBehaviorManager
       dispatcher.addBehavior(HumanoidBehaviorType.WALK_OVER_TERRAIN,
                              new WalkOverTerrainStateMachineBehavior(robotName, ros2Node, yoTime, wholeBodyControllerParameters, referenceFrames));
 
-      dispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK,
-                             new SearchAndKickBehavior(robotName,ros2Node,yoTime,referenceFrames,fullRobotModel,wholeBodyControllerParameters,yoDoubleSupport));
+      dispatcher.addBehavior(HumanoidBehaviorType.SEARCH_AND_KICK, new SearchAndKickBehavior(robotName,ros2Node,yoTime,referenceFrames,fullRobotModel,wholeBodyControllerParameters,yoDoubleSupport,atlasPrimitiveActions));
 
       if (objectDetectorBehaviorService != null)
       {

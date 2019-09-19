@@ -1,35 +1,27 @@
 package us.ihmc.humanoidBehaviors.behaviors.complexBehaviors;
 
-import controller_msgs.msg.dds.*;
-import std_msgs.msg.dds.*;
-import us.ihmc.communication.*;
-import us.ihmc.communication.packets.*;
-import us.ihmc.euclid.geometry.*;
+import controller_msgs.msg.dds.EuclideanTrajectoryPointMessage;
+import controller_msgs.msg.dds.PelvisHeightTrajectoryMessage;
+import controller_msgs.msg.dds.ValveLocationPacket;
+import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.referenceFrame.*;
-import us.ihmc.euclid.tuple2D.*;
-import us.ihmc.euclid.tuple3D.*;
-import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.*;
-import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.SearchAndKickBehavior.*;
-import us.ihmc.humanoidBehaviors.behaviors.primitives.*;
-import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.*;
-import us.ihmc.humanoidBehaviors.communication.*;
-import us.ihmc.humanoidBehaviors.stateMachine.*;
-import us.ihmc.humanoidRobotics.communication.packets.*;
-import us.ihmc.humanoidRobotics.frames.*;
-import us.ihmc.mecano.multiBodySystem.interfaces.*;
-import us.ihmc.robotModels.*;
-import us.ihmc.robotics.partNames.*;
-import us.ihmc.robotics.robotSide.*;
-import us.ihmc.robotics.stateMachine.factories.*;
-import us.ihmc.ros2.*;
-import us.ihmc.simulationConstructionSetTools.util.environments.*;
-import us.ihmc.simulationConstructionSetTools.util.environments.environmentRobots.*;
-import us.ihmc.wholeBodyController.*;
-import us.ihmc.yoVariables.variable.*;
-
-import javax.annotation.*;
-import java.lang.*;
-import java.lang.String;
+import us.ihmc.euclid.tuple2D.Point2D;
+import us.ihmc.humanoidBehaviors.behaviors.behaviorServices.FiducialDetectorBehaviorService;
+import us.ihmc.humanoidBehaviors.behaviors.complexBehaviors.SearchAndKickBehavior.WalkThroughDoorWOFiducialStates;
+import us.ihmc.humanoidBehaviors.behaviors.primitives.AtlasPrimitiveActions;
+import us.ihmc.humanoidBehaviors.behaviors.primitives.WalkToLocationBehavior;
+import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.BehaviorAction;
+import us.ihmc.humanoidBehaviors.behaviors.simpleBehaviors.SleepBehavior;
+import us.ihmc.humanoidBehaviors.communication.ConcurrentListeningQueue;
+import us.ihmc.humanoidBehaviors.stateMachine.StateMachineBehavior;
+import us.ihmc.humanoidRobotics.frames.HumanoidReferenceFrames;
+import us.ihmc.robotModels.FullHumanoidRobotModel;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
+import us.ihmc.ros2.Ros2Node;
+import us.ihmc.wholeBodyController.WholeBodyControllerParameters;
+import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoVariable;
 
 //wrtie a code to kick things
 public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorWOFiducialStates>
@@ -65,9 +57,8 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private boolean BALL_DETECTION = true;
 
    private final SleepBehavior sleepBehavior;
-//   private final Drc environment;
    private YoBoolean yoDoubleSuport;
-   //   private Pose3D spherePose = new Pose3D();
+//   private Pose3D spherePose = new Pose3D();
    private AtlasPrimitiveActions atlasPrimitiveActions;
    private double walkingYawofgetoffsetPoint;
 
@@ -75,12 +66,11 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private final WalkToLocationBehavior walkToLocationBehavior;
    private final WalkToLocationBehavior yawAccordingToGoalPost;
    private final WalkToLocationBehavior walkToOffsetPoint1;
-//   private final KickBehavior kickTheBall;
    private final DynamicKick kickTheBall;
    private FullHumanoidRobotModel model;
    private final SearchForDoorBehavior sphereLocationDetectionBehavior;
    private final FiducialDetectorBehaviorService fiducialDetectorBehaviorService;
-   //   private final SphereDetectionBehavior sphereDetctionBehavior;
+//   private final SphereDetectionBehavior sphereDetctionBehavior;
    private FrameVector2D walkingDirectionForYawMotion;
    private boolean IS_ROBOT_AHEAD_OR_BACK;
    private static YoVariable ankletau;
@@ -90,7 +80,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    private final HumanoidReferenceFrames referenceFrames;
    private FramePose3D tmpGFP = new FramePose3D();
 
-   //   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
+//   private IHMCROS2Publisher<ValveLocationPacket> xposoffsetpublisher;
 
    private final ConcurrentListeningQueue<ValveLocationPacket> sphereLocation = new ConcurrentListeningQueue<>(10);
 
@@ -100,27 +90,27 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 //                                FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
 //                                YoBoolean yoDoubleSupport, AtlasPrimitiveActions atlasPrimitiveActions)
 //   {
-//      this(robotName,ros2Node,yoTime,referenceFrames,fullHumanoidRobotModel,wholeBodyControllerParameters,yoDoubleSupport, atlasPrimitiveActions, null);
+//      this(robotName,ros2Node,yoTime,referenceFrames,fullHumanoidRobotModel,wholeBodyControllerParameters,yoDoubleSupport, atlasPrimitiveActions);
 //   }
 
 
    public SearchAndKickBehavior(String robotName, Ros2Node ros2Node, YoDouble yoTime, HumanoidReferenceFrames referenceFrames,
                                 FullHumanoidRobotModel fullHumanoidRobotModel, WholeBodyControllerParameters wholeBodyControllerParameters,
-                                YoBoolean yoDoubleSupport)//, AtlasPrimitiveActions atlasPrimitiveActions)//, StepUpDoor environment)
+                                YoBoolean yoDoubleSupport, AtlasPrimitiveActions atlasPrimitiveActions)
    {
       super(robotName, "SearchAndKickBehavior",WalkThroughDoorWOFiducialStates.class,yoTime, ros2Node);
       this.referenceFrames = referenceFrames;
       this.atlasPrimitiveActions = atlasPrimitiveActions;
       this.model = fullHumanoidRobotModel;
       sleepBehavior = new SleepBehavior(robotName,ros2Node, yoTime);
-      kickTheBall = new DynamicKick(robotName,ros2Node,yoTime,yoDoubleSupport,referenceFrames);
+      kickTheBall = new  DynamicKick(robotName,ros2Node,yoTime,yoDoubleSupport,referenceFrames);
 //      this.environment = environment;
       this.yoDoubleSuport = yoDoubleSupport;
       yawAccordingToGoalPost = new WalkToLocationBehavior(robotName,ros2Node,fullHumanoidRobotModel,referenceFrames,wholeBodyControllerParameters.getWalkingControllerParameters());
       walkToLocationBehavior = new WalkToLocationBehavior(robotName,ros2Node, fullHumanoidRobotModel,referenceFrames, wholeBodyControllerParameters.getWalkingControllerParameters());
       walkToOffsetPoint1 = new WalkToLocationBehavior(robotName,ros2Node,fullHumanoidRobotModel,referenceFrames,wholeBodyControllerParameters.getWalkingControllerParameters());
       resetRobotBehavior = new ResetRobotBehavior(robotName, ros2Node, yoTime);
-      //      sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
+//      sphereDetctionBehavior = new SphereDetectionBehavior(robotName, ros2Node, referenceFrames);
       fiducialDetectorBehaviorService = new FiducialDetectorBehaviorService(robotName,"FiducialDetector",ros2Node,null);
       fiducialDetectorBehaviorService.setTargetIDToLocate(50);
       fiducialDetectorBehaviorService.setExpectedFiducialSize(0.2032);
@@ -170,7 +160,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
             @Override
             public boolean isDone()
             {
-               return super.isDone() && fiducialDetectorBehaviorService.getGoalHasBeenLocated();
+               return super.isDone();// && fiducialDetectorBehaviorService.getGoalHasBeenLocated();
             }
 
             @Override
@@ -208,17 +198,17 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       };
 
 
-      BehaviorAction walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
-      {
-
-         @Override protected void setBehaviorInput ()
+         BehaviorAction walktowardstheObject = new BehaviorAction(walkToLocationBehavior)
          {
 
-            publishTextToSpeech("Directly Walking towards Sphere");
-            FramePose2D pose1 = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(offsetFromSphere.getX()-0.15,offsetFromSphere.getY()),getWalkingYawofgetoffsetPoint());
-            walkToLocationBehavior.setTarget(pose1);
-         }
-      };
+            @Override protected void setBehaviorInput ()
+            {
+
+               publishTextToSpeech("Directly Walking towards Sphere");
+               FramePose2D pose1 = new FramePose2D(referenceFrames.getWorldFrame(),new Point2D(offsetFromSphere.getX()-0.15,offsetFromSphere.getY()),getWalkingYawofgetoffsetPoint());
+               walkToLocationBehavior.setTarget(pose1);
+            }
+         };
 
       // get in position by yawing the robot in accordance to the goal post orientation
       BehaviorAction yawAction = new BehaviorAction(yawAccordingToGoalPost)
@@ -240,7 +230,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
          @Override
          public void setBehaviorInput()
          {
-            //            publishTextToSpeech("Getting pelvis up by 10 cms");
+//            publishTextToSpeech("Getting pelvis up by 10 cms");
             ReferenceFrame pelvisFrame = referenceFrames.getPelvisZUpFrame();
             FramePoint3D point = new FramePoint3D(pelvisFrame);
             point.changeFrame(referenceFrames.getWorldFrame());
@@ -275,7 +265,7 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
             publishTextToSpeech("Kicking the ball");
             FramePoint2D balltoKickLocation = new FramePoint2D(getoffsetPoint().getPosition());
-            kickTheBall.setObjectToKickPose(balltoKickLocation);//create a new method for orienting the robot
+            kickTheBall.setObjectToKickPose(balltoKickLocation);  //create a new method for orienting the robot
          }
 
 
@@ -393,14 +383,14 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
 
    private FramePose2D getPositionwrtGoalPost()
    {
-      //      FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getGoalPostPosition().getX(),environment.getGoalPostPosition().getY());
-      //      if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
-      //      {
-      //         publishTextToSpeech("Detected fiducial for Yaw motion ");
-      //      }
+//      FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),environment.getGoalPostPosition().getX(),environment.getGoalPostPosition().getY());
+//      if(fiducialDetectorBehaviorService.getGoalHasBeenLocated())
+//      {
+//         publishTextToSpeech("Detected fiducial for Yaw motion ");
+//      }
 
       fiducialDetectorBehaviorService.getReportedGoalPoseWorldFrame(tmpGFP);
-      goalPostPose = new Pose3D(tmpGFP);
+      goalPostPose = new Pose3D(2.0,0.0,1.25,0.0,0.0,0.0); //insert the tmpGFP here
       FramePoint2D goalPostPosition = new FramePoint2D(ReferenceFrame.getWorldFrame(),goalPostPose.getPosition().getX(),goalPostPose.getPosition().getY());
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(),0.0,0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
@@ -410,19 +400,19 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
       FrameVector2D tmp = getWalkingDirectionForYawMotion();
       //calcutating d value
       double distanceFromSphereBeforeYawMotion1 = Math.sqrt(Math.pow(tmp.getX(),2.0) + Math.pow(tmp.getY(),2.0)); //the issue is most probably with the tmp value
-      //      walkingDirection.set(robotPosition);
-      //      walkingDirection.sub(goalPostPosition);
+//      walkingDirection.set(robotPosition);
+//      walkingDirection.sub(goalPostPosition);
       walkingDirection.normalize();
       double walkingYaw = Math.atan2(walkingDirection.getY(), walkingDirection.getX());
-      //      if(DEBUG)
-      //      {
-      System.out.println("goal Post Position :" + goalPostPosition.getX() + goalPostPosition.getY());
-      //      }
+//      if(DEBUG)
+//      {
+         System.out.println("goal Post Position :" + goalPostPosition.getX() + goalPostPosition.getY());
+//      }
 
       double xprime;
       double yprime;
-      //      xprime = offsetFromSphere.getX()+ (offsetFromSphere.getX() - (offsetFromSphere.getX()*Math.cos(walkingYaw))) + 0.1;
-      //      yprime = offsetFromSphere.getY() - offsetFromSphere.getY()*Math.sin(walkingYaw);
+//      xprime = offsetFromSphere.getX()+ (offsetFromSphere.getX() - (offsetFromSphere.getX()*Math.cos(walkingYaw))) + 0.1;
+//      yprime = offsetFromSphere.getY() - offsetFromSphere.getY()*Math.sin(walkingYaw);
       xprime = offsetFromSphere.getX() + (distanceFromSphereBeforeYawMotion1 - distanceFromSphereBeforeYawMotion1*Math.cos(walkingYaw));
       yprime = offsetFromSphere.getY() - (distanceFromSphereBeforeYawMotion1*Math.sin(walkingYaw));
 
@@ -436,16 +426,17 @@ public class SearchAndKickBehavior extends StateMachineBehavior<WalkThroughDoorW
    {
       //use walk to interactactable behavior which by deffult assume two waypoints
       FramePoint2D ballPosition2d;
-//      if(!BALL_DETECTION)
-//      {
+      if(!BALL_DETECTION)
+      {
 //         ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(), environment.getInitialSpherePosition(),
-//                                           0.0);
-//      }
-//      else
-//      {
-      ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(),sphereLocationDetectionBehavior.getLocation().getPosition().getX(),
-                                           sphereLocationDetectionBehavior.getLocation().getPosition().getY());
-//      }
+//                                                                    0.0);
+         ballPosition2d = null;
+      }
+      else
+      {
+         ballPosition2d = new FramePoint2D(ReferenceFrame.getWorldFrame(),sphereLocationDetectionBehavior.getLocation().getPosition().getX(),
+                                                        sphereLocationDetectionBehavior.getLocation().getPosition().getY());
+      }
       FramePoint2D robotPosition = new FramePoint2D(referenceFrames.getMidFeetZUpFrame(), 0.0, 0.0);
       robotPosition.changeFrame(referenceFrames.getWorldFrame());
       FrameVector2D walkingDirection = new FrameVector2D(referenceFrames.getWorldFrame());

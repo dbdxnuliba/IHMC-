@@ -185,7 +185,7 @@ public class DynamicKick extends AbstractBehavior
 
       //after 1 sec gap move right leg forward c = 4, 5
       submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.15,0.1));
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.25,0.0));
+//      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.25,0.0));
 
 
       //while the above two action happen move right hand to till hip position and let left hand rotate more upwards
@@ -195,7 +195,7 @@ public class DynamicKick extends AbstractBehavior
       chestTask = new ChestOrientationTask(chestTrajectoryMessage,chestTrajectoryBehavior);
       pipeLine.submitTaskForPallelPipesStage(chestTrajectoryBehavior,chestTask);
       //all things to normal c = 6
-      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.0,-0.25,0.0));
+      submitFootPosition(kickFoot, new FramePoint3D(ankleZUpFrame.get(kickFoot.getOppositeSide()),0.3,-0.25,0.0));
 
 
       final FootLoadBearingBehavior footStateBehavior = new FootLoadBearingBehavior(robotName,ros2Node);
@@ -213,8 +213,17 @@ public class DynamicKick extends AbstractBehavior
 
    private void submitFootPosition(RobotSide robotSide , FramePoint3D desiredFootPosition)
    {
+      FrameQuaternion desiredFootOrientation;
 
-      FrameQuaternion desiredFootOrientation = new FrameQuaternion(desiredFootPosition.getReferenceFrame());
+      if(counter == 3)
+      {
+         desiredFootOrientation = new FrameQuaternion(desiredFootPosition.getReferenceFrame(),0.0,Math.toRadians(-35.0), 0.0 );
+      }
+      else
+      {
+         desiredFootOrientation = new FrameQuaternion(desiredFootPosition.getReferenceFrame());
+      }
+
       FramePose3D desiredFootPose = new FramePose3D(desiredFootPosition,desiredFootOrientation);
       submitFootPose(robotSide, desiredFootPose);
 
@@ -225,7 +234,7 @@ public class DynamicKick extends AbstractBehavior
 
 
       desiredFootPose.changeFrame(ReferenceFrame.getWorldFrame());
-      us.ihmc.euclid.tuple3D.Point3D desiredFootPosition = new Point3D();
+      Point3D desiredFootPosition = new Point3D();
       Quaternion desiredFootQaternion = new Quaternion();
       desiredFootPose.get(desiredFootPosition,desiredFootQaternion);
       FootTrajectoryTask task = new FootTrajectoryTask(side,desiredFootPosition,desiredFootQaternion, footTrajectoryBehavior
