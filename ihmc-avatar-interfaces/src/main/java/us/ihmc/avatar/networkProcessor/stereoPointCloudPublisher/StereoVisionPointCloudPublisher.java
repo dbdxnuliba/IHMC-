@@ -235,6 +235,10 @@ public class StereoVisionPointCloudPublisher
          double angularDistance = sensorPose.getOrientation().distance(previousSensorOrientation);
          double angularVelocity = angularDistance / timeDiff;
 
+         previousTimeStamp = robotTimestamp;
+         previousSensorPosition.set(sensorPose.getPosition());
+         previousSensorOrientation.set(sensorPose.getOrientation());
+         
          if (linearVelocity > linearVelocityThreshold.get() || angularVelocity > angularVelocityThreshold.get())
          {
             LogTools.info("timeDiff " + timeDiff);
@@ -256,10 +260,6 @@ public class StereoVisionPointCloudPublisher
       
       if (Debug)
          System.out.println("Publishing stereo data, number of points: " + (message.getPointCloud().size() / 3));
-
-      previousTimeStamp = robotTimestamp;
-      previousSensorPosition.set(sensorPose.getPosition());
-      previousSensorOrientation.set(sensorPose.getOrientation());
 
       if (pointcloudPublisher != null)
          pointcloudPublisher.publish(message);
