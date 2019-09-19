@@ -248,7 +248,7 @@ public class QuadrupedUserInterface
       AnchorPane.setLeftAnchor(videoViewOverlay.getNode(), 0.0);
       videoViewOverlay.getNode().addEventHandler(MouseEvent.MOUSE_PRESSED, event -> videoViewOverlay.toggleMode());
 
-      videoViewOverlay.start(messager, QuadrupedUIMessagerAPI.LeftCameraVideo);
+      //videoViewOverlay.start(messager, QuadrupedUIMessagerAPI.LeftCameraVideo);
       timeStatisticsManager.start();
       planarRegionViewer.start();
       startGoalPositionViewer.start();
