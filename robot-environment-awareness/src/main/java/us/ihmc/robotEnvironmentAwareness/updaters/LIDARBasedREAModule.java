@@ -217,6 +217,10 @@ public class LIDARBasedREAModule
       stereoVisionBufferUpdater.loadConfiguration(filePropertyHelper);
       mainUpdater.loadConfiguration(filePropertyHelper);
       planarRegionFeatureUpdater.loadConfiguration(filePropertyHelper);
+      
+      Boolean preserveOcTreeHistoryFile = filePropertyHelper.loadBooleanProperty(REAModuleAPI.StereoVisionBufferPreservingEnable.getName());
+      if (preserveOcTreeHistoryFile != null)
+         preserveOcTreeHistory.set(preserveOcTreeHistoryFile);
    }
 
    private final AtomicDouble lastCompleteUpdate = new AtomicDouble(Double.NaN);
