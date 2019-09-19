@@ -67,7 +67,6 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       this.nominalBodyHeight = nominalBodyHeight;
       this.referenceFrames = new QuadrupedReferenceFrames(robotModel);
 
-      joystick.addJoystickEventListener(this);
       joystick.setPollInterval(pollRateMillis);
       configureJoystickFilters(joystick);
 
@@ -94,6 +93,8 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       });
 
       currentSteppingState = messager.createInput(QuadrupedUIMessagerAPI.CurrentSteppingStateNameTopic, null);
+
+      joystick.addJoystickEventListener(this);
    }
 
    private static void configureJoystickFilters(Joystick device)
@@ -280,6 +281,17 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       {
          return;
       }
+      
+      ChannelData heightChannel = channelDataMap.get(XBoxOneMapping.DPAD);
+      boolean hasNewData = heightChannel.hasNewData();
+      double value = heightChannel.getValue();
+      if (hasNewData && (value == 1.0 || value == 0.5))
+      {
+         double stepHeightAdjustment = value == 0.5 ? 0.01 : - 0.01;
+         double stepHeight = xGaitSettings.getStepGroundClearance() + stepHeightAdjustment;
+         xGaitSettings.setStepGroundClearance(MathTools.clamp(stepHeight, 0.01, 0.15));
+         messager.submitMessage(QuadrupedUIMessagerAPI.XGaitSettingsTopic, xGaitSettings);         
+      }
 
       ChannelData xVelocityChannel = channelDataMap.get(xVelocityMapping);
       ChannelData yVelocityChannel = channelDataMap.get(yVelocityMapping);
@@ -308,7 +320,11 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
    @Override
    public void processEvent(Event event)
    {
-      channelDataMap.get(XBoxOneMapping.getMapping(event)).update((double) event.getValue());
+      XBoxOneMapping mapping = XBoxOneMapping.getMapping(event);
+      if(!channelDataMap.containsKey(mapping))
+         channelDataMap.put(mapping, new ChannelData());
+      
+      channelDataMap.get(mapping).update((double) event.getValue());
    }
 
    private class ChannelData
