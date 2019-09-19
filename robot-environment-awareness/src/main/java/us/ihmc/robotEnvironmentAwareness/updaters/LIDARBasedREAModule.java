@@ -248,10 +248,9 @@ public class LIDARBasedREAModule
          }
          else
          {
-//            if (enableStereoBuffer.get() && !preserveOcTreeHistory.get())//TODO: see configuration file and fix me.
-//            {
-//               mainUpdater.clearOcTree();
-//            }
+            if (enableStereoBuffer.get() && !preserveOcTreeHistory.get())
+               mainUpdater.clearOcTree();
+
             timeReporter.run(mainUpdater::update, ocTreeTimeReport);
             timeReporter.run(() -> moduleStateReporter.reportOcTreeState(mainOctree), reportOcTreeStateTimeReport);
 
@@ -263,8 +262,6 @@ public class LIDARBasedREAModule
 
             planarRegionNetworkProvider.update(ocTreeUpdateSuccess);
             planarRegionNetworkProvider.publishCurrentState();
-            
-            mainUpdater.clearOcTree(); //TODO: fix me.
          }
 
          if (isThreadInterrupted())
