@@ -100,7 +100,8 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    private final AvatarRobotPointCloudParameters[] pointCloudParameters = new AvatarRobotPointCloudParameters[1];
    public static final int MULTISENSE_STEREO_ID = 0;
    private static final String stereoSensorName = "stereo_camera";
-   private static final String stereoColorTopic = multisense_namespace + "/image_points2_color_world";
+   private static final String stereoColorTopic = "/cam_2/depth/color/points";
+//   private static final String stereoColorTopic = multisense_namespace + "/image_points2_color_world";
    private static final String stereoBaseFrame = multisense_namespace + "/head";
    private static final String stereoEndFrame = multisense_namespace + "/left_camera_frame";
 
