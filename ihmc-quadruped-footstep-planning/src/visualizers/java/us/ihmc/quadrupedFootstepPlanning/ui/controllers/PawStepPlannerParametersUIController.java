@@ -57,6 +57,8 @@ public class PawStepPlannerParametersUIController
    private Spinner<Double> yawWeight;
    @FXML
    private Spinner<Double> xGaitWeight;
+   @FXML
+   private Spinner<Double> velocityWeight;
 
    @FXML
    private Spinner<Double> costPerStep;
@@ -125,7 +127,8 @@ public class PawStepPlannerParametersUIController
 
       distanceWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 5.0, 0.0, 0.1));
       yawWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 5.0, 0.0, 0.1));
-      xGaitWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 5.0, 0.0, 0.1));
+      xGaitWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 50.0, 0.0, 0.1));
+      velocityWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 50.0, 0.0, 1.0));
 
       costPerStep.setValueFactory(new DoubleSpinnerValueFactory(0.0, 5.0, 0.0, 0.1));
       stepUpWeight.setValueFactory(new DoubleSpinnerValueFactory(0.0, 5.0, 0.0, 0.1));
@@ -155,10 +158,11 @@ public class PawStepPlannerParametersUIController
       javaFXStoredPropertyMap.put(minHindEndForwardDistanceFromCliffBottoms, PawStepPlannerParameterKeys.minimumHindEndForwardDistanceFromCliffBottoms);
       javaFXStoredPropertyMap.put(minHindEndBackwardDistanceFromCliffBottoms, PawStepPlannerParameterKeys.minimumHindEndBackwardDistanceFromCliffBottoms);
       javaFXStoredPropertyMap.put(minLateralDistanceFromCliffBottoms, PawStepPlannerParameterKeys.minimumLateralDistanceFromCliffBottoms);
-
+      
       javaFXStoredPropertyMap.put(distanceWeight, PawStepPlannerParameterKeys.distanceWeight);
       javaFXStoredPropertyMap.put(yawWeight, PawStepPlannerParameterKeys.yawWeight);
       javaFXStoredPropertyMap.put(xGaitWeight, PawStepPlannerParameterKeys.xGaitWeight);
+      javaFXStoredPropertyMap.put(velocityWeight, PawStepPlannerParameterKeys.desiredVelocityWeight);
 
       javaFXStoredPropertyMap.put(stepUpWeight, PawStepPlannerParameterKeys.stepUpWeight);
       javaFXStoredPropertyMap.put(stepDownWeight, PawStepPlannerParameterKeys.stepDownWeight);

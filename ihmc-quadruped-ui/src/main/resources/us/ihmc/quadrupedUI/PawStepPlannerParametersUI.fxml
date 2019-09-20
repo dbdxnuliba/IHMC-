@@ -55,10 +55,11 @@
                           <Label text="Distance weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" />
                           <Label text="Yaw weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
                           <Label text="X Gait Weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
-                          <Label text="Cost per step" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
-                          <Label text="Step up weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
-                          <Label text="Step down weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
-                          <Label text="Heuristics weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
+                          <Label text="Velocity Weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
+ 					      <Label text="Cost per step" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
+                          <Label text="Step up weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="5" />
+                          <Label text="Step down weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="6" />
+                          <Label text="Heuristics weight" GridPane.columnIndex="4" GridPane.halignment="RIGHT" GridPane.rowIndex="7" />
 
                           <Spinner fx:id="maxWalkingSpeedMultiplier" editable="true" prefWidth="100.0" GridPane.columnIndex="1" />
                           <Spinner fx:id="bodyGroundClearance" editable="true" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
@@ -68,7 +69,7 @@
                           <Spinner fx:id="projectInsideDistance" editable="true" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                           <Spinner fx:id="maximumXYWiggleDistance" editable="true" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 
-                                <Spinner fx:id="cliffHeightToAvoid" editable="true" prefWidth="100.0" GridPane.columnIndex="3" />
+                          <Spinner fx:id="cliffHeightToAvoid" editable="true" prefWidth="100.0" GridPane.columnIndex="3" />
                           <Spinner fx:id="minFrontEndForwardDistanceFromCliffBottoms" editable="true" prefWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
                           <Spinner fx:id="minFrontEndBackwardDistanceFromCliffBottoms" editable="true" prefWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="2" />
                           <Spinner fx:id="minHindEndForwardDistanceFromCliffBottoms" editable="true" prefWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
@@ -77,13 +78,14 @@
 
 
 
-                                <Spinner fx:id="distanceWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" />
+                          <Spinner fx:id="distanceWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" />
                           <Spinner fx:id="yawWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="1" />
                           <Spinner editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="2" fx:id="xGaitWeight" />
-                          <Spinner fx:id="costPerStep" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="3" />
-                          <Spinner fx:id="stepUpWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="4" />
-                          <Spinner fx:id="stepDownWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="5" />
-                          <Spinner fx:id="heuristicsWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="6" />
+                          <Spinner editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="3" fx:id="velocityWeight" />
+                          <Spinner fx:id="costPerStep" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="4" />
+                          <Spinner fx:id="stepUpWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="5" />
+                          <Spinner fx:id="stepDownWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="6" />
+                          <Spinner fx:id="heuristicsWeight" editable="true" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="7" />
                       </children>
 
                   </GridPane>
