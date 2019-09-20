@@ -141,10 +141,20 @@ public class QuadrupedNetworkProcessor
       {
          try
          {
-            if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
-               LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
+            if(params.useStereoBufferOnlyForREA())
+            {
+               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
+                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
+               else
+                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();   
+            }
             else
-               LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
+            {
+               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
+                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
+               else
+                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
+            }
          }
          catch (Exception e)
          {
