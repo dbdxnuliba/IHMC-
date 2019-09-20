@@ -127,6 +127,10 @@ public class LIDARBasedREAModule
                                            subscriberTopicNameGenerator,
                                            this::handleREASensorDataFilterParametersMessage);
 
+      preserveOcTreeHistory = reaMessager.createInput(REAModuleAPI.StereoVisionBufferPreservingEnable, false);
+      enableStereoBuffer = reaMessager.createInput(REAModuleAPI.StereoVisionBufferEnable, false);
+      octreeResolution = reaMessager.createInput(REAModuleAPI.OcTreeResolution, mainUpdater.getMainOctree().getResolution());
+      
       FilePropertyHelper filePropertyHelper = new FilePropertyHelper(configurationFile);
       loadConfigurationFile(filePropertyHelper);
 
@@ -145,10 +149,6 @@ public class LIDARBasedREAModule
 
       // At the very end, we force the modules to submit their state so duplicate inputs have consistent values.
       reaMessager.submitMessage(REAModuleAPI.RequestEntireModuleState, true);
-
-      preserveOcTreeHistory = reaMessager.createInput(REAModuleAPI.StereoVisionBufferPreservingEnable, false);
-      enableStereoBuffer = reaMessager.createInput(REAModuleAPI.StereoVisionBufferEnable, false);
-      octreeResolution = reaMessager.createInput(REAModuleAPI.OcTreeResolution, mainUpdater.getMainOctree().getResolution());
    }
 
    private void dispatchLidarScanMessage(Subscriber<LidarScanMessage> subscriber)
@@ -221,6 +221,12 @@ public class LIDARBasedREAModule
       Boolean preserveOcTreeHistoryFile = filePropertyHelper.loadBooleanProperty(REAModuleAPI.StereoVisionBufferPreservingEnable.getName());
       if (preserveOcTreeHistoryFile != null)
          preserveOcTreeHistory.set(preserveOcTreeHistoryFile);
+      Boolean enableStereoBufferFile = filePropertyHelper.loadBooleanProperty(REAModuleAPI.StereoVisionBufferEnable.getName());
+      if (enableStereoBufferFile != null)
+         enableStereoBuffer.set(enableStereoBufferFile);
+      Double ocTreeResolutionFile = filePropertyHelper.loadDoubleProperty(REAModuleAPI.OcTreeResolution.getName());
+      if (ocTreeResolutionFile != null)
+         octreeResolution.set(ocTreeResolutionFile);
    }
 
    private final AtomicDouble lastCompleteUpdate = new AtomicDouble(Double.NaN);
