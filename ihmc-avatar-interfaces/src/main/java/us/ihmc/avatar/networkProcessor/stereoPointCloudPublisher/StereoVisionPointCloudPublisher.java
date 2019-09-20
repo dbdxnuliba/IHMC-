@@ -240,15 +240,7 @@ public class StereoVisionPointCloudPublisher
          previousSensorOrientation.set(sensorPose.getOrientation());
          
          if (linearVelocity > linearVelocityThreshold.get() || angularVelocity > angularVelocityThreshold.get())
-         {
-//            LogTools.info("timeDiff " + timeDiff);
-//            LogTools.info("linearVelocity " + linearVelocity + " " + linearVelocityThreshold.get());
-//            LogTools.info("angularVelocity " + angularVelocity + " " + angularVelocityThreshold.get());
-//
-//            LogTools.info("linearVelocity " + (linearVelocity > linearVelocityThreshold.get()) + " angularVelocity "
-//                  + (angularVelocity > angularVelocityThreshold.get()));
             return;
-         }
       }
 
       // transform points.

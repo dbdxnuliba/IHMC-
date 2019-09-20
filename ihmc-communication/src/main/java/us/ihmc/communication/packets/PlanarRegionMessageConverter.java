@@ -13,6 +13,7 @@ import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.idl.IDLSequence.Object;
+import us.ihmc.log.LogTools;
 import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -106,6 +107,9 @@ public class PlanarRegionMessageConverter
 
       vertexBuffer.clear();
 
+      if(planarRegionsList.getNumberOfPlanarRegions() == 0)
+         LogTools.info("HEY someone tried to convert PlanarRegionsList into Message even though it is empty.");
+      
       for (PlanarRegion planarRegion : planarRegionsList.getPlanarRegionsAsList())
       {
          RigidBodyTransform transform = new RigidBodyTransform();
