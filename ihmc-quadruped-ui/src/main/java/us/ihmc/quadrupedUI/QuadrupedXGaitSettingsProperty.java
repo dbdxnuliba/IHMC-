@@ -1,6 +1,12 @@
 package us.ihmc.quadrupedUI;
 
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 import javafx.beans.property.Property;
+import javafx.beans.value.ChangeListener;
+import us.ihmc.quadrupedPlanning.QuadrupedGaitTimings;
+import us.ihmc.quadrupedPlanning.QuadrupedGaitTimingsReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
@@ -10,9 +16,11 @@ public class QuadrupedXGaitSettingsProperty extends ParametersProperty<Quadruped
 {
    private final DoubleField stanceLength = new DoubleField(QuadrupedXGaitSettings::getStanceLength, QuadrupedXGaitSettings::setStanceLength);
    private final DoubleField stanceWidth = new DoubleField(QuadrupedXGaitSettings::getStanceWidth, QuadrupedXGaitSettings::setStanceWidth);
-   private final DoubleField stepGroundClearance = new DoubleField(QuadrupedXGaitSettings::getStepGroundClearance, QuadrupedXGaitSettings::setStepGroundClearance);
+   private final DoubleField stepGroundClearance = new DoubleField(QuadrupedXGaitSettings::getStepGroundClearance,
+                                                                   QuadrupedXGaitSettings::setStepGroundClearance);
    private final DoubleField endPhaseShift = new DoubleField(QuadrupedXGaitSettings::getEndPhaseShift, QuadrupedXGaitSettings::setEndPhaseShift);
-   private final EnumField<QuadrupedSpeed> quadrupedSpeed = new EnumField<QuadrupedSpeed>(QuadrupedXGaitSettings::getQuadrupedSpeed, QuadrupedXGaitSettings::setQuadrupedSpeed);
+   private final EnumField<QuadrupedSpeed> quadrupedSpeed = new EnumField<QuadrupedSpeed>(QuadrupedXGaitSettings::getQuadrupedSpeed,
+                                                                                          QuadrupedXGaitSettings::setQuadrupedSpeed);
 
    private final QuadrupedGaitTimingsProperty paceSlowProperty;
    private final QuadrupedGaitTimingsProperty paceMediumProperty;
@@ -37,6 +45,25 @@ public class QuadrupedXGaitSettingsProperty extends ParametersProperty<Quadruped
       trotSlowProperty = new QuadrupedGaitTimingsProperty(bean, name, xGaitSettings.getTrotSlowTimings());
       trotMediumProperty = new QuadrupedGaitTimingsProperty(bean, name, xGaitSettings.getTrotMediumTimings());
       trotFastProperty = new QuadrupedGaitTimingsProperty(bean, name, xGaitSettings.getTrotFastTimings());
+      addChangeListener(paceSlowProperty, QuadrupedXGaitSettings::setPaceSlowSettings);
+      addChangeListener(paceMediumProperty, QuadrupedXGaitSettings::setPaceMediumSettings);
+      addChangeListener(paceFastProperty, QuadrupedXGaitSettings::setPaceFastSettings);
+      addChangeListener(ambleSlowProperty, QuadrupedXGaitSettings::setAmbleSlowSettings);
+      addChangeListener(ambleMediumProperty, QuadrupedXGaitSettings::setAmbleMediumSettings);
+      addChangeListener(ambleFastProperty, QuadrupedXGaitSettings::setAmbleFastSettings);
+      addChangeListener(trotSlowProperty, QuadrupedXGaitSettings::setTrotSlowSettings);
+      addChangeListener(trotMediumProperty, QuadrupedXGaitSettings::setTrotMediumSettings);
+      addChangeListener(trotFastProperty, QuadrupedXGaitSettings::setTrotFastSettings);
+   }
+   
+   private void addChangeListener(QuadrupedGaitTimingsProperty property, BiConsumer<QuadrupedXGaitSettings, QuadrupedGaitTimingsReadOnly> setter)
+   {
+      property.addListener((o, oldValue, newValue) ->
+      {
+         QuadrupedXGaitSettings newValue2 = getValueCopy(get());
+         setter.accept(newValue2, newValue);
+         set(newValue2);
+      });
    }
 
    @Override
