@@ -37,6 +37,7 @@ import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.stepCost.PawNod
 import us.ihmc.quadrupedFootstepPlanning.pathPlanning.WaypointsForPawStepPlanner;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedPlanning.stepStream.QuadrupedXGaitTools;
+import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
@@ -234,6 +235,8 @@ public class AStarPawStepPlanner implements BodyPathAndPawPlanner
 
       goalNodes = new QuadrantDependentList<>();
 
+      goalPoseInWorld.setToZero(worldFrame);
+
       if (goal.getTargetType().equals(PawStepPlannerTargetType.POSE_BETWEEN_FEET))
       {
          FramePose3DReadOnly goalPose = goal.getTargetPose();
@@ -254,13 +257,11 @@ public class AStarPawStepPlanner implements BodyPathAndPawPlanner
          {
             goalNodes.put(robotQuadrant, new PawNode(robotQuadrant, frontLeftGoalPosition, frontRightGoalPosition, hindLeftGoalPosition, hindRightGoalPosition,
                                                      goalPose.getYaw(), xGaitSettings.getStanceLength(), xGaitSettings.getStanceWidth()));
+            snapper.snapPawNode(goalNodes.get(robotQuadrant));
          }
-
-         goalPoseInWorld.set(goalPose);
       }
       else if (goal.getTargetType().equals(PawStepPlannerTargetType.FOOTSTEPS))
       {
-         goalPoseInWorld.setToZero(worldFrame);
 
          FramePoint2D frontLeftGoalPosition = new FramePoint2D(goal.getPawGoalPosition(RobotQuadrant.FRONT_LEFT));
          FramePoint2D frontRightGoalPosition = new FramePoint2D(goal.getPawGoalPosition(RobotQuadrant.FRONT_RIGHT));
@@ -281,12 +282,24 @@ public class AStarPawStepPlanner implements BodyPathAndPawPlanner
          {
             goalNodes.put(robotQuadrant, new PawNode(robotQuadrant, frontLeftGoalPosition, frontRightGoalPosition, hindLeftGoalPosition, hindRightGoalPosition,
                                                      nominalYaw, xGaitSettings.getStanceLength(), xGaitSettings.getStanceWidth()));
-            goalPoseInWorld.getPosition().add(goal.getPawGoalPosition(robotQuadrant));
+            snapper.snapPawNode(goalNodes.get(robotQuadrant));
          }
 
          goalPoseInWorld.getPosition().scale(0.25);
          goalPoseInWorld.getOrientation().setToYawOrientation(nominalYaw);
       }
+
+      goalPoseInWorld.setToZero(worldFrame);
+
+      double goalYaw = 0.0;
+      for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
+      {
+         goalPoseInWorld.getPosition().add(goalNodes.get(robotQuadrant).getX(robotQuadrant), goalNodes.get(robotQuadrant).getY(robotQuadrant), 0.0);
+         goalYaw += 0.25 * goalNodes.get(robotQuadrant).getStepYaw();
+      }
+      goalPoseInWorld.getPosition().scale(0.25);
+      goalYaw = AngleTools.trimAngleMinusPiToPi(goalYaw);
+      goalPoseInWorld.getOrientation().setToYawOrientation(goalYaw);
 
       heuristics.setGoalPose(goalPoseInWorld);
       startAndGoalListeners.parallelStream().forEach(listener -> listener.setGoalPose(goalPoseInWorld));
