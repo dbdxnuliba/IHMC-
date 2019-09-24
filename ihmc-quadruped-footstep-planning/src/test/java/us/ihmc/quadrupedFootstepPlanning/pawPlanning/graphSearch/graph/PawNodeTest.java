@@ -3,9 +3,11 @@ package us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.graph;
 import gnu.trove.list.array.TIntArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import us.ihmc.commons.RandomNumbers;
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.PawStepPlanningRandomTools;
+import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 
 import java.util.Random;
@@ -102,6 +104,20 @@ public class PawNodeTest
 
       Assertions.assertTrue(nodeA.equals(nodeB));
       Assertions.assertTrue(nodeA.hashCode() == nodeB.hashCode());
+   }
+
+   @Test
+   public void testSnapToYaw()
+   {
+      Random random = new Random(1738L);
+      for (int i = 0; i < 1000; i++)
+      {
+         double angleA = RandomNumbers.nextDouble(random, -Math.PI, Math.PI);
+         double angleB = -2.0 * Math.PI + angleA;
+
+         assertEquals(AngleTools.computeAngleDifferenceMinusPiToPi(angleA, angleB), 0.0, 1e-5);
+         assertEquals(PawNode.snapToYawGrid(angleA), PawNode.snapToYawGrid(angleB));
+      }
    }
 
    private static PawNode createNodeAtOrigin(double yaw)

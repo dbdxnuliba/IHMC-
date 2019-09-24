@@ -100,7 +100,7 @@ public class AStarPawStepPlannerTest
    }
 
    @Test
-   public void testWalkAndTurn()
+   public void testWalkAndTurnClockwise()
    {
       double timeout = 10.0;
       double stanceLength = 1.0;
@@ -111,6 +111,22 @@ public class AStarPawStepPlannerTest
       FramePose3D goalPose = new FramePose3D();
       goalPose.setPosition(2.5, 2.5, 0.0);
       goalPose.setOrientationYawPitchRoll(Math.PI / 3.0, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
+
+   @Test
+   public void testWalkAndTurnCounterClockwise()
+   {
+      double timeout = 10.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      PlanarRegionsList planarRegionsList = null;
+
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      goalPose.setPosition(2.5, -2.5, 0.0);
+      goalPose.setOrientationYawPitchRoll(-Math.PI / 3.0, 0.0, 0.0);
 
       runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
    }
@@ -127,6 +143,22 @@ public class AStarPawStepPlannerTest
       FramePose3D goalPose = new FramePose3D();
       goalPose.setPosition(1.5, 0.5, 0.0);
       goalPose.setOrientationYawPitchRoll(-Math.PI / 4.0, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
+
+   @Test
+   public void testSimpleForwardPointOther()
+   {
+      double timeout = 20.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      PlanarRegionsList planarRegionsList = null;
+
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      goalPose.setPosition(1.5, 0.5, 0.0);
+      goalPose.setOrientationYawPitchRoll(Math.PI / 4.0, 0.0, 0.0);
 
       runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
    }
