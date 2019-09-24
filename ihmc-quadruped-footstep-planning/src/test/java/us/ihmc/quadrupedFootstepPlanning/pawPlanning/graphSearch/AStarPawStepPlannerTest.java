@@ -146,6 +146,40 @@ public class AStarPawStepPlannerTest
 
       runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
    }
+   
+   @Test
+   public void testSimpleForwardPoint2()
+   {
+      double timeout = 20.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      PlanarRegionsList planarRegionsList = null;
+
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      goalPose.setPosition(0.4, -0.9, 0.0);
+      goalPose.setOrientationYawPitchRoll(-0.11, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
+   
+   @Test
+   public void testSimpleForwardPoint3()
+   {
+      double timeout = 20.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      PlanarRegionsList planarRegionsList = null;
+
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      startPose.setPosition(0.018, -0.009, 0.0);
+      startPose.setOrientationYawPitchRoll(-0.436, 0.0, 0.0);
+      goalPose.setPosition(0.662, -0.737, 0.0);
+      goalPose.setOrientationYawPitchRoll(-0.191, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
 
    @Test
    public void testSimpleForwardPointOther()
