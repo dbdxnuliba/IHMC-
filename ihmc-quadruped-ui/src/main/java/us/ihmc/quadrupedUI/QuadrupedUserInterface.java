@@ -131,7 +131,7 @@ public class QuadrupedUserInterface
       pawStepPlannerParametersUIController.setPlannerParametersTopic(QuadrupedUIMessagerAPI.FootstepPlannerParametersTopic);
       plannerReachParametersUIController.setPlannerParametersTopic(QuadrupedUIMessagerAPI.FootstepPlannerParametersTopic);
       visibilityGraphsParametersUIController.setVisibilityGraphsParametersTopic(QuadrupedUIMessagerAPI.VisibilityGraphsParametersTopic);
-      
+
       plannerTabController.bindControls();
       robotControlTabController.bindControls();
       pawStepPlannerParametersUIController.bindControls();
