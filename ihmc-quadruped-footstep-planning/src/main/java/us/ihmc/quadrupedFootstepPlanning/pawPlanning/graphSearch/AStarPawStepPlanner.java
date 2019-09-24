@@ -707,7 +707,7 @@ public class AStarPawStepPlanner implements BodyPathAndPawPlanner
          return false;
 
       RobotQuadrant nodeQuadrant = nodeToExpand.getMovingQuadrant();
-      if (goalNodes.get(nodeQuadrant).equals(nodeToExpand))
+      if (goalNodes.get(nodeQuadrant).equals(nodeToExpand) || goalNodes.get(nodeQuadrant).xGaitGeometricallyEquals(nodeToExpand))
       {
          PawNode parentNode = nodeToExpand;
          nodeQuadrant = nodeQuadrant.getNextRegularGaitSwingQuadrant();

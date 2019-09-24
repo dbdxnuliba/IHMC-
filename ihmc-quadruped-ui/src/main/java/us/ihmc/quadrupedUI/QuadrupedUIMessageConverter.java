@@ -20,6 +20,7 @@ import us.ihmc.humanoidRobotics.communication.packets.dataobjects.HighLevelContr
 import us.ihmc.messager.Messager;
 import us.ihmc.pathPlanning.visibilityGraphs.VisibilityGraphMessagesConverter;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.VisibilityMapWithNavigableRegion;
+import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersBasics;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityMapHolder;
 import us.ihmc.pubsub.DomainFactory;
@@ -28,6 +29,7 @@ import us.ihmc.quadrupedCommunication.QuadrupedControllerAPIDefinition;
 import us.ihmc.quadrupedCommunication.QuadrupedMessageTools;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.*;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.communication.PawStepPlannerCommunicationProperties;
+import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawStepPlannerParametersBasics;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawStepPlannerParametersReadOnly;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.tools.PawStepPlannerMessageTools;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
@@ -93,15 +95,16 @@ public class QuadrupedUIMessageConverter
 
    private IHMCRealtimeROS2Publisher<REAStateRequestMessage> reaStateRequestPublisher;
 
-   public QuadrupedUIMessageConverter(RealtimeRos2Node ros2Node, Messager messager, String robotName)
+   public QuadrupedUIMessageConverter(RealtimeRos2Node ros2Node, Messager messager, String robotName, PawStepPlannerParametersBasics defaultPawPlannerParameters,
+                                      VisibilityGraphsParametersBasics defaultVisibilityGraphsParameters, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings)
    {
       this.messager = messager;
       this.robotName = robotName;
       this.ros2Node = ros2Node;
 
-      footstepPlannerParametersReference = messager.createInput(QuadrupedUIMessagerAPI.FootstepPlannerParametersTopic, null);
-      visibilityGraphParametersReference = messager.createInput(QuadrupedUIMessagerAPI.VisibilityGraphsParametersTopic, null);
-      xGaitSettingsReference = messager.createInput(QuadrupedUIMessagerAPI.XGaitSettingsTopic, null);
+      footstepPlannerParametersReference = messager.createInput(QuadrupedUIMessagerAPI.FootstepPlannerParametersTopic, defaultPawPlannerParameters);
+      visibilityGraphParametersReference = messager.createInput(QuadrupedUIMessagerAPI.VisibilityGraphsParametersTopic, defaultVisibilityGraphsParameters);
+      xGaitSettingsReference = messager.createInput(QuadrupedUIMessagerAPI.XGaitSettingsTopic, defaultXGaitSettings);
       plannerStartPositionReference = messager.createInput(QuadrupedUIMessagerAPI.StartPositionTopic);
       plannerStartTargetTypeReference = messager.createInput(QuadrupedUIMessagerAPI.StartTargetTypeTopic, PawStepPlannerTargetType.POSE_BETWEEN_FEET);
       plannerStartFeetPositionsReference = messager.createInput(QuadrupedUIMessagerAPI.StartFeetPositionTopic);
@@ -534,14 +537,16 @@ public class QuadrupedUIMessageConverter
       return pawStepPlan;
    }
 
-   public static QuadrupedUIMessageConverter createConverter(Messager messager, String robotName, DomainFactory.PubSubImplementation implementation)
+   public static QuadrupedUIMessageConverter createConverter(Messager messager, String robotName, DomainFactory.PubSubImplementation implementation,  PawStepPlannerParametersBasics defaultPawStepPlannerParameters,
+                                                             VisibilityGraphsParametersBasics defaultVisGraphPlannerParameters, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings)
    {
       RealtimeRos2Node ros2Node = ROS2Tools.createRealtimeRos2Node(implementation, "ihmc_quadruped_ui");
-      return createConverter(ros2Node, messager, robotName);
+      return createConverter(ros2Node, messager, robotName, defaultPawStepPlannerParameters, defaultVisGraphPlannerParameters, defaultXGaitSettings);
    }
 
-   public static QuadrupedUIMessageConverter createConverter(RealtimeRos2Node ros2Node, Messager messager, String robotName)
+   public static QuadrupedUIMessageConverter createConverter(RealtimeRos2Node ros2Node, Messager messager, String robotName, PawStepPlannerParametersBasics defaultPawStepPlannerParameters,
+                                                             VisibilityGraphsParametersBasics defaultVisGraphPlannerParameters, QuadrupedXGaitSettingsReadOnly defaultXGaitSettings)
    {
-      return new QuadrupedUIMessageConverter(ros2Node, messager, robotName);
+      return new QuadrupedUIMessageConverter(ros2Node, messager, robotName, defaultPawStepPlannerParameters, defaultVisGraphPlannerParameters, defaultXGaitSettings);
    }
 }
