@@ -28,6 +28,7 @@ import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawS
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.visualization.AStarPawPlannerVisualizer;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettings;
+import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.graphics.Graphics3DObjectTools;
@@ -44,6 +45,9 @@ public class AStarPawStepPlannerTest
    private static final double epsilon = 1e-3;
    private static boolean visualize = false;
    private static boolean activelyVisualize = false;
+   
+   double stanceLength = 0.8;
+   double stanceWidth = 0.4;
 
    private static final QuadrantDependentList<AppearanceDefinition> colorDefinitions = new QuadrantDependentList<>(YoAppearance.Red(), YoAppearance.Green(), YoAppearance.DarkRed(), YoAppearance.DarkGreen());
 
@@ -57,6 +61,18 @@ public class AStarPawStepPlannerTest
    protected PawStepPlannerParametersBasics getPawStepPlannerParameters()
    {
       return new DefaultPawStepPlannerParameters();
+   }
+   
+   protected QuadrupedXGaitSettingsReadOnly getXGaitSettings()
+   {
+      QuadrupedXGaitSettings xGaitSettings = new QuadrupedXGaitSettings();
+      xGaitSettings.setStanceLength(stanceLength);
+      xGaitSettings.setStanceWidth(stanceWidth);
+      xGaitSettings.setEndPhaseShift(90.0);
+      xGaitSettings.setQuadrupedSpeed(QuadrupedSpeed.MEDIUM);
+      xGaitSettings.getAmbleMediumTimings().setStepDuration(0.4);
+      xGaitSettings.getAmbleMediumTimings().setEndDoubleSupportDuration(0.35);
+      return xGaitSettings;
    }
 
    @Test
@@ -186,6 +202,24 @@ public class AStarPawStepPlannerTest
 
       runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
    }
+   
+   @Test
+   public void testSimpleForwardPoint4()
+   {
+      double timeout = 20.0;
+      double stanceLength = 1.0;
+      double stanceWidth = 0.5;
+      PlanarRegionsList planarRegionsList = null;
+
+      FramePose3D startPose = new FramePose3D();
+      FramePose3D goalPose = new FramePose3D();
+      startPose.setPosition(-0.026, -0.003, 0.0);
+      startPose.setOrientationYawPitchRoll(-0.698, 0.0, 0.0);
+      goalPose.setPosition(1.41, -0.96, 0.0);
+      goalPose.setOrientationYawPitchRoll(-0.524, 0.0, 0.0);
+
+      runTest(stanceLength, stanceWidth, startPose, goalPose, planarRegionsList, timeout);
+   }
 
    @Test
    public void testSimpleForwardPointOther()
@@ -306,13 +340,7 @@ public class AStarPawStepPlannerTest
                         double timeout, RobotQuadrant initialQuadrant)
    {
       YoVariableRegistry registry = new YoVariableRegistry("test");
-      QuadrupedXGaitSettings xGaitSettings = new QuadrupedXGaitSettings();
-      xGaitSettings.setStanceLength(stanceLength);
-      xGaitSettings.setStanceWidth(stanceWidth);
-      xGaitSettings.setEndPhaseShift(90.0);
-      xGaitSettings.setQuadrupedSpeed(QuadrupedSpeed.MEDIUM);
-      xGaitSettings.getAmbleMediumTimings().setStepDuration(0.4);
-      xGaitSettings.getAmbleMediumTimings().setEndDoubleSupportDuration(0.35);
+      QuadrupedXGaitSettingsReadOnly xGaitSettings = getXGaitSettings();
       PawStepPlannerParametersReadOnly parameters = getPawStepPlannerParameters();
       AStarPawPlannerVisualizer visualizer;
       if (activelyVisualize)
