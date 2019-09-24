@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class QuadrupedStepTeleopManager
 {
-   private static final TrajectoryType trajectoryType = TrajectoryType.DEFAULT;
+   private static final double obstacleClearanceThreshold = 0.085;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
    private final QuadrupedXGaitSettingsBasics xGaitSettings;
@@ -86,12 +86,12 @@ public class QuadrupedStepTeleopManager
    {
       if (message.getFootstepStatus() == QuadrupedFootstepStatusMessage.FOOTSTEP_STATUS_STARTED)
       {
-         RobotQuadrant quadrant = RobotQuadrant.fromByte((byte) message.getFootstepQuadrant());
+         RobotQuadrant quadrant = RobotQuadrant.fromByte(message.getRobotQuadrant());
          bodyPathMultiplexer.startedFootstep(quadrant, message);
       }
       else if (message.getFootstepStatus() == QuadrupedFootstepStatusMessage.FOOTSTEP_STATUS_COMPLETED)
       {
-         RobotQuadrant quadrant = RobotQuadrant.fromByte((byte) message.getFootstepQuadrant());
+         RobotQuadrant quadrant = RobotQuadrant.fromByte(message.getRobotQuadrant());
          bodyPathMultiplexer.completedFootstep(quadrant, message);
       }
    }
@@ -189,8 +189,8 @@ public class QuadrupedStepTeleopManager
       {
          QuadrupedTimedStepMessage stepMessage = QuadrupedMessageTools.createQuadrupedTimedStepMessage(steps.get(i));
 
-         if(trajectoryType != null)
-            stepMessage.getQuadrupedStepMessage().setTrajectoryType(trajectoryType.toByte());
+         if(steps.get(i).getGroundClearance() >= obstacleClearanceThreshold)
+            stepMessage.getQuadrupedStepMessage().setTrajectoryType(TrajectoryType.OBSTACLE_CLEARANCE.toByte());
 
          stepMessages.add(stepMessage);
       }

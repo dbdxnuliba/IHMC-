@@ -8,13 +8,15 @@ import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DBasics;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Tuple2DReadOnly;
+import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.robotics.robotSide.RobotQuadrant;
 
 public class PawNode
 {
    public static double gridSizeXY = 0.06;
-   public static double gridSizeYaw = 0.1;
+   public static int yawDivisions = 72;
+   public static double gridSizeYaw = 2.0 * Math.PI / yawDivisions;
 
    private final QuadrantDependentList<Integer> xIndices = new QuadrantDependentList<>();
    private final QuadrantDependentList<Integer> yIndices = new QuadrantDependentList<>();
@@ -107,7 +109,7 @@ public class PawNode
       xPositions.put(RobotQuadrant.HIND_RIGHT, xHindRight);
       yPositions.put(RobotQuadrant.HIND_RIGHT, yHindRight);
 
-      stepYaw = gridSizeYaw * yawIndex;
+      stepYaw = AngleTools.trimAngleMinusPiToPi(gridSizeYaw * yawIndex);
       stepOrientation = new AxisAngle(stepYaw, 0.0, 0.0);
 
       hashCode = computeHashCode(this);
@@ -219,7 +221,7 @@ public class PawNode
 
    public static int snapToYawGrid(double yaw)
    {
-      return (int) Math.round(yaw / gridSizeYaw);
+      return Math.floorMod((int) (Math.round((yaw) / gridSizeYaw)), yawDivisions);
    }
 
    public static void snapPointToGrid(Point2DBasics pointToSnap)

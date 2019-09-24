@@ -1,5 +1,9 @@
 package us.ihmc.quadrupedCommunication.networkProcessing;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -17,10 +21,6 @@ import us.ihmc.robotEnvironmentAwareness.updaters.LIDARBasedREAModule;
 import us.ihmc.robotModels.FullQuadrupedRobotModelFactory;
 import us.ihmc.robotics.robotSide.QuadrantDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class QuadrupedNetworkProcessor
 {
@@ -92,8 +92,13 @@ public class QuadrupedNetworkProcessor
    {
       if (!params.isStepTeleopModuleEnabled())
          return;
-      stepTeleopModule = new QuadrupedStepTeleopModule(modelFactory, xGaitSettings, pointFootSnapperParameters, logModelProvider,
-                                                       params.visualizeStepTeleopModuleEnabled(), params.logStepTeleopModuleEnabled(), pubSubImplementation);
+      stepTeleopModule = new QuadrupedStepTeleopModule(modelFactory,
+                                                       xGaitSettings,
+                                                       pointFootSnapperParameters,
+                                                       logModelProvider,
+                                                       params.visualizeStepTeleopModuleEnabled(),
+                                                       params.logStepTeleopModuleEnabled(),
+                                                       pubSubImplementation);
       modules.add(stepTeleopModule);
    }
 
@@ -109,10 +114,10 @@ public class QuadrupedNetworkProcessor
                                         pubSubImplementation));
    }
 
-
    private void setupQuadrupedSupportPlanarRegionPublisherModule(FullQuadrupedRobotModelFactory modelFactory,
                                                                  QuadrantDependentList<ArrayList<Point2D>> groundContactPoints,
-                                                                 QuadrupedNetworkModuleParameters params, DomainFactory.PubSubImplementation pubSubImplementation)
+                                                                 QuadrupedNetworkModuleParameters params,
+                                                                 DomainFactory.PubSubImplementation pubSubImplementation)
    {
       if (params.isQuadrupedSupportPlanarRegionPublisherEnabled())
       {
@@ -127,12 +132,20 @@ public class QuadrupedNetworkProcessor
       {
          try
          {
-            if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
-               LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
+            if(params.useStereoBufferOnlyForREA())
+            {
+               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
+                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();
+               else
+                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/stereoREAModuleConfiguration.txt").start();   
+            }
             else
-               LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt")
-                                  .start();
-
+            {
+               if (pubSubImplementation == DomainFactory.PubSubImplementation.FAST_RTPS)
+                  LIDARBasedREAModule.createRemoteModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
+               else
+                  LIDARBasedREAModule.createIntraprocessModule(System.getProperty("user.home") + "/.ihmc/Configurations/defaultREAModuleConfiguration.txt").start();
+            }
          }
          catch (Exception e)
          {

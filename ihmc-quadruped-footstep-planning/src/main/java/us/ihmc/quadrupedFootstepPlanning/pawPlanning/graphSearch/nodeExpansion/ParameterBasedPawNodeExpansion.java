@@ -10,6 +10,7 @@ import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple2D.interfaces.Vector2DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.log.LogTools;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.graph.PawNode;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawStepPlannerParametersReadOnly;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
@@ -89,10 +90,11 @@ public class ParameterBasedPawNodeExpansion implements PawNodeExpansion
             if (ellipticalVelocity > 1.0)
                continue;
 
-//            double absoluteMaxYawDisplacement = maxYawDisplacement;
             double absoluteMaxYawDisplacement = InterpolationTools.hermiteInterpolate(maxYawDisplacement, 0.25 * maxYawDisplacement, translation / maxReach);
-            double minYaw = PawNode.snapToYawGrid(Math.max(maxNegativeYaw, -absoluteMaxYawDisplacement)) * PawNode.gridSizeYaw;
-            double maxYaw = PawNode.snapToYawGrid(Math.min(maxPositiveYaw, absoluteMaxYawDisplacement)) * PawNode.gridSizeYaw;
+            double minYaw = Math.max(maxNegativeYaw, Math.min(-absoluteMaxYawDisplacement, 0.5 * maxNegativeYaw));
+            double maxYaw = Math.min(maxPositiveYaw, Math.max(absoluteMaxYawDisplacement, 0.5 * maxPositiveYaw));
+            minYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(minYaw) * PawNode.gridSizeYaw);
+            maxYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(maxYaw) * PawNode.gridSizeYaw);
 
             Vector2D movingVector = new Vector2D(movingX, movingY);
             previousNodeOrientation.transform(movingVector);

@@ -22,14 +22,14 @@ public class QuadrupedXBoxBindings
    // orientation
    static XBoxOneMapping enableOrientationTeleop = XBoxOneMapping.B;
 
-   static XBoxOneMapping negativeYawMapping = XBoxOneMapping.LEFT_TRIGGER;
+   static XBoxOneMapping negativeYawMapping = XBoxOneMapping.RIGHT_TRIGGER;
    static boolean negativeYawInvert = false;
 
-   static XBoxOneMapping positiveYawMapping = XBoxOneMapping.RIGHT_TRIGGER;
+   static XBoxOneMapping positiveYawMapping = XBoxOneMapping.LEFT_TRIGGER;
    static boolean positiveYawInvert = false;
 
    static XBoxOneMapping rollMapping = XBoxOneMapping.RIGHT_STICK_X;
-   static boolean rollInvert = true;
+   static boolean rollInvert = false;
 
    static XBoxOneMapping pitchMapping = XBoxOneMapping.RIGHT_STICK_Y;
    static boolean pitchInvert = true;
