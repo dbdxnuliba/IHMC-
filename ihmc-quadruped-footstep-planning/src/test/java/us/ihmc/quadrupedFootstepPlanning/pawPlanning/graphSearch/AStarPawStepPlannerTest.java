@@ -46,8 +46,8 @@ public class AStarPawStepPlannerTest
    private static boolean visualize = false;
    private static boolean activelyVisualize = false;
    
-   double stanceLength = 0.8;
-   double stanceWidth = 0.4;
+   protected static final double stanceLength = 0.8;
+   protected static final double stanceWidth = 0.4;
 
    private static final QuadrantDependentList<AppearanceDefinition> colorDefinitions = new QuadrantDependentList<>(YoAppearance.Red(), YoAppearance.Green(), YoAppearance.DarkRed(), YoAppearance.DarkGreen());
 

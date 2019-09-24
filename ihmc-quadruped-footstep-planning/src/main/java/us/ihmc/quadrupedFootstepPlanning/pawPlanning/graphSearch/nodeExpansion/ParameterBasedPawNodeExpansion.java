@@ -91,8 +91,10 @@ public class ParameterBasedPawNodeExpansion implements PawNodeExpansion
                continue;
 
             double absoluteMaxYawDisplacement = InterpolationTools.hermiteInterpolate(maxYawDisplacement, 0.25 * maxYawDisplacement, translation / maxReach);
-            double minYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(Math.max(maxNegativeYaw, -absoluteMaxYawDisplacement)) * PawNode.gridSizeYaw);
-            double maxYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(Math.min(maxPositiveYaw, absoluteMaxYawDisplacement)) * PawNode.gridSizeYaw);
+            double minYaw = Math.max(maxNegativeYaw, Math.min(-absoluteMaxYawDisplacement, 0.5 * maxNegativeYaw));
+            double maxYaw = Math.min(maxPositiveYaw, Math.max(absoluteMaxYawDisplacement, 0.5 * maxPositiveYaw));
+            minYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(minYaw) * PawNode.gridSizeYaw);
+            maxYaw = AngleTools.trimAngleMinusPiToPi(PawNode.snapToYawGrid(maxYaw) * PawNode.gridSizeYaw);
 
             Vector2D movingVector = new Vector2D(movingX, movingY);
             previousNodeOrientation.transform(movingVector);
