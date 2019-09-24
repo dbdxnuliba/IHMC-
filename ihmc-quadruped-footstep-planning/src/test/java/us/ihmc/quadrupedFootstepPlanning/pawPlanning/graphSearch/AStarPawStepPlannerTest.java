@@ -23,6 +23,7 @@ import us.ihmc.quadrupedFootstepPlanning.pawPlanning.PawStepPlannerGoal;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.PawStepPlannerStart;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.graph.PawNode;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.DefaultPawStepPlannerParameters;
+import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawStepPlannerParametersBasics;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.parameters.PawStepPlannerParametersReadOnly;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.visualization.AStarPawPlannerVisualizer;
 import us.ihmc.quadrupedPlanning.QuadrupedSpeed;
@@ -51,6 +52,11 @@ public class AStarPawStepPlannerTest
    {
       visualize = visualize && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
       activelyVisualize = activelyVisualize && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
+   }
+
+   protected PawStepPlannerParametersBasics getPawStepPlannerParameters()
+   {
+      return new DefaultPawStepPlannerParameters();
    }
 
    @Test
@@ -307,7 +313,7 @@ public class AStarPawStepPlannerTest
       xGaitSettings.setQuadrupedSpeed(QuadrupedSpeed.MEDIUM);
       xGaitSettings.getAmbleMediumTimings().setStepDuration(0.4);
       xGaitSettings.getAmbleMediumTimings().setEndDoubleSupportDuration(0.35);
-      PawStepPlannerParametersReadOnly parameters = new DefaultPawStepPlannerParameters();
+      PawStepPlannerParametersReadOnly parameters = getPawStepPlannerParameters();
       AStarPawPlannerVisualizer visualizer;
       if (activelyVisualize)
          visualizer = new AStarPawPlannerVisualizer(planarRegionsList);
