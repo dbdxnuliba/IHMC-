@@ -4,6 +4,8 @@ import controller_msgs.msg.dds.*;
 import javafx.animation.AnimationTimer;
 import net.java.games.input.Event;
 import org.apache.commons.lang3.mutable.MutableDouble;
+
+import us.ihmc.commons.Conversions;
 import us.ihmc.commons.MathTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -35,16 +37,16 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
    private static final double bodyHeightDeltaPerClick = 0.01;
    private static final double endPhaseDeltaPerClick = 90.0;
    private static final double maxBodyYaw = 0.25;
-   private static final double maxBodyRoll = 0.15;
-   private static final double maxBodyPitch = 0.15;
-   private static final double bodyOrientationShiftTime = 0.1;
+   private static final double maxBodyRoll = 0.1;
+   private static final double maxBodyPitch = 0.1;
+   private static final double bodyOrientationShiftTime = 0.2;
    private static final double maxTranslationX = 0.25;
    private static final double maxTranslationY = 0.15;
 
    private final MutableDouble maxVelocityY = new MutableDouble();
    private final MutableDouble maxVelocityYaw = new MutableDouble();
    private final MutableDouble bodyHeightOffset = new MutableDouble();
-
+   
    private final Messager messager;
    private final double nominalBodyHeight;
    private final Map<XBoxOneMapping, ChannelData> channelDataMap = new HashMap<>();
@@ -223,7 +225,7 @@ public class QuadrupedJoystickModule extends AnimationTimer implements JoystickE
       ChannelData positiveYawChannel = channelDataMap.get(positiveYawMapping);
       ChannelData rollChannel = channelDataMap.get(rollMapping);
       ChannelData pitchChannel = channelDataMap.get(pitchMapping);
-
+      
       if (negativeYawChannel.hasNewData() || positiveYawChannel.hasNewData() || rollChannel.hasNewData() || pitchChannel.hasNewData())
       {
          double bodyYaw = 0.5 * (positiveYawChannel.getValue() - negativeYawChannel.getValue()) * maxBodyYaw;
