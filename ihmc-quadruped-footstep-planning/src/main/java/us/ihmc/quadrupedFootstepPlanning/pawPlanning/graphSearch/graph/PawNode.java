@@ -15,7 +15,7 @@ import us.ihmc.robotics.robotSide.RobotQuadrant;
 public class PawNode
 {
    public static double gridSizeXY = 0.06;
-   public static int yawDivisions = 36;
+   public static int yawDivisions = 72;
    public static double gridSizeYaw = 2.0 * Math.PI / yawDivisions;
 
    private final QuadrantDependentList<Integer> xIndices = new QuadrantDependentList<>();
