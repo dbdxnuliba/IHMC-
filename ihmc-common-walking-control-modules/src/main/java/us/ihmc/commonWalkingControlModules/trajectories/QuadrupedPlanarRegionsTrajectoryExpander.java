@@ -158,8 +158,11 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       incrementalAdjustmentDistance.set(0.03);
    }
 
-   public boolean expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPosition, FramePoint3DReadOnly swingEndPosition, double swingHeight,
-                                                   PlanarRegionsList planarRegionsList, TrajectoryType trajectoryType)
+   public boolean expandTrajectoryOverPlanarRegions(FramePoint3DReadOnly swingStartPosition,
+                                                    FramePoint3DReadOnly swingEndPosition,
+                                                    double swingHeight,
+                                                    PlanarRegionsList planarRegionsList,
+                                                    TrajectoryType trajectoryType)
    {
       trajectoryType = getTrajectoryType(trajectoryType, swingEndPosition);
 
@@ -223,6 +226,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
       }
 
+      // TODO: Maybe fix this dangerous 'this.'
       this.swingStartPosition.setMatchingFrame(swingStartPosition);
       this.swingEndPosition.setMatchingFrame(swingEndPosition);
       swingGenerator.setInitialConditions(this.swingStartPosition, initialVelocity);
@@ -256,10 +260,12 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       swingFloorPlane.set(this.swingStartPosition, tempPlaneNormal);
 
       tempPlaneNormal.sub(this.swingEndPosition, this.swingStartPosition);
+      // TODO: Was the normalize not necessary here?
       tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingStartPosition);
       frontOfCollisionPlaneFacingEnd.set(tempPointOnPlane, tempPlaneNormal);
 
       tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
+      // TODO: Was the normalize not necessary here?
       tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingEndPosition);
       backOfCollisionPlaneFacingStart.set(tempPointOnPlane, tempPlaneNormal);
 
@@ -267,8 +273,7 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
       numberOfTriesCounter.resetCount();
       while (status.getEnumValue().equals(SwingOverPlanarRegionsTrajectoryExpansionStatus.SEARCHING_FOR_SOLUTION) && !numberOfTriesCounter.maxCountReached())
       {
-         for (SwingOverPlanarRegionsTrajectoryCollisionType swingOverPlanarRegionsTrajectoryCollisionType : SwingOverPlanarRegionsTrajectoryCollisionType
-               .values())
+         for (SwingOverPlanarRegionsTrajectoryCollisionType swingOverPlanarRegionsTrajectoryCollisionType : SwingOverPlanarRegionsTrajectoryCollisionType .values())
          {
             closestPolygonPointMap.get(swingOverPlanarRegionsTrajectoryCollisionType)
                                   .setIncludingFrame(worldFrame, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -350,23 +355,22 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
                      updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.INTERSECTION_BUT_OUTSIDE_TRAJECTORY);
 
                      if ((frontOfCollisionPlaneFacingEnd.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon())
-                           && backOfCollisionPlaneFacingStart.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()))
-                           || midGroundPoint.distance(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()) < midGroundPoint
-                           .distance(trajectoryPosition))
+                          && backOfCollisionPlaneFacingStart.isOnOrAbove(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()))
+                          || midGroundPoint.distance(sphereWithConvexPolygonIntersector.getClosestPointOnPolygon()) < midGroundPoint
+                          .distance(trajectoryPosition))
                      {
                         updateClosestAndMostSevereIntersectionPoint(SwingOverPlanarRegionsTrajectoryCollisionType.CRITICAL_INTERSECTION);
 
                         axisAngle.set(swingTrajectoryPlane.getNormal(), Math.PI * phaseThroughTrajectory);
                         rigidBodyTransform.setRotation(axisAngle);
 
+                        waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
+                        waypointAdjustmentVector.normalize();
+                        rigidBodyTransform.transform(waypointAdjustmentVector);
+                        waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
 
-                           waypointAdjustmentVector.sub(swingStartPosition, swingEndPosition);
-                           waypointAdjustmentVector.normalize();
-                           rigidBodyTransform.transform(waypointAdjustmentVector);
-                           waypointAdjustmentVector.scale(incrementalAdjustmentDistance.getDoubleValue());
-
-                           adjustedWaypoints.get(0).scaleAdd(1.0 - phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(0));
-                           adjustedWaypoints.get(1).scaleAdd(phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(1));
+                        adjustedWaypoints.get(0).scaleAdd(1.0 - phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(0));
+                        adjustedWaypoints.get(1).scaleAdd(phaseThroughTrajectory, waypointAdjustmentVector, adjustedWaypoints.get(1));
 
                         if (haveAnyAdjustmentsHitMaxDistance())
                         {
