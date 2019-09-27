@@ -199,7 +199,6 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
          tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
          rigidBodyTransform.transform(tempPlaneNormal);
-         tempPlaneNormal.normalize();
          swingFloorPlane.set(this.swingStartPosition, tempPlaneNormal);
 
          tempPlaneNormal.sub(this.swingEndPosition, this.swingStartPosition);
@@ -256,16 +255,13 @@ public class QuadrupedPlanarRegionsTrajectoryExpander
 
       tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
       rigidBodyTransform.transform(tempPlaneNormal);
-      tempPlaneNormal.normalize();
       swingFloorPlane.set(this.swingStartPosition, tempPlaneNormal);
 
       tempPlaneNormal.sub(this.swingEndPosition, this.swingStartPosition);
-      // TODO: Was the normalize not necessary here?
       tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingStartPosition);
       frontOfCollisionPlaneFacingEnd.set(tempPointOnPlane, tempPlaneNormal);
 
       tempPlaneNormal.sub(this.swingStartPosition, this.swingEndPosition);
-      // TODO: Was the normalize not necessary here?
       tempPointOnPlane.scaleAdd(collisionSphereRadius / tempPlaneNormal.length(), tempPlaneNormal, this.swingEndPosition);
       backOfCollisionPlaneFacingStart.set(tempPointOnPlane, tempPlaneNormal);
 

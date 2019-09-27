@@ -204,16 +204,13 @@ public class SwingOverPlanarRegionsTrajectoryExpander
 
       tempPlaneNormal.sub(swingStartPosition, swingEndPosition);
       rigidBodyTransform.transform(tempPlaneNormal);
-      tempPlaneNormal.normalize();
       swingFloorPlane.set(swingStartPosition, tempPlaneNormal);
 
       tempPlaneNormal.sub(swingEndPosition, swingStartPosition);
-      tempPlaneNormal.normalize();
       tempPointOnPlane.scaleAdd(collisionSphereRadius, tempPlaneNormal, swingStartPosition);
       swingStartToeFacingSwingEndPlane.set(tempPointOnPlane, tempPlaneNormal);
 
       tempPlaneNormal.sub(swingStartPosition, swingEndPosition);
-      tempPlaneNormal.normalize();
       tempPointOnPlane.scaleAdd(collisionSphereRadius, tempPlaneNormal, swingEndPosition);
       swingEndHeelFacingSwingStartPlane.set(tempPointOnPlane, tempPlaneNormal);
 
