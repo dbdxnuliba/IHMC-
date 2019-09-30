@@ -12,6 +12,7 @@ import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D32;
 import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
+import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 
@@ -26,6 +27,12 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
    private static final Material defaultMaterial = new PhongMaterial(Color.DARKRED);
 
    public LidarScanViewer(Topic<LidarScanMessage> messageState, REAUIMessager uiMessager)
+   {
+      super(messageState, uiMessager);
+      numberOfScans = uiMessager.createInput(REAModuleAPI.UILidarScanSize, 50);
+   }
+   
+   public LidarScanViewer(Topic<LidarScanMessage> messageState, SharedMemoryMessager uiMessager)
    {
       super(messageState, uiMessager);
       numberOfScans = uiMessager.createInput(REAModuleAPI.UILidarScanSize, 50);

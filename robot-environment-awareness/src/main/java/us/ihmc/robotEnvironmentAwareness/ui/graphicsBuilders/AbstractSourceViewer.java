@@ -10,6 +10,7 @@ import us.ihmc.communication.packets.Packet;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
+import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 
 public abstract class AbstractSourceViewer<T extends Packet<?>> implements Runnable
@@ -29,6 +30,15 @@ public abstract class AbstractSourceViewer<T extends Packet<?>> implements Runna
    protected final AtomicReference<Boolean> clear;
 
    public AbstractSourceViewer(Topic<T> messageState, REAUIMessager uiMessager)
+   {
+      newMessageToRender = uiMessager.createInput(messageState);
+      meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(palleteSizeForMeshBuilder));
+
+      enable = uiMessager.createInput(createEnableInput(), false);
+      clear = uiMessager.createInput(createClearInput(), false);
+   }
+   
+   public AbstractSourceViewer(Topic<T> messageState, SharedMemoryMessager uiMessager)
    {
       newMessageToRender = uiMessager.createInput(messageState);
       meshBuilder = new JavaFXMultiColorMeshBuilder(new TextureColorAdaptivePalette(palleteSizeForMeshBuilder));

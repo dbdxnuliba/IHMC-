@@ -10,6 +10,7 @@ import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.tuple3D.Point3D32;
 import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
+import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 import us.ihmc.robotEnvironmentAwareness.ui.controller.PointCloudAnchorPaneController;
@@ -19,6 +20,12 @@ public class StereoVisionPointCloudViewer extends AbstractSourceViewer<StereoVis
    private final AtomicReference<Integer> sizeOfPointCloud;
 
    public StereoVisionPointCloudViewer(Topic<StereoVisionPointCloudMessage> messageState, REAUIMessager uiMessager)
+   {
+      super(messageState, uiMessager);
+      sizeOfPointCloud = uiMessager.createInput(REAModuleAPI.UIStereoVisionSize, PointCloudAnchorPaneController.initialSizeOfPointCloud);
+   }
+
+   public StereoVisionPointCloudViewer(Topic<StereoVisionPointCloudMessage> messageState, SharedMemoryMessager uiMessager)
    {
       super(messageState, uiMessager);
       sizeOfPointCloud = uiMessager.createInput(REAModuleAPI.UIStereoVisionSize, PointCloudAnchorPaneController.initialSizeOfPointCloud);
