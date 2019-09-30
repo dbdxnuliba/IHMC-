@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="1500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.robotEnvironmentAwareness.reconstruction.controller.SourceAnchorPaneController">
+   <children>
+      <VBox alignment="CENTER" layoutX="21.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ToggleButton maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Sensor Pose" />
+            <ToggleButton maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Stereo Vision" />
+            <ToggleButton maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Octree" />
+            <ToggleButton lineSpacing="5.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Planar Regions" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
