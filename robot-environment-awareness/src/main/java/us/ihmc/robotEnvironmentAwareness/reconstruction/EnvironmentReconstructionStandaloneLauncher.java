@@ -13,7 +13,7 @@ public class EnvironmentReconstructionStandaloneLauncher extends Application
 
    private EnvironmentReconstructionUI ui;
    private EnvironmentReconstructionModule module;
-
+   
    @Override
    public void start(Stage primaryStage) throws Exception
    {
@@ -22,9 +22,8 @@ public class EnvironmentReconstructionStandaloneLauncher extends Application
       messager.startMessager();
       module = EnvironmentReconstructionModule.createIntraprocessModule(ros2Node, messager);
       ui = new EnvironmentReconstructionUI(ros2Node, messager, primaryStage);
-      //
-      //      ui.show();
-      //      module.start();
+
+      module.start();
    }
 
    @Override
