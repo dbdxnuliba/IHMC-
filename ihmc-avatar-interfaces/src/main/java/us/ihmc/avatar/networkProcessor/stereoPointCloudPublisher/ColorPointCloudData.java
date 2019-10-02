@@ -1,20 +1,22 @@
 package us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher;
 
+import java.util.Arrays;
+import java.util.Random;
+
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import sensor_msgs.PointCloud2;
+import us.ihmc.commons.MathTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
+import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointCloud;
-
-import java.util.Arrays;
-import java.util.Random;
 
 public class ColorPointCloudData
 {
    private final long timestamp;
-   private final int numberOfPoints;
+   private int numberOfPoints;
    private final Point3D[] pointCloud;
    private final int[] colors;
 
@@ -58,6 +60,32 @@ public class ColorPointCloudData
             currentSize--;
          }
          numberOfPoints = maxSize;
+      }
+   }
+
+   public void removePoints(Point3DBasics min, Point3DBasics max)
+   {
+      int numberOfOriginalPoints = numberOfPoints;
+      for (int i = 0; i < numberOfOriginalPoints; i++)
+      {
+         boolean remove = false;
+         for (int j = 0; j < 3; j++)   // TODO: change to 3->2.
+         {
+            if (min.getElement(j) > pointCloud[i].getElement(j) || max.getElement(j) < pointCloud[i].getElement(j))
+            {
+               remove = true;
+               break;
+            }
+         }
+         if(remove)
+         {
+            pointCloud[i] = pointCloud[numberOfPoints - 1];
+            colors[i] = colors[numberOfPoints - 1];
+            pointCloud[numberOfPoints - 1] = null;
+            colors[numberOfPoints - 1] = -1;
+
+            numberOfPoints--;
+         }
       }
    }
 

@@ -44,6 +44,14 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final FullHumanoidRobotModelFactory modelFactory;
 
    private final String robotName;
+   
+   // This is for only atlas.
+   private final String rgbdTopicName = "/cam_2/depth/color/points";  // TODO implement this:
+   
+   private static final float STEREO_MIN_X = -0.1f;
+   private static final float STEREO_MIN_Y = -0.1f;
+   private static final float STEREO_MAX_X = 0.1f;
+   private static final float STEREO_MAX_Y = 0.1f;
 
    public AtlasSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory modelFactory, CollisionBoxProvider collisionBoxProvider,
                                   RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation,
@@ -106,6 +114,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold,
                                                          AtlasSensorInformation.angularVelocityThreshold);
       stereoVisionPointCloudPublisher.enableFilter(true);
+      stereoVisionPointCloudPublisher.setBoundingBox(STEREO_MIN_X, STEREO_MAX_X, STEREO_MIN_Y, STEREO_MAX_Y);
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
