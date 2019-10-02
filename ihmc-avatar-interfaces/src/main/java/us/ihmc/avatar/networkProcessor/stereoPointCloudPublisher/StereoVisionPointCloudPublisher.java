@@ -18,15 +18,12 @@ import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
-import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.robotEnvironmentAwareness.communication.packets.BoundingBoxParametersMessage;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -61,7 +58,8 @@ public class StereoVisionPointCloudPublisher
    private final IHMCRealtimeROS2Publisher<StereoVisionPointCloudMessage> pointcloudRealtimePublisher;
 
    private final AtomicReference<Boolean> enableBoundingBox = new AtomicReference<Boolean>(false);
-   private final BoundingBoxParametersMessage boundingBox = new BoundingBoxParametersMessage();
+   private Point3D boundingBoxMinPoint = new Point3D();
+   private Point3D boundingBoxMaxPoint = new Point3D();
 
    /**
     * units of velocities are meter/sec and rad/sec.
@@ -213,9 +211,7 @@ public class StereoVisionPointCloudPublisher
       }
       
       if(enableBoundingBox.get())
-      {
-         pointCloudData.removePoints(boundingBox.getMin(), boundingBox.getMax());
-      }
+         pointCloudData.removePoints(boundingBoxMinPoint, boundingBoxMaxPoint);
       
       if (stereoVisionTransformer != null)
       {
@@ -231,6 +227,7 @@ public class StereoVisionPointCloudPublisher
          }
 
          fullRobotModel.getHeadBaseFrame().getTransformToDesiredFrame(transformToWorld, worldFrame);
+         pointCloudData.applyTransform(transformToWorld); // TODO:
          sensorPose.set(transformToWorld);
       }
 
@@ -278,10 +275,8 @@ public class StereoVisionPointCloudPublisher
    
    public void setBoundingBox(float minX, float maxX, float minY, float maxY)
    {
-      boundingBox.setMinX(minX);
-      boundingBox.setMinX(minY);
-      boundingBox.setMaxX(maxX);
-      boundingBox.setMaxY(maxY);
+      boundingBoxMinPoint.set(minX, minY, -100.0);
+      boundingBoxMaxPoint.set(maxX, maxY, 100.0);
    }
 
    public static interface StereoVisionWorldTransformCalculator

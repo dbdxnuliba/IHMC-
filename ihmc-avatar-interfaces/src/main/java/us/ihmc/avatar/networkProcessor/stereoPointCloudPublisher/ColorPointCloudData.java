@@ -5,7 +5,6 @@ import java.util.Random;
 
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import sensor_msgs.PointCloud2;
-import us.ihmc.commons.MathTools;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -65,11 +64,11 @@ public class ColorPointCloudData
 
    public void removePoints(Point3DBasics min, Point3DBasics max)
    {
-      int numberOfOriginalPoints = numberOfPoints;
-      for (int i = 0; i < numberOfOriginalPoints; i++)
+      boolean remove = false;
+      for (int i = 0; i < numberOfPoints; i++)
       {
-         boolean remove = false;
-         for (int j = 0; j < 3; j++)   // TODO: change to 3->2.
+         remove = false;
+         for (int j = 0; j < 3; j++)
          {
             if (min.getElement(j) > pointCloud[i].getElement(j) || max.getElement(j) < pointCloud[i].getElement(j))
             {
@@ -77,13 +76,15 @@ public class ColorPointCloudData
                break;
             }
          }
-         if(remove)
+
+         if (remove)
          {
             pointCloud[i] = pointCloud[numberOfPoints - 1];
             colors[i] = colors[numberOfPoints - 1];
             pointCloud[numberOfPoints - 1] = null;
             colors[numberOfPoints - 1] = -1;
 
+            i--;
             numberOfPoints--;
          }
       }

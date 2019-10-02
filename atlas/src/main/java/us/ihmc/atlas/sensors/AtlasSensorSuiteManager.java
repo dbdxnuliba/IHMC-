@@ -46,12 +46,15 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final String robotName;
    
    // This is for only atlas.
-   private final String rgbdTopicName = "/cam_2/depth/color/points";  // TODO implement this:
+   private final static boolean USE_DEPTH_CAMERA = false;
+   private final String depthCameraTopicName = "/cam_2/depth/color/points";  // TODO implement this:
    
-   private static final float STEREO_MIN_X = -0.1f;
-   private static final float STEREO_MIN_Y = -0.1f;
-   private static final float STEREO_MAX_X = 0.1f;
-   private static final float STEREO_MAX_Y = 0.1f;
+   // TODO: if USE_DEPTH_CAMERA custom transformer is on pelvis along with additional transform.
+   // TODO: if not, the custom transformer is on head.
+   private static final float STEREO_MIN_X = -0.0f;
+   private static final float STEREO_MIN_Y = -0.0f;
+   private static final float STEREO_MAX_X = 1.0f;
+   private static final float STEREO_MAX_Y = 1.0f;
 
    public AtlasSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory modelFactory, CollisionBoxProvider collisionBoxProvider,
                                   RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation,
@@ -110,11 +113,16 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.receiveLidarFromROSAsPointCloud2WithSource(multisenseLidarParameters.getRosTopic(), rosMainNode);
       lidarScanPublisher.setScanFrameToWorldFrame();
 
-      stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      if(USE_DEPTH_CAMERA)
+         stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
+      else
+         stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+
       stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold,
                                                          AtlasSensorInformation.angularVelocityThreshold);
       stereoVisionPointCloudPublisher.enableFilter(true);
       stereoVisionPointCloudPublisher.setBoundingBox(STEREO_MIN_X, STEREO_MAX_X, STEREO_MIN_Y, STEREO_MAX_Y);
+      stereoVisionPointCloudPublisher.enableBoundingBox(true);
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
