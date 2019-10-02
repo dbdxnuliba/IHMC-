@@ -108,7 +108,19 @@ public class ValkyrieWalkingControllerParameters extends WalkingControllerParame
    {
       return 0.05;
    }
-
+   
+   @Override
+   public boolean allowUpperBodyMotionDuringLocomotion()
+   {
+      return true;
+   }
+   
+   @Override
+   public boolean doPrepareManipulationForLocomotion()
+   {
+      return false;
+   }
+   
    @Override
    public double getMinimumSwingTimeForDisturbanceRecovery()
    {
