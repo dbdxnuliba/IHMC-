@@ -8,7 +8,6 @@ import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Switch;
 
-import us.ihmc.atlas.sensors.AtlasRealsensePublisher;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.networkProcessor.DRCNetworkModuleParameters;
@@ -111,8 +110,6 @@ public class AtlasNetworkProcessor
          networkModuleParams.setRosUri(rosMasterURI);
 
          networkModuleParams.enableLocalControllerCommunicator(false);
-
-         new AtlasRealsensePublisher();
 
          new DRCNetworkProcessor(model, networkModuleParams);
       }

@@ -322,12 +322,6 @@ public class ValkyrieSensorInformation implements HumanoidRobotSensorInformation
       return true;
    }
 
-   @Override
-   public boolean usingRealsense()
-   {
-      return false;
-   }
-
    public String getRightTrunkIMUSensor()
    {
       return rightTrunkIMUSensor;

@@ -96,6 +96,7 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    /**
     * Stereo Parameters
     */
+
    private final AvatarRobotPointCloudParameters[] pointCloudParameters = new AvatarRobotPointCloudParameters[1];
    public static final int MULTISENSE_STEREO_ID = 0;
    private static final String stereoSensorName = "stereo_camera";
@@ -106,18 +107,12 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    private final boolean isMultisenseHead;
    private final boolean setupROSLocationService;
    private final boolean setupROSParameterSetters;
-
-   /**
-    * Realsense parameters
-    */
-   public static final String realsenseSensorName = "cam_2";
-   public static final String realsenseTransformId = "cam_2_link";
-   public static final String realsenseColorPointsTopic = "/depth/color/points";
-   public static final String realsenseTopicName = realsenseSensorName + realsenseColorPointsTopic;
-   private boolean usingRealsense = true;
+   private final RobotTarget target;
 
    public AtlasSensorInformation(AtlasRobotVersion atlasRobotVersion, RobotTarget target)
    {
+	   this.target = target;
+
 	   if (atlasRobotVersion != AtlasRobotVersion.ATLAS_UNPLUGGED_V5_NO_FOREARMS)
 	   {
 	      forceSensorNames = new String[]{ "l_leg_akx", "r_leg_akx", "l_arm_wry2", "r_arm_wry2" };
@@ -178,7 +173,6 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
       setupROSLocationService = target == RobotTarget.REAL_ROBOT || (target == RobotTarget.SCS && SEND_ROBOT_DATA_TO_ROS);
       setupROSParameterSetters = target == RobotTarget.REAL_ROBOT;
       isMultisenseHead = target == RobotTarget.REAL_ROBOT;
-      usingRealsense = usingRealsense && target == RobotTarget.REAL_ROBOT; // sometimes we disable on purpose
 
       setupStaticTransformsForRos();
 	}
@@ -310,12 +304,6 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    public boolean isMultisenseHead()
    {
       return isMultisenseHead;
-   }
-
-   @Override
-   public boolean usingRealsense()
-   {
-      return usingRealsense;
    }
 
    @Override
