@@ -22,9 +22,23 @@ public class AtlasRealsensePublisher
          }
       });
 
+      // subscribe to humanoid reference frames
+
+
+      // start thread
+
+
       rosMainNode.execute();
 
       ThreadTools.join();
+   }
+
+   private void run()
+   {
+      // latest point cloud 2
+      // latest reference frames
+
+
    }
 
    public static void main(String[] args)

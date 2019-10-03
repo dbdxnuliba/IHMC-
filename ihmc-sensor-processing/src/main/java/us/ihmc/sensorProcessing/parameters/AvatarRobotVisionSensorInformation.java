@@ -20,4 +20,6 @@ public interface AvatarRobotVisionSensorInformation
    public AvatarRobotPointCloudParameters getPointCloudParameters(int pointCloudSensorId);
 
    public boolean isMultisenseHead();
+
+   public boolean usingRealsense();
 }
