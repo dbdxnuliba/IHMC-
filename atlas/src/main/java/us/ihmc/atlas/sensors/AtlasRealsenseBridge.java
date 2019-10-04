@@ -1,19 +1,18 @@
 package us.ihmc.atlas.sensors;
 
 import sensor_msgs.PointCloud2;
-import us.ihmc.atlas.parameters.AtlasSensorInformation;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.configuration.NetworkParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.utilities.ros.RosMainNode;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 
-public class AtlasRealsensePublisher
+public class AtlasRealsenseBridge
 {
-   public AtlasRealsensePublisher()
+   public AtlasRealsenseBridge()
    {
       RosMainNode rosMainNode = new RosMainNode(NetworkParameters.getROSURI(), "networkProcessor/realsense", true);
-      rosMainNode.attachSubscriber(AtlasSensorInformation.realsenseTopicName, new RosPointCloudSubscriber()
+      rosMainNode.attachSubscriber("cam_2/depth/color/points", new RosPointCloudSubscriber()
       {
          @Override
          public void onNewMessage(PointCloud2 pointCloud)
@@ -22,6 +21,8 @@ public class AtlasRealsensePublisher
          }
       });
 
+      // link cam_2_link transform
+
       rosMainNode.execute();
 
       ThreadTools.join();
@@ -29,6 +30,6 @@ public class AtlasRealsensePublisher
 
    public static void main(String[] args)
    {
-      new AtlasRealsensePublisher();
+      new AtlasRealsenseBridge();
    }
 }
