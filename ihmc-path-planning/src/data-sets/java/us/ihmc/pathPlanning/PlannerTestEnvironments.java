@@ -455,7 +455,20 @@ public class PlannerTestEnvironments
    public static PlanarRegionsList getSimpleOcclusionHallway()
    {
       PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
-      generator.addRectangle(15.0, 2.0);
+      generator.translate(4.0, 0.0, 0.0);
+      generator.addRectangle(10.0, 3.0);
+
+      generator.translate(-5.0, 0.0, 0.0);
+      generator.translate(0.0, 1.5, 0.0);
+      generator.rotate(Math.toRadians(90.0), Axis.X);
+      generator.addRectangleReferencedAtNegativeXYCorner(10.0, 2.0);
+      generator.rotate(Math.toRadians(-90.0), Axis.X);
+
+      generator.translate(10.0, -3.0, 0.0);
+      generator.rotate(Math.toRadians(180.0), Axis.Z);
+      generator.rotate(Math.toRadians(90.0), Axis.X);
+      generator.addRectangleReferencedAtNegativeXYCorner(10.0, 2.0);
+      generator.rotate(Math.toRadians(-90.0), Axis.X);
 
       return generator.getPlanarRegionsList();
    }
