@@ -1,0 +1,35 @@
+#ifndef __controller_msgs__msg__DepthCloudMessage__idl__
+#define __controller_msgs__msg__DepthCloudMessage__idl__
+
+#include "geometry_msgs/msg/./Point_.idl"
+#include "geometry_msgs/msg/./Quaternion_.idl"
+#include "geometry_msgs/msg/./Vector3_.idl"
+module controller_msgs
+{
+  module msg
+  {
+    module dds
+    {
+
+      /**
+       * Should disappear for the ROS equivalent.
+       */
+      @TypeCode(type="controller_msgs::msg::dds_::DepthCloudMessage_")
+      struct DepthCloudMessage
+      {
+        /**
+         * Unique ID used to identify this message, should preferably be consecutively increasing.
+         */
+        unsigned long sequence_id;
+        long long timestamp;
+        geometry_msgs::msg::dds::Point sensor_position;
+        geometry_msgs::msg::dds::Quaternion sensor_orientation;
+        geometry_msgs::msg::dds::Vector3 linear_velocity;
+        geometry_msgs::msg::dds::Vector3 angular_velocity;
+        sequence<float, 600000> point_cloud;
+      };
+    };
+  };
+};
+
+#endif
