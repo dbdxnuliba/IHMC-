@@ -7,6 +7,7 @@ import controller_msgs.msg.dds.RobotConfigurationData;
 import us.ihmc.atlas.parameters.AtlasSensorInformation;
 import us.ihmc.avatar.drcRobot.RobotPhysicalProperties;
 import us.ihmc.avatar.drcRobot.RobotTarget;
+import us.ihmc.avatar.networkProcessor.depthCloudPublisher.DepthCloudPublisher;
 import us.ihmc.avatar.networkProcessor.lidarScanPublisher.LidarScanPublisher;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
@@ -37,6 +38,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
    private final LidarScanPublisher lidarScanPublisher;
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
+   private final DepthCloudPublisher depthCloudPublisher;
 
    private final RobotROSClockCalculator rosClockCalculator;
    private final HumanoidRobotSensorInformation sensorInformation;
@@ -44,10 +46,16 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final FullHumanoidRobotModelFactory modelFactory;
 
    private final String robotName;
+   private final String depthCameraTopicName = "/cam_2/depth/color/points"; // TODO implement this:
+
+   private static final float STEREO_MIN_X = -0.0f;
+   private static final float STEREO_MIN_Y = -0.0f;
+   private static final float STEREO_MAX_X = 1.0f;
+   private static final float STEREO_MAX_Y = 1.0f;
 
    public AtlasSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory modelFactory, CollisionBoxProvider collisionBoxProvider,
-                                  RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation,
-                                  DRCRobotJointMap jointMap, RobotPhysicalProperties physicalProperties, RobotTarget targetDeployment)
+                                  RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation, DRCRobotJointMap jointMap,
+                                  RobotPhysicalProperties physicalProperties, RobotTarget targetDeployment)
    {
       this.robotName = robotName;
       this.rosClockCalculator = rosClockCalculator;
@@ -65,6 +73,8 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       stereoVisionPointCloudPublisher = new StereoVisionPointCloudPublisher(modelFactory, ros2Node, rcdTopicName);
       stereoVisionPointCloudPublisher.setROSClockCalculator(rosClockCalculator);
 
+      depthCloudPublisher = new DepthCloudPublisher(modelFactory, ros2Node, rcdTopicName);
+      depthCloudPublisher.setROSClockCalculator(rosClockCalculator);
    }
 
    @Override
@@ -103,6 +113,12 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.setScanFrameToWorldFrame();
 
       stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold, AtlasSensorInformation.angularVelocityThreshold);
+      stereoVisionPointCloudPublisher.enableFilter(true);
+      stereoVisionPointCloudPublisher.setBoundingBox(STEREO_MIN_X, STEREO_MAX_X, STEREO_MIN_Y, STEREO_MAX_Y);
+      stereoVisionPointCloudPublisher.enableBoundingBox(true);
+
+      depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -121,6 +137,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       rightFishEyeCameraReceiver.start();
       lidarScanPublisher.start();
       stereoVisionPointCloudPublisher.start();
+      depthCloudPublisher.start();
 
       rosClockCalculator.setROSMainNode(rosMainNode);
 
