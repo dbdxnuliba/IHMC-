@@ -1,9 +1,8 @@
 package us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher;
 
-import java.util.Arrays;
 import java.util.Random;
 
-import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import controller_msgs.msg.dds.DepthCloudMessage;
 import sensor_msgs.PointCloud2;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
@@ -12,27 +11,26 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointCloud;
 
-public class ColorPointCloudData extends PointCloudData
+public class PointCloudData
 {
-   private final int[] colors;
-
-   public ColorPointCloudData(long timestamp, Point3D[] scanPoints, int[] scanColors)
+   protected final long timestamp;
+   protected int numberOfPoints;
+   protected final Point3D[] pointCloud;
+   
+   public PointCloudData(long timestamp, Point3D[] scanPoints)
    {
-      super(timestamp, scanPoints);
-      this.colors = scanColors;
-      
-      if (scanPoints.length != scanColors.length)
-         throw new IllegalArgumentException("wrong size!");
+      this.timestamp = timestamp;
 
+      this.pointCloud = scanPoints;
       this.numberOfPoints = scanPoints.length;
    }
 
-   public ColorPointCloudData(PointCloud2 rosPointCloud2, int maxSize)
+   public PointCloudData(PointCloud2 rosPointCloud2, int maxSize)
    {
-      super(rosPointCloud2.getHeader().getStamp().totalNsecs(), RosPointCloudSubscriber.unpackPointsAndIntensities(rosPointCloud2).getPoints());
-      
+      timestamp = rosPointCloud2.getHeader().getStamp().totalNsecs();
+
       UnpackedPointCloud unpackPointsAndIntensities = RosPointCloudSubscriber.unpackPointsAndIntensities(rosPointCloud2);
-      colors = unpackPointsAndIntensities.getPointColorsRGB();
+      pointCloud = unpackPointsAndIntensities.getPoints();
 
       if (unpackPointsAndIntensities.getPoints().length <= maxSize)
       {
@@ -47,9 +45,7 @@ public class ColorPointCloudData extends PointCloudData
          {
             int nextToRemove = random.nextInt(currentSize);
             pointCloud[nextToRemove] = pointCloud[currentSize - 1];
-            colors[nextToRemove] = colors[currentSize - 1];
             pointCloud[currentSize - 1] = null;
-            colors[currentSize - 1] = -1;
 
             currentSize--;
          }
@@ -75,9 +71,7 @@ public class ColorPointCloudData extends PointCloudData
          if (remove)
          {
             pointCloud[i] = pointCloud[numberOfPoints - 1];
-            colors[i] = colors[numberOfPoints - 1];
             pointCloud[numberOfPoints - 1] = null;
-            colors[numberOfPoints - 1] = -1;
 
             i--;
             numberOfPoints--;
@@ -90,21 +84,10 @@ public class ColorPointCloudData extends PointCloudData
       return timestamp;
    }
 
-   public int[] getColors()
-   {
-      return colors;
-   }
-
-   public StereoVisionPointCloudMessage toStereoVisionPointCloudMessage()
+   public DepthCloudMessage toDepthCloudMessage()
    {
       long timestamp = this.timestamp;
       float[] pointCloudBuffer = new float[3 * numberOfPoints];
-      int[] colorsInteger;
-
-      if (colors.length == numberOfPoints)
-         colorsInteger = colors;
-      else
-         colorsInteger = Arrays.copyOf(colors, numberOfPoints);
 
       for (int i = 0; i < numberOfPoints; i++)
       {
@@ -115,7 +98,7 @@ public class ColorPointCloudData extends PointCloudData
          pointCloudBuffer[3 * i + 2] = (float) scanPoint.getZ();
       }
 
-      return MessageTools.createStereoVisionPointCloudMessage(timestamp, pointCloudBuffer, colorsInteger);
+      return MessageTools.createDepthCloudMessage(timestamp, pointCloudBuffer);
    }
    
    public void applyTransform(RigidBodyTransform transform)
