@@ -452,6 +452,14 @@ public class PlannerTestEnvironments
       return generator.getPlanarRegionsList();
    }
 
+   public static PlanarRegionsList getSimpleOcclusionHallway()
+   {
+      PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
+      generator.addRectangle(15.0, 2.0);
+
+      return generator.getPlanarRegionsList();
+   }
+
    public static void main(String[] args)
    {
       String dataSetNameSuffix = "QuadrupedEnvironment3";
