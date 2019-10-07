@@ -848,8 +848,8 @@ public class VisibilityGraphsFrameworkTest
 
       }
 //      test.runAssertionsOnDataset(dataset -> test.runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 100000000, true), dataSetName);
-//      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
-      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithOcclusions(dataset), dataSetName);
+      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
+//      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithOcclusions(dataset), dataSetName);
       test.tearDown();
 
    }
