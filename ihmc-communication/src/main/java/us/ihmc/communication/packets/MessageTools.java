@@ -7,6 +7,7 @@ import java.util.List;
 
 import controller_msgs.msg.dds.BoundingBoxesPacket;
 import controller_msgs.msg.dds.ControllerCrashNotificationPacket;
+import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.DetectedFacesPacket;
 import controller_msgs.msg.dds.HeatMapPacket;
 import controller_msgs.msg.dds.InvalidPacketNotificationPacket;
@@ -440,6 +441,14 @@ public class MessageTools
       message.setTimestamp(timestamp);
       message.getPointCloud().add(pointCloud);
       message.getColors().add(colors);
+      return message;
+   }
+   
+   public static DepthCloudMessage createDepthCloudMessage(long timestamp, float[] pointCloud)
+   {
+      DepthCloudMessage message = new DepthCloudMessage();
+      message.setTimestamp(timestamp);
+      message.getPointCloud().add(pointCloud);
       return message;
    }
 
