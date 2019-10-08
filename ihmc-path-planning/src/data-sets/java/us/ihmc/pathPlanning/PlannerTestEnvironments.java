@@ -452,34 +452,63 @@ public class PlannerTestEnvironments
       return generator.getPlanarRegionsList();
    }
 
-   public static PlanarRegionsList getSimpleOcclusionHallway()
+   public static PlanarRegionsList getSimpleCorridor()
    {
       PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
-      generator.translate(4.0, 0.0, 0.0);
-      generator.addRectangle(10.0, 3.0);
+      generator.translate(-1.0, 0.0, 0.0);
 
+      generator.translate(5.0, 0.0, 0.0);
+      generator.addRectangle(10.0, 3.0);
       generator.translate(-5.0, 0.0, 0.0);
+
       generator.translate(0.0, 1.5, 0.0);
       generator.rotate(Math.toRadians(90.0), Axis.X);
       generator.addRectangleReferencedAtNegativeXYCorner(10.0, 2.0);
       generator.rotate(Math.toRadians(-90.0), Axis.X);
+      generator.translate(0.0, -1.5, 0.0);
 
-      generator.translate(10.0, -3.0, 0.0);
+      generator.translate(10.0, -1.5, 0.0);
       generator.rotate(Math.toRadians(180.0), Axis.Z);
       generator.rotate(Math.toRadians(90.0), Axis.X);
       generator.addRectangleReferencedAtNegativeXYCorner(10.0, 2.0);
       generator.rotate(Math.toRadians(-90.0), Axis.X);
+      generator.rotate(Math.toRadians(-180.0), Axis.Z);
+      generator.translate(-10.0, 1.5, 0.0);
+
+      generator.translate(0.0, 0.0, 1.0);
+      generator.rotate(Math.toRadians(90.0), Axis.Y);
+      generator.addRectangle(2.0, 3.0);
+      generator.rotate(Math.toRadians(-90.0), Axis.Y);
+      generator.translate(0.0, 0.0, -1.0);
+
+      generator.translate(10.0, 0.0, 1.0);
+      generator.rotate(Math.toRadians(-90.0), Axis.Y);
+      generator.addRectangle(2.0, 3.0);
+      generator.rotate(Math.toRadians(90.0), Axis.Y);
+      generator.translate(-10.0, 0.0, -1.0);
+
+      generator.translate(1.0, 0.0, 0.0);
 
       return generator.getPlanarRegionsList();
    }
 
+   public static PlanarRegionsList getCorridorWith1Wall()
+   {
+      PlanarRegionsListGenerator generator = new PlanarRegionsListGenerator();
+
+      PlanarRegionsList planarRegionsList = generator.getPlanarRegionsList();
+      planarRegionsList.addPlanarRegionsList(getSimpleCorridor());
+
+      return planarRegionsList;
+   }
+
    public static void main(String[] args)
    {
-      String dataSetNameSuffix = "QuadrupedEnvironment3";
+      String dataSetNameSuffix = "SimpleCorridor";
       DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
       String date = LocalDateTime.now().format(dateTimeFormatter);
 
-      DataSet dataSet = new DataSet(date + "_" + dataSetNameSuffix, getQuadrupedEnvironment3());
+      DataSet dataSet = new DataSet(date + "_" + dataSetNameSuffix, getSimpleCorridor());
       DataSetIOTools.exportDataSet(dataSet);
    }
 }

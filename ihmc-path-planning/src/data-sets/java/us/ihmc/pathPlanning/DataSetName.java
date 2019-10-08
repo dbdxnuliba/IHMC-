@@ -2,6 +2,7 @@ package us.ihmc.pathPlanning;
 
 public enum DataSetName
 {
+	_20191007_185913_SimpleCorridor,
 	_20190603_224047_PlanarRegionWigglerViolateDeltaInside,
 	_20190514_163532_QuadrupedShortPlatformEnvironment,
 	_20190514_163532_QuadrupedPlatformEnvironment,
