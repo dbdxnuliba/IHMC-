@@ -23,6 +23,7 @@ import controller_msgs.msg.dds.SimulatedLidarScanPacket;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import controller_msgs.msg.dds.TextToSpeechPacket;
 import controller_msgs.msg.dds.ToolboxStateMessage;
+import controller_msgs.msg.dds.TrackingCameraMessage;
 import controller_msgs.msg.dds.UIPositionCheckerPacket;
 import controller_msgs.msg.dds.WalkingControllerPreviewOutputMessage;
 import controller_msgs.msg.dds.WeightMatrix3DMessage;
@@ -449,6 +450,25 @@ public class MessageTools
       DepthCloudMessage message = new DepthCloudMessage();
       message.setTimestamp(timestamp);
       message.getPointCloud().add(pointCloud);
+      return message;
+   }
+   
+   public static TrackingCameraMessage createTrackingCameraMessage(long timestamp, Point3D32 sensorPosition, Quaternion32 sensorOrientation)
+   {
+      TrackingCameraMessage message = new TrackingCameraMessage();
+      message.setTimestamp(timestamp);
+      message.getSensorPosition().set(sensorPosition);
+      message.getSensorOrientation().set(sensorOrientation);
+      return message;
+   }
+   
+   public static TrackingCameraMessage createTrackingCameraMessage(long timestamp, double quality, Point3D senorPosition, Quaternion sensorOrientation)
+   {
+      TrackingCameraMessage message = new TrackingCameraMessage();
+      message.setTimestamp(timestamp);
+      message.setQuality(quality);
+      message.getSensorPosition().set(senorPosition);
+      message.getSensorOrientation().set(sensorOrientation);
       return message;
    }
 
