@@ -836,7 +836,9 @@ public class VisibilityGraphsFrameworkTest
 //      String dataSetName = "20171215_214730_CinderBlockField";
 //      String dataSetName = "20001201_205050_TwoSquaresOneObstacle";
 //      String dataSetName = "20171215_210811_DoorwayWithCeiling";
-      String dataSetName = "20191007_185913_SimpleCorridor";
+//      String dataSetName = "20191007_185913_SimpleCorridor";
+//      String dataSetName = "20191007_200400_Corridor1Wall";
+      String dataSetName = "20191008_153543_TrickCorridor";
 
       VISUALIZE = true;
       test.setup();
@@ -848,8 +850,10 @@ public class VisibilityGraphsFrameworkTest
          messager.submitMessage(UIVisibilityGraphsTopics.ShowInterRegionVisibilityMap, true);
 
       }
-//      test.runAssertionsOnDataset(dataset -> test.runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 100000000, true), dataSetName);
-      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
+
+      ThreadTools.sleepSeconds(10.0);
+      test.runAssertionsOnDataset(dataset -> test.runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 100000000, true), dataSetName);
+//      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
 //      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithOcclusions(dataset), dataSetName);
       test.tearDown();
 

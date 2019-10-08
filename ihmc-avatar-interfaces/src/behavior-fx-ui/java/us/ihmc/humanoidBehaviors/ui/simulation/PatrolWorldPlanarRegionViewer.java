@@ -17,7 +17,7 @@ public class PatrolWorldPlanarRegionViewer extends Application
       view3dFactory.addDefaultLighting();
 
       PlanarRegionsGraphic regionsGraphic = new PlanarRegionsGraphic();
-      regionsGraphic.generateMeshes(PlannerTestEnvironments.getSimpleCorridor());
+      regionsGraphic.generateMeshes(PlannerTestEnvironments.getTrickCorridor());
       regionsGraphic.update();
 
       view3dFactory.addNodeToView(regionsGraphic);
