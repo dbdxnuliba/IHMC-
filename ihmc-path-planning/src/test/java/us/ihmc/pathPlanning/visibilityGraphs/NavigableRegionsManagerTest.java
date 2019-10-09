@@ -1070,8 +1070,8 @@ public class NavigableRegionsManagerTest
       parameters.setPreferredObstacleExtrusionDistance(preferredObstacleExtrusionDistance);
 //      parameters.setClusterResolution(0.501);
       parameters.setPerformPostProcessingNodeShifting(true);
-      parameters.setIntroduceMidpointsInPostProcessing(true);
-      parameters.setComputeOrientationsToAvoidObstacles(true);
+      parameters.setIntroduceMidpointsInPostProcessing(false);
+//      parameters.setComputeOrientationsToAvoidObstacles(true);
 
       return parameters;
    }
