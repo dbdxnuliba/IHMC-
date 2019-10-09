@@ -34,7 +34,7 @@ import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 
 public class StereoVisionPointCloudPublisher
 {
-   private static final boolean Debug = false;
+   private static final boolean Debug = true;
 
    private static final int MAX_NUMBER_OF_POINTS = 200000;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
@@ -141,10 +141,13 @@ public class StereoVisionPointCloudPublisher
          @Override
          public void onNewMessage(PointCloud2 pointCloud)
          {
+            if (Debug)
+               System.out.println("!!Receiving point cloud, n points: " + pointCloud.getHeight() * pointCloud.getWidth());
+            
             rosPointCloud2ToPublish.set(new ColorPointCloudData(pointCloud, MAX_NUMBER_OF_POINTS));
 
             if (Debug)
-               System.out.println("Receiving point cloud, n points: " + pointCloud.getHeight() * pointCloud.getWidth());
+               System.out.println("@@Receiving point cloud, n points: " + pointCloud.getHeight() * pointCloud.getWidth());
          }
       };
    }
@@ -208,8 +211,12 @@ public class StereoVisionPointCloudPublisher
 
       if (stereoVisionTransformer != null)
       {
+         if (Debug)
+            System.out.println("transforming ");
          stereoVisionTransformer.computeTransformToWorld(fullRobotModel, stereoVisionPointsFrame, transformToWorld, sensorPose);
          pointCloudData.applyTransform(transformToWorld);
+         if (Debug)
+            System.out.println(transformToWorld);
       }
       else
       {

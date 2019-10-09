@@ -7,10 +7,10 @@ import controller_msgs.msg.dds.RobotConfigurationData;
 import us.ihmc.atlas.parameters.AtlasSensorInformation;
 import us.ihmc.avatar.drcRobot.RobotPhysicalProperties;
 import us.ihmc.avatar.drcRobot.RobotTarget;
-import us.ihmc.avatar.networkProcessor.depthCloudPublisher.DepthCloudPublisher;
 import us.ihmc.avatar.networkProcessor.depthCloudPublisher.DepthCloudPublisher.DepthCloudWorldTransformCalculator;
 import us.ihmc.avatar.networkProcessor.lidarScanPublisher.LidarScanPublisher;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher;
+import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
 import us.ihmc.avatar.sensors.multisense.MultiSenseSensorManager;
@@ -43,7 +43,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
    private final LidarScanPublisher lidarScanPublisher;
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
-   private final DepthCloudPublisher depthCloudPublisher;
+   //private final DepthCloudPublisher depthCloudPublisher;
 
    private final RobotROSClockCalculator rosClockCalculator;
    private final HumanoidRobotSensorInformation sensorInformation;
@@ -72,10 +72,11 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
       stereoVisionPointCloudPublisher = new StereoVisionPointCloudPublisher(modelFactory, ros2Node, rcdTopicName);
       stereoVisionPointCloudPublisher.setROSClockCalculator(rosClockCalculator);
+      stereoVisionPointCloudPublisher.setCustomStereoVisionTransformer(createCustomStereoTransformCalculator());
 
-      depthCloudPublisher = new DepthCloudPublisher(modelFactory, ros2Node, rcdTopicName);
-      depthCloudPublisher.setROSClockCalculator(rosClockCalculator);
-      depthCloudPublisher.setCustomDepthCameraTransformer(createCustomStereoTransformCalculator());
+//      depthCloudPublisher = new DepthCloudPublisher(modelFactory, ros2Node, rcdTopicName);
+//      depthCloudPublisher.setROSClockCalculator(rosClockCalculator);
+//      depthCloudPublisher.setCustomDepthCameraTransformer(createCustomStereoTransformCalculator());
    }
 
    @Override
@@ -113,11 +114,12 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.receiveLidarFromROSAsPointCloud2WithSource(multisenseLidarParameters.getRosTopic(), rosMainNode);
       lidarScanPublisher.setScanFrameToWorldFrame();
 
-      stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      //stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
       stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold, AtlasSensorInformation.angularVelocityThreshold);
-      stereoVisionPointCloudPublisher.enableFilter(true);
+      stereoVisionPointCloudPublisher.enableFilter(false);
 
-      depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
+//      depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -136,7 +138,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       rightFishEyeCameraReceiver.start();
       lidarScanPublisher.start();
       stereoVisionPointCloudPublisher.start();
-      depthCloudPublisher.start();
+//      depthCloudPublisher.start();
 
       rosClockCalculator.setROSMainNode(rosMainNode);
 
@@ -155,7 +157,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    {
    }
 
-   private DepthCloudWorldTransformCalculator createCustomStereoTransformCalculator()
+   private DepthCloudWorldTransformCalculator createCustomDepthCloudTransformCalculator()
    {
       return new DepthCloudWorldTransformCalculator()
       {
@@ -163,6 +165,23 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
          @Override
          public void computeTransformToWorld(FullRobotModel fullRobotModel, RigidBodyTransform transformToWorldToPack, Pose3DBasics sensorPoseToPack)
+         {
+            ReferenceFrame pelvisFrame = fullRobotModel.getRootJoint().getFrameAfterJoint(); // TODO: check this.
+            pelvisFrame.getTransformToDesiredFrame(transformToWorldToPack, ReferenceFrame.getWorldFrame());
+            transformToWorldToPack.multiply(transformFromPelvisToRealSense);
+            sensorPoseToPack.set(transformToWorldToPack);
+         }
+      };
+   }
+   
+   private StereoVisionWorldTransformCalculator createCustomStereoTransformCalculator()
+   {
+      return new StereoVisionWorldTransformCalculator()
+      {
+         private final RigidBodyTransform transformFromPelvisToRealSense = AtlasSensorInformation.transformPelvisToDepthCamera;
+
+         @Override
+         public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack, Pose3DBasics sensorPoseToPack)
          {
             ReferenceFrame pelvisFrame = fullRobotModel.getRootJoint().getFrameAfterJoint(); // TODO: check this.
             pelvisFrame.getTransformToDesiredFrame(transformToWorldToPack, ReferenceFrame.getWorldFrame());

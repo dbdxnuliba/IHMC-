@@ -8,31 +8,38 @@ import sensor_msgs.PointCloud2;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.interfaces.Point3DBasics;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointCloud;
 
-public class ColorPointCloudData extends PointCloudData
+public class ColorPointCloudData
 {
+   private final long timestamp;
+   private final int numberOfPoints;
+   private final Point3D[] pointCloud;
    private final int[] colors;
 
    public ColorPointCloudData(long timestamp, Point3D[] scanPoints, int[] scanColors)
    {
-      super(timestamp, scanPoints);
-      this.colors = scanColors;
-      
+      this.timestamp = timestamp;
+
       if (scanPoints.length != scanColors.length)
          throw new IllegalArgumentException("wrong size!");
 
+      this.pointCloud = scanPoints;
+      this.colors = scanColors;
       this.numberOfPoints = scanPoints.length;
    }
 
    public ColorPointCloudData(PointCloud2 rosPointCloud2, int maxSize)
    {
-      super(rosPointCloud2.getHeader().getStamp().totalNsecs(), RosPointCloudSubscriber.unpackPointsAndIntensities(rosPointCloud2).getPoints());
-      
+      timestamp = rosPointCloud2.getHeader().getStamp().totalNsecs();
+
       UnpackedPointCloud unpackPointsAndIntensities = RosPointCloudSubscriber.unpackPointsAndIntensities(rosPointCloud2);
-      colors = unpackPointsAndIntensities.getPointColorsRGB();
+      pointCloud = unpackPointsAndIntensities.getPoints();
+      //colors = unpackPointsAndIntensities.getPointColorsRGB();
+      colors = new int[pointCloud.length];
+      for(int i=0;i<colors.length;i++)
+         colors[i] = 0;
 
       if (unpackPointsAndIntensities.getPoints().length <= maxSize)
       {
@@ -54,34 +61,6 @@ public class ColorPointCloudData extends PointCloudData
             currentSize--;
          }
          numberOfPoints = maxSize;
-      }
-   }
-
-   public void removePoints(Point3DBasics min, Point3DBasics max)
-   {
-      boolean remove = false;
-      for (int i = 0; i < numberOfPoints; i++)
-      {
-         remove = false;
-         for (int j = 0; j < 3; j++)
-         {
-            if (min.getElement(j) > pointCloud[i].getElement(j) || max.getElement(j) < pointCloud[i].getElement(j))
-            {
-               remove = true;
-               break;
-            }
-         }
-
-         if (remove)
-         {
-            pointCloud[i] = pointCloud[numberOfPoints - 1];
-            colors[i] = colors[numberOfPoints - 1];
-            pointCloud[numberOfPoints - 1] = null;
-            colors[numberOfPoints - 1] = -1;
-
-            i--;
-            numberOfPoints--;
-         }
       }
    }
 
@@ -117,7 +96,7 @@ public class ColorPointCloudData extends PointCloudData
 
       return MessageTools.createStereoVisionPointCloudMessage(timestamp, pointCloudBuffer, colorsInteger);
    }
-   
+
    public void applyTransform(RigidBodyTransform transform)
    {
       for (int i = 0; i < numberOfPoints; i++)
