@@ -96,7 +96,6 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    /**
     * Stereo Parameters
     */
-
    private final AvatarRobotPointCloudParameters[] pointCloudParameters = new AvatarRobotPointCloudParameters[1];
    public static final int MULTISENSE_STEREO_ID = 0;
    private static final String stereoSensorName = "stereo_camera";
@@ -117,6 +116,18 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
     */
    private static final String frontFacingD435 = realsense_namespace + "/frontCam/depth/color/points";
    private static final String frontFacingT265 = realsense_namespace + "/frontT265/odom/sample";
+   
+   public static final RigidBodyTransform transformPelvisToDepthCamera = new RigidBodyTransform();
+   static
+   {
+      double offsetX = 0.16;  // Daniel Said.
+      double pitchingAngle = 70.0 / 90.0 * Math.PI / 2;
+      transformPelvisToDepthCamera.appendTranslation(offsetX, 0.0, 0.0);
+      transformPelvisToDepthCamera.appendPitchRotation(pitchingAngle);
+      
+      transformPelvisToDepthCamera.appendYawRotation(-Math.PI/2);
+      transformPelvisToDepthCamera.appendRollRotation(-Math.PI/2);
+   }
 
    public AtlasSensorInformation(AtlasRobotVersion atlasRobotVersion, RobotTarget target)
    {
