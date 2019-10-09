@@ -108,6 +108,9 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.setScanFrameToWorldFrame();
 
       stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold,
+                                                         AtlasSensorInformation.angularVelocityThreshold);
+      stereoVisionPointCloudPublisher.enableFilter(true);
 
       depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
 
