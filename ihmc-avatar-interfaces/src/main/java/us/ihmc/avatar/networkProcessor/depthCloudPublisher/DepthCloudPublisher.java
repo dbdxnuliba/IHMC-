@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import sensor_msgs.PointCloud2;
-import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.ColorPointCloudData;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.PointCloudData;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
@@ -17,7 +16,10 @@ import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.euclid.geometry.Pose3D;
+import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
 import us.ihmc.ros2.RealtimeRos2Node;
@@ -28,7 +30,7 @@ import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 
 public class DepthCloudPublisher
 {
-   private static final boolean Debug = false;
+   private static final boolean Debug = true;
 
    private static final int MAX_NUMBER_OF_POINTS = 200000;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
@@ -41,8 +43,9 @@ public class DepthCloudPublisher
 
    private final String robotName;
    private final FullRobotModel fullRobotModel;
-   private ReferenceFrame depthCloudFrame = worldFrame;
-   private StereoVisionWorldTransformCalculator depthCloudTransformer = null;
+   private DepthCloudWorldTransformCalculator depthCloudTransformer = null;
+   private final RigidBodyTransform worldTransformer = new RigidBodyTransform();
+   private final Pose3D sensorPose = new Pose3D();
 
    private final RobotConfigurationDataBuffer robotConfigurationDataBuffer = new RobotConfigurationDataBuffer();
 
@@ -83,12 +86,12 @@ public class DepthCloudPublisher
    {
       this.rosClockCalculator = rosClockCalculator;
    }
-   
+
    public void receiveStereoPointCloudFromROS(String stereoPointCloudROSTopic, RosMainNode rosMainNode)
    {
       rosMainNode.attachSubscriber(stereoPointCloudROSTopic, createROSPointCloud2Subscriber());
    }
-   
+
    private RosPointCloudSubscriber createROSPointCloud2Subscriber()
    {
       return new RosPointCloudSubscriber()
@@ -103,6 +106,11 @@ public class DepthCloudPublisher
          }
       };
    }
+   
+   public void setCustomDepthCameraTransformer(DepthCloudWorldTransformCalculator transformer)
+   {
+      depthCloudTransformer = transformer;
+   }
 
    public void start()
    {
@@ -114,7 +122,7 @@ public class DepthCloudPublisher
       publisherTask.cancel(false);
       executorService.shutdownNow();
    }
-   
+
    private void readAndPublishInternal()
    {
       try
@@ -127,7 +135,7 @@ public class DepthCloudPublisher
          executorService.shutdown();
       }
    }
-   
+
    private void transformDataAndPublish()
    {
       PointCloudData depthCloudData = rosDepthCloud2ToPublish.getAndSet(null);
@@ -155,10 +163,16 @@ public class DepthCloudPublisher
          if (!success)
             return;
       }
-      
+
+      if (depthCloudTransformer != null)
+      {
+         depthCloudTransformer.computeTransformToWorld(fullRobotModel, worldTransformer, sensorPose);
+         depthCloudData.applyTransform(worldTransformer);
+      }
+
       DepthCloudMessage message = depthCloudData.toDepthCloudMessage();
-//      message.getSensorPosition().set(sensorPose.getPosition());
-//      message.getSensorOrientation().set(sensorPose.getOrientation());
+      message.getSensorPosition().set(sensorPose.getPosition());
+      message.getSensorOrientation().set(sensorPose.getOrientation());
 
       if (Debug)
          System.out.println("Publishing stereo data, number of points: " + (message.getPointCloud().size() / 3));
@@ -166,5 +180,10 @@ public class DepthCloudPublisher
          depthcloudPublisher.publish(message);
       else
          depthcloudRealtimePublisher.publish(message);
+   }
+
+   public static interface DepthCloudWorldTransformCalculator
+   {
+      public void computeTransformToWorld(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformer, Pose3DBasics sensorPoseToPack);
    }
 }
