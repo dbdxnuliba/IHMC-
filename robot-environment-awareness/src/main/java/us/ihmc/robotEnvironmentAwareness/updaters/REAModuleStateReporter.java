@@ -2,6 +2,7 @@ package us.ihmc.robotEnvironmentAwareness.updaters;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
@@ -62,5 +63,11 @@ public class REAModuleStateReporter
    {
       if (reaMessager.isMessagerOpen())
          reaMessager.submitMessage(REAModuleAPI.StereoVisionPointCloudState, new StereoVisionPointCloudMessage(message));
+   }
+   
+   public void registerDepthCloudMessage(DepthCloudMessage message)
+   {
+      if (reaMessager.isMessagerOpen())
+         reaMessager.submitMessage(REAModuleAPI.DepthCloudState, new DepthCloudMessage(message));
    }
 }

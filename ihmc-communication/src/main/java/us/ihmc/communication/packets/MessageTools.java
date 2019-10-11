@@ -5,33 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import controller_msgs.msg.dds.BoundingBoxesPacket;
-import controller_msgs.msg.dds.ControllerCrashNotificationPacket;
-import controller_msgs.msg.dds.DepthCloudMessage;
-import controller_msgs.msg.dds.DetectedFacesPacket;
-import controller_msgs.msg.dds.HeatMapPacket;
-import controller_msgs.msg.dds.InvalidPacketNotificationPacket;
-import controller_msgs.msg.dds.KinematicsToolboxCenterOfMassMessage;
-import controller_msgs.msg.dds.KinematicsToolboxConfigurationMessage;
-import controller_msgs.msg.dds.KinematicsToolboxOutputStatus;
-import controller_msgs.msg.dds.KinematicsToolboxRigidBodyMessage;
-import controller_msgs.msg.dds.LidarScanMessage;
-import controller_msgs.msg.dds.LidarScanParametersMessage;
-import controller_msgs.msg.dds.ObjectDetectorResultPacket;
-import controller_msgs.msg.dds.SelectionMatrix3DMessage;
-import controller_msgs.msg.dds.SimulatedLidarScanPacket;
-import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
-import controller_msgs.msg.dds.TextToSpeechPacket;
-import controller_msgs.msg.dds.ToolboxStateMessage;
-import controller_msgs.msg.dds.TrackingCameraMessage;
-import controller_msgs.msg.dds.UIPositionCheckerPacket;
-import controller_msgs.msg.dds.WalkingControllerPreviewOutputMessage;
-import controller_msgs.msg.dds.WeightMatrix3DMessage;
-import gnu.trove.list.array.TByteArrayList;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TLongArrayList;
+import controller_msgs.msg.dds.*;
+import gnu.trove.list.array.*;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.PrintTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
@@ -53,11 +28,7 @@ import us.ihmc.euclid.tuple4D.Vector4D;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.euclid.utils.NameBasedHashCodeTools;
 import us.ihmc.idl.IDLSequence.Float;
-import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointBasics;
-import us.ihmc.mecano.multiBodySystem.interfaces.FloatingJointReadOnly;
-import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
-import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointReadOnly;
-import us.ihmc.mecano.multiBodySystem.interfaces.RigidBodyBasics;
+import us.ihmc.mecano.multiBodySystem.interfaces.*;
 import us.ihmc.mecano.spatial.interfaces.TwistReadOnly;
 import us.ihmc.robotics.lidar.LidarScanParameters;
 import us.ihmc.robotics.math.QuaternionCalculus;
@@ -387,7 +358,7 @@ public class MessageTools
       }
       else
       {
-         double outputDT = inputDT * (double) previewFrames.size() / (double) WALKING_PREVIEW_MAX_NUMBER_OF_FRAMES;
+         double outputDT = inputDT * previewFrames.size() / WALKING_PREVIEW_MAX_NUMBER_OF_FRAMES;
          message.setFrameDt(outputDT);
 
          for (int outputFrameIndex = 0; outputFrameIndex < WALKING_PREVIEW_MAX_NUMBER_OF_FRAMES; outputFrameIndex++)
@@ -481,7 +452,7 @@ public class MessageTools
 
    public static <T extends Enum<T>> T fromByteToEnum(byte value, Class<T> enumType)
    {
-      return enumType.getEnumConstants()[(int) value];
+      return enumType.getEnumConstants()[value];
    }
 
    public static LidarScanParameters toLidarScanParameters(LidarScanParametersMessage message)
@@ -1139,5 +1110,13 @@ public class MessageTools
          scanPoints[index] = scanPoint;
       }
       return scanPoints;
+   }
+   
+   public static void unpackScanPoint(DepthCloudMessage depthCloudMessage, int index, Point3DBasics scanPointToPack)
+   {
+      index *= 3;
+      scanPointToPack.setX(depthCloudMessage.getPointCloud().get(index++));
+      scanPointToPack.setY(depthCloudMessage.getPointCloud().get(index++));
+      scanPointToPack.setZ(depthCloudMessage.getPointCloud().get(index++));
    }
 }

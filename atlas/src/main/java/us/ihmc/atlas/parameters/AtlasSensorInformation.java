@@ -10,7 +10,6 @@ import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.sensorProcessing.parameters.*;
-import us.ihmc.sensorProcessing.parameters.AvatarRobotCameraParameters;
 
 public class AtlasSensorInformation implements HumanoidRobotSensorInformation
 {
@@ -120,7 +119,7 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    public static final RigidBodyTransform transformPelvisToDepthCamera = new RigidBodyTransform();
    static
    {
-      double offsetX = 0.16;  // Daniel Said.
+      double offsetX = 0.245;  // Daniel Said.   0.16.
       double pitchingAngle = 70.0 / 90.0 * Math.PI / 2;
       transformPelvisToDepthCamera.appendTranslation(offsetX, 0.0, 0.0);
       transformPelvisToDepthCamera.appendPitchRotation(pitchingAngle);

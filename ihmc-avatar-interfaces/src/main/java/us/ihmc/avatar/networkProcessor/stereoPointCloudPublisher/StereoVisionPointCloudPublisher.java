@@ -34,7 +34,7 @@ import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 
 public class StereoVisionPointCloudPublisher
 {
-   private static final boolean Debug = true;
+   private static final boolean Debug = false;
 
    private static final int MAX_NUMBER_OF_POINTS = 200000;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();

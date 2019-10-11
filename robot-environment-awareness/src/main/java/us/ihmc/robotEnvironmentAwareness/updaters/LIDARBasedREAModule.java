@@ -135,7 +135,7 @@ public class LIDARBasedREAModule
    private void dispatchDepthCloudMessage(Subscriber<DepthCloudMessage> subscriber)
    {
       DepthCloudMessage message = subscriber.takeNextData();
-      LogTools.info("dispatching DepthCloudMessage " + message.timestamp_ + " " + (message.point_cloud_.size() / 3));
+      moduleStateReporter.registerDepthCloudMessage(message);
    }
 
    private void dispatchCustomPlanarRegion(Subscriber<PlanarRegionsListMessage> subscriber)
