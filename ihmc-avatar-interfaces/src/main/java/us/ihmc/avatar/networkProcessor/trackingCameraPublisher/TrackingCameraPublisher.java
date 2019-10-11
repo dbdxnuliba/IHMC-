@@ -8,50 +8,43 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.TrackingCameraMessage;
-import sensor_msgs.PointCloud2;
-import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.PointCloudData;
-import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
+import geometry_msgs.Pose;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
-import us.ihmc.communication.packets.MessageTools;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
+import us.ihmc.robotics.kinematics.TimeStampedTransform3D;
 import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.sensorProcessing.communication.producers.RobotConfigurationDataBuffer;
 import us.ihmc.utilities.ros.RosMainNode;
-import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
+import us.ihmc.utilities.ros.subscriber.RosNavMsgsOdometrySubscriber;
 
 public class TrackingCameraPublisher
 {
    private static final boolean Debug = false;
 
-   private static final int MAX_NUMBER_OF_POINTS = 200000;
-   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-
    private final String name = getClass().getSimpleName();
    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(ThreadTools.getNamedThreadFactory(name));
    private ScheduledFuture<?> publisherTask;
 
-   private final AtomicReference<TrackingCameraData> rosDepthCloud2ToPublish = new AtomicReference<>(null);
+   private final AtomicReference<TrackingCameraData> rosDataToPublish = new AtomicReference<>(null);
 
    private final String robotName;
    private final FullRobotModel fullRobotModel;
-   private ReferenceFrame depthCloudFrame = worldFrame;
-   private StereoVisionWorldTransformCalculator depthCloudTransformer = null;
+   private TrackingCameraWorldTransformCalculator trackingCameratransformer = null;
 
    private final RobotConfigurationDataBuffer robotConfigurationDataBuffer = new RobotConfigurationDataBuffer();
 
    private RobotROSClockCalculator rosClockCalculator = null;
 
-   private final IHMCROS2Publisher<TrackingCameraMessage> depthcloudPublisher;
-   private final IHMCRealtimeROS2Publisher<TrackingCameraMessage> depthcloudRealtimePublisher;
+   private final IHMCROS2Publisher<TrackingCameraMessage> trackingCameraPublisher;
+   private final IHMCRealtimeROS2Publisher<TrackingCameraMessage> trackingCameraRealtimePublisher;
 
    public TrackingCameraPublisher(FullRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
    {
@@ -59,7 +52,7 @@ public class TrackingCameraPublisher
    }
 
    public TrackingCameraPublisher(String robotName, FullRobotModel fullRobotModel, Ros2Node ros2Node, RealtimeRos2Node realtimeRos2Node,
-                              String robotConfigurationDataTopicName)
+                                  String robotConfigurationDataTopicName)
    {
       this.robotName = robotName;
       this.fullRobotModel = fullRobotModel;
@@ -68,15 +61,15 @@ public class TrackingCameraPublisher
       {
          ROS2Tools.createCallbackSubscription(ros2Node, RobotConfigurationData.class, robotConfigurationDataTopicName,
                                               s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
-         depthcloudPublisher = ROS2Tools.createPublisher(ros2Node, TrackingCameraMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
-         depthcloudRealtimePublisher = null;
+         trackingCameraPublisher = ROS2Tools.createPublisher(ros2Node, TrackingCameraMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+         trackingCameraRealtimePublisher = null;
       }
       else
       {
          ROS2Tools.createCallbackSubscription(realtimeRos2Node, RobotConfigurationData.class, robotConfigurationDataTopicName,
                                               s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
-         depthcloudPublisher = null;
-         depthcloudRealtimePublisher = ROS2Tools.createPublisher(realtimeRos2Node, TrackingCameraMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
+         trackingCameraPublisher = null;
+         trackingCameraRealtimePublisher = ROS2Tools.createPublisher(realtimeRos2Node, TrackingCameraMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
 
       }
    }
@@ -85,25 +78,45 @@ public class TrackingCameraPublisher
    {
       this.rosClockCalculator = rosClockCalculator;
    }
-   
-   public void receiveStereoPointCloudFromROS(String stereoPointCloudROSTopic, RosMainNode rosMainNode)
+
+   public void receiveNavigationMessageFromROS(String stereoPointCloudROSTopic, RosMainNode rosMainNode)
    {
-      rosMainNode.attachSubscriber(stereoPointCloudROSTopic, createROSPointCloud2Subscriber());
+      rosMainNode.attachSubscriber(stereoPointCloudROSTopic, createNavigationMessageSubscriber());
    }
-   
+
    //TODO : implement RosTrackingCameraSubsriber.
-   private RosPointCloudSubscriber createROSPointCloud2Subscriber()
+   private RosNavMsgsOdometrySubscriber createNavigationMessageSubscriber()
    {
-      return new RosPointCloudSubscriber()
+      return new RosNavMsgsOdometrySubscriber()
       {
          @Override
-         public void onNewMessage(PointCloud2 pointCloud)   //TODO:
+         public void onNewMessage(nav_msgs.Odometry message)
          {
-            // TODO : Implement
-            rosDepthCloud2ToPublish.set(null);
+            long timeStamp = message.getHeader().getStamp().totalNsecs();
+            if (Debug)
+               System.out.println("Odometry timeStamp " + timeStamp);
+
+            Pose pose = message.getPose().getPose();
+            TrackingCameraData trackingCameraData = new TrackingCameraData(timeStamp);
+            trackingCameraData.setPosition(pose.getPosition());
+            trackingCameraData.setOrientation(pose.getOrientation());
+            //            // get linear velocity
+            //            linearVelocity = new Vector3D(msg.getTwist().getTwist().getLinear().getX(), msg.getTwist().getTwist().getLinear().getY(),
+            //                                          msg.getTwist().getTwist().getLinear().getZ());
+            //            // get angular velocity
+            //            angularVelocity = new Vector3D(msg.getTwist().getTwist().getAngular().getX(), msg.getTwist().getTwist().getAngular().getY(),
+            //                                           msg.getTwist().getTwist().getAngular().getZ());
 
             if (Debug)
-               System.out.println("Receiving point cloud, n points: " + pointCloud.getHeight() * pointCloud.getWidth());
+               System.out.println("message.getPose().getPose() " + message.getPose().getPose());
+
+            rosDataToPublish.set(trackingCameraData);
+         }
+
+         @Override
+         protected void newPose(String frameID, TimeStampedTransform3D transform)
+         {
+
          }
       };
    }
@@ -118,7 +131,7 @@ public class TrackingCameraPublisher
       publisherTask.cancel(false);
       executorService.shutdownNow();
    }
-   
+
    private void readAndPublishInternal()
    {
       try
@@ -131,10 +144,10 @@ public class TrackingCameraPublisher
          executorService.shutdown();
       }
    }
-   
+
    private void transformDataAndPublish()
    {
-      TrackingCameraData trackingCameraData = rosDepthCloud2ToPublish.getAndSet(null);
+      TrackingCameraData trackingCameraData = rosDataToPublish.getAndSet(null);
 
       if (trackingCameraData == null)
          return;
@@ -159,13 +172,26 @@ public class TrackingCameraPublisher
          if (!success)
             return;
       }
-      
-      // TODO: implement!
+
       TrackingCameraMessage message = trackingCameraData.toTrackingCameraMessage();
 
-      if (depthcloudPublisher != null)
-         depthcloudPublisher.publish(message);
+      if (Debug)
+      {
+         System.out.println("TrackingCameraMessage.");
+         System.out.println(message.timestamp_);
+         System.out.println(message.quality_);
+         System.out.println(message.sensor_position_);
+         System.out.println(message.sensor_orientation_);
+      }
+
+      if (trackingCameraPublisher != null)
+         trackingCameraPublisher.publish(message);
       else
-         depthcloudRealtimePublisher.publish(message);
+         trackingCameraRealtimePublisher.publish(message);
+   }
+
+   public static interface TrackingCameraWorldTransformCalculator
+   {
+      public void computeTransformToWorld(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformer, Pose3DBasics sensorPoseToPack);
    }
 }
