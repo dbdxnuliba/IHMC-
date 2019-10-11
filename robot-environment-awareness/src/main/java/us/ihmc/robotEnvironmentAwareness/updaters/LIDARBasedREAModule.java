@@ -1,8 +1,6 @@
 package us.ihmc.robotEnvironmentAwareness.updaters;
 
-import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.publisherTopicNameGenerator;
-import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.subscriberCustomRegionsTopicNameGenerator;
-import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.subscriberTopicNameGenerator;
+import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
-import controller_msgs.msg.dds.LidarScanMessage;
-import controller_msgs.msg.dds.PlanarRegionsListMessage;
-import controller_msgs.msg.dds.REASensorDataFilterParametersMessage;
-import controller_msgs.msg.dds.REAStateRequestMessage;
-import controller_msgs.msg.dds.RequestPlanarRegionsListMessage;
-import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import controller_msgs.msg.dds.*;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.communication.packets.PlanarRegionsRequestType;
@@ -93,6 +86,7 @@ public class LIDARBasedREAModule
       ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
+      ROS2Tools.createCallbackSubscription(ros2Node, DepthCloudMessage.class, "/ihmc/depth_cloud", this::dispatchDepthCloudMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, PlanarRegionsListMessage.class, subscriberCustomRegionsTopicNameGenerator,
                                            this::dispatchCustomPlanarRegion);
       ROS2Tools.createCallbackSubscription(ros2Node, RequestPlanarRegionsListMessage.class, subscriberTopicNameGenerator,
@@ -136,6 +130,12 @@ public class LIDARBasedREAModule
       moduleStateReporter.registerStereoVisionPointCloudMessage(message);
       stereoVisionBufferUpdater.handleStereoVisionPointCloudMessage(message);
       mainUpdater.handleStereoVisionPointCloudMessage(message);
+   }
+
+   private void dispatchDepthCloudMessage(Subscriber<DepthCloudMessage> subscriber)
+   {
+      DepthCloudMessage message = subscriber.takeNextData();
+      LogTools.info("dispatching DepthCloudMessage " + message.timestamp_ + " " + (message.point_cloud_.size() / 3));
    }
 
    private void dispatchCustomPlanarRegion(Subscriber<PlanarRegionsListMessage> subscriber)
