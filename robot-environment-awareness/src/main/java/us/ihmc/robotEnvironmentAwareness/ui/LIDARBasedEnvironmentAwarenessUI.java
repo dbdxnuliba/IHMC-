@@ -16,14 +16,7 @@ import us.ihmc.robotEnvironmentAwareness.communication.KryoMessager;
 import us.ihmc.robotEnvironmentAwareness.communication.REACommunicationProperties;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.CustomRegionMergeAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.DataExporterAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.LIDARFilterAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.NormalEstimationAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.OcTreeBasicsAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.PointCloudAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.PolygonizerAnchorPaneController;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.RegionSegmentationAnchorPaneController;
+import us.ihmc.robotEnvironmentAwareness.ui.controller.*;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionDataExporter;
 import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionSegmentationDataExporter;
 import us.ihmc.robotEnvironmentAwareness.ui.io.StereoVisionPointCloudDataExporter;
@@ -56,6 +49,8 @@ public class LIDARBasedEnvironmentAwarenessUI
    private CustomRegionMergeAnchorPaneController customRegionMergeAnchorPaneController;
    @FXML
    private PolygonizerAnchorPaneController polygonizerAnchorPaneController;
+   @FXML
+   private DepthTrackingAnchorPaneController depthTrackingAnchorPaneController;
    @FXML
    private DataExporterAnchorPaneController dataExporterAnchorPaneController;
 
@@ -149,7 +144,7 @@ public class LIDARBasedEnvironmentAwarenessUI
       regionSegmentationAnchorPaneController.setConfigurationFile(configurationFile);
       regionSegmentationAnchorPaneController.attachREAMessager(uiMessager);
       regionSegmentationAnchorPaneController.bindControls();
-      
+
       customRegionMergeAnchorPaneController.setConfigurationFile(configurationFile);
       customRegionMergeAnchorPaneController.attachREAMessager(uiMessager);
       customRegionMergeAnchorPaneController.bindControls();
@@ -157,6 +152,10 @@ public class LIDARBasedEnvironmentAwarenessUI
       polygonizerAnchorPaneController.setConfigurationFile(configurationFile);
       polygonizerAnchorPaneController.attachREAMessager(uiMessager);
       polygonizerAnchorPaneController.bindControls();
+
+      depthTrackingAnchorPaneController.setConfigurationFile(configurationFile);
+      depthTrackingAnchorPaneController.attachREAMessager(uiMessager);
+      depthTrackingAnchorPaneController.bindControls();
 
       dataExporterAnchorPaneController.setConfigurationFile(configurationFile);
       dataExporterAnchorPaneController.attachREAMessager(uiMessager);
@@ -188,14 +187,16 @@ public class LIDARBasedEnvironmentAwarenessUI
 
    public static LIDARBasedEnvironmentAwarenessUI creatIntraprocessUI(Stage primaryStage) throws Exception
    {
-      Messager moduleMessager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT, REACommunicationProperties.getPrivateNetClassList());
+      Messager moduleMessager = KryoMessager.createIntraprocess(REAModuleAPI.API, NetworkPorts.REA_MODULE_UI_PORT,
+                                                                REACommunicationProperties.getPrivateNetClassList());
       REAUIMessager uiMessager = new REAUIMessager(moduleMessager);
       return new LIDARBasedEnvironmentAwarenessUI(uiMessager, primaryStage);
    }
 
    public static LIDARBasedEnvironmentAwarenessUI creatRemoteUI(Stage primaryStage, String host) throws Exception
    {
-      Messager moduleMessager = KryoMessager.createTCPClient(REAModuleAPI.API, host, NetworkPorts.REA_MODULE_UI_PORT, REACommunicationProperties.getPrivateNetClassList());
+      Messager moduleMessager = KryoMessager.createTCPClient(REAModuleAPI.API, host, NetworkPorts.REA_MODULE_UI_PORT,
+                                                             REACommunicationProperties.getPrivateNetClassList());
       REAUIMessager uiMessager = new REAUIMessager(moduleMessager);
       return new LIDARBasedEnvironmentAwarenessUI(uiMessager, primaryStage);
    }

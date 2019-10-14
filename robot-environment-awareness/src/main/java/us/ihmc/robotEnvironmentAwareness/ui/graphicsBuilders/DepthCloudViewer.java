@@ -12,7 +12,6 @@ import us.ihmc.graphicsDescription.MeshDataGenerator;
 import us.ihmc.messager.MessagerAPIFactory.Topic;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
-import us.ihmc.robotEnvironmentAwareness.ui.controller.PointCloudAnchorPaneController;
 
 public class DepthCloudViewer extends AbstractSourceViewer<DepthCloudMessage>
 {
@@ -21,7 +20,7 @@ public class DepthCloudViewer extends AbstractSourceViewer<DepthCloudMessage>
    public DepthCloudViewer(Topic<DepthCloudMessage> messageState, REAUIMessager uiMessager)
    {
       super(messageState, uiMessager);
-      sizeOfPointCloud = uiMessager.createInput(REAModuleAPI.UIStereoVisionSize, PointCloudAnchorPaneController.initialSizeOfPointCloud);
+      sizeOfPointCloud = uiMessager.createInput(REAModuleAPI.UIStereoVisionSize, 10000);
    }
 
    @Override
@@ -76,12 +75,12 @@ public class DepthCloudViewer extends AbstractSourceViewer<DepthCloudMessage>
    @Override
    protected Topic<Boolean> createEnableInput()
    {
-      return REAModuleAPI.UIStereoVisionShow;
+      return REAModuleAPI.DepthCloudEnable;
    }
 
    @Override
    protected Topic<Boolean> createClearInput()
    {
-      return REAModuleAPI.UIStereoVisionClear;
+      return REAModuleAPI.DepthCloudClear;
    }
 }
