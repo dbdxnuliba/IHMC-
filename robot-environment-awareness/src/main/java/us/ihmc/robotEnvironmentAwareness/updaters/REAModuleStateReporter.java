@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import controller_msgs.msg.dds.TrackingCameraMessage;
 import us.ihmc.communication.packets.PlanarRegionMessageConverter;
 import us.ihmc.jOctoMap.ocTree.NormalOcTree;
 import us.ihmc.messager.Messager;
@@ -69,5 +70,11 @@ public class REAModuleStateReporter
    {
       if (reaMessager.isMessagerOpen())
          reaMessager.submitMessage(REAModuleAPI.DepthCloudState, new DepthCloudMessage(message));
+   }
+
+   public void registerTrackingCameraMessage(TrackingCameraMessage message)
+   {
+      if (reaMessager.isMessagerOpen())
+         reaMessager.submitMessage(REAModuleAPI.TrackingCameraState, new TrackingCameraMessage(message));
    }
 }

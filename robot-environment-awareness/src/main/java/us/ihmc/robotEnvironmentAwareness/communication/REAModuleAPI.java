@@ -4,12 +4,26 @@ import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.LidarScanMessage;
 import controller_msgs.msg.dds.PlanarRegionsListMessage;
 import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
+import controller_msgs.msg.dds.TrackingCameraMessage;
 import us.ihmc.jOctoMap.normalEstimation.NormalEstimationParameters;
 import us.ihmc.messager.MessagerAPIFactory;
-import us.ihmc.messager.MessagerAPIFactory.*;
-import us.ihmc.robotEnvironmentAwareness.communication.packets.*;
+import us.ihmc.messager.MessagerAPIFactory.Category;
+import us.ihmc.messager.MessagerAPIFactory.CategoryTheme;
+import us.ihmc.messager.MessagerAPIFactory.MessagerAPI;
+import us.ihmc.messager.MessagerAPIFactory.Topic;
+import us.ihmc.messager.MessagerAPIFactory.TopicTheme;
+import us.ihmc.messager.MessagerAPIFactory.TypedTopicTheme;
+import us.ihmc.robotEnvironmentAwareness.communication.packets.BoundingBoxParametersMessage;
+import us.ihmc.robotEnvironmentAwareness.communication.packets.BoxMessage;
+import us.ihmc.robotEnvironmentAwareness.communication.packets.LineSegment3DMessage;
+import us.ihmc.robotEnvironmentAwareness.communication.packets.NormalOcTreeMessage;
+import us.ihmc.robotEnvironmentAwareness.communication.packets.PlanarRegionSegmentationMessage;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
-import us.ihmc.robotEnvironmentAwareness.planarRegion.*;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.CustomRegionMergeParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.IntersectionEstimationParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionSegmentationParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PolygonizerParameters;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.SurfaceNormalFilterParameters;
 import us.ihmc.robotEnvironmentAwareness.ui.graphicsBuilders.OcTreeMeshBuilder.ColoringType;
 import us.ihmc.robotEnvironmentAwareness.ui.graphicsBuilders.OcTreeMeshBuilder.DisplayType;
 
@@ -24,6 +38,7 @@ public class REAModuleAPI
    private static final CategoryTheme Lidar = apiFactory.createCategoryTheme("Lidar");
    private static final CategoryTheme StereoVision = apiFactory.createCategoryTheme("StereoVision");
    private static final CategoryTheme DepthCloud = apiFactory.createCategoryTheme("DepthCloud");
+   private static final CategoryTheme TrackingCamera = apiFactory.createCategoryTheme("TrackingCamera");
    private static final CategoryTheme BoundingBox = apiFactory.createCategoryTheme("BoundingBox");
    private static final CategoryTheme NormalEstimation = apiFactory.createCategoryTheme("NormalEstimation");
    private static final CategoryTheme PlanarRegions = apiFactory.createCategoryTheme("PlanarRegions");
@@ -102,6 +117,11 @@ public class REAModuleAPI
    public static final Topic<IntersectionEstimationParameters> PlanarRegionsIntersectionParameters = PlanarRegionsCategory.child(Intersection)
                                                                                                                           .topic(Parameters);
    public static final Topic<SurfaceNormalFilterParameters> SurfaceNormalFilterParameters = OcTreeCategory.child(SurfaceNormal).topic(Parameters);
+   
+   public static final Topic<Boolean> DepthCloudEnable = ModuleCategory.child(DepthCloud).topic(Enable);
+   public static final Topic<Boolean> DepthCloudClear = ModuleCategory.child(DepthCloud).topic(Clear);
+   public static final Topic<Boolean> TrackingCameraEnable = ModuleCategory.child(TrackingCamera).topic(Enable);
+   public static final Topic<Boolean> TrackingCameraClear = ModuleCategory.child(TrackingCamera).topic(Clear);
 
    public static final Topic<Integer> UIOcTreeDepth = Root.child(UI).child(OcTree).topic(Depth);
    public static final Topic<ColoringType> UIOcTreeColoringMode = Root.child(UI).child(OcTree).topic(Color);
@@ -127,6 +147,7 @@ public class REAModuleAPI
    public static final Topic<LidarScanMessage> LidarScanState = ModuleCategory.child(Lidar).topic(Data);
    public static final Topic<StereoVisionPointCloudMessage> StereoVisionPointCloudState = ModuleCategory.child(StereoVision).topic(Data);
    public static final Topic<DepthCloudMessage> DepthCloudState = ModuleCategory.child(DepthCloud).topic(Data);
+   public static final Topic<TrackingCameraMessage> TrackingCameraState = ModuleCategory.child(TrackingCamera).topic(Data);
    public static final Topic<NormalOcTreeMessage> OcTreeState = OcTreeCategory.topic(Data);
    public static final Topic<NormalOcTreeMessage> LidarBufferState = OcTreeCategory.child(Lidar).child(Buffer).topic(Data);
    public static final Topic<NormalOcTreeMessage> StereoVisionBufferState = OcTreeCategory.child(StereoVision).child(Buffer).topic(Data);

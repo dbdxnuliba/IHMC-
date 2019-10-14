@@ -22,6 +22,7 @@ public class LidarFrameViewer extends AnimationTimer
    private final AtomicReference<Affine> lastAffine = new AtomicReference<>();
 
    private final Group root = new Group();
+
    public LidarFrameViewer(REAUIMessager uiMessager)
    {
       lidarCoordinateSystem = new JavaFXCoordinateSystem(0.1);

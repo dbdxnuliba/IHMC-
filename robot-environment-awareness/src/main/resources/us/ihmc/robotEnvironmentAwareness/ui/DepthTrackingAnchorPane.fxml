@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="180.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="us.ihmc.robotEnvironmentAwareness.ui.controller.DepthTrackingAnchorPaneController">
+   <children>
+      <VBox layoutX="27.0" prefHeight="6.0" prefWidth="100.0" spacing="10.0">
+         <children>
+            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+               <children>
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" text="Depth" textAlignment="CENTER" />
+                  <ToggleButton fx:id="enableDepth" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Visualize" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearDepth" text="Clear" />
+               </children>
+            </VBox>
+            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+               <children>
+                  <Label alignment="CENTER" maxWidth="1.7976931348623157E308" text="Tracking" textAlignment="CENTER" />
+                  <ToggleButton fx:id="enableTracking" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Visualize" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearTracking" text="Clear" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

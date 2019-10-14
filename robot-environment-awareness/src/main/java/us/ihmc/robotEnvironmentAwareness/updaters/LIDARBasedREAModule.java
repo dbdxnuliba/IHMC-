@@ -87,6 +87,7 @@ public class LIDARBasedREAModule
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, DepthCloudMessage.class, "/ihmc/depth_cloud", this::dispatchDepthCloudMessage);
+      ROS2Tools.createCallbackSubscription(ros2Node, TrackingCameraMessage.class, "/ihmc/tracking_camera", this::dispatchTrackingCameraMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, PlanarRegionsListMessage.class, subscriberCustomRegionsTopicNameGenerator,
                                            this::dispatchCustomPlanarRegion);
       ROS2Tools.createCallbackSubscription(ros2Node, RequestPlanarRegionsListMessage.class, subscriberTopicNameGenerator,
@@ -136,6 +137,13 @@ public class LIDARBasedREAModule
    {
       DepthCloudMessage message = subscriber.takeNextData();
       moduleStateReporter.registerDepthCloudMessage(message);
+   }
+
+   private void dispatchTrackingCameraMessage(Subscriber<TrackingCameraMessage> subscriber)
+   {
+      TrackingCameraMessage message = subscriber.takeNextData();
+      moduleStateReporter.registerTrackingCameraMessage(message);
+      LogTools.info("tracking camera message " + message.getSensorPosition());
    }
 
    private void dispatchCustomPlanarRegion(Subscriber<PlanarRegionsListMessage> subscriber)

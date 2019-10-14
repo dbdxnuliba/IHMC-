@@ -84,7 +84,6 @@ public class TrackingCameraPublisher
       rosMainNode.attachSubscriber(stereoPointCloudROSTopic, createNavigationMessageSubscriber());
    }
 
-   //TODO : implement RosTrackingCameraSubsriber.
    private RosNavMsgsOdometrySubscriber createNavigationMessageSubscriber()
    {
       return new RosNavMsgsOdometrySubscriber()

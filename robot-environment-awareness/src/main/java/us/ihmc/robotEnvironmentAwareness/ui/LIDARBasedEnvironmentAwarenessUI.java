@@ -29,6 +29,7 @@ import us.ihmc.robotEnvironmentAwareness.ui.io.PlanarRegionSegmentationDataExpor
 import us.ihmc.robotEnvironmentAwareness.ui.io.StereoVisionPointCloudDataExporter;
 import us.ihmc.robotEnvironmentAwareness.ui.viewer.LidarFrameViewer;
 import us.ihmc.robotEnvironmentAwareness.ui.viewer.REAMeshViewer;
+import us.ihmc.robotEnvironmentAwareness.ui.viewer.TrackingCameraViewer;
 
 public class LIDARBasedEnvironmentAwarenessUI
 {
@@ -39,6 +40,7 @@ public class LIDARBasedEnvironmentAwarenessUI
    private final REAUIMessager uiMessager;
    private final REAMeshViewer reaMeshViewer;
    private final LidarFrameViewer lidarFrameViewer;
+   private final TrackingCameraViewer trackingCameraViewer;
 
    @FXML
    private PointCloudAnchorPaneController pointCloudAnchorPaneController;
@@ -74,6 +76,7 @@ public class LIDARBasedEnvironmentAwarenessUI
       uiMessager.startMessager();
 
       lidarFrameViewer = new LidarFrameViewer(uiMessager);
+      trackingCameraViewer = new TrackingCameraViewer(uiMessager);
       reaMeshViewer = new REAMeshViewer(uiMessager);
       new PlanarRegionSegmentationDataExporter(uiMessager); // No need to anything with it beside instantiating it.
       new PlanarRegionDataExporter(uiMessager); // No need to anything with it beside instantiating it.
@@ -88,6 +91,7 @@ public class LIDARBasedEnvironmentAwarenessUI
 
       view3dFactory.addNodeToView(reaMeshViewer.getRoot());
       view3dFactory.addNodeToView(lidarFrameViewer.getRoot());
+      view3dFactory.addNodeToView(trackingCameraViewer.getRoot());
 
       uiConnectionHandler = new UIConnectionHandler(primaryStage, uiMessager);
       uiConnectionHandler.start();

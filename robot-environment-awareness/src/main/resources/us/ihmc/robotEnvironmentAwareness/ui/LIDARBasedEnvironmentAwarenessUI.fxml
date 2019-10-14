@@ -75,6 +75,15 @@
                   </AnchorPane>
                </content>
             </Tab>
+            <Tab text="Depth Tracking">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <fx:include fx:id="depthTrackingAnchorPane" source="DepthTrackingAnchorPane.fxml" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
             <Tab text="DataExporter">
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
