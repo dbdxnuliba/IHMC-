@@ -12,6 +12,7 @@ import us.ihmc.avatar.networkProcessor.depthCloudPublisher.DepthCloudPublisher.D
 import us.ihmc.avatar.networkProcessor.lidarScanPublisher.LidarScanPublisher;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
+import us.ihmc.avatar.networkProcessor.trackingCameraPublisher.TrackingCameraPublisher;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
 import us.ihmc.avatar.sensors.multisense.MultiSenseSensorManager;
@@ -45,7 +46,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final LidarScanPublisher lidarScanPublisher;
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
    private final DepthCloudPublisher depthCloudPublisher;
-   //private final TrackingCameraPublisher trackingCameraPublisher;
+   private final TrackingCameraPublisher trackingCameraPublisher;
 
    private final RobotROSClockCalculator rosClockCalculator;
    private final HumanoidRobotSensorInformation sensorInformation;
@@ -74,14 +75,13 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
       stereoVisionPointCloudPublisher = new StereoVisionPointCloudPublisher(modelFactory, ros2Node, rcdTopicName);
       stereoVisionPointCloudPublisher.setROSClockCalculator(rosClockCalculator);
-      //stereoVisionPointCloudPublisher.setCustomStereoVisionTransformer(createCustomStereoTransformCalculator());
 
       depthCloudPublisher = new DepthCloudPublisher(modelFactory, ros2Node, rcdTopicName);
       depthCloudPublisher.setROSClockCalculator(rosClockCalculator);
       depthCloudPublisher.setCustomDepthCameraTransformer(createCustomDepthCloudTransformCalculator());
       
-//      trackingCameraPublisher = new TrackingCameraPublisher(modelFactory, ros2Node, rcdTopicName);
-//      trackingCameraPublisher.setROSClockCalculator(rosClockCalculator);
+      trackingCameraPublisher = new TrackingCameraPublisher(modelFactory, ros2Node, rcdTopicName);
+      trackingCameraPublisher.setROSClockCalculator(rosClockCalculator);
    }
 
    @Override
@@ -120,12 +120,12 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.setScanFrameToWorldFrame();
 
       stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
-//      stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
       stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold, AtlasSensorInformation.angularVelocityThreshold);
       stereoVisionPointCloudPublisher.enableFilter(false);
 
       depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
-
+      trackingCameraPublisher.receiveNavigationMessageFromROS("/cam_loc/odom/sample", rosMainNode);
+      
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
                                                                                     multisenseLidarParameters, multisenseStereoParameters,
@@ -144,6 +144,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.start();
       stereoVisionPointCloudPublisher.start();
       depthCloudPublisher.start();
+      trackingCameraPublisher.start();
 
       rosClockCalculator.setROSMainNode(rosMainNode);
 

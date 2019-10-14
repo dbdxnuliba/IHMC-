@@ -143,7 +143,6 @@ public class LIDARBasedREAModule
    {
       TrackingCameraMessage message = subscriber.takeNextData();
       moduleStateReporter.registerTrackingCameraMessage(message);
-      LogTools.info("tracking camera message " + message.getSensorPosition());
    }
 
    private void dispatchCustomPlanarRegion(Subscriber<PlanarRegionsListMessage> subscriber)

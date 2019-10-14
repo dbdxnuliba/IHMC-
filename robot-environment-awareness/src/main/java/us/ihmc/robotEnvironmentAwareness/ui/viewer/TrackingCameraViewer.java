@@ -28,6 +28,7 @@ public class TrackingCameraViewer extends AnimationTimer
    private final Affine sensorPose = new Affine();
 
    private final AtomicReference<Affine> lastAffine = new AtomicReference<>();
+   protected final AtomicReference<MeshView> historyMeshToRender = new AtomicReference<>(null);
 
    private final ArrayList<Point3D> sensorOriginHistory = new ArrayList<Point3D>();
    private final TDoubleArrayList confidenceFactorHistory = new TDoubleArrayList();
@@ -36,7 +37,7 @@ public class TrackingCameraViewer extends AnimationTimer
    private final Group affineRoot = new Group();
    private final Group historyRoot = new Group();
 
-   protected static final float ORIGIN_POINT_SIZE = 0.01f;
+   protected static final float ORIGIN_POINT_SIZE = 0.05f;
    protected final JavaFXMultiColorMeshBuilder meshBuilder;
 
    public TrackingCameraViewer(REAUIMessager uiMessager)
@@ -75,19 +76,13 @@ public class TrackingCameraViewer extends AnimationTimer
       if (affine != null)
          sensorPose.setToTransform(affine);
 
-      historyRoot.getChildren().clear();
-      meshBuilder.clear();
-      Point3D32 point = new Point3D32();
-      for (int i = 0; i < sensorOriginHistory.size(); i++)
+      MeshView newHistoryMeshToRender = historyMeshToRender.getAndSet(null);
+
+      if (newHistoryMeshToRender != null)
       {
-         int colorScaler = (int) (0xFF * confidenceFactorHistory.get(i));
-         Color confidenceColor = Color.rgb(0xFF, colorScaler, 0);
-         meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(ORIGIN_POINT_SIZE), point, confidenceColor);
+         historyRoot.getChildren().clear();
+         historyRoot.getChildren().add(newHistoryMeshToRender);
       }
-      MeshView scanMeshView = new MeshView(meshBuilder.generateMesh());
-      scanMeshView.setMaterial(meshBuilder.generateMaterial());
-      historyRoot.getChildren().add(scanMeshView);
-      meshBuilder.clear();
    }
 
    private void handleMessage(TrackingCameraMessage trackingCameraMessage)
@@ -97,8 +92,24 @@ public class TrackingCameraViewer extends AnimationTimer
       Quaternion orientation = trackingCameraMessage.getSensorOrientation();
       Point3D position = trackingCameraMessage.getSensorPosition();
       lastAffine.set(JavaFXTools.createAffineFromQuaternionAndTuple(orientation, position));
+
       sensorOriginHistory.add(new Point3D(position));
       confidenceFactorHistory.add(trackingCameraMessage.getQuality());
+
+      meshBuilder.clear();
+      Point3D32 point = new Point3D32();
+      for (int i = 0; i < sensorOriginHistory.size(); i++)
+      {
+         point.set(sensorOriginHistory.get(i));
+         int redScaler = (int) (0xFF * (1 - confidenceFactorHistory.get(i)));
+         int greenScaler = (int) (0xFF * confidenceFactorHistory.get(i));
+         Color confidenceColor = Color.rgb(redScaler, greenScaler, 0);
+         meshBuilder.addMesh(MeshDataGenerator.Tetrahedron(ORIGIN_POINT_SIZE), point, confidenceColor);
+      }
+      MeshView historyMeshView = new MeshView(meshBuilder.generateMesh());
+      historyMeshView.setMaterial(meshBuilder.generateMaterial());
+      historyMeshToRender.set(historyMeshView);
+      meshBuilder.clear();
    }
 
    public Node getRoot()

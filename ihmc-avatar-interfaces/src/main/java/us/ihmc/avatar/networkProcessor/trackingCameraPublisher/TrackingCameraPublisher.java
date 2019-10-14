@@ -107,7 +107,7 @@ public class TrackingCameraPublisher
             //                                           msg.getTwist().getTwist().getAngular().getZ());
 
             if (Debug)
-               System.out.println("message.getPose().getPose() " + message.getPose().getPose());
+               System.out.println("message.getPose().getPose() " + message.getPose().getPose().getPosition().getX());
 
             rosDataToPublish.set(trackingCameraData);
          }
