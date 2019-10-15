@@ -10,7 +10,6 @@ import controller_msgs.msg.dds.DepthCloudMessage;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import sensor_msgs.PointCloud2;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.PointCloudData;
-import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
@@ -18,7 +17,6 @@ import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
@@ -33,7 +31,6 @@ public class DepthCloudPublisher
    private static final boolean Debug = true;
 
    private static final int MAX_NUMBER_OF_POINTS = 200000;
-   private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private final String name = getClass().getSimpleName();
    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(ThreadTools.getNamedThreadFactory(name));
@@ -41,7 +38,6 @@ public class DepthCloudPublisher
 
    private final AtomicReference<PointCloudData> rosDepthCloud2ToPublish = new AtomicReference<>(null);
 
-   private final String robotName;
    private final FullRobotModel fullRobotModel;
    private DepthCloudWorldTransformCalculator depthCloudTransformer = null;
    private final RigidBodyTransform worldTransformer = new RigidBodyTransform();
@@ -54,6 +50,9 @@ public class DepthCloudPublisher
    private final IHMCROS2Publisher<DepthCloudMessage> depthcloudPublisher;
    private final IHMCRealtimeROS2Publisher<DepthCloudMessage> depthcloudRealtimePublisher;
 
+   private final AtomicReference<Boolean> useEstimatedSensorPose = new AtomicReference<Boolean>(false);
+   private final AtomicReference<Pose3D> estimatedSensorPose = new AtomicReference<Pose3D>(new Pose3D());
+
    public DepthCloudPublisher(FullRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
    {
       this(modelFactory.getRobotDescription().getName(), modelFactory.createFullRobotModel(), ros2Node, null, robotConfigurationDataTopicName);
@@ -62,7 +61,6 @@ public class DepthCloudPublisher
    public DepthCloudPublisher(String robotName, FullRobotModel fullRobotModel, Ros2Node ros2Node, RealtimeRos2Node realtimeRos2Node,
                               String robotConfigurationDataTopicName)
    {
-      this.robotName = robotName;
       this.fullRobotModel = fullRobotModel;
 
       if (ros2Node != null)
@@ -78,7 +76,6 @@ public class DepthCloudPublisher
                                               s -> robotConfigurationDataBuffer.receivedPacket(s.takeNextData()));
          depthcloudPublisher = null;
          depthcloudRealtimePublisher = ROS2Tools.createPublisher(realtimeRos2Node, DepthCloudMessage.class, ROS2Tools.getDefaultTopicNameGenerator());
-
       }
    }
 
@@ -106,10 +103,20 @@ public class DepthCloudPublisher
          }
       };
    }
-   
+
    public void setCustomDepthCameraTransformer(DepthCloudWorldTransformCalculator transformer)
    {
       depthCloudTransformer = transformer;
+   }
+
+   public void useEstimatedSensorPose(boolean use)
+   {
+      useEstimatedSensorPose.set(use);
+   }
+
+   public void updateEstimatedSensorPose(Pose3D estimatedPose)
+   {
+      estimatedSensorPose.set(estimatedPose);
    }
 
    public void start()
@@ -171,8 +178,16 @@ public class DepthCloudPublisher
       }
 
       DepthCloudMessage message = depthCloudData.toDepthCloudMessage();
-      message.getSensorPosition().set(sensorPose.getPosition());
-      message.getSensorOrientation().set(sensorPose.getOrientation());
+      if (useEstimatedSensorPose.get())
+      {
+         message.getSensorPosition().set(estimatedSensorPose.get().getPosition());
+         message.getSensorOrientation().set(estimatedSensorPose.get().getOrientation());
+      }
+      else
+      {
+         message.getSensorPosition().set(sensorPose.getPosition());
+         message.getSensorOrientation().set(sensorPose.getOrientation());
+      }
 
       if (Debug)
          System.out.println("Publishing stereo data, number of points: " + (message.getPointCloud().size() / 3));
