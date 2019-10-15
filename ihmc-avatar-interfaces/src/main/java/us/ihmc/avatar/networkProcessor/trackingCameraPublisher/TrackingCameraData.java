@@ -11,10 +11,10 @@ public class TrackingCameraData
 {
    private final long timestamp;
    private final double confidenceFactor;
-   
+
    private final Point3D senorPosition;
    private final Quaternion sensorOrientation;
-   
+
    private final Vector3D linearVelocity; // TODO: on TrackingCameraMessage. or StampedPosePacket.
    private final Vector3D angularVelocity;
 
@@ -27,12 +27,12 @@ public class TrackingCameraData
       this.linearVelocity = new Vector3D();
       this.angularVelocity = new Vector3D();
    }
-   
+
    public void setPosition(Point position)
    {
       senorPosition.set(position.getX(), position.getY(), position.getZ());
    }
-   
+
    public void setOrientation(geometry_msgs.Quaternion quaternion)
    {
       sensorOrientation.set(quaternion.getX(), quaternion.getY(), quaternion.getZ(), quaternion.getW());
@@ -43,10 +43,18 @@ public class TrackingCameraData
       return timestamp;
    }
 
+   public Point3D getSenorPosition()
+   {
+      return senorPosition;
+   }
+
+   public Quaternion getSensorOrientation()
+   {
+      return sensorOrientation;
+   }
+
    public TrackingCameraMessage toTrackingCameraMessage()
    {
       return MessageTools.createTrackingCameraMessage(timestamp, confidenceFactor, senorPosition, sensorOrientation);
    }
-
-   // TODO: add transform tracking camera to depth camera
 }

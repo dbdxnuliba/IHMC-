@@ -9,11 +9,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import controller_msgs.msg.dds.TrackingCameraMessage;
 import geometry_msgs.Pose;
+import us.ihmc.avatar.networkProcessor.depthCloudPublisher.DepthCloudPublisher;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
+import us.ihmc.euclid.geometry.Pose3D;
 import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotModels.FullRobotModel;
@@ -45,6 +47,8 @@ public class TrackingCameraPublisher
 
    private final IHMCROS2Publisher<TrackingCameraMessage> trackingCameraPublisher;
    private final IHMCRealtimeROS2Publisher<TrackingCameraMessage> trackingCameraRealtimePublisher;
+
+   private final AtomicReference<Pose3D> estimatedSensorPose = new AtomicReference<Pose3D>(new Pose3D());
 
    public TrackingCameraPublisher(FullRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
    {
@@ -173,7 +177,11 @@ public class TrackingCameraPublisher
       }
 
       TrackingCameraMessage message = trackingCameraData.toTrackingCameraMessage();
-
+      Pose3D sensorPose = new Pose3D();
+      sensorPose.setPosition(message.getSensorPosition());
+      sensorPose.setOrientation(message.getSensorOrientation());
+      estimatedSensorPose.set(sensorPose);
+      
       if (Debug)
       {
          System.out.println("TrackingCameraMessage.");
@@ -187,6 +195,11 @@ public class TrackingCameraPublisher
          trackingCameraPublisher.publish(message);
       else
          trackingCameraRealtimePublisher.publish(message);
+   }
+   
+   public void updateDepthCloudSensorPose(DepthCloudPublisher depthCloudPublisher)
+   {
+      depthCloudPublisher.updateEstimatedSensorPose(estimatedSensorPose.get());
    }
 
    public static interface TrackingCameraWorldTransformCalculator
