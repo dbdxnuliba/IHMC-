@@ -14,7 +14,8 @@ import us.ihmc.sensorProcessing.parameters.*;
 public class AtlasSensorInformation implements HumanoidRobotSensorInformation
 {
    private static final String multisense_namespace = "/multisense";
-   private static final String realsense_namespace = "/realsense";
+   private static final String depth_camera_namespace = "/depthcam";
+   private static final String tracking_camera_namespace = "/trackingcam";
    private static final String baseTfName = multisense_namespace + "/head";
    private static final String multisenseHandoffFrame = "head";
    private final ArrayList<ImmutableTriple<String, String, RigidBodyTransform>> staticTranformsForRos = new ArrayList<ImmutableTriple<String, String, RigidBodyTransform>>();
@@ -106,26 +107,26 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    private final boolean setupROSLocationService;
    private final boolean setupROSParameterSetters;
    private final RobotTarget target;
-   
+
    public static final double linearVelocityThreshold = 0.2;
-   public static final double angularVelocityThreshold = Math.PI/15;
+   public static final double angularVelocityThreshold = Math.PI / 15;
 
    /**
     * Realsense Parameters
     */
-   private static final String frontFacingD435 = realsense_namespace + "/frontCam/depth/color/points";
-   private static final String frontFacingT265 = realsense_namespace + "/frontT265/odom/sample";
-   
+   public static final String depthCameraTopic = depth_camera_namespace + "/depth/color/points";
+   public static final String trackingCameraTopic = tracking_camera_namespace + "/odom/sample";
+
    public static final RigidBodyTransform transformPelvisToDepthCamera = new RigidBodyTransform();
    static
    {
-      double offsetX = 0.245;  // Daniel Said.   0.16.
+      double offsetX = 0.245; // Daniel Said.   0.16.
       double pitchingAngle = 70.0 / 90.0 * Math.PI / 2;
       transformPelvisToDepthCamera.appendTranslation(offsetX, 0.0, 0.0);
       transformPelvisToDepthCamera.appendPitchRotation(pitchingAngle);
-      
-      transformPelvisToDepthCamera.appendYawRotation(-Math.PI/2);
-      transformPelvisToDepthCamera.appendRollRotation(-Math.PI/2);
+
+      transformPelvisToDepthCamera.appendYawRotation(-Math.PI / 2);
+      transformPelvisToDepthCamera.appendRollRotation(-Math.PI / 2);
    }
 
    public AtlasSensorInformation(AtlasRobotVersion atlasRobotVersion, RobotTarget target)
