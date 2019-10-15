@@ -54,7 +54,6 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final FullHumanoidRobotModelFactory modelFactory;
 
    private final String robotName;
-   private final String depthCameraTopicName = "/cam_2/depth/color/points"; // TODO implement this:
 
    public AtlasSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory modelFactory, CollisionBoxProvider collisionBoxProvider,
                                   RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation, DRCRobotJointMap jointMap,
@@ -123,8 +122,8 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold, AtlasSensorInformation.angularVelocityThreshold);
       stereoVisionPointCloudPublisher.enableFilter(false);
 
-      depthCloudPublisher.receiveStereoPointCloudFromROS(depthCameraTopicName, rosMainNode);
-      trackingCameraPublisher.receiveNavigationMessageFromROS("/cam_loc/odom/sample", rosMainNode);
+      depthCloudPublisher.receiveStereoPointCloudFromROS(AtlasSensorInformation.depthCameraTopic, rosMainNode);
+      trackingCameraPublisher.receiveNavigationMessageFromROS(AtlasSensorInformation.trackingCameraTopic, rosMainNode);
       
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
