@@ -28,7 +28,7 @@ import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 
 public class DepthCloudPublisher
 {
-   private static final boolean Debug = true;
+   private static final boolean Debug = false;
 
    private static final int MAX_NUMBER_OF_POINTS = 200000;
 

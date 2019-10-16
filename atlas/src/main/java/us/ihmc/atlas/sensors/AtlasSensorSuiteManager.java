@@ -127,6 +127,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
       depthCloudPublisher.receiveStereoPointCloudFromROS(AtlasSensorInformation.depthCameraTopic, rosMainNode);
       trackingCameraPublisher.receiveNavigationMessageFromROS(AtlasSensorInformation.trackingCameraTopic, rosMainNode);
+//      trackingCameraPublisher.initializeTrackingCameraCustomOriginWorldTransform(modelFactory.createFullRobotModel());
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -187,20 +188,30 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       return new TrackingCameraCustomOriginWorldTransform()
       {
          private final RigidBodyTransform transformFromPelvisToTracking = AtlasSensorInformation.transformPelvisToTrackingCamera;
+         private final RigidBodyTransform transformFromTrackingToDepth = AtlasSensorInformation.transformTrackingCameraToDepthCamera;
          private final RigidBodyTransform originWorldTransform = new RigidBodyTransform();
+         private final RigidBodyTransform depthCameraOriginWorldTransform = new RigidBodyTransform();
 
          @Override
-         public void initialize(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformToPack)
+         public void initialize(FullRobotModel fullRobotModel)
          {
             ReferenceFrame pelvisFrame = fullRobotModel.getRootJoint().getFrameAfterJoint();
             pelvisFrame.getTransformToDesiredFrame(originWorldTransform, ReferenceFrame.getWorldFrame());
             originWorldTransform.multiply(transformFromPelvisToTracking);
+            depthCameraOriginWorldTransform.set(originWorldTransform);
+            depthCameraOriginWorldTransform.multiply(transformFromTrackingToDepth);
          }
 
          @Override
          public RigidBodyTransform getOriginWorldTransform()
          {
             return originWorldTransform;
+         }
+         
+         @Override
+         public RigidBodyTransform getDepthCameraOriginWorldTransform()
+         {
+            return depthCameraOriginWorldTransform;
          }
       };
    }

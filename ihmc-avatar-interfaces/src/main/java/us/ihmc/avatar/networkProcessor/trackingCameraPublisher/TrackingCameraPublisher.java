@@ -150,6 +150,8 @@ public class TrackingCameraPublisher
       }
    }
 
+   private boolean heckyFlag = false;
+   
    private void transformDataAndPublish()
    {
       TrackingCameraData trackingCameraData = rosDataToPublish.getAndSet(null);
@@ -176,10 +178,18 @@ public class TrackingCameraPublisher
 
          if (!success)
             return;
+         
+         if(!heckyFlag)
+         {
+            heckyFlag = true;
+            customOriginWorldTransform.initialize(fullRobotModel);
+         }
       }
 
-      if(customOriginWorldTransform != null)
-         trackingCameraData.transform(customOriginWorldTransform.getOriginWorldTransform());
+      if(customOriginWorldTransform != null) 
+      {
+         trackingCameraData.transform(customOriginWorldTransform.getDepthCameraOriginWorldTransform());
+      }
       
       TrackingCameraMessage message = trackingCameraData.toTrackingCameraMessage();
       Pose3D sensorPose = new Pose3D();
@@ -206,8 +216,10 @@ public class TrackingCameraPublisher
 
    public static interface TrackingCameraCustomOriginWorldTransform
    {
-      public void initialize(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformToPack);
+      public void initialize(FullRobotModel fullRobotModel);
 
       public RigidBodyTransform getOriginWorldTransform();
+      
+      public RigidBodyTransform getDepthCameraOriginWorldTransform();
    }
 }
