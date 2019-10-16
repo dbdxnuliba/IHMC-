@@ -3,6 +3,7 @@ package us.ihmc.avatar.networkProcessor.trackingCameraPublisher;
 import controller_msgs.msg.dds.TrackingCameraMessage;
 import geometry_msgs.Point;
 import us.ihmc.communication.packets.MessageTools;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
@@ -56,5 +57,11 @@ public class TrackingCameraData
    public TrackingCameraMessage toTrackingCameraMessage()
    {
       return MessageTools.createTrackingCameraMessage(timestamp, confidenceFactor, senorPosition, sensorOrientation);
+   }
+
+   public void transform(RigidBodyTransform originWorldTransform)
+   {
+      originWorldTransform.transform(senorPosition);
+      originWorldTransform.transform(sensorOrientation);
    }
 }

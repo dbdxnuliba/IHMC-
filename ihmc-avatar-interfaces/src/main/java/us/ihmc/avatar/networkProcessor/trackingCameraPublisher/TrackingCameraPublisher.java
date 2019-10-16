@@ -16,7 +16,6 @@ import us.ihmc.communication.IHMCROS2Publisher;
 import us.ihmc.communication.IHMCRealtimeROS2Publisher;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.euclid.geometry.Pose3D;
-import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.robotModels.FullRobotModelFactory;
@@ -37,9 +36,7 @@ public class TrackingCameraPublisher
 
    private final AtomicReference<TrackingCameraData> rosDataToPublish = new AtomicReference<>(null);
 
-   private final String robotName;
    private final FullRobotModel fullRobotModel;
-   private TrackingCameraWorldTransformCalculator trackingCameratransformer = null;
 
    private final RobotConfigurationDataBuffer robotConfigurationDataBuffer = new RobotConfigurationDataBuffer();
 
@@ -48,8 +45,9 @@ public class TrackingCameraPublisher
    private final IHMCROS2Publisher<TrackingCameraMessage> trackingCameraPublisher;
    private final IHMCRealtimeROS2Publisher<TrackingCameraMessage> trackingCameraRealtimePublisher;
 
-   private final AtomicReference<Pose3D> estimatedSensorPose = new AtomicReference<Pose3D>(new Pose3D());
-
+   private DepthCloudPublisher depthCloudPublisher = null;
+   private TrackingCameraCustomOriginWorldTransform customOriginWorldTransform = null;
+   
    public TrackingCameraPublisher(FullRobotModelFactory modelFactory, Ros2Node ros2Node, String robotConfigurationDataTopicName)
    {
       this(modelFactory.getRobotDescription().getName(), modelFactory.createFullRobotModel(), ros2Node, null, robotConfigurationDataTopicName);
@@ -58,7 +56,6 @@ public class TrackingCameraPublisher
    public TrackingCameraPublisher(String robotName, FullRobotModel fullRobotModel, Ros2Node ros2Node, RealtimeRos2Node realtimeRos2Node,
                                   String robotConfigurationDataTopicName)
    {
-      this.robotName = robotName;
       this.fullRobotModel = fullRobotModel;
 
       if (ros2Node != null)
@@ -88,6 +85,16 @@ public class TrackingCameraPublisher
       rosMainNode.attachSubscriber(stereoPointCloudROSTopic, createNavigationMessageSubscriber());
    }
 
+   public void setDepthCloudPublisher(DepthCloudPublisher depthCloudPublisher)
+   {
+      this.depthCloudPublisher = depthCloudPublisher;
+   }
+   
+   public void setTrackingCameraCustomOriginWorldTransform(TrackingCameraCustomOriginWorldTransform customOriginWorldTransform)
+   {
+      this.customOriginWorldTransform = customOriginWorldTransform;
+   }
+
    private RosNavMsgsOdometrySubscriber createNavigationMessageSubscriber()
    {
       return new RosNavMsgsOdometrySubscriber()
@@ -96,19 +103,14 @@ public class TrackingCameraPublisher
          public void onNewMessage(nav_msgs.Odometry message)
          {
             long timeStamp = message.getHeader().getStamp().totalNsecs();
+
             if (Debug)
                System.out.println("Odometry timeStamp " + timeStamp);
 
             Pose pose = message.getPose().getPose();
             TrackingCameraData trackingCameraData = new TrackingCameraData(timeStamp);
             trackingCameraData.setPosition(pose.getPosition());
-            trackingCameraData.setOrientation(pose.getOrientation());
-            //            // get linear velocity
-            //            linearVelocity = new Vector3D(msg.getTwist().getTwist().getLinear().getX(), msg.getTwist().getTwist().getLinear().getY(),
-            //                                          msg.getTwist().getTwist().getLinear().getZ());
-            //            // get angular velocity
-            //            angularVelocity = new Vector3D(msg.getTwist().getTwist().getAngular().getX(), msg.getTwist().getTwist().getAngular().getY(),
-            //                                           msg.getTwist().getTwist().getAngular().getZ());
+            trackingCameraData.setOrientation(pose.getOrientation()); // TODO: see Odometry for twist.
 
             if (Debug)
                System.out.println("message.getPose().getPose() " + message.getPose().getPose().getPosition().getX());
@@ -176,12 +178,17 @@ public class TrackingCameraPublisher
             return;
       }
 
+      if(customOriginWorldTransform != null)
+         trackingCameraData.transform(customOriginWorldTransform.getOriginWorldTransform());
+      
       TrackingCameraMessage message = trackingCameraData.toTrackingCameraMessage();
       Pose3D sensorPose = new Pose3D();
       sensorPose.setPosition(message.getSensorPosition());
       sensorPose.setOrientation(message.getSensorOrientation());
-      estimatedSensorPose.set(sensorPose);
-      
+
+      if (depthCloudPublisher != null && depthCloudPublisher.useEstimatedSensorPose())
+         depthCloudPublisher.updateEstimatedSensorPose(sensorPose);
+
       if (Debug)
       {
          System.out.println("TrackingCameraMessage.");
@@ -196,14 +203,11 @@ public class TrackingCameraPublisher
       else
          trackingCameraRealtimePublisher.publish(message);
    }
-   
-   public void updateDepthCloudSensorPose(DepthCloudPublisher depthCloudPublisher)
-   {
-      depthCloudPublisher.updateEstimatedSensorPose(estimatedSensorPose.get());
-   }
 
-   public static interface TrackingCameraWorldTransformCalculator
+   public static interface TrackingCameraCustomOriginWorldTransform
    {
-      public void computeTransformToWorld(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformer, Pose3DBasics sensorPoseToPack);
+      public void initialize(FullRobotModel fullRobotModel, RigidBodyTransform worldTransformToPack);
+
+      public RigidBodyTransform getOriginWorldTransform();
    }
 }

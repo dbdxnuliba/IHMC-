@@ -114,6 +114,11 @@ public class DepthCloudPublisher
       useEstimatedSensorPose.set(use);
    }
 
+   public boolean useEstimatedSensorPose()
+   {
+      return useEstimatedSensorPose.get();
+   }
+
    public void updateEstimatedSensorPose(Pose3D estimatedPose)
    {
       estimatedSensorPose.set(estimatedPose);
@@ -176,18 +181,20 @@ public class DepthCloudPublisher
          depthCloudTransformer.computeTransformToWorld(fullRobotModel, worldTransformer, sensorPose);
          depthCloudData.applyTransform(worldTransformer);
       }
-
-      DepthCloudMessage message = depthCloudData.toDepthCloudMessage();
-      if (useEstimatedSensorPose.get())
-      {
-         message.getSensorPosition().set(estimatedSensorPose.get().getPosition());
-         message.getSensorOrientation().set(estimatedSensorPose.get().getOrientation());
-      }
       else
       {
-         message.getSensorPosition().set(sensorPose.getPosition());
-         message.getSensorOrientation().set(sensorPose.getOrientation());
+         if (useEstimatedSensorPose.get())
+         {
+            worldTransformer.setTranslation(estimatedSensorPose.get().getPosition());
+            worldTransformer.setRotation(estimatedSensorPose.get().getOrientation());
+            depthCloudData.applyTransform(worldTransformer);
+            sensorPose.set(estimatedSensorPose.get());
+         }   
       }
+
+      DepthCloudMessage message = depthCloudData.toDepthCloudMessage();
+      message.getSensorPosition().set(sensorPose.getPosition());
+      message.getSensorOrientation().set(sensorPose.getOrientation());
 
       if (Debug)
          System.out.println("Publishing stereo data, number of points: " + (message.getPointCloud().size() / 3));
