@@ -121,7 +121,7 @@ tasks.create("deploy") {
    dependsOn("installDist")
 
    doLast {
-      remote.session("link02", "val") // control
+      remote.session("link01", "val") // control
       {
          exec("mkdir -p $directory")
 
@@ -149,7 +149,7 @@ tasks.create("deployNetworkProcessor") {
 
 fun deployNetworkProcessor()
 {
-   remote.session("zelda02", "val") // perception
+   remote.session("zelda01", "val") // perception
    {
       exec("mkdir -p $directory")
 
