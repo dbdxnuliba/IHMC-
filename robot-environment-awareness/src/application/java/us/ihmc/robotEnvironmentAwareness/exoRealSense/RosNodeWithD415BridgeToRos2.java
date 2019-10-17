@@ -31,7 +31,7 @@ public class RosNodeWithD415BridgeToRos2 extends AbstractRosTopicSubscriber<Poin
    {
       super(PointCloud2._TYPE);
       URI masterURI = new URI(Up2URI);
-      RosMainNode rosMainNode = new RosMainNode(masterURI, "Up2-Ubuintu-D415", true);
+      RosMainNode rosMainNode = new RosMainNode(masterURI, "StereoVisionPublisher", true);
       rosMainNode.attachSubscriber("/camera/depth/color/points", this);
       rosMainNode.execute();
       
