@@ -6,7 +6,8 @@ import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.ConnectionPoint3D;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.*;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionFilter;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionTools;
 import us.ihmc.robotics.geometry.ConvexPolygonTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.tools.property.StoredPropertySetReadOnly;
@@ -133,6 +134,11 @@ public interface VisibilityGraphsParametersReadOnly extends StoredPropertySetRea
       return get(lengthForLongInterRegionEdge);
    }
 
+   default double getWeightForInterRegionEdge()
+   {
+      return get(weightForInterRegionEdge);
+   }
+
    default boolean getPerformPostProcessingNodeShifting()
    {
       return get(performPostProcessingNodeShifting);
@@ -174,7 +180,7 @@ public interface VisibilityGraphsParametersReadOnly extends StoredPropertySetRea
     */
    default boolean returnBestEffortSolution()
    {
-      return true;
+      return get(returnBestEffortSolution);
    }
 
    /**

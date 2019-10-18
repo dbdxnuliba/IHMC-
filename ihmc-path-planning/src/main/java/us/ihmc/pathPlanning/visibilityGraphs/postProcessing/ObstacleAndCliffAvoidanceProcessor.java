@@ -13,7 +13,7 @@ import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.NavigableRegion;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.VisibilityGraphNode;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.VisibilityMapSolution;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionTools;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.VisibilityTools;
 import us.ihmc.robotics.geometry.PlanarRegion;
 
@@ -69,7 +69,7 @@ public class ObstacleAndCliffAvoidanceProcessor
          VisibilityGraphNode startVisGraphNode = nodePath.get(pathNodeIndex);
          VisibilityGraphNode endVisGraphNode = nodePath.get(nextPathNodeIndex);
 
-         boolean isGoalNode = pathNodeIndex > nodePath.size() - 2;
+         boolean isGoalNode = nextWaypointIndex > newPathPositions.size() - 2;
 
          NavigableRegion startingRegion = startVisGraphNode.getVisibilityGraphNavigableRegion().getNavigableRegion();
          NavigableRegion endingRegion = endVisGraphNode.getVisibilityGraphNavigableRegion().getNavigableRegion();

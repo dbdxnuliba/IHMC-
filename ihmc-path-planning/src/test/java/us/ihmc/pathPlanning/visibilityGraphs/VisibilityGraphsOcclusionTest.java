@@ -8,7 +8,6 @@ import java.util.Random;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -37,7 +36,7 @@ import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPolygon;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.DefaultVisibilityGraphParameters;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionTools;
 import us.ihmc.robotics.Assert;
 import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -67,7 +66,7 @@ public class VisibilityGraphsOcclusionTest
 
    private static final boolean VERBOSE = false;
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromSystemProperties();
-   private boolean visualize = true;
+   private boolean visualize = false;
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private static final int rays = 5000;
@@ -86,7 +85,6 @@ public class VisibilityGraphsOcclusionTest
    public void setup()
    {
       visualize = visualize && !ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer();
-
    }
 
    @AfterEach
@@ -380,9 +378,12 @@ public class VisibilityGraphsOcclusionTest
 
          if (regions.findPlanarRegionsContainingPoint(currentPosition, maximumFlyingDistance) == null)
          {
-            PrintTools.info("Planner failed: path results in a flying robot.");
-            plannerFailed.set(true);
-            break;
+            if (regions.findPlanarRegionsContainingPointByProjectionOntoXYPlane(currentPosition.getX(), currentPosition.getY()) != null)
+            {
+               PrintTools.info("Planner failed: path results in a flying robot.");
+               plannerFailed.set(true);
+               break;
+            }
          }
       }
 

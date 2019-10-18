@@ -1,6 +1,7 @@
 package us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.heuristics;
 
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.PawNodeCostTools;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.pawSnapping.PawNodeSnapData;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.graphSearch.pawSnapping.PawNodeSnapper;
@@ -22,11 +23,11 @@ public class PawDistanceAndYawBasedHeuristics extends PawPlanningCostToGoHeurist
    }
 
    @Override
-   protected double computeHeuristics(PawNode node, PawNode goalNode)
+   protected double computeHeuristics(PawNode node)
    {
-      double bodyDistance = node.euclideanDistance(goalNode);
+      double bodyDistance = node.getOrComputeXGaitCenterPoint().distanceXY(goalPose.getPosition());
 
-      double referenceYaw = PawNodeCostTools.computeReferenceYaw(node.getOrComputeXGaitCenterPoint(), node.getStepYaw(), goalNode, parameters.getFinalTurnProximity());
+      double referenceYaw = PawNodeCostTools.computeReferenceYaw(node.getOrComputeXGaitCenterPoint(), node.getStepYaw(), goalPose, parameters.getFinalTurnProximity());
       double angleDifference = AngleTools.computeAngleDifferenceMinusPiToPi(node.getStepYaw(), referenceYaw);
       double yawHeuristicCost = parameters.getYawWeight() * Math.abs(angleDifference);
       double distanceHeuristicCost = parameters.getDistanceWeight() * bodyDistance;
@@ -35,29 +36,23 @@ public class PawDistanceAndYawBasedHeuristics extends PawPlanningCostToGoHeurist
 
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
       {
-         int goalNodeXIndex = goalNode.getXIndex(robotQuadrant);
-         int goalNodeYIndex = goalNode.getYIndex(robotQuadrant);
          int nodeXIndex = node.getXIndex(robotQuadrant);
          int nodeYIndex = node.getYIndex(robotQuadrant);
 
-         PawNodeSnapData goalNodeData = snapper.snapPawNode(goalNodeXIndex, goalNodeYIndex);
-         PawNodeSnapData nodeData = snapper.snapPawNode(nodeXIndex, nodeYIndex);
+         PawNodeSnapData nodeData = snapper.snapPawNode(robotQuadrant, nodeXIndex, nodeYIndex, node.getStepYaw());
 
-         if (nodeData == null || goalNodeData == null)
+         if (nodeData == null)
          {
             heightCost = 0.0;
             break;
          }
 
-         RigidBodyTransform nodeTransform = new RigidBodyTransform();
-         RigidBodyTransform goalNodeTransform = new RigidBodyTransform();
+         Point3D snappedNode = new Point3D(node.getX(robotQuadrant), node.getY(robotQuadrant), 0.0);
+         nodeData.getSnapTransform().transform(snappedNode);
 
-         PawNodeTools.getSnappedNodeTransformToWorld(nodeXIndex, nodeYIndex, nodeData.getSnapTransform(), nodeTransform);
-         PawNodeTools.getSnappedNodeTransformToWorld(goalNodeXIndex, goalNodeYIndex, goalNodeData.getSnapTransform(), goalNodeTransform);
-
-         if (!nodeTransform.containsNaN() && !goalNodeTransform.containsNaN())
+         if (!snappedNode.containsNaN())
          {
-            double heightChange = goalNodeTransform.getTranslationVector().getZ() - nodeTransform.getTranslationVector().getZ();
+            double heightChange = goalPose.getZ() - snappedNode.getZ();
 
             if (heightChange > 0.0)
                heightCost += parameters.getStepUpWeight() * heightChange;

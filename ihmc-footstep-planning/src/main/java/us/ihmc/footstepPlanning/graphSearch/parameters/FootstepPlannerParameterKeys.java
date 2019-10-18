@@ -11,7 +11,7 @@ public class FootstepPlannerParameterKeys
    public static final StoredPropertyKeyList keys = new StoredPropertyKeyList();
 
    public static final BooleanStoredPropertyKey checkForBodyBoxCollisions                  = keys.addBooleanKey("Check for body box collisions", false);
-   public static final BooleanStoredPropertyKey checkForPathCollisions                     = keys.addBooleanKey("Check for path collisions", false);
+   public static final BooleanStoredPropertyKey checkForPathCollisions                     = keys.addBooleanKey("Check for path collisions", true);
    public static final BooleanStoredPropertyKey performHeuristicSearchPolicies             = keys.addBooleanKey("Perform heuristic search policies", true);
    public static final DoubleStoredPropertyKey idealFootstepWidth                         = keys.addDoubleKey ("Ideal footstep width", 0.22);
    public static final DoubleStoredPropertyKey idealFootstepLength                        = keys.addDoubleKey ("Ideal footstep length", 0.3);
@@ -40,7 +40,6 @@ public class FootstepPlannerParameterKeys
    public static final IntegerStoredPropertyKey minimumStepsForBestEffortPlan              = keys.addIntegerKey("Min steps for best effort plan", 3);
    public static final DoubleStoredPropertyKey  minXClearanceFromStance                    = keys.addDoubleKey ("Min X clearance from stance", 0.0);
    public static final DoubleStoredPropertyKey  minYClearanceFromStance                    = keys.addDoubleKey ("Min Y clearance from stance", 0.0);
-   public static final DoubleStoredPropertyKey  bodyGroundClearance                        = keys.addDoubleKey ("Body ground clearance", 0.25);
    public static final DoubleStoredPropertyKey  bodyBoxWidth                               = keys.addDoubleKey ("Body box width", 0.7);
    public static final DoubleStoredPropertyKey  bodyBoxHeight                              = keys.addDoubleKey ("Body box height", 1.5);
    public static final DoubleStoredPropertyKey  bodyBoxDepth                               = keys.addDoubleKey ("Body box depth", 0.3);
@@ -48,7 +47,7 @@ public class FootstepPlannerParameterKeys
    public static final DoubleStoredPropertyKey  bodyBoxBaseY                               = keys.addDoubleKey ("Body box base Y", 0.0);
    public static final DoubleStoredPropertyKey  bodyBoxBaseZ                               = keys.addDoubleKey ("Body box base Z", 0.25);
    public static final DoubleStoredPropertyKey  finalTurnProximity                         = keys.addDoubleKey ("Final turn proximity", 1.0);
-   public static final DoubleStoredPropertyKey finalTurnBodyPathProximity                  = keys.addDoubleKey ("Final turn body path proximity", 0.25);
+   public static final DoubleStoredPropertyKey finalTurnBodyPathProximity                  = keys.addDoubleKey ("Final turn body path proximity", 0.2);
    public static final DoubleStoredPropertyKey  finalTurnProximityBlendFactor              = keys.addDoubleKey ("Final turn proximity blend factor", 0.25);
    public static final IntegerStoredPropertyKey numberOfBoundingBoxChecks                  = keys.addIntegerKey("Number of bounding box checks", 1);
 
@@ -72,6 +71,6 @@ public class FootstepPlannerParameterKeys
    public static final DoubleStoredPropertyKey  footholdAreaWeight                         = keys.addDoubleKey ("Foothold area weight", 0.0);
    public static final DoubleStoredPropertyKey  longStepWeight                             = keys.addDoubleKey ("Long step weight", 1.0);
    public static final DoubleStoredPropertyKey bodyPathViolationWeight                         = keys.addDoubleKey("Body path violation weight", 30.0);
-   public static final DoubleStoredPropertyKey distanceFromPathTolerance                   = keys.addDoubleKey("Distance from path tolerance", 0.2);
+   public static final DoubleStoredPropertyKey distanceFromPathTolerance                   = keys.addDoubleKey("Distance from path tolerance", 0.3);
    public static final DoubleStoredPropertyKey deltaYawFromReferenceTolerance              = keys.addDoubleKey("Delta yaw from reference tolerance", 0.2);
 }

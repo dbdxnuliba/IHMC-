@@ -1,5 +1,6 @@
 package us.ihmc.valkyrie.parameters;
 
+import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.configurations.AngularMomentumEstimationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.CoPPointName;
 import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
@@ -7,9 +8,15 @@ import us.ihmc.euclid.tuple2D.Vector2D;
 
 public class ValkyrieSmoothCMPPlannerParameters extends SmoothCMPPlannerParameters
 {
-   public ValkyrieSmoothCMPPlannerParameters()
+   public final boolean createAngularMomentumPredictionModule;
+   private final RobotTarget robotTarget;
+
+   public ValkyrieSmoothCMPPlannerParameters(RobotTarget robotTarget)
    {
       super(1.0);
+      this.robotTarget = robotTarget;
+
+      createAngularMomentumPredictionModule = (robotTarget != RobotTarget.SCS) ? false : true;
 
       endCoPName = CoPPointName.MIDFEET_COP;
       entryCoPName = CoPPointName.ENTRY_COP;
@@ -41,15 +48,29 @@ public class ValkyrieSmoothCMPPlannerParameters extends SmoothCMPPlannerParamete
    }
 
    @Override
+   public int getNumberOfFootstepsToConsider()
+   { // FIXME Workaround to speed up the ICP planner so the controller can meet its deadline.
+      switch (robotTarget)
+      {
+         case GAZEBO:
+         case REAL_ROBOT:
+            return 2;
+         case SCS:
+         default:
+            return 3;
+      }
+   }
+
+   @Override
    public boolean planSwingAngularMomentum()
    {
-      return true;
+      return (robotTarget != RobotTarget.SCS) ? false : true;
    }
 
    @Override
    public boolean planTransferAngularMomentum()
    {
-      return true;
+      return (robotTarget != RobotTarget.SCS) ? false : true;
    }
 
    /** {@inheritDoc} */
@@ -80,20 +101,27 @@ public class ValkyrieSmoothCMPPlannerParameters extends SmoothCMPPlannerParamete
    @Override
    public AngularMomentumEstimationParameters getAngularMomentumEstimationParameters()
    {
-      return new AngularMomentumEstimationParameters()
+      if (createAngularMomentumPredictionModule)
       {
-         @Override
-         public double getPercentageSwingLegMass()
+         return new AngularMomentumEstimationParameters()
          {
-            return 0.02;
-         }
-
-         @Override
-         public double getPercentageSupportLegMass()
-         {
-            return 0.02;
-         }
-      };
+            @Override
+            public double getPercentageSwingLegMass()
+            {
+               return 0.02;
+            }
+            
+            @Override
+            public double getPercentageSupportLegMass()
+            {
+               return 0.02;
+            }
+         };
+      }
+      else
+      {
+         return null;
+      }
    }
 
    @Override
@@ -136,5 +164,11 @@ public class ValkyrieSmoothCMPPlannerParameters extends SmoothCMPPlannerParamete
    public boolean doContinuousReplanningForSwing()
    {
       return true;
+   }
+
+   @Override
+   public double getVelocityDecayDurationWhenDone()
+   {
+      return 0.5;
    }
 }

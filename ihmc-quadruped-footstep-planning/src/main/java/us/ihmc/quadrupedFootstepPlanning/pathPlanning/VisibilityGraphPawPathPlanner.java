@@ -10,12 +10,12 @@ import us.ihmc.pathPlanning.visibilityGraphs.NavigableRegionsManager;
 import us.ihmc.pathPlanning.visibilityGraphs.dataStructure.VisibilityMapWithNavigableRegion;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityMapHolder;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
+import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.ObstacleAndCliffAvoidanceProcessor;
 import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.PathOrientationCalculator;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionTools;
 import us.ihmc.quadrupedFootstepPlanning.pawPlanning.PawStepPlanningResult;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPlanner
@@ -32,8 +32,14 @@ public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPl
 
    public VisibilityGraphPawPathPlanner(String prefix, VisibilityGraphsParametersReadOnly visibilityGraphsParameters, YoVariableRegistry registry)
    {
+      this(prefix, visibilityGraphsParameters, null, registry);
+   }
+
+   public VisibilityGraphPawPathPlanner(String prefix, VisibilityGraphsParametersReadOnly visibilityGraphsParameters,
+                                        ObstacleAndCliffAvoidanceProcessor postProcessor, YoVariableRegistry registry)
+   {
       super(prefix, registry);
-      this.navigableRegionsManager = new NavigableRegionsManager(visibilityGraphsParameters);
+      this.navigableRegionsManager = new NavigableRegionsManager(visibilityGraphsParameters, null, postProcessor);
       this.orientationCalculator = new PathOrientationCalculator(visibilityGraphsParameters);
    }
 
@@ -51,6 +57,7 @@ public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPl
          Point3DReadOnly startPos = PlanarRegionTools.projectPointToPlanesVertically(bodyStartPose.getPosition(), planarRegionsList);
          Point3DReadOnly goalPos = PlanarRegionTools.projectPointToPlanesVertically(bodyGoalPose.getPosition(), planarRegionsList);
 
+         // FIXME: DO WE WANT TO DO EITHER OF THESE?
          if (startPos == null)
          {
             LogTools.info("adding plane at start pose");
@@ -76,7 +83,8 @@ public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPl
          try
          {
             List<Point3DReadOnly> pathPoints = navigableRegionsManager.calculateBodyPath(startPos, goalPos);
-            List<? extends Pose3DReadOnly> path = orientationCalculator.computePosesFromPath(pathPoints, navigableRegionsManager.getVisibilityMapSolution());
+            List<? extends Pose3DReadOnly> path = orientationCalculator.computePosesFromPath(pathPoints, navigableRegionsManager.getVisibilityMapSolution(),
+                                                                                             bodyStartPose.getOrientation(), bodyGoalPose.getOrientation());
 
             waypoints.addAll(path);
          }
@@ -88,7 +96,10 @@ public class VisibilityGraphPawPathPlanner extends AbstractWaypointsForPawStepPl
          }
       }
 
-      yoResult.set(PawStepPlanningResult.SUB_OPTIMAL_SOLUTION);
+      if (waypoints.size() < 2)
+         yoResult.set(PawStepPlanningResult.PLANNER_FAILED);
+      else
+         yoResult.set(PawStepPlanningResult.SUB_OPTIMAL_SOLUTION);
       return yoResult.getEnumValue();
    }
 

@@ -24,18 +24,20 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DBasics;
+import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.javaFXToolkit.messager.JavaFXMessager;
 import us.ihmc.log.LogTools;
 import us.ihmc.pathPlanning.DataSet;
 import us.ihmc.pathPlanning.DataSetIOTools;
 import us.ihmc.pathPlanning.PlannerInput;
 import us.ihmc.pathPlanning.visibilityGraphs.interfaces.NavigableRegionFilter;
-import us.ihmc.pathPlanning.visibilityGraphs.interfaces.PlanarRegionFilter;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionFilter;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.DefaultVisibilityGraphParameters;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersBasics;
 import us.ihmc.pathPlanning.visibilityGraphs.parameters.VisibilityGraphsParametersReadOnly;
+import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.ObstacleAndCliffAvoidanceProcessor;
 import us.ihmc.pathPlanning.visibilityGraphs.postProcessing.PathOrientationCalculator;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
+import us.ihmc.robotEnvironmentAwareness.planarRegion.PlanarRegionTools;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.messager.UIVisibilityGraphsTopics;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullDecomposition;
 import us.ihmc.robotEnvironmentAwareness.geometry.ConcaveHullFactoryParameters;
@@ -88,12 +90,13 @@ public class VisibilityGraphsFrameworkTest
    private final ConcaveHullFactoryParameters concaveHullFactoryParameters = new ConcaveHullFactoryParameters();
    private final PolygonizerParameters polygonizerParameters = new PolygonizerParameters();
 
-   private VisibilityGraphsParametersReadOnly parameters;
-
    private static VisibilityGraphsParametersReadOnly createTestParameters()
    {
       VisibilityGraphsParametersBasics parameters = new DefaultVisibilityGraphParameters();
       parameters.setNormalZThresholdForAccessibleRegions(Math.cos(Math.toRadians(30.0)));
+//      parameters.setPerformPostProcessingNodeShifting(true);
+//      parameters.setIntroduceMidpointsInPostProcessing(true);
+
       return parameters;
    }
 
@@ -110,8 +113,6 @@ public class VisibilityGraphsFrameworkTest
 
          messager = visualizerApplication.getMessager();
       }
-
-      parameters = createTestParameters();
    }
 
    @AfterEach
@@ -123,8 +124,6 @@ public class VisibilityGraphsFrameworkTest
          visualizerApplication = null;
          messager = null;
       }
-
-      parameters = null;
    }
 
    @Test
@@ -147,8 +146,9 @@ public class VisibilityGraphsFrameworkTest
          messager.submitMessage(UIVisibilityGraphsTopics.EnableWalkerAnimation, true);
          messager.submitMessage(UIVisibilityGraphsTopics.WalkerOffsetHeight, walkerOffsetHeight);
          messager.submitMessage(UIVisibilityGraphsTopics.WalkerSize, walkerRadii);
+         messager.submitMessage(UIVisibilityGraphsTopics.ShowInterRegionVisibilityMap, true);
       }
-      runAssertionsOnAllDatasets(dataset -> runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 1000, false), false);
+      runAssertionsOnAllDatasets(dataset -> runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 5000, false), false);
    }
 
    //TODO: Fix and make this pass.
@@ -553,7 +553,8 @@ public class VisibilityGraphsFrameworkTest
    private String calculateAndTestVizGraphsBodyPath(String datasetName, Point3D start, Point3D goal, PlanarRegionsList planarRegionsList,
                                                     List<Pose3DReadOnly> bodyPathToPack, boolean simulateOcclusions)
    {
-      NavigableRegionsManager manager = new NavigableRegionsManager(parameters);
+      VisibilityGraphsParametersReadOnly parameters = createTestParameters();
+      NavigableRegionsManager manager = new NavigableRegionsManager(parameters, null, new ObstacleAndCliffAvoidanceProcessor(parameters));
       PathOrientationCalculator orientationCalculator = new PathOrientationCalculator(parameters);
       manager.setPlanarRegions(planarRegionsList.getPlanarRegionsAsList());
 
@@ -563,7 +564,7 @@ public class VisibilityGraphsFrameworkTest
       try
       {
          pathPoints = manager.calculateBodyPath(start, goal, fullyExpandVisibilityGraph);
-         path = orientationCalculator.computePosesFromPath(pathPoints, manager.getVisibilityMapSolution());
+         path = orientationCalculator.computePosesFromPath(pathPoints, manager.getVisibilityMapSolution(), new Quaternion(), new Quaternion());
 //         path = manager.calculateBodyPathWithOcclusions(start, goal,);
       }
       catch (Exception e)
@@ -828,23 +829,26 @@ public class VisibilityGraphsFrameworkTest
    {
       VisibilityGraphsFrameworkTest test = new VisibilityGraphsFrameworkTest();
 //      String dataSetName = "20171218_205120_BodyPathPlannerEnvironment";
-      String dataSetName = "20171215_211034_DoorwayNoCeiling";
-//      String dataSetName = "20171218_204953_FlatGroundWithWall";
+//      String dataSetName = "20171215_211034_DoorwayNoCeiling";
+//      String dataSetName = "20171218_205120_BodyPathPlannerEnvironment";
 //      String dataSetName = "20171215_220523_SteppingStones";
-//      String dataSetName = "20171218_204917_FlatGround";
+      String dataSetName = "20171218_204917_FlatGround";
 //      String dataSetName = "20171215_214730_CinderBlockField";
 //      String dataSetName = "20001201_205050_TwoSquaresOneObstacle";
 //      String dataSetName = "20171215_210811_DoorwayWithCeiling";
 
+      VISUALIZE = true;
       test.setup();
       if (VISUALIZE)
       {
          messager.submitMessage(UIVisibilityGraphsTopics.EnableWalkerAnimation, false);
          messager.submitMessage(UIVisibilityGraphsTopics.WalkerOffsetHeight, walkerOffsetHeight);
          messager.submitMessage(UIVisibilityGraphsTopics.WalkerSize, walkerRadii);
+         messager.submitMessage(UIVisibilityGraphsTopics.ShowInterRegionVisibilityMap, true);
+
       }
-      test.runAssertionsOnDataset(dataset -> test.runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 100000000, true), dataSetName);
-//      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
+//      test.runAssertionsOnDataset(dataset -> test.runAssertionsSimulateDynamicReplanning(dataset, walkerMarchingSpeed, 100000000, true), dataSetName);
+      test.runAssertionsOnDataset(dataset -> test.runAssertionsWithoutOcclusion(dataset), dataSetName);
       test.tearDown();
 
    }

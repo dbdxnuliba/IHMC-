@@ -428,7 +428,7 @@ public abstract class FootstepPlannerToolboxDataSetTest
       return footstepPlan;
    }
 
-   private String getTimeoutFlag()
+   protected String getTimeoutFlag()
    {
       return getPlannerType().toString().toLowerCase() + "_timeout";
    }
@@ -860,7 +860,9 @@ public abstract class FootstepPlannerToolboxDataSetTest
       @Override
       public FootstepPlannerParametersBasics getFootstepPlannerParameters()
       {
-         return new DefaultFootstepPlannerParameters();
+         DefaultFootstepPlannerParameters parameters = new DefaultFootstepPlannerParameters();
+         parameters.setCheckForPathCollisions(true);
+         return parameters;
       }
 
       @Override
