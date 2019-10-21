@@ -4,6 +4,7 @@ import controller_msgs.msg.dds.StereoVisionPointCloudMessage;
 import sensor_msgs.PointCloud2;
 import us.ihmc.communication.packets.MessageTools;
 import us.ihmc.euclid.transform.RigidBodyTransform;
+import us.ihmc.euclid.tuple2D.Point2D;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber;
 import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointCloud;
@@ -14,7 +15,7 @@ import java.util.Random;
 public class ColorPointCloudData
 {
    private final long timestamp;
-   private final int numberOfPoints;
+   private int numberOfPoints;
    private final Point3D[] pointCloud;
    private final int[] colors;
 
@@ -99,6 +100,34 @@ public class ColorPointCloudData
       for (int i = 0; i < numberOfPoints; i++)
       {
          pointCloud[i].applyTransform(transform);
+      }
+   }
+
+   public void removePoints(Point2D min, Point2D max)
+   {
+      boolean remove = false;
+      for (int i = 0; i < numberOfPoints; i++)
+      {
+         remove = false;
+         for (int j = 0; j < 2; j++)
+         {
+            if (min.getElement(j) > pointCloud[i].getElement(j) || max.getElement(j) < pointCloud[i].getElement(j))
+            {
+               remove = true;
+               break;
+            }
+         }
+
+         if (remove)
+         {
+            pointCloud[i] = pointCloud[numberOfPoints - 1];
+            colors[i] = colors[numberOfPoints - 1];
+            pointCloud[numberOfPoints - 1] = null;
+            colors[numberOfPoints - 1] = -1;
+
+            i--;
+            numberOfPoints--;
+         }
       }
    }
 }

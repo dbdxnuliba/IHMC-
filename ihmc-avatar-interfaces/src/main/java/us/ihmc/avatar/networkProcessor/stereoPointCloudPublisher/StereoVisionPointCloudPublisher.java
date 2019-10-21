@@ -210,6 +210,9 @@ public class StereoVisionPointCloudPublisher
          if (!success)
             return;
       }
+      
+      if(enableBoundingBox.get())
+         pointCloudData.removePoints(boundingBoxMinPoint, boundingBoxMaxPoint);
 
       if (stereoVisionTransformer != null)
       {
