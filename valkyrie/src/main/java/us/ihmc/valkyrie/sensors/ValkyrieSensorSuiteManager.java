@@ -6,6 +6,7 @@ import java.net.URI;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.networkProcessor.lidarScanPublisher.LidarScanPublisher;
+import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.MultisenseStereoPublisherSettingsInterface;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
@@ -45,6 +46,7 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
    private final FullHumanoidRobotModelFactory fullRobotModelFactory;
    private final LidarScanPublisher lidarScanPublisher;
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
+   private final MultisenseStereoPublisherSettingsInterface valkyrieMultisenseStereoPublisherSettings;
 
    private final String robotName;
 
@@ -74,6 +76,7 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
       {
          stereoVisionPointCloudPublisher = null;
       }
+      valkyrieMultisenseStereoPublisherSettings = new ValkyrieMultisenseStereoPublisherSettings();
    }
 
    @Override
@@ -121,9 +124,8 @@ public class ValkyrieSensorSuiteManager implements DRCSensorSuiteManager
 
       if (ENABLE_STEREO_PUBLISHER)
       {
-         stereoVisionPointCloudPublisher.setFilterThreshold(ValkyrieSensorInformation.linearVelocityThreshold,
-                                                            ValkyrieSensorInformation.angularVelocityThreshold);
-         stereoVisionPointCloudPublisher.enableFilter(true);
+         stereoVisionPointCloudPublisher.setFilterThreshold(valkyrieMultisenseStereoPublisherSettings);
+         stereoVisionPointCloudPublisher.enableFilter(valkyrieMultisenseStereoPublisherSettings.useVelocityFilter());
          stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
          stereoVisionPointCloudPublisher.start();
       }

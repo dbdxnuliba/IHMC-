@@ -9,8 +9,11 @@ import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.sensorProcessing.parameters.*;
 import us.ihmc.sensorProcessing.parameters.AvatarRobotCameraParameters;
+import us.ihmc.sensorProcessing.parameters.AvatarRobotLidarParameters;
+import us.ihmc.sensorProcessing.parameters.AvatarRobotPointCloudParameters;
+import us.ihmc.sensorProcessing.parameters.AvatarRobotSensorParameters;
+import us.ihmc.sensorProcessing.parameters.HumanoidRobotSensorInformation;
 
 public class AtlasSensorInformation implements HumanoidRobotSensorInformation
 {
@@ -101,6 +104,7 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    public static final int MULTISENSE_STEREO_ID = 0;
    private static final String stereoSensorName = "stereo_camera";
    private static final String stereoColorTopic = multisense_namespace + "/image_points2_color_world";
+   public static final String stereoColorTopicLocal = multisense_namespace + "/image_points2_color";
    private static final String stereoBaseFrame = multisense_namespace + "/head";
    private static final String stereoEndFrame = multisense_namespace + "/left_camera_frame";
 
@@ -108,15 +112,23 @@ public class AtlasSensorInformation implements HumanoidRobotSensorInformation
    private final boolean setupROSLocationService;
    private final boolean setupROSParameterSetters;
    private final RobotTarget target;
-   
+
    public static final double linearVelocityThreshold = 0.2;
-   public static final double angularVelocityThreshold = Math.PI/15;
+   public static final double angularVelocityThreshold = Math.PI / 15;
 
    /**
     * Realsense Parameters
     */
    private static final String frontFacingD435 = realsense_namespace + "/frontCam/depth/color/points";
    private static final String frontFacingT265 = realsense_namespace + "/frontT265/odom/sample";
+
+   public static final RigidBodyTransform transformHeadToMultisenseStereo = new RigidBodyTransform();
+   static
+   {
+      RigidBodyTransform transform = new RigidBodyTransform();
+      transform.appendYawRotation(-Math.PI / 2);
+      transform.appendRollRotation(-Math.PI / 2);
+   }
 
    public AtlasSensorInformation(AtlasRobotVersion atlasRobotVersion, RobotTarget target)
    {

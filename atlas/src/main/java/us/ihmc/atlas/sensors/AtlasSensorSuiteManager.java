@@ -8,7 +8,9 @@ import us.ihmc.atlas.parameters.AtlasSensorInformation;
 import us.ihmc.avatar.drcRobot.RobotPhysicalProperties;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.avatar.networkProcessor.lidarScanPublisher.LidarScanPublisher;
+import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.MultisenseStereoPublisherSettingsInterface;
 import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher;
+import us.ihmc.avatar.networkProcessor.stereoPointCloudPublisher.StereoVisionPointCloudPublisher.StereoVisionWorldTransformCalculator;
 import us.ihmc.avatar.ros.RobotROSClockCalculator;
 import us.ihmc.avatar.sensors.DRCSensorSuiteManager;
 import us.ihmc.avatar.sensors.multisense.MultiSenseSensorManager;
@@ -17,11 +19,15 @@ import us.ihmc.commons.thread.ThreadTools;
 import us.ihmc.communication.ROS2Tools;
 import us.ihmc.communication.configuration.NetworkParameters;
 import us.ihmc.communication.net.ObjectCommunicator;
+import us.ihmc.euclid.geometry.interfaces.Pose3DBasics;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.ihmcPerception.camera.FisheyeCameraReceiver;
 import us.ihmc.ihmcPerception.camera.SCSCameraDataReceiver;
 import us.ihmc.ihmcPerception.depthData.CollisionBoxProvider;
 import us.ihmc.pubsub.DomainFactory.PubSubImplementation;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
+import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.ros2.Ros2Node;
 import us.ihmc.sensorProcessing.communication.producers.RobotConfigurationDataBuffer;
 import us.ihmc.sensorProcessing.parameters.AvatarRobotCameraParameters;
@@ -37,6 +43,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
 
    private final LidarScanPublisher lidarScanPublisher;
    private final StereoVisionPointCloudPublisher stereoVisionPointCloudPublisher;
+   private final MultisenseStereoPublisherSettingsInterface atlasMultisenseStereoPublisherSettings;
 
    private final RobotROSClockCalculator rosClockCalculator;
    private final HumanoidRobotSensorInformation sensorInformation;
@@ -65,6 +72,7 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       stereoVisionPointCloudPublisher = new StereoVisionPointCloudPublisher(modelFactory, ros2Node, rcdTopicName);
       stereoVisionPointCloudPublisher.setROSClockCalculator(rosClockCalculator);
 
+      atlasMultisenseStereoPublisherSettings = new AtlasMultisenseStereoPublisherSettings();
    }
 
    @Override
@@ -103,9 +111,8 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.setScanFrameToWorldFrame();
 
       stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
-      stereoVisionPointCloudPublisher.setFilterThreshold(AtlasSensorInformation.linearVelocityThreshold,
-                                                         AtlasSensorInformation.angularVelocityThreshold);
-      stereoVisionPointCloudPublisher.enableFilter(true);
+      stereoVisionPointCloudPublisher.setFilterThreshold(atlasMultisenseStereoPublisherSettings);
+      stereoVisionPointCloudPublisher.enableFilter(atlasMultisenseStereoPublisherSettings.useVelocityFilter());
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -140,5 +147,22 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    @Override
    public void connect() throws IOException
    {
+   }
+   
+   private StereoVisionWorldTransformCalculator createCustomStereoTransformCalculator()
+   {
+      return new StereoVisionWorldTransformCalculator()
+      {
+         private final RigidBodyTransform transformFromPelvisToRealSense = AtlasSensorInformation.transformHeadToMultisenseStereo;
+
+         @Override
+         public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack, Pose3DBasics sensorPoseToPack)
+         {
+            ReferenceFrame headFrame = fullRobotModel.getHeadBaseFrame();
+            headFrame.getTransformToDesiredFrame(transformToWorldToPack, ReferenceFrame.getWorldFrame());
+            transformToWorldToPack.multiply(transformFromPelvisToRealSense);
+            sensorPoseToPack.set(transformToWorldToPack);
+         }
+      };
    }
 }
