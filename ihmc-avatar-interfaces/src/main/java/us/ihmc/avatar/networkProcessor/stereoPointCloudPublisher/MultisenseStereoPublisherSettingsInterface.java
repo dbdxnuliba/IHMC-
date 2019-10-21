@@ -5,31 +5,16 @@ import us.ihmc.euclid.tuple2D.Point2D;
 public interface MultisenseStereoPublisherSettingsInterface
 {
    public boolean useVelocityFilter();
-   
-   default double getLinearVelocityThreshold()
-   {
-      return 0.0;
-   }
-   
-   default double getAngularVelocityThreshold()
-   {
-      return 0.0;
-   }
-   
+
+   public double getLinearVelocityThreshold();
+
+   public double getAngularVelocityThreshold();
+
    public boolean useIntensiveBox();
-   
-   default String getTopicNameForIntensiveBox()
-   {
-      return "";
-   }
 
-   default Point2D getIntensiveBoxUpperPoint()
-   {
-      return null;
-   }
+   public String getTopicNameForIntensiveBox();
 
-   default Point2D getIntensiveBoxLowerPoint()
-   {
-      return null;
-   }
+   public Point2D getIntensiveBoxUpperPoint();
+
+   public Point2D getIntensiveBoxLowerPoint();
 }

@@ -9,7 +9,7 @@ public class AtlasMultisenseStereoPublisherSettings implements MultisenseStereoP
    @Override
    public boolean useVelocityFilter()
    {
-      return true;
+      return false;
    }
 
    @Override

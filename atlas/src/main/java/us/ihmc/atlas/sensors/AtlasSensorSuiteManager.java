@@ -53,8 +53,8 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    private final String robotName;
 
    public AtlasSensorSuiteManager(String robotName, FullHumanoidRobotModelFactory modelFactory, CollisionBoxProvider collisionBoxProvider,
-                                  RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation,
-                                  DRCRobotJointMap jointMap, RobotPhysicalProperties physicalProperties, RobotTarget targetDeployment)
+                                  RobotROSClockCalculator rosClockCalculator, HumanoidRobotSensorInformation sensorInformation, DRCRobotJointMap jointMap,
+                                  RobotPhysicalProperties physicalProperties, RobotTarget targetDeployment)
    {
       this.robotName = robotName;
       this.rosClockCalculator = rosClockCalculator;
@@ -110,9 +110,16 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
       lidarScanPublisher.receiveLidarFromROSAsPointCloud2WithSource(multisenseLidarParameters.getRosTopic(), rosMainNode);
       lidarScanPublisher.setScanFrameToWorldFrame();
 
-      stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
-      stereoVisionPointCloudPublisher.setFilterThreshold(atlasMultisenseStereoPublisherSettings);
-      stereoVisionPointCloudPublisher.enableFilter(atlasMultisenseStereoPublisherSettings.useVelocityFilter());
+      if (atlasMultisenseStereoPublisherSettings.useIntensiveBox())
+      {
+         stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(atlasMultisenseStereoPublisherSettings.getTopicNameForIntensiveBox(), rosMainNode);
+         stereoVisionPointCloudPublisher.setCustomStereoVisionTransformer(createCustomStereoTransformCalculator());
+         stereoVisionPointCloudPublisher.setBoundingBox(atlasMultisenseStereoPublisherSettings);
+      }
+      else
+      {
+         stereoVisionPointCloudPublisher.receiveStereoPointCloudFromROS(multisenseStereoParameters.getRosTopic(), rosMainNode);
+      }
 
       MultiSenseSensorManager multiSenseSensorManager = new MultiSenseSensorManager(modelFactory, robotConfigurationDataBuffer, rosMainNode, ros2Node,
                                                                                     rosClockCalculator, multisenseLeftEyeCameraParameters,
@@ -148,19 +155,20 @@ public class AtlasSensorSuiteManager implements DRCSensorSuiteManager
    public void connect() throws IOException
    {
    }
-   
+
    private StereoVisionWorldTransformCalculator createCustomStereoTransformCalculator()
    {
       return new StereoVisionWorldTransformCalculator()
       {
-         private final RigidBodyTransform transformFromPelvisToRealSense = AtlasSensorInformation.transformHeadToMultisenseStereo;
+         private final RigidBodyTransform transformFromHeadToMultisenseStereo = AtlasSensorInformation.transformHeadToMultisenseStereo;
 
          @Override
-         public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack, Pose3DBasics sensorPoseToPack)
+         public void computeTransformToWorld(FullRobotModel fullRobotModel, ReferenceFrame scanPointsFrame, RigidBodyTransform transformToWorldToPack,
+                                             Pose3DBasics sensorPoseToPack)
          {
             ReferenceFrame headFrame = fullRobotModel.getHeadBaseFrame();
             headFrame.getTransformToDesiredFrame(transformToWorldToPack, ReferenceFrame.getWorldFrame());
-            transformToWorldToPack.multiply(transformFromPelvisToRealSense);
+            transformToWorldToPack.multiply(transformFromHeadToMultisenseStereo);
             sensorPoseToPack.set(transformToWorldToPack);
          }
       };
