@@ -254,10 +254,10 @@ public class StereoVisionPointCloudPublisher
       enableFilter.set(enable);
    }
 
-   public void setFilterThreshold(double linearVelocityThreshold, double angularVelocityThreshold)
+   public void setFilterThreshold(MultisenseStereoPublisherSettingsInterface valkyrieMultisenseStereoPublisherSettings)
    {
-      this.linearVelocityThreshold.set(linearVelocityThreshold);
-      this.angularVelocityThreshold.set(angularVelocityThreshold);
+      this.linearVelocityThreshold.set(valkyrieMultisenseStereoPublisherSettings.getLinearVelocityThreshold());
+      this.angularVelocityThreshold.set(valkyrieMultisenseStereoPublisherSettings.getAngularVelocityThreshold());
    }
 
    public static interface StereoVisionWorldTransformCalculator
