@@ -5,6 +5,7 @@ import static us.ihmc.robotEnvironmentAwareness.communication.REACommunicationPr
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -55,23 +56,25 @@ public class ObstacleDisplayer
 
    private ScheduledExecutorService executorService = ExecutorServiceTools.newScheduledThreadPool(2, getClass(), ExceptionHandling.CATCH_AND_REPORT);
    private ScheduledFuture<?> scheduled;
-   private final Messager reaMessager;
+   private final Messager reaMessager;  
+   
+   private UDPDataSender sender;
    
    //functions
    public static void main(String[] args)
    {
       try {
          ros2Node = ROS2Tools.createRos2Node(PubSubImplementation.FAST_RTPS, ROS2Tools.REA.getNodeName());
-         new RosNodeWithD415BridgeToRos2(ros2Node); //connection to realsense D415         
+         new RealSenseBridgeRos2(ros2Node); //connection to realsense D415         
 
          ObstacleDisplayer module = ObstacleDisplayer.createIntraprocessModule();
-         module.start();
+         module.start();         
       }
       catch (Exception ex) {
          ex.printStackTrace();         
       }
    }
-   
+      
    private ObstacleDisplayer(Messager reaMessager, File configurationFile) throws IOException
    {
       this.reaMessager = reaMessager;
@@ -104,6 +107,8 @@ public class ObstacleDisplayer
       reaMessager.submitMessage(REAModuleAPI.StereoVisionBufferEnable, true);
       reaMessager.submitMessage(REAModuleAPI.OcTreeBoundingBoxEnable, false);
       reaMessager.submitMessage(REAModuleAPI.UIOcTreeDisplayType, DisplayType.HIDE);
+      
+      sender = new UDPDataSender();
    }
 
    private void dispatchStereoVisionPointCloudMessage(Subscriber<StereoVisionPointCloudMessage> subscriber)
@@ -139,7 +144,8 @@ public class ObstacleDisplayer
 
          planarRegionFeatureUpdater.update(mainOctree);
          
-         obstacleDistance(planarRegionFeatureUpdater.getPlanarRegionsList());
+         double distance = obstacleDistance(planarRegionFeatureUpdater.getPlanarRegionsList());
+         sender.sendDistance(distance);
 
          planarRegionNetworkProvider.update(ocTreeUpdateSuccess);
          planarRegionNetworkProvider.publishCurrentState();
@@ -163,13 +169,13 @@ public class ObstacleDisplayer
    private double obstacleDistance(PlanarRegionsList planarRegionsList) {
       
       //params
-      double distance = 0.0;            
+      double distance = -1.0;            
       double positiveAngle = 135;
       double positiveD2Distance = 0.1;
-      double positiveDistance = 1.5;
+      LinkedList<Double> distanceList = new LinkedList<Double>();
       
       for(int i = 0; i < planarRegionsList.getNumberOfPlanarRegions(); i++) {
-         PlanarRegion planarRegion = planarRegionsList.getPlanarRegion(i); 
+         PlanarRegion planarRegion = planarRegionsList.getPlanarRegion(i);
          Vector3D vector = planarRegion.getNormal();
          //System.out.println(vector.toString());
          double angle = Math.acos(vector.getZ())*180/Math.PI;
@@ -179,16 +185,19 @@ public class ObstacleDisplayer
             //System.out.println(D2Distance);
             if(D2Distance < positiveD2Distance) {
                distance = planarRegion.getPlaneZGivenXY(0, 0);
-               //System.out.println(distance);
-               if(distance < positiveDistance) {
-                  System.out.println("obstacle at " + distance + " meters");
-                  return distance;
-               }                         
+               //System.out.println("obstacle at " + distance + " meters");
+               distanceList.add(distance);                        
             }
          }               
       }
-      System.out.println("-----------------------------------");
-      return -1.0;
+      
+      //System.out.println("-----------------------------------");
+      for(int i = 0; i < distanceList.size() -1; i++){
+         if(distanceList.get(i) < distance) {
+            distance = distanceList.get(i);
+         }
+      }
+      return distance;   
    }
 
    private boolean isThreadInterrupted()

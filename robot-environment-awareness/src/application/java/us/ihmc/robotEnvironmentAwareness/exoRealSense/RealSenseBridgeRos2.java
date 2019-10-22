@@ -20,14 +20,14 @@ import us.ihmc.utilities.ros.subscriber.RosPointCloudSubscriber.UnpackedPointClo
 /*
  * class for creating connection between Ros publishing /camera/depth/color/points (realsense D415 camera) and Ros2
  */
-public class RosNodeWithD415BridgeToRos2 extends AbstractRosTopicSubscriber<PointCloud2>
+public class RealSenseBridgeRos2 extends AbstractRosTopicSubscriber<PointCloud2>
 {
    //params
    private static final int MAX_NUMBER_OF_POINTS = 200000;
    private static final String Up2URI = "http://192.168.137.2:11311";
 
    //constructor
-   public RosNodeWithD415BridgeToRos2(Ros2Node ros2Node) throws URISyntaxException
+   public RealSenseBridgeRos2(Ros2Node ros2Node) throws URISyntaxException
    {
       super(PointCloud2._TYPE);
       URI masterURI = new URI(Up2URI);
