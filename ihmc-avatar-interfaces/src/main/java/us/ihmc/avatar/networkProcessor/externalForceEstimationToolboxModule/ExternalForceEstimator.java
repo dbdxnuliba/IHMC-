@@ -1,4 +1,4 @@
-package us.ihmc.exampleSimulations.externalForceEstimation;
+package us.ihmc.avatar.networkProcessor.externalForceEstimationToolboxModule;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.interfaces.linsol.LinearSolver;
@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
-/*package private*/ class ExternalForceEstimator implements RobotController
+public class ExternalForceEstimator implements RobotController
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
